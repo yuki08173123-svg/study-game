@@ -1,0 +1,3837 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>まなびクエスト</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#05070f">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="まなびクエスト">
+<style>
+:root{
+  --ink:#0b1230; --win:#0d1638; --line:#ffffff;
+  --gold:#ffd34d; --hp:#4ade80; --hp2:#16a34a; --ehp:#f87171;
+  --exp:#60a5fa; --dim:#9fb0d8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:#05070f; color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  font-weight:700; letter-spacing:.02em; line-height:1.6;
+  -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
+  overflow-x:hidden;
+}
+.wrap{max-width:560px;margin:0 auto;padding:12px 12px 84px;min-height:100%}
+h1,h2,h3{margin:0;line-height:1.25}
+button{font-family:inherit;font-weight:700;color:inherit;cursor:pointer}
+.hidden{display:none!important}
+.muted{color:var(--dim);font-weight:600;font-size:.82rem;letter-spacing:0}
+
+/* ---- RPGウィンドウ ---- */
+.win{
+  background:var(--win); border:3px solid var(--line); border-radius:10px;
+  box-shadow:0 0 0 3px var(--ink), 0 6px 0 rgba(0,0,0,.5);
+  padding:14px 16px; margin-bottom:12px;
+}
+.win.tight{padding:10px 12px}
+
+/* ---- ボタン / コマンド ---- */
+.cmd{
+  display:block; width:100%; text-align:left; background:var(--win);
+  border:3px solid var(--line); border-radius:8px; color:#fff;
+  padding:13px 14px 13px 34px; font-size:1rem; position:relative;
+  box-shadow:0 4px 0 rgba(0,0,0,.5); transition:transform .06s;
+}
+.cmd::before{content:"▶"; position:absolute; left:12px; opacity:0; color:var(--gold)}
+.cmd:hover:not(:disabled)::before{opacity:1}
+.cmd:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.5)}
+.cmd:disabled{cursor:default}
+.cmd.ok{background:#14532d;border-color:var(--hp)}
+.cmd.ng{background:#4c1d1d;border-color:var(--ehp)}
+.cmds2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:400px){.cmds2{grid-template-columns:1fr}}
+
+.btn{
+  border:3px solid var(--line); border-radius:8px; background:var(--win); color:#fff;
+  padding:11px 16px; font-size:.95rem; box-shadow:0 4px 0 rgba(0,0,0,.5);
+}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.5)}
+.btn.wide{width:100%;display:block}
+.btn.sm{padding:6px 11px;font-size:.8rem;border-width:2px;box-shadow:0 3px 0 rgba(0,0,0,.5)}
+.btn.gold{background:#7c5c00;border-color:var(--gold);color:var(--gold)}
+.btn:disabled{opacity:.4;cursor:default}
+
+input,textarea{
+  font-family:inherit;font-weight:600;font-size:1rem;width:100%;padding:11px 12px;
+  border:2.5px solid var(--line);border-radius:8px;background:#060b1e;color:#fff;
+}
+textarea{min-height:110px;resize:vertical;line-height:1.5}
+label{display:block;font-size:.75rem;color:var(--dim);margin:12px 0 5px;letter-spacing:.05em}
+
+/* ---- HPバー ---- */
+.gauge{height:12px;background:#000;border:2px solid #fff;border-radius:4px;overflow:hidden}
+.gauge>i{display:block;height:100%;background:var(--hp);transition:width .45s ease}
+.gauge.e>i{background:var(--ehp)}
+.gauge.x>i{background:var(--exp)}
+.gauge.low>i{background:#f87171}
+
+/* ---- バトル画面 ---- */
+#v-battle{padding-top:4px}
+.field{
+  position:relative; height:290px; border:3px solid #fff; border-radius:10px;
+  box-shadow:0 0 0 3px var(--ink);
+  background:
+    radial-gradient(120% 80% at 50% 0%, #2b3f7a 0%, #131c3f 55%, #0a0f22 100%);
+  overflow:hidden; margin-bottom:12px;
+}
+.field::after{ /* 地面 */
+  content:""; position:absolute; left:0; right:0; bottom:0; height:74px;
+  background:linear-gradient(#3c2f4d,#1b1426);
+  border-top:3px solid rgba(255,255,255,.25);
+}
+.stars{position:absolute;inset:0;opacity:.5;
+  background-image:radial-gradient(2px 2px at 12% 18%,#fff,transparent),
+    radial-gradient(2px 2px at 68% 12%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 40% 30%,#fff,transparent),
+    radial-gradient(2px 2px at 86% 34%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 25% 45%,#fff,transparent);}
+.actor{position:absolute;z-index:2;text-align:center}
+.actor .sp{font-size:4.6rem;line-height:1;display:block;filter:drop-shadow(0 6px 6px rgba(0,0,0,.6))}
+/* 敵は 1〜4体 よこに ならぶ */
+.enrow{position:absolute;left:0;right:0;top:6px;z-index:2;
+  display:flex;justify-content:center;align-items:flex-end;gap:2%;padding:0 3%}
+.en{text-align:center;flex:0 1 auto;min-width:0;max-width:25%;transition:opacity .5s,transform .5s}
+.en .sp{display:block;line-height:1;filter:drop-shadow(0 6px 6px rgba(0,0,0,.6));
+  animation:float 2.6s ease-in-out infinite}
+.en .tgt{height:15px;font-size:.85rem;color:var(--gold);line-height:1}
+.en .nm{font-size:.56rem;background:rgba(0,0,0,.65);border:1.5px solid #fff;border-radius:5px;
+  padding:0 4px;display:block;margin:0 auto 2px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.en .gauge{height:8px;border-width:1.5px}
+.en.dead{opacity:0;transform:translateY(26px) scale(.7) rotate(18deg)}
+#pl-actor{left:8%;bottom:8px}
+#pl-actor .sp{font-size:6rem;transform:scaleX(-1);animation:float 3.1s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#pl-actor .sp{animation-name:floatp}
+@keyframes floatp{0%,100%{transform:scaleX(-1) translateY(0)}50%{transform:scaleX(-1) translateY(-7px)}}
+.nameplate{font-size:.7rem;background:rgba(0,0,0,.6);border:2px solid #fff;border-radius:6px;padding:1px 7px;display:inline-block;margin-bottom:4px}
+.hp-mini{width:118px;margin:4px auto 0}
+
+.hit{animation:shake .38s}
+@keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-11px)}30%{transform:translateX(9px)}45%{transform:translateX(-7px)}60%{transform:translateX(5px)}80%{transform:translateX(-3px)}}
+.faint{animation:faint .6s forwards}
+@keyframes faint{to{opacity:0;transform:translateY(26px) scale(.7) rotate(18deg)}}
+
+.dmg{position:absolute;z-index:5;font-size:2rem;font-weight:900;color:var(--gold);
+  text-shadow:3px 3px 0 #000,-2px -2px 0 #000;animation:fly 1s forwards;pointer-events:none}
+.dmg.crit{font-size:2.7rem;color:#fff3a0}
+.dmg.pl{color:#ff8a8a}
+@keyframes fly{0%{opacity:1;transform:translate(-50%,0) scale(.5)}
+  25%{transform:translate(-50%,-34px) scale(1.25)}
+  100%{opacity:0;transform:translate(-50%,-64px) scale(1)}}
+
+.slash{position:absolute;inset:0;z-index:4;pointer-events:none}
+.slash i{position:absolute;top:-10%;height:120%;width:9px;background:#fff;
+  border-radius:9px;box-shadow:0 0 14px #fff;transform:rotate(22deg);opacity:0;
+  animation:sl .34s forwards}
+@keyframes sl{0%{opacity:0;transform:rotate(22deg) scaleY(0)}
+  30%{opacity:1;transform:rotate(22deg) scaleY(1)}
+  100%{opacity:0;transform:rotate(22deg) scaleY(1)}}
+
+.flash{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:0}
+.flash.on{animation:fl .34s}
+@keyframes fl{0%{opacity:.75}100%{opacity:0}}
+
+.msgwin{min-height:74px}
+.msgwin p{margin:0;font-size:.97rem}
+.qwin{text-align:center}
+.qwin .qt{font-size:1.35rem;padding:8px 0 2px;word-break:break-word}
+
+/* ---- キャラ選択 ---- */
+.picks{display:flex;flex-direction:column;gap:10px}
+.pick{border:3px solid #fff;border-radius:12px;background:var(--win);padding:12px 14px;
+  box-shadow:0 4px 0 rgba(0,0,0,.5);display:flex;align-items:center;gap:14px;text-align:left;width:100%}
+.pick .txt{flex:1;min-width:0}
+.pick.sel{border-color:var(--gold);background:#2a2000}
+.pick .e{font-size:4.6rem;line-height:1;flex:0 0 auto;width:1em}
+.pick .n{font-size:1.1rem;display:block}
+.pick .t{font-size:.68rem;color:var(--gold);letter-spacing:.08em}
+.chain{font-size:1.15rem;letter-spacing:.12em;margin-top:6px;opacity:.75}
+
+.hero-img{width:1em;height:1em;object-fit:contain;display:block;margin:0 auto;
+  -webkit-user-drag:none;user-select:none}
+.seclabel{font-size:.75rem;color:var(--dim);letter-spacing:.12em;margin:14px 0 8px}
+
+/* ---- しんか演出 ---- */
+#evo{position:fixed;inset:0;z-index:90;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  background:#000;transition:background 1s}
+.evo-rays{position:absolute;left:50%;top:50%;width:240vmax;height:240vmax;
+  margin:-120vmax 0 0 -120vmax;z-index:1;opacity:0;
+  background:repeating-conic-gradient(from 0deg,
+    rgba(255,228,140,.5) 0deg 4deg, transparent 4deg 16deg);
+  animation:evospin 9s linear infinite;transition:opacity .6s}
+@keyframes evospin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.evo-ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  z-index:2;border:6px solid #fff;border-radius:50%;
+  width:60px;height:60px;opacity:0}
+.evo-ring.go{animation:evoring 1s ease-out forwards}
+@keyframes evoring{
+  0%{opacity:.95;width:40px;height:40px;border-width:8px;transform:translate(-50%,-50%)}
+  100%{opacity:0;width:150vmax;height:150vmax;border-width:1px;transform:translate(-50%,-50%)}}
+.evo-sp{position:relative;z-index:4;font-size:10rem;line-height:1;
+  transition:transform .5s, filter .5s;
+  filter:drop-shadow(0 0 26px rgba(255,255,255,.45))}
+.evo-sp.dark{filter:brightness(0) saturate(0) drop-shadow(0 0 34px #7fb2ff)}
+.evo-sp.buzz{animation:evobuzz .09s infinite}
+@keyframes evobuzz{
+  0%{transform:translate(-6px,1px) scale(1.05)}
+  50%{transform:translate(6px,-1px) scale(1.05)}
+  100%{transform:translate(-5px,0) scale(1.05)}}
+.evo-sp.big{transform:scale(1.5);filter:drop-shadow(0 0 46px #ffd34d)}
+.evo-txt{position:absolute;bottom:16%;z-index:5;width:100%;text-align:center;
+  opacity:0;transition:opacity .6s}
+.evo-txt.on{opacity:1}
+.evo-txt .l1{font-size:1rem;color:#fff;letter-spacing:.3em}
+.evo-txt .l2{font-size:1.9rem;color:var(--gold);margin-top:6px;
+  text-shadow:0 0 22px rgba(255,211,77,.9)}
+.evo-flash{position:absolute;inset:0;z-index:6;background:#fff;opacity:0;pointer-events:none}
+.evo-flash.on{animation:evoflash 1.1s ease-out forwards}
+@keyframes evoflash{0%{opacity:1}100%{opacity:0}}
+.spark{position:absolute;z-index:3;width:7px;height:7px;border-radius:50%;
+  background:#ffe27a;box-shadow:0 0 12px #ffd34d;pointer-events:none}
+
+/* ---- さいしょの 10もん ---- */
+.setupbar{background:linear-gradient(#2a2000,#1a1400);border:3px solid var(--gold);
+  border-radius:12px;padding:14px 16px;margin-bottom:12px;text-align:center}
+.setupbar h3{font-size:1.05rem;color:var(--gold);margin:0}
+.setupbar .cnt{font-size:2.2rem;color:#fff;line-height:1.1;margin:6px 0 2px}
+.setupbar .cnt small{font-size:1rem;color:var(--dim)}
+.setupbar .gauge{margin-top:6px}
+.setupbar .gauge>i{background:var(--gold);transition:width .4s}
+
+/* ---- きろく（せいせき一覧） ---- */
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{flex:1;background:var(--win);border:2.5px solid var(--line);border-radius:9px;
+  color:var(--dim);padding:8px 2px;font-size:.78rem;box-shadow:0 3px 0 rgba(0,0,0,.5)}
+.tabs button.on{border-color:var(--gold);color:var(--gold);background:#241b00}
+.qrow{padding:10px 0;border-bottom:2px solid rgba(255,255,255,.13)}
+.qrow:last-child{border-bottom:none}
+.qrow .top{display:flex;align-items:baseline;gap:8px}
+.qrow .q{font-size:.98rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qrow .pc{font-size:.85rem;white-space:nowrap}
+.qrow .a{font-size:.78rem;color:var(--dim);margin-top:1px}
+.qbar{height:8px;background:#000;border:1.5px solid rgba(255,255,255,.5);
+  border-radius:99px;overflow:hidden;margin-top:5px}
+.qbar>i{display:block;height:100%;background:var(--hp)}
+.qbar.mid>i{background:var(--gold)}
+.qbar.bad>i{background:var(--ehp)}
+.qbar.none{opacity:.35}
+
+/* ---- おぼえた度（マスター度） ---- */
+.tabs.two{flex-wrap:wrap}
+.tabs.two button{flex:1 1 28%}
+.mtop{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.mtop b:last-child{color:var(--gold);font-size:1.15rem}
+.mbar{display:flex;height:16px;border:2.5px solid var(--line);border-radius:99px;
+  overflow:hidden;background:#000}
+.mbar>i{display:block;height:100%;transition:width .5s cubic-bezier(.2,.9,.3,1)}
+.mleg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:.72rem;color:var(--dim)}
+.mleg span{display:flex;align-items:center;gap:4px}
+.mleg i{width:9px;height:9px;border-radius:2px;display:block}
+nav button{position:relative}
+.badge{position:absolute;top:3px;right:calc(50% - 26px);min-width:17px;height:17px;
+  border-radius:99px;background:var(--ehp);color:#fff;font-size:.62rem;font-style:normal;
+  line-height:17px;text-align:center;padding:0 4px;border:2px solid var(--bg);
+  box-shadow:0 0 8px rgba(248,113,113,.8)}
+.item.tap{cursor:pointer}
+.item.tap:active{background:rgba(255,255,255,.07)}
+.item .pen{font-size:.95rem;opacity:.5;margin-left:2px}
+.cardedit{margin:8px 0;border-color:var(--gold)}
+.cardedit label{display:block;font-size:.7rem;color:var(--dim);margin-bottom:3px}
+.editrow{display:flex;gap:8px;margin-top:12px}
+.editrow button{flex:1}
+.impnote{margin:9px 0 0;padding:9px 11px;border-radius:9px;font-size:.78rem;line-height:1.6;
+  background:rgba(255,255,255,.06);border:2px solid var(--line);color:var(--dim)}
+.mnote{margin:9px 0 0;font-size:.78rem;color:var(--dim);line-height:1.5}
+/* ---- まちがえた ときの おぼえ直し ---- */
+#miss{position:fixed;inset:0;z-index:60;background:rgba(4,6,20,.88);
+  display:flex;align-items:center;justify-content:center;padding:18px;
+  animation:missIn .18s ease-out}
+@keyframes missIn{from{opacity:0}to{opacity:1}}
+.misswin{width:100%;max-width:440px;background:var(--win);border:3px solid var(--line);
+  border-radius:14px;padding:18px;box-shadow:0 10px 0 rgba(0,0,0,.55)}
+.misshead{font-size:1.15rem;text-align:center;margin-bottom:14px}
+.missq{font-size:1.05rem;text-align:center;padding:12px;margin-bottom:14px;
+  background:#000;border:2px solid var(--line);border-radius:10px;line-height:1.5}
+.missrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  padding:9px 11px;border-radius:9px;margin-bottom:8px;background:rgba(255,255,255,.05)}
+.missrow span{font-size:.72rem;color:var(--dim);white-space:nowrap}
+.missrow b{font-size:1.15rem;text-align:right;word-break:break-word;color:var(--ehp)}
+.missrow.ans{background:rgba(74,222,128,.13);border:2px solid var(--hp)}
+.missrow.ans b{color:var(--hp);font-size:1.35rem}
+.missnote{margin:2px 0 12px;font-size:.78rem;color:var(--dim);text-align:center;line-height:1.5}
+#miss-accept{margin-bottom:8px;border-color:var(--hp);color:var(--hp)}
+#miss-ok{margin-top:2px;border-color:var(--gold);color:var(--gold)}
+.lv{font-size:.7rem;padding:1px 6px;border-radius:99px;border:1.5px solid currentColor;
+  white-space:nowrap}
+.qrow .nx{font-size:.7rem;color:var(--dim);margin-left:6px}
+
+/* ---- ステージ選択 ---- */
+.stagegrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:12px;
+  max-height:46vh;overflow-y:auto;padding:2px;
+  border:2px solid var(--line);border-radius:10px}
+.st{aspect-ratio:1;border:2.5px solid var(--line);border-radius:10px;background:var(--win);
+  color:var(--dim);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0;padding:2px;font-size:.9rem;line-height:1.15}
+.st .ic{font-size:1.1rem;line-height:1.1}
+.st.open{border-color:#fff;color:#fff}
+.st.clear{border-color:var(--hp);color:var(--hp);background:#0f2a1c}
+.st.sel{border-color:var(--gold);color:var(--gold);background:#2a2000;border-width:3px}
+.st.boss{background:#2a1020}
+.st.boss.clear{background:#0f2a1c}
+.st.lock{opacity:.35}
+
+/* ---- あそびかた（チュートリアル） ---- */
+#tut{position:fixed;inset:0;z-index:80;background:rgba(3,6,16,.92);
+  display:flex;align-items:center;justify-content:center;padding:18px}
+.tutbox{background:var(--win);border:3px solid #fff;border-radius:14px;
+  box-shadow:0 0 0 3px var(--ink),0 10px 0 rgba(0,0,0,.5);
+  padding:22px 20px;max-width:400px;width:100%;text-align:center}
+.tutico{font-size:4.2rem;line-height:1}
+.tutbox h2{font-size:1.2rem;margin:8px 0 6px;color:var(--gold)}
+.tutbox p{font-size:.95rem;margin:0;color:#dfe6fb;line-height:1.7}
+.tutdots{display:flex;gap:7px;justify-content:center;margin:16px 0 14px}
+.tutdots i{width:9px;height:9px;border-radius:50%;background:var(--line);display:block}
+.tutdots i.on{background:var(--gold)}
+
+/* ---- 写真から出題 ---- */
+.photoprev{max-width:100%;border:2.5px solid #fff;border-radius:9px;margin-top:10px;display:block}
+
+/* ---- レベル / EXP ---- */
+.statusbar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.lvchip{background:var(--win);border:2.5px solid var(--gold);color:var(--gold);
+  border-radius:8px;padding:3px 10px;font-size:.8rem;white-space:nowrap}
+.lvchip b{font-size:1.05rem}
+.gauge>i.grow{transition:width .5s cubic-bezier(.2,.8,.3,1)}
+
+.levelup{position:fixed;inset:0;z-index:70;display:flex;align-items:center;
+  justify-content:center;pointer-events:none}
+.levelup .in{background:linear-gradient(#ffe27a,#f0a020);color:#3a2400;
+  border:5px solid #fff;border-radius:18px;padding:20px 38px;text-align:center;
+  box-shadow:0 0 50px rgba(255,211,77,.9);animation:lvpop 1.5s forwards}
+.levelup .in .t{font-size:1rem;letter-spacing:.2em}
+.levelup .in .n{font-size:3rem;line-height:1.1}
+@keyframes lvpop{
+  0%{transform:scale(.3) rotate(-10deg);opacity:0}
+  18%{transform:scale(1.2) rotate(3deg);opacity:1}
+  30%{transform:scale(1) rotate(0)}
+  80%{transform:scale(1);opacity:1}
+  100%{transform:scale(1.15);opacity:0}}
+
+.expfly{position:absolute;z-index:6;left:50%;top:96px;font-size:1.5rem;font-weight:900;
+  color:#8ec5ff;text-shadow:2px 2px 0 #000;pointer-events:none;animation:fly 1.2s forwards}
+
+/* ---- 記述回答 ---- */
+#bt-write input{font-size:1.15rem;text-align:center}
+#w-mic.on{background:#b91c1c;animation:pulse 1.3s infinite}
+
+/* ---- 音声入力 ---- */
+.micwrap{text-align:center;padding:6px 0 2px}
+.mic{width:112px;height:112px;border-radius:50%;font-size:2.8rem;line-height:1;
+  border:4px solid #fff;background:#7f1d1d;color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.5)}
+.mic:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.5)}
+.mic.on{background:#b91c1c;animation:pulse 1.3s infinite}
+.mic:disabled{opacity:.4}
+@keyframes pulse{
+  0%,100%{box-shadow:0 6px 0 rgba(0,0,0,.5), 0 0 0 0 rgba(248,113,113,.65)}
+  60%{box-shadow:0 6px 0 rgba(0,0,0,.5), 0 0 0 22px rgba(248,113,113,0)}}
+.vstate{font-size:1.05rem;margin-top:12px}
+.vlive{min-height:30px;font-size:1.2rem;color:var(--gold);margin-top:4px;word-break:break-word}
+.vstep{display:inline-block;font-size:.7rem;padding:2px 10px;border-radius:99px;
+  border:2px solid var(--gold);color:var(--gold);letter-spacing:.1em}
+.vstep.a{border-color:var(--hp);color:var(--hp)}
+.vhelp{background:#3a1010;border-color:#f87171}
+.polishing{opacity:.55;font-style:italic}
+
+/* ---- リスト / 図鑑 ---- */
+.item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:2px solid rgba(255,255,255,.14)}
+.item:last-child{border-bottom:none}
+.item .g{flex:1;min-width:0}
+.item .g b{display:block;font-size:.95rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.slot{border:2.5px solid #fff;border-radius:9px;background:var(--win);padding:8px 4px;text-align:center}
+.slot .e{font-size:1.9rem;line-height:1.1;display:block}
+.slot .n{font-size:.62rem;letter-spacing:0}
+.slot.lock{opacity:.3}
+.slot.rare{border-color:var(--gold);background:#241b00}
+.slot.bossslot{border-color:#c084fc;background:#2a1030}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.stat3 b{display:block;font-size:1.25rem;color:var(--gold)}
+.stat3 span{font-size:.66rem;color:var(--dim);letter-spacing:0}
+
+/* ---- nav ---- */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;gap:6px;
+  max-width:560px;margin:0 auto;padding:8px 12px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(transparent,#05070f 30%)}
+nav button{flex:1;min-width:0;background:var(--win);border:2.5px solid #fff;border-radius:8px;
+  color:var(--dim);padding:7px 1px;font-size:.6rem;box-shadow:0 3px 0 rgba(0,0,0,.5)}
+nav button .ic{display:block;font-size:1.15rem;line-height:1.35}
+nav button.on{color:var(--gold);border-color:var(--gold);background:#241b00}
+
+#sound{position:fixed;top:8px;right:8px;z-index:50;background:rgba(0,0,0,.6);
+  border:2px solid #fff;border-radius:8px;padding:4px 8px;font-size:.85rem}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:92px;z-index:55;
+  display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+.toast{background:var(--gold);color:#2a1f00;padding:7px 16px;border-radius:6px;
+  font-size:.85rem;border:2px solid #fff;animation:pop .25s}
+@keyframes pop{from{opacity:0;transform:translateY(10px)}}
+</style>
+</head>
+<body>
+<!-- スクリプトが とちゅうで 止まったら だまって 死なせず 画面に 出す -->
+<div id="fatal" style="display:none;position:fixed;left:0;right:0;top:0;z-index:99;
+  background:#7f1d1d;color:#fff;border-bottom:3px solid #fff;padding:12px 14px;
+  font-size:.82rem;line-height:1.5;font-family:-apple-system,sans-serif"></div>
+<script>
+window.addEventListener('error', function(ev){
+  var el = document.getElementById('fatal');
+  if(!el) return;
+  el.style.display = 'block';
+  el.textContent = '⚠ エラーで うごきが 止まりました: ' +
+    (ev.message || ev.error) + '　（' + (ev.filename||'').split('/').pop() + ':' + ev.lineno + '）' +
+    '　→ ブラウザを ハードこうしん（⌘⇧R）して ください。';
+});
+</script>
+
+<!-- ================= あそびかた ================= -->
+<div id="tut" class="hidden">
+  <div class="tutbox">
+    <div class="tutico" id="tut-ico">📜</div>
+    <h2 id="tut-t"></h2>
+    <p id="tut-b"></p>
+    <div class="tutdots" id="tut-dots"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="tut-prev" onclick="tutPrev()" style="width:56px">◀</button>
+      <button class="btn gold" id="tut-next" onclick="tutNext()" style="flex:1">つぎ ▶</button>
+    </div>
+    <button class="btn sm wide" style="margin-top:8px" onclick="tutClose()">とじる</button>
+  </div>
+</div>
+
+<!-- ================= しんか演出 ================= -->
+<div id="evo" class="hidden">
+  <div class="evo-rays" id="evo-rays"></div>
+  <div class="evo-ring" id="evo-ring"></div>
+  <div class="evo-sp" id="evo-sp">🦎</div>
+  <div class="evo-txt" id="evo-txt">
+    <div class="l1" id="evo-l1"></div>
+    <div class="l2" id="evo-l2"></div>
+  </div>
+  <div class="evo-flash" id="evo-flash"></div>
+</div>
+
+<div class="flash" id="flash"></div>
+<div class="levelup hidden" id="levelup"><div class="in">
+  <div class="t" id="lu-t">LEVEL UP!</div><div class="n" id="lu-n">Lv.2</div>
+</div></div>
+<button id="sound" onclick="toggleSound()">🔊</button>
+
+<div class="wrap">
+
+<!-- ================= キャラ選択 ================= -->
+<section id="v-start" class="hidden">
+  <div class="win" style="text-align:center">
+    <h1 style="font-size:1.5rem;color:var(--gold)">まなびクエスト</h1>
+    <p class="muted" style="margin:6px 0 0">といに こたえ モンスターを たおせ</p>
+  </div>
+  <div class="win">
+    <h3 class="seclabel" style="margin-top:0">すがたを えらぶ</h3>
+    <div class="picks" id="pick-list"></div>
+    <label>なまえ</label>
+    <input id="pick-name" maxlength="8" placeholder="ゆうしゃ">
+    <button class="btn gold wide" style="margin-top:14px;font-size:1.1rem;padding:16px" id="pick-go" onclick="startGame()" disabled>▶ たびだつ</button>
+  </div>
+</section>
+
+<!-- ================= 町（ホーム） ================= -->
+<section id="v-town" class="hidden">
+  <div class="win" style="text-align:center;padding:20px 16px">
+    <div style="font-size:7.5rem;line-height:1" id="t-sprite"></div>
+    <h2 style="font-size:1.1rem;margin-top:6px" id="t-name">—</h2>
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:16px">
+      <span class="lvchip">Lv.<b id="t-lv">1</b></span>
+      <span class="muted" id="t-expt">つぎまで 0</span>
+    </div>
+    <div class="gauge x" style="margin-top:5px"><i id="t-exp" style="width:0%"></i></div>
+
+    <div style="display:flex;justify-content:space-around;margin-top:16px;font-size:.95rem">
+      <span>❤️ <b id="t-hpt">30</b></span>
+      <span>⚔️ <b id="t-atk">0</b></span>
+      <span>💰 <b id="t-gold">0</b></span>
+    </div>
+  </div>
+
+  <button class="btn gold wide" style="font-size:1.3rem;padding:22px" onclick="go('prep')">⚔️ ぼうけん</button>
+</section>
+
+<!-- ================= 冒険の準備 ================= -->
+<section id="v-prep" class="hidden">
+  <h3 class="seclabel">📜 もんだい</h3>
+  <div id="p-decks"></div>
+  <h3 class="seclabel" id="p-difflabel">🗺️ ステージ <span id="p-prog"></span></h3>
+  <div class="stagegrid" id="p-stages"></div>
+  <div class="win tight" id="p-info"></div>
+  <button class="btn gold wide" id="p-go" style="font-size:1.2rem;padding:18px" onclick="beginAdventure()" disabled>▶ しゅっぱつ</button>
+</section>
+
+<!-- ================= バトル ================= -->
+<section id="v-battle" class="hidden">
+  <div class="field" id="field">
+    <div class="stars"></div>
+    <div class="enrow" id="en-row"></div>
+    <div class="actor" id="pl-actor">
+      <span class="sp" id="pl-sp">🦎</span>
+      <div class="gauge hp-mini"><i id="pl-hp" style="width:100%"></i></div>
+      <div class="nameplate" id="pl-name" style="margin:4px 0 0">—</div>
+    </div>
+    <div class="slash hidden" id="slash"><i style="left:18%"></i><i style="left:38%;animation-delay:.07s"></i><i style="left:58%;animation-delay:.14s"></i></div>
+  </div>
+
+  <div class="statusbar">
+    <span class="lvchip">Lv.<b id="bt-lv">1</b></span>
+    <div class="gauge x" style="flex:1"><i id="bt-exp" class="grow" style="width:0%"></i></div>
+    <span style="font-size:.75rem;color:var(--gold)" id="bt-combo"></span>
+    <span class="muted" id="bt-prog">1/3</span>
+  </div>
+
+  <div class="win msgwin"><p id="bt-msg"></p></div>
+  <div class="win qwin hidden" id="bt-qwin"><div class="qt" id="bt-q"></div></div>
+
+  <div class="cmds2" id="bt-choices"></div>
+
+  <div id="bt-write" class="hidden">
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="w-mic" onclick="writeVoice()" style="font-size:1.4rem;padding:10px 16px">🎤</button>
+      <input id="w-input" placeholder="こたえ" autocomplete="off">
+    </div>
+    <button class="btn gold wide" style="margin-top:10px;font-size:1.05rem" onclick="submitWrite()">こたえる</button>
+    <button class="btn sm wide" style="margin-top:8px" onclick="giveUp()">わからない</button>
+  </div>
+
+  <button class="btn sm wide" style="margin-top:10px" id="bt-flee" onclick="flee()">にげる</button>
+</section>
+
+<!-- ================= リザルト ================= -->
+<section id="v-result" class="hidden">
+  <div class="win" style="text-align:center">
+    <div style="font-size:3.2rem" id="r-emoji">🏆</div>
+    <h2 id="r-title" style="color:var(--gold)">かんぜん しょうり！</h2>
+    <p class="muted" id="r-sub" style="margin:6px 0 0"></p>
+  </div>
+  <div class="win stat3">
+    <div><b id="r-exp">0</b><span>EXP</span></div>
+    <div><b id="r-gold">0</b><span>💰</span></div>
+    <div><b id="r-kill">0</b><span>げきは</span></div>
+  </div>
+  <div class="win" id="r-log"></div>
+  <div id="r-miss"></div>
+  <button class="btn gold wide hidden" id="r-next" style="font-size:1.15rem;padding:18px" onclick="nextStage()"></button>
+  <button class="btn wide" id="r-retry" style="margin-top:10px" onclick="retryStage()">🔄 もう いちど</button>
+  <button class="btn wide" style="margin-top:10px" onclick="go('prep')">🗺️ ステージえらび</button>
+  <button class="btn wide" style="margin-top:10px" onclick="go('town')">🏰 まち</button>
+</section>
+
+<!-- ================= もんだいしゅう ================= -->
+<section id="v-decks" class="hidden">
+  <div id="d-top">
+    <div class="win" style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="font-size:1.05rem">もんだいしゅう</h2>
+      <button class="btn sm" onclick="newDeck()">＋ あたらしく つくる</button>
+    </div>
+    <div id="d-list"></div>
+  </div>
+
+  <div id="d-edit" class="hidden">
+    <div class="setupbar hidden" id="setup-bar">
+      <h3>まずは もんだいを 10こ つくろう</h3>
+      <div class="cnt"><span id="setup-n">0</span><small> / 10</small></div>
+      <div class="gauge"><i id="setup-g" style="width:0%"></i></div>
+      <button class="btn gold wide hidden" id="setup-go" style="margin-top:12px;font-size:1.05rem"
+              onclick="finishSetup()">▶ ぼうけんに でる</button>
+      <button class="btn sm wide" style="margin-top:8px" onclick="skipSetup()">サンプルで はじめる</button>
+    </div>
+    <button class="btn sm" onclick="closeDeck()">← もどる</button>
+
+    <!-- 音声で作る -->
+    <div class="win" style="margin-top:12px">
+      <div class="micwrap">
+        <button class="mic" id="mic-btn" onclick="toggleVoice()">🎤</button>
+        <div class="vstate" id="v-state">こえで もんだいを つくる</div>
+        <div class="vlive" id="v-live"></div>
+        <p class="muted" id="v-hint" style="margin:8px 0 0">
+          ボタンを おして「アップル」→「りんご」の ように<br>もんだい と こたえを こうごに はなす
+        </p>
+      </div>
+      <div id="v-last" class="hidden" style="margin-top:12px;border-top:2px dashed rgba(255,255,255,.25);padding-top:10px">
+        <div class="item" style="border:none">
+          <div class="g"><b id="v-lq">—</b><span class="muted" id="v-la">—</span></div>
+          <button class="btn sm" onclick="undoLast()">とりけす</button>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;border-top:2px dashed rgba(255,255,255,.25);padding-top:12px">
+        <button class="btn gold wide" id="photo-btn" onclick="pickPhoto()" style="font-size:1.05rem;padding:14px">
+          📷 しゃしんから つくる
+        </button>
+        <input type="file" id="photo-file" accept="image/*" capture="environment"
+               style="display:none" onchange="photoChosen(this)">
+        <p class="muted" id="photo-note" style="margin:8px 0 0">
+          きょうかしょや ノートを うつすと もんだいに なります
+        </p>
+        <div id="photo-box"></div>
+      </div>
+    </div>
+
+    <div class="win vhelp hidden" id="v-help">
+      <h3 style="font-size:.95rem">🎤 マイクが つかえません</h3>
+      <p class="muted" id="v-helptext" style="margin:8px 0 0"></p>
+    </div>
+
+    <div class="win">
+      <label>もんだいしゅうの なまえ</label>
+      <div style="display:flex;gap:8px">
+        <input id="d-name" placeholder="れい: 英単語 中1">
+        <button class="btn sm" onclick="voiceDeckName()" title="こえで 入力">🎤</button>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
+        <h3 style="font-size:.95rem">もんだい（<span id="d-count">0</span>）</h3>
+        <div style="display:flex;gap:6px">
+          <button class="btn sm" id="polish-all" onclick="polishAll()">✨ 整形</button>
+          <button class="btn sm" onclick="toggleImport()">⌨️</button>
+        </div>
+      </div>
+
+      <div id="d-import" class="hidden" style="margin-top:10px">
+        <p class="muted" style="margin:0 0 6px">PCから 貼り付ける ばあい。1行に1問「もんだい,こたえ」（タブ区切りも可）。<br>
+          3れつめ いこうは「べつの こたえ」に なります。れい: <code>えどばくふ,徳川家康,とくがわいえやす</code></p>
+        <textarea id="d-importtext" placeholder="apple,りんご&#10;dog,いぬ&#10;book,本"></textarea>
+        <button class="btn sm wide" style="margin-top:8px" onclick="doImport()">ついかする</button>
+        <p id="imp-note" class="hidden impnote"></p>
+        <div style="margin-top:14px;border-top:2px dashed rgba(255,255,255,.25);padding-top:12px">
+          <label>1問ずつ 手入力</label>
+          <input id="c-q" placeholder="もんだい（れい: apple）">
+          <input id="c-a" style="margin-top:8px" placeholder="こたえ（れい: りんご）">
+          <button class="btn sm wide" style="margin-top:10px" onclick="addCard()">＋ ついか</button>
+        </div>
+      </div>
+
+      <div id="d-cards"></div>
+    </div>
+    <button class="btn wide" style="border-color:#f87171;color:#f87171" onclick="delDeck()">この もんだいしゅうを けす</button>
+  </div>
+</section>
+
+<!-- ================= きろく ================= -->
+<section id="v-stats" class="hidden">
+  <div class="win">
+    <div class="mtop"><b>おぼえた もんだい</b><b id="k-mast">0 / 0</b></div>
+    <div class="mbar" id="k-mbar"></div>
+    <div class="mleg" id="k-mleg"></div>
+    <p class="mnote" id="k-note"></p>
+  </div>
+  <div class="win stat3">
+    <div><b id="k-due">0</b><span>きょう ふくしゅう</span></div>
+    <div><b id="k-acc">—</b><span>せいとうりつ</span></div>
+    <div><b id="k-ans">0</b><span>といた</span></div>
+  </div>
+  <div class="tabs two" id="k-tabs"></div>
+  <div class="win" id="k-list"></div>
+</section>
+
+<!-- ================= ずかん ================= -->
+<section id="v-book" class="hidden">
+  <div class="win">
+    <h2 style="font-size:1.05rem">モンスターずかん <span class="muted" id="z-count"></span></h2>
+  </div>
+  <div class="grid" id="z-grid"></div>
+
+  <div class="win" style="margin-top:14px">
+    <h2 style="font-size:1.05rem">しょうごう <span class="muted" id="ti-count"></span></h2>
+  </div>
+  <div class="win" id="ti-list"></div>
+
+  <div class="win stat3">
+    <div><b id="z-ans">0</b><span>そう正解数</span></div>
+    <div><b id="z-acc">—</b><span>正答率</span></div>
+    <div><b id="z-best">0</b><span>さいこうコンボ</span></div>
+  </div>
+
+  <div class="win">
+    <h3 style="font-size:.95rem">✨ AI整形（にんい）</h3>
+    <p class="muted" style="margin:6px 0 0">
+      Claude APIキーを 入れると、こえで はなした ないようを
+      きれいな日本語の もんだいに 書きなおします。<br>
+      <b style="color:#f87171">入力した もんだい文は Anthropicの サーバーに おくられます。</b>
+      キーは この ブラウザにだけ ほぞんされます。空欄なら AI整形は つかいません
+      （その ばあいも かんたんな 自動そうじは はたらきます）。
+    </p>
+    <label>APIキー（sk-ant-...）</label>
+    <input id="ai-key" type="password" placeholder="空欄＝つかわない" autocomplete="off">
+    <label>モデル</label>
+    <select id="ai-model" style="font-family:inherit;font-weight:600;font-size:1rem;width:100%;
+      padding:11px 12px;border:2.5px solid #fff;border-radius:8px;background:#060b1e;color:#fff">
+      <option value="claude-opus-5">Claude Opus 5（いちばん きれい）</option>
+      <option value="claude-haiku-4-5">Claude Haiku 4.5（はやい・やすい）</option>
+    </select>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn sm" onclick="saveAi()">ほぞん</button>
+      <button class="btn sm" onclick="testAi()">せつぞく テスト</button>
+    </div>
+    <p class="muted" id="ai-status" style="margin:10px 0 0"></p>
+  </div>
+
+  <div class="win">
+    <h3 style="font-size:.95rem">あそびかた</h3>
+    <button class="btn sm wide" style="margin-top:10px" onclick="tutOpen(0)">▶ もういちど みる</button>
+  </div>
+
+  <div class="win">
+    <h3 style="font-size:.95rem">データ</h3>
+    <p class="muted" style="margin:6px 0 12px">このブラウザの中だけに ほぞんされます。</p>
+    <p class="muted" style="margin:0 0 10px">
+      ⚠️ ファイルで ひらいた ばあいと <b>http://localhost</b> で ひらいた ばあいは
+      きろくが べつに なります。うつすには 書き出して → 読みこんで ください。
+    </p>
+    <button class="btn sm" onclick="exportData()">⬇ 書き出す</button>
+    <button class="btn sm" onclick="pickImportFile()">⬆ 読みこむ</button>
+    <input type="file" id="imp-file" accept="application/json,.json" style="display:none" onchange="importData(this)">
+    <button class="btn sm" style="border-color:#f87171;color:#f87171" onclick="resetAll()">さいしょから</button>
+  </div>
+</section>
+
+</div>
+
+<nav id="nav" class="hidden">
+  <button id="n-town"  onclick="go('town')"><span class="ic">🏰</span>まち</button>
+  <button id="n-prep"  onclick="go('prep')"><span class="ic">⚔️</span>ぼうけん</button>
+  <button id="n-decks" onclick="go('decks')"><span class="ic">📜</span>もんだい</button>
+  <button id="n-stats" onclick="go('stats')"><span class="ic">📊</span>きろく<i id="n-badge" class="badge hidden"></i></button>
+  <button id="n-book"  onclick="go('book')"><span class="ic">📖</span>ずかん</button>
+</nav>
+
+<!-- まちがえた ときに 止まって おぼえ直す がめん -->
+<div id="miss" class="hidden">
+  <div class="misswin">
+    <div class="misshead" id="miss-head"></div>
+    <div class="missq" id="miss-q"></div>
+    <div class="missrow" id="miss-you"><span>あなたの こたえ</span><b id="miss-yv"></b></div>
+    <div class="missrow ans"><span>ただしい こたえ</span><b id="miss-av"></b></div>
+    <p class="missnote" id="miss-note"></p>
+    <button class="btn wide hidden" id="miss-accept" onclick="acceptMiss()">⭕ これも 正解に する</button>
+    <button class="btn wide" id="miss-ok" onclick="closeMiss()">わかった</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+/* ==================================================
+   1. データ定義
+================================================== */
+
+// プレイヤーの職業（4段階に進化）
+/* ==================================================
+   1.5 キャラクターの え（SVG・じぶんで えがく）
+   絵文字だと 色や かたちを えらべないので、
+   じぶんの モンスターだけは SVGで えがいている。
+================================================== */
+function eye(x, y, r, fierce){
+  if(fierce){
+    return `<path d="M${x-r} ${y-r*0.5} L${x+r} ${y-r*0.1} L${x+r*0.9} ${y+r} L${x-r} ${y+r*0.6} Z" fill="#fff"/>`
+         + `<circle cx="${x+r*0.15}" cy="${y+r*0.25}" r="${r*0.48}" fill="#241a1a"/>`;
+  }
+  return `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*1.12}" fill="#fff"/>`
+       + `<circle cx="${x}" cy="${y+r*0.16}" r="${r*0.56}" fill="#2b1d1d"/>`
+       + `<circle cx="${x-r*0.34}" cy="${y-r*0.44}" r="${r*0.24}" fill="#fff"/>`;
+}
+function mouth(x, y, w, d, col){
+  return `<path d="M${x-w} ${y} q${w} ${d} ${w*2} 0" stroke="${col}" stroke-width="2.6"
+           fill="none" stroke-linecap="round"/>`;
+}
+function fang(x, y, s, col){
+  return `<path d="M${x} ${y} l${s} 0 l${-s/2} ${s*1.5} z" fill="${col||'#fff'}"/>`;
+}
+function wrapSvg(inner){
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
+    style="width:1em;height:1em;display:block;margin:0 auto;overflow:visible">${inner}</svg>`;
+}
+
+const ART_SVG = {
+  fire: [
+    // ① ヒノコ — まるくて かわいい ほのおの こ
+    wrapSvg(
+      `<path d="M74 70 q16 1 13-14 q11 11 1 23 q-8 7-17 2z" fill="#ff8a5c"/>` +
+      `<ellipse cx="48" cy="63" rx="27" ry="25" fill="#ff6a52"/>` +
+      `<ellipse cx="48" cy="71" rx="17" ry="14" fill="#ffc0ad"/>` +
+      `<path d="M48 6 C58 23 71 30 58 43 C54 48 42 48 38 43 C25 30 38 23 48 6z" fill="#ffd93b"/>` +
+      `<path d="M48 19 C54 29 61 33 54 41 C51 44 45 44 42 41 C35 33 42 29 48 19z" fill="#ff8a2b"/>` +
+      `<ellipse cx="35" cy="86" rx="9" ry="5.5" fill="#d63b28"/>` +
+      `<ellipse cx="61" cy="86" rx="9" ry="5.5" fill="#d63b28"/>` +
+      `<circle cx="26" cy="69" r="4.5" fill="#ff9c8a"/><circle cx="70" cy="69" r="4.5" fill="#ff9c8a"/>` +
+      eye(38,58,7) + eye(58,58,7) + mouth(48,73,6,6,'#a82a1c')),
+    // ② メラリザ — ほのおの トカゲ
+    wrapSvg(
+      `<path d="M70 74 q19 5 17-12 q13 13-3 27 q-10 8-19-1z" fill="#ff8a5c"/>` +
+      `<path d="M85 57 q11 11 0 22 q-5-9 0-22z" fill="#ffd93b"/>` +
+      `<path d="M28 80 q-7-32 22-36 q29 4 22 36 q-22 9-44 0z" fill="#ff6a52"/>` +
+      `<ellipse cx="50" cy="73" rx="14" ry="12" fill="#ffc0ad"/>` +
+      `<ellipse cx="50" cy="36" rx="22" ry="19" fill="#ff6a52"/>` +
+      `<path d="M36 21 l-7-15 l14 9z" fill="#ffd93b"/><path d="M64 21 l7-15 l-14 9z" fill="#ffd93b"/>` +
+      `<ellipse cx="33" cy="88" rx="9" ry="5.5" fill="#d63b28"/>` +
+      `<ellipse cx="63" cy="88" rx="9" ry="5.5" fill="#d63b28"/>` +
+      `<circle cx="30" cy="43" r="4" fill="#ff9c8a"/><circle cx="70" cy="43" r="4" fill="#ff9c8a"/>` +
+      eye(41,35,6.5) + eye(59,35,6.5) + mouth(50,47,6,5,'#a82a1c')),
+    // ③ カエンリュウ — つばさが はえた
+    wrapSvg(
+      `<path d="M24 46 q-20-18-18 6 q-3 20 18 11z" fill="#d63b28"/>` +
+      `<path d="M76 46 q20-18 18 6 q3 20-18 11z" fill="#d63b28"/>` +
+      `<path d="M68 78 q21 7 19-13 q13 15-5 28 q-11 6-19-5z" fill="#ff6a52"/>` +
+      `<path d="M87 58 q13 13 0 25 q-6-11 0-25z" fill="#ffd93b"/>` +
+      `<path d="M26 83 q-8-35 24-39 q32 4 24 39 q-24 9-48 0z" fill="#ff6a52"/>` +
+      `<ellipse cx="50" cy="75" rx="15" ry="13" fill="#ffc0ad"/>` +
+      `<ellipse cx="50" cy="33" rx="21" ry="18" fill="#ff6a52"/>` +
+      `<path d="M50 3 q9 13 0 17 q-9-4 0-17z" fill="#ffd93b"/>` +
+      `<path d="M33 17 l-9-14 l17 8z" fill="#ffd93b"/><path d="M67 17 l9-14 l-17 8z" fill="#ffd93b"/>` +
+      `<ellipse cx="32" cy="90" rx="10" ry="5.5" fill="#a82a1c"/>` +
+      `<ellipse cx="64" cy="90" rx="10" ry="5.5" fill="#a82a1c"/>` +
+      eye(41,32,6,1) + eye(59,32,6,1) +
+      `<path d="M42 45 q8 7 16 0" stroke="#8e2113" stroke-width="3" fill="none" stroke-linecap="round"/>` +
+      fang(43,45,4,'#fff') + fang(53,45,4,'#fff')),
+    // ④ バーンドラゴ — さいしゅう形態
+    wrapSvg(
+      `<path d="M22 44 q-24-22-21 8 q-4 26 21 13z" fill="#a82a1c"/>` +
+      `<path d="M78 44 q24-22 21 8 q4 26-21 13z" fill="#a82a1c"/>` +
+      `<path d="M20 48 q-14-10-12 5 q-2 13 12 6z" fill="#ff8a5c"/>` +
+      `<path d="M80 48 q14-10 12 5 q2 13-12 6z" fill="#ff8a5c"/>` +
+      `<path d="M66 78 q24 8 22-15 q15 17-6 31 q-13 7-22-6z" fill="#d63b28"/>` +
+      `<path d="M88 56 q15 15 0 29 q-7-13 0-29z" fill="#ffd93b"/>` +
+      `<path d="M24 84 q-9-38 26-42 q35 4 26 42 q-26 9-52 0z" fill="#ff6a52"/>` +
+      `<ellipse cx="50" cy="76" rx="16" ry="14" fill="#ffc0ad"/>` +
+      `<path d="M40 62 l4-9 l4 9 l4-9 l4 9" stroke="#ffd93b" stroke-width="2.4" fill="none"/>` +
+      `<ellipse cx="50" cy="31" rx="22" ry="19" fill="#ff6a52"/>` +
+      `<path d="M50 0 q11 15 0 20 q-11-5 0-20z" fill="#ffd93b"/>` +
+      `<path d="M36 1 q4 13-4 15 q-8-6 4-15z" fill="#ff8a2b"/>` +
+      `<path d="M64 1 q-4 13 4 15 q8-6-4-15z" fill="#ff8a2b"/>` +
+      `<path d="M30 15 l-12-13 l20 7z" fill="#ffe9a3"/><path d="M70 15 l12-13 l-20 7z" fill="#ffe9a3"/>` +
+      `<ellipse cx="30" cy="91" rx="11" ry="6" fill="#8e2113"/>` +
+      `<ellipse cx="66" cy="91" rx="11" ry="6" fill="#8e2113"/>` +
+      eye(40,30,6.5,1) + eye(60,30,6.5,1) +
+      `<path d="M40 44 q10 8 20 0" stroke="#8e2113" stroke-width="3.4" fill="none" stroke-linecap="round"/>` +
+      fang(41,44,4.5) + fang(48,45,4.5) + fang(55,44,4.5)),
+  ],
+
+  aqua: [
+    // ① シズク — しずくの かたちの こ
+    wrapSvg(
+      `<path d="M50 6 C68 34 78 48 78 60 a28 28 0 0 1-56 0 C22 48 32 34 50 6z" fill="#4dc9ff"/>` +
+      `<ellipse cx="50" cy="68" rx="18" ry="14" fill="#bdeeff"/>` +
+      `<path d="M20 62 q-14 4-12 14 q12 2 16-8z" fill="#7fd9ff"/>` +
+      `<path d="M80 62 q14 4 12 14 q-12 2-16-8z" fill="#7fd9ff"/>` +
+      `<ellipse cx="37" cy="88" rx="9" ry="5" fill="#1a8fc7"/>` +
+      `<ellipse cx="63" cy="88" rx="9" ry="5" fill="#1a8fc7"/>` +
+      `<ellipse cx="40" cy="30" rx="7" ry="10" fill="#ffffff" opacity=".55"/>` +
+      eye(39,58,7) + eye(59,58,7) + mouth(49,73,6,6,'#0e6a96')),
+    // ② アワリン — ひれが はえた
+    wrapSvg(
+      `<path d="M74 70 q18 3 16-13 q12 13-2 26 q-9 7-18-1z" fill="#4dc9ff"/>` +
+      `<path d="M86 56 q13 12 0 24 q-6-11 0-24z" fill="#bdeeff"/>` +
+      `<ellipse cx="46" cy="60" rx="30" ry="26" fill="#4dc9ff"/>` +
+      `<ellipse cx="46" cy="69" rx="19" ry="15" fill="#bdeeff"/>` +
+      `<path d="M46 26 q-4-20 10-22 q-2 12 4 20z" fill="#7fd9ff"/>` +
+      `<path d="M16 58 q-14 5-11 16 q13 1 17-9z" fill="#7fd9ff"/>` +
+      `<ellipse cx="34" cy="87" rx="9" ry="5" fill="#1a8fc7"/>` +
+      `<ellipse cx="58" cy="87" rx="9" ry="5" fill="#1a8fc7"/>` +
+      `<circle cx="24" cy="66" r="4" fill="#a8e6ff"/><circle cx="68" cy="66" r="4" fill="#a8e6ff"/>` +
+      eye(36,55,7) + eye(56,55,7) + mouth(46,70,6,6,'#0e6a96')),
+    // ③ ミズチ — みずの りゅう
+    wrapSvg(
+      `<path d="M22 48 q-20-14-18 8 q-2 18 18 8z" fill="#1a8fc7"/>` +
+      `<path d="M78 48 q20-14 18 8 q2 18-18 8z" fill="#1a8fc7"/>` +
+      `<path d="M68 80 q22 6 20-14 q14 16-5 29 q-12 6-20-5z" fill="#4dc9ff"/>` +
+      `<path d="M88 58 q14 14 0 27 q-7-12 0-27z" fill="#bdeeff"/>` +
+      `<path d="M26 83 q-8-36 24-40 q32 4 24 40 q-24 9-48 0z" fill="#4dc9ff"/>` +
+      `<ellipse cx="50" cy="75" rx="15" ry="13" fill="#bdeeff"/>` +
+      `<ellipse cx="50" cy="33" rx="21" ry="18" fill="#4dc9ff"/>` +
+      `<path d="M50 2 q6 12 0 16 q-6-4 0-16z" fill="#bdeeff"/>` +
+      `<path d="M34 12 q2 12-6 14 q-7-8 6-14z" fill="#7fd9ff"/>` +
+      `<path d="M66 12 q-2 12 6 14 q7-8-6-14z" fill="#7fd9ff"/>` +
+      `<ellipse cx="32" cy="90" rx="10" ry="5.5" fill="#0e6a96"/>` +
+      `<ellipse cx="64" cy="90" rx="10" ry="5.5" fill="#0e6a96"/>` +
+      eye(41,32,6,1) + eye(59,32,6,1) +
+      `<path d="M42 45 q8 7 16 0" stroke="#0e6a96" stroke-width="3" fill="none" stroke-linecap="round"/>`),
+    // ④ リヴァイア — うみの おうじゃ
+    wrapSvg(
+      `<path d="M20 44 q-26-20-22 10 q-4 26 22 12z" fill="#0e6a96"/>` +
+      `<path d="M80 44 q26-20 22 10 q4 26-22 12z" fill="#0e6a96"/>` +
+      `<path d="M19 50 q-14-8-12 6 q-2 12 12 5z" fill="#7fd9ff"/>` +
+      `<path d="M81 50 q14-8 12 6 q2 12-12 5z" fill="#7fd9ff"/>` +
+      `<path d="M66 78 q25 8 23-16 q16 18-6 32 q-13 7-23-6z" fill="#1a8fc7"/>` +
+      `<path d="M89 55 q16 16 0 30 q-8-14 0-30z" fill="#bdeeff"/>` +
+      `<path d="M24 84 q-9-39 26-43 q35 4 26 43 q-26 9-52 0z" fill="#4dc9ff"/>` +
+      `<ellipse cx="50" cy="76" rx="16" ry="14" fill="#bdeeff"/>` +
+      `<path d="M40 62 q10 6 20 0" stroke="#a8e6ff" stroke-width="2.4" fill="none"/>` +
+      `<ellipse cx="50" cy="31" rx="22" ry="19" fill="#4dc9ff"/>` +
+      `<path d="M50 0 q8 14 0 18 q-8-4 0-18z" fill="#bdeeff"/>` +
+      `<path d="M30 4 q4 16-6 18 q-9-8 6-18z" fill="#7fd9ff"/>` +
+      `<path d="M70 4 q-4 16 6 18 q9-8-6-18z" fill="#7fd9ff"/>` +
+      `<ellipse cx="30" cy="91" rx="11" ry="6" fill="#0e6a96"/>` +
+      `<ellipse cx="66" cy="91" rx="11" ry="6" fill="#0e6a96"/>` +
+      eye(40,30,6.5,1) + eye(60,30,6.5,1) +
+      `<path d="M40 44 q10 8 20 0" stroke="#0a516f" stroke-width="3.4" fill="none" stroke-linecap="round"/>` +
+      fang(42,44,4.5) + fang(54,44,4.5)),
+  ],
+
+  volt: [
+    // ① ビリタマ — まるい でんきの こ（いなずまの みみと しっぽ）
+    wrapSvg(
+      `<path d="M74 60 l16-12 l-7 12 l14-2 l-21 19 l5-12z" fill="#ffd93b" stroke="#e0a800" stroke-width="2"/>` +
+      `<circle cx="46" cy="62" r="28" fill="#ffd93b"/>` +
+      `<ellipse cx="46" cy="70" rx="18" ry="14" fill="#fff3a8"/>` +
+      `<path d="M28 40 l-9-26 l17 13z" fill="#ffd93b" stroke="#e0a800" stroke-width="2"/>` +
+      `<path d="M64 40 l9-26 l-17 13z" fill="#ffd93b" stroke="#e0a800" stroke-width="2"/>` +
+      `<path d="M22 16 l-3-9 l7 5z" fill="#3b2f00"/><path d="M70 16 l3-9 l-7 5z" fill="#3b2f00"/>` +
+      `<ellipse cx="30" cy="87" rx="9" ry="5" fill="#e0a800"/>` +
+      `<ellipse cx="58" cy="87" rx="9" ry="5" fill="#e0a800"/>` +
+      `<circle cx="22" cy="68" r="6" fill="#ff5a4d"/><circle cx="70" cy="68" r="6" fill="#ff5a4d"/>` +
+      `<path d="M18 64 l3-4 l-1 4 l3-1 l-5 5 l1-4z" fill="#fff"/>` +
+      eye(36,58,7) + eye(56,58,7) + mouth(46,72,6,6,'#8a6b00')),
+    // ② スパチュウ — でんきを まとった けもの
+    wrapSvg(
+      `<path d="M70 72 l18-14 l-8 14 l16-2 l-24 22 l6-14z" fill="#ffd93b" stroke="#e0a800" stroke-width="2"/>` +
+      `<path d="M28 80 q-7-32 22-36 q29 4 22 36 q-22 9-44 0z" fill="#ffd93b"/>` +
+      `<ellipse cx="50" cy="73" rx="14" ry="12" fill="#fff3a8"/>` +
+      `<path d="M24 58 l-8 6 l6 1 l-7 7 l14-8 l-6-1z" fill="#fff08a"/>` +
+      `<ellipse cx="50" cy="36" rx="22" ry="19" fill="#ffd93b"/>` +
+      `<path d="M33 20 l-9-19 l17 11z" fill="#ffd93b" stroke="#e0a800" stroke-width="2"/>` +
+      `<path d="M67 20 l9-19 l-17 11z" fill="#ffd93b" stroke="#e0a800" stroke-width="2"/>` +
+      `<path d="M27 4 l-3-8 l7 5z" fill="#3b2f00"/><path d="M73 4 l3-8 l-7 5z" fill="#3b2f00"/>` +
+      `<ellipse cx="33" cy="88" rx="9" ry="5.5" fill="#e0a800"/>` +
+      `<ellipse cx="63" cy="88" rx="9" ry="5.5" fill="#e0a800"/>` +
+      `<circle cx="28" cy="44" r="5" fill="#ff5a4d"/><circle cx="72" cy="44" r="5" fill="#ff5a4d"/>` +
+      eye(41,35,6.5) + eye(59,35,6.5) + mouth(50,47,6,5,'#8a6b00')),
+    // ③ ライガル — たてがみが いなずまに
+    wrapSvg(
+      `<path d="M68 76 l20-16 l-9 16 l18-3 l-27 25 l7-16z" fill="#ffd93b" stroke="#e0a800" stroke-width="2"/>` +
+      `<path d="M26 83 q-8-35 24-39 q32 4 24 39 q-24 9-48 0z" fill="#ffd93b"/>` +
+      `<ellipse cx="50" cy="75" rx="15" ry="13" fill="#fff3a8"/>` +
+      `<path d="M50 8 l-16 6 l7 5 l-14 8 l13 2 l-8 9 l18-6z" fill="#ffe27a" stroke="#e0a800" stroke-width="1.6"/>` +
+      `<path d="M50 8 l16 6 l-7 5 l14 8 l-13 2 l8 9 l-18-6z" fill="#ffe27a" stroke="#e0a800" stroke-width="1.6"/>` +
+      `<ellipse cx="50" cy="35" rx="21" ry="18" fill="#ffd93b"/>` +
+      `<path d="M34 19 l-9-16 l17 9z" fill="#ffd93b" stroke="#e0a800" stroke-width="2"/>` +
+      `<path d="M66 19 l9-16 l-17 9z" fill="#ffd93b" stroke="#e0a800" stroke-width="2"/>` +
+      `<ellipse cx="32" cy="90" rx="10" ry="5.5" fill="#c98f00"/>` +
+      `<ellipse cx="64" cy="90" rx="10" ry="5.5" fill="#c98f00"/>` +
+      `<circle cx="29" cy="43" r="5" fill="#ff5a4d"/><circle cx="71" cy="43" r="5" fill="#ff5a4d"/>` +
+      eye(41,34,6,1) + eye(59,34,6,1) +
+      `<path d="M42 46 q8 7 16 0" stroke="#8a6b00" stroke-width="3" fill="none" stroke-linecap="round"/>` +
+      fang(43,46,4) + fang(53,46,4)),
+    // ④ サンダーロ — かみなりの けもの
+    wrapSvg(
+      `<path d="M66 74 l22-18 l-10 18 l20-3 l-30 28 l8-18z" fill="#ffd93b" stroke="#e0a800" stroke-width="2.4"/>` +
+      `<path d="M14 30 l8-14 l-2 10 l9-4 l-13 20 l3-11z" fill="#fff08a" opacity=".9"/>` +
+      `<path d="M86 26 l-8-14 l2 10 l-9-4 l13 20 l-3-11z" fill="#fff08a" opacity=".9"/>` +
+      `<path d="M24 84 q-9-38 26-42 q35 4 26 42 q-26 9-52 0z" fill="#ffd93b"/>` +
+      `<ellipse cx="50" cy="76" rx="16" ry="14" fill="#fff3a8"/>` +
+      `<path d="M42 62 l5-10 l2 7 l5-7 l-3 10z" fill="#e0a800"/>` +
+      `<path d="M50 2 l-20 7 l9 6 l-17 9 l16 3 l-10 11 l22-8z" fill="#ffe27a" stroke="#e0a800" stroke-width="1.8"/>` +
+      `<path d="M50 2 l20 7 l-9 6 l17 9 l-16 3 l10 11 l-22-8z" fill="#ffe27a" stroke="#e0a800" stroke-width="1.8"/>` +
+      `<ellipse cx="50" cy="32" rx="22" ry="19" fill="#ffd93b"/>` +
+      `<path d="M30 14 l-12-16 l21 8z" fill="#fff08a" stroke="#e0a800" stroke-width="2"/>` +
+      `<path d="M70 14 l12-16 l-21 8z" fill="#fff08a" stroke="#e0a800" stroke-width="2"/>` +
+      `<ellipse cx="30" cy="91" rx="11" ry="6" fill="#c98f00"/>` +
+      `<ellipse cx="66" cy="91" rx="11" ry="6" fill="#c98f00"/>` +
+      `<circle cx="27" cy="40" r="5.5" fill="#ff5a4d"/><circle cx="73" cy="40" r="5.5" fill="#ff5a4d"/>` +
+      eye(40,31,6.5,1) + eye(60,31,6.5,1) +
+      `<path d="M40 45 q10 8 20 0" stroke="#8a6b00" stroke-width="3.4" fill="none" stroke-linecap="round"/>` +
+      fang(41,45,4.5) + fang(48,46,4.5) + fang(55,45,4.5)),
+  ],
+};
+
+
+/* ---- げんがの 画像（art/ フォルダ）。よみこめない ときは 上の SVG に もどす ---- */
+const ART_IMG = {
+  fire: [1,2,3,4].map(i => `art/fire${i}.png`),
+  aqua: [1,2,3,4].map(i => `art/aqua${i}.png`),
+  volt: [1,2,3,4].map(i => `art/volt${i}.png`),
+};
+let ART_OK = true;                       // 画像が つかえるか
+function checkArt(){
+  const t = new Image();
+  t.onerror = () => { ART_OK = false; redrawHero(); };
+  t.src = ART_IMG.fire[0];
+}
+function redrawHero(){                   // いま 出ている すがたを えがきなおす
+  const a = $('#t-sprite'); if(a) a.innerHTML = heroArt();
+  const b = $('#pl-sp');    if(b) b.innerHTML = heroArt();
+  if(typeof picked !== 'undefined' && !$('#v-start').classList.contains('hidden')) renderStart();
+}
+
+const CLASSES = {
+  fire:{ label:'ほのお', col:'#ff6a52', img:ART_IMG.fire, svg:ART_SVG.fire,
+         names:['ヒノコ','メラリザ','ホムラドリ','フェニクス'],
+         desc:'こうげきが つよい', atk:1.15, hp:0.95, starter:true },
+  aqua:{ label:'みず',   col:'#4dc9ff', img:ART_IMG.aqua, svg:ART_SVG.aqua,
+         names:['シズク','ミズネコ','アクアリア','リヴァイア'],
+         desc:'たいりょくが おおい', atk:0.9, hp:1.2, guard:true, starter:true },
+  volt:{ label:'でんき', col:'#ffd93b', img:ART_IMG.volt, svg:ART_SVG.volt,
+         names:['ビリタマ','ライキツネ','ライジン','サンダーロ'],
+         desc:'れんぞくが つながる', atk:1.0, hp:1.0, comboBoost:true, starter:true },
+};
+const MAX_LV = 100;
+
+// 進化する レベルは あそぶたびに ランダム（3回）
+function rollEvo(){
+  const r = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+  const e1 = r(6, 11);              // 1回目：じょばんの ごほうび
+  const e2 = e1 + r(16, 25);        // 2回目：ちゅうばん
+  const e3 = e2 + r(24, 36);        // 3回目：さいしゅう形態
+  return [e1, e2, e3];              // だいたい Lv6〜11 / 22〜36 / 46〜72
+}
+
+// モンスター（tier 1〜5 ＋ ボス）
+const MONS = [
+  // --- tier1 : ステージ 1〜6 ---
+  {id:'bat',   n:'まよいコウモリ',   e:'🦇', hp:38,  atk:5,  exp:16,  g:8,   t:1},
+  {id:'rat',   n:'おおネズミ',       e:'🐀', hp:34,  atk:5,  exp:15,  g:8,   t:1},
+  {id:'spid',  n:'どくグモ',         e:'🕷️', hp:44,  atk:6,  exp:19,  g:9,   t:1},
+  {id:'worm',  n:'はらぺこイモムシ', e:'🐛', hp:30,  atk:4,  exp:13,  g:7,   t:1},
+  {id:'frog',  n:'どくガエル',       e:'🐸', hp:48,  atk:7,  exp:22,  g:11,  t:1},
+  {id:'snail', n:'のろいカタツムリ',   e:'🐌', hp:56,  atk:4,  exp:20,  g:10,  t:1},
+  {id:'mosq',  n:'ちくちくカ',         e:'🦟', hp:26,  atk:8,  exp:18,  g:9,   t:1},
+  {id:'ant',   n:'はたらきアリ',       e:'🐜', hp:40,  atk:6,  exp:19,  g:10,  t:1},
+  // --- tier2 : ステージ 7〜13 ---
+  {id:'snake', n:'だいだヘビ',       e:'🐍', hp:78,  atk:11, exp:42,  g:21,  t:2},
+  {id:'scorp', n:'サソリード',       e:'🦂', hp:84,  atk:12, exp:46,  g:23,  t:2},
+  {id:'boar',  n:'あばれイノシシ',   e:'🐗', hp:92,  atk:13, exp:50,  g:25,  t:2},
+  {id:'hawk',  n:'かぜのワシ',       e:'🦅', hp:72,  atk:12, exp:44,  g:22,  t:2},
+  {id:'wolf',  n:'きばオオカミ',     e:'🐺', hp:88,  atk:14, exp:52,  g:26,  t:2},
+  {id:'liz',   n:'とかげへい',         e:'🦎', hp:80,  atk:12, exp:45,  g:22,  t:2},
+  {id:'hedge', n:'ハリネズミ',         e:'🦔', hp:98,  atk:10, exp:48,  g:24,  t:2},
+  {id:'badg',  n:'あばれアナグマ',     e:'🦡', hp:86,  atk:13, exp:50,  g:25,  t:2},
+  // --- tier3 : ステージ 14〜20 ---
+  {id:'tengu', n:'テングもどき',     e:'👺', hp:148, atk:17, exp:88,  g:44,  t:3},
+  {id:'zomb',  n:'ゾンビール',       e:'🧟', hp:160, atk:18, exp:95,  g:47,  t:3},
+  {id:'kra',   n:'クラーケン',       e:'🐙', hp:172, atk:19, exp:102, g:51,  t:3},
+  {id:'shark', n:'かみつきザメ',     e:'🦈', hp:140, atk:20, exp:92,  g:46,  t:3},
+  {id:'rhino', n:'いわサイ',         e:'🦏', hp:180, atk:16, exp:105, g:52,  t:3},
+  {id:'leop',  n:'はやてヒョウ',       e:'🐆', hp:132, atk:21, exp:96,  g:48,  t:3},
+  {id:'bison', n:'とつげきバイソン',   e:'🦬', hp:190, atk:17, exp:110, g:55,  t:3},
+  {id:'genie', n:'いたずらまじん',     e:'🧞', hp:150, atk:19, exp:100, g:50,  t:3},
+  // --- tier4 : ステージ 21〜30 ---
+  {id:'ogre',  n:'あばれトロール',   e:'🧌', hp:250, atk:25, exp:170, g:84,  t:4},
+  {id:'death', n:'デスナイト',       e:'💀', hp:268, atk:27, exp:185, g:92,  t:4},
+  {id:'rex',   n:'キングザウルス',   e:'🦖', hp:290, atk:29, exp:200, g:99,  t:4},
+  {id:'mamm',  n:'だいちマンモス',   e:'🦣', hp:305, atk:24, exp:195, g:96,  t:4},
+  {id:'mage',  n:'くろまどうし',     e:'🧙', hp:232, atk:31, exp:178, g:88,  t:4},
+  {id:'eleph', n:'てっこうゾウ',       e:'🐘', hp:320, atk:23, exp:198, g:98,  t:4},
+  {id:'delf',  n:'やみエルフ',         e:'🧝', hp:244, atk:29, exp:180, g:90,  t:4},
+  {id:'bear',  n:'きょうぼうベア',     e:'🐻', hp:278, atk:26, exp:188, g:93,  t:4},
+  // --- tier5 : ステージ 31〜40 ---
+  {id:'alien', n:'いじげんせいぶつ', e:'👾', hp:390, atk:33, exp:290, g:145, t:5},
+  {id:'ufo',   n:'ミステリーUFO',    e:'🛸', hp:372, atk:35, exp:300, g:150, t:5},
+  {id:'drake', n:'こだいドラゴン',   e:'🐉', hp:430, atk:37, exp:325, g:162, t:5},
+  {id:'meteo', n:'いんせきのぬし',   e:'☄️', hp:412, atk:34, exp:310, g:155, t:5},
+  {id:'storm', n:'あらしのぬし',     e:'🌪️', hp:398, atk:38, exp:330, g:165, t:5},
+  {id:'dino',  n:'タイタノサウルス',   e:'🦕', hp:460, atk:32, exp:320, g:160, t:5},
+  {id:'moai',  n:'いにしえの きょぞう', e:'🗿', hp:490, atk:30, exp:315, g:158, t:5},
+  {id:'wave',  n:'つなみのぬし',       e:'🌊', hp:405, atk:36, exp:328, g:164, t:5},
+];
+
+// レアモンスター（たまにしか 出ない。ごほうびは 3ばい）
+const RARES = [
+  {id:'r1', n:'きらめきスライム',   e:'✨', hp:60,  atk:6,  exp:70,  g:60,  t:1, rare:true},
+  {id:'r2', n:'まぼろしユニコーン', e:'🦄', hp:130, atk:13, exp:170, g:140, t:2, rare:true},
+  {id:'r3', n:'クリスタルゴーレム', e:'💎', hp:260, atk:19, exp:340, g:280, t:3, rare:true},
+  {id:'r4', n:'ひかりのようせい',   e:'🧚', hp:400, atk:28, exp:600, g:480, t:4, rare:true},
+  {id:'r5', n:'スターキーパー',     e:'🌟', hp:620, atk:36, exp:980, g:760, t:5, rare:true},
+];
+const RARE_RATE = 0.06;          // 6%くらいで あらわれる
+
+// ボス（5ステージごとに あらわれる）
+const BOSSES = [
+  {id:'b1', n:'ぬまのぬし',       e:'🐊', hp:150, atk:12, exp:120,  g:70,   boss:true},
+  {id:'b2', n:'もりのきょじん',   e:'🦍', hp:300, atk:18, exp:260,  g:140,  boss:true},
+  {id:'b3', n:'やまのりゅう',     e:'🐲', hp:520, atk:24, exp:450,  g:230,  boss:true},
+  {id:'b4', n:'やみのはくしゃく', e:'🧛', hp:760, atk:30, exp:700,  g:350,  boss:true},
+  {id:'b5', n:'しんかいのぬし',   e:'🦑', hp:1020,atk:35, exp:980,  g:480,  boss:true},
+  {id:'b6', n:'しのきし',         e:'☠️', hp:1320,atk:40, exp:1300, g:620,  boss:true},
+  {id:'b7', n:'まおう',           e:'👑', hp:1650,atk:45, exp:1700, g:800,  boss:true},
+  {id:'b8', n:'こんとんのぬし',   e:'🌋', hp:2100,atk:52, exp:2400, g:1100, boss:true},
+];
+
+/* ---- ステージ（全40・すすむほど きつくなる） ----
+   waves    : 1ステージの たいめ数
+   maxPer   : 1たいめに 同時に出る 敵の さいだい数
+   tier     : 出てくる 敵の つよさ
+   boss     : 5ステージごとに 最後の たいめが ボス
+   mul      : HP と こうげきの ばいりつ                                  */
+const STAGE_COUNT = 40;
+
+function stageDef(n){
+  const waves  = Math.min(6, 2 + Math.floor((n-1)/6));      // 2 → 6
+  const maxPer = Math.min(4, 1 + Math.floor((n-1)/6));      // 1 → 4
+  const tier   = Math.min(5, 1 + Math.floor((n-1)/7));      // 1 → 5
+  const boss   = n % 5 === 0;
+  const mul    = 1 + (n-1) * 0.05;                          // st40 で 約2.95倍
+  return { n, waves, maxPer, tier, boss, mul,
+           bossIdx: boss ? Math.min(BOSSES.length-1, n/5 - 1) : -1 };
+}
+
+// ステージの 見た目（アイコンは 7ステージごとに かわる）
+const STAGE_ICONS = ['🕳️','🌲','🏔️','🌊','🏜️','🌋','🌌'];
+function stageIcon(n){
+  const d = stageDef(n);
+  return d.boss ? '👑' : STAGE_ICONS[Math.min(STAGE_ICONS.length-1, Math.floor((n-1)/6))];
+}
+
+// 称号
+const TITLES = [
+  /* ---- ぼうけんの あしあと ---- */
+  {id:'t1', n:'かけだしの ぼうけんしゃ', d:'はじめて ステージを クリア',   f:s=>s.clears>=1},
+  {id:'t16',n:'たびの はじまり',         d:'ステージ5 まで クリア',        f:s=>s.stage>=5},
+  {id:'t17',n:'ちゅうけんの ぼうけんしゃ',d:'ステージ15 まで クリア',       f:s=>s.stage>=15},
+  {id:'t18',n:'ベテラン',                d:'ステージ25 まで クリア',       f:s=>s.stage>=25},
+  {id:'t20',n:'まおうじょうの まえに',   d:'ステージ35 まで クリア',       f:s=>s.stage>=35},
+  {id:'t19',n:'でんせつの ゆうしゃ',     d:'ぜん40ステージ クリア',        f:s=>s.stage>=STAGE_COUNT},
+
+  /* ---- モンスターを たおす ---- */
+  {id:'t2', n:'モンスターハンター',      d:'モンスターを 30たい たおす',   f:s=>s.kills>=30},
+  {id:'t3', n:'まもののてんてき',        d:'モンスターを 150たい たおす',  f:s=>s.kills>=150},
+  {id:'t21',n:'せんじょうの じょうれん', d:'モンスターを 500たい たおす',  f:s=>s.kills>=500},
+  {id:'t22',n:'まもの つかい',           d:'モンスターを 1500たい たおす', f:s=>s.kills>=1500},
+
+  /* ---- ずかん ---- */
+  {id:'t4', n:'ずかん マニア',           d:'ずかんを 15しゅるい うめる',   f:s=>s.seen>=15},
+  {id:'t23',n:'ずかん はかせ',           d:'ずかんを 30しゅるい うめる',   f:s=>s.seen>=30},
+  {id:'t24',n:'ずかん たつじん',         d:'ずかんを 45しゅるい うめる',   f:s=>s.seen>=45},
+  {id:'t5', n:'ずかん コンプリート',     d:'ぜんしゅるい を たおす',       f:s=>s.seen>=s.bookTotal},
+
+  /* ---- ボスと レア ---- */
+  {id:'t6', n:'ボスキラー',              d:'ボスを たおす',                f:s=>s.bossKills>=1},
+  {id:'t25',n:'ボスハンター',            d:'ボスを 4たい たおす',          f:s=>s.bossKills>=4},
+  {id:'t26',n:'ぜんボス せいは',         d:'8たいの ボス すべてを たおす', f:s=>s.bossKills>=8},
+  {id:'t27',n:'しあわせの であい',       d:'レアモンスターに であう',      f:s=>s.rares>=1},
+  {id:'t28',n:'レアハンター',            d:'レアモンスターを 10たい たおす',f:s=>s.rares>=10},
+  {id:'t29',n:'きせきの コレクター',     d:'レアモンスターを 40たい たおす',f:s=>s.rares>=40},
+
+  /* ---- べんきょう ---- */
+  {id:'t10',n:'べんきょうか',            d:'つうさん 100もん せいかい',    f:s=>s.correct>=100},
+  {id:'t11',n:'だいけんじゃ',            d:'つうさん 600もん せいかい',    f:s=>s.correct>=600},
+  {id:'t30',n:'ちしきの とう',           d:'つうさん 2000もん せいかい',   f:s=>s.correct>=2000},
+  {id:'t31',n:'まなびの きわみ',         d:'つうさん 6000もん せいかい',   f:s=>s.correct>=6000},
+  {id:'t32',n:'じぶんの ことばで',       d:'かいて 100もん せいかい',      f:s=>s.writeOk>=100},
+  {id:'t33',n:'ひっきの めいじん',       d:'かいて 500もん せいかい',      f:s=>s.writeOk>=500},
+
+  /* ---- うでまえ ---- */
+  {id:'t7', n:'れんげきの たつじん',     d:'12れんぞく せいかい',          f:s=>s.combo>=12},
+  {id:'t8', n:'かみの ごとき ひらめき',  d:'30れんぞく せいかい',          f:s=>s.combo>=30},
+  {id:'t34',n:'むけつの あたま',         d:'60れんぞく せいかい',          f:s=>s.combo>=60},
+  {id:'t9', n:'むきずの えいゆう',       d:'ノーダメージで ステージクリア', f:s=>s.noHit},
+  {id:'t35',n:'かんぺき しゅぎ',         d:'ぜんもん せいかいで 5かい クリア',f:s=>s.perfects>=5},
+  {id:'t36',n:'むはいの てんさい',       d:'ぜんもん せいかいで 25かい クリア',f:s=>s.perfects>=25},
+
+  /* ---- そだてる ---- */
+  {id:'t37',n:'すくすく',                d:'Lv.20に とうたつ',             f:s=>s.lv>=20},
+  {id:'t12',n:'さいしゅう しんか',       d:'さいごの すがたに なる',       f:s=>s.evoStage>=3},
+  {id:'t38',n:'つわもの',                d:'Lv.50に とうたつ',             f:s=>s.lv>=50},
+  {id:'t39',n:'ごくい',                  d:'Lv.80に とうたつ',             f:s=>s.lv>=80},
+  {id:'t15',n:'カンスト',                d:'Lv.100に とうたつ',            f:s=>s.lv>=MAX_LV},
+
+  /* ---- つづける ---- */
+  {id:'t40',n:'みっかぼうず だっしゅつ', d:'3日 れんぞくで ぼうけん',      f:s=>s.streak>=3},
+  {id:'t13',n:'まいにちの しゅうかん',   d:'7日 れんぞくで ぼうけん',      f:s=>s.streak>=7},
+  {id:'t41',n:'ひとつき つづけた',       d:'30日 れんぞくで ぼうけん',     f:s=>s.streak>=30},
+  {id:'t14',n:'おおがねもち',            d:'5000ゴールド ためる',          f:s=>s.gold>=5000},
+  {id:'t42',n:'だいふごう',              d:'30000ゴールド ためる',         f:s=>s.gold>=30000},
+];
+
+/* ==================================================
+   2. セーブデータ
+================================================== */
+const KEY = 'manabi-quest-v2';
+const OLDKEY = 'manabi-monster-v1';
+let S;
+
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function today(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function daysBetween(a,b){
+  const p=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d).getTime();};
+  return Math.round((p(b)-p(a))/86400000);
+}
+function sampleDeck(){
+  // [もんだい, こたえ, これも正解(よみ・別表記)]
+  return {id:uid(), name:'サンプル: 英単語', cards:[
+    ['apple','りんご',   ['リンゴ','林檎','アップル']],
+    ['dog','いぬ',       ['イヌ','犬']],
+    ['book','本',        ['ほん','ブック']],
+    ['water','水',       ['みず','ウォーター']],
+    ['school','学校',    ['がっこう','スクール']],
+    ['friend','友だち',  ['ともだち','友達','友人']],
+    ['music','音楽',     ['おんがく','ミュージック']],
+    ['river','川',       ['かわ','河','リバー']],
+    ['bridge','橋',      ['はし','ブリッジ']],
+    ['garden','庭',      ['にわ','ガーデン']],
+    ['winter','冬',      ['ふゆ','ウィンター']],
+    ['letter','手紙',    ['てがみ','レター']],
+  ].map(([q,a,alt])=>({id:uid(),q,a,alt:alt||[],right:0,wrong:0,box:0,due:null}))};
+}
+function defaultState(){
+  let decks = null;
+  try{ // 旧バージョンのもんだいしゅうを引き継ぐ
+    const old = JSON.parse(localStorage.getItem(OLDKEY)||'null');
+    if(old && old.decks && old.decks.length) decks = old.decks;
+  }catch(e){}
+  return {
+    ver:2, started:false,
+    p:{ cls:'fire', name:'ゆうしゃ', lv:1, exp:0, hp:0, gold:0, evo:rollEvo() },
+    decks: decks || [sampleDeck()],
+    seen:{}, titles:[],
+    st:{ correct:0, answered:0, bestCombo:0, kills:0, clears:0, deaths:0,
+         streak:0, bestStreak:0, lastDay:null, noHit:false, demon:false,
+         bossKills:0, writeOk:0, perfects:0, rares:0 },
+    snd:{ se:true, bgm:true },
+    ai:{ key:'', model:'claude-opus-5' },
+    tutDone:false,
+    stageCleared:0,          // ここまで クリア
+    setupDone:false,         // さいしょの 10もんを つくったかした
+  };
+}
+// 旧タイプ（かぜ／つち）で あそんでいた人を あたらしい 3タイプへ うつす
+const CLS_MIGRATE = { wind:'volt', rock:'aqua' };
+function fixClass(){
+  if(CLS_MIGRATE[S.p.cls]) S.p.cls = CLS_MIGRATE[S.p.cls];
+  if(!CLASSES[S.p.cls]) S.p.cls = 'fire';
+}
+
+function load(){
+  try{ S = JSON.parse(localStorage.getItem(KEY)) || defaultState(); }
+  catch(e){ S = defaultState(); }
+  if(!S.p) S = defaultState();
+  if(!S.ai) S.ai = { key:'', model:'claude-opus-5' };
+  if(typeof S.tutDone !== 'boolean') S.tutDone = false;
+  if(typeof S.stageCleared !== 'number') S.stageCleared = 0;
+  if(typeof S.setupDone !== 'boolean') S.setupDone = false;
+  ['bossKills','writeOk','perfects','rares'].forEach(k => { if(S.st && typeof S.st[k] !== 'number') S.st[k] = 0; });
+  migrateAllCards();
+  fixClass();
+  if(!Array.isArray(S.p.evo) || S.p.evo.length !== 3) S.p.evo = rollEvo();
+  if(S.p.lv > MAX_LV) S.p.lv = MAX_LV;
+  while(S.p.lv < MAX_LV && S.p.exp >= needExp(S.p.lv)){   // カーブ変更ごの ずれを ならす
+    S.p.exp -= needExp(S.p.lv); S.p.lv++;
+  }
+  if(S.p.lv >= MAX_LV) S.p.exp = 0;
+  if(S.p.hp<=0 || S.p.hp>maxHp()) S.p.hp = maxHp();
+  save();
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+
+/* ==================================================
+   3. ステータス計算
+================================================== */
+function cls(){ return CLASSES[S.p.cls]; }
+function stage(lv){ let s=0; S.p.evo.forEach(v => { if(lv >= v) s++; }); return s; }  // 0〜3
+function heroName(){ return S.p.name || 'ゆうしゃ'; }
+function heroForm(){ return cls().names[stage(S.p.lv)]; }
+function artOf(c, st){
+  const i = Math.min(3, Math.max(0, st));
+  return ART_OK ? `<img class="hero-img" src="${c.img[i]}" alt="" draggable="false">` : c.svg[i];
+}
+function heroArt(st){ return artOf(cls(), st === undefined ? stage(S.p.lv) : st); }
+function maxHp(){ return Math.round((26 + S.p.lv*7) * cls().hp); }
+function atk(){ return Math.round((9 + S.p.lv*3) * cls().atk); }
+function maxed(){ return S.p.lv >= MAX_LV; }
+// レベルが 上がるほど つぎの レベルまで とおくなる。
+// 1〜10は これまでと ほぼ おなじ テンポ、その先が だんだん きつくなる。
+//   Lv1:23  Lv10:246  Lv25:1003  Lv50:3287  Lv75:6804  Lv99:11316
+function needExp(lv){ return Math.round(10 + lv*12 + 1.3 * Math.pow(lv, 1.95)); }
+function expPct(){ return maxed() ? 100 : Math.min(100, S.p.exp / needExp(S.p.lv) * 100); }
+
+/* ---- 経験値ゲージを アニメーションさせながら 加算する ---- */
+function setExpBars(pct){
+  const a = $('#t-exp'), b = $('#bt-exp');
+  if(a) a.style.width = pct + '%';
+  if(b) b.style.width = pct + '%';
+}
+function setLvLabels(){
+  const need = needExp(S.p.lv);
+  const lv1 = $('#t-lv'), lv2 = $('#bt-lv');
+  if(lv1) lv1.textContent = S.p.lv;
+  if(lv2) lv2.textContent = S.p.lv;
+  const t = $('#t-expt');
+  if(t) t.textContent = maxed() ? 'さいだいレベル' : `つぎまで ${need - S.p.exp}`;
+}
+
+// 1レベル分の ゲージを なめらかに 伸ばす
+function tweenBar(fromPct, toPct, ms){
+  return new Promise(res => {
+    let done = false;
+    const finish = () => { if(done) return; done = true; setExpBars(toPct); res(); };
+    const t0 = performance.now();
+    (function step(now){
+      if(done) return;
+      const k = Math.min(1, (now - t0) / ms);
+      setExpBars(fromPct + (toPct - fromPct) * k);
+      if(k < 1) requestAnimationFrame(step); else finish();
+    })(t0);
+    // タブを うらに すると requestAnimationFrame が 止まるので、
+    // ほけんの タイマーで かならず つぎに すすめる
+    setTimeout(finish, ms + 400);
+  });
+}
+
+async function levelUpFx(){
+  S.p.hp = maxHp();
+  SE.level();
+  flash('#ffffff');
+  $('#lu-t').textContent = 'LEVEL UP!';
+  $('#lu-n').textContent = 'Lv.' + S.p.lv;
+  const el = $('#levelup');
+  el.classList.remove('hidden');
+  const inner = el.firstElementChild;
+  inner.style.animation = 'none'; void inner.offsetWidth; inner.style.animation = '';
+  setLvLabels(); refreshBars();
+  await sleep(1500);
+  el.classList.add('hidden');
+}
+
+/* ---- しんか演出（ぜんぶで やく6びょう） ---- */
+function evoSpark(n){
+  const box = $('#evo');
+  for(let i=0;i<n;i++){
+    const d = document.createElement('div');
+    d.className = 'spark';
+    const ang = Math.random()*Math.PI*2;
+    const dist = 120 + Math.random()*260;
+    d.style.left = '50%'; d.style.top = '50%';
+    d.style.transform = 'translate(-50%,-50%)';
+    box.appendChild(d);
+    d.animate([
+      { transform:'translate(-50%,-50%) scale(.4)', opacity:1 },
+      { transform:`translate(calc(-50% + ${Math.cos(ang)*dist}px),
+                             calc(-50% + ${Math.sin(ang)*dist}px)) scale(1.3)`, opacity:0 }
+    ], { duration: 900 + Math.random()*700, easing:'cubic-bezier(.15,.7,.3,1)' })
+     .onfinish = () => d.remove();
+  }
+}
+function evoTone(f, dur, type, vol){
+  if(!S.snd.se && !S.snd.bgm) return;
+  const c = ac(); if(!c) return;
+  const o=c.createOscillator(), g=c.createGain();
+  o.type=type||'triangle'; o.frequency.value=f;
+  g.gain.setValueAtTime(vol||.10, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(.0001, c.currentTime+dur);
+  o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime+dur);
+}
+
+async function evolveFx(){
+  const ov=$('#evo'), sp=$('#evo-sp'), rays=$('#evo-rays'),
+        ring=$('#evo-ring'), txt=$('#evo-txt'), fl=$('#evo-flash');
+  const before = heroArt(Math.max(0, stage(S.p.lv)-1));
+  const wasBgm = S.snd.bgm;
+  S.snd.bgm = false; stopBgm();               // 曲を とめて ためを つくる
+
+  // ① くらくなって、まえの すがたが うかびあがる
+  ov.classList.remove('hidden');
+  ov.style.background='#000';
+  rays.style.opacity='0';
+  txt.classList.remove('on'); $('#evo-l1').textContent=''; $('#evo-l2').textContent='';
+  sp.className='evo-sp'; sp.innerHTML=before;
+  await sleep(700);
+
+  // ② 「おや……？」
+  $('#evo-l1').textContent='おや……？';
+  txt.classList.add('on');
+  evoTone(196,.9,'sine',.09);
+  await sleep(1000);
+
+  // ③ シルエットに なって ふるえだす（だんだん はやく・たかく）
+  txt.classList.remove('on');
+  sp.classList.add('dark','buzz');
+  for(let i=0;i<4;i++){
+    ring.classList.remove('go'); void ring.offsetWidth; ring.classList.add('go');
+    evoTone(330 + i*110, .3, 'square', .08);
+    SE.select();
+    await sleep(620 - i*110);
+  }
+
+  // ④ 光が はじけて あたらしい すがたへ
+  fl.classList.remove('on'); void fl.offsetWidth; fl.classList.add('on');
+  rays.style.opacity='1';
+  ov.style.background='#1a1206';
+  SE.evolve();
+  evoSpark(46);
+  sp.classList.remove('dark','buzz');
+  sp.innerHTML = heroArt();
+  sp.classList.add('big');
+  await sleep(1100);
+
+  // ⑤ なまえを 見せる
+  $('#evo-l1').textContent = heroName()+' は';
+  $('#evo-l2').innerHTML = `<span style="display:inline-block;vertical-align:-.25em;font-size:1.4em">${heroArt()}</span> ${heroForm()} に しんかした！`;
+  txt.classList.add('on');
+  evoSpark(24);
+  [784,988,1175,1568].forEach((f,i)=>setTimeout(()=>evoTone(f,.5,'triangle',.10), i*180));
+  await sleep(2200);
+
+  // ⑥ かたづけ
+  rays.style.opacity='0';
+  txt.classList.remove('on');
+  await sleep(450);
+  ov.classList.add('hidden');
+  sp.className='evo-sp';
+
+  const pl=$('#pl-sp'); if(pl) pl.innerHTML = heroArt();
+  S.snd.bgm = wasBgm;
+  if(B && !$('#v-battle').classList.contains('hidden')){
+    startBgm(bgmKey(B.def.n, wave().some(e=>e.boss)));
+  }
+}
+
+// 経験値の 獲得を 演出つきで 行う（バトル中に つかう）
+async function gainExpAnimated(n){
+  if(maxed()){ setLvLabels(); return; }
+  let remain = n;
+  let guard = 0;
+  while(remain > 0 && !maxed() && guard++ < 120){
+    const need = needExp(S.p.lv);
+    const room = need - S.p.exp;
+    const add  = Math.min(room, remain);
+    const from = S.p.exp / need * 100;
+    const to   = (S.p.exp + add) / need * 100;
+    await tweenBar(from, to, Math.max(260, Math.min(900, add / need * 900)));
+    S.p.exp += add; remain -= add;
+    setLvLabels();
+    if(S.p.exp >= need){
+      S.p.exp = 0;
+      const before = stage(S.p.lv);
+      S.p.lv++;
+      setExpBars(0);
+      await levelUpFx();
+      if(stage(S.p.lv) > before) await evolveFx();
+      if(maxed()){ S.p.exp = 0; setExpBars(100); break; }
+    }
+  }
+  setLvLabels(); save();
+}
+
+
+/* ==================================================
+   4. サウンド（WebAudio・外部ファイルなし）
+================================================== */
+const A = { ctx:null, bgm:null, noise:null };
+function ac(){
+  if(!A.ctx){
+    const C = window.AudioContext || window.webkitAudioContext;
+    if(!C) return null;
+    A.ctx = new C();
+  }
+  if(A.ctx.state === 'suspended') A.ctx.resume();
+  return A.ctx;
+}
+function tone(freq, dur, type='square', vol=.09, slideTo=null){
+  if(!S.snd.se) return;
+  const c = ac(); if(!c) return;
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, c.currentTime);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(20,slideTo), c.currentTime+dur);
+  g.gain.setValueAtTime(vol, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(.0001, c.currentTime+dur);
+  o.connect(g).connect(c.destination);
+  o.start(); o.stop(c.currentTime+dur);
+}
+function noise(dur=.16, vol=.16, hi=1400){
+  if(!S.snd.se) return;
+  const c = ac(); if(!c) return;
+  if(!A.noise){
+    const len = c.sampleRate*1;
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i] = Math.random()*2-1;
+    A.noise = buf;
+  }
+  const src = c.createBufferSource(); src.buffer = A.noise;
+  const f = c.createBiquadFilter(); f.type='bandpass'; f.frequency.value=hi;
+  const g = c.createGain();
+  g.gain.setValueAtTime(vol, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(.0001, c.currentTime+dur);
+  src.connect(f).connect(g).connect(c.destination);
+  src.start(); src.stop(c.currentTime+dur);
+}
+const SE = {
+  select:()=>tone(880,.05,'square',.05),
+  correct:()=>{ tone(784,.07); setTimeout(()=>tone(1175,.12),70); },
+  attack: ()=>{ noise(.14,.18,2200); tone(520,.16,'sawtooth',.09,120); },
+  crit:   ()=>{ noise(.2,.22,3000); tone(700,.26,'sawtooth',.11,90);
+                setTimeout(()=>tone(1568,.16,'square',.08),90); },
+  wrong:  ()=>tone(220,.3,'square',.09,90),
+  hurt:   ()=>{ noise(.22,.14,400); tone(150,.3,'square',.1,60); },
+  down:   ()=>{ [660,550,440,330,220].forEach((f,i)=>setTimeout(()=>tone(f,.16,'square',.08),i*90)); },
+  // モンスター撃破: ばくはつ音 → みじかい ファンファーレ
+  defeat: ()=>{ noise(.42,.26,700); tone(180,.5,'sawtooth',.12,50);
+                setTimeout(()=>noise(.24,.16,300), 90);
+                [[784,240],[988,360],[1319,480]].forEach(([f,t]) =>
+                  setTimeout(()=>tone(f,.24,'square',.09), t)); },
+  exp:    ()=>{ [880,1109,1319].forEach((f,i)=>setTimeout(()=>tone(f,.09,'triangle',.06),i*55)); },
+  level:  ()=>{ [523,659,784,1046,1319].forEach((f,i)=>setTimeout(()=>tone(f,.16,'square',.08),i*80)); },
+  evolve: ()=>{ [392,523,659,784,1046,1319,1568].forEach((f,i)=>setTimeout(()=>tone(f,.2,'triangle',.09),i*95)); },
+  win:    ()=>{ [[784,0],[784,120],[784,240],[1046,380],[880,620],[1046,760]]
+                .forEach(([f,t])=>setTimeout(()=>tone(f,.28,'square',.08),t)); },
+  gold:   ()=>{ tone(1319,.06); setTimeout(()=>tone(1760,.1),60); },
+};
+
+/* ---- BGM：10ステージごとに かわる ＋ ボスせん専用 ---- */
+const BGMS = {
+  // ステージ 1〜10：あかるい ぼうけん
+  a: { step:150, wave:'square', lv:.035, bl:.07, kick:0,
+       lead:[440,0,523,0,659,0,523,0, 587,0,494,0,440,0,0,0,
+             392,0,494,0,587,0,494,0, 440,0,392,0,330,0,0,0],
+       bass:[110,110,147,147,110,110,98,98, 87,87,110,110,73,73,98,98] },
+  // ステージ 11〜20：すこし ちからづよく
+  b: { step:138, wave:'square', lv:.038, bl:.075, kick:0,
+       lead:[587,0,698,587,523,0,587,0, 494,0,587,494,440,0,0,0,
+             523,0,659,523,587,0,523,0, 494,0,440,0,392,0,0,0],
+       bass:[147,147,110,110,131,131,98,98, 117,117,88,88,98,98,73,73] },
+  // ステージ 21〜30：くらく はりつめた
+  c: { step:130, wave:'sawtooth', lv:.030, bl:.085, kick:8,
+       lead:[349,0,415,0,466,0,415,0, 349,0,311,0,349,0,0,0,
+             466,0,523,466,415,0,349,0, 311,0,349,0,262,0,0,0],
+       bass:[87,87,104,104,87,87,78,78, 93,93,78,78,65,65,73,73] },
+  // ステージ 31〜40：そうだいな さいしゅうへん
+  d: { step:124, wave:'sawtooth', lv:.034, bl:.09, kick:4,
+       lead:[659,0,784,659,880,0,784,0, 659,0,587,0,659,0,784,0,
+             880,0,988,880,784,0,659,0, 587,0,659,0,523,523,0,0],
+       bass:[110,110,131,131,147,147,110,110, 98,98,117,117,131,131,98,98] },
+  // ボスせん：はやく かっこよく
+  boss:{ step:108, wave:'sawtooth', lv:.042, bl:.10, kick:2,
+       lead:[587,587,0,587,698,0,587,0, 523,523,0,523,622,0,523,0,
+             466,466,0,466,587,0,523,0, 440,0,466,0,523,0,587,698],
+       bass:[73,73,73,73,87,87,73,73, 65,65,65,65,78,78,65,65] },
+};
+
+function bgmKey(stageN, isBoss){
+  if(isBoss) return 'boss';
+  if(stageN <= 10) return 'a';
+  if(stageN <= 20) return 'b';
+  if(stageN <= 30) return 'c';
+  return 'd';
+}
+
+let bgmNow = null;
+function startBgm(key){
+  const k = key || 'a';
+  if(A.bgm && bgmNow === k) return;      // おなじ曲なら つづける
+  stopBgm();
+  bgmNow = k;
+  if(!S.snd.bgm) return;
+  const T = BGMS[k] || BGMS.a;
+  let i = 0;
+  A.bgm = setInterval(()=>{
+    if(!S.snd.bgm) return;
+    const c = ac(); if(!c) return;
+    const t = c.currentTime;
+
+    const n = T.lead[i % T.lead.length];
+    if(n){ const o=c.createOscillator(),g=c.createGain();
+      o.type=T.wave; o.frequency.value=n;
+      g.gain.setValueAtTime(T.lv,t);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.13);
+      o.connect(g).connect(c.destination); o.start(); o.stop(t+.14); }
+
+    if(i%2===0){ const b=T.bass[Math.floor(i/2)%T.bass.length];
+      const o=c.createOscillator(),g=c.createGain();
+      o.type='triangle'; o.frequency.value=b;
+      g.gain.setValueAtTime(T.bl,t);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.26);
+      o.connect(g).connect(c.destination); o.start(); o.stop(t+.27); }
+
+    // ドラム（うしろの ステージほど 入る）
+    if(T.kick && i % T.kick === 0){
+      const o=c.createOscillator(),g=c.createGain();
+      o.type='triangle'; o.frequency.setValueAtTime(120,t);
+      o.frequency.exponentialRampToValueAtTime(45,t+.12);
+      g.gain.setValueAtTime(.16,t);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.14);
+      o.connect(g).connect(c.destination); o.start(); o.stop(t+.15);
+    }
+    i++;
+  }, T.step);
+}
+function stopBgm(){ if(A.bgm){ clearInterval(A.bgm); A.bgm=null; } bgmNow=null; }
+function toggleSound(){
+  const on = !(S.snd.se || S.snd.bgm);
+  S.snd.se = on; S.snd.bgm = on; save();
+  $('#sound').textContent = on ? '🔊' : '🔇';
+  if(on){ if(!$('#v-battle').classList.contains('hidden') && B) startBgm(bgmKey(B.def.n, wave().some(e=>e.boss))); }
+  else stopBgm();
+}
+
+/* ==================================================
+   5. 画面切り替え
+================================================== */
+const VIEWS = ['start','town','prep','battle','result','decks','stats','book'];
+const NAVED = ['town','prep','decks','stats','book'];
+function go(v){
+  if(v!=='battle') stopBgm();
+  if(v!=='decks' && typeof V !== 'undefined' && V.on) stopVoice();
+  VIEWS.forEach(x=>$('#v-'+x).classList.toggle('hidden', x!==v));
+  $('#nav').classList.toggle('hidden', !NAVED.includes(v));
+  NAVED.forEach(x=>{ const b=$('#n-'+x); if(b) b.classList.toggle('on', x===v); });
+  window.scrollTo(0,0);
+  if(v==='town'){ S.p.hp = maxHp(); save(); renderTown(); }
+  if(v==='prep') renderPrep();
+  if(v==='decks'){ closeDeck(); renderDecks(); }
+  if(v==='stats') renderStats();
+  if(v==='book') renderBook();
+  updateBadge();
+}
+// わすれかけの もんだいが あることを 見のがさないように
+function updateBadge(){
+  const b = $('#n-badge'); if(!b) return;
+  const n = dueCount();
+  b.textContent = n > 99 ? '99+' : n;
+  b.classList.toggle('hidden', !n);
+}
+function toast(m){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=m;
+  $('#toast').appendChild(t); setTimeout(()=>t.remove(), 2600);
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+/* ==================================================
+   5.5 あそびかた（チュートリアル）
+================================================== */
+const TUT = [
+  { ico:'📜', t:'① もんだいを つくる',
+    b:'「もんだい」タブで<br>🎤 こえ か 📷 しゃしん で<br>もんだいを つくれるよ' },
+  { ico:'⚔️', t:'② ぼうけんに でる',
+    b:'いきさきを えらんで<br>しゅっぱつ！<br>モンスターが まっている' },
+  { ico:'💬', t:'③ こたえる',
+    b:'モンスターが もんだいを だす<br>せいかいすると<br>こうげき できる！' },
+  { ico:'⭐', t:'④ そだてる',
+    b:'たおすと けいけんち<br>レベルが あがると<br>すがたが しんか する' },
+];
+let tutI = 0;
+
+function tutOpen(i){
+  tutI = i || 0;
+  $('#tut').classList.remove('hidden');
+  tutRender();
+}
+function tutRender(){
+  const s = TUT[tutI];
+  $('#tut-ico').textContent = s.ico;
+  $('#tut-t').textContent = s.t;
+  $('#tut-b').innerHTML = s.b;
+  $('#tut-dots').innerHTML = TUT.map((_,i)=>`<i class="${i===tutI?'on':''}"></i>`).join('');
+  $('#tut-prev').style.visibility = tutI === 0 ? 'hidden' : 'visible';
+  $('#tut-next').textContent = tutI === TUT.length-1 ? 'はじめる！' : 'つぎ ▶';
+}
+function tutNext(){
+  SE.select();
+  if(tutI >= TUT.length-1){ tutClose(); return; }
+  tutI++; tutRender();
+}
+function tutPrev(){ if(tutI > 0){ SE.select(); tutI--; tutRender(); } }
+function tutClose(){
+  $('#tut').classList.add('hidden');
+  S.tutDone = true; save();
+  if(!S.setupDone) startSetup();          // はじめての人は まず もんだいづくり
+}
+
+/* ---- さいしょの 10もん ---- */
+const SETUP_GOAL = 10;
+function myDeck(){
+  let d = S.decks.find(x => x.mine);
+  if(!d){
+    d = { id:uid(), name:'わたしの もんだい', mine:true, cards:[] };
+    S.decks.unshift(d); save();
+  }
+  return d;
+}
+function startSetup(){
+  const d = myDeck();
+  selDeck = d.id;
+  go('decks');
+  openDeck(d.id);
+}
+// 自分で つくった もんだいしゅう ぜんぶを かぞえる
+// （2つに 分けて 5もんずつ 入れても すすめるように）
+function setupCount(){
+  return S.decks.filter(d => d.mine).reduce((n,d) => n + d.cards.length, 0);
+}
+function renderSetup(){
+  const on = !S.setupDone && editing && editing.mine;
+  $('#setup-bar').classList.toggle('hidden', !on);
+  if(!on) return;
+  const n = setupCount();
+  $('#setup-n').textContent = Math.min(n, SETUP_GOAL);
+  $('#setup-g').style.width = Math.min(100, n / SETUP_GOAL * 100) + '%';
+  $('#setup-go').classList.toggle('hidden', n < SETUP_GOAL);
+}
+function finishSetup(){
+  S.setupDone = true; save();
+  SE.win();
+  $('#setup-bar').classList.add('hidden');
+  toast('じゅんび かんりょう！');
+  go('town');
+}
+function skipSetup(){
+  if(!confirm('サンプルの もんだいで はじめますか？\nもんだいは あとから いつでも つくれます。')) return;
+  S.setupDone = true; save();
+  go('town');
+}
+
+/* ==================================================
+   6. キャラ選択
+================================================== */
+let picked = null;
+function renderStart(){
+  const el = $('#pick-list'); el.innerHTML='';
+  Object.entries(CLASSES).filter(([,c])=>c.starter).forEach(([k,c])=>{
+    const d=document.createElement('button');
+    d.className='pick'+(picked===k?' sel':'');
+    d.style.borderColor = picked===k ? c.col : 'rgba(255,255,255,.55)';
+    if(picked===k) d.style.background = c.col + '22';
+    d.innerHTML = `<span class="e">${artOf(c,0)}</span>
+      <span class="txt"><span class="n" style="color:${c.col}">${c.names[0]}</span>
+        <span class="t" style="color:${c.col}">${c.label}タイプ</span>
+        <div class="muted" style="margin-top:2px;font-size:.72rem">${c.desc}</div></span>
+      <span style="font-size:1.3rem;color:${picked===k?c.col:'transparent'}">✔</span>`;
+    d.onclick=()=>{ picked=k; SE.select(); renderStart(); };
+    el.appendChild(d);
+  });
+  $('#pick-go').disabled = !picked;
+}
+function startGame(){
+  S.p.cls = picked;
+  S.p.name = ($('#pick-name').value.trim() || 'ゆうしゃ').slice(0,8);
+  S.p.lv=1; S.p.exp=0; S.p.evo = rollEvo(); S.p.hp=maxHp(); S.started=true;
+  save(); SE.level(); go('town');
+  if(!S.tutDone) setTimeout(()=>tutOpen(0), 400);        // はじめての人に あそびかたを 見せる
+  else if(!S.setupDone) setTimeout(startSetup, 300);
+}
+
+/* ==================================================
+   7. 町
+================================================== */
+function renderTown(){
+  $('#t-sprite').innerHTML = heroArt();
+  $('#t-name').textContent = `${heroName()}（${heroForm()}）`;
+  $('#t-hpt').textContent = maxHp();
+  $('#t-gold').textContent = S.p.gold;
+  $('#t-atk').textContent = atk();
+  setLvLabels();
+  setExpBars(expPct());
+}
+
+/* ==================================================
+   8. 冒険の準備
+================================================== */
+let selDeck = null, selStage = 1;
+
+function stageOpen(n){ return n <= S.stageCleared + 1; }   // クリアした つぎまで あそべる
+
+function renderPrep(){
+  const el = $('#p-decks'); el.innerHTML='';
+  const usable = S.decks.filter(d=>d.cards.length>=4);
+  const grid = $('#p-stages');
+  if(!usable.length){
+    el.innerHTML = `<div class="win"><p style="margin:0">📜 もんだいが たりません</p>
+      <button class="btn sm wide" style="margin-top:12px" onclick="go('decks')">つくりに いく</button></div>`;
+    grid.innerHTML = ''; $('#p-info').innerHTML = '';
+    $('#p-difflabel').classList.add('hidden'); $('#p-go').disabled = true;
+    return;
+  }
+  $('#p-difflabel').classList.remove('hidden');
+  if(!usable.find(d=>d.id===selDeck)) selDeck = usable[0].id;
+  usable.forEach(d=>{
+    const b=document.createElement('button');
+    b.className='cmd'+(d.id===selDeck?' ok':''); b.style.marginBottom='8px';
+    b.innerHTML = `${esc(d.name)} <span class="muted">${d.cards.length}</span>`;
+    b.onclick=()=>{ selDeck=d.id; SE.select(); renderPrep(); };
+    el.appendChild(b);
+  });
+
+  // まだ あそべない ステージが えらばれていたら もどす
+  if(!stageOpen(selStage)) selStage = Math.min(STAGE_COUNT, S.stageCleared + 1);
+
+  $('#p-prog').textContent = `${S.stageCleared} / ${STAGE_COUNT} クリア`;
+  grid.innerHTML = '';
+  for(let n=1; n<=STAGE_COUNT; n++){
+    const d = stageDef(n);
+    const cleared = n <= S.stageCleared;
+    const open = stageOpen(n);
+    const b = document.createElement('button');
+    b.className = 'st' + (d.boss?' boss':'') + (cleared?' clear':'') +
+                  (open&&!cleared?' open':'') + (!open?' lock':'') + (n===selStage?' sel':'');
+    b.innerHTML = open
+      ? `<span class="ic">${cleared ? '✅' : stageIcon(n)}</span>${n}`
+      : `<span class="ic">🔒</span>${n}`;
+    if(open) b.onclick = ()=>{ selStage=n; SE.select(); renderPrep(); };
+    else b.disabled = true;
+    grid.appendChild(b);
+  }
+
+  // えらんだ ステージが 見えるように スクロール
+  const selEl = grid.children[selStage-1];
+  if(selEl) selEl.scrollIntoView({block:'nearest'});
+
+  const d = stageDef(selStage);
+  $('#p-info').innerHTML =
+    `<div style="display:flex;justify-content:space-between;align-items:center">
+       <b style="font-size:1.05rem">${stageIcon(selStage)} ステージ ${selStage}</b>
+       <span class="muted">${'⭐'.repeat(Math.min(5, d.tier))}</span>
+     </div>
+     <div class="muted" style="margin-top:6px">
+       ${d.waves} たいめ ／ 同時に さいだい ${d.maxPer} たい${d.boss ? ' ／ 👑 ボス' : ''}
+     </div>`;
+  $('#p-go').disabled = false;
+}
+
+/* ==================================================
+   9. バトル
+================================================== */
+let B = null;
+let resolveChoice = null;
+
+/* ---- ステージから 敵の へんせいを つくる ---- */
+function makeFoe(m, mul){
+  // HP は ばいりつを ひかえめに かける（長くなりすぎない ように）
+  const hp = Math.max(1, Math.round(m.hp * (1 + (mul - 1) * 0.5)));
+  return { ...m, hp, maxHp:hp, atk: Math.max(1, Math.round(m.atk * mul)),
+           exp: Math.round(m.exp * mul), g: Math.round(m.g * mul) };
+}
+
+function pickFoe(tier, mul){
+  // たまに レアモンスターが あらわれる
+  if(Math.random() < RARE_RATE){
+    const r = RARES.filter(m => m.t === tier || m.t === tier - 1);
+    if(r.length) return makeFoe(r[Math.floor(Math.random()*r.length)], mul);
+  }
+  // その ステージの tier を 中心に、ひとつ下も まぜる
+  const pool = MONS.filter(m => m.t === tier || m.t === tier - 1);
+  const src = pool.length ? pool : MONS.filter(m => m.t === 1);
+  return makeFoe(src[Math.floor(Math.random()*src.length)], mul);
+}
+
+// 1ステージぶんの たいめ（wave）を つくる。wave = 敵の はいれつ
+function buildWaves(def){
+  const waves = [];
+  const normal = def.waves - (def.boss ? 1 : 0);
+  for(let w = 0; w < normal; w++){
+    // すすむほど 同時に 出る 数が ふえやすい（さいごの たいめが いちばん 多い）
+    const t = normal <= 1 ? 1 : w / (normal - 1);          // 0 → 1
+    const lo = def.maxPer >= 3 ? 2 : 1;
+    const hi = Math.max(lo, Math.round(lo + (def.maxPer - lo) * t));
+    const count = lo + Math.floor(Math.random() * (hi - lo + 1));
+    const wave = [];
+    for(let i = 0; i < count; i++) wave.push(pickFoe(def.tier, def.mul));
+    waves.push(wave);
+  }
+  if(def.boss){
+    const b = BOSSES[def.bossIdx] || BOSSES[0];
+    const wave = [makeFoe(b, 1)];
+    // 後半の ボスには おともが つく
+    const guards = def.n >= 20 ? 2 : def.n >= 10 ? 1 : 0;
+    for(let i = 0; i < guards; i++) wave.push(pickFoe(def.tier, def.mul * 0.8));
+    waves.push(wave);
+  }
+  return waves;
+}
+/* ---- 文字の 正規化と 判定（記述回答用） ---- */
+// 半角カナ → 全角カナ
+const HKANA = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝｧｨｩｪｫｯｬｭｮ';
+const FKANA = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンァィゥェォッャュョ';
+const HK_VOICED = {'ｶ':'ガ','ｷ':'ギ','ｸ':'グ','ｹ':'ゲ','ｺ':'ゴ','ｻ':'ザ','ｼ':'ジ','ｽ':'ズ','ｾ':'ゼ','ｿ':'ゾ',
+  'ﾀ':'ダ','ﾁ':'ヂ','ﾂ':'ヅ','ﾃ':'デ','ﾄ':'ド','ﾊ':'バ','ﾋ':'ビ','ﾌ':'ブ','ﾍ':'ベ','ﾎ':'ボ','ｳ':'ヴ'};
+const HK_P = {'ﾊ':'パ','ﾋ':'ピ','ﾌ':'プ','ﾍ':'ペ','ﾎ':'ポ'};
+
+function norm(s){
+  let t = tidy(String(s||'')).toLowerCase();
+  t = t.replace(/(.)ﾞ/g, (m,c) => HK_VOICED[c] || m)
+       .replace(/(.)ﾟ/g, (m,c) => HK_P[c] || m)
+       .replace(/./g, c => { const i = HKANA.indexOf(c); return i >= 0 ? FKANA[i] : c; });
+  t = t.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60)); // ひらがな→カタカナ
+  return t.replace(/[ーｰ－―‐\-\s・、。,.!?！？「」（）()]/g, '');
+}
+function lev(a,b){
+  const m=a.length, n=b.length;
+  if(!m) return n; if(!n) return m;
+  let prev = Array.from({length:n+1}, (_,j)=>j);
+  for(let i=1;i<=m;i++){
+    const cur=[i];
+    for(let j=1;j<=n;j++){
+      cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1] + (a[i-1]===b[j-1]?0:1));
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+// 答えあわせ。1文字でも ちがえば ふせいかい。
+// 「1192 と 1195」「H2O と H2S」「よりとも と よしとも」は べつの 答えなので、
+// にているから 正解、には しない。
+// 長音・くとうてん・全角半角・ひらがな/カタカナの ちがいは norm() が すでに 吸収ずみ。
+// よみがな や 同義語は alt（べつの こたえ）と AI判定が うけもつ。
+function judge(given, answer){
+  const a = norm(tidyAnswer(given)), b = norm(answer);
+  if(!a || !b) return false;
+  return a === b;
+}
+
+// おしかったか（1〜2文字ちがい）。正解には しないが、どこが ちがうか 見せる ために つかう
+function isClose(given, answer){
+  const a = norm(tidyAnswer(given)), b = norm(answer);
+  if(!a || !b || a === b) return false;
+  const tol = b.length >= 6 ? 2 : b.length >= 3 ? 1 : 0;
+  return tol > 0 && lev(a,b) <= tol;
+}
+function isCloseCard(card, given){
+  if(!given) return false;
+  return isClose(given, card.a) || (card.alt||[]).some(x => isClose(given, x));
+}
+
+/* ---- 書きかたの ちがいは 正解に する ----
+   「手紙」と「手がみ」、「友達」と「友だち」は おなじ ことば。
+   ただし 読みを 知らないと「手紙」と「手ぬぐい」も おなじ かたち（手＋かな）に
+   見えてしまう。so カードが 読みを 知っている ときだけ 自動で みとめる。
+   知らない ときは まちがい画面の「これも 正解にする」で 1タップ。        */
+const KANJI = /[\u4e00-\u9faf\u3005\u30f5\u30f6]/;
+const RE_ESC = /[.*+?^${}()|[\]\\]/g;
+
+// 漢字の ところを ワイルドカードに して、よみと つじつまが あうか
+function fitsReading(mixed, reading){
+  let re = '';
+  for(const ch of mixed){
+    if(KANJI.test(ch)){ if(!re.endsWith('.+')) re += '.+'; }
+    else re += ch.replace(RE_ESC, '\\$&');
+  }
+  return re.includes('.+') && new RegExp('^' + re + '$').test(reading);
+}
+// かなの ところを ワイルドカードに して、漢字の 形と つじつまが あうか
+function fitsKanjiForm(mixed, kanjiForm){
+  let re = '', kana = false;
+  for(const ch of mixed){
+    if(KANJI.test(ch)){ re += ch.replace(RE_ESC, '\\$&'); kana = false; }
+    else if(!kana){ re += '.+'; kana = true; }
+  }
+  return re.includes('.+') && new RegExp('^' + re + '$').test(kanjiForm);
+}
+// 漢字と 漢字の あいだに かなが あるか（「申し込み」の「し」）
+function hasInnerKana(t){
+  const first = t.search(KANJI);
+  if(first < 0) return false;
+  let last = -1;
+  for(let i = t.length - 1; i > first; i--) if(KANJI.test(t[i])){ last = i; break; }
+  if(last < 0) return false;
+  for(let i = first + 1; i < last; i++) if(!KANJI.test(t[i])) return true;
+  return false;
+}
+// 送りがなの ゆれ（申込 / 申し込み）。漢字の ならびが 同じなら おなじ ことば。
+// ただし「大人」と「大人しい」、「生」と「生きる」の ように
+// うしろに つくだけの ものは べつの ことばなので みとめない。
+function sameOkurigana(a, b){
+  const k = t => (t.match(new RegExp(KANJI.source, 'g')) || []).join('');
+  const ka = k(a), kb = k(b);
+  if(!ka || ka !== kb) return false;
+  if(Math.abs(a.length - b.length) > 4) return false;
+  return hasInnerKana(a) || hasInnerKana(b);
+}
+
+function sameWordAs(card, given){
+  const g = norm(given);
+  if(!g) return false;
+  const forms = [card.a, ...(card.alt || [])].map(norm).filter(Boolean);
+
+  // 送りがなの ゆれ（読みを 知らなくても 安全に みとめられる）
+  if(forms.some(f => sameOkurigana(g, f))) return true;
+
+  // 交ぜ書き（手がみ）は 読みが わかる ときだけ
+  if(!KANJI.test(g)) return false;
+  const kanjiForms = forms.filter(f => KANJI.test(f));
+  const kanaForms  = forms.filter(f => !KANJI.test(f));
+  if(!kanjiForms.length || !kanaForms.length) return false;
+  return kanjiForms.some(K => fitsKanjiForm(g, K))
+      && kanaForms.some(R => fitsReading(g, R));
+}
+
+// 正解 と 別表記（よみ・同義語）の どれかに あえば 正解
+function judgeCard(card, given){
+  if(judge(given, card.a)) return true;
+  if((card.alt || []).some(x => judge(given, x))) return true;
+  return sameWordAs(card, given);
+}
+
+/* ---- 類題さがし（bigramの かさなり） ---- */
+function bigrams(s){
+  const t = norm(s), out = new Set();
+  if(t.length <= 1){ if(t) out.add(t); return out; }
+  for(let i=0;i<t.length-1;i++) out.add(t.slice(i,i+2));
+  return out;
+}
+function jac(A,B){
+  if(!A.size || !B.size) return 0;
+  let i=0; A.forEach(x=>{ if(B.has(x)) i++; });
+  return i / (A.size + B.size - i);
+}
+// こたえの 見た目。人めいの 中に「3776メートル」が まざらないように、
+// すうじ・英字・かんじ を ふくむか どうかで なかまわけ する。
+function ansShape(a){
+  const t = String(a);
+  return {
+    d: /[0-9\uff10-\uff19]/.test(t),
+    l: /[a-zA-Z\uff41-\uff5a\uff21-\uff3a]/.test(t),
+    k: /[\u4e00-\u9faf]/.test(t),
+  };
+}
+function similarCards(deck, card, n=2, minS=0.10){
+  const qa = bigrams(card.q), aa = bigrams(card.a), alen = norm(card.a).length;
+  const sh = ansShape(card.a);
+  return deck.cards
+    .filter(c => c.id !== card.id)
+    .map(c => {
+      const s2   = ansShape(c.a);
+      const same = (sh.d===s2.d) + (sh.l===s2.l) + (sh.k===s2.k);
+      const s = Math.max(jac(qa, bigrams(c.q)), jac(aa, bigrams(c.a)))
+              + (Math.abs(norm(c.a).length - alen) <= 2 ? 0.12 : 0)
+              + (same === 3 ? 0.10 : (same - 3) * 0.14);   // 見た目が ちがうと 下げる
+      return {c, s};
+    })
+    .filter(x => x.s > minS)
+    .sort((x,y) => y.s - x.s)
+    .slice(0, n).map(x => x.c);
+}
+
+/* ---- つぎの もんだいを えらぶ ---- */
+function markSeen(c){
+  B.recent.push(c.id);
+  if(B.recent.length > 3) B.recent.shift();
+  return c;
+}
+function nextCard(){
+  const cards = B.deck.cards;
+
+  // 復習キュー（まちがえた もんだい・その 類題）を ときどき わりこませる
+  if(B.retry.length && Math.random() < 0.45){
+    for(let i=0;i<B.retry.length;i++){
+      const c = B.retry[i];
+      if(cards.includes(c) && !B.recent.includes(c.id)){
+        B.retry.splice(i,1);
+        return markSeen(c);
+      }
+    }
+  }
+
+  let pool = cards.filter(c => !B.recent.includes(c.id));
+  if(!pool.length) pool = cards;
+
+  const today = dayNo();
+  const w = pool.map(c => {
+    const n = c.right + c.wrong;
+    const acc = n ? c.right / n : 0.5;
+    const box = cardBox(c);
+    let x;
+
+    if(box === 0){
+      x = 2.2;                                   // まだ 出ていない
+    }else if(c.due == null || c.due <= today){
+      // ふくしゅうの 日が きた。すぎているほど いそぐ
+      x = 3.0 + Math.min(today - c.due, 30) * 0.12;
+      x *= 1 + (MAX_BOX - box) * 0.12;           // はこが ひくい ものほど 手あつく
+    }else{
+      // まだ さき。ゼロには しない（ゲーム中の 問題が つきないように）
+      x = 0.30 + 0.5 / (1 + (c.due - today));
+    }
+
+    if(n >= 2 && acc < 0.5) x *= 1.6;            // 正答率が ひくい ものを ゆうせん
+    x += Math.min(c.wrong, 4) * 0.4;             // まちがえた かずも 見る
+    return Math.max(0.15, x);
+  });
+  let total = w.reduce((a,b)=>a+b,0), r = Math.random()*total, i=0;
+  for(;i<pool.length;i++){ r -= w[i]; if(r<=0) break; }
+  return markSeen(pool[Math.min(i, pool.length-1)]);
+}
+
+// 4択 か 記述 か を きめる（かたよらないよう 混ぜる）
+function pickMode(card){
+  const hist = B.modeHist;
+  if(B.deck.cards.length < 4) return noteMode('write');
+  if(norm(card.a).length > 12) return noteMode('choice');   // 長い こたえは 記述にしない
+
+  const n = card.right + card.wrong;
+  const acc = n ? card.right / n : 0;
+  let p = 0.22;
+  if(n >= 3 && acc >= 0.8) p = 0.4;                   // よく できる もんだいは 記述で ふかめる
+  if(card.wrong > card.right) p = 0.08;               // にがては 4択で ささえる
+
+  const last5 = hist.slice(-5);
+  if(last5.length === 5 && last5.every(m => m === 'choice')) p = 1;    // 4択が つづいたら 記述を いれる
+  const last2 = hist.slice(-2);
+  if(last2.length === 2 && last2.every(m => m === 'write')) p = 0;     // 記述が つづきすぎない
+
+  return noteMode(Math.random() < p ? 'write' : 'choice');
+}
+function noteMode(m){
+  B.modeHist.push(m);
+  if(B.modeHist.length > 8) B.modeHist.shift();
+  return m;
+}
+
+// 4択の まちがい選択肢。
+// ランダムに えらぶと 消去法で とけてしまい、正答率が 実力より 高く出る。
+// にている こたえを ゆうせん して、ほんとうに 知らないと とけないように する。
+function choicesFor(card){
+  const seen   = new Set([norm(card.a)]);
+  const picked = [];
+  const add = a => {
+    const k = norm(a);
+    if(picked.length < 3 && a && !seen.has(k)){ seen.add(k); picked.push(a); }
+  };
+
+  // 1. にた こたえ（じょうい 6件を シャッフルして 3つまで）
+  shuffle(similarCards(B.deck, card, 6, 0)).forEach(c => add(c.a));
+  // 2. たりなければ おなじ ぐらいの 長さの こたえ
+  if(picked.length < 3){
+    const sh = ansShape(card.a), len = norm(card.a).length;
+    shuffle(B.deck.cards.slice())
+      .filter(c => { const t = ansShape(c.a);
+                     return t.d===sh.d && t.l===sh.l && t.k===sh.k
+                            && Math.abs(norm(c.a).length - len) <= 4; })
+      .forEach(c => add(c.a));
+  }
+  // 3. それでも たりなければ なんでも
+  if(picked.length < 3) shuffle(B.deck.cards.slice()).forEach(c => add(c.a));
+
+  return shuffle([card.a, ...picked]);
+}
+
+// まちがえたら 本人と 類題を 復習キューへ
+function queueReview(card, chosenAnswer){
+  const push = c => { if(c && !B.retry.includes(c)) B.retry.push(c); };
+  push(card);
+  if(chosenAnswer){
+    const confused = B.deck.cards.find(c => c.a === chosenAnswer && c.id !== card.id);
+    push(confused);                                    // まちがえて えらんだ ほうも
+  }
+  similarCards(B.deck, card).forEach(push);
+  if(B.retry.length > 8) B.retry = B.retry.slice(-8);
+}
+
+// 結果画面から そのまま つぎの ステージへ（まちに もどらない）
+function nextStage(){
+  const nx = (B ? B.def.n : selStage) + 1;
+  if(nx > STAGE_COUNT || !stageOpen(nx)) { go('prep'); return; }
+  selStage = nx;
+  SE.select();
+  beginAdventure();
+}
+function retryStage(){
+  selStage = B ? B.def.n : selStage;
+  SE.select();
+  beginAdventure();
+}
+
+function beginAdventure(){
+  const deck = S.decks.find(d=>d.id===selDeck);
+  if(!deck || deck.cards.length<4) return;
+  if(!stageOpen(selStage)) return;
+  const def = stageDef(selStage);
+  B = { deck, def, waves: buildWaves(def), wi:0, target:0,
+        combo:0, maxCombo:0, exp:0, gold:0, kills:0,
+        misses:[], missLog:[], noHit:true, recent:[], retry:[], modeHist:[],
+        busy:false, abort:false, fled:false };
+  resolveChoice = null;
+  S.p.hp = maxHp();
+  go('battle');
+  startBgm(bgmKey(def.n, false));
+  runBattle();
+}
+
+async function say(text, hold=380){
+  const el = $('#bt-msg');
+  el.textContent = '';
+  for(const ch of text){ el.textContent += ch; await sleep(15); }
+  if(hold) await sleep(hold);
+}
+
+/* ---- 敵の れつ（1〜4体）を えがく ---- */
+function wave(){ return B.waves[B.wi] || []; }
+function aliveFoes(){ return wave().filter(e => e.hp > 0); }
+function pickTarget(){
+  const i = wave().findIndex(e => e.hp > 0);
+  B.target = i < 0 ? 0 : i;
+}
+function foeSize(){
+  const n = wave().length;
+  return n >= 4 ? '2.5rem' : n === 3 ? '3rem' : n === 2 ? '3.6rem' : '4.6rem';
+}
+function renderFoes(){
+  const row = $('#en-row'); row.innerHTML = '';
+  const size = foeSize();
+  wave().forEach((e, i) => {
+    const d = document.createElement('div');
+    d.className = 'en' + (e.hp <= 0 ? ' dead' : '');
+    d.dataset.i = i;
+    d.innerHTML =
+      `<div class="tgt">${i === B.target && e.hp > 0 ? '▼' : ''}</div>
+       <div class="nm">${esc(e.n)}</div>
+       <div class="gauge e"><i style="width:${Math.max(0, e.hp/e.maxHp*100)}%"></i></div>
+       <span class="sp" style="font-size:${e.boss ? '4.8rem' : size}">${e.e}</span>`;
+    row.appendChild(d);
+  });
+}
+function foeEl(i){ return $('#en-row').children[i]; }
+
+function refreshBars(){
+  wave().forEach((e, i) => {
+    const el = foeEl(i); if(!el) return;
+    const bar = el.querySelector('.gauge > i');
+    if(bar) bar.style.width = Math.max(0, e.hp/e.maxHp*100) + '%';
+    el.classList.toggle('dead', e.hp <= 0);
+    const tg = el.querySelector('.tgt');
+    if(tg) tg.textContent = (i === B.target && e.hp > 0) ? '▼' : '';
+  });
+  const r = S.p.hp/maxHp();
+  $('#pl-hp').style.width = Math.max(0, r*100)+'%';
+  $('#pl-hp').parentElement.classList.toggle('low', r<=.3);
+  $('#pl-name').textContent = `${heroName()} HP${Math.max(0,S.p.hp)}`;
+  $('#pl-sp').innerHTML = heroArt();
+  const left = aliveFoes().length;
+  $('#bt-prog').textContent = `S${B.def.n} ${B.wi+1}/${B.waves.length}` + (left>1 ? ` 👾${left}` : '');
+  $('#bt-combo').textContent = B.combo>=2 ? `🔥${B.combo}` : '';
+  setLvLabels();
+}
+function floatDmg(x, y, text, kind){
+  const d=document.createElement('div');
+  d.className='dmg'+(kind?' '+kind:'');
+  d.textContent=text; d.style.left=x; d.style.top=y;
+  $('#field').appendChild(d); setTimeout(()=>d.remove(),1000);
+}
+function flash(color){
+  const f=$('#flash'); f.style.background=color;
+  f.classList.remove('on'); void f.offsetWidth; f.classList.add('on');
+}
+async function slashFx(){
+  const s=$('#slash'); s.classList.remove('hidden');
+  [...s.children].forEach(i=>{ i.style.animation='none'; void i.offsetWidth; i.style.animation=''; });
+  await sleep(420); s.classList.add('hidden');
+}
+function floatExp(n){
+  const d=document.createElement('div');
+  d.className='expfly'; d.textContent = '+' + n + ' EXP';
+  d.style.transform = 'translateX(-50%)';
+  $('#field').appendChild(d); setTimeout(()=>d.remove(), 1200);
+}
+
+/* ---- こたえを うけとる（4択 / 記述） ---- */
+function askAnswer(card, mode){
+  const box = $('#bt-choices'), wr = $('#bt-write');
+  box.innerHTML = '';
+  if(mode === 'choice'){
+    wr.classList.add('hidden');
+    choicesFor(card).forEach(ch=>{
+      const b=document.createElement('button');
+      b.className='cmd'; b.textContent=ch;
+      b.onclick=()=>{
+        if(B.busy || !resolveChoice) return; B.busy=true;
+        [...box.children].forEach(x=>x.disabled=true);
+        const r = resolveChoice; resolveChoice = null; r({type:'choice', ch, el:b});
+      };
+      box.appendChild(b);
+    });
+  }else{
+    wr.classList.remove('hidden');
+    const inp = $('#w-input');
+    inp.value = ''; inp.disabled = false;
+    inp.onkeydown = e => { if(e.key === 'Enter') submitWrite(); };
+    setTimeout(()=>{ try{ inp.focus(); }catch(e){} }, 50);
+  }
+  return new Promise(r => { resolveChoice = r; });
+}
+function submitWrite(){
+  if(B && B.busy) return;
+  const t = tidyAnswer($('#w-input').value);
+  if(!t){ toast('こたえを 入れてね'); return; }
+  stopWriteVoice();
+  if(!resolveChoice) return;
+  B.busy = true; $('#w-input').disabled = true;
+  const r = resolveChoice; resolveChoice = null; r({type:'write', text:t});
+}
+function giveUp(){
+  if(B && B.busy) return;
+  stopWriteVoice();
+  if(!resolveChoice) return;
+  B.busy = true; $('#w-input').disabled = true;
+  const r = resolveChoice; resolveChoice = null; r({type:'write', text:'', give:true});
+}
+/* ---- まちがえた ときは 止まって おぼえ直す ----
+   まえは 0.7びょうで つぎに 流れていた。いちばん おぼえられる 場面なので、
+   じぶんで「わかった」を おすまで まつ。 */
+let resolveMiss = null;
+function showMiss(card, given, close, canAccept){
+  return new Promise(res => {
+    resolveMiss = res;
+    $('#miss-accept').classList.toggle('hidden', !canAccept);
+    $('#miss-head').innerHTML = close
+      ? '<span style="color:var(--gold)">おしい！ あと すこし</span>'
+      : '<span style="color:var(--ehp)">ざんねん</span>';
+    $('#miss-q').textContent = card.q;
+
+    const you = $('#miss-you');
+    if(given){ you.classList.remove('hidden'); $('#miss-yv').textContent = given; }
+    else you.classList.add('hidden');
+
+    $('#miss-av').textContent = card.a;
+    $('#miss-note').textContent = close
+      ? 'にていても べつの こたえです。よく 見くらべてね。'
+      : (card.alt||[]).length ? 'これも 正解: ' + card.alt.join('、') : '';
+
+    $('#miss').classList.remove('hidden');
+    setTimeout(()=>{ try{ $('#miss-ok').focus(); }catch(e){} }, 30);
+  });
+}
+function closeMiss(accepted){
+  $('#miss').classList.add('hidden');
+  if(resolveMiss){ const r = resolveMiss; resolveMiss = null; r(accepted === true); }
+}
+// 「手紙」に「手がみ」の ように、書きかたが ちがう だけの ときに おす。
+// この カードは つぎから その 書きかたも 正解に する。
+function acceptMiss(){ SE.correct(); closeMiss(true); }
+
+function clearChoices(){
+  $('#bt-choices').innerHTML='';
+  $('#bt-qwin').classList.add('hidden');
+  $('#bt-write').classList.add('hidden');
+  stopWriteVoice();
+}
+
+/* ---- 記述の 音声入力（1回ぶん・確認してから 送信） ---- */
+let writeRec = null;
+function stopWriteVoice(){
+  if(writeRec){ try{ writeRec.stop(); }catch(e){} writeRec = null; }
+  const b = $('#w-mic'); if(b) b.classList.remove('on');
+}
+function writeVoice(){
+  if(!SR){ toast('この ブラウザは 音声入力に 対応していません'); return; }
+  if(writeRec){ stopWriteVoice(); return; }
+  const btn = $('#w-mic'), inp = $('#w-input');
+  const rec = new SR(); writeRec = rec;
+  rec.lang='ja-JP'; rec.continuous=false; rec.interimResults=true; rec.maxAlternatives=1;
+  let fin = '';
+  btn.classList.add('on');
+  rec.onresult = e => {
+    let it = '';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const r = e.results[i];
+      if(r.isFinal) fin += r[0].transcript; else it += r[0].transcript;
+    }
+    inp.value = tidy(fin || it);              // 話しながら 文字が でる
+  };
+  rec.onerror = e => {
+    writeRec = null; btn.classList.remove('on');
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed') toast('🎤 マイクが つかえません');
+    else if(e.error === 'network') toast('🎤 ネットに つながっていません');
+  };
+  rec.onend = () => {
+    writeRec = null; btn.classList.remove('on');
+    if(fin) inp.value = tidyAnswer(fin);      // 確定したら 整えて 見せる（送信は しない）
+  };
+  let started = false;
+  rec.onstart = () => { started = true; };
+  try{
+    rec.start();
+  }catch(err){
+    writeRec = null; btn.classList.remove('on');
+    toast(fileMode() ? '🎤 file:// では マイクが つかえません' : '🎤 マイクが つかえません');
+    inp.placeholder = fileMode() ? 'ここに 手で 入力' : 'こたえ';
+    return;
+  }
+  // だまって 起動しない かんきょうへの ほけん
+  setTimeout(() => {
+    if(!started && writeRec === rec){
+      stopWriteVoice();
+      toast(fileMode() ? '🎤 file:// では マイクが つかえません' : '🎤 マイクが つかえません');
+      inp.placeholder = 'ここに 手で 入力';
+    }
+  }, 2500);
+}
+
+async function runBattle(){
+  const my = B;
+  // 「にげる」や 新しい ぼうけん が はじまったら この ループは 打ち切る
+  const stale = () => B !== my || my.abort;
+
+  while(!stale() && my.wi < my.waves.length){
+    pickTarget();
+    renderFoes(); refreshBars(); clearChoices();
+
+    const w = wave();
+    const boss = w.some(e => e.boss);
+    startBgm(bgmKey(my.def.n, boss));          // ボスせんは 専用BGM
+    const rare = w.find(e => e.rare);
+    await say(boss ? `⚡ ${w[0].n} が たちふさがった！`
+                   : rare ? `✨ レア！ ${rare.n} が あらわれた！`
+                   : w.length === 1 ? `${w[0].n} が あらわれた！`
+                                    : `モンスターが ${w.length}たい あらわれた！`, 520);
+    if(stale()) return;
+
+    // この たいめの 敵を ぜんぶ たおすまで
+    while(aliveFoes().length > 0 && S.p.hp > 0){
+      const card = nextCard();
+      const mode = pickMode(card);
+      $('#bt-qwin').classList.remove('hidden');
+      $('#bt-q').textContent = card.q;
+      await say(mode === 'write' ? '🎤 こたえを どうぞ' : 'こたえは？', 0);
+      if(stale()) return;
+
+      B.busy = false;
+      const ans = await askAnswer(card, mode);
+      if(stale()) return;
+      S.st.answered++;
+
+      let ok, byAi = false;
+      if(ans.type === 'choice'){
+        ok = ans.ch === card.a;
+      }else if(ans.give || !ans.text){
+        ok = false;
+      }else{
+        ok = judgeCard(card, ans.text);
+        if(!ok && aiOn()){
+          // 表記が ちがうだけ かもしれないので AIに たしかめる
+          await say('🤔 たしかめて います…', 0);
+          const v = await judgeSmart(card, ans.text);
+          if(stale()) return;
+          ok = v.ok; byAi = v.ok && v.by === 'ai';
+          if(v.by === 'error') toast('AI判定 しっぱい: ' + v.msg);
+        }
+      }
+
+      if(ok){
+        if(byAi) await say(`⭕ 「${ans.text}」も せいかい！`, 600);
+        if(ans.el) ans.el.classList.add('ok');
+        recordAnswer(card, true); B.combo++; B.maxCombo=Math.max(B.maxCombo,B.combo);
+        S.st.correct++; S.st.bestCombo = Math.max(S.st.bestCombo, B.combo);
+        if(mode === 'write') S.st.writeOk = (S.st.writeOk||0) + 1;
+
+        pickTarget();
+        const ti = B.target, foe = wave()[ti];
+        const critAt = cls().comboBoost ? 2 : 3;
+        const crit = B.combo >= critAt && B.combo % critAt === 0;
+        let dmg = atk() + Math.floor(Math.random()*4);
+        if(crit) dmg = Math.round(dmg*2);
+        if(mode === 'write') dmg = Math.round(dmg * 1.3);      // 記述は ごほうび
+
+        SE.correct(); await sleep(150);
+        crit ? SE.crit() : SE.attack();
+        slashFx();
+        const el = foeEl(ti);
+        if(el){ const sp = el.querySelector('.sp');
+          sp.classList.remove('hit'); void sp.offsetWidth; sp.classList.add('hit');
+          const r = el.getBoundingClientRect(), f = $('#field').getBoundingClientRect();
+          floatDmg((r.left - f.left + r.width/2) + 'px', '52px', dmg, crit?'crit':'');
+        }
+        foe.hp -= dmg;
+        refreshBars();
+        await say(crit ? '⚡ かいしんの いちげき！' : '⚔️ せいかい！', 380);
+        if(stale()) return;
+
+        if(foe.hp <= 0){ await defeatFoe(foe, ti); if(stale()) return; }
+
+      }else{
+        if(ans.el) ans.el.classList.add('ng');
+        [...$('#bt-choices').children].forEach(b=>{ if(b.textContent===card.a) b.classList.add('ok'); });
+
+        // 「これも 正解に する」を おされた ときに もどせるように ひかえておく
+        const snap = { right:card.right, wrong:card.wrong,
+                       box:cardBox(card), due:card.due, last:card.last };
+        recordAnswer(card, false); B.combo=0; B.misses.push(card);
+        const given = ans.give ? '' : (ans.ch || ans.text || '');
+        B.missLog.push({ q:card.q, a:card.a, you: given });
+        queueReview(card, ans.type === 'choice' ? ans.ch : null);
+        SE.wrong(); await sleep(220);
+
+        // 書きかたの ちがい だけかも しれない ときは、じぶんで 正解に できる。
+        // 4択は ほかの カードの こたえが ならぶので 出さない。
+        const canAccept = mode === 'write' && !!given
+          && !B.deck.cards.some(c => c.id !== card.id && norm(c.a) === norm(given));
+
+        // 0.7びょうで 流さず、じぶんで とじるまで まつ
+        const accepted = await showMiss(card, given, isCloseCard(card, given), canAccept);
+        if(stale()) return;
+
+        if(accepted){
+          // まちがい あつかいを とりけして、この 書きかたを おぼえさせる
+          card.right = snap.right; card.wrong = snap.wrong;
+          card.box = snap.box; card.due = snap.due; card.last = snap.last;
+          mergeAlt(card, [given]);
+          recordAnswer(card, true);
+          B.misses  = B.misses.filter(x => x !== card);
+          B.missLog = B.missLog.filter(m => m.q !== card.q);
+          B.retry   = B.retry.filter(x => x !== card);
+          S.st.correct++;
+          clearChoices(); save();
+          await say(`⭕ 「${given}」も 正解に しました`, 700);
+          if(stale()) return;
+          continue;                      // てきの こうげきは なし
+        }
+
+        await say(`せいかいは「${card.a}」`, 260);
+        if(stale()) return;
+
+        // 生きている 敵が ぜんぶ こうげきしてくる（多いほど いたい）
+        const foes = aliveFoes();
+        const share = 0.5 + 0.5 / Math.max(1, foes.length);
+        let total = 0;
+        foes.forEach(f => { total += Math.max(1, Math.round((f.atk + Math.floor(Math.random()*4)) * share)); });
+        if(cls().guard) total = Math.round(total * 0.7);
+        S.p.hp = Math.max(0, S.p.hp - total);
+        B.noHit = false;
+
+        SE.hurt(); flash('#ff3b3b');
+        $('#pl-sp').classList.remove('hit'); void $('#pl-sp').offsetWidth; $('#pl-sp').classList.add('hit');
+        floatDmg('22%','150px', total, 'pl');
+        refreshBars();
+        if(foes.length > 1) await say(`${foes.length}たいの こうげき！`, 420);
+        else await sleep(420);
+        if(stale()) return;
+      }
+      clearChoices();
+      save();
+    }
+
+    if(stale()) return;
+    if(S.p.hp <= 0){ return await gameOver(); }
+    my.wi++;
+  }
+  if(stale()) return;
+  await victory();
+}
+
+/* ---- 1体 たおしたときの 演出＋けいけんち ---- */
+async function defeatFoe(foe, i){
+  SE.defeat();
+  flash('#ffe27a');
+  const el = foeEl(i);
+  if(el) el.classList.add('dead');
+  await say(`💥 ${foe.n} を たおした！`, 0);
+  await sleep(560);
+
+  B.kills++; S.st.kills++;
+  S.seen[foe.id] = (S.seen[foe.id]||0)+1;
+  if(foe.boss){ S.st.demon = true; S.st.bossKills = (S.st.bossKills||0) + 1; }
+  if(foe.rare) S.st.rares = (S.st.rares||0) + 1;
+  B.exp += foe.exp; B.gold += foe.g;
+  S.p.gold += foe.g;
+
+  SE.exp();
+  floatExp(foe.exp);
+  await say(`+${foe.exp} EXP　　+${foe.g} 💰`, 0);
+  await sleep(380);
+  await gainExpAnimated(foe.exp);      // レベルアップ／進化演出も この中
+
+  pickTarget();
+  refreshBars();
+  await sleep(200);
+}
+
+async function victory(){
+  stopBgm();
+  // けいけんち と ゴールドは 1たい たおすごとに もらいずみ
+  S.st.clears++;
+  if(!B.misses.length) S.st.perfects = (S.st.perfects||0) + 1;   // ぜんもん せいかい
+  const first = B.def.n > S.stageCleared;      // はじめて この ステージを クリア
+  if(first) S.stageCleared = B.def.n;
+  markDay();
+  checkTitles();
+  save();
+
+  SE.win();
+  await say(`🏆 ステージ ${B.def.n} クリア！`, 700);
+  if(first && B.def.n < STAGE_COUNT){
+    await say(`🔓 ステージ ${B.def.n + 1} が ひらいた！`, 800);
+  }
+  B.firstClear = first;
+  showResult(true);
+}
+
+async function gameOver(){
+  stopBgm();
+  clearChoices();
+  S.st.deaths++;
+  SE.down(); flash('#ff0000');
+  $('#pl-sp').classList.add('faint');
+  await say('💀 ちからつきた……', 900);
+  markDay(); checkTitles(); save();
+  $('#pl-sp').classList.remove('faint');
+  showResult(false);
+}
+
+function flee(){
+  if(!B || B.abort) return;
+  if(!confirm('まちに もどる？')) return;
+  stopBgm();
+  B.abort = true; B.busy = true;
+  // 待機中の こたえ を 解放して バトルループを 止める
+  if(resolveChoice){ const r = resolveChoice; resolveChoice = null; r({type:'choice', ch:null, el:null}); }
+  closeMiss();
+  clearChoices();
+  markDay(); checkTitles(); save();
+  B.fled = true;
+  showResult(false);
+}
+
+function markDay(){
+  const t = today();
+  if(S.st.lastDay !== t){
+    const diff = S.st.lastDay ? daysBetween(S.st.lastDay, t) : 999;
+    S.st.streak = (diff===1) ? S.st.streak+1 : 1;
+    S.st.bestStreak = Math.max(S.st.bestStreak, S.st.streak);
+    S.st.lastDay = t;
+  }
+}
+
+function showResult(won){
+  if(won && B.noHit) S.st.noHit = true;
+  checkTitles(); save();
+  go('result');
+  const cleared = won;
+  $('#r-emoji').textContent = cleared ? (B.def.boss?'👑':'🏆') : (B.fled?'💨':'💀');
+  $('#r-title').textContent = cleared ? `ステージ ${B.def.n} クリア！` : (B.fled?'てったい':'ぜんめつ');
+  $('#r-sub').textContent = cleared && B.firstClear && B.def.n < STAGE_COUNT
+    ? `🔓 つぎは ステージ ${B.def.n + 1}`
+    : `${stageIcon(B.def.n)} ステージ ${B.def.n}`;
+  $('#r-exp').textContent = B.exp;
+  $('#r-gold').textContent = B.gold;
+  $('#r-kill').textContent = B.kills;
+  $('#r-log').innerHTML =
+    `<div class="item"><span style="font-size:2rem">${heroArt()}</span>
+       <div class="g"><b>Lv.${S.p.lv}　${heroForm()}</b>
+       <span class="muted">${maxed() ? 'さいだいレベル' : 'つぎまで ' + (needExp(S.p.lv)-S.p.exp)}</span></div>
+     </div>
+     <div class="gauge x" style="margin-top:4px"><i style="width:${expPct()}%"></i></div>
+     ${B.maxCombo>=2 ? `<div class="item" style="border:none"><div class="g">
+        <b>🔥 さいだい ${B.maxCombo} れんぞく</b></div></div>` : ''}`;
+  // ワンボタンで つぎへ / やりなおし
+  const nx = B.def.n + 1;
+  const canNext = cleared && nx <= STAGE_COUNT && stageOpen(nx);
+  const nb = $('#r-next');
+  nb.classList.toggle('hidden', !canNext);
+  if(canNext) nb.textContent = `▶ ステージ ${nx} へ`;
+  $('#r-retry').textContent = cleared ? '🔄 このステージを もういちど' : '🔄 もう いちど';
+
+  // まちがえた もんだいを もういちど。じぶんが なんと 答えたかも 出す
+  const seenQ = new Set();
+  const rows = B.missLog.filter(m => !seenQ.has(m.q) && seenQ.add(m.q));
+  $('#r-miss').innerHTML = rows.length
+    ? `<div class="win"><h3 class="seclabel" style="margin-top:0">📕 まちがえた もんだい</h3>` +
+      rows.map(m=>`<div class="qrow">
+        <div class="top"><span class="q">${esc(m.q)}</span></div>
+        <div class="a">${m.you ? `あなた: <span style="color:var(--ehp)">${esc(m.you)}</span>　` : ''}`
+        + `ただしくは <b style="color:var(--hp)">${esc(m.a)}</b></div>
+      </div>`).join('') + `</div>`
+    : '';
+}
+
+/* ==================================================
+   10. 称号
+================================================== */
+function checkTitles(){
+  const s = {
+    clears:S.st.clears, kills:S.st.kills, seen:Object.keys(S.seen).length,
+    bookTotal: MONS.length + RARES.length + BOSSES.length,
+    demon:S.st.demon, bossKills:S.st.bossKills||0, rares:S.st.rares||0,
+    combo:S.st.bestCombo, noHit:S.st.noHit, perfects:S.st.perfects||0,
+    correct:S.st.correct, writeOk:S.st.writeOk||0,
+    lv:S.p.lv, evoStage:stage(S.p.lv), stage:S.stageCleared,
+    streak:S.st.bestStreak, gold:S.p.gold,
+  };
+  TITLES.forEach(t=>{
+    if(!S.titles.includes(t.id) && t.f(s)){
+      S.titles.push(t.id);
+      toast(`👑 しょうごう「${t.n}」を えた！`);
+    }
+  });
+}
+
+/* ==================================================
+   10.4 かんかく反復（わすれた ころに もう一度）
+   ・せいかいするほど つぎに 出るまでの 日が のびる
+   ・まちがえると すぐ もどってくる
+   ライトナー方式。ゲーム性は ふやさず、暗記の ていちゃく だけを ねらう。
+================================================== */
+
+// きょうが なん日目か（ローカル時間の 0時 きじゅん）
+function dayNo(){
+  const d = new Date();
+  return Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 86400000);
+}
+
+// はこ 0〜5。せいかいで 1つ 上がり、つぎに 出るまでの 日が のびる
+const BOX_DAYS  = [0, 1, 3, 7, 16, 35];
+const MAX_BOX   = 5;
+
+// ひょうじ用の 4だんかい
+const LEVELS = [
+  { id:'new',  n:'まだ',     col:'var(--dim)',  min:0 },
+  { id:'weak', n:'あやふや', col:'var(--ehp)',  min:1 },
+  { id:'ok',   n:'おぼえた', col:'var(--gold)', min:3 },
+  { id:'best', n:'かんぺき', col:'var(--hp)',   min:5 },
+];
+function cardBox(c){ return typeof c.box === 'number' ? c.box : 0; }
+function cardLevel(c){
+  const b = cardBox(c);
+  return b >= 5 ? LEVELS[3] : b >= 3 ? LEVELS[2] : b >= 1 ? LEVELS[1] : LEVELS[0];
+}
+function isDue(c){ return cardBox(c) === 0 || c.due == null || c.due <= dayNo(); }
+function dueCount(){
+  let n = 0;
+  S.decks.forEach(d => d.cards.forEach(c => { if(cardBox(c) > 0 && isDue(c)) n++; }));
+  return n;
+}
+
+// こたえた けっかを カードに かきこむ
+function recordAnswer(card, ok){
+  const today = dayNo();
+  if(typeof card.box !== 'number') card.box = 0;
+  card.last = today;
+  if(ok){
+    card.right++;
+    card.box = Math.min(MAX_BOX, card.box + 1);
+    card.due = today + BOX_DAYS[card.box];
+  }else{
+    card.wrong++;
+    card.box = Math.max(1, card.box - 3);      // わすれていたら 大きく もどす
+    card.due = today;                          // すぐ ふくしゅうに もどす
+  }
+}
+
+// 古いカードに はこ を つける（これまでの 成績から すいてい）
+function migrateCard(c){
+  if(typeof c.box === 'number') return;
+  const n = (c.right||0) + (c.wrong||0);
+  if(!n){ c.box = 0; c.due = null; return; }
+  const acc = c.right / n;
+  c.box = (acc >= 0.9 && c.right >= 4) ? 4
+        : (acc >= 0.8 && c.right >= 3) ? 3
+        : (acc >= 0.6 && c.right >= 2) ? 2 : 1;
+  c.due  = dayNo();                            // いつ やったか 不明なので きょう から
+  c.last = dayNo();
+}
+function migrateAllCards(){
+  S.decks.forEach(d => d.cards.forEach(c => {
+    migrateCard(c);
+    // 整形ちゅうに タブを とじると フラグが のこり、
+    // ずっと「✨整形中…」の ままに なるので 読みこみ時に けす
+    delete c.polishing;
+  }));
+}
+
+/* ==================================================
+   10.5 テキスト整形（ルールベース・APIなしで動く）
+================================================== */
+
+// 話し言葉のフィラー。長い ものから 見る（「えー」が「えーと」を こわさないように）
+const FILLERS = ['なんていうか','ええっと','えっとー','えーっと','えーと','えっと','ええと',
+                 'あのー','そのー','じゃあ','なんか','まあ','あの','その','えー','あー',
+                 'うーん','んー','はい'].sort((a,b) => b.length - a.length);
+
+// フィラーの あとが 区切り（句読点・空白・文末）のときだけ 消す。
+// 「その人」の「その」や「あの日」の「あの」を 消さないため。
+function tidy(text){
+  let t = String(text || '');
+  // 全角英数字 → 半角
+  t = t.replace(/[Ａ-Ｚａ-ｚ０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  t = t.replace(/　/g, ' ').replace(/\s+/g, ' ').trim();
+
+  let guard = 0;
+  outer: while(guard++ < 10){
+    for(const f of FILLERS){
+      const re = new RegExp('^' + f + '(?=$|[、,，。．\\s])[、,，。．\\s]*');
+      if(re.test(t)){
+        const next = t.replace(re, '').trim();
+        // けずると 何も のこらない ときは けずらない。
+        // 「はい」「その」「なんか」が こたえ そのもの の ことが あるため。
+        if(!next) break outer;
+        t = next; continue outer;
+      }
+    }
+    break;
+  }
+  // 末尾の句読点・記号を除去
+  return t.replace(/[。．.、,，！!？?\s]+$/, '').trim();
+}
+
+// 手で 打った 文・写真から つくった 文・貼りつけた 文 むけ。
+// 見た目の ゆらぎ（全角英数・空白・文末の 句読点）だけ そろえて、
+// 話し言葉あつかいの フィラー除去は しない。
+// tidy() を つかうと「その とき の しゅしょう は」の「その」まで 消えてしまう。
+// おなじ もんだいが すでに ないか
+const MAX_Q = 120, MAX_A = 60;
+function newCard(q, a, alt){
+  const c = { id:uid(), q, a, alt:[], right:0, wrong:0, box:0, due:null };
+  if(alt && alt.length) mergeAlt(c, alt);
+  return c;
+}
+function findDup(deck, q, exceptId){
+  const k = norm(q);
+  if(!k) return null;
+  return deck.cards.find(c => c.id !== exceptId && norm(c.q) === k) || null;
+}
+function plain(text){
+  let t = String(text || '');
+  t = t.replace(/[Ａ-Ｚａ-ｚ０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  t = t.replace(/\u3000/g, ' ').replace(/\s+/g, ' ').trim();
+  return t.replace(/[。．.、,，！!？?\s]+$/, '').trim();
+}
+
+// あいづち・せきばらい だけの 発話か（もんだい待ちの ときだけ むしする）
+const PURE_FILLER = new RegExp('^(?:' + FILLERS.join('|') + ')$');
+
+// こたえ用。話し言葉の 語尾も 落として みじかくする
+function tidyAnswer(text){
+  const t = tidy(text);
+  const short = t.replace(/(?:だと思います|かと思います|と思います|でしょうか|ですかね|ですね|でした|ですよ|です|だよ|だね|かな)$/, '').trim();
+  return short.length ? short : t;   // ぜんぶ 消えたら もとに もどす
+}
+
+// 「アップル、りんご」のように 一息で 言われた場合に 2つへ 分ける。
+// 読点は 日本語なら ふつうに 出てくるので、それだけを たよりに 分けると
+// 「たいらのきよもりが、たおれたのは いつ」まで 分かれて ゴミが たまる。
+// まよったら 分けない（分けなくても つぎに こたえを 聞くだけ）。
+const SPLIT_STRONG  = /\s*(?:こたえは|答えは|意味は|の意味は|イコール|いこーる|＝|=)\s*/;
+const SPLIT_COMMA   = /\s*[、，,]\s*/;
+// 「の だいひょうさくは」のように 助詞が うきあがった ときだけ はじく。
+// 1文字で 見ると 「とうきょう」「にほん」「やま」まで はじいてしまう ため、
+// うしろに 空白が ある ばあいに かぎる。
+const HEAD_PARTICLE = /^[のはがをにでともへや][\s　]/;
+const TAIL_ASK      = /(?:は|なに|なん|なぜ|どこ|だれ|いつ|どれ|どちら|いくつ|ですか|でしょう)$/;
+// 「ふじさんは、なんメートル」の「なんメートル」は こたえでは なく といの つづき
+const HEAD_ASK      = /^(?:なに|なん|なぜ|どこ|だれ|いつ|どれ|どちら|どの|どんな|いくつ|いくら)/;
+
+function trySplit(text){
+  // 「こたえは」「イコール」など、はっきりした 区切り
+  const m = SPLIT_STRONG.exec(text);
+  if(m){
+    const q = tidy(text.slice(0, m.index));
+    const a = tidyAnswer(text.slice(m.index + m[0].length));
+    return (q && a) ? { q, a } : null;
+  }
+  // 読点は あいまい。「〜は、ワシントン」の 形の ときだけ みとめる
+  const parts = text.split(SPLIT_COMMA);
+  if(parts.length !== 2) return null;
+  const q = tidy(parts[0]), a = tidyAnswer(parts[1]);
+  if(!q || !a) return null;
+  if(q.length < 3) return null;              // 前半が みじかすぎる
+  if(norm(a).length > 12) return null;       // 後半が 長い → こたえ らしくない
+  if(HEAD_PARTICLE.test(a)) return null;     // 「の つづきは」
+  if(HEAD_ASK.test(a)) return null;          // 「なんメートル」
+  if(TAIL_ASK.test(a)) return null;          // 「たおれたのは いつ」
+  return { q, a };
+}
+
+/* ==================================================
+   10.6 AI整形（Claude API・にんい）
+================================================== */
+const AI_URL = 'https://api.anthropic.com/v1/messages';
+const AI_SYSTEM =
+  '音声入力された学習クイズを校正します。意味を変えず、簡潔で読みやすい日本語に整えてください。' +
+  '規則: (1) フィラー（えーと・あの・なんか等）と言い直しを削除。' +
+  '(2) 話し言葉を書き言葉に。ただし答えが単語・数値・固有名詞ならそのまま短く保つ。' +
+  '(3) 音声認識の明らかな誤変換は文脈から修正。' +
+  '(4) 情報を足さない・推測しない・解説を付けない。' +
+  '(5) 問題文は問いの形、答えはできるだけ短く。' +
+  '(6) alt には、その答えとして正解にすべき別表記をすべて入れる。' +
+  '答えに漢字が含まれるならその「ひらがなの読み」を必ず入れる。' +
+  '英単語ならカタカナ表記、数字なら漢数字/アラビア数字の両方、' +
+  '一般的な同義語・略称・送り仮名の違いも入れる。該当がなければ空配列。';
+
+// カード1枚のスキーマ（q / a / alt）
+const CARD_SCHEMA = {
+  type:'object',
+  properties:{
+    q:{type:'string'}, a:{type:'string'},
+    alt:{type:'array', items:{type:'string'}}
+  },
+  required:['q','a','alt'], additionalProperties:false
+};
+
+function aiOn(){ return !!(S.ai && S.ai.key); }
+function aiHeaders(){
+  return {
+    'content-type':'application/json',
+    'x-api-key': S.ai.key,
+    'anthropic-version':'2023-06-01',
+    'anthropic-dangerous-direct-browser-access':'true',
+  };
+}
+
+// 共通の API よびだし（タイムアウトつき）
+async function aiFetch(body, ms){
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), ms || 30000);
+  let res;
+  try{
+    res = await fetch(AI_URL, { method:'POST', headers:aiHeaders(),
+                                body:JSON.stringify(body), signal:ctl.signal });
+  }catch(e){
+    clearTimeout(timer);
+    throw new Error(e.name === 'AbortError' ? 'じかんぎれ' : 'つながりません');
+  }
+  clearTimeout(timer);
+  if(!res.ok){
+    let msg = res.status + ' ' + res.statusText;
+    try{ const e = await res.json(); if(e.error && e.error.message) msg = e.error.message; }catch(_){}
+    throw new Error(msg);
+  }
+  const data = await res.json();
+  if(data.stop_reason === 'refusal') throw new Error('AIが ことわりました');
+  const block = (data.content || []).find(b => b.type === 'text');
+  if(!block) throw new Error('AIから 文字が かえってきませんでした');
+  return JSON.parse(block.text);
+}
+
+async function aiCall(items){
+  // items: [{q,a}, ...] → 同じ順序で [{q,a,alt}, ...] を返す
+  const out = await aiFetch({
+    model: S.ai.model || 'claude-opus-5',
+    max_tokens: 3000,
+    system: AI_SYSTEM,
+    output_config: {
+      effort:'low',
+      format:{ type:'json_schema', schema:{
+        type:'object',
+        properties:{ cards:{ type:'array', items:CARD_SCHEMA } },
+        required:['cards'], additionalProperties:false } }
+    },
+    messages:[{ role:'user', content:
+      '次のクイズを校正し、同じ件数・同じ順序で返してください。\n' +
+      JSON.stringify({cards: items}) }],
+  }, 40000);
+  if(!out.cards || out.cards.length !== items.length) throw new Error('件数が あいません');
+  return out.cards;
+}
+
+// AI が つけてくれた 別表記を カードに 取りこむ
+function mergeAlt(card, list){
+  const seen = new Set([norm(card.a), ...(card.alt||[]).map(norm)]);
+  (list || []).forEach(x => {
+    const t = plain(x);
+    if(t && !seen.has(norm(t))){ (card.alt = card.alt || []).push(t); seen.add(norm(t)); }
+  });
+}
+
+// 追加ずみカードを 裏で 1枚だけ 整形（音声入力の テンポを 止めない）
+async function polishCardLater(deck, card){
+  if(!aiOn()) return;
+  card.polishing = true;
+  if(editing === deck) renderCards();
+  try{
+    const [r] = await aiCall([{q:card.q, a:card.a}]);
+    if(r && r.q && r.a){ card.q = r.q; card.a = r.a; mergeAlt(card, r.alt); }
+  }catch(e){
+    toast('AI整形 しっぱい: ' + e.message);
+  }finally{
+    delete card.polishing;
+    save();
+    if(editing === deck) renderCards();
+  }
+}
+
+async function polishAll(){
+  if(!editing) return;
+  if(!aiOn()){ toast('「ずかん」タブで APIキーを 入れてください'); return; }
+  const cards = editing.cards;
+  if(!cards.length){ toast('もんだいが ありません'); return; }
+  if(!confirm(`${cards.length}もんを AIで 整形します。ないようが Anthropicに おくられます。よろしい？`)) return;
+  const btn = $('#polish-all'); btn.disabled = true; btn.textContent = '整形中…';
+  const deck = editing;
+  try{
+    // 20件ずつ
+    for(let i=0; i<cards.length; i+=20){
+      const chunk = cards.slice(i, i+20);
+      const out = await aiCall(chunk.map(c=>({q:c.q, a:c.a})));
+      out.forEach((r,j)=>{
+        if(r && r.q && r.a){ chunk[j].q = r.q; chunk[j].a = r.a; mergeAlt(chunk[j], r.alt); }
+      });
+      save(); if(editing === deck) renderCards();
+    }
+    toast('整形しました');
+  }catch(e){
+    toast('しっぱい: ' + e.message);
+  }finally{
+    btn.disabled = false; btn.textContent = '✨ 整形';
+  }
+}
+
+function saveAi(){
+  S.ai.key = $('#ai-key').value.trim();
+  S.ai.model = $('#ai-model').value;
+  save();
+  $('#ai-status').textContent = S.ai.key ? '✅ ほぞんしました。AI整形が つかえます。' : 'キーは 空です。AI整形は つかいません。';
+}
+
+async function testAi(){
+  saveAi();
+  const st = $('#ai-status');
+  if(!aiOn()){ st.textContent = 'キーが 空です。'; return; }
+  st.textContent = 'テスト中…';
+  try{
+    const [r] = await aiCall([{q:'えーと、りんごって 英語で なんて いうんだっけ', a:'あー、アップル です'}]);
+    st.textContent = `✅ せいこう。「${r.q}」→「${r.a}」` +
+      (r.alt && r.alt.length ? `（べつの言い方: ${r.alt.join('、')}）` : '');
+  }catch(e){
+    st.textContent = '❌ ' + e.message;
+  }
+}
+
+/* ---- 意味が あっていれば 正解にする（AI判定・おぼえる） ---- */
+async function aiJudge(card, given){
+  const out = await aiFetch({
+    model: S.ai.model || 'claude-opus-5',
+    max_tokens: 300,
+    system:
+      '学習クイズの答え合わせをします。表記のちがいだけなら正解にしてください。' +
+      '正解にする例: ひらがな/カタカナ/漢字のちがい、送り仮名のちがい、読みで答えた、' +
+      '英語とカタカナ、数字の書き方、一般的な同義語・略称、語尾や助詞のちがい。' +
+      '不正解にする例: ちがう概念・ちがう人物・ちがう数値・逆の意味・答えになっていない、' +
+      'そして つづりのまちがい・打ちまちがい・1文字だけちがう惜しい答え。' +
+      '暗記アプリなので、惜しい答えを正解にすると まちがえて覚えてしまいます。' +
+      'canonical には、正解なら「生徒の答え」をそのまま入れる。不正解なら空文字。',
+    output_config:{ effort:'low', format:{ type:'json_schema', schema:{
+      type:'object',
+      properties:{ ok:{type:'boolean'}, canonical:{type:'string'} },
+      required:['ok','canonical'], additionalProperties:false } } },
+    messages:[{ role:'user', content:
+      `問題: ${card.q}\n正解: ${card.a}\n生徒の答え: ${given}\n` +
+      `この答えは正解とみなせますか？` }],
+  }, 12000);            // バトル中なので みじかめに 待つ
+  return !!out.ok;
+}
+
+// ローカルで 判定 →ダメなら AIに きく（結果は カードに おぼえさせる）
+async function judgeSmart(card, given){
+  if(judgeCard(card, given)) return { ok:true, by:'local' };
+  if(!aiOn() || !given) return { ok:false, by:'local' };
+  try{
+    const ok = await aiJudge(card, given);
+    if(ok){
+      mergeAlt(card, [given]);      // つぎからは API なしで 正解になる
+      save();
+      return { ok:true, by:'ai' };
+    }
+    return { ok:false, by:'ai' };
+  }catch(e){
+    return { ok:false, by:'error', msg:e.message };
+  }
+}
+
+/* ==================================================
+   10.65 しゃしんから もんだいを つくる
+================================================== */
+const PHOTO_SYSTEM =
+  '画像から学習用の一問一答クイズを作ります。' +
+  '規則: (1) 画像に実際に写っている内容だけを使う。写っていないことは絶対に作らない。' +
+  '(2) 画像の全体から、かたよりなく ばらばらの箇所を選ぶ。' +
+  '(3) 問題文は短い問いの形。答えは単語・数値・固有名詞など できるだけ短く。' +
+  '(4) 答えが1つに決まる問題だけ作る。あいまいな問題は作らない。' +
+  '(5) alt には正解にすべき別表記をすべて入れる。' +
+  '漢字の答えには必ずひらがなの読みを入れる。英単語にはカタカナ。該当なしなら空配列。' +
+  '(6) 文字が読み取れない・学習内容がない画像なら cards を空配列にする。';
+
+// 画像を ちいさくして base64 にする（通信量と 料金を おさえる）
+function shrinkImage(file, maxEdge){
+  return new Promise((res, rej) => {
+    if(!/^image\//.test(file.type)) return rej(new Error('画像ファイルでは ありません'));
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const m = maxEdge || 1400;
+      const s = Math.min(1, m / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * s));
+      const h = Math.max(1, Math.round(img.height * s));
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      res({ dataUrl: cv.toDataURL('image/jpeg', 0.85), w, h });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('画像を ひらけません')); };
+    img.src = url;
+  });
+}
+
+async function aiFromImage(dataUrl, count){
+  const m = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(dataUrl);
+  if(!m) throw new Error('画像の へんかんに しっぱいしました');
+  const out = await aiFetch({
+    model: S.ai.model || 'claude-opus-5',
+    max_tokens: 4000,
+    system: PHOTO_SYSTEM,
+    output_config:{ effort:'low', format:{ type:'json_schema', schema:{
+      type:'object',
+      properties:{
+        cards:{ type:'array', items:CARD_SCHEMA },
+        note:{ type:'string' }
+      },
+      required:['cards','note'], additionalProperties:false } } },
+    messages:[{ role:'user', content:[
+      { type:'image', source:{ type:'base64', media_type:m[1], data:m[2] } },
+      { type:'text', text:
+        `この画像から一問一答を最大${count}問つくってください。` +
+        `画像の中のいろいろな箇所から、ばらばらに選んでください。` +
+        `note には日本語で一言（何の画像か／作れなかった理由）。` }
+    ]}],
+  }, 90000);
+  return out;
+}
+
+function pickPhoto(){
+  if(!aiOn()){
+    $('#photo-box').innerHTML =
+      `<div class="win vhelp" style="margin-top:10px"><p style="margin:0;font-size:.85rem">
+        📷 しゃしんから つくるには <b>APIキー</b>が ひつようです。<br>
+        「ずかん」タブの ✨AI整形 で 入れてください。</p></div>`;
+    return;
+  }
+  $('#photo-file').click();
+}
+
+async function photoChosen(input){
+  const f = input.files && input.files[0];
+  input.value = '';
+  if(!f || !editing) return;
+
+  const box = $('#photo-box'), btn = $('#photo-btn');
+  const deck = editing;
+  box.innerHTML = '<p class="muted" style="margin:10px 0 0">🖼️ しゃしんを よみこんで います…</p>';
+  btn.disabled = true;
+
+  try{
+    const img = await shrinkImage(f, 1400);
+    box.innerHTML =
+      `<img class="photoprev" src="${img.dataUrl}" alt="">
+       <p class="muted" style="margin:8px 0 0">🤖 もんだいを かんがえて います… (${img.w}×${img.h})</p>`;
+
+    const out = await aiFromImage(img.dataUrl, 8);
+    const made = (out.cards || []).filter(c => c && c.q && c.a);
+
+    if(!made.length){
+      box.innerHTML =
+        `<img class="photoprev" src="${img.dataUrl}" alt="">
+         <div class="win vhelp" style="margin-top:10px"><p style="margin:0;font-size:.85rem">
+           もんだいを つくれませんでした。<br>
+           <span class="muted">${esc(out.note || '文字が よみとれなかった かもしれません')}</span><br><br>
+           もじが 大きく うつるように、ちかづけて とりなおしてみて ください。</p></div>`;
+      return;
+    }
+
+    let added = 0, dup = 0;
+    made.forEach(c => {
+      const q = plain(c.q), a = plain(c.a);
+      if(!q || !a || q.length > MAX_Q || a.length > MAX_A) return;
+      if(findDup(deck, q)){ dup++; return; }
+      deck.cards.push(newCard(q, a, c.alt));
+      added++;
+    });
+    save();
+    if(editing === deck) renderCards();
+    SE.correct();
+
+    box.innerHTML =
+      `<img class="photoprev" src="${img.dataUrl}" alt="">
+       <p style="margin:10px 0 0;color:var(--hp)">✅ ${added}もん つくりました</p>
+       ${dup ? `<p class="muted" style="margin:2px 0 0">すでに ある もんだい ${dup}もんは とばしました</p>` : ''}
+       <p class="muted" style="margin:4px 0 0">${esc(out.note || '')}<br>
+         いらない ものは 下の × で けせます。</p>`;
+  }catch(e){
+    box.innerHTML = `<div class="win vhelp" style="margin-top:10px"><p style="margin:0;font-size:.85rem">
+      ❌ ${esc(e.message)}</p></div>`;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+/* ==================================================
+   10.7 音声入力
+================================================== */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let V = { on:false, step:'q', q:'', rec:null, stopping:false, nameMode:false, last:null };
+
+function voiceSupported(){ return !!SR; }
+function fileMode(){ return location.protocol === 'file:'; }
+
+const SERVER_HELP =
+  'いまは ファイルを ちょくせつ ひらいて います（file://）。<br>' +
+  'この ひらきかたでは <b>ブラウザが マイクを ゆるしません</b>。<br><br>' +
+  'ターミナルで つぎを 実行して、<br><b style="color:var(--gold)">http://localhost:8000</b> を ひらいてください。<br>' +
+  '<code style="font-size:.8rem;color:var(--gold);word-break:break-all">' +
+  'cd ~/study-game &amp;&amp; python3 -m http.server 8000 --bind 127.0.0.1</code><br><br>' +
+  '<span class="muted">音声を つかわない ばあいは、下の ⌨️ ボタンから 手入力できます。</span>';
+
+function showVoiceHelp(msg){
+  $('#v-help').classList.remove('hidden');
+  $('#v-helptext').innerHTML = msg;
+}
+function hideVoiceHelp(){ $('#v-help').classList.add('hidden'); }
+
+function setVState(txt, step){
+  $('#v-state').innerHTML = step
+    ? `<span class="vstep ${step}">${step==='q'?'もんだい':'こたえ'}</span><br>${txt}`
+    : txt;
+}
+
+function toggleVoice(){
+  if(V.on) stopVoice(); else startVoice();
+}
+
+function startVoice(){
+  if(!voiceSupported()){
+    showVoiceHelp('この ブラウザは 音声入力に 対応していません。<br>' +
+      '<b>Chrome</b> か <b>Safari</b> で ひらいてください。');
+    return;
+  }
+  hideVoiceHelp();
+  V.on = true; V.step = 'q'; V.q = ''; V.stopping = false; V.nameMode = false;
+  $('#mic-btn').classList.add('on');
+  setVState('きいています…', 'q');
+  listen();
+}
+
+function stopVoice(){
+  V.on = false; V.stopping = true;
+  if(V.rec){ try{ V.rec.stop(); }catch(e){} }
+  $('#mic-btn').classList.remove('on');
+  $('#v-live').textContent = '';
+  setVState(V.q ? 'とちゅうで やめました' : 'こえで もんだいを つくる', null);
+  V.q = '';
+}
+
+function listen(){
+  const rec = new SR();
+  V.rec = rec;
+  rec.lang = 'ja-JP';
+  rec.continuous = false;      // 1発話ごとに 確定させる
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+
+  let finalText = '';
+
+  rec.onresult = e => {
+    let interim = '';
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const r = e.results[i];
+      if(r.isFinal) finalText += r[0].transcript;
+      else interim += r[0].transcript;
+    }
+    $('#v-live').textContent = finalText || interim;
+  };
+
+  let started = false;
+  rec.onstart = () => { started = true; };
+
+  rec.onerror = e => {
+    if(e.error === 'no-speech' || e.error === 'aborted') return;   // onend で 再開
+    micFailed(e.error);
+  };
+
+  rec.onend = () => {
+    const text = tidy(finalText);
+    if(text) handleUtterance(text);
+    if(V.on && !V.stopping) listen();       // 連続して きき続ける
+  };
+
+  try{
+    rec.start();
+  }catch(err){
+    // 直前の停止と かさなった だけなら onend で 再開される。
+    // それ いがい（きょか なし・かんきょう ふてきごう）は だまって 終わらせない。
+    if(V.on && !V.stopping && String(err && err.name) !== 'InvalidStateError'){
+      micFailed('start-failed', err);
+      return;
+    }
+  }
+  // start() が だまって 失敗する かんきょうへの ほけん
+  setTimeout(() => {
+    if(V.on && !V.stopping && !started && V.rec === rec) micFailed('no-start');
+  }, 2500);
+}
+
+// マイクが つかえなかった ときの 共通しょり（かならず 画面に 出す）
+function micFailed(reason, err){
+  V.on = false; V.stopping = true;
+  if(V.rec){ try{ V.rec.stop(); }catch(e){} V.rec = null; }
+  const mb = $('#mic-btn'); if(mb) mb.classList.remove('on');
+  setVState('こえで もんだいを つくる', null);
+  $('#v-live').textContent = '';
+
+  if(reason === 'network'){
+    showVoiceHelp('音声にんしきは インターネットせつぞくが ひつようです。<br>つながりを たしかめてください。');
+  }else if(reason === 'not-allowed' || reason === 'service-not-allowed'
+        || reason === 'start-failed' || reason === 'no-start'){
+    showVoiceHelp(fileMode()
+      ? SERVER_HELP
+      : 'マイクの きょかが とれませんでした。<br>' +
+        'ブラウザの アドレスバー よこの 🔒 から マイクを「きょか」に してください。' +
+        (err ? `<br><span class="muted">(${err.name}: ${err.message})</span>` : ''));
+  }else{
+    showVoiceHelp('音声にんしき エラー: ' + reason);
+  }
+}
+
+const CMD_STOP = /^(?:おわり|終わり|おしまい|ストップ|すとっぷ|停止|終了|やめて|やめる)$/;
+const CMD_UNDO = /^(?:とりけし|取り消し|とりけす|取り消す|キャンセル|まちがえた|間違えた)$/;
+
+function handleUtterance(text){
+  $('#v-live').textContent = '';
+
+  // 音声コマンド。
+  // 「もんだい待ち」の ときだけ、かつ ぴったり 同じ ときだけ うけつける。
+  // まえは 前方一致で こたえも 見ていたので、英単語 stop の こたえ「ストップ」で
+  // 録音が とまり、cancel の こたえ「キャンセル」で 直前の カードが 消えていた。
+  if(V.step === 'q' && !V.nameMode){
+    if(CMD_STOP.test(text)){ stopVoice(); return; }
+    if(CMD_UNDO.test(text)){ undoLast(); return; }
+    if(PURE_FILLER.test(text)) return;          // せきばらい・あいづちは むしする
+  }
+
+  if(V.nameMode){
+    const n = $('#d-name');
+    n.value = text; editing.name = text; save(); renderDecks();
+    V.nameMode = false; stopVoice();
+    toast('なまえを 「' + text + '」に しました');
+    return;
+  }
+
+  if(V.step === 'q'){
+    const pair = trySplit(text);          // 「アップル、りんご」を 一息で 言った場合
+    if(pair){ commit(pair.q, pair.a); return; }
+    V.q = text;
+    V.step = 'a';
+    setVState('「' + text + '」<br>… の こたえは？', 'a');
+    SE.select();
+  }else{
+    commit(V.q, tidyAnswer(text));
+  }
+}
+
+function commit(q, a){
+  if(!q || !a) return;
+  if(q.length > MAX_Q || a.length > MAX_A){
+    setVState('ながすぎます。みじかく いいなおして ください', 'q');
+    V.step = 'q'; V.q = ''; SE.wrong(); return;
+  }
+  const dup = findDup(editing, q);
+  if(dup){
+    // こえだと 言ったか どうか わからなく なりがち。だまって 足さずに 知らせる
+    setVState(`「${esc(dup.q)}」は もう あります<br>つぎの もんだいを どうぞ`, 'q');
+    V.step = 'q'; V.q = ''; SE.select(); return;
+  }
+  const card = newCard(q, a);
+  editing.cards.push(card);
+  V.last = { deck:editing, card };
+  V.step = 'q'; V.q = '';
+  save(); renderCards();
+  SE.correct();
+  setVState('つぎの もんだいを どうぞ', 'q');
+  $('#v-last').classList.remove('hidden');
+  $('#v-lq').textContent = q;
+  $('#v-la').textContent = a;
+  if(aiOn()) polishCardLater(editing, card);
+}
+
+function undoLast(){
+  if(!V.last || !V.last.deck.cards.includes(V.last.card)){ toast('とりけせる ものが ありません'); return; }
+  V.last.deck.cards = V.last.deck.cards.filter(c => c !== V.last.card);
+  save(); renderCards();
+  $('#v-last').classList.add('hidden');
+  V.last = null;
+  toast('とりけしました');
+  if(V.on) setVState('もういちど どうぞ', 'q');
+}
+
+function voiceDeckName(){
+  if(!voiceSupported()){
+    showVoiceHelp('この ブラウザは 音声入力に 対応していません。');
+    return;
+  }
+  hideVoiceHelp();
+  V.on = true; V.step = 'q'; V.q = ''; V.stopping = false; V.nameMode = true;
+  $('#mic-btn').classList.add('on');
+  setVState('もんだいしゅうの なまえを どうぞ', null);
+  listen();
+}
+
+/* ==================================================
+   11. もんだいしゅう
+================================================== */
+let editing = null;
+function renderDecks(){
+  const el=$('#d-list'); el.innerHTML='';
+  if(!S.decks.length){
+    el.innerHTML = '<div class="win"><p class="muted" style="margin:0">まだ ない。「あたらしく つくる」から どうぞ。</p></div>';
+    return;
+  }
+  S.decks.forEach(d=>{
+    const w=document.createElement('div');
+    w.className='win'; w.style.display='flex';
+    w.style.justifyContent='space-between'; w.style.alignItems='center';
+    const m = d.cards.filter(c => cardBox(c) >= 3).length;
+    const dn = d.cards.filter(c => cardBox(c) > 0 && isDue(c)).length;
+    const info = d.cards.length
+      ? `おぼえた <b style="color:var(--gold)">${m}</b>/${d.cards.length}`
+        + (dn ? `　🔔 ふくしゅう ${dn}` : '')
+        + (d.cards.length < 4 ? '　／ 4もん いじょうで たたかえる' : '')
+      : '0もん ／ 4もん いじょうで たたかえる';
+    w.innerHTML = `<div><b>${esc(d.name)}</b><div class="muted">${info}</div></div>`;
+    const b=document.createElement('button');
+    b.className='btn sm'; b.textContent='へんしゅう';
+    b.onclick=()=>openDeck(d.id);
+    w.appendChild(b); el.appendChild(w);
+  });
+}
+function newDeck(){
+  // mine を つけないと さいしょの 10もん登録の バーが 消えて すすめなくなる
+  const d={id:uid(),name:'あたらしい もんだいしゅう',cards:[],mine:true};
+  S.decks.push(d); save(); openDeck(d.id);
+}
+function openDeck(id){
+  editing = S.decks.find(d=>d.id===id);
+  editCardId = null;
+  $('#d-top').classList.add('hidden');
+  $('#d-edit').classList.remove('hidden');
+  const n=$('#d-name'); n.value=editing.name;
+  n.oninput=()=>{ editing.name=n.value; save(); };
+  $('#d-import').classList.add('hidden');
+  $('#v-last').classList.add('hidden');
+  V.last = null;
+  setVState('こえで もんだいを つくる', null);
+  $('#v-live').textContent = '';
+  hideVoiceHelp();
+  $('#polish-all').classList.toggle('hidden', !aiOn());
+  $('#photo-note').innerHTML = aiOn()
+    ? 'きょうかしょや ノートを うつすと もんだいに なります'
+    : '⚠️ つかうには「ずかん」タブで APIキーが ひつようです';
+  $('#photo-box').innerHTML = '';
+  // つかえない ことは おす まえに 知らせる
+  if(!voiceSupported()){
+    showVoiceHelp('この ブラウザは 音声入力に 対応していません。<br>' +
+      '<b>Chrome</b> か <b>Safari</b> で ひらいてください。');
+    $('#d-import').classList.remove('hidden');
+    $('#mic-btn').disabled = true;
+  }else if(fileMode()){
+    showVoiceHelp(SERVER_HELP);
+    $('#d-import').classList.remove('hidden');
+  }else{
+    $('#mic-btn').disabled = false;
+  }
+  renderCards();
+}
+function closeDeck(){
+  if(V.on) stopVoice();
+  editing=null; editCardId=null;
+  $('#d-edit').classList.add('hidden');
+  $('#d-top').classList.remove('hidden');
+  renderDecks();
+}
+// なおしている カードの id。
+// まえは 行の みぎはしに 35px の × が あって、スクロールの ついでに
+// さわっただけで きえていた。いまは タップで ひらいて、なかで けす。
+let editCardId = null;
+
+function renderCards(){
+  $('#d-count').textContent = editing.cards.length;
+  renderSetup();
+  const el=$('#d-cards'); el.innerHTML='';
+  if(!editing.cards.length){
+    el.innerHTML = '<p class="muted" style="margin:10px 0 0">まだ ありません。マイクを おして はなしてみてください。</p>';
+    return;
+  }
+  editing.cards.forEach(c=>{
+    if(c.id === editCardId){ el.appendChild(cardEditor(c)); return; }
+    const row=document.createElement('div');
+    row.className='item tap';
+    const alt=(c.alt||[]).length ? ` <span style="color:var(--hp)">＋${(c.alt||[]).length}</span>` : '';
+    row.innerHTML=`<div class="g${c.polishing?' polishing':''}"><b>${esc(c.q)}</b>
+      <span class="muted">${esc(c.a)}${alt}${c.polishing?' ✨整形中…':''}</span></div>
+      <span class="lv" style="color:${cardLevel(c).col}">${cardLevel(c).n}</span>
+      <span class="pen">✏️</span>`;
+    if((c.alt||[]).length) row.title = 'これも 正解: ' + c.alt.join('、');
+    row.onclick = ()=>{ editCardId = c.id; SE.select(); renderCards(); };
+    el.appendChild(row);
+  });
+}
+
+function cardEditor(c){
+  const w = document.createElement('div');
+  w.className = 'win cardedit';
+  w.innerHTML = `
+    <label>もんだい</label>
+    <input id="e-q" maxlength="${MAX_Q}">
+    <label style="margin-top:8px">こたえ</label>
+    <input id="e-a" maxlength="${MAX_A}">
+    <label style="margin-top:8px">これも 正解（、で くぎる）</label>
+    <input id="e-alt" placeholder="よみがな や べつの いいかた">
+    <div class="editrow">
+      <button class="btn sm" onclick="cancelEdit()">やめる</button>
+      <button class="btn sm" style="border-color:var(--hp);color:var(--hp)" onclick="saveEdit()">ほぞん</button>
+    </div>
+    <button class="btn sm wide" style="margin-top:10px;border-color:#f87171;color:#f87171"
+            onclick="deleteEdit()">🗑️ この もんだいを けす</button>`;
+  setTimeout(()=>{
+    $('#e-q').value = c.q; $('#e-a').value = c.a;
+    $('#e-alt').value = (c.alt||[]).join('、');
+    try{ $('#e-q').focus(); }catch(e){}
+  }, 0);
+  return w;
+}
+
+function cancelEdit(){ editCardId = null; renderCards(); }
+
+function saveEdit(){
+  const c = editing.cards.find(x => x.id === editCardId);
+  if(!c) return cancelEdit();
+  const q = plain($('#e-q').value), a = plain($('#e-a').value);
+  if(!q || !a){ toast('もんだいと こたえを 入力してね'); return; }
+  const dup = findDup(editing, q, c.id);
+  if(dup){ toast(`「${dup.q}」と おなじに なります`); return; }
+  c.q = q; c.a = a;
+  c.alt = [];
+  mergeAlt(c, $('#e-alt').value.split(/[、,，]/).map(x=>plain(x)).filter(Boolean));
+  editCardId = null; save(); renderCards(); SE.correct(); toast('なおしました');
+}
+
+function deleteEdit(){
+  const c = editing.cards.find(x => x.id === editCardId);
+  if(!c) return cancelEdit();
+  if(!confirm(`「${c.q}」を けします。よろしい？`)) return;
+  editing.cards = editing.cards.filter(x => x.id !== c.id);
+  editCardId = null; save(); renderCards(); toast('けしました');
+}
+function addCard(){
+  const q=$('#c-q'), a=$('#c-a');
+  const qt = plain(q.value), at = plain(a.value);
+  if(!qt || !at){ toast('もんだいと こたえを 入力してね'); return; }
+  if(qt.length > MAX_Q || at.length > MAX_A){
+    toast(`もんだいは ${MAX_Q}文字、こたえは ${MAX_A}文字までです`); return;
+  }
+  const dup = findDup(editing, qt);
+  if(dup){ toast(`「${dup.q}」は もう あります`); return; }
+  editing.cards.push(newCard(qt, at));
+  q.value=''; a.value=''; q.focus(); SE.select(); save(); renderCards();
+}
+function toggleImport(){ $('#d-import').classList.toggle('hidden'); }
+
+// 表計算ソフトから コピーすると「"apple","りんご"」の ように 引用符が つく。
+// その ままだと 引用符ごと もんだいに なるので、ちゃんと よみとる。
+function splitLine(line){
+  if(line.includes('\t')) return line.split('\t');
+  const out=[]; let cur='', inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(inQ){
+      if(c==='"'){ if(line[i+1]==='"'){ cur+='"'; i++; } else inQ=false; }
+      else cur+=c;
+    }else{
+      if(c==='"') inQ=true;
+      else if(c===','){ out.push(cur); cur=''; }
+      else cur+=c;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+const HEAD_Q = /^(?:もんだい|問題|質問|おもて|表|question|word|q)$/i;
+const HEAD_A = /^(?:こたえ|答え|かいとう|解答|うら|裏|answer|meaning|a)$/i;
+
+function doImport(){
+  const ta=$('#d-importtext');
+  const lines = ta.value.split('\n');
+  let n=0; const skipDup=[], skipBad=[], skipLong=[];
+  let head=false;
+
+  lines.forEach((line, i) => {
+    if(!line.trim()) return;
+    const parts = splitLine(line).map(x => plain(x));
+    const q = parts[0] || '', a = parts[1] || '';
+    // 1行目が 見出しなら とばす
+    if(i===0 && !head && HEAD_Q.test(q) && HEAD_A.test(a)){ head=true; return; }
+    if(!q || !a){ skipBad.push(line.trim()); return; }
+    if(q.length > MAX_Q || a.length > MAX_A){ skipLong.push(q.slice(0,14)); return; }
+    if(findDup(editing, q)){ skipDup.push(q); return; }
+    // 3れつめ いこうは「べつの こたえ」として とりこむ
+    editing.cards.push(newCard(q, a, parts.slice(2).filter(Boolean)));
+    n++;
+  });
+
+  save(); renderCards();
+  if(n) ta.value='';
+
+  // なにが 入って なにが 入らなかったか を かならず 見せる
+  const msg = [];
+  if(n) msg.push(`✅ ${n}もん ついかしました`);
+  if(head) msg.push(`・1ぎょうめは 見出しなので とばしました`);
+  if(skipDup.length) msg.push(`・おなじ もんだいが あるので とばした: ${skipDup.length}もん（${esc(skipDup.slice(0,3).join('、'))}${skipDup.length>3?' ほか':''}）`);
+  if(skipLong.length) msg.push(`・長すぎるので とばした: ${skipLong.length}もん`);
+  if(skipBad.length) msg.push(`・「もんだい,こたえ」の 形に なっていない: ${skipBad.length}ぎょう（${esc(skipBad.slice(0,2).join(' / '))}${skipBad.length>2?' ほか':''}）`);
+  if(!msg.length) msg.push('ついかできる ぎょうが ありませんでした');
+  $('#imp-note').innerHTML = msg.join('<br>');
+  $('#imp-note').classList.remove('hidden');
+  if(n) SE.correct();
+}
+function delDeck(){
+  if(!confirm(`「${editing.name}」を けします。よろしい？`)) return;
+  S.decks=S.decks.filter(d=>d.id!==editing.id); save(); closeDeck();
+}
+
+/* ==================================================
+   11.5 きろく（といた もんだいの 一覧）
+================================================== */
+let statFilter = 'all';
+const STAT_TABS = [
+  {id:'all',  label:'ぜんぶ'},
+  {id:'due',  label:'🔔 きょう'},
+  {id:'new',  label:'まだ'},
+  {id:'weak', label:'あやふや'},
+  {id:'ok',   label:'おぼえた'},
+  {id:'best', label:'かんぺき'},
+];
+
+function cardRate(c){
+  const n = c.right + c.wrong;
+  return n ? c.right / n : -1;          // -1 = まだ といていない
+}
+// いつ また 出るか を ことばで
+function nextText(c){
+  if(cardBox(c) === 0) return 'まだ といていない';
+  const d = (c.due == null ? 0 : c.due - dayNo());
+  if(d <= 0)  return '🔔 きょう ふくしゅう';
+  if(d === 1) return 'つぎは あした';
+  if(d < 7)   return `つぎは ${d}日ご`;
+  if(d < 30)  return `つぎは やく ${Math.round(d/7)}しゅうかんご`;
+  return `つぎは やく ${Math.round(d/30)}かげつご`;
+}
+
+function renderStats(){
+  const all = [];
+  S.decks.forEach(d => d.cards.forEach(c => all.push({c, deck:d})));
+
+  const totalR = all.reduce((s,x)=>s+x.c.right, 0);
+  const totalW = all.reduce((s,x)=>s+x.c.wrong, 0);
+
+  // ---- おぼえた度の うちわけ ----
+  const cnt = { new:0, weak:0, ok:0, best:0 };
+  all.forEach(x => cnt[cardLevel(x.c).id]++);
+  const mastered = cnt.ok + cnt.best;
+  const due = all.filter(x => cardBox(x.c) > 0 && isDue(x.c)).length;
+
+  $('#k-mast').textContent = `${mastered} / ${all.length}`;
+  $('#k-due').textContent  = due;
+  $('#k-ans').textContent  = totalR + totalW;
+  $('#k-acc').textContent  = (totalR+totalW) ? Math.round(totalR/(totalR+totalW)*100)+'%' : '—';
+
+  const bar = $('#k-mbar'); bar.innerHTML = '';
+  LEVELS.forEach(L => {
+    if(!cnt[L.id]) return;
+    const i = document.createElement('i');
+    i.style.width = (cnt[L.id] / Math.max(1, all.length) * 100) + '%';
+    i.style.background = L.col;
+    i.title = `${L.n} ${cnt[L.id]}もん`;
+    bar.appendChild(i);
+  });
+  $('#k-mleg').innerHTML = LEVELS.map(L =>
+    `<span><i style="background:${L.col}"></i>${L.n} ${cnt[L.id]}</span>`).join('');
+
+  // ---- きょう なにを すれば いいか を 一行で ----
+  $('#k-note').innerHTML = !all.length
+    ? 'まず「もんだい」タブで もんだいを つくろう。'
+    : due
+      ? `わすれかけの もんだいが <b style="color:var(--gold)">${due}もん</b> あります。`
+        + 'ぼうけんに 出ると ゆうせん的に 出てきます。'
+      : cnt.new
+        ? `ふくしゅうは ぜんぶ おわり。まだ といていない もんだいが ${cnt.new}もん あります。`
+        : mastered === all.length
+          ? '🎉 ぜんぶ おぼえました。日が たつと また ふくしゅうに 出てきます。'
+          : 'きょうの ふくしゅうは おわり。また あした 出てきます。';
+
+  // ---- タブ ----
+  const counts = { all: all.length, due, ...cnt };
+  $('#k-tabs').innerHTML = '';
+  STAT_TABS.forEach(t => {
+    const b = document.createElement('button');
+    b.className = statFilter === t.id ? 'on' : '';
+    b.innerHTML = `${t.label}<br>${counts[t.id]}`;
+    b.onclick = () => { statFilter = t.id; SE.select(); renderStats(); };
+    $('#k-tabs').appendChild(b);
+  });
+
+  // ---- 一覧（おぼえていない ものから）----
+  let list = all.filter(x =>
+    statFilter === 'all' ? true :
+    statFilter === 'due' ? (cardBox(x.c) > 0 && isDue(x.c)) :
+    cardLevel(x.c).id === statFilter);
+
+  list.sort((a,b) => {
+    const g = cardBox(a.c) - cardBox(b.c);          // はこが ひくい ものから
+    if(g) return g;
+    if(b.c.wrong !== a.c.wrong) return b.c.wrong - a.c.wrong;
+    return cardRate(a.c) - cardRate(b.c);
+  });
+
+  const el = $('#k-list');
+  if(!list.length){
+    el.innerHTML = `<p class="muted" style="margin:0;text-align:center;padding:14px 0">
+      ${statFilter==='all' ? 'まだ もんだいが ありません' : 'ここには まだ ありません'}</p>`;
+    return;
+  }
+  el.innerHTML = list.slice(0, 200).map(({c, deck}) => {
+    const L   = cardLevel(c);
+    const n   = c.right + c.wrong;
+    const pct = cardBox(c) / MAX_BOX * 100;
+    return `<div class="qrow">
+      <div class="top">
+        <span class="q">${esc(c.q)}</span>
+        <span class="lv" style="color:${L.col}">${L.n}</span>
+      </div>
+      <div class="a">${esc(c.a)}　<span style="opacity:.6">${esc(deck.name)}</span></div>
+      <div class="qbar${cardBox(c)?'':' none'}"><i style="width:${pct}%;background:${L.col}"></i></div>
+      <div class="a">${nextText(c)}<span class="nx">${n?`○${c.right} ×${c.wrong}`:''}</span></div>
+    </div>`;
+  }).join('') + (list.length > 200
+    ? `<p class="muted" style="margin:10px 0 0;text-align:center">ほか ${list.length-200}もん</p>` : '');
+}
+
+/* ==================================================
+   12. ずかん
+================================================== */
+function renderBook(){
+  const BOOK = [...MONS, ...RARES, ...BOSSES];
+  $('#z-count').textContent = `${Object.keys(S.seen).length} / ${BOOK.length}`;
+  const g=$('#z-grid'); g.innerHTML='';
+  BOOK.forEach(m=>{
+    const c=S.seen[m.id]||0;
+    const d=document.createElement('div');
+    d.className='slot'+(c?'':' lock')+(m.rare?' rare':'')+(m.boss?' bossslot':'');
+    d.innerHTML = c
+      ? `<span class="e">${m.e}</span><span class="n">${m.n}</span>
+         <span class="n muted">${m.rare?'✨レア ':''}${m.boss?'👑ボス ':''}×${c}</span>`
+      : `<span class="e">❔</span><span class="n">？？？</span>`;
+    g.appendChild(d);
+  });
+  $('#ti-count').textContent = `${S.titles.length} / ${TITLES.length}`;
+  $('#ti-list').innerHTML = TITLES.map(t=>{
+    const has=S.titles.includes(t.id);
+    return `<div class="item" style="${has?'':'opacity:.35'}">
+      <span style="font-size:1.3rem">${has?'👑':'🔒'}</span>
+      <div class="g"><b>${t.n}</b><span class="muted">${t.d}</span></div></div>`;
+  }).join('');
+  $('#z-ans').textContent = S.st.correct;
+  $('#z-acc').textContent = S.st.answered ? Math.round(S.st.correct/S.st.answered*100)+'%' : '—';
+  $('#z-best').textContent = S.st.bestCombo;
+
+  $('#ai-key').value = S.ai.key || '';
+  $('#ai-model').value = S.ai.model || 'claude-opus-5';
+  $('#ai-status').textContent = aiOn() ? '✅ AI整形が つかえます。' : 'キーが 空です。AI整形は つかいません。';
+}
+
+/* ==================================================
+   13. データ
+================================================== */
+function exportData(){
+  const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download='manabi-quest-save.json'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+function pickImportFile(){ $('#imp-file').click(); }
+
+function importData(input){
+  const f = input.files && input.files[0];
+  input.value = '';                       // 同じファイルを つづけて えらべるように
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    let d;
+    try{ d = JSON.parse(rd.result); }
+    catch(e){ toast('よみこめません（JSONでは ない）'); return; }
+    if(!d || !d.p || !Array.isArray(d.decks)){ toast('このゲームの きろくでは ない'); return; }
+    if(!confirm('いまの きろくを 上書きします。よろしい？')) return;
+    S = d; load2();                       // 足りない項目を おぎなって ほぞん
+    toast('よみこみました');
+    go(S.started ? 'town' : 'start');
+    if(!S.started){ picked = null; renderStart(); }
+  };
+  rd.onerror = () => toast('ファイルを ひらけません');
+  rd.readAsText(f);
+}
+
+// 読みこんだ きろくに 足りない項目を おぎなう（load() と 同じ しあげ）
+function load2(){
+  if(!S.ai) S.ai = { key:'', model:'claude-opus-5' };
+  if(typeof S.tutDone !== 'boolean') S.tutDone = false;
+  if(typeof S.stageCleared !== 'number') S.stageCleared = 0;
+  if(typeof S.setupDone !== 'boolean') S.setupDone = false;
+  ['bossKills','writeOk','perfects','rares'].forEach(k => { if(S.st && typeof S.st[k] !== 'number') S.st[k] = 0; });
+  migrateAllCards();
+  fixClass();
+  if(!S.snd) S.snd = { se:true, bgm:true };
+  if(!S.st)  S.st  = defaultState().st;
+  if(!S.seen) S.seen = {};
+  if(!Array.isArray(S.titles)) S.titles = [];
+  if(!Array.isArray(S.p.evo) || S.p.evo.length !== 3) S.p.evo = rollEvo();
+  if(S.p.lv > MAX_LV) S.p.lv = MAX_LV;
+  while(S.p.lv < MAX_LV && S.p.exp >= needExp(S.p.lv)){   // カーブ変更ごの ずれを ならす
+    S.p.exp -= needExp(S.p.lv); S.p.lv++;
+  }
+  if(S.p.lv >= MAX_LV) S.p.exp = 0;
+  if(S.p.hp <= 0 || S.p.hp > maxHp()) S.p.hp = maxHp();
+  save();
+}
+
+function resetAll(){
+  if(!confirm('すべての きろくが きえます。さいしょから はじめますか？')) return;
+  localStorage.removeItem(KEY);
+  S = defaultState(); save();
+  picked=null; renderStart(); go('start');
+}
+
+/* ==================================================
+   14. 起動
+================================================== */
+load();
+checkArt();
+$('#sound').textContent = (S.snd.se||S.snd.bgm) ? '🔊' : '🔇';
+if(S.started){ go('town'); } else { renderStart(); go('start'); }
+
+/* ---- PWA: service worker ----
+   ホーム画面に 入れた ときに アプリとして うごくように。
+   file:// や 非対応ブラウザでは なにも しない。 */
+if('serviceWorker' in navigator && location.protocol !== 'file:'){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

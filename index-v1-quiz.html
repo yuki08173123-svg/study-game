@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>まなびモンスター</title>
+<style>
+:root{
+  --bg:#f4f1ea; --bg2:#fffdf8; --fg:#2e2a25; --sub:#7d7468;
+  --line:#e2dbcd; --accent:#f0803c; --accent2:#3aa88b; --wrong:#e05a5a;
+  --shadow:0 2px 0 rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.06);
+  --r:16px;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#1c1a18; --bg2:#272421; --fg:#f0ebe3; --sub:#a49a8c;
+    --line:#3a3530; --shadow:0 2px 0 rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35); }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  -webkit-font-smoothing:antialiased; line-height:1.6;
+  padding-bottom:88px;
+}
+.wrap{max-width:640px;margin:0 auto;padding:16px}
+h1,h2,h3{margin:0;line-height:1.3}
+button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.muted{color:var(--sub);font-size:.85rem}
+.row{display:flex;align-items:center;gap:10px}
+.spread{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.btn{
+  border:none;border-radius:12px;padding:12px 18px;font-weight:700;
+  background:var(--accent);color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.15);
+  transition:transform .08s;
+}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.15)}
+.btn.ghost{background:transparent;color:var(--fg);border:1.5px solid var(--line);box-shadow:none;font-weight:600}
+.btn.sm{padding:7px 12px;font-size:.85rem;border-radius:10px}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.45;cursor:default}
+input,textarea,select{
+  font-family:inherit;font-size:1rem;width:100%;padding:11px 12px;
+  border:1.5px solid var(--line);border-radius:11px;background:var(--bg);color:var(--fg);
+}
+textarea{resize:vertical;min-height:96px;line-height:1.5}
+label{display:block;font-size:.8rem;font-weight:700;color:var(--sub);margin:12px 0 5px}
+
+/* nav */
+nav{
+  position:fixed;left:0;right:0;bottom:0;background:var(--bg2);
+  border-top:1px solid var(--line);display:flex;
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:30;
+}
+nav button{flex:1;background:none;border:none;padding:6px 2px;border-radius:12px;color:var(--sub);font-size:.68rem;font-weight:700}
+nav button .ic{display:block;font-size:1.35rem;line-height:1.3}
+nav button.on{color:var(--accent);background:rgba(240,128,60,.1)}
+
+/* buddy */
+.buddy{text-align:center;padding:22px 16px}
+.buddy .sprite{font-size:5.5rem;line-height:1;display:inline-block;animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.bar{height:11px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:7px}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),#6dd3b4);border-radius:99px;transition:width .5s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center}
+.stats div b{display:block;font-size:1.35rem}
+.stats div span{font-size:.72rem;color:var(--sub)}
+
+/* quiz */
+.choice{
+  display:block;width:100%;text-align:left;margin-bottom:10px;padding:15px 16px;
+  border:2px solid var(--line);border-radius:14px;background:var(--bg2);font-weight:600;
+  transition:.12s;
+}
+.choice:hover:not(:disabled){border-color:var(--accent)}
+.choice.correct{border-color:var(--accent2);background:rgba(58,168,139,.14)}
+.choice.wrong{border-color:var(--wrong);background:rgba(224,90,90,.14)}
+.choice:disabled{cursor:default}
+.qtext{font-size:1.3rem;font-weight:700;text-align:center;padding:26px 12px;min-height:120px;display:flex;align-items:center;justify-content:center}
+.combo{font-weight:800;color:var(--accent)}
+
+/* collection */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.slot{
+  aspect-ratio:1;border:1.5px solid var(--line);border-radius:14px;background:var(--bg2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;padding:4px;
+}
+.slot .e{font-size:2rem;line-height:1}
+.slot .n{font-size:.64rem;font-weight:700}
+.slot.locked{opacity:.32;filter:grayscale(1)}
+.slot.active{border-color:var(--accent);border-width:2.5px}
+
+/* list */
+.item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:none}
+.item .g{flex:1;min-width:0}
+.item .g b{display:block;font-size:.98rem}
+.item .g span{font-size:.75rem;color:var(--sub)}
+.pill{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--line);color:var(--sub)}
+
+/* toast */
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:50;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:700;font-size:.88rem;animation:pop .3s;box-shadow:var(--shadow)}
+@keyframes pop{from{opacity:0;transform:translateY(12px)}}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- ============ ホーム ============ -->
+  <section id="v-home">
+    <div class="card buddy">
+      <div class="sprite" id="b-sprite">🥚</div>
+      <h2 id="b-name" style="margin-top:8px">—</h2>
+      <div class="muted" id="b-lv">Lv.1</div>
+      <div class="bar"><i id="b-exp" style="width:0%"></i></div>
+      <div class="muted" id="b-expt" style="margin-top:4px">0 / 0 EXP</div>
+    </div>
+
+    <div class="card stats">
+      <div><b id="s-streak">0</b><span>連続学習日</span></div>
+      <div><b id="s-coin">0</b><span>コイン</span></div>
+      <div><b id="s-acc">—</b><span>正答率</span></div>
+    </div>
+
+    <button class="btn wide" style="font-size:1.1rem;padding:16px" onclick="go('quiz')">クイズをはじめる</button>
+
+    <div class="card" style="margin-top:14px">
+      <div class="spread"><h3>今日のひとこと</h3></div>
+      <p class="muted" id="s-tip" style="margin:8px 0 0"></p>
+    </div>
+  </section>
+
+  <!-- ============ クイズ ============ -->
+  <section id="v-quiz" class="hidden">
+    <!-- デッキ選択 -->
+    <div id="q-pick">
+      <h2 style="margin-bottom:12px">デッキを選ぶ</h2>
+      <div id="q-decklist"></div>
+    </div>
+
+    <!-- 出題中 -->
+    <div id="q-play" class="hidden">
+      <div class="spread" style="margin-bottom:10px">
+        <span class="muted" id="q-prog">1 / 10</span>
+        <span class="combo" id="q-combo"></span>
+      </div>
+      <div class="bar" style="margin-bottom:14px"><i id="q-bar" style="width:0%"></i></div>
+      <div class="card qtext" id="q-text"></div>
+      <div id="q-choices"></div>
+      <div id="q-feedback" style="min-height:52px;text-align:center;font-weight:700"></div>
+      <button class="btn wide hidden" id="q-next">つぎへ</button>
+    </div>
+
+    <!-- 結果 -->
+    <div id="q-result" class="hidden">
+      <div class="card" style="text-align:center;padding:28px 18px">
+        <div style="font-size:3.4rem" id="r-emoji">🎉</div>
+        <h2 id="r-title">クリア！</h2>
+        <p class="muted" id="r-score" style="margin:6px 0 18px"></p>
+        <div class="stats">
+          <div><b id="r-exp">0</b><span>獲得EXP</span></div>
+          <div><b id="r-coin">0</b><span>獲得コイン</span></div>
+          <div><b id="r-maxc">0</b><span>最大コンボ</span></div>
+        </div>
+      </div>
+      <div id="r-review"></div>
+      <button class="btn wide" onclick="startPick()">もう一度</button>
+      <button class="btn ghost wide" style="margin-top:10px" onclick="go('home')">ホームへ</button>
+    </div>
+  </section>
+
+  <!-- ============ デッキ ============ -->
+  <section id="v-decks" class="hidden">
+    <div class="spread" style="margin-bottom:12px">
+      <h2>デッキ</h2>
+      <button class="btn sm" onclick="newDeck()">＋ 新規</button>
+    </div>
+    <div id="d-list"></div>
+
+    <!-- デッキ編集 -->
+    <div id="d-edit" class="hidden">
+      <button class="btn ghost sm" onclick="closeDeck()">← もどる</button>
+      <div class="card" style="margin-top:12px">
+        <label>デッキ名</label>
+        <input id="d-name" placeholder="例: 英単語 中1">
+        <div class="spread" style="margin-top:14px">
+          <h3 style="font-size:1rem">問題（<span id="d-count">0</span>）</h3>
+          <button class="btn sm ghost" onclick="toggleImport()">一括入力</button>
+        </div>
+        <div id="d-import" class="hidden" style="margin-top:10px">
+          <p class="muted" style="margin:0 0 6px">1行に1問。「問題,答え」または「問題[タブ]答え」の形式で貼り付け。</p>
+          <textarea id="d-importtext" placeholder="apple,りんご&#10;dog,いぬ&#10;book,本"></textarea>
+          <button class="btn sm wide" style="margin-top:8px" onclick="doImport()">この内容を追加</button>
+        </div>
+        <div id="d-cards"></div>
+        <div style="margin-top:14px;border-top:1px dashed var(--line);padding-top:14px">
+          <label>問題文</label>
+          <input id="c-q" placeholder="例: apple">
+          <label>答え</label>
+          <input id="c-a" placeholder="例: りんご">
+          <button class="btn sm wide" style="margin-top:12px" onclick="addCard()">＋ 追加</button>
+        </div>
+      </div>
+      <button class="btn ghost wide" style="color:var(--wrong)" onclick="delDeck()">このデッキを削除</button>
+    </div>
+  </section>
+
+  <!-- ============ ずかん ============ -->
+  <section id="v-book" class="hidden">
+    <div class="card spread">
+      <div>
+        <h3>タマゴをかえす</h3>
+        <p class="muted" style="margin:2px 0 0">80コイン でなかまが1匹ふえる</p>
+      </div>
+      <button class="btn" id="gacha-btn" onclick="gacha()">🥚 80</button>
+    </div>
+
+    <h3 style="margin:18px 0 10px">なかま <span class="muted" id="k-count"></span></h3>
+    <p class="muted" style="margin:0 0 10px">タップで相棒を切り替え（EXPは相棒だけが受け取ります）</p>
+    <div class="grid" id="k-grid"></div>
+
+    <h3 style="margin:22px 0 10px">バッジ <span class="muted" id="bg-count"></span></h3>
+    <div id="bg-list" class="card"></div>
+
+    <div class="card" style="margin-top:18px">
+      <h3 style="font-size:1rem">データ</h3>
+      <p class="muted" style="margin:6px 0 12px">このブラウザの中だけに保存されています。</p>
+      <button class="btn ghost sm" onclick="exportData()">書き出す</button>
+      <button class="btn ghost sm" onclick="resetAll()" style="color:var(--wrong)">全部リセット</button>
+    </div>
+  </section>
+</div>
+
+<nav>
+  <button id="n-home"  class="on" onclick="go('home')"><span class="ic">🏠</span>ホーム</button>
+  <button id="n-quiz"  onclick="go('quiz')"><span class="ic">✏️</span>クイズ</button>
+  <button id="n-decks" onclick="go('decks')"><span class="ic">📚</span>デッキ</button>
+  <button id="n-book"  onclick="go('book')"><span class="ic">🐾</span>ずかん</button>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* ===================== データ定義 ===================== */
+
+const SPECIES = [
+  {id:'neko',  names:['コネコ','ノラネコ','トラオー'],   e:['🐱','🐈','🐅']},
+  {id:'inu',   names:['コイヌ','ワンダー','ウルフガ'],   e:['🐶','🐕','🐺']},
+  {id:'tori',  names:['ピヨタ','コトリン','イーグル'],   e:['🐣','🐤','🦅']},
+  {id:'kame',  names:['カメキチ','ワニゾウ','ザウルス'], e:['🐢','🐊','🦖']},
+  {id:'sakana',names:['サカナン','イルカン','クジラン'], e:['🐟','🐬','🐋']},
+  {id:'mushi', names:['イモリン','チョウチョ','ドラゴ'], e:['🐛','🦋','🐉']},
+  {id:'hoshi', names:['ホシノコ','キラリ','コメット'],   e:['⭐','🌟','☄️']},
+  {id:'robo',  names:['ロボチ','インベー','ユーフォン'], e:['🤖','👾','🛸']},
+];
+
+const BADGES = [
+  {id:'first', n:'はじめの一歩', d:'クイズを1回クリア',      f:s=>s.runs>=1},
+  {id:'c10',   n:'かけだし',     d:'累計10問 正解',          f:s=>s.totalCorrect>=10},
+  {id:'c100',  n:'勉強家',       d:'累計100問 正解',         f:s=>s.totalCorrect>=100},
+  {id:'c500',  n:'博士',         d:'累計500問 正解',         f:s=>s.totalCorrect>=500},
+  {id:'cb5',   n:'コンボ5',      d:'5連続で正解',            f:s=>s.bestCombo>=5},
+  {id:'cb10',  n:'コンボ10',     d:'10連続で正解',           f:s=>s.bestCombo>=10},
+  {id:'cb20',  n:'コンボ20',     d:'20連続で正解',           f:s=>s.bestCombo>=20},
+  {id:'pf1',   n:'全問正解',     d:'パーフェクトクリア1回',  f:s=>s.perfects>=1},
+  {id:'pf10',  n:'無敵',         d:'パーフェクトクリア10回', f:s=>s.perfects>=10},
+  {id:'st3',   n:'3日ぼうず突破',d:'3日連続で学習',          f:s=>s.bestStreak>=3},
+  {id:'st7',   n:'一週間',       d:'7日連続で学習',          f:s=>s.bestStreak>=7},
+  {id:'st30',  n:'習慣化',       d:'30日連続で学習',         f:s=>s.bestStreak>=30},
+  {id:'k3',    n:'なかま3匹',    d:'なかまを3匹あつめる',    f:s=>s.buddyCount>=3},
+  {id:'kall',  n:'コンプリート', d:'全8種をあつめる',        f:s=>s.speciesCount>=8},
+  {id:'ev1',   n:'はじめての進化',d:'なかまを1回 進化させる',f:s=>s.maxStage>=2},
+  {id:'ev2',   n:'最終進化',     d:'なかまを最終形にする',   f:s=>s.maxStage>=3},
+];
+
+const TIPS = [
+  '間違えた問題は次から出やすくなります。にがてを潰していこう。',
+  '毎日ちょっとずつ。連続学習日数はバッジになります。',
+  'コンボが続くほど もらえるEXPが増えます。',
+  'デッキは科目ごとに分けると復習しやすいです。',
+  '全問正解でボーナスコインがもらえます。',
+];
+
+const QUIZ_LEN = 10;
+const GACHA_COST = 80;
+
+/* ===================== 状態 ===================== */
+
+const KEY = 'manabi-monster-v1';
+let S;
+
+function defaultState(){
+  return {
+    decks: [{
+      id: uid(), name:'サンプル: 英単語',
+      cards: [
+        ['apple','りんご'],['dog','いぬ'],['book','本'],['water','水'],
+        ['school','学校'],['friend','友だち'],['music','音楽'],['river','川'],
+        ['bridge','橋'],['garden','庭'],['winter','冬'],['letter','手紙'],
+      ].map(([q,a])=>({id:uid(), q, a, right:0, wrong:0}))
+    }],
+    buddies: [{id:uid(), sp:'tori', lv:1, exp:0}],
+    activeBuddy: null,
+    coins: 0,
+    streak: 0, bestStreak: 0, lastDay: null,
+    totalCorrect: 0, totalAnswered: 0,
+    bestCombo: 0, perfects: 0, runs: 0,
+    badges: [],
+  };
+}
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    S = raw ? JSON.parse(raw) : defaultState();
+  }catch(e){ S = defaultState(); }
+  if(!S.activeBuddy && S.buddies.length) S.activeBuddy = S.buddies[0].id;
+  save();
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function today(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function daysBetween(a,b){
+  const p=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d).getTime();};
+  return Math.round((p(b)-p(a))/86400000);
+}
+
+/* ===================== なかま / レベル ===================== */
+
+function spec(id){ return SPECIES.find(s=>s.id===id); }
+function needExp(lv){ return 50 + lv*30; }
+function stageOf(lv){ return lv>=12 ? 2 : (lv>=5 ? 1 : 0); }
+function buddyName(b){ return spec(b.sp).names[stageOf(b.lv)]; }
+function buddyEmoji(b){ return spec(b.sp).e[stageOf(b.lv)]; }
+function activeBuddy(){ return S.buddies.find(b=>b.id===S.activeBuddy) || S.buddies[0]; }
+
+function giveExp(n){
+  const b = activeBuddy();
+  if(!b) return;
+  const before = stageOf(b.lv);
+  b.exp += n;
+  while(b.exp >= needExp(b.lv)){
+    b.exp -= needExp(b.lv);
+    b.lv++;
+    toast(`Lv.${b.lv} になった！`);
+  }
+  if(stageOf(b.lv) > before) toast(`${buddyName(b)} に進化した！ ${buddyEmoji(b)}`);
+}
+
+/* ===================== バッジ ===================== */
+
+function badgeStats(){
+  return {
+    runs:S.runs, totalCorrect:S.totalCorrect, bestCombo:S.bestCombo,
+    perfects:S.perfects, bestStreak:S.bestStreak,
+    buddyCount:S.buddies.length,
+    speciesCount:new Set(S.buddies.map(b=>b.sp)).size,
+    maxStage:S.buddies.reduce((m,b)=>Math.max(m,stageOf(b.lv)+1),0),
+  };
+}
+function checkBadges(){
+  const st = badgeStats();
+  BADGES.forEach(b=>{
+    if(!S.badges.includes(b.id) && b.f(st)){
+      S.badges.push(b.id);
+      toast(`🏅 バッジ獲得: ${b.n}`);
+    }
+  });
+}
+
+/* ===================== 画面切り替え ===================== */
+
+const VIEWS = ['home','quiz','decks','book'];
+function go(v){
+  VIEWS.forEach(x=>{
+    document.getElementById('v-'+x).classList.toggle('hidden', x!==v);
+    document.getElementById('n-'+x).classList.toggle('on', x===v);
+  });
+  window.scrollTo(0,0);
+  if(v==='home') renderHome();
+  if(v==='quiz') startPick();
+  if(v==='decks'){ closeDeck(); renderDecks(); }
+  if(v==='book') renderBook();
+}
+
+function toast(msg){
+  const t=document.createElement('div');
+  t.className='toast'; t.textContent=msg;
+  document.getElementById('toast').appendChild(t);
+  setTimeout(()=>t.remove(), 2600);
+}
+
+/* ===================== ホーム ===================== */
+
+function renderHome(){
+  const b = activeBuddy();
+  if(b){
+    document.getElementById('b-sprite').textContent = buddyEmoji(b);
+    document.getElementById('b-name').textContent = buddyName(b);
+    document.getElementById('b-lv').textContent = 'Lv.' + b.lv;
+    const need = needExp(b.lv);
+    document.getElementById('b-exp').style.width = Math.min(100, b.exp/need*100) + '%';
+    document.getElementById('b-expt').textContent = `${b.exp} / ${need} EXP`;
+  }
+  document.getElementById('s-streak').textContent = S.streak;
+  document.getElementById('s-coin').textContent = S.coins;
+  document.getElementById('s-acc').textContent =
+    S.totalAnswered ? Math.round(S.totalCorrect/S.totalAnswered*100)+'%' : '—';
+  document.getElementById('s-tip').textContent = TIPS[new Date().getDate() % TIPS.length];
+}
+
+/* ===================== クイズ ===================== */
+
+let Q = null;
+
+function startPick(){
+  document.getElementById('q-pick').classList.remove('hidden');
+  document.getElementById('q-play').classList.add('hidden');
+  document.getElementById('q-result').classList.add('hidden');
+
+  const el = document.getElementById('q-decklist');
+  el.innerHTML = '';
+  if(!S.decks.length){
+    el.innerHTML = '<div class="card"><p class="muted" style="margin:0">デッキがありません。「デッキ」タブから作成してください。</p></div>';
+    return;
+  }
+  S.decks.forEach(d=>{
+    const c=document.createElement('div');
+    c.className='card spread';
+    const ok = d.cards.length>=4;
+    c.innerHTML = `<div><b>${esc(d.name)}</b><div class="muted">${d.cards.length}問${ok?'':' — 4問以上で出題できます'}</div></div>`;
+    const btn=document.createElement('button');
+    btn.className='btn sm'; btn.textContent='はじめる'; btn.disabled=!ok;
+    btn.onclick=()=>startQuiz(d);
+    c.appendChild(btn);
+    el.appendChild(c);
+  });
+}
+
+function startQuiz(deck){
+  // にがて優先の重みづけ抽選
+  const pool = deck.cards.map(c=>({c, w: 1 + c.wrong*2.5 - Math.min(c.right,3)*0.2}));
+  const picked = [];
+  const rest = pool.slice();
+  const n = Math.min(QUIZ_LEN, deck.cards.length);
+  for(let i=0;i<n;i++){
+    let total = rest.reduce((s,x)=>s+Math.max(0.2,x.w),0);
+    let r = Math.random()*total, idx=0;
+    for(let j=0;j<rest.length;j++){ r -= Math.max(0.2, rest[j].w); if(r<=0){ idx=j; break; } }
+    picked.push(rest.splice(idx,1)[0].c);
+  }
+
+  Q = { deck, cards:picked, i:0, correct:0, combo:0, maxCombo:0, exp:0, coins:0, misses:[] };
+  document.getElementById('q-pick').classList.add('hidden');
+  document.getElementById('q-result').classList.add('hidden');
+  document.getElementById('q-play').classList.remove('hidden');
+  showQuestion();
+}
+
+function showQuestion(){
+  const card = Q.cards[Q.i];
+  document.getElementById('q-prog').textContent = `${Q.i+1} / ${Q.cards.length}`;
+  document.getElementById('q-bar').style.width = (Q.i/Q.cards.length*100)+'%';
+  document.getElementById('q-combo').textContent = Q.combo>=2 ? `🔥 ${Q.combo} コンボ` : '';
+  document.getElementById('q-text').textContent = card.q;
+  document.getElementById('q-feedback').textContent = '';
+  document.getElementById('q-next').classList.add('hidden');
+
+  // 選択肢: 同デッキの他の答えから3つ
+  const others = Q.deck.cards.filter(c=>c.id!==card.id && c.a!==card.a).map(c=>c.a);
+  const uniq = [...new Set(others)];
+  shuffle(uniq);
+  const choices = shuffle([card.a, ...uniq.slice(0,3)]);
+
+  const box = document.getElementById('q-choices');
+  box.innerHTML = '';
+  choices.forEach(ch=>{
+    const b=document.createElement('button');
+    b.className='choice'; b.textContent=ch;
+    b.onclick=()=>answer(b, ch, card, box);
+    box.appendChild(b);
+  });
+}
+
+function answer(btn, chosen, card, box){
+  [...box.children].forEach(b=>{
+    b.disabled = true;
+    if(b.textContent===card.a) b.classList.add('correct');
+  });
+  const ok = chosen === card.a;
+  S.totalAnswered++;
+
+  if(ok){
+    card.right++; Q.correct++; S.totalCorrect++;
+    Q.combo++; Q.maxCombo = Math.max(Q.maxCombo, Q.combo);
+    S.bestCombo = Math.max(S.bestCombo, Q.combo);
+    const bonus = 1 + Math.min(Q.combo-1, 9)*0.1;   // 最大1.9倍
+    const gain = Math.round(10*bonus);
+    Q.exp += gain; Q.coins += 2;
+    document.getElementById('q-feedback').innerHTML =
+      `<span style="color:var(--accent2)">せいかい！ +${gain} EXP</span>`;
+  }else{
+    btn.classList.add('wrong');
+    card.wrong++; Q.combo = 0; Q.misses.push(card);
+    document.getElementById('q-feedback').innerHTML =
+      `<span style="color:var(--wrong)">ざんねん…</span><br><span class="muted">正解: ${esc(card.a)}</span>`;
+  }
+  document.getElementById('q-combo').textContent = Q.combo>=2 ? `🔥 ${Q.combo} コンボ` : '';
+  save();
+
+  const next = document.getElementById('q-next');
+  next.classList.remove('hidden');
+  next.textContent = (Q.i+1 >= Q.cards.length) ? '結果を見る' : 'つぎへ';
+  next.onclick = ()=>{
+    Q.i++;
+    if(Q.i >= Q.cards.length) finish(); else showQuestion();
+  };
+}
+
+function finish(){
+  const perfect = Q.correct === Q.cards.length;
+  if(perfect){ Q.coins += 20; S.perfects++; }
+  S.runs++;
+  S.coins += Q.coins;
+  giveExp(Q.exp);
+
+  // 連続学習日数
+  const t = today();
+  if(S.lastDay !== t){
+    const diff = S.lastDay ? daysBetween(S.lastDay, t) : 999;
+    S.streak = (diff === 1) ? S.streak+1 : 1;
+    S.bestStreak = Math.max(S.bestStreak, S.streak);
+    S.lastDay = t;
+  }
+  checkBadges();
+  save();
+
+  document.getElementById('q-play').classList.add('hidden');
+  document.getElementById('q-result').classList.remove('hidden');
+  const rate = Q.correct/Q.cards.length;
+  document.getElementById('r-emoji').textContent = perfect?'🏆' : rate>=0.7?'🎉' : rate>=0.4?'💪':'🌱';
+  document.getElementById('r-title').textContent = perfect?'パーフェクト！' : rate>=0.7?'よくできました！' : 'おつかれさま';
+  document.getElementById('r-score').textContent = `${Q.cards.length}問中 ${Q.correct}問 正解`;
+  document.getElementById('r-exp').textContent = Q.exp;
+  document.getElementById('r-coin').textContent = Q.coins;
+  document.getElementById('r-maxc').textContent = Q.maxCombo;
+
+  const rev = document.getElementById('r-review');
+  if(Q.misses.length){
+    rev.innerHTML = '<div class="card"><h3 style="font-size:1rem;margin-bottom:6px">まちがえた問題</h3>' +
+      Q.misses.map(c=>`<div class="item"><div class="g"><b>${esc(c.q)}</b><span>${esc(c.a)}</span></div></div>`).join('') +
+      '</div>';
+  }else rev.innerHTML = '';
+}
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ===================== デッキ ===================== */
+
+let editing = null;
+
+function renderDecks(){
+  const el = document.getElementById('d-list');
+  el.innerHTML = '';
+  if(!S.decks.length){
+    el.innerHTML = '<div class="card"><p class="muted" style="margin:0">まだデッキがありません。「＋ 新規」から作りましょう。</p></div>';
+    return;
+  }
+  S.decks.forEach(d=>{
+    const c=document.createElement('div');
+    c.className='card spread';
+    c.innerHTML = `<div><b>${esc(d.name)}</b><div class="muted">${d.cards.length}問</div></div>`;
+    const b=document.createElement('button');
+    b.className='btn sm ghost'; b.textContent='編集';
+    b.onclick=()=>openDeck(d.id);
+    c.appendChild(b);
+    el.appendChild(c);
+  });
+}
+
+function newDeck(){
+  const d={id:uid(), name:'新しいデッキ', cards:[]};
+  S.decks.push(d); save(); openDeck(d.id);
+}
+
+function openDeck(id){
+  editing = S.decks.find(d=>d.id===id);
+  document.getElementById('d-list').classList.add('hidden');
+  document.querySelector('#v-decks .spread').classList.add('hidden');
+  document.getElementById('d-edit').classList.remove('hidden');
+  const name = document.getElementById('d-name');
+  name.value = editing.name;
+  name.oninput = ()=>{ editing.name = name.value; save(); };
+  document.getElementById('d-import').classList.add('hidden');
+  renderCards();
+}
+
+function closeDeck(){
+  editing = null;
+  document.getElementById('d-edit').classList.add('hidden');
+  document.getElementById('d-list').classList.remove('hidden');
+  document.querySelector('#v-decks .spread').classList.remove('hidden');
+  renderDecks();
+}
+
+function renderCards(){
+  document.getElementById('d-count').textContent = editing.cards.length;
+  const el = document.getElementById('d-cards');
+  el.innerHTML = '';
+  editing.cards.forEach(c=>{
+    const row=document.createElement('div');
+    row.className='item';
+    const acc = (c.right+c.wrong) ? Math.round(c.right/(c.right+c.wrong)*100)+'%' : '未';
+    row.innerHTML = `<div class="g"><b>${esc(c.q)}</b><span>${esc(c.a)}</span></div><span class="pill">${acc}</span>`;
+    const del=document.createElement('button');
+    del.className='btn sm ghost'; del.textContent='×';
+    del.onclick=()=>{ editing.cards = editing.cards.filter(x=>x.id!==c.id); save(); renderCards(); };
+    row.appendChild(del);
+    el.appendChild(row);
+  });
+}
+
+function addCard(){
+  const q=document.getElementById('c-q'), a=document.getElementById('c-a');
+  if(!q.value.trim() || !a.value.trim()){ toast('問題と答えの両方を入力してください'); return; }
+  editing.cards.push({id:uid(), q:q.value.trim(), a:a.value.trim(), right:0, wrong:0});
+  q.value=''; a.value=''; q.focus();
+  save(); renderCards();
+}
+
+function toggleImport(){ document.getElementById('d-import').classList.toggle('hidden'); }
+
+function doImport(){
+  const ta=document.getElementById('d-importtext');
+  let n=0;
+  ta.value.split('\n').forEach(line=>{
+    const parts = line.includes('\t') ? line.split('\t') : line.split(',');
+    if(parts.length<2) return;
+    const q=parts[0].trim(), a=parts.slice(1).join(',').trim();
+    if(!q||!a) return;
+    editing.cards.push({id:uid(), q, a, right:0, wrong:0}); n++;
+  });
+  ta.value='';
+  save(); renderCards();
+  toast(n ? `${n}問 追加しました` : '追加できる行がありませんでした');
+}
+
+function delDeck(){
+  if(!confirm(`「${editing.name}」を削除します。よろしいですか？`)) return;
+  S.decks = S.decks.filter(d=>d.id!==editing.id);
+  save(); closeDeck();
+}
+
+/* ===================== ずかん ===================== */
+
+function renderBook(){
+  const gb=document.getElementById('gacha-btn');
+  gb.disabled = S.coins < GACHA_COST;
+  gb.textContent = `🥚 ${GACHA_COST}`;
+
+  const owned = new Set(S.buddies.map(b=>b.sp));
+  document.getElementById('k-count').textContent = `${owned.size} / ${SPECIES.length}種`;
+
+  const g=document.getElementById('k-grid');
+  g.innerHTML='';
+  SPECIES.forEach(sp=>{
+    const mine = S.buddies.filter(b=>b.sp===sp.id);
+    const d=document.createElement('div');
+    if(!mine.length){
+      d.className='slot locked';
+      d.innerHTML = `<div class="e">❔</div><div class="n">？？？</div>`;
+    }else{
+      const best = mine.reduce((m,b)=>b.lv>m.lv?b:m, mine[0]);
+      const isActive = mine.some(b=>b.id===S.activeBuddy);
+      d.className='slot'+(isActive?' active':'');
+      d.innerHTML = `<div class="e">${buddyEmoji(best)}</div><div class="n">${buddyName(best)}</div><div class="n muted">Lv.${best.lv}${mine.length>1?' ×'+mine.length:''}</div>`;
+      d.onclick=()=>{ S.activeBuddy=best.id; save(); renderBook(); toast(`${buddyName(best)} が相棒になった`); };
+      d.style.cursor='pointer';
+    }
+    g.appendChild(d);
+  });
+
+  document.getElementById('bg-count').textContent = `${S.badges.length} / ${BADGES.length}`;
+  document.getElementById('bg-list').innerHTML = BADGES.map(b=>{
+    const has = S.badges.includes(b.id);
+    return `<div class="item" style="${has?'':'opacity:.4'}">
+      <span style="font-size:1.4rem">${has?'🏅':'🔒'}</span>
+      <div class="g"><b>${b.n}</b><span>${b.d}</span></div></div>`;
+  }).join('');
+}
+
+function gacha(){
+  if(S.coins < GACHA_COST){ toast('コインが足りません'); return; }
+  S.coins -= GACHA_COST;
+  const owned = new Set(S.buddies.map(b=>b.sp));
+  const news = SPECIES.filter(s=>!owned.has(s.id));
+  // 未所持を優先（70%）
+  const pool = (news.length && Math.random()<0.7) ? news : SPECIES;
+  const sp = pool[Math.floor(Math.random()*pool.length)];
+  const b = {id:uid(), sp:sp.id, lv:1, exp:0};
+  S.buddies.push(b);
+  toast(owned.has(sp.id) ? `${sp.names[0]} がなかまになった（重複）` : `✨ 新種！ ${sp.names[0]} ${sp.e[0]}`);
+  checkBadges(); save(); renderBook();
+}
+
+/* ===================== データ ===================== */
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(S,null,2)], {type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='manabi-monster-backup.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function resetAll(){
+  if(!confirm('すべてのデッキ・なかま・記録が消えます。本当にリセットしますか？')) return;
+  localStorage.removeItem(KEY);
+  load(); go('home');
+  toast('リセットしました');
+}
+
+/* ===================== 起動 ===================== */
+load();
+go('home');
+</script>
+</body>
+</html>

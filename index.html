@@ -233,16 +233,6 @@ label{display:block;font-size:.75rem;color:var(--dim);margin:12px 0 5px;letter-s
 .qbar.bad>i{background:var(--ehp)}
 .qbar.none{opacity:.35}
 
-/* ---- iPhoneの ノッチ・ステータスバーを よける ----
-   ホーム画面から ひらくと 画面の いちばん上まで つかうので、
-   時計や 電池の ひょうじの 下に コンテンツを ずらす。
-   env() に 対応しない ブラウザでは 元の 値の まま。 */
-.wrap{padding:calc(12px + env(safe-area-inset-top, 0px)) 12px calc(84px + env(safe-area-inset-bottom, 0px))}
-#sound{top:calc(8px + env(safe-area-inset-top, 0px))}
-#toast{bottom:calc(92px + env(safe-area-inset-bottom, 0px))}
-#fatal{padding-top:calc(8px + env(safe-area-inset-top, 0px))}
-#miss{padding:calc(18px + env(safe-area-inset-top, 0px)) 18px calc(18px + env(safe-area-inset-bottom, 0px))}
-
 /* ---- おぼえた度（マスター度） ---- */
 .tabs.two{flex-wrap:wrap}
 .tabs.two button{flex:1 1 28%}
@@ -401,6 +391,17 @@ nav button.on{color:var(--gold);border-color:var(--gold);background:#241b00}
 .toast{background:var(--gold);color:#2a1f00;padding:7px 16px;border-radius:6px;
   font-size:.85rem;border:2px solid #fff;animation:pop .25s}
 @keyframes pop{from{opacity:0;transform:translateY(10px)}}
+
+/* ---- iPhoneの ノッチ・ステータスバーを よける ----
+   ホーム画面から ひらくと 画面の いちばん上まで つかうので、
+   時計や 電池の ひょうじの 下に コンテンツを ずらす。
+   env() に 対応しない ブラウザでは 元の 値の まま。 */
+.wrap{--sa:1;padding:calc(12px + env(safe-area-inset-top, 0px)) 12px calc(84px + env(safe-area-inset-bottom, 0px))}
+#sound{top:calc(8px + env(safe-area-inset-top, 0px))}
+#toast{bottom:calc(92px + env(safe-area-inset-bottom, 0px))}
+#fatal{padding-top:calc(8px + env(safe-area-inset-top, 0px))}
+#miss{padding:calc(18px + env(safe-area-inset-top, 0px)) 18px calc(18px + env(safe-area-inset-bottom, 0px))}
+
 </style>
 </head>
 <body>
@@ -489,6 +490,7 @@ window.addEventListener('error', function(ev){
   </div>
 
   <button class="btn gold wide" style="font-size:1.3rem;padding:22px" onclick="go('prep')">⚔️ ぼうけん</button>
+  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">まなびクエスト v3</p>
 </section>
 
 <!-- ================= 冒険の準備 ================= -->

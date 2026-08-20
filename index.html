@@ -490,7 +490,7 @@ window.addEventListener('error', function(ev){
   </div>
 
   <button class="btn gold wide" style="font-size:1.3rem;padding:22px" onclick="go('prep')">⚔️ ぼうけん</button>
-  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">まなびクエスト v3</p>
+  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">まなびクエスト v4</p>
 </section>
 
 <!-- ================= 冒険の準備 ================= -->
@@ -1453,6 +1453,25 @@ async function gainExpAnimated(n){
    4. サウンド（WebAudio・外部ファイルなし）
 ================================================== */
 const A = { ctx:null, bgm:null, noise:null };
+
+/* ---- iPhoneの マナーモード対策 ----
+   iOSは マナーモード中、ふつうのWeb音（WebAudio）を すべて 消してしまう。
+   でも YouTubeや 音楽アプリは 鳴る。あれは「メディア再生」あつかい だから。
+   無音の音声を うらで ながしつづける ことで おなじ あつかいに してもらい、
+   マナーモードでも BGMと 効果音が 鳴るように する。 */
+const SILENT_WAV = 'data:audio/wav;base64,UklGRmQGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUAGAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+let unlockEl = null;
+function unlockAudio(){
+  try{ if(navigator.audioSession) navigator.audioSession.type = 'playback'; }catch(e){}
+  if(!unlockEl){
+    unlockEl = document.createElement('audio');
+    unlockEl.loop = true;
+    unlockEl.setAttribute('playsinline','');
+    unlockEl.src = SILENT_WAV;
+  }
+  if(S.snd.se || S.snd.bgm) unlockEl.play().catch(()=>{});
+  ac();
+}
 function ac(){
   if(!A.ctx){
     const C = window.AudioContext || window.webkitAudioContext;
@@ -1600,11 +1619,16 @@ function toggleSound(){
   const on = !(S.snd.se || S.snd.bgm);
   S.snd.se = on; S.snd.bgm = on; save();
   $('#sound').textContent = on ? '🔊' : '🔇';
+  toast(on ? '🔊 おとを だします' : '🔇 おとを けします');
   if(on){
+    unlockAudio();                       // タップの ついでに 音の ロックを かいじょ
+    SE.select();                         // すぐ 鳴らして 手ごたえを かえす
     if(!$('#v-battle').classList.contains('hidden') && B) startBgm(bgmKey(B.def.n, wave().some(e=>e.boss)));
     else startBgm('town');
+  }else{
+    stopBgm();
+    if(unlockEl) unlockEl.pause();       // メディア再生あつかいも やめる
   }
-  else stopBgm();
 }
 
 /* ==================================================
@@ -3849,8 +3873,8 @@ if(S.started){ go('town'); } else { renderStart(); go('start'); }
    file:// や 非対応ブラウザでは なにも しない。 */
 /* iOSでは ユーザーが 一度 タップするまで 音が 出せない きまり。
    さいしょの タップで オーディオを おこして、BGMが ながれはじめるように する */
-['pointerdown','touchend','keydown'].forEach(ev =>
-  document.addEventListener(ev, () => ac(), { once:true, capture:true }));
+['pointerdown','touchend','click','keydown'].forEach(ev =>
+  document.addEventListener(ev, () => unlockAudio(), { once:true, capture:true }));
 
 if('serviceWorker' in navigator && location.protocol !== 'file:'){
   window.addEventListener('load', () => {

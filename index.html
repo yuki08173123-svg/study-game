@@ -233,6 +233,16 @@ label{display:block;font-size:.75rem;color:var(--dim);margin:12px 0 5px;letter-s
 .qbar.bad>i{background:var(--ehp)}
 .qbar.none{opacity:.35}
 
+/* ---- iPhoneの ノッチ・ステータスバーを よける ----
+   ホーム画面から ひらくと 画面の いちばん上まで つかうので、
+   時計や 電池の ひょうじの 下に コンテンツを ずらす。
+   env() に 対応しない ブラウザでは 元の 値の まま。 */
+.wrap{padding:calc(12px + env(safe-area-inset-top, 0px)) 12px calc(84px + env(safe-area-inset-bottom, 0px))}
+#sound{top:calc(8px + env(safe-area-inset-top, 0px))}
+#toast{bottom:calc(92px + env(safe-area-inset-bottom, 0px))}
+#fatal{padding-top:calc(8px + env(safe-area-inset-top, 0px))}
+#miss{padding:calc(18px + env(safe-area-inset-top, 0px)) 18px calc(18px + env(safe-area-inset-bottom, 0px))}
+
 /* ---- おぼえた度（マスター度） ---- */
 .tabs.two{flex-wrap:wrap}
 .tabs.two button{flex:1 1 28%}
@@ -1523,6 +1533,11 @@ const BGMS = {
        lead:[659,0,784,659,880,0,784,0, 659,0,587,0,659,0,784,0,
              880,0,988,880,784,0,659,0, 587,0,659,0,523,523,0,0],
        bass:[110,110,131,131,147,147,110,110, 98,98,117,117,131,131,98,98] },
+  // まち・メニュー：おだやかな 曲（たたかい 以外の 画面で ながれる）
+  town:{ step:175, wave:'triangle', lv:.032, bl:.055, kick:0,
+       lead:[523,0,587,0,659,0,0,0, 784,0,659,0,587,0,0,0,
+             659,0,587,0,523,0,0,0, 440,0,494,0,523,0,0,0],
+       bass:[131,131,98,98,110,110,131,131, 87,87,98,98,65,65,98,98] },
   // ボスせん：はやく かっこよく
   boss:{ step:108, wave:'sawtooth', lv:.042, bl:.10, kick:2,
        lead:[587,587,0,587,698,0,587,0, 523,523,0,523,622,0,523,0,
@@ -1583,7 +1598,10 @@ function toggleSound(){
   const on = !(S.snd.se || S.snd.bgm);
   S.snd.se = on; S.snd.bgm = on; save();
   $('#sound').textContent = on ? '🔊' : '🔇';
-  if(on){ if(!$('#v-battle').classList.contains('hidden') && B) startBgm(bgmKey(B.def.n, wave().some(e=>e.boss))); }
+  if(on){
+    if(!$('#v-battle').classList.contains('hidden') && B) startBgm(bgmKey(B.def.n, wave().some(e=>e.boss)));
+    else startBgm('town');
+  }
   else stopBgm();
 }
 
@@ -1593,7 +1611,7 @@ function toggleSound(){
 const VIEWS = ['start','town','prep','battle','result','decks','stats','book'];
 const NAVED = ['town','prep','decks','stats','book'];
 function go(v){
-  if(v!=='battle') stopBgm();
+  if(v!=='battle') startBgm('town');     // たたかい以外は おだやかな 曲
   if(v!=='decks' && typeof V !== 'undefined' && V.on) stopVoice();
   VIEWS.forEach(x=>$('#v-'+x).classList.toggle('hidden', x!==v));
   $('#nav').classList.toggle('hidden', !NAVED.includes(v));
@@ -3827,6 +3845,11 @@ if(S.started){ go('town'); } else { renderStart(); go('start'); }
 /* ---- PWA: service worker ----
    ホーム画面に 入れた ときに アプリとして うごくように。
    file:// や 非対応ブラウザでは なにも しない。 */
+/* iOSでは ユーザーが 一度 タップするまで 音が 出せない きまり。
+   さいしょの タップで オーディオを おこして、BGMが ながれはじめるように する */
+['pointerdown','touchend','keydown'].forEach(ev =>
+  document.addEventListener(ev, () => ac(), { once:true, capture:true }));
+
 if('serviceWorker' in navigator && location.protocol !== 'file:'){
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});

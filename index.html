@@ -402,6 +402,12 @@ nav button.on{color:var(--gold);border-color:var(--gold);background:#241b00}
 #fatal{padding-top:calc(8px + env(safe-area-inset-top, 0px))}
 #miss{padding:calc(18px + env(safe-area-inset-top, 0px)) 18px calc(18px + env(safe-area-inset-bottom, 0px))}
 
+/* せまい 画面では 音ボタンが カードの 上に かさなるので、
+   ボタンの 高さぶん 下から コンテンツを はじめる（ひろい 画面では かさならない） */
+@media (max-width:656px){
+  .wrap{padding-top:calc(54px + env(safe-area-inset-top, 0px))}
+}
+
 </style>
 </head>
 <body>
@@ -490,7 +496,7 @@ window.addEventListener('error', function(ev){
   </div>
 
   <button class="btn gold wide" style="font-size:1.3rem;padding:22px" onclick="go('prep')">⚔️ ぼうけん</button>
-  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">まなびクエスト v4</p>
+  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">まなびクエスト v5</p>
 </section>
 
 <!-- ================= 冒険の準備 ================= -->
@@ -1630,6 +1636,26 @@ function toggleSound(){
     if(unlockEl) unlockEl.pause();       // メディア再生あつかいも やめる
   }
 }
+
+/* ---- アプリが うらに まわったら 音を ぜんぶ とめる ----
+   iPhoneで ホームに もどっても BGMが 小さく なりつづけて いたので、
+   画面が 見えなく なったら とめて、もどってきたら つづきから ながす。 */
+function audioBackground(hidden){
+  if(hidden){
+    stopBgm();
+    if(unlockEl) unlockEl.pause();
+    if(A.ctx && A.ctx.state === 'running'){ try{ A.ctx.suspend(); }catch(e){} }
+  }else{
+    if(A.ctx){ try{ A.ctx.resume(); }catch(e){} }
+    if(S.snd.bgm){
+      if(unlockEl) unlockEl.play().catch(()=>{});
+      const inBattle = !$('#v-battle').classList.contains('hidden') && B && !B.abort;
+      startBgm(inBattle ? bgmKey(B.def.n, wave().some(e=>e.boss)) : 'town');
+    }
+  }
+}
+document.addEventListener('visibilitychange', () => audioBackground(document.hidden));
+window.addEventListener('pagehide', () => audioBackground(true));
 
 /* ==================================================
    5. 画面切り替え

@@ -392,6 +392,17 @@ nav button.on{color:var(--gold);border-color:var(--gold);background:#241b00}
   font-size:.85rem;border:2px solid #fff;animation:pop .25s}
 @keyframes pop{from{opacity:0;transform:translateY(10px)}}
 
+/* ---- もんだいづくりの 2大ボタンと ガイド ---- */
+.mkrow{display:flex;gap:10px}
+.mkbig{flex:1;background:var(--win);border:3px solid var(--gold);border-radius:14px;color:var(--gold);
+  padding:18px 8px 14px;font-size:2.1rem;line-height:1;box-shadow:0 4px 0 rgba(0,0,0,.5)}
+.mkbig span{display:block;font-size:.85rem;margin-top:9px;color:#fff;letter-spacing:.05em}
+.mkbig:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.5)}
+.guide .gstep{display:flex;gap:10px;align-items:flex-start;margin-top:9px}
+.guide .gstep b{flex:0 0 22px;height:22px;border-radius:50%;background:var(--gold);color:#000;
+  text-align:center;line-height:22px;font-size:.8rem}
+.guide .gstep span{font-size:.9rem;line-height:1.5;padding-top:1px}
+
 /* ---- iPhoneの ノッチ・ステータスバーを よける ----
    ホーム画面から ひらくと 画面の いちばん上まで つかうので、
    時計や 電池の ひょうじの 下に コンテンツを ずらす。
@@ -496,7 +507,7 @@ window.addEventListener('error', function(ev){
   </div>
 
   <button class="btn gold wide" style="font-size:1.3rem;padding:22px" onclick="go('prep')">⚔️ ぼうけん</button>
-  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">まなびクエスト v5</p>
+  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">まなびクエスト v6</p>
 </section>
 
 <!-- ================= 冒険の準備 ================= -->
@@ -587,14 +598,32 @@ window.addEventListener('error', function(ev){
     </div>
     <button class="btn sm" onclick="closeDeck()">← もどる</button>
 
-    <!-- 音声で作る -->
-    <div class="win" style="margin-top:12px">
+    <!-- つくりかた（もんだいが 0この あいだだけ 出る） -->
+    <div class="win guide hidden" id="mk-guide" style="margin-top:12px">
+      <h3 style="font-size:1rem;margin:0 0 10px">📖 もんだいの つくりかた</h3>
+      <div class="gstep"><b>1</b><span>🎤 を おして、もんだいを はなす<br><span class="muted">れい:「アップル」</span></span></div>
+      <div class="gstep"><b>2</b><span>つづけて こたえを はなす<br><span class="muted">れい:「りんご」</span></span></div>
+      <div class="gstep"><b>3</b><span>これを くりかえす だけ！</span></div>
+      <p class="muted" style="margin:12px 0 0">📷 なら きょうかしょや ノートを うつすだけ。<br>キーボードで うちたい ときは 下の「そのほか」から。</p>
+    </div>
+
+    <!-- つくりかたは おおきく 2つ -->
+    <div class="mkrow" style="margin-top:12px">
+      <button class="mkbig" onclick="openVoicePanel()">🎤<span>こえで つくる</span></button>
+      <button class="mkbig" id="photo-btn" onclick="pickPhoto()">📷<span>しゃしんで つくる</span></button>
+    </div>
+    <input type="file" id="photo-file" accept="image/*" capture="environment"
+           style="display:none" onchange="photoChosen(this)">
+
+    <!-- こえで つくる パネル -->
+    <div class="win hidden" id="v-panel">
       <div class="micwrap">
         <button class="mic" id="mic-btn" onclick="toggleVoice()">🎤</button>
         <div class="vstate" id="v-state">こえで もんだいを つくる</div>
         <div class="vlive" id="v-live"></div>
         <p class="muted" id="v-hint" style="margin:8px 0 0">
-          ボタンを おして「アップル」→「りんご」の ように<br>もんだい と こたえを こうごに はなす
+          「アップル」→「りんご」の ように こうごに はなす<br>
+          「アップル、りんご」と ひといきでも OK
         </p>
       </div>
       <div id="v-last" class="hidden" style="margin-top:12px;border-top:2px dashed rgba(255,255,255,.25);padding-top:10px">
@@ -603,18 +632,12 @@ window.addEventListener('error', function(ev){
           <button class="btn sm" onclick="undoLast()">とりけす</button>
         </div>
       </div>
+    </div>
 
-      <div style="margin-top:14px;border-top:2px dashed rgba(255,255,255,.25);padding-top:12px">
-        <button class="btn gold wide" id="photo-btn" onclick="pickPhoto()" style="font-size:1.05rem;padding:14px">
-          📷 しゃしんから つくる
-        </button>
-        <input type="file" id="photo-file" accept="image/*" capture="environment"
-               style="display:none" onchange="photoChosen(this)">
-        <p class="muted" id="photo-note" style="margin:8px 0 0">
-          きょうかしょや ノートを うつすと もんだいに なります
-        </p>
-        <div id="photo-box"></div>
-      </div>
+    <!-- しゃしんで つくる パネル -->
+    <div class="win hidden" id="p-panel">
+      <p class="muted" id="photo-note" style="margin:0"></p>
+      <div id="photo-box"></div>
     </div>
 
     <div class="win vhelp hidden" id="v-help">
@@ -633,7 +656,7 @@ window.addEventListener('error', function(ev){
         <h3 style="font-size:.95rem">もんだい（<span id="d-count">0</span>）</h3>
         <div style="display:flex;gap:6px">
           <button class="btn sm" id="polish-all" onclick="polishAll()">✨ 整形</button>
-          <button class="btn sm" onclick="toggleImport()">⌨️</button>
+          <button class="btn sm" onclick="toggleImport()">⌨️ そのほか</button>
         </div>
       </div>
 
@@ -3178,14 +3201,34 @@ async function aiFromImage(dataUrl, count){
 }
 
 function pickPhoto(){
+  if(V.on) stopVoice();
+  $('#v-panel').classList.add('hidden');
+  $('#p-panel').classList.remove('hidden');
   if(!aiOn()){
+    // ずかんタブへ 行かせず、その場で かぎを 入れられるように する
+    $('#photo-note').innerHTML = '';
     $('#photo-box').innerHTML =
-      `<div class="win vhelp" style="margin-top:10px"><p style="margin:0;font-size:.85rem">
-        📷 しゃしんから つくるには <b>APIキー</b>が ひつようです。<br>
-        「ずかん」タブの ✨AI整形 で 入れてください。</p></div>`;
+      `<div class="win vhelp" style="margin-top:0"><p style="margin:0;font-size:.85rem">
+        📷 しゃしんから つくるには、AIの <b>かぎ（APIキー）</b>が 1かいだけ ひつようです。</p>
+        <input id="pk-key" type="password" placeholder="sk-ant- で はじまる かぎ" style="margin-top:10px">
+        <button class="btn sm wide" style="margin-top:8px" onclick="savePhotoKey()">ほぞんして カメラへ</button>
+        <p class="muted" style="margin:8px 0 0;font-size:.72rem">かぎは この 端末の 中にだけ ほぞんされます。<br>
+        もっていない ばあいは「そのほか」の 手入力・こえで つくれます。</p></div>`;
     return;
   }
+  $('#photo-note').textContent = 'きょうかしょや ノートを うつすと もんだいに なります';
   $('#photo-file').click();
+}
+function savePhotoKey(){
+  const k = $('#pk-key').value.trim();
+  if(!k){ toast('かぎを 入れてね'); return; }
+  S.ai = S.ai || {};
+  S.ai.key = k; save();
+  const ak = $('#ai-key'); if(ak) ak.value = k;
+  $('#polish-all').classList.remove('hidden');
+  $('#photo-box').innerHTML = '';
+  toast('✅ ほぞんしました');
+  pickPhoto();          // ボタンを おした ながれの まま カメラへ
 }
 
 async function photoChosen(input){
@@ -3258,7 +3301,7 @@ const SERVER_HELP =
   'ターミナルで つぎを 実行して、<br><b style="color:var(--gold)">http://localhost:8000</b> を ひらいてください。<br>' +
   '<code style="font-size:.8rem;color:var(--gold);word-break:break-all">' +
   'cd ~/study-game &amp;&amp; python3 -m http.server 8000 --bind 127.0.0.1</code><br><br>' +
-  '<span class="muted">音声を つかわない ばあいは、下の ⌨️ ボタンから 手入力できます。</span>';
+  '<span class="muted">音声を つかわない ばあいは、「⌨️ そのほか」から 手入力できます。</span>';
 
 function showVoiceHelp(msg){
   $('#v-help').classList.remove('hidden');
@@ -3270,6 +3313,13 @@ function setVState(txt, step){
   $('#v-state').innerHTML = step
     ? `<span class="vstep ${step}">${step==='q'?'もんだい':'こたえ'}</span><br>${txt}`
     : txt;
+}
+
+// おおきな「こえで つくる」ボタン。パネルを ひらいて すぐ きき始める
+function openVoicePanel(){
+  $('#p-panel').classList.add('hidden');
+  $('#v-panel').classList.remove('hidden');
+  if(!V.on) startVoice();
 }
 
 function toggleVoice(){
@@ -3360,8 +3410,15 @@ function micFailed(reason, err){
     showVoiceHelp('音声にんしきは インターネットせつぞくが ひつようです。<br>つながりを たしかめてください。');
   }else if(reason === 'not-allowed' || reason === 'service-not-allowed'
         || reason === 'start-failed' || reason === 'no-start'){
+    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
     showVoiceHelp(fileMode()
       ? SERVER_HELP
+      : ios
+      ? 'マイクの きょかが ありません。<br>' +
+        'iPhoneの <b>設定</b>アプリ → 下の アプリ一覧から <b>まなびクエスト</b>' +
+        '（なければ <b>Safari</b>）→ <b>マイク</b>を ONに してください。<br><br>' +
+        '<span class="muted">🎤が つかえなくても だいじょうぶ。「そのほか」の 手入力らんで、' +
+        'キーボードの 🎤（音声入力）でも つくれます。</span>'
       : 'マイクの きょかが とれませんでした。<br>' +
         'ブラウザの アドレスバー よこの 🔒 から マイクを「きょか」に してください。' +
         (err ? `<br><span class="muted">(${err.name}: ${err.message})</span>` : ''));
@@ -3494,15 +3551,15 @@ function openDeck(id){
   const n=$('#d-name'); n.value=editing.name;
   n.oninput=()=>{ editing.name=n.value; save(); };
   $('#d-import').classList.add('hidden');
+  $('#v-panel').classList.add('hidden');
+  $('#p-panel').classList.add('hidden');
   $('#v-last').classList.add('hidden');
   V.last = null;
   setVState('こえで もんだいを つくる', null);
   $('#v-live').textContent = '';
   hideVoiceHelp();
   $('#polish-all').classList.toggle('hidden', !aiOn());
-  $('#photo-note').innerHTML = aiOn()
-    ? 'きょうかしょや ノートを うつすと もんだいに なります'
-    : '⚠️ つかうには「ずかん」タブで APIキーが ひつようです';
+  $('#photo-note').innerHTML = '';
   $('#photo-box').innerHTML = '';
   // つかえない ことは おす まえに 知らせる
   if(!voiceSupported()){
@@ -3533,9 +3590,11 @@ let editCardId = null;
 function renderCards(){
   $('#d-count').textContent = editing.cards.length;
   renderSetup();
+  // まだ 1もんも ない あいだは、つくりかたガイドを 出す
+  $('#mk-guide').classList.toggle('hidden', editing.cards.length > 0);
   const el=$('#d-cards'); el.innerHTML='';
   if(!editing.cards.length){
-    el.innerHTML = '<p class="muted" style="margin:10px 0 0">まだ ありません。マイクを おして はなしてみてください。</p>';
+    el.innerHTML = '<p class="muted" style="margin:10px 0 0">つくった もんだいは ここに ならびます。</p>';
     return;
   }
   editing.cards.forEach(c=>{

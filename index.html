@@ -507,7 +507,7 @@ window.addEventListener('error', function(ev){
   </div>
 
   <button class="btn gold wide" style="font-size:1.3rem;padding:22px" onclick="go('prep')">⚔️ ぼうけん</button>
-  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">暗記クエスト v7</p>
+  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">暗記クエスト v8</p>
 </section>
 
 <!-- ================= 冒険の準備 ================= -->
@@ -1266,7 +1266,7 @@ function defaultState(){
          streak:0, bestStreak:0, lastDay:null, noHit:false, demon:false,
          bossKills:0, writeOk:0, perfects:0, rares:0 },
     snd:{ se:true, bgm:true },
-    ai:{ key:'', model:'claude-opus-5' },
+    ai:{ key:'', model:'claude-haiku-4-5' },
     tutDone:false,
     stageCleared:0,          // ここまで クリア
     setupDone:false,         // さいしょの 10もんを つくったかした
@@ -1283,7 +1283,7 @@ function load(){
   try{ S = JSON.parse(localStorage.getItem(KEY)) || defaultState(); }
   catch(e){ S = defaultState(); }
   if(!S.p) S = defaultState();
-  if(!S.ai) S.ai = { key:'', model:'claude-opus-5' };
+  if(!S.ai) S.ai = { key:'', model:'claude-haiku-4-5' };
   if(typeof S.tutDone !== 'boolean') S.tutDone = false;
   if(typeof S.stageCleared !== 'number') S.stageCleared = 0;
   if(typeof S.setupDone !== 'boolean') S.setupDone = false;
@@ -2964,6 +2964,28 @@ const AI_URL = 'https://api.anthropic.com/v1/messages';
 // 共用AIサーバーの URL。ここが 入っていると、つかう人は かぎの 入力が 不要になる。
 // （もちぬしが 1つ サーバーを 用意して、その中に かぎを おいておく 方式）
 const AI_PROXY = '';
+
+// 自分の かぎを 入れた人は 直せつ Anthropic へ（無制限）。
+// 入れていない人は 共用サーバーへ（1日の 無料ぶんだけ）。
+function useOwnKey(){ return !!(S.ai && S.ai.key); }
+function aiModel(){
+  if(!useOwnKey()) return 'claude-haiku-4-5';   // 共用サーバーは haiku 固定
+  return (S.ai && S.ai.model) || 'claude-haiku-4-5';
+}
+// effort は Haiku 4.5 では エラーに なるので、つかえる モデルにだけ つける
+function aiEffort(){ return /haiku/.test(aiModel()) ? {} : { effort:'low' }; }
+
+// 端末を みわける ID。共用サーバーが「1台なん回つかったか」を かぞえる ためだけ。
+// 名前や メールなどの 個人じょうほうは 入っていない。
+function deviceId(){
+  let id = '';
+  try{ id = localStorage.getItem('aq-device') || ''; }catch(e){}
+  if(!id){
+    id = 'x' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    try{ localStorage.setItem('aq-device', id); }catch(e){}
+  }
+  return id;
+}
 const AI_SYSTEM =
   '音声入力された学習クイズを校正します。意味を変えず、簡潔で読みやすい日本語に整えてください。' +
   '規則: (1) フィラー（えーと・あの・なんか等）と言い直しを削除。' +
@@ -3000,11 +3022,15 @@ function aiHeaders(){
 async function aiFetch(body, ms){
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), ms || 30000);
+  const own = useOwnKey();
+  const url = own ? AI_URL : AI_PROXY;
+  if(!url){ clearTimeout(timer); throw new Error('AIの せっていが ありません'); }
   let res;
   try{
-    res = await fetch(AI_PROXY || AI_URL, {
+    res = await fetch(url, {
       method:'POST',
-      headers: AI_PROXY ? {'content-type':'application/json'} : aiHeaders(),
+      headers: own ? aiHeaders()
+                   : {'content-type':'application/json', 'x-device-id': deviceId()},
       body:JSON.stringify(body), signal:ctl.signal });
   }catch(e){
     clearTimeout(timer);
@@ -3012,9 +3038,15 @@ async function aiFetch(body, ms){
   }
   clearTimeout(timer);
   if(!res.ok){
-    let msg = res.status + ' ' + res.statusText;
-    try{ const e = await res.json(); if(e.error && e.error.message) msg = e.error.message; }catch(_){}
-    throw new Error(msg);
+    let msg = res.status + ' ' + res.statusText, type = '';
+    try{
+      const e = await res.json();
+      if(e.error){ if(e.error.message) msg = e.error.message; type = e.error.type || ''; }
+    }catch(_){}
+    const err = new Error(msg);
+    // 無料ぶんを つかいきった → 「自分の かぎ」に あんないする ための めじるし
+    if(res.status === 429 && type === 'over_quota') err.overQuota = true;
+    throw err;
   }
   const data = await res.json();
   if(data.stop_reason === 'refusal') throw new Error('AIが ことわりました');
@@ -3026,11 +3058,11 @@ async function aiFetch(body, ms){
 async function aiCall(items){
   // items: [{q,a}, ...] → 同じ順序で [{q,a,alt}, ...] を返す
   const out = await aiFetch({
-    model: S.ai.model || 'claude-opus-5',
+    model: aiModel(),
     max_tokens: 3000,
     system: AI_SYSTEM,
     output_config: {
-      effort:'low',
+      ...aiEffort(),
       format:{ type:'json_schema', schema:{
         type:'object',
         properties:{ cards:{ type:'array', items:CARD_SCHEMA } },
@@ -3120,7 +3152,7 @@ async function testAi(){
 /* ---- 意味が あっていれば 正解にする（AI判定・おぼえる） ---- */
 async function aiJudge(card, given){
   const out = await aiFetch({
-    model: S.ai.model || 'claude-opus-5',
+    model: aiModel(),
     max_tokens: 300,
     system:
       '学習クイズの答え合わせをします。表記のちがいだけなら正解にしてください。' +
@@ -3130,7 +3162,7 @@ async function aiJudge(card, given){
       'そして つづりのまちがい・打ちまちがい・1文字だけちがう惜しい答え。' +
       '暗記アプリなので、惜しい答えを正解にすると まちがえて覚えてしまいます。' +
       'canonical には、正解なら「生徒の答え」をそのまま入れる。不正解なら空文字。',
-    output_config:{ effort:'low', format:{ type:'json_schema', schema:{
+    output_config:{ ...aiEffort(), format:{ type:'json_schema', schema:{
       type:'object',
       properties:{ ok:{type:'boolean'}, canonical:{type:'string'} },
       required:['ok','canonical'], additionalProperties:false } } },
@@ -3197,10 +3229,10 @@ async function aiFromImage(dataUrl, count){
   const m = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(dataUrl);
   if(!m) throw new Error('画像の へんかんに しっぱいしました');
   const out = await aiFetch({
-    model: S.ai.model || 'claude-opus-5',
+    model: aiModel(),
     max_tokens: 4000,
     system: PHOTO_SYSTEM,
-    output_config:{ effort:'low', format:{ type:'json_schema', schema:{
+    output_config:{ ...aiEffort(), format:{ type:'json_schema', schema:{
       type:'object',
       properties:{
         cards:{ type:'array', items:CARD_SCHEMA },
@@ -3232,10 +3264,12 @@ function pickPhoto(){
 }
 
 // かぎの 入力フォーム（共用サーバーが ない ときの よび）
-function keyForm(boxSel, next){
+function keyForm(boxSel, next, lead){
   $(boxSel).innerHTML =
-    `<div class="win vhelp" style="margin-top:10px"><p style="margin:0;font-size:.85rem">
-      この きのうには、AIの <b>かぎ（APIキー）</b>が 1かいだけ ひつようです。</p>
+    `<div class="win vhelp" style="margin-top:10px">
+      ${lead ? `<p style="margin:0 0 8px;color:var(--ehp);font-size:.85rem">⏳ ${esc(lead)}</p>` : ''}
+      <p style="margin:0;font-size:.85rem">
+      すぐに つかいたい ときは、AIの <b>かぎ（APIキー）</b>を 入れると 無制限に なります。</p>
       <input id="pk-key" type="password" placeholder="sk-ant- で はじまる かぎ" style="margin-top:10px">
       <button class="btn sm wide" style="margin-top:8px" onclick="saveAiKey('${next}')">ほぞんして すすむ</button>
       <p class="muted" style="margin:8px 0 0;font-size:.72rem">かぎは この 端末の 中にだけ ほぞんされます。<br>
@@ -3277,10 +3311,10 @@ async function aiMake(){
   box.innerHTML = '<p class="muted" style="margin:10px 0 0">🤖 かんがえて います…（30びょう くらい）</p>';
   try{
     const out = await aiFetch({
-      model: S.ai.model || 'claude-opus-5',
+      model: aiModel(),
       max_tokens: 6000,
       system: MAKE_SYSTEM,
-      output_config:{ effort:'low', format:{ type:'json_schema', schema:{
+      output_config:{ ...aiEffort(), format:{ type:'json_schema', schema:{
         type:'object',
         properties:{ cards:{ type:'array', items:CARD_SCHEMA }, note:{ type:'string' } },
         required:['cards','note'], additionalProperties:false } } },
@@ -3305,7 +3339,8 @@ async function aiMake(){
       : `<p style="margin:10px 0 0;color:var(--ehp)">つくれませんでした。テーマを かえて ためしてください。<br>
          <span class="muted">${esc(out.note || '')}</span></p>`;
   }catch(e){
-    box.innerHTML = `<p style="margin:10px 0 0;color:var(--ehp)">❌ ${esc(e.message)}</p>`;
+    if(e.overQuota) keyForm('#ai-make-box', 'make', e.message);
+    else box.innerHTML = `<p style="margin:10px 0 0;color:var(--ehp)">❌ ${esc(e.message)}</p>`;
   }finally{
     btn.disabled = false;
   }
@@ -3381,7 +3416,8 @@ async function photoChosen(input){
        <p class="muted" style="margin:4px 0 0">${esc(out.note || '')}<br>
          いらない ものは 下の × で けせます。</p>`;
   }catch(e){
-    box.innerHTML = `<div class="win vhelp" style="margin-top:10px"><p style="margin:0;font-size:.85rem">
+    if(e.overQuota) keyForm('#photo-box', 'photo', e.message);
+    else box.innerHTML = `<div class="win vhelp" style="margin-top:10px"><p style="margin:0;font-size:.85rem">
       ❌ ${esc(e.message)}</p></div>`;
   }finally{
     btn.disabled = false;
@@ -4067,7 +4103,7 @@ function renderBook(){
   $('#z-best').textContent = S.st.bestCombo;
 
   $('#ai-key').value = S.ai.key || '';
-  $('#ai-model').value = S.ai.model || 'claude-opus-5';
+  $('#ai-model').value = S.ai.model || 'claude-haiku-4-5';
   $('#ai-status').textContent = aiOn() ? '✅ AI整形が つかえます。' : 'キーが 空です。AI整形は つかいません。';
 }
 
@@ -4104,7 +4140,7 @@ function importData(input){
 
 // 読みこんだ きろくに 足りない項目を おぎなう（load() と 同じ しあげ）
 function load2(){
-  if(!S.ai) S.ai = { key:'', model:'claude-opus-5' };
+  if(!S.ai) S.ai = { key:'', model:'claude-haiku-4-5' };
   if(typeof S.tutDone !== 'boolean') S.tutDone = false;
   if(typeof S.stageCleared !== 'number') S.stageCleared = 0;
   if(typeof S.setupDone !== 'boolean') S.setupDone = false;

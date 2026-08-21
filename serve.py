@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-まなびクエスト用の かんたんサーバー
+暗記クエスト用の かんたんサーバー
 
     python3 serve.py
 
@@ -41,7 +41,7 @@ class Server(socketserver.TCPServer):
 if __name__ == "__main__":
     try:
         with Server((HOST, PORT), NoCacheHandler) as httpd:
-            print(f"\n  まなびクエスト を ひらいてください:\n")
+            print(f"\n  暗記クエスト を ひらいてください:\n")
             print(f"      http://localhost:{PORT}\n")
             print("  とめるときは Ctrl+C\n")
             httpd.serve_forever()

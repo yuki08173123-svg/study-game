@@ -1,6 +1,6 @@
 {
-  "name": "まなびクエスト",
-  "short_name": "まなびクエスト",
+  "name": "暗記クエスト",
+  "short_name": "暗記クエスト",
   "description": "といに こたえて モンスターを たおす、暗記のためのRPG",
   "lang": "ja",
   "start_url": "./",

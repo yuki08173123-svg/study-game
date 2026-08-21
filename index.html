@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-store">
-<title>まなびクエスト</title>
+<title>暗記クエスト</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#05070f">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="まなびクエスト">
+<meta name="apple-mobile-web-app-title" content="暗記クエスト">
 <style>
 :root{
   --ink:#0b1230; --win:#0d1638; --line:#ffffff;
@@ -475,7 +475,7 @@ window.addEventListener('error', function(ev){
 <!-- ================= キャラ選択 ================= -->
 <section id="v-start" class="hidden">
   <div class="win" style="text-align:center">
-    <h1 style="font-size:1.5rem;color:var(--gold)">まなびクエスト</h1>
+    <h1 style="font-size:1.5rem;color:var(--gold)">暗記クエスト</h1>
     <p class="muted" style="margin:6px 0 0">といに こたえ モンスターを たおせ</p>
   </div>
   <div class="win">
@@ -507,7 +507,7 @@ window.addEventListener('error', function(ev){
   </div>
 
   <button class="btn gold wide" style="font-size:1.3rem;padding:22px" onclick="go('prep')">⚔️ ぼうけん</button>
-  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">まなびクエスト v6</p>
+  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">暗記クエスト v7</p>
 </section>
 
 <!-- ================= 冒険の準備 ================= -->
@@ -585,6 +585,7 @@ window.addEventListener('error', function(ev){
       <button class="btn sm" onclick="newDeck()">＋ あたらしく つくる</button>
     </div>
     <div id="d-list"></div>
+    <div class="win hidden" id="d-presets"></div>
   </div>
 
   <div id="d-edit" class="hidden">
@@ -604,7 +605,7 @@ window.addEventListener('error', function(ev){
       <div class="gstep"><b>1</b><span>🎤 を おして、もんだいを はなす<br><span class="muted">れい:「アップル」</span></span></div>
       <div class="gstep"><b>2</b><span>つづけて こたえを はなす<br><span class="muted">れい:「りんご」</span></span></div>
       <div class="gstep"><b>3</b><span>これを くりかえす だけ！</span></div>
-      <p class="muted" style="margin:12px 0 0">📷 なら きょうかしょや ノートを うつすだけ。<br>キーボードで うちたい ときは 下の「そのほか」から。</p>
+      <p class="muted" style="margin:12px 0 0">📷 なら きょうかしょを うつすだけ。🤖 なら テーマを つたえるだけ。<br>キーボードで うちたい ときは「そのほか」から。</p>
     </div>
 
     <!-- つくりかたは おおきく 2つ -->
@@ -614,6 +615,18 @@ window.addEventListener('error', function(ev){
     </div>
     <input type="file" id="photo-file" accept="image/*" capture="environment"
            style="display:none" onchange="photoChosen(this)">
+    <button class="btn wide" style="margin-top:10px" onclick="openAiMake()">🤖 テーマを つたえて AIに つくってもらう</button>
+
+    <!-- AIに つくってもらう パネル -->
+    <div class="win hidden" id="ai-panel">
+      <label>どんな もんだいが ほしい？</label>
+      <div style="display:flex;gap:8px">
+        <input id="ai-theme" placeholder="れい: 英検5きゅうの 英単語を 20もん">
+        <button class="btn sm" id="ai-theme-mic" onclick="themeVoice()">🎤</button>
+      </div>
+      <button class="btn gold wide" style="margin-top:10px" id="ai-make-go" onclick="aiMake()">✨ つくってもらう</button>
+      <div id="ai-make-box"></div>
+    </div>
 
     <!-- こえで つくる パネル -->
     <div class="win hidden" id="v-panel">
@@ -2948,6 +2961,9 @@ function trySplit(text){
    10.6 AI整形（Claude API・にんい）
 ================================================== */
 const AI_URL = 'https://api.anthropic.com/v1/messages';
+// 共用AIサーバーの URL。ここが 入っていると、つかう人は かぎの 入力が 不要になる。
+// （もちぬしが 1つ サーバーを 用意して、その中に かぎを おいておく 方式）
+const AI_PROXY = '';
 const AI_SYSTEM =
   '音声入力された学習クイズを校正します。意味を変えず、簡潔で読みやすい日本語に整えてください。' +
   '規則: (1) フィラー（えーと・あの・なんか等）と言い直しを削除。' +
@@ -2970,7 +2986,7 @@ const CARD_SCHEMA = {
   required:['q','a','alt'], additionalProperties:false
 };
 
-function aiOn(){ return !!(S.ai && S.ai.key); }
+function aiOn(){ return !!AI_PROXY || !!(S.ai && S.ai.key); }
 function aiHeaders(){
   return {
     'content-type':'application/json',
@@ -2986,8 +3002,10 @@ async function aiFetch(body, ms){
   const timer = setTimeout(() => ctl.abort(), ms || 30000);
   let res;
   try{
-    res = await fetch(AI_URL, { method:'POST', headers:aiHeaders(),
-                                body:JSON.stringify(body), signal:ctl.signal });
+    res = await fetch(AI_PROXY || AI_URL, {
+      method:'POST',
+      headers: AI_PROXY ? {'content-type':'application/json'} : aiHeaders(),
+      body:JSON.stringify(body), signal:ctl.signal });
   }catch(e){
     clearTimeout(timer);
     throw new Error(e.name === 'AbortError' ? 'じかんぎれ' : 'つながりません');
@@ -3205,30 +3223,114 @@ function pickPhoto(){
   $('#v-panel').classList.add('hidden');
   $('#p-panel').classList.remove('hidden');
   if(!aiOn()){
-    // ずかんタブへ 行かせず、その場で かぎを 入れられるように する
+    keyForm('#photo-box', 'photo');
     $('#photo-note').innerHTML = '';
-    $('#photo-box').innerHTML =
-      `<div class="win vhelp" style="margin-top:0"><p style="margin:0;font-size:.85rem">
-        📷 しゃしんから つくるには、AIの <b>かぎ（APIキー）</b>が 1かいだけ ひつようです。</p>
-        <input id="pk-key" type="password" placeholder="sk-ant- で はじまる かぎ" style="margin-top:10px">
-        <button class="btn sm wide" style="margin-top:8px" onclick="savePhotoKey()">ほぞんして カメラへ</button>
-        <p class="muted" style="margin:8px 0 0;font-size:.72rem">かぎは この 端末の 中にだけ ほぞんされます。<br>
-        もっていない ばあいは「そのほか」の 手入力・こえで つくれます。</p></div>`;
     return;
   }
   $('#photo-note').textContent = 'きょうかしょや ノートを うつすと もんだいに なります';
   $('#photo-file').click();
 }
-function savePhotoKey(){
+
+// かぎの 入力フォーム（共用サーバーが ない ときの よび）
+function keyForm(boxSel, next){
+  $(boxSel).innerHTML =
+    `<div class="win vhelp" style="margin-top:10px"><p style="margin:0;font-size:.85rem">
+      この きのうには、AIの <b>かぎ（APIキー）</b>が 1かいだけ ひつようです。</p>
+      <input id="pk-key" type="password" placeholder="sk-ant- で はじまる かぎ" style="margin-top:10px">
+      <button class="btn sm wide" style="margin-top:8px" onclick="saveAiKey('${next}')">ほぞんして すすむ</button>
+      <p class="muted" style="margin:8px 0 0;font-size:.72rem">かぎは この 端末の 中にだけ ほぞんされます。<br>
+      もっていない ばあいは 🎤 や「そのほか」の 手入力で つくれます。</p></div>`;
+}
+function saveAiKey(next){
   const k = $('#pk-key').value.trim();
   if(!k){ toast('かぎを 入れてね'); return; }
   S.ai = S.ai || {};
   S.ai.key = k; save();
   const ak = $('#ai-key'); if(ak) ak.value = k;
   $('#polish-all').classList.remove('hidden');
-  $('#photo-box').innerHTML = '';
   toast('✅ ほぞんしました');
-  pickPhoto();          // ボタンを おした ながれの まま カメラへ
+  if(next === 'photo'){ $('#photo-box').innerHTML = ''; pickPhoto(); }
+  else { $('#ai-make-box').innerHTML = ''; aiMake(); }
+}
+
+/* ---- テーマを つたえて AIに つくってもらう ---- */
+function openAiMake(){
+  if(V.on) stopVoice();
+  $('#v-panel').classList.add('hidden');
+  $('#p-panel').classList.add('hidden');
+  $('#ai-panel').classList.remove('hidden');
+  setTimeout(()=>{ try{ $('#ai-theme').focus(); }catch(e){} }, 50);
+}
+
+const MAKE_SYSTEM =
+  '学習用の一問一答クイズを作ります。ユーザーのテーマに沿って、' +
+  '問題文 q と短い答え a、alt には正解にすべき別表記（読み仮名・カタカナ・略称など）を入れてください。' +
+  '個数の指定があればその数（最大20問）、なければ15問。' +
+  '小中学生にも読める、やさしくはっきりした表現で。事実は正確に。答えはできるだけ短く。';
+
+async function aiMake(){
+  const theme = plain($('#ai-theme').value);
+  if(!theme){ toast('テーマを 入れてね'); return; }
+  if(!aiOn()){ keyForm('#ai-make-box', 'make'); return; }
+  const box = $('#ai-make-box'), btn = $('#ai-make-go'), deck = editing;
+  btn.disabled = true;
+  box.innerHTML = '<p class="muted" style="margin:10px 0 0">🤖 かんがえて います…（30びょう くらい）</p>';
+  try{
+    const out = await aiFetch({
+      model: S.ai.model || 'claude-opus-5',
+      max_tokens: 6000,
+      system: MAKE_SYSTEM,
+      output_config:{ effort:'low', format:{ type:'json_schema', schema:{
+        type:'object',
+        properties:{ cards:{ type:'array', items:CARD_SCHEMA }, note:{ type:'string' } },
+        required:['cards','note'], additionalProperties:false } } },
+      messages:[{ role:'user', content:`テーマ: ${theme}` }],
+    }, 90000);
+
+    let added = 0, dup = 0;
+    (out.cards || []).forEach(c => {
+      const q = plain(c.q), a = plain(c.a);
+      if(!q || !a || q.length > MAX_Q || a.length > MAX_A) return;
+      if(findDup(deck, q)){ dup++; return; }
+      deck.cards.push(newCard(q, a, c.alt));
+      added++;
+    });
+    save();
+    if(editing === deck) renderCards();
+    SE.correct();
+    box.innerHTML = added
+      ? `<p style="margin:10px 0 0;color:var(--hp)">✅ ${added}もん つくりました</p>
+         ${dup ? `<p class="muted" style="margin:2px 0 0">おなじ もんだい ${dup}もんは とばしました</p>` : ''}
+         <p class="muted" style="margin:4px 0 0">${esc(out.note || '')}　いらない ものは 一覧から けせます。</p>`
+      : `<p style="margin:10px 0 0;color:var(--ehp)">つくれませんでした。テーマを かえて ためしてください。<br>
+         <span class="muted">${esc(out.note || '')}</span></p>`;
+  }catch(e){
+    box.innerHTML = `<p style="margin:10px 0 0;color:var(--ehp)">❌ ${esc(e.message)}</p>`;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+// テーマらんへの こえ入力（1回ぶん）
+let themeRec = null;
+function themeVoice(){
+  if(!SR){ toast('この ブラウザは 音声入力に 対応していません'); return; }
+  if(themeRec){ try{ themeRec.stop(); }catch(e){} themeRec = null; return; }
+  const btn = $('#ai-theme-mic');
+  const r = new SR(); themeRec = r;
+  r.lang = 'ja-JP'; r.continuous = false; r.interimResults = true;
+  let fin = '';
+  btn.classList.add('on');
+  r.onresult = e => {
+    let it = '';
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const x = e.results[i];
+      if(x.isFinal) fin += x[0].transcript; else it += x[0].transcript;
+    }
+    $('#ai-theme').value = tidy(fin || it);
+  };
+  r.onend = r.onerror = () => { btn.classList.remove('on'); themeRec = null; };
+  try{ r.start(); }catch(e){ btn.classList.remove('on'); themeRec = null; }
 }
 
 async function photoChosen(input){
@@ -3415,7 +3517,7 @@ function micFailed(reason, err){
       ? SERVER_HELP
       : ios
       ? 'マイクの きょかが ありません。<br>' +
-        'iPhoneの <b>設定</b>アプリ → 下の アプリ一覧から <b>まなびクエスト</b>' +
+        'iPhoneの <b>設定</b>アプリ → 下の アプリ一覧から <b>暗記クエスト</b>' +
         '（なければ <b>Safari</b>）→ <b>マイク</b>を ONに してください。<br><br>' +
         '<span class="muted">🎤が つかえなくても だいじょうぶ。「そのほか」の 手入力らんで、' +
         'キーボードの 🎤（音声入力）でも つくれます。</span>'
@@ -3517,7 +3619,8 @@ let editing = null;
 function renderDecks(){
   const el=$('#d-list'); el.innerHTML='';
   if(!S.decks.length){
-    el.innerHTML = '<div class="win"><p class="muted" style="margin:0">まだ ない。「あたらしく つくる」から どうぞ。</p></div>';
+    el.innerHTML = '<div class="win"><p class="muted" style="margin:0">まだ ない。下の ていばんを ついかするか、「あたらしく つくる」から どうぞ。</p></div>';
+    renderPresets();
     return;
   }
   S.decks.forEach(d=>{
@@ -3537,7 +3640,90 @@ function renderDecks(){
     b.onclick=()=>openDeck(d.id);
     w.appendChild(b); el.appendChild(w);
   });
+  renderPresets();
 }
+/* ---- ていばん もんだいしゅう（1タップで ついか・かぎ 不要） ----
+   はじめての 人が「まず 作らないと あそべない」で つまずかないように、
+   ついかするだけで すぐ ぼうけんに 出られる 中身を 用意しておく。 */
+function kukuCards(){
+  const out = [];
+  for(let a=2;a<=9;a++) for(let b=a;b<=9;b++)
+    out.push([`${a}×${b} は？`, String(a*b)]);
+  return out;
+}
+const PRESETS = [
+  { id:'kuku', icon:'✖️', name:'九九', make: kukuCards },
+  { id:'pref', icon:'🗾', name:'けんちょうしょざいち', make: () => [
+    ['「北海道」の けんちょうしょざいちは？','札幌市',['さっぽろし','札幌','さっぽろ']],
+    ['「岩手県」の けんちょうしょざいちは？','盛岡市',['もりおかし','盛岡','もりおか']],
+    ['「宮城県」の けんちょうしょざいちは？','仙台市',['せんだいし','仙台','せんだい']],
+    ['「茨城県」の けんちょうしょざいちは？','水戸市',['みとし','水戸','みと']],
+    ['「栃木県」の けんちょうしょざいちは？','宇都宮市',['うつのみやし','宇都宮','うつのみや']],
+    ['「群馬県」の けんちょうしょざいちは？','前橋市',['まえばしし','前橋','まえばし']],
+    ['「埼玉県」の けんちょうしょざいちは？','さいたま市',['さいたまし','さいたま']],
+    ['「神奈川県」の けんちょうしょざいちは？','横浜市',['よこはまし','横浜','よこはま']],
+    ['「石川県」の けんちょうしょざいちは？','金沢市',['かなざわし','金沢','かなざわ']],
+    ['「山梨県」の けんちょうしょざいちは？','甲府市',['こうふし','甲府','こうふ']],
+    ['「愛知県」の けんちょうしょざいちは？','名古屋市',['なごやし','名古屋','なごや']],
+    ['「三重県」の けんちょうしょざいちは？','津市',['つし','津','つ']],
+    ['「滋賀県」の けんちょうしょざいちは？','大津市',['おおつし','大津','おおつ']],
+    ['「兵庫県」の けんちょうしょざいちは？','神戸市',['こうべし','神戸','こうべ']],
+    ['「島根県」の けんちょうしょざいちは？','松江市',['まつえし','松江','まつえ']],
+    ['「香川県」の けんちょうしょざいちは？','高松市',['たかまつし','高松','たかまつ']],
+    ['「愛媛県」の けんちょうしょざいちは？','松山市',['まつやまし','松山','まつやま']],
+    ['「沖縄県」の けんちょうしょざいちは？','那覇市',['なはし','那覇','なは']],
+  ]},
+  { id:'kotowaza', icon:'📜', name:'ことわざ', make: () => [
+    ['「さるも 木から ___」つづきは？','おちる',['落ちる']],
+    ['「石の上にも ___」つづきは？','三年',['さんねん','3年','3ねん']],
+    ['「ちりも つもれば ___となる」','山',['やま']],
+    ['「ななころび ___」つづきは？','やおき',['八起き','8おき']],
+    ['「早おきは ___の とく」','三文',['さんもん','3もん']],
+    ['「犬も あるけば ___に あたる」','ぼう',['棒']],
+    ['「花より ___」つづきは？','だんご',['団子']],
+    ['「すきこそ ものの ___なれ」','じょうず',['上手']],
+    ['「いそがば ___」つづきは？','まわれ',['回れ']],
+    ['「ねこに ___」つづきは？','こばん',['小判']],
+    ['「二階から ___」つづきは？','めぐすり',['目薬']],
+    ['「おにに ___」つづきは？','かなぼう',['金棒']],
+  ]},
+  { id:'kanji', icon:'✏️', name:'とくべつな よみかたの 漢字', make: () => [
+    ['「昨日」の よみかたは？','きのう'],
+    ['「今朝」の よみかたは？','けさ'],
+    ['「真面目」の よみかたは？','まじめ'],
+    ['「八百屋」の よみかたは？','やおや'],
+    ['「博士」の よみかたは？','はかせ'],
+    ['「眼鏡」の よみかたは？','めがね'],
+    ['「迷子」の よみかたは？','まいご'],
+    ['「河原」の よみかたは？','かわら'],
+    ['「七夕」の よみかたは？','たなばた'],
+    ['「時計」の よみかたは？','とけい'],
+    ['「大人」の よみかたは？','おとな'],
+    ['「景色」の よみかたは？','けしき'],
+  ]},
+];
+function addPreset(id){
+  const pz = PRESETS.find(x => x.id === id);
+  if(!pz || S.decks.some(d => d.preset === id)) return;
+  const cards = pz.make().map(([q,a,alt]) => newCard(q, a, alt));
+  S.decks.push({ id:uid(), name:`${pz.icon} ${pz.name}`, preset:id, cards });
+  // ついかした 時点で すぐ あそべるので、はじめの 10もん登録は とばせる
+  if(!S.setupDone){ S.setupDone = true; }
+  save(); SE.correct();
+  toast(`✅ 「${pz.name}」を ついかしました`);
+  renderDecks();
+}
+function renderPresets(){
+  const el = $('#d-presets'); if(!el) return;
+  const rest = PRESETS.filter(pz => !S.decks.some(d => d.preset === pz.id));
+  el.classList.toggle('hidden', !rest.length);
+  if(!rest.length) return;
+  el.innerHTML = '<h3 class="seclabel" style="margin-top:0">🎁 ていばんを ついかして すぐ はじめる</h3>' +
+    rest.map(pz => `<div class="item"><div class="g"><b>${pz.icon} ${pz.name}</b>
+      <span class="muted">${pz.make().length}もん・そのまま あそべる</span></div>
+      <button class="btn sm" onclick="addPreset('${pz.id}')">＋ ついか</button></div>`).join('');
+}
+
 function newDeck(){
   // mine を つけないと さいしょの 10もん登録の バーが 消えて すすめなくなる
   const d={id:uid(),name:'あたらしい もんだいしゅう',cards:[],mine:true};
@@ -3553,6 +3739,7 @@ function openDeck(id){
   $('#d-import').classList.add('hidden');
   $('#v-panel').classList.add('hidden');
   $('#p-panel').classList.add('hidden');
+  $('#ai-panel').classList.add('hidden');
   $('#v-last').classList.add('hidden');
   V.last = null;
   setVState('こえで もんだいを つくる', null);

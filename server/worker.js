@@ -4,8 +4,16 @@
    かぎは 画面の Variables and Secrets に ANTHROPIC_API_KEY として おく。 */
 export default {
   async fetch(request, env) {
+    // 本ばん（GitHub Pages）と、手もとの ためし用（localhost）だけ ゆるす
+    const OK_ORIGINS = [
+      'https://yuki08173123-svg.github.io',
+      'http://localhost:8000',
+      'http://127.0.0.1:8000',
+    ];
+    const origin = request.headers.get('Origin') || '';
     const cors = {
-      'Access-Control-Allow-Origin': 'https://yuki08173123-svg.github.io',
+      'Access-Control-Allow-Origin': OK_ORIGINS.includes(origin) ? origin : OK_ORIGINS[0],
+      'Vary': 'Origin',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'content-type',
     };

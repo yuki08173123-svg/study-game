@@ -233,6 +233,85 @@ a.btn{color:inherit;text-decoration:none}
 .steps li::before{content:counter(s);position:absolute;left:0;top:8px;width:20px;height:20px;border-radius:50%;
   background:var(--core);color:#fff;font-size:.7rem;font-weight:800;display:flex;align-items:center;justify-content:center}
 
+
+/* ---------- レベル ---------- */
+.levelstrip{
+  display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  background:linear-gradient(120deg,#16233c,#161d2b);border:1px solid var(--line);
+  border-radius:14px;padding:11px 14px;margin-bottom:12px;
+}
+.levelstrip .lv{font-size:.8rem;color:var(--dim);font-weight:700;white-space:nowrap}
+.levelstrip .lv b{font-size:1.45rem;color:#93c5fd;margin:0 1px 0 5px}
+.levelstrip .lv small{font-size:.68rem}
+.levelstrip .lvbar{flex:1;height:8px;border-radius:5px;background:#0e1420;overflow:hidden}
+.levelstrip .lvbar i{display:block;height:100%;width:0;border-radius:5px;
+  background:linear-gradient(90deg,#3b82f6,#22c55e);transition:width .5s}
+.levelstrip .lvmore{font-size:.7rem;color:var(--dim);white-space:nowrap}
+
+.bigscore{text-align:center;padding:4px 0 2px}
+.bigscore b{font-size:3.4rem;font-weight:800;color:#93c5fd;line-height:1}
+.bigscore b small{font-size:1rem;color:var(--dim);font-weight:700}
+.bigscore .sub{color:var(--dim);font-size:.78rem;margin-top:4px}
+.brk{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.brk .r{display:grid;grid-template-columns:6.2rem 1fr 2.6rem;gap:9px;align-items:center;font-size:.78rem}
+.brk .r .track{height:9px;border-radius:5px;background:#0e1420;overflow:hidden}
+.brk .r .track i{display:block;height:100%;border-radius:5px}
+.brk .r .track i.a{background:var(--core)} .brk .r .track i.b{background:var(--life)}
+.brk .r .track i.c{background:#a78bfa}
+.brk .r .v{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.lvbars{display:flex;align-items:flex-end;gap:4px;height:92px;margin-top:8px}
+.lvbars .c{flex:1;border-radius:3px 3px 0 0;min-height:3px;background:linear-gradient(180deg,#60a5fa,#3b82f6)}
+.lvbars .c.none{background:#222c3d}
+
+/* ---------- はじめてのスライド ---------- */
+.slides{
+  position:fixed;inset:0;z-index:120;background:#070a12;display:flex;flex-direction:column;
+  padding:calc(22px + env(safe-area-inset-top)) 18px calc(22px + env(safe-area-inset-bottom));
+}
+.slides .body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:15px;max-width:420px;margin:0 auto;width:100%}
+.slides .pic{font-size:3.2rem;line-height:1}
+.slides h2{font-size:1.3rem;line-height:1.5}
+.slides p{font-size:.94rem;color:var(--dim);line-height:1.95;margin:0}
+.slides .demo{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:13px 14px;text-align:left}
+.slides .dots{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
+.slides .dots i{width:7px;height:7px;border-radius:50%;background:#39445c;transition:.2s}
+.slides .dots i.on{background:var(--core);width:22px;border-radius:5px}
+.slides .nav{display:grid;grid-template-columns:5.5rem 1fr;gap:9px}
+.slides .skip{position:absolute;top:calc(20px + env(safe-area-inset-top));right:18px;
+  font-size:.78rem;color:var(--dim);font-weight:700;padding:6px}
+
+/* デモの中身 */
+.d-row{display:flex;align-items:center;gap:9px;font-size:.84rem;font-weight:700}
+.d-row+.d-row{margin-top:8px}
+.d-chip{border-radius:999px;padding:4px 11px;font-size:.78rem;font-weight:700}
+.d-chip.core{background:var(--core-s);color:#bfdbfe;border:1px solid var(--core)}
+.d-chip.life{background:var(--life-s);color:#bbf7d0;border:1px solid var(--life)}
+.d-chip.waste{background:var(--waste-s);color:#fecaca;border:1px solid var(--waste)}
+.d-time{font-size:1.6rem;font-weight:800;font-variant-numeric:tabular-nums}
+.d-btn{border-radius:9px;padding:7px 0;text-align:center;font-weight:800;font-size:.82rem}
+.d-btn.go{background:var(--core);color:#fff}
+.d-btn.stop{background:#e5e9f2;color:#0b0f17}
+.d-warn{background:#2a1114;border:1px solid var(--waste);border-radius:10px;padding:10px;text-align:center}
+.d-warn b{color:#fca5a5;font-size:.9rem}
+
+/* ---------- 更新のおしらせ ---------- */
+.upd{background:#0f2a1c;border:1px solid var(--life);border-radius:14px;padding:13px 14px;margin-bottom:12px;font-size:.86rem}
+.upd b{color:#86efac}
+
+/* ---------- ヘルプ ---------- */
+.headbtn{display:flex;align-items:center;gap:9px}
+.hbtn{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--card2);
+  font-size:.9rem;font-weight:800;color:var(--dim);display:flex;align-items:center;justify-content:center}
+.faq details{border-bottom:1px solid var(--line);padding:2px 0}
+.faq details:last-of-type{border-bottom:none}
+.faq summary{cursor:pointer;padding:11px 0;font-weight:700;font-size:.9rem;list-style:none;display:flex;gap:8px;align-items:flex-start}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::before{content:"Q";color:var(--core);font-weight:800;flex:none}
+.faq .ans{padding:0 0 12px 20px;font-size:.85rem;color:var(--dim);line-height:1.9}
+.qbox{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;
+  padding:12px;font-size:.9rem;line-height:1.7;min-height:90px;resize:vertical}
+
 /* iOSのノッチ・ホームバー対応（この2つは style の最後に置くこと） */
 .wrap{padding-top:calc(14px + env(safe-area-inset-top))}
 .tabs{padding-bottom:env(safe-area-inset-bottom)}
@@ -243,7 +322,10 @@ a.btn{color:inherit;text-decoration:none}
 
   <div class="head">
     <div class="name">タイムレコード</div>
-    <div class="ver" id="verLabel">v2</div>
+    <div class="headbtn">
+      <button class="hbtn" id="helpBtn" aria-label="つかい方をきく">?</button>
+      <div class="ver" id="verLabel">v5</div>
+    </div>
   </div>
 
   <!-- ============ 計測タブ ============ -->
@@ -254,6 +336,18 @@ a.btn{color:inherit;text-decoration:none}
       iPhoneの中だけにある記録は、消えることがあります。設定タブの「書き出す」でファイルに残しておきましょう。
       <button class="btn" id="goBackup" style="margin-top:9px">書き出しにすすむ</button>
     </div>
+
+    <div id="updNotice" class="upd hidden">
+      <b>🎉 新しい版が あります</b><br>
+      <span id="updNote"></span>
+      <button class="btn" id="updBtn" style="margin-top:9px">いますぐ 新しくする</button>
+    </div>
+
+    <button class="levelstrip" id="levelStrip">
+      <span class="lv">レベル<b id="lvNum">–</b><small>/100</small></span>
+      <span class="lvbar"><i id="lvBar"></i></span>
+      <span class="lvmore">くわしく ▸</span>
+    </button>
 
     <div class="timerbox" id="timerBox">
       <div class="task" id="tTask">－</div>
@@ -369,6 +463,14 @@ a.btn{color:inherit;text-decoration:none}
     </div>
 
     <div class="card">
+      <h3>レベルの うつりかわり</h3>
+      <div class="dim" style="margin:-4px 0 8px">1日ごとの 点数です（記録が 少ない日は 灰色）</div>
+      <div class="lvbars" id="aLvBars"></div>
+      <div class="barsx" id="aLvBarsX"></div>
+      <div class="dim" style="margin-top:8px" id="aLvTxt"></div>
+    </div>
+
+    <div class="card">
       <h3>日ごとの 内わけ</h3>
       <div class="bars" id="aBars"></div>
       <div class="barsx" id="aBarsX"></div>
@@ -414,6 +516,25 @@ a.btn{color:inherit;text-decoration:none}
 
   <!-- ============ 設定タブ ============ -->
   <section id="tab-set" class="hidden">
+    <div class="card">
+      <h3>バージョン</h3>
+      <div class="row sb" style="margin-bottom:10px">
+        <div><div class="dim" style="font-size:.76rem">いま つかっている版</div>
+          <div style="font-weight:800;font-size:1.2rem" id="setVerNow">v5</div></div>
+        <div style="text-align:right"><div class="dim" style="font-size:.76rem">いちばん 新しい版</div>
+          <div style="font-weight:800;font-size:1.2rem" id="setVerNew">－</div></div>
+      </div>
+      <button class="btn pri" id="chkBtn">最新か たしかめる</button>
+      <div class="dim" style="margin-top:8px" id="chkInfo"></div>
+    </div>
+
+    <div class="card">
+      <h3>つかい方</h3>
+      <button class="btn" id="slidesBtn">▶ はじめての つかい方（スライド）</button>
+      <a class="btn" href="guide.html" target="_blank" rel="noopener" style="margin-top:9px">📖 くわしい 手順書を ひらく</a>
+      <button class="btn" id="helpBtn2" style="margin-top:9px">❓ わからないことを AIに きく</button>
+    </div>
+
     <div class="card">
       <h3>目標と 1日のかたち</h3>
       <div class="field"><label>1日に 本命へ 使いたい時間</label>
@@ -473,8 +594,7 @@ a.btn{color:inherit;text-decoration:none}
     </div>
 
     <div class="card">
-      <h3>つかい方</h3>
-      <a class="btn" href="guide.html" target="_blank" rel="noopener" style="margin-bottom:12px">📖 くわしい 手順書を ひらく</a>
+      <h3>かんたんな ながれ</h3>
       <div class="dim" style="line-height:1.8">
         1. やることを 入れて 色を えらび、スタート<br>
         2. 終わったら ストップ。それだけで 記録が たまります<br>
@@ -509,12 +629,22 @@ a.btn{color:inherit;text-decoration:none}
 
 <div class="sheet hidden" id="sheet"><div class="inner" id="sheetInner"></div></div>
 
+<div class="slides hidden" id="slides">
+  <button class="skip" id="slSkip">とじる</button>
+  <div class="body" id="slBody"></div>
+  <div class="dots" id="slDots"></div>
+  <div class="nav">
+    <button class="btn" id="slPrev">もどる</button>
+    <button class="btn pri" id="slNext">つぎへ</button>
+  </div>
+</div>
+
 <script>
 /* =========================================================
-   タイムレコード v4 — 行動を記録して、無駄な時間を見えるようにするアプリ
+   タイムレコード v5 — 行動を記録して、無駄な時間を見えるようにするアプリ
    データは この端末の localStorage だけに 入る（外に送らない）
    ========================================================= */
-const VER = 4;
+const VER = 5;
 const KEY = 'focuslog.v1';
 const MIN=60000, HOUR=3600000, DAY=86400000;
 const $  = s => document.querySelector(s);
@@ -532,7 +662,8 @@ const KINDS = {
 const DEF = { v:VER, sessions:[], active:null, tasks:[],
   set:{ alertOn:true, soundOn:true, wakeOn:true, sleepOn:true, ignoreMs:3000,
         goalMin:180, dayFrom:7*60, dayTo:24*60, gapMin:30,
-        lastExport:0, lastCopy:0, lastSeen:0, sleepAsked:'', installed:0 } };
+        lastExport:0, lastCopy:0, lastSeen:0, sleepAsked:'', installed:0,
+        onboardDone:false, lastCheck:0, latestVer:0, latestNote:'' } };
 
 function migrate(r){
   // v1（青・赤の2色）から v2（本命・生活・無駄）へ
@@ -1115,6 +1246,229 @@ $('#addBtn').onclick = ()=>{
 };
 
 /* =========================================================
+   レベル（100点まんてん）
+   ---------------------------------------------------------
+   その日の点数 = 本命の量50点 + むだの少なさ30点 + 集中の深さ20点。
+   「レベル」は 直近7日の 平均点。1日の出来に ふりまわされないため。
+   ========================================================= */
+function dayScore(d0){
+  const o = sum(sessionsOf(d0, true));
+  const rec = o.core + o.life + o.waste + o.unknown;
+  if(rec < 20*MIN) return null;                       // 記録が少ない日は 点をつけない
+  const goal = Math.max(30*MIN, S.set.goalMin*MIN);
+  const A = 50 * Math.min(1, o.core/goal);            // 本命の量
+  const wr = (o.waste + o.unknown*0.5) / rec;         // 不明は 半分だけ むだあつかい
+  const B = 30 * (1 - Math.min(1, wr/0.4));           // むだが4割以上で 0点
+  const coreH = Math.max(o.core/HOUR, .25);
+  const C = 20 * (1 - Math.min(1, (o.awayCnt/coreH)/4));  // 1時間に4回以上 離脱で 0点
+  return {score:Math.round(A+B+C), a:Math.round(A), b:Math.round(B), c:Math.round(C), o};
+}
+function levelNow(){
+  const today = dayStart(Date.now()), arr=[];
+  for(let i=0;i<7;i++){ const x=dayScore(today-i*DAY); if(x) arr.push(x.score); }
+  return arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : null;
+}
+function renderLevel(){
+  const lv = levelNow();
+  $('#lvNum').textContent = lv===null ? '–' : lv;
+  $('#lvBar').style.width = (lv===null?0:lv)+'%';
+}
+function levelSheet(){
+  const lv = levelNow(), td = dayScore(dayStart(Date.now()));
+  const today = dayStart(Date.now());
+  let bars='', labs='';
+  for(let i=13;i>=0;i--){
+    const d=today-i*DAY, x=dayScore(d);
+    bars += '<div class="c'+(x?'':' none')+'" style="height:'+(x?Math.max(3,x.score):3)+'%"></div>';
+    labs += '<div>'+(i%3===0? new Date(d).getDate() : '')+'</div>';
+  }
+  const row=(name,val,max,cls)=>
+    '<div class="r"><span class="dim">'+name+'</span>'+
+    '<span class="track"><i class="'+cls+'" style="width:'+(val/max*100)+'%"></i></span>'+
+    '<span class="v">'+val+'</span></div>';
+  openSheet(
+    '<h3 style="margin-bottom:4px">あなたの レベル</h3>'+
+    '<div class="dim" style="margin-bottom:10px">この7日間の 平均点です</div>'+
+    '<div class="bigscore"><b>'+(lv===null?'–':lv)+'<small>/100</small></b>'+
+      '<div class="sub">'+(td? '今日は '+td.score+'点':'今日は まだ 点がつきません（記録が 20分より 少ないため）')+'</div></div>'+
+    (td ? '<div class="brk">'+
+        row('本命の 量', td.a, 50, 'a')+
+        row('むだの 少なさ', td.b, 30, 'b')+
+        row('集中の 深さ', td.c, 20, 'c')+
+      '</div>' : '')+
+    '<div style="margin-top:18px"><div class="dim" style="margin-bottom:4px">この2週間</div>'+
+      '<div class="lvbars">'+bars+'</div><div class="barsx">'+labs+'</div></div>'+
+    '<div class="dim" style="margin-top:16px;line-height:1.9">'+
+      '・<b>本命の 量</b>：目標（1日 '+minLabel(S.set.goalMin)+'）に とどくほど 高くなります<br>'+
+      '・<b>むだの 少なさ</b>：記録のうち 🔴むだ が 少ないほど 高くなります<br>'+
+      '・<b>集中の 深さ</b>：本命の 最中に よそ見が 少ないほど 高くなります</div>'+
+    '<button class="btn pri" id="lvClose" style="margin-top:16px">とじる</button>'
+  );
+  $('#lvClose').onclick = closeSheet;
+}
+$('#levelStrip').onclick = levelSheet;
+
+/* =========================================================
+   はじめての つかい方（スライド）
+   ========================================================= */
+const SLIDES = [
+  { pic:'⏱', h:'はじめる前に スタート、<br>おわったら ストップ',
+    p:'やることを 書いて、色を えらんで スタート。それだけで 1日の記録が たまっていきます。',
+    demo:'<div class="d-row"><span>数学の課題</span><span class="d-chip core">🔵 本命</span></div>'+
+         '<div class="d-row" style="justify-content:space-between"><span class="d-time mono">0:25:13</span>'+
+         '<span class="d-btn stop" style="padding:7px 14px">ストップ</span></div>' },
+  { pic:'🎨', h:'色は 3つだけ',
+    p:'まよったら 直感で 大丈夫。あとから いつでも 変えられます。',
+    demo:'<div class="d-row"><span class="d-chip core">🔵 本命</span><span class="dim">勉強・部活・練習</span></div>'+
+         '<div class="d-row"><span class="d-chip life">🟢 生活</span><span class="dim">ごはん・おふろ・移動</span></div>'+
+         '<div class="d-row"><span class="d-chip waste">🔴 むだ</span><span class="dim">だらだら スマホ</span></div>' },
+  { pic:'🕳️', h:'押しわすれても 大丈夫',
+    p:'記録の ない時間が できたら、次に ひらいたときに アプリが たずねます。あとから 埋められます。',
+    demo:'<div style="font-size:.86rem;font-weight:700">その時間、何を していましたか？</div>'+
+         '<div class="dim" style="font-size:.78rem;margin-top:4px">13:00 〜 14:45（1時間45分）の 記録が ありません</div>' },
+  { pic:'📱', h:'よそ見は 記録される',
+    p:'🔵本命 の とちゅうで ほかのアプリを 見ると、回数と 時間が のこり、その分は 🔴むだ に 入ります。',
+    demo:'<div class="d-warn"><div style="font-size:1.4rem">⚠️</div><b>アプリから 離れました</b>'+
+         '<div class="dim" style="font-size:.78rem">3回目 ／ 4分 よそ見しました</div></div>' },
+  { pic:'📈', h:'レベルで 成長が 見える',
+    p:'1日ごとに 100点まんてんで 点がつきます。上の「レベル」は この7日間の 平均。少しずつ 上げていきましょう。',
+    demo:'<div class="d-row" style="justify-content:space-between"><span class="dim">レベル</span>'+
+         '<span style="font-size:1.6rem;font-weight:800;color:#93c5fd">62<span style="font-size:.8rem;color:var(--dim)">/100</span></span></div>' }
+];
+let slIdx = 0;
+function openSlides(){
+  slIdx = 0; $('#slides').classList.remove('hidden'); drawSlide();
+}
+function closeSlides(){
+  $('#slides').classList.add('hidden');
+  S.set.onboardDone = true; saveNow();
+  setTimeout(()=>{ if(!checkLongRun()) runPrompts(); seen(); }, 300);
+}
+function drawSlide(){
+  const s0 = SLIDES[slIdx];
+  $('#slBody').innerHTML =
+    '<div class="pic">'+s0.pic+'</div><h2>'+s0.h+'</h2><p>'+s0.p+'</p>'+
+    (s0.demo? '<div class="demo">'+s0.demo+'</div>' : '');
+  $('#slDots').innerHTML = SLIDES.map((_,i)=>'<i class="'+(i===slIdx?'on':'')+'"></i>').join('');
+  $('#slPrev').style.display = slIdx===0 ? 'none' : 'block';
+  document.querySelector('.slides .nav').style.gridTemplateColumns = slIdx===0 ? '1fr' : '5.5rem 1fr';
+  $('#slNext').textContent = slIdx===SLIDES.length-1 ? 'はじめる' : 'つぎへ';
+}
+$('#slPrev').onclick = ()=>{ if(slIdx>0){ slIdx--; drawSlide(); } };
+$('#slNext').onclick = ()=>{ if(slIdx<SLIDES.length-1){ slIdx++; drawSlide(); } else closeSlides(); };
+$('#slSkip').onclick = closeSlides;
+$('#slidesBtn').onclick = openSlides;
+
+/* =========================================================
+   わからないことを AIに きく
+   ========================================================= */
+const FAQ = [
+  ['まちがえた色で 記録してしまった',
+   '📒記録タブで その記録を タップすると、名前も 色も 時間も 直せます。'],
+  ['計るのを 忘れて 1日たった',
+   '📒記録タブで 日付を ◀ でもどして「＋ 手で追加」から あとで 足せます。'],
+  ['「何をしていましたか？」が よく出て うるさい',
+   '⚙️設定の「これ以上の 空白が できたら たずねる」を 1時間に すると 減ります。'],
+  ['むだな時間を 計るとき 警告は 出るの？',
+   '出ません。🔴むだ の ときは、ほかのアプリを 見るのが あたりまえなので 何も 言いません。'],
+  ['レベルが 上がらない',
+   'まず 🔵本命 の 時間を のばすのが いちばん 効きます（50点ぶん）。目標が 高すぎるときは ⚙️設定で 下げても かまいません。'],
+  ['記録が 消えないか 心配',
+   '⚙️設定の「書き出す」で ファイルに のこせます。新しいスマホでも「読みこむ」で 戻せます。']
+];
+function appSpec(){
+  return [
+    '【アプリの説明】',
+    '・「タイムレコード」は、やることを入れて色（🔵本命=勉強や仕事や自己研鑽 / 🟢生活=風呂・食事・移動 / 🔴むだ）をえらび、スタートとストップで時間を記録するスマホアプリ（iPhoneのホーム画面に追加して使うWebアプリ）',
+    '・記録のない空白の時間は、次にアプリを開いたときに「何をしていましたか？」と聞かれ、あとから埋められる。答えないと⬜️不明として残る',
+    '・🔵本命の最中に他のアプリへ行くと「離脱」として回数と時間が記録され、戻ると赤い警告が出る。その時間は🔴むだに計上される（🟢生活は警告なしで記録、🔴むだは検知しない）',
+    '・朝ひらくと、寝た時刻と起きた時刻を1回だけ確認される',
+    '・レベル（100点満点）＝直近7日の平均点。1日の点数は 本命の量50点＋むだの少なさ30点＋集中の深さ（離脱の少なさ）20点',
+    '・タブは 計測／記録／分析／設定 の4つ。分析タブに、AIに貼るためのテキストをコピーするボタンがある',
+    '・記録はスマホの中だけに保存され、外には送られない',
+    '',
+    '【いまの状態】',
+    'バージョン v'+VER+' ／ 記録 '+S.sessions.length+'件 ／ 目標 1日'+minLabel(S.set.goalMin)+
+      ' ／ 活動時間帯 '+Math.floor(S.set.dayFrom/60)+'時〜'+Math.floor(S.set.dayTo/60)+'時'
+  ].join('\n');
+}
+function helpSheet(){
+  openSheet(
+    '<h3 style="margin-bottom:4px">わからないことを きく</h3>'+
+    '<div class="dim" style="margin-bottom:12px">まず よくある しつもんを 見てください。</div>'+
+    '<div class="faq" style="margin-bottom:16px">'+
+      FAQ.map(q=>'<details><summary>'+q[0]+'</summary><div class="ans">'+q[1]+'</div></details>').join('')+
+    '</div>'+
+    '<div class="field"><label>それでも わからないときは、ここに 書いてください</label>'+
+      '<textarea class="qbox" id="qText" placeholder="例）スタートを押したのに 時間が すすみません"></textarea></div>'+
+    '<button class="btn pri" id="qCopy">📋 コピーして AIに きく</button>'+
+    '<a class="btn" id="qOpen" href="https://claude.ai/new" target="_blank" rel="noopener" style="margin-top:9px">Claudeを ひらく</a>'+
+    '<div class="dim" style="margin-top:10px;line-height:1.8">コピー → Claude（または ChatGPT）に そのまま はりつけて 送ると、アプリの しくみを わかったうえで 答えてくれます。</div>'+
+    '<button class="btn" id="qClose" style="margin-top:12px;color:var(--dim)">とじる</button>'
+  );
+  $('#qClose').onclick = closeSheet;
+  $('#qCopy').onclick = ()=>{
+    const q = ($('#qText').value||'').trim() || '（うまく つかえません。どうすれば いいですか？）';
+    const txt = '「タイムレコード」という 時間記録アプリの つかい方について 質問です。\n\n'+
+      appSpec()+'\n\n【質問】\n'+q+'\n\n小学生にも わかる、やさしい日本語で 答えてください。';
+    copyText(txt, 'コピーしました。Claudeに はりつけてください');
+  };
+}
+$('#helpBtn').onclick  = helpSheet;
+$('#helpBtn2').onclick = helpSheet;
+
+async function copyText(txt, msg){
+  try{ await navigator.clipboard.writeText(txt); toast(msg); return true; }
+  catch(e){
+    const ta=document.createElement('textarea'); ta.value=txt;
+    ta.style.position='fixed'; ta.style.top='-1000px'; document.body.appendChild(ta);
+    ta.select();
+    let ok=false; try{ ok=document.execCommand('copy'); }catch(e2){}
+    document.body.removeChild(ta);
+    toast(ok? msg : 'コピーできませんでした');
+    return ok;
+  }
+}
+
+/* =========================================================
+   バージョンの 確認と 更新
+   ========================================================= */
+async function checkUpdate(manual){
+  try{
+    const r = await fetch('version.json?t='+Date.now(), {cache:'no-store'});
+    if(!r.ok) throw 0;
+    const j = await r.json();
+    S.set.lastCheck = Date.now();
+    S.set.latestVer = j.v||0;
+    S.set.latestNote = j.note||'';
+    saveNow();
+    const stale = (j.v||0) > VER;
+    $('#updNotice').classList.toggle('hidden', !stale);
+    $('#updNote').textContent = stale ? ('v'+j.v+'：'+(j.note||'')) : '';
+    $('#setBadge').classList.toggle('hidden', !stale && $('#setBadge').classList.contains('hidden'));
+    if(manual) toast(stale ? '新しい版が あります' : '最新の状態です（v'+VER+'）');
+    if(tab==='set') renderSet();
+    return stale;
+  }catch(e){
+    if(manual) toast('たしかめられませんでした。通信を 確かめてください');
+    return false;
+  }
+}
+async function doUpdate(){
+  toast('新しくしています…');
+  try{
+    if(window.caches){ for(const k of await caches.keys()) await caches.delete(k); }
+    if(navigator.serviceWorker){
+      const rs = await navigator.serviceWorker.getRegistrations();
+      for(const r of rs) await r.unregister();
+    }
+  }catch(e){}
+  setTimeout(()=> location.replace(location.pathname+'?v='+Date.now()), 400);
+}
+$('#chkBtn').onclick = ()=> checkUpdate(true);
+$('#updBtn').onclick = doUpdate;
+
+/* =========================================================
    分析
    ========================================================= */
 let aRange = 7;
@@ -1183,6 +1537,25 @@ function renderAI(){
     if(x.d===dayStart(Date.now())) lb.className='today';
     bx.appendChild(lb);
   });
+
+  // レベルの うつりかわり
+  const lvEl=$('#aLvBars'), lvxEl=$('#aLvBarsX'); lvEl.innerHTML=''; lvxEl.innerHTML='';
+  const scores=[];
+  bk.forEach((x,i)=>{
+    const sc = dayScore(x.d);
+    if(sc) scores.push(sc.score);
+    const d=document.createElement('div');
+    d.className='c'+(sc?'':' none');
+    d.style.height=(sc? Math.max(3,sc.score) : 3)+'%';
+    lvEl.appendChild(d);
+    const l=document.createElement('div');
+    l.textContent = (aRange<=7 || i%5===0) ? new Date(x.d).getDate() : '';
+    if(x.d===dayStart(Date.now())) l.className='today';
+    lvxEl.appendChild(l);
+  });
+  $('#aLvTxt').textContent = scores.length
+    ? ('平均 '+Math.round(scores.reduce((a,b)=>a+b,0)/scores.length)+'点 ／ いちばん高い日 '+Math.max(...scores)+'点')
+    : 'まだ 点が つく日が ありません';
 
   const tasks = byTask(list);
   $('#aRankW').innerHTML = rankHtml(tasks.filter(x=>x.waste>0).sort((a,b)=>b.waste-a.waste).slice(0,6),'waste');
@@ -1298,15 +1671,8 @@ function aiText(list, bk, tasks){
 }
 
 $('#copyBtn').onclick = async ()=>{
-  const txt = $('#aiText').textContent;
-  const ok = ()=>{ S.set.lastCopy=Date.now(); saveNow(); toast('コピーしました'); renderAI(); };
-  try{ await navigator.clipboard.writeText(txt); ok(); }
-  catch(e){
-    const ta=document.createElement('textarea'); ta.value=txt;
-    ta.style.position='fixed'; ta.style.top='-1000px'; document.body.appendChild(ta);
-    ta.select(); try{ document.execCommand('copy'); ok(); }catch(e2){ toast('コピーできませんでした'); }
-    document.body.removeChild(ta);
-  }
+  const ok = await copyText($('#aiText').textContent, 'コピーしました');
+  if(ok){ S.set.lastCopy=Date.now(); saveNow(); renderAI(); }
 };
 
 /* =========================================================
@@ -1329,6 +1695,14 @@ function buildSelects(){
 function renderSet(){
   $$('.toggle').forEach(t=> t.classList.toggle('on', !!S.set[t.dataset.s]));
   buildSelects();
+  $('#setVerNow').textContent = 'v'+VER;
+  const lv = S.set.latestVer||0;
+  $('#setVerNew').textContent = lv ? 'v'+lv : '－';
+  const c = S.set.lastCheck ? Math.floor((Date.now()-S.set.lastCheck)/DAY) : -1;
+  $('#chkInfo').textContent = lv>VER
+    ? '新しい版が あります。上の「いますぐ 新しくする」を おしてください。'
+    : (c<0 ? 'まだ たしかめていません'
+           : (lv? '最新です。' : '')+'さいごに たしかめたのは '+(c===0?'今日':c+'日前'));
   const d = S.set.lastExport ? Math.floor((Date.now()-S.set.lastExport)/DAY) : -1;
   $('#expInfo').innerHTML = '記録は この端末の中だけに 保存されます。消えてしまう前に、ときどき 書き出して ファイルに 残してください。<br>'+
     (d<0 ? '<b style="color:#fcd34d">まだ 一度も 書き出していません</b>' : '前回の書き出し：'+(d===0?'今日':d+'日前'));
@@ -1400,6 +1774,7 @@ $$('.tabs button').forEach(b=> b.onclick = ()=> showTab(b.dataset.tab));
 
 function renderAll(){
   renderTimer();
+  renderLevel();
   if(tab==='timer'){ renderChips(); renderToday(); }
   if(tab==='log')   renderLog();
   if(tab==='ai')    renderAI();
@@ -1444,7 +1819,20 @@ function checkLongRun(){
 setKind('core');
 showTab('timer');
 reqWake();
-setTimeout(()=>{ if(!checkLongRun()) runPrompts(); seen(); }, 400);
+
+// はじめて ひらいた人には スライドを 見せる
+if(!S.set.onboardDone && !S.sessions.length && !S.active){
+  setTimeout(openSlides, 300);
+}else{
+  setTimeout(()=>{ if(!checkLongRun()) runPrompts(); seen(); }, 400);
+}
+
+// 1日に1回、新しい版が ないか しずかに たしかめる
+if(Date.now() - (S.set.lastCheck||0) > DAY) setTimeout(()=>checkUpdate(false), 2500);
+else if((S.set.latestVer||0) > VER){
+  $('#updNotice').classList.remove('hidden');
+  $('#updNote').textContent = 'v'+S.set.latestVer+'：'+(S.set.latestNote||'');
+}
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>

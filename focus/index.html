@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>集中ログ</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0f17">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="集中ログ">
+<style>
+:root{
+  --bg:#0b0f17; --card:#151b28; --card2:#1c2434; --line:#2a3448;
+  --fg:#e9eefb; --dim:#8ea0c0;
+  --blue:#3b82f6; --blue-d:#1e40af; --blue-s:#0f1f3d;
+  --red:#ef4444;  --red-d:#991b1b;  --red-s:#2a1216;
+  --warn:#f59e0b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  line-height:1.6; -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent; overflow-x:hidden;
+  overscroll-behavior-y:none;
+}
+button,input,select,textarea{font-family:inherit;color:inherit;font-size:1rem}
+button{cursor:pointer;border:none;background:none}
+.hidden{display:none!important}
+.wrap{max-width:560px;margin:0 auto;padding:14px 14px 96px;min-height:100%}
+h1,h2,h3{margin:0;line-height:1.3}
+.dim{color:var(--dim);font-size:.82rem}
+.mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* ---------- カード ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.card h3{font-size:.95rem;margin-bottom:10px;letter-spacing:.02em}
+.row{display:flex;align-items:center;gap:10px}
+.row.sb{justify-content:space-between}
+
+/* ---------- ヘッダ ---------- */
+.head{display:flex;align-items:center;justify-content:space-between;margin:2px 0 14px}
+.head .name{font-size:1.05rem;font-weight:700;letter-spacing:.04em}
+.head .ver{font-size:.72rem;color:var(--dim)}
+
+/* ---------- 計測画面 ---------- */
+.timerbox{
+  border-radius:20px;padding:22px 18px;text-align:center;
+  border:2px solid var(--line);background:var(--card);
+  transition:background .3s,border-color .3s;
+}
+.timerbox.run-blue{background:linear-gradient(160deg,#12294f,#101a2b);border-color:var(--blue)}
+.timerbox.run-red{background:linear-gradient(160deg,#3a161c,#1c1218);border-color:var(--red)}
+.timerbox .task{font-size:1.05rem;font-weight:700;min-height:1.6em;word-break:break-all}
+.bigtime{font-size:3.5rem;font-weight:800;letter-spacing:.02em;margin:6px 0 2px;line-height:1.05}
+.bigtime small{font-size:1.4rem;font-weight:700;opacity:.7}
+.state{font-size:.78rem;color:var(--dim);letter-spacing:.08em}
+
+.kindpick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 12px}
+.kindbtn{
+  border:2px solid var(--line);background:var(--card2);border-radius:14px;
+  padding:12px 8px;text-align:center;font-weight:700;transition:.15s;
+}
+.kindbtn .lbl{font-size:1rem}
+.kindbtn .sub{font-size:.7rem;color:var(--dim);font-weight:600;display:block;margin-top:2px}
+.kindbtn[data-k="blue"].on{background:var(--blue-s);border-color:var(--blue);color:#bfdbfe}
+.kindbtn[data-k="red"].on{background:var(--red-s);border-color:var(--red);color:#fecaca}
+.kindbtn.on .sub{color:inherit;opacity:.75}
+
+.taskin{
+  width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;
+  padding:13px 14px;font-weight:600;
+}
+.taskin::placeholder{color:#6b7c99}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.chip{
+  border:1px solid var(--line);background:var(--card2);border-radius:999px;
+  padding:6px 12px;font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:6px;
+}
+.chip .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.blue{background:var(--blue)} .dot.red{background:var(--red)}
+
+.bigbtn{
+  width:100%;border-radius:16px;padding:18px;font-size:1.15rem;font-weight:800;
+  letter-spacing:.06em;margin-top:14px;border:2px solid transparent;transition:transform .06s;
+}
+.bigbtn:active{transform:scale(.985)}
+.bigbtn.start{background:linear-gradient(180deg,#2563eb,#1d4ed8);color:#fff}
+.bigbtn.start.red{background:linear-gradient(180deg,#dc2626,#991b1b)}
+.bigbtn.stop{background:#e5e9f2;color:#0b0f17}
+.bigbtn:disabled{opacity:.4}
+
+.awaybadge{
+  display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:6px 14px;
+  font-size:.82rem;font-weight:700;background:#1d2432;
+  border:1px solid var(--line); color:var(--dim);margin-top:10px;
+}
+.awaybadge.hit{background:#3a1a1a;border-color:var(--red);color:#fca5a5}
+
+/* ---------- 集計バー ---------- */
+.ratio{display:flex;height:14px;border-radius:8px;overflow:hidden;background:#0e1420;border:1px solid var(--line)}
+.ratio i{display:block;height:100%}
+.ratio i.b{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.ratio i.r{background:linear-gradient(90deg,#ef4444,#f87171)}
+.legend{display:flex;gap:14px;margin-top:9px;font-size:.8rem;font-weight:600}
+.legend span{display:flex;align-items:center;gap:6px}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center}
+.stat b{display:block;font-size:1.15rem;font-weight:800}
+.stat span{font-size:.68rem;color:var(--dim);font-weight:600}
+.stat.b b{color:#93c5fd} .stat.r b{color:#fca5a5} .stat.w b{color:#fcd34d}
+
+/* ---------- タイムライン ---------- */
+.tl{position:relative;height:30px;background:#0e1420;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:6px}
+.tl i{position:absolute;top:0;bottom:0;min-width:2px;border-radius:2px}
+.tl i.b{background:var(--blue)} .tl i.r{background:var(--red)}
+.tlx{display:flex;justify-content:space-between;font-size:.62rem;color:var(--dim);margin-top:3px}
+
+/* ---------- 日別グラフ ---------- */
+.bars{display:flex;align-items:flex-end;gap:6px;height:130px;margin-top:8px}
+.bars .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:2px}
+.bars .seg{border-radius:3px;min-height:0}
+.bars .seg.r{background:linear-gradient(180deg,#f87171,#ef4444)}
+.bars .seg.b{background:linear-gradient(180deg,#60a5fa,#3b82f6)}
+.barsx{display:flex;gap:6px;margin-top:5px}
+.barsx div{flex:1;text-align:center;font-size:.64rem;color:var(--dim)}
+.barsx div.today{color:var(--fg);font-weight:700}
+
+/* ---------- 記録リスト ---------- */
+.rec{
+  display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:12px;
+  background:var(--card2);border:1px solid var(--line);margin-bottom:8px;width:100%;text-align:left;
+}
+.rec .bar{width:4px;align-self:stretch;border-radius:3px;flex:none}
+.rec .bar.b{background:var(--blue)} .rec .bar.r{background:var(--red)}
+.rec .mid{flex:1;min-width:0;display:flex;flex-direction:column}
+.rec .t{font-weight:700;font-size:.94rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec .s{font-size:.72rem;color:var(--dim)}
+.rec .s .away{color:#fca5a5}
+.rec .d{font-weight:800;font-size:.95rem}
+
+/* ---------- タブ ---------- */
+.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  background:rgba(11,15,23,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+  display:flex;
+}
+.tabs button{flex:1;padding:10px 0 8px;font-size:.66rem;font-weight:700;color:var(--dim);letter-spacing:.04em}
+.tabs button .ic{display:block;font-size:1.25rem;line-height:1.2;filter:grayscale(1);opacity:.65}
+.tabs button.on{color:var(--fg)}
+.tabs button.on .ic{filter:none;opacity:1}
+
+/* ---------- 離脱アラート ---------- */
+.alert{
+  position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:rgba(60,6,6,.93);backdrop-filter:blur(6px);
+  animation:flash .5s ease-in-out 3;
+}
+@keyframes flash{0%,100%{background:rgba(60,6,6,.93)}50%{background:rgba(140,12,12,.95)}}
+.alert .box{max-width:340px;width:100%;text-align:center;
+  background:#1a0d0f;border:2px solid var(--red);border-radius:20px;padding:26px 20px}
+.alert .em{font-size:2.6rem;line-height:1}
+.alert h2{font-size:1.2rem;margin:10px 0 6px;color:#fecaca}
+.alert .cnt{font-size:2.6rem;font-weight:900;color:#fca5a5;margin:6px 0}
+.alert p{margin:4px 0;font-size:.86rem;color:#e7b9b9}
+.alert button{margin-top:16px;width:100%;background:var(--red);color:#fff;border-radius:12px;padding:14px;font-weight:800;font-size:1rem}
+
+/* ---------- 汎用 ---------- */
+.toast{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:90;
+  background:#e9eefb;color:#0b0f17;padding:11px 20px;border-radius:999px;
+  font-weight:700;font-size:.88rem;box-shadow:0 8px 24px rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(-6px)}
+
+.sheet{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.6);display:flex;align-items:flex-end}
+.sheet .inner{width:100%;max-width:560px;margin:0 auto;background:var(--card);
+  border-radius:20px 20px 0 0;border-top:1px solid var(--line);padding:20px 16px 34px;max-height:88vh;overflow:auto}
+
+.btn{border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:12px;font-weight:700;text-align:center;display:block;width:100%}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+a.btn{color:inherit;text-decoration:none}
+.btn.dan{background:#3a1518;border-color:var(--red);color:#fca5a5}
+.btn2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:.76rem;color:var(--dim);font-weight:700;margin-bottom:5px}
+.field input,.field select{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:11px 12px;font-weight:600}
+.seg2{display:flex;gap:8px}
+.seg2 button{flex:1;border:1px solid var(--line);background:var(--card2);border-radius:11px;padding:9px;font-weight:700;font-size:.86rem;color:var(--dim)}
+.seg2 button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.seg2 button.on[data-k="blue"],.seg2 button.on[data-sw="blue"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.seg2 button.on[data-k="red"],.seg2 button.on[data-sw="red"]{background:var(--red);border-color:var(--red);color:#fff}
+
+.sw{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
+.sw:last-child{border-bottom:none}
+.sw .lb{font-weight:700;font-size:.92rem}
+.sw .lb small{display:block;color:var(--dim);font-weight:600;font-size:.72rem}
+.toggle{width:50px;height:30px;border-radius:999px;background:#39445c;position:relative;flex:none;transition:.2s}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+.toggle.on{background:var(--blue)}
+.toggle.on::after{left:23px}
+
+.rank{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.rank:last-child{border-bottom:none}
+.rank .no{width:22px;font-weight:800;color:var(--dim);font-size:.85rem}
+.rank .nm{flex:1;font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank .vl{font-weight:800;font-size:.9rem}
+.rank .vl.r{color:#fca5a5} .rank .vl.b{color:#93c5fd}
+
+.hours{display:flex;align-items:flex-end;gap:2px;height:64px;margin-top:8px}
+.hours .h{flex:1;background:#233046;border-radius:2px 2px 0 0;min-height:2px;position:relative}
+.hours .h.hit{background:linear-gradient(180deg,#fbbf24,#ef4444)}
+.hoursx{display:flex;gap:2px;margin-top:4px}
+.hoursx div{flex:1;text-align:center;font-size:.55rem;color:var(--dim)}
+
+.aiout{width:100%;height:190px;background:#0e1420;border:1px solid var(--line);border-radius:12px;
+  padding:12px;font-size:.72rem;line-height:1.55;color:#c9d6ee;white-space:pre-wrap;word-break:break-all;overflow:auto;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;-webkit-user-select:text;user-select:text}
+.empty{text-align:center;color:var(--dim);font-size:.85rem;padding:26px 10px}
+
+/* iOSのノッチ・ホームバー対応（この2つは style の最後に置くこと） */
+.wrap{padding-top:calc(14px + env(safe-area-inset-top))}
+.tabs{padding-bottom:env(safe-area-inset-bottom)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="name">集中ログ</div>
+    <div class="ver" id="verLabel">v1</div>
+  </div>
+
+  <!-- ============ 計測タブ ============ -->
+  <section id="tab-timer">
+
+    <div class="timerbox" id="timerBox">
+      <div class="task" id="tTask">－</div>
+      <div class="bigtime mono" id="tTime">0:00<small>:00</small></div>
+      <div class="state" id="tState">まだ はじまっていません</div>
+      <div id="tAway" class="awaybadge hidden"><span>📱</span><span id="tAwayTxt">離脱 0回</span></div>
+    </div>
+
+    <!-- 開始前 -->
+    <div id="preRun" class="card" style="margin-top:12px">
+      <h3>いま から やること</h3>
+      <input class="taskin" id="taskInput" placeholder="例）数学の課題 / YouTube" maxlength="40" autocomplete="off">
+      <div class="chips" id="quickChips"></div>
+      <div class="kindpick">
+        <button class="kindbtn on" data-k="blue"><span class="lbl">🔵 意味ある</span><span class="sub">勉強・生活・自己研鑽</span></button>
+        <button class="kindbtn" data-k="red"><span class="lbl">🔴 無駄</span><span class="sub">だらだら・スマホ</span></button>
+      </div>
+      <button class="bigbtn start" id="startBtn">スタート</button>
+    </div>
+
+    <!-- 計測中 -->
+    <div id="inRun" class="hidden">
+      <div class="card">
+        <div class="dim" style="margin-bottom:7px">いまの 色</div>
+        <div class="seg2" style="margin-bottom:10px">
+          <button data-sw="blue">🔵 意味ある</button>
+          <button data-sw="red">🔴 無駄</button>
+        </div>
+        <div class="dim">やってみて「これは無駄だった」と思ったら、途中でも 赤に 変えられます。</div>
+      </div>
+      <button class="bigbtn stop" id="stopBtn">ストップして 記録する</button>
+      <button class="btn" id="cancelBtn" style="margin-top:9px;color:var(--dim)">記録せずに やめる</button>
+    </div>
+
+    <!-- 今日のまとめ -->
+    <div class="card" style="margin-top:12px">
+      <div class="row sb"><h3 style="margin:0">今日</h3><span class="dim" id="todayDate"></span></div>
+      <div class="ratio" style="margin-top:10px"><i class="b" id="tdB"></i><i class="r" id="tdR"></i></div>
+      <div class="legend"><span><i class="dot blue" style="width:9px;height:9px;border-radius:50%;display:inline-block"></i><span id="tdBt">0分</span></span><span><i class="dot red" style="width:9px;height:9px;border-radius:50%;display:inline-block"></i><span id="tdRt">0分</span></span></div>
+      <div class="stats">
+        <div class="stat b"><b id="tdBlue">0m</b><span>意味ある時間</span></div>
+        <div class="stat r"><b id="tdRed">0m</b><span>無駄な時間</span></div>
+        <div class="stat w"><b id="tdAway">0</b><span>離脱した回数</span></div>
+      </div>
+      <div class="tl" id="tdTl"></div>
+      <div class="tlx"><span>0時</span><span>6時</span><span>12時</span><span>18時</span><span>24時</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 記録タブ ============ -->
+  <section id="tab-log" class="hidden">
+    <div class="card">
+      <div class="row sb">
+        <button class="btn" style="width:44px" id="dPrev">◀</button>
+        <div style="text-align:center"><b id="dLabel">-</b><div class="dim" id="dSub"></div></div>
+        <button class="btn" style="width:44px" id="dNext">▶</button>
+      </div>
+      <div class="ratio" style="margin-top:12px"><i class="b" id="dB"></i><i class="r" id="dR"></i></div>
+      <div class="stats">
+        <div class="stat b"><b id="dBlue">0m</b><span>意味ある</span></div>
+        <div class="stat r"><b id="dRed">0m</b><span>無駄</span></div>
+        <div class="stat w"><b id="dAway">0</b><span>離脱回数</span></div>
+      </div>
+      <div class="tl" id="dTl"></div>
+      <div class="tlx"><span>0時</span><span>6時</span><span>12時</span><span>18時</span><span>24時</span></div>
+    </div>
+
+    <div class="card">
+      <div class="row sb" style="margin-bottom:10px"><h3 style="margin:0">この日の記録</h3>
+        <button class="btn" style="width:auto;padding:7px 12px;font-size:.8rem" id="addBtn">＋ 手で追加</button></div>
+      <div id="recList"></div>
+    </div>
+  </section>
+
+  <!-- ============ 分析タブ ============ -->
+  <section id="tab-ai" class="hidden">
+    <div class="card">
+      <div class="seg2" id="rangePick">
+        <button data-r="7" class="on">この7日間</button>
+        <button data-r="30">この30日間</button>
+      </div>
+      <div class="stats" style="grid-template-columns:repeat(2,1fr);margin-top:12px">
+        <div class="stat b"><b id="aBlue">0h</b><span>意味ある時間</span></div>
+        <div class="stat r"><b id="aRed">0h</b><span>無駄な時間</span></div>
+      </div>
+      <div class="ratio" style="margin-top:10px"><i class="b" id="aB"></i><i class="r" id="aR"></i></div>
+      <div class="dim" style="margin-top:8px;text-align:center" id="aRatioTxt"></div>
+    </div>
+
+    <div class="card">
+      <h3>日ごとの 内わけ</h3>
+      <div class="bars" id="aBars"></div>
+      <div class="barsx" id="aBarsX"></div>
+    </div>
+
+    <div class="card">
+      <h3>🔴 無駄な時間 ランキング</h3>
+      <div class="dim" style="margin:-4px 0 8px">青いタスクでも、離脱していた時間は ここに 入ります</div>
+      <div id="aRankR"><div class="empty">まだ 記録が ありません</div></div>
+    </div>
+
+    <div class="card">
+      <h3>📱 何時に スマホへ 逃げたか</h3>
+      <div class="hours" id="aHours"></div>
+      <div class="hoursx" id="aHoursX"></div>
+      <div class="dim" style="margin-top:8px" id="aHoursTxt"></div>
+    </div>
+
+    <div class="card">
+      <h3>💡 きづき</h3>
+      <div id="aInsight"></div>
+    </div>
+
+    <div class="card">
+      <h3>🤖 AIに 分析してもらう</h3>
+      <div class="dim" style="margin-bottom:10px">下のボタンで記録をコピーして、Claude（またはChatGPT）にそのまま貼りつけてください。アドバイスが返ってきます。</div>
+      <div class="aiout mono" id="aiText"></div>
+      <div class="btn2" style="margin-top:10px">
+        <button class="btn pri" id="copyBtn">📋 コピーする</button>
+        <a class="btn" id="openAi" href="https://claude.ai/new" target="_blank" rel="noopener">Claudeを ひらく</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 設定タブ ============ -->
+  <section id="tab-set" class="hidden">
+    <div class="card">
+      <h3>離脱の 検知</h3>
+      <div class="sw"><div class="lb">警告を 出す<small>他のアプリを開いて戻ると 赤い画面で知らせます</small></div><div class="toggle on" data-s="alertOn"></div></div>
+      <div class="sw"><div class="lb">警告音を 鳴らす<small>マナーモードだと 鳴りません</small></div><div class="toggle on" data-s="soundOn"></div></div>
+      <div class="sw"><div class="lb">画面を 消さない<small>ロックを離脱と数えないため（対応端末のみ）</small></div><div class="toggle on" data-s="wakeOn"></div></div>
+      <div class="field" style="margin-top:14px">
+        <label>これより短い離脱は 数えない</label>
+        <select id="ignoreSel">
+          <option value="0">すべて数える</option>
+          <option value="3000">3秒未満は 無視</option>
+          <option value="5000">5秒未満は 無視</option>
+          <option value="10000">10秒未満は 無視</option>
+          <option value="30000">30秒未満は 無視</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>データ</h3>
+      <div class="dim" style="margin-bottom:10px">記録は この端末の中だけに 保存されます。機種変更のまえに 書き出しておくと 安心です。</div>
+      <div class="btn2">
+        <button class="btn" id="expBtn">書き出す</button>
+        <button class="btn" id="impBtn">読みこむ</button>
+      </div>
+      <button class="btn dan" id="clrBtn" style="margin-top:9px">記録を ぜんぶ 消す</button>
+      <input type="file" id="impFile" accept="application/json" class="hidden">
+    </div>
+
+    <div class="card">
+      <h3>つかい方</h3>
+      <div class="dim" style="line-height:1.8">
+        1. やることを 入れて 色を えらび、スタート<br>
+        2. 終わったら ストップ。それだけで 記録がたまります<br>
+        3. 計測中に 他のアプリへ行くと 回数が記録され、その時間は 無駄時間 に 入ります<br>
+        4. 「分析」タブで コピー → Claudeに貼る と アドバイスがもらえます
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<nav class="tabs">
+  <button data-tab="timer" class="on"><span class="ic">⏱</span>計測</button>
+  <button data-tab="log"><span class="ic">📒</span>記録</button>
+  <button data-tab="ai"><span class="ic">📊</span>分析</button>
+  <button data-tab="set"><span class="ic">⚙️</span>設定</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="alert hidden" id="alertBox">
+  <div class="box">
+    <div class="em">⚠️</div>
+    <h2>アプリから 離れました</h2>
+    <div class="cnt mono" id="alCount">1回目</div>
+    <p id="alDur">12秒 ほかのことを していました</p>
+    <p id="alTask" style="color:#c98b8b"></p>
+    <button id="alBack">もどって つづける</button>
+  </div>
+</div>
+
+<div class="sheet hidden" id="sheet"><div class="inner" id="sheetInner"></div></div>
+
+<script>
+/* =========================================================
+   集中ログ — 行動を記録して、無駄な時間を見えるようにするアプリ
+   データは この端末の localStorage だけに 入る（外に送らない）
+   ========================================================= */
+const VER = 1;
+const KEY = 'focuslog.v1';
+const MIN=60000, HOUR=3600000, DAY=86400000;
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+/* ---------------- データ ---------------- */
+const DEF = { v:VER, sessions:[], active:null, tasks:[],
+  set:{ alertOn:true, soundOn:true, wakeOn:true, ignoreMs:3000 } };
+
+function load(){
+  try{
+    const r = JSON.parse(localStorage.getItem(KEY));
+    if(r && Array.isArray(r.sessions)){
+      const s = Object.assign({}, DEF, r);
+      s.set = Object.assign({}, DEF.set, r.set||{});
+      return s;
+    }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEF));
+}
+let S = load();
+let saveT=null;
+function save(){ clearTimeout(saveT); saveT=setTimeout(saveNow,400); }
+function saveNow(){ clearTimeout(saveT); try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast('保存できませんでした'); } }
+
+/* ---------------- 時間の書式 ---------------- */
+const p2 = n => String(n).padStart(2,'0');
+function bigTime(ms){
+  const s=Math.max(0,Math.floor(ms/1000)), h=Math.floor(s/3600), m=Math.floor(s%3600/60), ss=s%60;
+  return h+':'+p2(m)+'<small>:'+p2(ss)+'</small>';
+}
+function fmtDur(ms){
+  const s=Math.max(0,Math.round(ms/1000));
+  if(s<60) return s+'秒';
+  const m=Math.round(s/60);
+  if(m<60) return m+'分';
+  return Math.floor(m/60)+'時間'+(m%60? (m%60)+'分':'');
+}
+function fmtShort(ms){
+  const m=Math.max(0,Math.round(ms/60000));
+  if(m<60) return m+'m';
+  const h=Math.floor(m/60), r=m%60;
+  return r? h+'h'+r+'m' : h+'h';
+}
+function dayStart(ts){ const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
+const WD=['日','月','火','水','木','金','土'];
+function dLabel(ts){ const d=new Date(ts); return (d.getMonth()+1)+'月'+d.getDate()+'日('+WD[d.getDay()]+')'; }
+function dShort(ts){ const d=new Date(ts); return (d.getMonth()+1)+'/'+d.getDate(); }
+function hhmm(ts){ const d=new Date(ts); return d.getHours()+':'+p2(d.getMinutes()); }
+
+/* ---------------- 集計 ---------------- */
+// 1つの記録を 青（意味ある）/ 赤（無駄）に わける。
+// 青いタスクでも「離脱していた時間」は 無駄な時間 として 赤に入れる。
+function seg(s){
+  const tot = Math.max(0, (s.end||Date.now()) - s.start);
+  const away = Math.min(s.awayMs||0, tot);
+  if(s.kind==='red') return {tot, blue:0, red:tot, away};
+  return {tot, blue:tot-away, red:away, away};
+}
+function sum(list){
+  const o={blue:0,red:0,away:0,tot:0,awayCnt:0,cnt:list.length};
+  list.forEach(s=>{ const g=seg(s); o.blue+=g.blue; o.red+=g.red; o.away+=g.away; o.tot+=g.tot;
+    o.awayCnt += (s.aways? s.aways.length : 0); });
+  return o;
+}
+function liveActive(){                       // 計測中のものを 記録っぽく 見せる
+  if(!S.active) return null;
+  const a=S.active;
+  let awayMs=a.awayMs||0;
+  if(a.awayStart) awayMs += Date.now()-a.awayStart;
+  return {id:a.id, task:a.task, kind:a.kind, start:a.start, end:Date.now(),
+          aways:a.aways||[], awayMs, live:true};
+}
+function sessionsOf(dayTs, withLive){
+  const e=dayTs+DAY;
+  let l = S.sessions.filter(s=>s.start>=dayTs && s.start<e);
+  if(withLive){ const a=liveActive(); if(a && a.start>=dayTs && a.start<e) l=l.concat([a]); }
+  return l.sort((x,y)=>x.start-y.start);
+}
+function sessionsRange(days, withLive){
+  const from = dayStart(Date.now()) - (days-1)*DAY;
+  let l = S.sessions.filter(s=>s.start>=from);
+  if(withLive){ const a=liveActive(); if(a) l=l.concat([a]); }
+  return l.sort((x,y)=>x.start-y.start);
+}
+
+/* ---------------- ちいさな部品 ---------------- */
+let toastT=null;
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2200);
+}
+function openSheet(html){
+  $('#sheetInner').innerHTML = html;
+  $('#sheet').classList.remove('hidden');
+}
+function closeSheet(){ $('#sheet').classList.add('hidden'); }
+$('#sheet').addEventListener('click', e=>{ if(e.target.id==='sheet') closeSheet(); });
+
+/* ---------------- 音 ---------------- */
+let ac=null;
+function initAudio(){ if(ac) return; try{ ac = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+function alarm(){
+  if(navigator.vibrate) { try{ navigator.vibrate([120,70,120,70,220]); }catch(e){} }
+  if(!S.set.soundOn || !ac) return;
+  try{
+    ac.resume();
+    [0,.2,.4].forEach(d=>{
+      const o=ac.createOscillator(), g=ac.createGain();
+      o.type='square'; o.frequency.value= d<.35 ? 880 : 660;
+      o.connect(g); g.connect(ac.destination);
+      const t=ac.currentTime+d;
+      g.gain.setValueAtTime(.0001,t);
+      g.gain.exponentialRampToValueAtTime(.22,t+.012);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.16);
+      o.start(t); o.stop(t+.18);
+    });
+  }catch(e){}
+}
+
+/* ---------------- 画面を消させない ---------------- */
+let wl=null;
+async function reqWake(){
+  if(!S.set.wakeOn || !S.active || !('wakeLock' in navigator)) return;
+  try{ wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release',()=>{ wl=null; }); }catch(e){}
+}
+function relWake(){ try{ if(wl) wl.release(); }catch(e){} wl=null; }
+
+/* ---------------- 離脱の 検知 ---------------- */
+function goneAway(){
+  if(!S.active || S.active.awayStart) return;
+  S.active.awayStart = Date.now();
+  saveNow();
+}
+function backAgain(){
+  reqWake();
+  if(!S.active || !S.active.awayStart) return;
+  const st = S.active.awayStart, dur = Date.now()-st;
+  S.active.awayStart = null;
+  if(dur >= (S.set.ignoreMs||0)){
+    S.active.aways = S.active.aways||[];
+    S.active.aways.push({t:st, ms:dur});
+    S.active.awayMs = (S.active.awayMs||0) + dur;
+    if(S.set.alertOn) showAlert(dur, S.active.aways.length);
+  }
+  saveNow(); renderAll();
+}
+document.addEventListener('visibilitychange', ()=>{ document.hidden ? goneAway() : backAgain(); });
+window.addEventListener('blur',  goneAway);
+window.addEventListener('focus', backAgain);
+window.addEventListener('pagehide', ()=>{ goneAway(); saveNow(); });
+
+function showAlert(dur, cnt){
+  $('#alCount').textContent = cnt + '回目';
+  $('#alDur').textContent   = fmtDur(dur) + ' ほかのことを していました';
+  $('#alTask').textContent  = '「' + (S.active? S.active.task : '') + '」に もどりましょう';
+  $('#alertBox').classList.remove('hidden');
+  alarm();
+}
+$('#alBack').onclick = ()=>{ $('#alertBox').classList.add('hidden'); };
+
+/* ---------------- 計測の 開始 / 終了 ---------------- */
+let pickKind = 'blue';
+function setKind(k){
+  pickKind = k;
+  $$('#preRun .kindbtn').forEach(b=>b.classList.toggle('on', b.dataset.k===k));
+  $('#startBtn').classList.toggle('red', k==='red');
+}
+$$('#preRun .kindbtn').forEach(b=> b.onclick = ()=> setKind(b.dataset.k));
+
+function rememberTask(name, kind){
+  S.tasks = S.tasks || [];
+  const i = S.tasks.findIndex(t=>t.name===name);
+  if(i>=0){ S.tasks[i].n++; S.tasks[i].kind=kind; S.tasks[i].last=Date.now(); }
+  else S.tasks.push({name, kind, n:1, last:Date.now()});
+  S.tasks.sort((a,b)=> (b.n-a.n) || (b.last-a.last));
+  S.tasks = S.tasks.slice(0,30);
+}
+
+function startRun(){
+  if(S.active) return;
+  initAudio();
+  const name = ($('#taskInput').value||'').trim() || (pickKind==='red' ? 'なんとなく' : '無題');
+  S.active = { id:Date.now(), task:name, kind:pickKind, start:Date.now(), aways:[], awayMs:0, awayStart:null };
+  rememberTask(name, pickKind);
+  $('#taskInput').value='';
+  $('#taskInput').blur();
+  saveNow(); reqWake(); renderAll();
+  toast('計測を はじめました');
+}
+function stopRun(){
+  const a = S.active; if(!a) return;
+  if(a.awayStart){                                   // 離脱したまま 止めた場合
+    const dur = Date.now()-a.awayStart;
+    if(dur >= (S.set.ignoreMs||0)){ a.aways.push({t:a.awayStart, ms:dur}); a.awayMs=(a.awayMs||0)+dur; }
+    a.awayStart=null;
+  }
+  const end = Date.now(), dur = end-a.start;
+  S.active = null; relWake();
+  if(dur < 5000){ saveNow(); renderAll(); toast('短すぎるので 記録しませんでした'); return; }
+  S.sessions.push({ id:a.id, task:a.task, kind:a.kind, start:a.start, end, aways:a.aways||[], awayMs:a.awayMs||0 });
+  saveNow(); renderAll();
+  toast(fmtDur(dur) + ' 記録しました');
+}
+function cancelRun(){
+  if(!S.active) return;
+  if(!confirm('この計測を 記録せずに やめますか？')) return;
+  S.active=null; relWake(); saveNow(); renderAll(); toast('やめました');
+}
+$('#startBtn').onclick  = startRun;
+$('#stopBtn').onclick   = stopRun;
+$('#cancelBtn').onclick = cancelRun;
+$$('#inRun .seg2 button').forEach(b=> b.onclick = ()=>{
+  if(!S.active) return;
+  S.active.kind = b.dataset.sw; saveNow(); renderAll();
+  toast(b.dataset.sw==='red' ? '🔴 無駄 に しました' : '🔵 意味ある に しました');
+});
+$('#taskInput').addEventListener('keydown', e=>{ if(e.key==='Enter') startRun(); });
+
+/* ---------------- 描画：計測タブ ---------------- */
+function renderTimer(){
+  const a = S.active;
+  const box=$('#timerBox');
+  box.classList.toggle('run-blue', !!a && a.kind==='blue');
+  box.classList.toggle('run-red',  !!a && a.kind==='red');
+  $('#preRun').classList.toggle('hidden', !!a);
+  $('#inRun').classList.toggle('hidden', !a);
+
+  if(a){
+    $('#tTask').textContent = (a.kind==='red'?'🔴 ':'🔵 ') + a.task;
+    $('#tTime').innerHTML = bigTime(Date.now()-a.start);
+    $('#tState').textContent = '計測中';
+    const n=(a.aways||[]).length;
+    const b=$('#tAway'); b.classList.remove('hidden'); b.classList.toggle('hit', n>0);
+    $('#tAwayTxt').textContent = n>0 ? ('離脱 '+n+'回 / '+fmtDur(a.awayMs||0)) : '離脱 0回　いい調子';
+    $$('#inRun .seg2 button').forEach(x=>x.classList.toggle('on', x.dataset.sw===a.kind));
+  }else{
+    $('#tTask').textContent = '－';
+    $('#tTime').innerHTML = bigTime(0);
+    $('#tState').textContent = 'まだ はじまっていません';
+    $('#tAway').classList.add('hidden');
+  }
+}
+
+function renderChips(){
+  const box=$('#quickChips'); box.innerHTML='';
+  (S.tasks||[]).slice(0,8).forEach(t=>{
+    const b=document.createElement('button');
+    b.className='chip';
+    b.innerHTML = '<i class="dot '+(t.kind==='red'?'red':'blue')+'"></i>'+esc(t.name);
+    b.onclick = ()=>{ $('#taskInput').value=t.name; setKind(t.kind||'blue'); };
+    box.appendChild(b);
+  });
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function fillRatio(bEl,rEl,o){
+  const t=o.blue+o.red;
+  const bp = t? o.blue/t*100 : 0;
+  bEl.style.width = bp+'%'; rEl.style.width = (t? 100-bp : 0)+'%';
+}
+function fillTimeline(el, list){
+  el.innerHTML='';
+  if(!list.length) return;
+  const d0 = dayStart(list[0].start);
+  list.forEach(s=>{
+    const g=seg(s);
+    const st=Math.max(0, s.start-d0), en=Math.min(DAY, (s.end||Date.now())-d0);
+    if(en<=st) return;
+    const i=document.createElement('i');
+    i.className = (s.kind==='red'?'r':'b');
+    i.style.left  = (st/DAY*100)+'%';
+    i.style.width = ((en-st)/DAY*100)+'%';
+    el.appendChild(i);
+    // 離脱していた部分は 赤で 上書き
+    (s.aways||[]).forEach(w=>{
+      const ws=Math.max(0,w.t-d0), we=Math.min(DAY, w.t+w.ms-d0);
+      if(we<=ws) return;
+      const j=document.createElement('i');
+      j.className='r'; j.style.left=(ws/DAY*100)+'%'; j.style.width=Math.max(.3,(we-ws)/DAY*100)+'%';
+      el.appendChild(j);
+    });
+  });
+}
+
+function renderToday(){
+  const d0 = dayStart(Date.now());
+  const list = sessionsOf(d0, true);
+  const o = sum(list);
+  $('#todayDate').textContent = dLabel(d0);
+  fillRatio($('#tdB'), $('#tdR'), o);
+  $('#tdBt').textContent = fmtDur(o.blue);
+  $('#tdRt').textContent = fmtDur(o.red);
+  $('#tdBlue').textContent = fmtShort(o.blue);
+  $('#tdRed').textContent  = fmtShort(o.red);
+  $('#tdAway').textContent = o.awayCnt;
+  fillTimeline($('#tdTl'), list);
+}
+
+/* ---------------- 描画：記録タブ ---------------- */
+let viewDay = dayStart(Date.now());
+function renderLog(){
+  const list = sessionsOf(viewDay, true);
+  const o = sum(list);
+  $('#dLabel').textContent = dLabel(viewDay);
+  const diff = Math.round((dayStart(Date.now())-viewDay)/DAY);
+  $('#dSub').textContent = diff===0?'今日':(diff===1?'きのう':diff+'日前');
+  $('#dNext').style.visibility = diff<=0 ? 'hidden':'visible';
+  fillRatio($('#dB'), $('#dR'), o);
+  $('#dBlue').textContent = fmtShort(o.blue);
+  $('#dRed').textContent  = fmtShort(o.red);
+  $('#dAway').textContent = o.awayCnt;
+  fillTimeline($('#dTl'), list);
+
+  const box=$('#recList'); box.innerHTML='';
+  if(!list.length){ box.innerHTML='<div class="empty">この日の 記録は ありません</div>'; return; }
+  list.slice().reverse().forEach(s=>{
+    const g=seg(s), n=(s.aways||[]).length;
+    const b=document.createElement('button');
+    b.className='rec';
+    b.innerHTML =
+      '<span class="bar '+(s.kind==='red'?'r':'b')+'"></span>'+
+      '<span class="mid"><span class="t">'+esc(s.task)+(s.live?' <span style="color:#93c5fd">● 計測中</span>':'')+'</span>'+
+      '<span class="s mono">'+hhmm(s.start)+'〜'+(s.live?'':hhmm(s.end))+
+      (n? ' <span class="away">📱'+n+'回 '+fmtDur(s.awayMs||0)+'</span>':'')+'</span></span>'+
+      '<span class="d">'+fmtShort(g.tot)+'</span>';
+    b.onclick = ()=> s.live ? toast('計測中の記録は ストップしてから 編集できます') : editSheet(s.id);
+    box.appendChild(b);
+  });
+}
+$('#dPrev').onclick = ()=>{ viewDay-=DAY; renderLog(); };
+$('#dNext').onclick = ()=>{ if(viewDay<dayStart(Date.now())){ viewDay+=DAY; renderLog(); } };
+
+function editSheet(id){
+  const s = S.sessions.find(x=>x.id===id); if(!s) return;
+  openSheet(
+    '<h3 style="margin-bottom:14px">記録を なおす</h3>'+
+    '<div class="field"><label>やったこと</label><input id="eName" value="'+esc(s.task)+'" maxlength="40"></div>'+
+    '<div class="field"><label>色</label><div class="seg2" id="eKind">'+
+      '<button data-k="blue" class="'+(s.kind==='blue'?'on':'')+'">🔵 意味ある</button>'+
+      '<button data-k="red" class="'+(s.kind==='red'?'on':'')+'">🔴 無駄</button></div></div>'+
+    '<div class="field"><label>時間</label><div class="seg2">'+
+      '<input id="eS" type="time" value="'+p2(new Date(s.start).getHours())+':'+p2(new Date(s.start).getMinutes())+'">'+
+      '<input id="eE" type="time" value="'+p2(new Date(s.end).getHours())+':'+p2(new Date(s.end).getMinutes())+'"></div></div>'+
+    '<div class="dim" style="margin-bottom:12px">離脱 '+((s.aways||[]).length)+'回 / '+fmtDur(s.awayMs||0)+'</div>'+
+    '<div class="btn2"><button class="btn" id="eCancel">やめる</button><button class="btn pri" id="eSave">保存</button></div>'+
+    '<button class="btn dan" id="eDel" style="margin-top:9px">この記録を 消す</button>'
+  );
+  let k=s.kind;
+  $$('#eKind button').forEach(b=> b.onclick=()=>{ k=b.dataset.k; $$('#eKind button').forEach(x=>x.classList.toggle('on',x===b)); });
+  $('#eCancel').onclick = closeSheet;
+  $('#eDel').onclick = ()=>{ if(!confirm('この記録を 消しますか？')) return;
+    S.sessions = S.sessions.filter(x=>x.id!==id); saveNow(); closeSheet(); renderAll(); toast('消しました'); };
+  $('#eSave').onclick = ()=>{
+    const d0=dayStart(s.start);
+    const st=d0+tm($('#eS').value), en=d0+tm($('#eE').value);
+    if(en<=st){ toast('終わりの時刻が おかしいです'); return; }
+    s.task = ($('#eName').value||'').trim()||s.task; s.kind=k; s.start=st; s.end=en;
+    if((s.awayMs||0) > en-st) s.awayMs = en-st;
+    saveNow(); closeSheet(); renderAll(); toast('なおしました');
+  };
+}
+function tm(v){ const [h,m]=(v||'0:0').split(':').map(Number); return (h||0)*HOUR+(m||0)*MIN; }
+
+$('#addBtn').onclick = ()=>{
+  const now=new Date();
+  openSheet(
+    '<h3 style="margin-bottom:4px">手で 追加する</h3>'+
+    '<div class="dim" style="margin-bottom:14px">'+dLabel(viewDay)+' の 記録として 追加します</div>'+
+    '<div class="field"><label>やったこと</label><input id="nName" placeholder="例）お風呂" maxlength="40"></div>'+
+    '<div class="field"><label>色</label><div class="seg2" id="nKind">'+
+      '<button data-k="blue" class="on">🔵 意味ある</button><button data-k="red">🔴 無駄</button></div></div>'+
+    '<div class="field"><label>時間（開始 〜 終了）</label><div class="seg2">'+
+      '<input id="nS" type="time" value="'+p2(now.getHours()-1<0?0:now.getHours()-1)+':'+p2(now.getMinutes())+'">'+
+      '<input id="nE" type="time" value="'+p2(now.getHours())+':'+p2(now.getMinutes())+'"></div></div>'+
+    '<div class="btn2"><button class="btn" id="nCancel">やめる</button><button class="btn pri" id="nSave">追加</button></div>'
+  );
+  let k='blue';
+  $$('#nKind button').forEach(b=> b.onclick=()=>{ k=b.dataset.k; $$('#nKind button').forEach(x=>x.classList.toggle('on',x===b)); });
+  $('#nCancel').onclick = closeSheet;
+  $('#nSave').onclick = ()=>{
+    const st=viewDay+tm($('#nS').value), en=viewDay+tm($('#nE').value);
+    if(en<=st){ toast('終わりの時刻が おかしいです'); return; }
+    const name=($('#nName').value||'').trim()||'記録';
+    S.sessions.push({id:Date.now(), task:name, kind:k, start:st, end:en, aways:[], awayMs:0});
+    rememberTask(name,k); saveNow(); closeSheet(); renderAll(); toast('追加しました');
+  };
+};
+
+/* ---------------- 描画：分析タブ ---------------- */
+let aRange = 7;
+$$('#rangePick button').forEach(b=> b.onclick = ()=>{
+  aRange = +b.dataset.r;
+  $$('#rangePick button').forEach(x=>x.classList.toggle('on',x===b));
+  renderAI();
+});
+
+function byTask(list){
+  const m = {};
+  list.forEach(s=>{
+    const g=seg(s);
+    const k=s.task;
+    if(!m[k]) m[k]={name:k, blue:0, red:0, tot:0, cnt:0, awayCnt:0};
+    m[k].blue+=g.blue; m[k].red+=g.red; m[k].tot+=g.tot; m[k].cnt++;
+    m[k].awayCnt += (s.aways||[]).length;
+  });
+  return Object.values(m);
+}
+function dayBuckets(days, list){
+  const today = dayStart(Date.now()), out=[];
+  for(let i=days-1;i>=0;i--){
+    const d = today-i*DAY;
+    out.push({ d, o: sum(list.filter(s=>s.start>=d && s.start<d+DAY)) });
+  }
+  return out;
+}
+function awayHours(list){
+  const h=new Array(24).fill(0);
+  list.forEach(s=> (s.aways||[]).forEach(w=> h[new Date(w.t).getHours()]++ ));
+  return h;
+}
+
+function renderAI(){
+  const list = sessionsRange(aRange, true);
+  const o = sum(list);
+  $('#aBlue').textContent = fmtShort(o.blue);
+  $('#aRed').textContent  = fmtShort(o.red);
+  fillRatio($('#aB'), $('#aR'), o);
+  const t=o.blue+o.red;
+  $('#aRatioTxt').textContent = t
+    ? ('記録した '+fmtDur(t)+' のうち 無駄な時間 は '+Math.round(o.red/t*100)+'%　／ 離脱 '+o.awayCnt+'回')
+    : 'まだ 記録が ありません';
+
+  // 日ごとの棒グラフ
+  const bk = dayBuckets(aRange, list);
+  const max = Math.max(1, ...bk.map(x=>x.o.blue+x.o.red));
+  const bars=$('#aBars'), bx=$('#aBarsX'); bars.innerHTML=''; bx.innerHTML='';
+  bk.forEach(x=>{
+    const col=document.createElement('div'); col.className='col';
+    const r=document.createElement('div'); r.className='seg r'; r.style.height=(x.o.red/max*100)+'%';
+    const b=document.createElement('div'); b.className='seg b'; b.style.height=(x.o.blue/max*100)+'%';
+    col.appendChild(r); col.appendChild(b); bars.appendChild(col);
+    const lb=document.createElement('div');
+    lb.textContent = aRange<=7 ? dShort(x.d) : (new Date(x.d).getDate());
+    if(x.d===dayStart(Date.now())) lb.className='today';
+    bx.appendChild(lb);
+  });
+
+  // 無駄な時間 ランキング
+  const rk = byTask(list).filter(x=>x.red>0).sort((a,b)=>b.red-a.red).slice(0,6);
+  const rEl=$('#aRankR');
+  rEl.innerHTML = rk.length ? rk.map((x,i)=>
+    '<div class="rank"><span class="no">'+(i+1)+'</span><span class="nm">'+esc(x.name)+'</span>'+
+    '<span class="vl r">'+fmtShort(x.red)+'</span></div>').join('')
+    : '<div class="empty">赤（無駄）の 記録は ありません。すばらしい。</div>';
+
+  // 時間帯べつ 離脱
+  const hs = awayHours(list), hmax=Math.max(1,...hs);
+  const hEl=$('#aHours'), hxEl=$('#aHoursX'); hEl.innerHTML=''; hxEl.innerHTML='';
+  hs.forEach((v,i)=>{
+    const d=document.createElement('div');
+    d.className='h'+(v>0?' hit':''); d.style.height=Math.max(3,v/hmax*100)+'%'; d.title=i+'時 '+v+'回';
+    hEl.appendChild(d);
+    const l=document.createElement('div'); l.textContent = i%6===0 ? i : '';
+    hxEl.appendChild(l);
+  });
+  const worst = hs.indexOf(Math.max(...hs));
+  $('#aHoursTxt').textContent = Math.max(...hs)>0
+    ? (worst+'時台が いちばん スマホに 逃げています（'+hs[worst]+'回）')
+    : 'まだ 離脱の 記録は ありません';
+
+  $('#aInsight').innerHTML = insights(list, bk, rk, hs);
+  $('#aiText').textContent = aiText(list, bk);
+}
+
+function insights(list, bk, rk, hs){
+  if(!list.length) return '<div class="empty">記録が たまると ここに 出ます</div>';
+  const o=sum(list), t=o.blue+o.red, out=[];
+  const pct = t? Math.round(o.red/t*100) : 0;
+  out.push((pct>=40?'⚠️ ':'✅ ')+'記録した時間の <b>'+pct+'%</b> が 無駄な時間 でした（'+fmtDur(o.red)+'）');
+  const worstDay = bk.slice().sort((a,b)=>b.o.red-a.o.red)[0];
+  if(worstDay && worstDay.o.red>0) out.push('📅 いちばん 無駄が多かったのは <b>'+dShort(worstDay.d)+'</b>（'+fmtDur(worstDay.o.red)+'）');
+  if(rk[0]) out.push('🔴 いちばんの 時間どろぼうは <b>'+esc(rk[0].name)+'</b>（'+fmtDur(rk[0].red)+'）');
+  const wh=hs.indexOf(Math.max(...hs));
+  if(Math.max(...hs)>0) out.push('📱 離脱は <b>'+wh+'時台</b>に かたよっています。その時間は スマホを 別の部屋へ。');
+  const days = bk.filter(x=>x.o.tot>0).length;
+  if(days>0) out.push('📈 1日あたり 平均 <b>'+fmtDur(o.blue/days)+'</b> 集中できています');
+  const perH = o.tot ? (o.awayCnt/(o.tot/HOUR)) : 0;
+  if(o.awayCnt>0) out.push('⏱ 1時間あたり <b>'+perH.toFixed(1)+'回</b> ほかのアプリへ 行っています');
+  if(pct<20 && t>HOUR) out.push('🎉 無駄な時間は 2割 未満。この調子で。');
+  return '<div style="line-height:2;font-size:.88rem">'+out.join('<br>')+'</div>';
+}
+
+/* ---------------- AIに 渡す テキスト ---------------- */
+function aiText(list, bk){
+  if(!list.length) return '（まだ 記録が ありません）';
+  const o=sum(list), t=o.blue+o.red;
+  const L=[];
+  L.push('■ 私の行動ログ（集中ログ アプリの記録／直近'+aRange+'日）');
+  L.push('青=意味のある時間（勉強・生活・自己研鑽）、赤=無駄な時間');
+  L.push('※青いタスク中に他アプリへ「離脱」した時間は 無駄時間として赤に計上');
+  L.push('');
+  L.push('【合計】記録 '+fmtDur(t)+' ／ 青 '+fmtDur(o.blue)+' ／ 赤 '+fmtDur(o.red)+'（'+(t?Math.round(o.red/t*100):0)+'%）');
+  L.push('【離脱】ほかのアプリを開いた回数 '+o.awayCnt+'回 ／ 合計 '+fmtDur(o.away));
+  L.push('');
+  L.push('【日ごと】');
+  bk.forEach(x=>{ if(x.o.tot<=0) { L.push(dShort(x.d)+'('+WD[new Date(x.d).getDay()]+') 記録なし'); return; }
+    L.push(dShort(x.d)+'('+WD[new Date(x.d).getDay()]+') 青'+fmtShort(x.o.blue)+' 赤'+fmtShort(x.o.red)+' 離脱'+x.o.awayCnt+'回'); });
+  L.push('');
+  L.push('【やったこと べつ】');
+  byTask(list).sort((a,b)=>b.tot-a.tot).slice(0,15).forEach(x=>{
+    L.push('・'+x.name+'：計'+fmtShort(x.tot)+'（青'+fmtShort(x.blue)+'/赤'+fmtShort(x.red)+'）'+x.cnt+'回、離脱'+x.awayCnt+'回');
+  });
+  L.push('');
+  const hs=awayHours(list);
+  L.push('【時間帯べつ 離脱回数】');
+  L.push(hs.map((v,i)=> v? i+'時:'+v+'回' : '').filter(Boolean).join(' ') || 'なし');
+  L.push('');
+  L.push('【1件ずつ（新しい順・最大60件）】');
+  list.slice().reverse().slice(0,60).forEach(s=>{
+    const g=seg(s), n=(s.aways||[]).length;
+    L.push(dShort(s.start)+' '+hhmm(s.start)+'-'+hhmm(s.end||Date.now())+' ['+(s.kind==='red'?'赤':'青')+'] '+s.task+
+      ' '+fmtShort(g.tot)+(n? '（離脱'+n+'回 '+fmtShort(s.awayMs||0)+'）':''));
+  });
+  L.push('');
+  L.push('----');
+  L.push('このデータをもとに、次の点を分析してアドバイスをください。');
+  L.push('1. 無駄な時間が生まれているパターン（時間帯・きっかけ・タスクの前後関係）');
+  L.push('2. 集中が切れている原因の仮説');
+  L.push('3. 明日から実行できる具体的な改善策を3つ（精神論ではなく、環境や手順を変える案で）');
+  L.push('4. よくできている点も1つ');
+  return L.join('\n');
+}
+
+$('#copyBtn').onclick = async ()=>{
+  const txt = $('#aiText').textContent;
+  try{ await navigator.clipboard.writeText(txt); toast('コピーしました'); }
+  catch(e){
+    const ta=document.createElement('textarea'); ta.value=txt;
+    ta.style.position='fixed'; ta.style.top='-1000px'; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); toast('コピーしました'); }catch(e2){ toast('コピーできませんでした'); }
+    document.body.removeChild(ta);
+  }
+};
+
+/* ---------------- 設定 ---------------- */
+function renderSet(){
+  $$('.toggle').forEach(t=> t.classList.toggle('on', !!S.set[t.dataset.s]));
+  $('#ignoreSel').value = String(S.set.ignoreMs);
+}
+$$('.toggle').forEach(t=> t.onclick = ()=>{
+  S.set[t.dataset.s] = !S.set[t.dataset.s];
+  t.classList.toggle('on', S.set[t.dataset.s]);
+  if(t.dataset.s==='wakeOn'){ S.set.wakeOn ? reqWake() : relWake(); }
+  if(t.dataset.s==='soundOn' && S.set.soundOn){ initAudio(); alarm(); }
+  saveNow();
+});
+$('#ignoreSel').onchange = e=>{ S.set.ignoreMs = +e.target.value; saveNow(); };
+
+$('#expBtn').onclick = ()=>{
+  const blob = new Blob([JSON.stringify(S,null,1)], {type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='shuchu-log-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  toast('書き出しました');
+};
+$('#impBtn').onclick = ()=> $('#impFile').click();
+$('#impFile').onchange = e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload = ()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(!d || !Array.isArray(d.sessions)) throw 0;
+      if(!confirm('いまの記録に '+d.sessions.length+'件を たしますか？')) return;
+      const have = new Set(S.sessions.map(s=>s.id));
+      d.sessions.forEach(s=>{ if(!have.has(s.id)) S.sessions.push(s); });
+      S.sessions.sort((a,b)=>a.start-b.start);
+      saveNow(); renderAll(); toast('読みこみました');
+    }catch(err){ toast('このファイルは 読めません'); }
+  };
+  r.readAsText(f); e.target.value='';
+};
+$('#clrBtn').onclick = ()=>{
+  if(!confirm('記録を ぜんぶ 消します。もとに もどせません。よろしいですか？')) return;
+  if(!confirm('本当に 消しますか？')) return;
+  S = JSON.parse(JSON.stringify(DEF)); saveNow(); renderAll(); toast('消しました');
+};
+
+/* ---------------- タブ ---------------- */
+let tab='timer';
+function showTab(t){
+  tab=t;
+  ['timer','log','ai','set'].forEach(x=> $('#tab-'+x).classList.toggle('hidden', x!==t));
+  $$('.tabs button').forEach(b=> b.classList.toggle('on', b.dataset.tab===t));
+  window.scrollTo(0,0);
+  renderAll();
+}
+$$('.tabs button').forEach(b=> b.onclick = ()=> showTab(b.dataset.tab));
+
+/* ---------------- まとめて 描画 ---------------- */
+function renderAll(){
+  renderTimer();
+  if(tab==='timer'){ renderChips(); renderToday(); }
+  if(tab==='log')   renderLog();
+  if(tab==='ai')    renderAI();
+  if(tab==='set')   renderSet();
+}
+
+/* ---------------- 時計 ---------------- */
+let tick=0;
+setInterval(()=>{
+  if(S.active) renderTimer();
+  tick++;
+  if(tick%10===0 && S.active){            // 5秒に1回 まわりも 更新
+    if(tab==='timer') renderToday();
+    if(tab==='log' && viewDay===dayStart(Date.now())) renderLog();
+  }
+},500);
+
+/* ---------------- 起動 ---------------- */
+$('#verLabel').textContent = 'v'+VER;
+document.addEventListener('click', initAudio, {once:true});
+
+// 計測しっぱなし（8時間超）を みつけたら たずねる
+if(S.active && Date.now()-S.active.start > 8*HOUR){
+  const a=S.active;
+  setTimeout(()=>openSheet(
+    '<h3 style="margin-bottom:8px">⏱ 計測が つけっぱなしです</h3>'+
+    '<div class="dim" style="margin-bottom:14px">「'+esc(a.task)+'」を '+fmtDur(Date.now()-a.start)+' 計測しています。ストップを 押しわすれたかも しれません。</div>'+
+    '<button class="btn pri" id="kKeep">このまま つづける</button>'+
+    '<button class="btn" id="kStop" style="margin-top:9px">いま ストップして 記録する</button>'+
+    '<button class="btn dan" id="kDrop" style="margin-top:9px">この計測を 捨てる</button>'
+  ),300);
+  setTimeout(()=>{
+    const k=$('#kKeep'); if(!k) return;
+    k.onclick=closeSheet;
+    $('#kStop').onclick=()=>{ closeSheet(); stopRun(); };
+    $('#kDrop').onclick=()=>{ S.active=null; saveNow(); closeSheet(); renderAll(); toast('捨てました'); };
+  },400);
+}
+
+setKind('blue');
+showTab('timer');
+reqWake();
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

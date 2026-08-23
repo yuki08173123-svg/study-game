@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F4F6FA">
+<meta name="description" content="タイムレコードの入れ方と つかい方の手順書">
+<title>タイムレコード のつかい方</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+:root{
+  --paper:#F4F6FA;
+  --card:#FFFFFF;
+  --ink:#131A26;
+  --soft:#5A6478;
+  --rule:#DBE1EC;
+  --blue:#2563EB;
+  --blue-soft:#E7EEFD;
+  --green:#16A34A;
+  --green-soft:#E4F6EA;
+  --red:#DC2626;
+  --red-soft:#FCE9E9;
+  --amber:#B45309;
+  --amber-soft:#FBF0DC;
+  --shadow:0 1px 2px rgba(19,26,38,.05), 0 8px 24px rgba(19,26,38,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E131C;
+    --card:#161D2A;
+    --ink:#E8EDF7;
+    --soft:#94A2B9;
+    --rule:#28313F;
+    --blue:#6BA1F8;
+    --blue-soft:#16233C;
+    --green:#5BD68B;
+    --green-soft:#12291D;
+    --red:#F98080;
+    --red-soft:#301719;
+    --amber:#F2B857;
+    --amber-soft:#2B2213;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E131C;
+  --card:#161D2A;
+  --ink:#E8EDF7;
+  --soft:#94A2B9;
+  --rule:#28313F;
+  --blue:#6BA1F8;
+  --blue-soft:#16233C;
+  --green:#5BD68B;
+  --green-soft:#12291D;
+  --red:#F98080;
+  --red-soft:#301719;
+  --amber:#F2B857;
+  --amber-soft:#2B2213;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  font-weight:400;
+  line-height:1.9;
+  -webkit-font-smoothing:antialiased;
+}
+.page{max-width:40rem;margin:0 auto;padding:clamp(1.5rem,4vw,3rem) clamp(1.1rem,4vw,2rem) 5rem}
+
+h1,h2,h3{font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.1rem,7vw,3rem);font-weight:900;letter-spacing:.01em;line-height:1.25}
+h2{font-size:clamp(1.35rem,4.4vw,1.7rem);font-weight:700;line-height:1.4}
+h3{font-size:1.05rem;font-weight:700;line-height:1.5}
+p{margin:0}
+
+/* ---- 時間の帯（アプリの1日グラフと同じかたち） ---- */
+.ribbon{display:flex;height:9px;border-radius:99px;overflow:hidden;background:var(--rule)}
+.ribbon span{display:block}
+.ribbon .b{background:var(--blue)}
+.ribbon .g{background:var(--green)}
+.ribbon .r{background:var(--red)}
+.ribbon .u{background:repeating-linear-gradient(45deg,var(--rule),var(--rule) 3px,var(--card) 3px,var(--card) 6px)}
+
+/* ---- 見出し ---- */
+header{display:flex;flex-direction:column;gap:1.1rem;margin-bottom:2.5rem}
+.eyebrow{
+  font-family:"Zen Maru Gothic",sans-serif;font-weight:700;font-size:.8rem;
+  letter-spacing:.12em;color:var(--blue);
+}
+.lead{font-size:1.05rem;color:var(--soft);max-width:32rem}
+
+section{margin-top:3.2rem;display:flex;flex-direction:column;gap:1.1rem}
+.sec-head{display:flex;align-items:baseline;gap:.7rem;border-bottom:2px solid var(--ink);padding-bottom:.6rem}
+.sec-num{
+  font-family:"Zen Maru Gothic",sans-serif;font-weight:900;font-size:1.05rem;
+  color:var(--blue);font-variant-numeric:tabular-nums;
+}
+
+/* ---- カード ---- */
+.card{
+  background:var(--card);border:1px solid var(--rule);border-radius:16px;
+  padding:1.3rem 1.25rem;box-shadow:var(--shadow);
+}
+
+/* ---- QRのカード ---- */
+.qr{display:flex;flex-direction:column;align-items:center;gap:.9rem;text-align:center;padding:1.6rem 1.25rem}
+.qr img{
+  width:min(220px,62vw);height:auto;display:block;
+  background:#fff;padding:10px;border-radius:12px;border:1px solid var(--rule);
+}
+.qr .url{
+  font-family:"Zen Kaku Gothic New",monospace;font-size:.85rem;color:var(--soft);
+  word-break:break-all;line-height:1.6;
+}
+.qr .cap{font-family:"Zen Maru Gothic",sans-serif;font-weight:700;font-size:1rem}
+
+/* ---- 3色の説明 ---- */
+.kinds{display:grid;gap:.7rem}
+.kind{
+  display:flex;flex-direction:column;gap:.15rem;
+  background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:.95rem 1.1rem;
+}
+.kind b{font-family:"Zen Maru Gothic",sans-serif;font-size:1.05rem;line-height:1.4}
+.kind.core b{color:var(--blue)}
+.kind.life b{color:var(--green)}
+.kind.waste b{color:var(--red)}
+.kind span{font-size:.92rem;color:var(--soft);line-height:1.7}
+
+/* ---- 手順 ---- */
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.55rem;counter-reset:step}
+ol.steps li{
+  counter-increment:step;
+  display:grid;grid-template-columns:2.5rem 1fr;gap:.9rem;align-items:start;
+  background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:.9rem 1.1rem .9rem .85rem;
+}
+ol.steps li::before{
+  content:counter(step);
+  font-family:"Zen Maru Gothic",sans-serif;font-weight:900;font-size:1.05rem;
+  width:2.5rem;height:2.5rem;border-radius:50%;
+  background:var(--blue);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-variant-numeric:tabular-nums;
+}
+ol.steps li .txt{padding-top:.32rem}
+ol.steps li b{font-weight:700}
+ol.steps li small{display:block;color:var(--soft);font-size:.86rem;line-height:1.7;margin-top:.15rem}
+
+/* ---- 注意・ヒント ---- */
+.note{
+  border-radius:14px;padding:1rem 1.15rem;
+  display:flex;flex-direction:column;gap:.35rem;
+  border:1px solid transparent;
+}
+.note b{font-family:"Zen Maru Gothic",sans-serif;font-size:.98rem}
+.note p{font-size:.94rem;line-height:1.85}
+.note.warn{background:var(--amber-soft);border-color:color-mix(in srgb,var(--amber) 35%,transparent)}
+.note.warn b{color:var(--amber)}
+.note.tip{background:var(--blue-soft);border-color:color-mix(in srgb,var(--blue) 30%,transparent)}
+.note.tip b{color:var(--blue)}
+
+/* ---- 一問一答 ---- */
+.qa{display:flex;flex-direction:column;gap:0}
+.qa div{padding:1rem 0;border-bottom:1px solid var(--rule)}
+.qa div:last-child{border-bottom:none}
+.qa .q{font-family:"Zen Maru Gothic",sans-serif;font-weight:700;font-size:.98rem;display:block;margin-bottom:.15rem}
+.qa .a{font-size:.94rem;color:var(--soft);line-height:1.85}
+
+.body-txt{font-size:1rem;line-height:1.95}
+.small{font-size:.9rem;color:var(--soft);line-height:1.8}
+.tag{
+  display:inline-block;background:var(--blue-soft);color:var(--blue);
+  font-family:"Zen Maru Gothic",sans-serif;font-weight:700;font-size:.85rem;
+  padding:.1rem .55rem;border-radius:7px;white-space:nowrap;
+}
+
+footer{margin-top:3.5rem;padding-top:1.5rem;border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:.8rem}
+
+@media print{
+  body{background:#fff;color:#000}
+  .page{max-width:none;padding:0}
+  .card,ol.steps li,.kind,.note{box-shadow:none;break-inside:avoid}
+  section{break-inside:avoid-page}
+}
+</style>
+
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="eyebrow">じかんの つかい方が 見えるアプリ</div>
+    <h1>タイムレコード</h1>
+    <div class="ribbon" aria-hidden="true">
+      <span class="b" style="width:34%"></span><span class="g" style="width:18%"></span><span class="r" style="width:26%"></span><span class="u" style="width:22%"></span>
+    </div>
+    <p class="lead">
+      やることを はじめる前に「スタート」、おわったら「ストップ」。
+      それだけで、その日の じぶんの時間が 色でわかります。
+      むだな時間を へらして、本当に やるべきことに 集中するための アプリです。
+    </p>
+  </header>
+
+  <div class="kinds">
+    <div class="kind core">
+      <b>🔵 本命（ほんめい）</b>
+      <span>勉強、部活、練習、読書。いちばん やるべきこと。</span>
+    </div>
+    <div class="kind life">
+      <b>🟢 生活（せいかつ）</b>
+      <span>ごはん、おふろ、移動、家の手つだい。へらす必要のない、必要なこと。</span>
+    </div>
+    <div class="kind waste">
+      <b>🔴 むだ</b>
+      <span>なんとなく見ていた動画、だらだらスマホ。へらしたい時間。</span>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">1</span><h2>アプリを 入れる</h2></div>
+
+    <div class="card qr">
+      <div class="cap">スマホの カメラを 向けてください</div>
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAq4AAAKuAQMAAABaMQxFAAAABlBMVEULDxf///+AgJfpAAAD4ElEQVR42u2dS5KkMAwFFcMBOBJX95E4ABHu4mP7yXbMbKZRLdIburogF7XIkIQsW/6NdRhYsGDBggULFixYsGDBggULFixYsN+INVnb+f81p/Pv53Kt5XNfOi/7fct1Z/58MnfLif1jv7LAggUL1q1isKVIrerp891tqee7dsvzab8f32+R6S0YDCxYsC8bbL+DqFNIV/D1BGZPRJbrJbdQTB8Q12EwsGDBRhssWUsmq56Se2DLGAwsWLDfZrAniywiy2qpllpKFonBwIIFG2swXwdbyyerJXz/wOMz6mBgwYKNN5isrU8R/3VpC4OBBQs2wGDDklCsySpLTrn8rUmD3xYsWLBvGyxZq25JYFYqX/UFpVb5S9RVckoMBhYs2PcNdriccpopPjHY0RLGNJbRMBhYsGAjDCa1+6HhfppMTp7DYGDBgo3KIlsyaaWH1YZqveaUeqfLKfltwYIF+6LBrr/7ni/NMFsdzDeCLXRTgAUL9gsMJvX5LkXstxNl6RUz8+0XGAwsWLAxBvPvFB+f5XnrV8s3pbEVg4EFCzbEYF0Q5bwk8VnOGnWZk5xRBwMLFmyIwVo3hTZOuC1D7bu9xWCTRBODgQULNiKLvJJCyRs1BvM7ITWLXEsJP9FNARYs2OAsUuMsP6p1Gdr2k4DopgALFmxgFinZoLkur1br8s4y0+4wB+O3BQsW7NtZ5DCiol58v35tuEjlTt1qhMHAggUbFINJZ2qSnZA+mawdrX05jBgMLFiwQQbTZnw/h7ULsMqj62wkIgYDCxZsRBZp5nskkvn00Z+2Zq5JTEtlGAwsWLAxMdj1Lz0vst/EnUwH6SQbGlsxGFiwYCMMpn1dR9eFL+oqz7mXkOyLBAsWbLTBkulEsPpJD75NfaK5dCPEMBhYsGBfN9hkX+QQn/Xhls5CpJsCLFiwoQbLXQyWZxuIkvnxFU15xGBgwYINjsGGaWFmQ9/9MelvZV8kWLBgIw1m+vbRz5weusNWV9CX4IsYDCxYsIEGm5wX2Z8QWR5cXP3Mmw+DgQULNiIGc5MKuyE7y0xk1WecVQQWLNgog/mlA6W38V2k1vyXWQiHwcCCBftyDGbNWdZv4nZFriH42phwCBYs2FCDLa4A5ndCjsHX1p0QaXS0ggULNtRgu4RU3chVd6rtOEnMjCwSLFiw32Owcdh0a9Tvp+uMVTEMBhYs2ECDdV1e5xp2HNXL2iWaGAwsWLDvG8w3gpmbWyjFMd0zOTlEEoOBBQv2fYPJ0hPVfEHf542yL1KHhmEwsGDBvmyw/7sOsGDBggULFixYsGDBggULFixYsGC/CvsDgaFaF06hWz8AAAAASUVORK5CYII=" alt="タイムレコードのQRコード">
+      <p class="url">
+        読みとれないときは、Safariの 上のアドレス欄に この文字を 入力します<br>
+        yuki08173123-svg.github.io/study-game/focus/
+      </p>
+    </div>
+
+    <ol class="steps">
+      <li><div class="txt"><b>カメラアプリを ひらいて、QRコードに 向ける</b>
+        <small>読みとりアプリは いりません。画面の上に 出てくるリンクを タップします。</small></div></li>
+      <li><div class="txt"><b>Safari（サファリ）で ひらく</b>
+        <small>iPhoneの人は かならず Safari で。ほかのアプリで ひらくと、うまく うごきません。</small></div></li>
+      <li><div class="txt"><b>画面の下の 共有ボタンを タップ</b>
+        <small>四角に 上むきの矢印（↑）が 入った マークです。</small></div></li>
+      <li><div class="txt"><b>メニューを 下に スクロールして「ホーム画面に追加」</b>
+        <small>見つからないときは、もう少し 下まで さがしてください。</small></div></li>
+      <li><div class="txt"><b>右上の「追加」を タップ</b>
+        <small>ホーム画面に、青いアイコンが できます。</small></div></li>
+      <li><div class="txt"><b>Safariの タブを 閉じる</b>
+        <small>これから先は、かならず ホーム画面の アイコンから ひらきます。</small></div></li>
+    </ol>
+
+    <div class="note warn">
+      <b>⚠️ ここだけは 気をつけて</b>
+      <p>Safariの タブで 使ったときの記録と、アイコンから 使ったときの記録は、
+      べつべつの場所に 保存されることがあります。
+      さきに タブで 記録を ためてしまうと、あとで 見えなくなることがあります。
+      <b>入れたら すぐ タブを閉じて、アイコンから 使いはじめてください。</b></p>
+    </div>
+
+    <div class="note tip">
+      <b>Androidのスマホの人へ</b>
+      <p>Chrome（クローム）で ひらいて、右上の <b>⋮</b> → 「ホーム画面に追加」または「アプリをインストール」を タップします。あとは 同じです。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">2</span><h2>さいしょの 設定（1分）</h2></div>
+    <p class="body-txt">アイコンから ひらいたら、右下の <span class="tag">⚙️ 設定</span> を タップして、3つだけ 決めます。</p>
+    <ol class="steps">
+      <li><div class="txt"><b>1日に 本命へ 使いたい時間</b>
+        <small>さいしょは 少なめが つづきます。2時間くらいから どうぞ。</small></div></li>
+      <li><div class="txt"><b>活動時間帯（かつどう じかんたい）</b>
+        <small>起きている時間の はじめと おわり。この外の時間は、アプリは 何も 聞いてきません。</small></div></li>
+      <li><div class="txt"><b>どのくらい 空いたら たずねるか</b>
+        <small>ふつうは 30分の ままで だいじょうぶ。多いと感じたら 1時間に かえられます。</small></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">3</span><h2>つかう</h2></div>
+    <p class="body-txt">やることを 書いて、色を えらんで、<b>スタート</b>。おわったら <b>ストップ</b>。まずは これだけです。</p>
+    <div class="note tip">
+      <b>💡 うまくいく コツ</b>
+      <p>正しく 記録しようと がんばりすぎないこと。
+      押しわすれても、次に ひらいたときに アプリが 聞いてくれます。
+      「あとで 直せる」と 思って、気軽に 押してください。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">4</span><h2>こんなときは</h2></div>
+
+    <div class="card">
+      <h3>押しわすれて、時間が あいてしまった</h3>
+      <p class="small" style="margin-top:.4rem">次に アプリを ひらくと「10:20 〜 12:05 の記録が ありません。何を していましたか？」と 聞かれます。
+      書いて 色を えらべば うまります。思い出せないときは「あとで」を 押すと、<b>⬜️ 不明</b> として のこります。</p>
+    </div>
+
+    <div class="card">
+      <h3>本命の とちゅうで ほかのアプリを 見てしまった</h3>
+      <p class="small" style="margin-top:.4rem">もどってくると、赤い画面が 出ます。
+      何回・何分 よそ見したかが 記録され、その時間は <b>🔴 むだ</b> に 入ります。
+      おこられているのでは ありません。「もどっておいで」の 合図です。</p>
+    </div>
+
+    <div class="card">
+      <h3>朝、ねた時間を 聞かれた</h3>
+      <p class="small" style="margin-top:.4rem">アプリが「何時に ねて、何時に 起きた？」を 1日1回だけ たずねます。
+      だいたい 合っていれば、そのまま タップするだけで OK です。</p>
+    </div>
+
+    <div class="card">
+      <h3>1週間 つかったら</h3>
+      <p class="small" style="margin-top:.4rem"><span class="tag">📊 分析</span> を ひらいて「コピーする」を タップ。
+      それを Claude や ChatGPT に そのまま はりつけると、
+      「何時ごろ 集中が きれているか」「どうすれば へらせるか」を 教えてくれます。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">5</span><h2>記録の まもり方</h2></div>
+    <p class="body-txt">記録は <b>じぶんのスマホの中だけ</b>に 保存されます。先生にも、だれにも、自動では 送られません。</p>
+    <div class="note warn">
+      <b>⚠️ 消えてしまうことが あります</b>
+      <p>アイコンを 消したり、スマホの データを けしたりすると、記録も 消えることがあります。
+      たいせつな記録は、ときどき <span class="tag">⚙️ 設定</span> の「書き出す」で ファイルに のこしてください。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">6</span><h2>よくある しつもん</h2></div>
+    <div class="card qa">
+      <div>
+        <span class="q">まちがえた色で 記録してしまった</span>
+        <span class="a"><span class="tag">📒 記録</span> タブで その記録を タップすると、名前も 色も 時間も 直せます。</span>
+      </div>
+      <div>
+        <span class="q">きのうの分を 忘れていた</span>
+        <span class="a">📒記録タブで 日付を ◀ でもどして、「＋ 手で追加」から あとで 足せます。</span>
+      </div>
+      <div>
+        <span class="q">警告の 音が 鳴らない</span>
+        <span class="a">マナーモードだと 鳴りません。画面と ふるえで 知らせます。音が いらないときは 設定で 消せます。</span>
+      </div>
+      <div>
+        <span class="q">むだな時間を 計るとき、警告は 出るの？</span>
+        <span class="a">出ません。🔴むだ を 計っているときは、ほかのアプリを 見るのが あたりまえなので、アプリは 何も 言いません。</span>
+      </div>
+      <div>
+        <span class="q">通知は 来ないの？</span>
+        <span class="a">このアプリからは 通知を 出せません。かわりに、iPhoneの「ショートカット」で 毎晩 決まった時間に 自動で ひらく 方法を、アプリの 設定タブに のせています。</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="ribbon" aria-hidden="true">
+      <span class="b" style="width:48%"></span><span class="g" style="width:20%"></span><span class="r" style="width:14%"></span><span class="u" style="width:18%"></span>
+    </div>
+    <p class="body-txt"><b>このアプリは まだ 作りかけです。</b></p>
+    <p class="small">
+      使ってみて「ここが 使いにくい」「こうなってほしい」と 思ったことが あれば、どんな小さなことでも 教えてください。
+      みんなの 意見を 聞きながら、いっしょに 良くしていきます。
+    </p>
+  </footer>
+
+</div>
+
+</body>
+</html>

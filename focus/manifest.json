@@ -1,7 +1,7 @@
 {
-  "name": "集中ログ",
-  "short_name": "集中ログ",
-  "description": "行動を記録して、無駄な時間を見えるようにするアプリ",
+  "name": "タイムレコード",
+  "short_name": "タイムレコード",
+  "description": "行動を記録して、むだな時間を見えるようにするアプリ",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",

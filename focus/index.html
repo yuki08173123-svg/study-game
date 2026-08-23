@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-store">
-<title>集中ログ</title>
+<title>タイムレコード</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b0f17">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="集中ログ">
+<meta name="apple-mobile-web-app-title" content="タイムレコード">
 <style>
 :root{
   --bg:#0b0f17; --card:#151b28; --card2:#1c2434; --line:#2a3448;
@@ -242,7 +242,7 @@ a.btn{color:inherit;text-decoration:none}
 <div class="wrap">
 
   <div class="head">
-    <div class="name">集中ログ</div>
+    <div class="name">タイムレコード</div>
     <div class="ver" id="verLabel">v2</div>
   </div>
 
@@ -459,14 +459,14 @@ a.btn{color:inherit;text-decoration:none}
 
     <div class="card">
       <h3>📲 毎晩 自動で ひらく（おすすめ）</h3>
-      <div class="dim" style="margin-bottom:8px">iPhone標準の「ショートカット」アプリで、決まった時刻に集中ログが自動で開くようにできます。一度だけの設定です。</div>
+      <div class="dim" style="margin-bottom:8px">iPhone標準の「ショートカット」アプリで、決まった時刻にタイムレコードが自動で開くようにできます。一度だけの設定です。</div>
       <ol class="steps">
         <li>「ショートカット」アプリを ひらく</li>
         <li>下の「オートメーション」を タップ</li>
         <li>右上の ＋ →「時刻」を えらぶ</li>
         <li>時刻を 22:00、くり返しを「毎日」にして「次へ」</li>
         <li>「Appを開く」を さがして えらぶ</li>
-        <li>App のところを タップして「集中ログ」を えらぶ</li>
+        <li>App のところを タップして「タイムレコード」を えらぶ</li>
         <li>「すぐに実行」を オンにして 完了</li>
       </ol>
       <div class="dim" style="margin-top:8px">※ iOSの版によって 文言が すこし ちがうことがあります</div>
@@ -510,10 +510,10 @@ a.btn{color:inherit;text-decoration:none}
 
 <script>
 /* =========================================================
-   集中ログ v2 — 行動を記録して、無駄な時間を見えるようにするアプリ
+   タイムレコード v3 — 行動を記録して、無駄な時間を見えるようにするアプリ
    データは この端末の localStorage だけに 入る（外に送らない）
    ========================================================= */
-const VER = 2;
+const VER = 3;
 const KEY = 'focuslog.v1';
 const MIN=60000, HOUR=3600000, DAY=86400000;
 const $  = s => document.querySelector(s);
@@ -1251,7 +1251,7 @@ function aiText(list, bk, tasks){
   if(!list.length) return '（まだ 記録が ありません）';
   const o=sum(list), t=o.core+o.life+o.waste+o.unknown;
   const L=[];
-  L.push('■ 私の行動ログ（集中ログ アプリの記録／直近'+aRange+'日）');
+  L.push('■ 私の行動ログ（タイムレコード アプリの記録／直近'+aRange+'日）');
   L.push('分類: 🔵本命=勉強・仕事・自己研鑽 / 🟢生活=風呂・食事・移動など必要なこと / 🔴無駄 / ⬜️不明=記録し忘れて後から埋めなかった時間 / 😴睡眠');
   L.push('※本命・生活の最中にスマホなど他アプリへ離れた時間は「離脱」として 無駄に計上している');
   L.push('※目標: 1日に本命へ '+minLabel(S.set.goalMin)+' 使うこと');
@@ -1350,7 +1350,7 @@ $('#expBtn').onclick = ()=>{
   const blob = new Blob([JSON.stringify(S,null,1)], {type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download='shuchu-log-'+ymd(Date.now())+'.json';
+  a.download='timerecord-'+ymd(Date.now())+'.json';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(a.href),3000);
   S.set.lastExport=Date.now(); saveNow(); renderSet(); renderToday();

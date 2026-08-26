@@ -116,8 +116,10 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .bg.got .bd{color:var(--ink2);opacity:1}
 
 .tlist{display:flex;flex-direction:column;gap:5px}
-.tl{display:flex;justify-content:space-between;gap:10px;font-size:.84rem;color:var(--dim);
-  padding:8px 12px;border-radius:11px}
+.tl{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.86rem;
+  color:var(--dim);padding:9px 12px;border-radius:11px}
+.tl .tn{display:block}
+.tl .ts{display:block;font-size:.7rem;opacity:.72;margin-top:1px;line-height:1.5}
 .tl.reached{color:var(--ink2)}
 .tl.now{background:rgba(159,216,214,.12);color:#eafaf8;border:1px solid rgba(159,216,214,.3)}
 
@@ -283,7 +285,20 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .vrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;
   border-radius:12px;background:var(--surf);border:1px solid var(--line);font-size:.88rem;color:var(--ink2)}
 .vrow.now{background:rgba(159,216,214,.12);border-color:rgba(159,216,214,.4);color:#eafaf8}
-.vrow .try{font-size:.72rem;color:var(--dim);text-decoration:underline;text-underline-offset:3px}
+.vrow .vn{flex:1;min-width:0;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.vrow .vtag{font-size:.62rem;color:var(--warm);border:1px solid rgba(227,199,154,.4);
+  border-radius:999px;padding:2px 8px}
+.vrow .vb{display:flex;gap:6px;flex:none}
+.vrow .try{font-size:.72rem;color:var(--ink2);padding:7px 10px;border-radius:9px;
+  background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.vrow .use{font-size:.72rem;color:#eafaf8;padding:7px 12px;border-radius:9px;
+  background:rgba(159,216,214,.16);border:1px solid rgba(159,216,214,.4)}
+.tipbox{background:rgba(227,199,154,.07);border:1px solid rgba(227,199,154,.26);
+  border-radius:14px;padding:14px 15px;margin-bottom:14px;font-size:.84rem;color:var(--ink2);line-height:1.8}
+.tipbox b{color:var(--ink)}
+.tipbox ol{margin:8px 0 6px;padding-left:1.25em}
+.tipbox li{margin-bottom:4px}
+.tipbox .tipnote{display:block;margin-top:6px;font-size:.75rem;color:var(--dim);line-height:1.7}
 
 /* ── タブバー ── */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;
@@ -439,7 +454,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <div class="foot">
-      Mindrest v7 ・ 記録はこの端末の中だけに保存されます<br>
+      Mindrest v9 ・ 記録はこの端末の中だけに保存されます<br>
       <button id="btnBackup">記録をコピーして控える</button>
     </div>
   </div>
@@ -496,7 +511,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
           <li>終わると自動で記録されます。「ひとこと」に感じたことを残せます（声でも入れられます）。</li>
           <li>「記録」で、続いた日数やこれまでの時間を見られます。</li>
           <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。1日後・3日後・7日後…と<b>復習</b>が出てくるので、そのたびに読み直すと記憶に残ります。</li>
-          <li>読む画面の右上の<b>「聞く」</b>を押すと、声で読み上げます。目を閉じたまま、ラジオのように聞けます。</li>
+          <li>読む画面の右上の<b>「聞く」</b>を押すと、声で読み上げます。目を閉じたまま、ラジオのように聞けます。声が機械っぽいときは、聞く画面の<b>「声」</b>を押して、案内のとおり iPhone に「拡張」や「プレミアム」の声をダウンロードすると、ぐっと自然になります。</li>
         </ol>
         <p class="g-dim">途中でやめたぶんは記録されません。音はマナーモードだと鳴らないことがあるので、はじめる前に音量をたしかめてください。</p>
       </section>
@@ -521,7 +536,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
           <li>1回終えるごとに <b>20</b>（短くても座れば入ります）</li>
           <li>その日の分に、続けている日数 × <b>5</b></li>
         </ul>
-        <p>レベルが上がると<b>称号</b>が変わります。「はじまりの灯」から始まって、続けていくと「無風」まで進みます。</p>
+        <p>レベルが上がると<b>称号</b>が変わります。「見習い」から始まり、初級・中級・上級・達人・名人・師範・仙人と上がって、いちばん上は「悟りの境地」です。</p>
         <p>ほかに、はじめての瞑想や、3日つづけた、合計60分こえた、などで<b>しるし（バッジ）</b>が集まります。瞑想タブの上のカードを押すと、今のレベルと集めたしるしを全部見られます。</p>
         <p class="g-dim">数字を増やすことが目的ではありません。続けた分がちゃんと見える、というだけのものです。気にしすぎないでください。</p>
       </section>
@@ -621,7 +636,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 7;
+const VER = 9;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1215,18 +1230,29 @@ $('btnNextNew').addEventListener('click', function(){
    長い文章を一度に渡すと途中で止まる端末があるので、文ごとに分けて順に読ませる。 */
 const SYN = window.speechSynthesis || null;
 let voices = [], vSel = null, plOn = false, plPause = false, plQ = [], plI = 0, plU = null;
-let plRate = parseFloat(localStorage.getItem('med.rate.v1') || '1') || 1;
+let plRate = parseFloat(localStorage.getItem('med.rate.v1') || '0.9') || 0.9;
+const PITCH = 0.92;   // 少しだけ低くすると落ち着いて聞こえる
 let plCont = localStorage.getItem('med.cont.v1') !== 'off';
 
+const RE_HIQ = /premium|enhanced|neural|siri|拡張|プレミアム/i;
+const RE_FEM = /kyoko|o-?ren|sayaka|haruka|nanami|mizuki|ayumi|flo|sandy|shelley|grandma|nicky/i;
+const RE_MALE = /otoya|hattori|daichi|eddy|reed|rocko|grandpa|ralph|fred/i;
+function voiceScore(v){
+  let n = 0;
+  if(RE_HIQ.test(v.name)) n += 100;        // 拡張・プレミアムはぐっと自然になる
+  if(RE_FEM.test(v.name)) n += 40;
+  if(RE_MALE.test(v.name)) n -= 60;
+  if(/kyoko/i.test(v.name)) n += 20;
+  if(v.localService === false) n += 5;
+  return n;
+}
 function pickVoice(){
   if(!SYN) return;
   const all = SYN.getVoices() || [];
   voices = all.filter(function(v){ return /^ja/i.test(v.lang) || /japan/i.test(v.name); });
+  voices.sort(function(a, b){ return voiceScore(b) - voiceScore(a); });
   const saved = localStorage.getItem('med.voice.v1');
-  vSel = voices.filter(function(v){ return v.name === saved; })[0]
-      || voices.filter(function(v){ return /kyoko/i.test(v.name); })[0]
-      || voices.filter(function(v){ return /o-?ren|sayaka|haruka|nanami|mizuki|ayumi/i.test(v.name); })[0]
-      || voices[0] || null;
+  vSel = voices.filter(function(v){ return v.name === saved; })[0] || voices[0] || null;
 }
 if(SYN){
   pickVoice();
@@ -1260,12 +1286,12 @@ function toSentences(t){
 }
 function lessonSpeech(L){
   const t = [];
-  t.push(L.n + '。');
-  t.push(L.d + '。');
-  t.push('図の説明。' + L.cap + '。');
-  toSentences(plainText(L.body)).forEach(function(x){ t.push(x); });
-  t.push('研究のはなしです。');
-  toSentences(plainText(L.ref)).forEach(function(x){ t.push(x); });
+  t.push({ t: L.n + '。', p: 900 });          // p = このあとに置く間（ミリ秒）
+  t.push({ t: L.d + '。', p: 900 });
+  t.push({ t: '図の説明。' + L.cap + '。', p: 800 });
+  toSentences(plainText(L.body)).forEach(function(x){ t.push({ t: x, p: 420 }); });
+  t.push({ t: 'ここからは、研究のはなしです。', p: 800 });
+  toSentences(plainText(L.ref)).forEach(function(x){ t.push({ t: x, p: 420 }); });
   return t;
 }
 
@@ -1297,23 +1323,23 @@ function plStart(){
 }
 function plSay(){
   if(!plOn || plI >= plQ.length) return plDone();
-  const u = new SpeechSynthesisUtterance(plQ[plI]);
+  const cur = plQ[plI];
+  const u = new SpeechSynthesisUtterance(cur.t);
   if(vSel) u.voice = vSel;
   u.lang = (vSel && vSel.lang) || 'ja-JP';
-  u.rate = plRate; u.pitch = 1; u.volume = 1;
-  u.onend = function(){
+  u.rate = plRate; u.pitch = PITCH; u.volume = 1;
+  const nextAfter = function(wait){
     if(!plOn || plPause) return;
     plI++;
-    if(plI < plQ.length) plSay(); else plDone();
+    if(plI < plQ.length) setTimeout(plSay, wait); else plDone();
   };
+  u.onend = function(){ nextAfter(Math.round((cur.p || 400) / plRate)); };
   u.onerror = function(e){
-    if(!plOn || plPause) return;
     if(e && e.error === 'interrupted') return;
-    plI++;
-    if(plI < plQ.length) setTimeout(plSay, 120); else plDone();
+    nextAfter(150);
   };
   plU = u;
-  $('plTxt').textContent = plQ[plI];
+  $('plTxt').textContent = cur.t;
   $('plBar').style.width = (100 * plI / Math.max(1, plQ.length - 1)) + '%';
   try{ SYN.speak(u); }catch(err){ plStop(); }
 }
@@ -1360,7 +1386,7 @@ $('plFwd').addEventListener('click', function(){
   setTimeout(plSay, 100);
 });
 $('plRate').addEventListener('click', function(){
-  const list = [0.8, 0.9, 1.0, 1.1, 1.2, 1.4];
+  const list = [0.75, 0.8, 0.85, 0.9, 1.0, 1.1];
   let k = list.indexOf(Math.round(plRate * 10) / 10);
   plRate = list[(k + 1) % list.length];
   localStorage.setItem('med.rate.v1', String(plRate));
@@ -1379,27 +1405,49 @@ $('plVoice').addEventListener('click', function(){
   sh.className = 'sheet';
   const rows = voices.length
     ? voices.map(function(v, i){
-        return '<div class="vrow' + (vSel && v.name === vSel.name ? ' now' : '') + '" data-i="' + i + '">' +
-          '<span>' + v.name + '</span><span class="try">これにする</span></div>';
+        const hi = RE_HIQ.test(v.name);
+        return '<div class="vrow' + (vSel && v.name === vSel.name ? ' now' : '') + '">' +
+          '<span class="vn">' + v.name.replace(/\s*\(.*?\)\s*/, ' ') +
+          (hi ? '<span class="vtag">自然な声</span>' : '') + '</span>' +
+          '<span class="vb"><button class="try" data-try="' + i + '">試し聞き</button>' +
+          '<button class="use" data-use="' + i + '">えらぶ</button></span></div>';
       }).join('')
     : '<div class="vrow">この端末には日本語の声が入っていません</div>';
   sh.innerHTML = '<div class="box"><h3>声をえらぶ</h3>' +
-    '<p>端末に入っている日本語の声です。iPhone なら Kyoko が女性の声です。' +
-    '（設定 → アクセシビリティ → 読み上げコンテンツ → 声 から、きれいな声を追加できます）</p>' +
+    '<p>いまの声：<b style="color:var(--ink)">' + (vSel ? vSel.name : 'なし') + '</b></p>' +
+    '<div class="tipbox"><b>もっと自然な声にする（おすすめ）</b>' +
+    '<ol><li>iPhone の <b>設定</b> をひらく</li>' +
+    '<li><b>アクセシビリティ</b> → <b>読み上げコンテンツ</b> → <b>声</b></li>' +
+    '<li><b>日本語</b> を選び、Kyoko などの右にある ⬇ を押して<b>「拡張」や「プレミアム」</b>をダウンロード</li>' +
+    '<li>このアプリに戻り、下の一覧から選ぶ（「自然な声」と出ているもの）</li></ol>' +
+    '<span class="tipnote">出荷時に入っている声は、どうしても機械っぽく聞こえます。' +
+    'ダウンロードした声にすると、ぐっとなめらかになります。</span></div>' +
     '<div class="vlist">' + rows + '</div>' +
     '<div class="btns"><button class="no">とじる</button></div></div>';
   document.body.appendChild(sh);
+
+  function stopTry(){ try{ SYN.cancel(); }catch(e){} }
   sh.addEventListener('click', function(e){
-    const r = e.target.closest('.vrow');
-    if(r && r.dataset.i !== undefined){
-      vSel = voices[parseInt(r.dataset.i, 10)];
+    const tb = e.target.closest('[data-try]');
+    if(tb){
+      const v = voices[parseInt(tb.dataset.try, 10)];
+      stopTry();
+      const u = new SpeechSynthesisUtterance('こんにちは。ゆっくり息を吐いて、肩の力をぬいてください。');
+      u.voice = v; u.lang = v.lang || 'ja-JP'; u.rate = plRate; u.pitch = PITCH;
+      try{ SYN.speak(u); }catch(err){}
+      return;
+    }
+    const ub = e.target.closest('[data-use]');
+    if(ub){
+      stopTry();
+      vSel = voices[parseInt(ub.dataset.use, 10)];
       localStorage.setItem('med.voice.v1', vSel.name);
       sh.remove();
       toast(vSel.name + ' にしました');
-      if(plOn && !plPause){ try{ SYN.cancel(); }catch(e2){} setTimeout(plSay, 120); }
+      if(plOn && !plPause) setTimeout(plSay, 150);
       return;
     }
-    if(e.target.classList.contains('no') || e.target === sh) sh.remove();
+    if(e.target.classList.contains('no') || e.target === sh){ stopTry(); sh.remove(); }
   });
 });
 
@@ -1460,15 +1508,15 @@ $('rdClose').addEventListener('click', function(){ plStop(); $('reader').classLi
 /* 経験値：1分=10 ／ 1回=20 ／ その日の分に「続けている日数×5」（最大100）
    ぜんぶ記録から計算し直すので、記録を消せば経験値も減る（ごまかせない） */
 const TITLES = [
-  { lv: 1,  n: 'はじまりの灯' },
-  { lv: 3,  n: 'しずかな波' },
-  { lv: 5,  n: '澄みはじめ' },
-  { lv: 8,  n: '静かな湖' },
-  { lv: 12, n: '風のない朝' },
-  { lv: 16, n: '深い森' },
-  { lv: 21, n: '月の道' },
-  { lv: 26, n: '星の静けさ' },
-  { lv: 31, n: '無風' }
+  { lv: 1,  n: '見習い',     s: 'まずは座ってみる' },
+  { lv: 3,  n: '初級',       s: '続ける形ができてきた' },
+  { lv: 5,  n: '中級',       s: '気が散っても、戻ってこられる' },
+  { lv: 8,  n: '上級',       s: '静けさが身につきはじめた' },
+  { lv: 12, n: '達人',       s: '落ち着きが自分のものになった' },
+  { lv: 16, n: '名人',       s: 'どんな日でも、自分を整えられる' },
+  { lv: 21, n: '師範',       s: '人に教えられるほどの積み重ね' },
+  { lv: 26, n: '仙人',       s: 'ここまで来る人は、めったにいない' },
+  { lv: 31, n: '悟りの境地', s: '静けさが、ふだんの自分になった' }
 ];
 function titleOf(lv){
   let t = TITLES[0].n;
@@ -1724,7 +1772,8 @@ $('lvCard').addEventListener('click', function(){
     const nx = TITLES[i + 1];
     const range = nx ? ('Lv ' + x.lv + '〜' + (nx.lv - 1)) : ('Lv ' + x.lv + '〜');
     const cls = (L.title === x.n) ? 'tl now' : (L.lv >= x.lv ? 'tl reached' : 'tl');
-    return '<div class="' + cls + '"><span>' + x.n + '</span><span class="mono">' + range + '</span></div>';
+    return '<div class="' + cls + '"><span class="tn">' + (i + 1) + '. ' + x.n +
+      '<span class="ts">' + x.s + '</span></span><span class="mono">' + range + '</span></div>';
   }).join('');
   const bg = BADGES.map(function(b){
     const on = got.indexOf(b.id) >= 0;

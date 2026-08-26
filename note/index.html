@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>学びメモ</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121319" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="学びメモ">
+<style>
+/* ===== 学びメモ デザイン ===== */
+:root{
+  --paper:#f6f4ef; --paper2:#efece5;
+  --surf:#ffffff; --surf2:#f3f1ec;
+  --ink:#1d2128; --ink2:#4a5261; --dim:#8a92a3;
+  --line:#e5e1d8; --line2:#d9d4c8;
+  --pri:#5b53d6; --pri-s:#eceafc; --pri-ink:#ffffff;
+  --accent:#e0a020; --accent-s:#fdf3dd;
+  --ok:#1f9d63; --ok-s:#e6f6ee;
+  --ng:#d64545; --ng-s:#fceaea;
+  --audio:#8b5cf6; --youtube:#e5484d; --lecture:#3b82f6; --book:#1f9d63; --other:#8a92a3;
+  --sh1:0 1px 2px rgba(30,32,40,.05), 0 2px 8px rgba(30,32,40,.045);
+  --sh2:0 4px 12px rgba(30,32,40,.08), 0 12px 32px rgba(30,32,40,.07);
+  --r:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#121319; --paper2:#0e0f14;
+    --surf:#1b1d25; --surf2:#232630;
+    --ink:#eceef4; --ink2:#b8bfcd; --dim:#7d8698;
+    --line:#2b2f3a; --line2:#363b48;
+    --pri:#8f88f5; --pri-s:#26243d; --pri-ink:#14131f;
+    --accent:#e5b34a; --accent-s:#332a14;
+    --ok:#3fbe83; --ok-s:#14281f;
+    --ng:#f07171; --ng-s:#2e1618;
+    --sh1:0 1px 2px rgba(0,0,0,.3);
+    --sh2:0 6px 20px rgba(0,0,0,.45);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  font-size:16px; line-height:1.75; -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent; overflow-x:hidden; overscroll-behavior-y:none;
+  letter-spacing:.01em;
+}
+button,input,select,textarea{font-family:inherit;color:inherit;font-size:1rem}
+button{cursor:pointer;border:none;background:none;color:inherit;-webkit-user-select:none;user-select:none}
+a{color:var(--pri)}
+.hidden{display:none!important}
+.wrap{max-width:620px;margin:0 auto;padding:10px 16px 120px;min-height:100%}
+h1,h2,h3{margin:0;line-height:1.4;letter-spacing:-.01em}
+.dim{color:var(--dim);font-size:.82rem;line-height:1.7}
+.mono{font-variant-numeric:tabular-nums}
+.center{text-align:center}
+
+/* ---- ヘッダー ---- */
+.head{display:flex;align-items:center;justify-content:space-between;padding:14px 2px 18px}
+.head .name{font-size:1.28rem;font-weight:800;letter-spacing:-.02em}
+.head .ver{font-size:.7rem;color:var(--dim);display:flex;align-items:center;gap:7px;margin-top:2px}
+.head .tools{display:flex;gap:8px}
+.iconbtn{width:38px;height:38px;border-radius:12px;background:var(--surf);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:var(--dim);
+  box-shadow:var(--sh1);transition:.15s}
+.iconbtn:active{transform:scale(.94)}
+
+/* ---- カード ---- */
+.card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
+  padding:20px 18px;margin-bottom:14px;box-shadow:var(--sh1)}
+.card h3{font-size:1rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.row{display:flex;align-items:center;gap:10px}
+.row.sb{justify-content:space-between}
+.row.wrap2{flex-wrap:wrap}
+
+/* ---- 入力 ---- */
+.in{width:100%;background:var(--surf2);border:1.5px solid transparent;border-radius:13px;
+  padding:13px 14px;font-weight:500;transition:.15s;outline:none;line-height:1.7}
+.in:focus{border-color:var(--pri);background:var(--surf);box-shadow:0 0 0 4px var(--pri-s)}
+.in::placeholder{color:var(--dim);font-weight:400}
+textarea.in{min-height:150px;resize:vertical}
+textarea.big{min-height:240px;font-size:1.02rem;line-height:1.85}
+label.lb{display:block;font-size:.74rem;color:var(--dim);font-weight:800;margin:18px 0 7px;letter-spacing:.06em}
+select.mini{-webkit-appearance:none;appearance:none;padding-right:26px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+
+/* ---- 種類えらび ---- */
+.kinds{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.kindbtn{border:1.5px solid var(--line);background:var(--surf);border-radius:14px;
+  padding:11px 2px 9px;text-align:center;font-weight:700;transition:.15s;line-height:1.3}
+.kindbtn .em{font-size:1.3rem;display:block;filter:grayscale(1) opacity(.45);transition:.15s}
+.kindbtn .lbl{font-size:.68rem;color:var(--dim);font-weight:800}
+.kindbtn:active{transform:scale(.96)}
+.kindbtn.on{border-color:var(--pri);background:var(--pri-s);box-shadow:0 0 0 3px var(--pri-s)}
+.kindbtn.on .em{filter:none}
+.kindbtn.on .lbl{color:var(--pri)}
+
+/* ---- チップ ---- */
+.chips{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--surf);border-radius:999px;
+  padding:6px 13px;font-size:.8rem;font-weight:700;color:var(--ink2);transition:.15s}
+.chip:active{transform:scale(.95)}
+.chip.on{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+.chip.tag{color:var(--pri);background:var(--pri-s);border-color:transparent}
+.chip.tag.on{color:var(--pri-ink);background:var(--pri)}
+
+/* ---- ボタン ---- */
+.bigbtn{width:100%;border-radius:15px;padding:16px;font-size:1.02rem;font-weight:800;
+  letter-spacing:.03em;border:1.5px solid transparent;transition:.12s}
+.bigbtn:active{transform:scale(.985)}
+.bigbtn.go{background:var(--pri);color:var(--pri-ink);box-shadow:0 4px 14px rgba(91,83,214,.28)}
+.bigbtn.sub{background:var(--surf);border-color:var(--line);color:var(--ink);font-size:.94rem;padding:13px;box-shadow:var(--sh1)}
+.bigbtn.danger{background:var(--ng-s);border-color:transparent;color:var(--ng);font-size:.9rem;padding:13px}
+.mini{border:1px solid var(--line);background:var(--surf);border-radius:11px;padding:9px 14px;
+  font-size:.82rem;font-weight:700;color:var(--ink2);transition:.15s}
+.mini:active{transform:scale(.95)}
+.mini.on{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+
+/* ---- メモカード ---- */
+.note{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
+  padding:16px 16px 14px;margin-bottom:12px;box-shadow:var(--sh1);position:relative;overflow:hidden}
+.note::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--other)}
+.note.k-audio::before{background:var(--audio)}
+.note.k-youtube::before{background:var(--youtube)}
+.note.k-lecture::before{background:var(--lecture)}
+.note.k-book::before{background:var(--book)}
+.note .meta{display:flex;align-items:center;gap:6px;font-size:.71rem;color:var(--dim);
+  font-weight:700;margin-bottom:7px;flex-wrap:wrap}
+.note .ttl{font-size:1.06rem;font-weight:800;margin-bottom:7px;word-break:break-word;line-height:1.5}
+.note .body{white-space:pre-wrap;word-break:break-word;font-size:.95rem;color:var(--ink2);line-height:1.85}
+.note .body.clip{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.note .more{font-size:.78rem;color:var(--pri);font-weight:800;margin-top:8px}
+.note .tags{margin-top:11px}
+.note .tags .chip{padding:3px 10px;font-size:.71rem}
+.note .acts{display:flex;gap:6px;margin-top:13px;padding-top:11px;border-top:1px solid var(--line)}
+.note .acts button{flex:1;font-size:.76rem;font-weight:700;color:var(--dim);padding:8px 2px;
+  border-radius:10px;background:var(--surf2);transition:.15s}
+.note .acts button:active{transform:scale(.95)}
+.note.star{background:linear-gradient(180deg,var(--accent-s),var(--surf) 55%)}
+.srclink{color:var(--pri);text-decoration:none;font-weight:700;word-break:break-all}
+
+/* ---- ふりかえり ---- */
+.rev{background:var(--surf);border:1px solid var(--line);border-radius:22px;
+  padding:24px 20px;min-height:360px;display:flex;flex-direction:column;box-shadow:var(--sh2)}
+.rev .count{font-size:.72rem;color:var(--pri);font-weight:800;letter-spacing:.14em;margin-bottom:14px}
+.rev .ttl{font-size:1.34rem;font-weight:800;margin-bottom:14px;word-break:break-word;line-height:1.5}
+.rev .body{white-space:pre-wrap;word-break:break-word;flex:1;font-size:1.02rem;color:var(--ink2);line-height:1.9}
+.rev .body.hide{filter:blur(8px);opacity:.4;user-select:none}
+.rev .foot{margin-top:20px;display:flex;gap:9px}
+.rev .foot button{flex:1;border-radius:14px;padding:15px;font-weight:800;font-size:.95rem;transition:.12s}
+.rev .foot button:active{transform:scale(.97)}
+.b-ok{background:var(--ok-s);border:1.5px solid transparent;color:var(--ok)}
+.b-ng{background:var(--ng-s);border:1.5px solid transparent;color:var(--ng)}
+.b-show{background:var(--pri);color:var(--pri-ink);box-shadow:0 4px 14px rgba(91,83,214,.28)}
+
+/* ---- タブバー ---- */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:50;
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:saturate(1.6) blur(14px);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom)}
+.tabs .inner{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);padding:6px 8px 4px;gap:4px}
+.tab{padding:7px 0 6px;text-align:center;color:var(--dim);font-size:.66rem;font-weight:800;
+  border-radius:14px;transition:.15s}
+.tab .em{display:block;font-size:1.32rem;line-height:1.4;filter:grayscale(1) opacity(.42);transition:.15s}
+.tab.on{color:var(--pri);background:var(--pri-s)}
+.tab.on .em{filter:none}
+
+/* ---- そのほか ---- */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.stat{background:var(--surf2);border-radius:14px;padding:13px 6px;text-align:center}
+.stat b{display:block;font-size:1.5rem;font-weight:800;letter-spacing:-.02em;line-height:1.3}
+.stat span{font-size:.68rem;color:var(--dim);font-weight:700}
+.empty{text-align:center;color:var(--dim);padding:52px 20px;font-size:.9rem;line-height:2.1}
+.empty .em{font-size:2.8rem;display:block;filter:grayscale(1) opacity(.35);margin-bottom:6px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:200;
+  background:var(--ink);color:var(--paper);padding:12px 22px;border-radius:999px;
+  font-weight:800;font-size:.87rem;box-shadow:var(--sh2);opacity:0;transition:.22s;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(-8px)}
+
+.sheet{position:fixed;inset:0;z-index:150;background:rgba(20,22,28,.45);
+  display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
+.sheet .box{background:var(--paper);border-radius:26px 26px 0 0;width:100%;max-width:620px;
+  max-height:88vh;overflow-y:auto;padding:14px 18px calc(28px + env(safe-area-inset-bottom));
+  box-shadow:var(--sh2);animation:up .24s cubic-bezier(.2,.9,.3,1)}
+@keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
+.sheet .grab{width:42px;height:5px;border-radius:3px;background:var(--line2);margin:0 auto 16px}
+
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 9px;
+  font-size:.67rem;font-weight:800;background:var(--surf2);color:var(--dim)}
+.badge.ok{background:var(--ok-s);color:var(--ok)}
+.badge.ng{background:var(--ng-s);color:var(--ng)}
+.badge.wait{background:var(--accent-s);color:var(--accent)}
+.help{font-size:.86rem;color:var(--ink2);line-height:1.95}
+.help b{color:var(--ink);font-weight:800}
+ol.steps{padding-left:1.3em;font-size:.88rem;line-height:2;color:var(--ink2);margin:0}
+ol.steps li{margin-bottom:9px;padding-left:3px}
+ol.steps li::marker{color:var(--pri);font-weight:800}
+code{background:var(--surf2);border-radius:7px;padding:2px 7px;font-size:.82rem;
+  word-break:break-all;font-family:ui-monospace,Menlo,monospace;color:var(--pri)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div>
+      <div class="name">学びメモ</div>
+      <div class="ver">v<span id="verTxt">1</span> ・ <span id="syncBadge" class="dim">—</span></div>
+    </div>
+    <div class="tools">
+      <button class="iconbtn" id="btnHelp" title="つかいかた">?</button>
+    </div>
+  </div>
+
+  <div id="updBox" class="card hidden" style="border-color:var(--accent)">
+    <div class="row sb">
+      <div><b>新しいバージョンがあります</b><div class="dim" id="updNote"></div></div>
+      <button class="mini on" id="btnUpd">更新</button>
+    </div>
+  </div>
+
+  <!-- ============ かく ============ -->
+  <section id="pgWrite">
+    <div class="card">
+      <h3 id="writeTitle">📝 メモを かく</h3>
+
+      <label class="lb">どこで まなんだ？</label>
+      <div class="kinds" id="kindPick"></div>
+
+      <label class="lb">見出し（あとで探しやすい ひとこと）</label>
+      <input class="in" id="inTitle" placeholder="例）複利は「時間」が効く" autocomplete="off">
+
+      <label class="lb">まなんだこと</label>
+      <textarea class="in big" id="inBody" placeholder="学んだこと・気づいたこと・自分の言葉での言いかえ を書く"></textarea>
+
+      <label class="lb">出典（本の名前・動画のタイトルなど）</label>
+      <input class="in" id="inSrc" placeholder="例）〇〇という本／△△チャンネル" autocomplete="off">
+
+      <label class="lb">リンク（YouTubeのURLなど・なくてよい）</label>
+      <input class="in" id="inUrl" placeholder="https://" autocomplete="off" inputmode="url">
+
+      <label class="lb">タグ（スペース区切り・なくてよい）</label>
+      <input class="in" id="inTags" placeholder="例）投資 習慣" autocomplete="off">
+      <div class="chips" id="tagSuggest" style="margin-top:8px"></div>
+
+      <button class="bigbtn go" id="btnSave" style="margin-top:16px">ほぞんする</button>
+      <button class="bigbtn sub hidden" id="btnCancelEdit" style="margin-top:8px">編集をやめる</button>
+    </div>
+
+    <div class="card">
+      <h3>📊 いまの ようす</h3>
+      <div class="stats" id="statBox"></div>
+    </div>
+  </section>
+
+  <!-- ============ いちらん ============ -->
+  <section id="pgList" class="hidden">
+    <div class="card">
+      <input class="in" id="inSearch" placeholder="🔍 ことばで さがす" autocomplete="off">
+      <div class="chips" id="filterKind" style="margin-top:10px"></div>
+      <div class="chips" id="filterTag" style="margin-top:8px"></div>
+      <div class="row sb" style="margin-top:10px">
+        <div class="dim" id="listCount">0件</div>
+        <select class="mini" id="selSort" style="padding:7px 9px">
+          <option value="new">新しい順</option>
+          <option value="old">古い順</option>
+          <option value="rev">ふりかえりが少ない順</option>
+        </select>
+      </div>
+    </div>
+    <div id="listBox"></div>
+  </section>
+
+  <!-- ============ ふりかえり ============ -->
+  <section id="pgReview" class="hidden">
+    <div id="revStart" class="card center">
+      <h3 style="font-size:1.05rem">🔁 きょうの ふりかえり</h3>
+      <div class="dim" style="margin:10px 0 16px;line-height:1.9">
+        しばらく 見ていないメモを <b id="revN">5</b>件 えらびます。<br>
+        見出しだけ見て、中身を 思い出してから めくります。
+      </div>
+      <div class="row" style="justify-content:center;gap:8px;margin-bottom:14px">
+        <button class="mini" data-revn="3">3件</button>
+        <button class="mini on" data-revn="5">5件</button>
+        <button class="mini" data-revn="10">10件</button>
+      </div>
+      <button class="bigbtn go" id="btnRevStart">はじめる</button>
+      <div class="dim" style="margin-top:12px" id="revDone"></div>
+    </div>
+
+    <div id="revCard" class="hidden">
+      <div class="rev">
+        <div class="count" id="revCount">1 / 5</div>
+        <div class="meta dim" id="revMeta" style="font-size:.72rem;font-weight:700;margin-bottom:8px"></div>
+        <div class="ttl" id="revTtl"></div>
+        <div class="body hide" id="revBody"></div>
+        <div class="foot" id="revFootHide">
+          <button class="b-show" id="btnRevShow">中身を みる</button>
+        </div>
+        <div class="foot hidden" id="revFootShow">
+          <button class="b-ng" id="btnRevNg">あいまい</button>
+          <button class="b-ok" id="btnRevOk">おぼえてた</button>
+        </div>
+      </div>
+      <button class="bigbtn sub" id="btnRevQuit" style="margin-top:10px">やめる</button>
+    </div>
+
+    <div id="revEnd" class="hidden">
+      <div class="card center">
+        <div style="font-size:2.6rem">🎉</div>
+        <h3 style="font-size:1.05rem;margin:8px 0">おつかれさま</h3>
+        <div class="stats" style="margin-top:12px">
+          <div class="stat"><b id="endAll">0</b><span>みた</span></div>
+          <div class="stat"><b id="endOk" style="color:#86efac">0</b><span>おぼえてた</span></div>
+          <div class="stat"><b id="endNg" style="color:#fca5a5">0</b><span>あいまい</span></div>
+        </div>
+        <button class="bigbtn sub" id="btnRevAgain" style="margin-top:14px">もう一度 えらぶ</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 設定 ============ -->
+  <section id="pgSet" class="hidden">
+
+    <div class="card">
+      <h3>📮 毎日メールで とどける</h3>
+      <div class="help">
+        メモの中から 毎朝ランダムに数件、<b id="mailAddr">あなたのGmail</b> あてに とどきます。<br>
+        Google の無料のしくみ（Apps Script）を 1回だけ 設定します。
+      </div>
+      <label class="lb">つなぎ先のURL（Apps Script のウェブアプリURL）</label>
+      <input class="in" id="inGasUrl" placeholder="https://script.google.com/macros/s/..." autocomplete="off">
+      <label class="lb">あいことば（設定したものと 同じ文字）</label>
+      <input class="in" id="inGasKey" placeholder="例）manabi2026" autocomplete="off">
+      <button class="bigbtn go" id="btnGasTest" style="margin-top:14px">つながるか ためす</button>
+      <button class="bigbtn sub" id="btnGasSync" style="margin-top:8px">いま すぐ 送る</button>
+      <div class="dim" id="gasState" style="margin-top:10px"></div>
+      <button class="bigbtn sub" id="btnGasGuide" style="margin-top:10px">設定のしかたを 見る（はじめての人）</button>
+    </div>
+
+    <div class="card">
+      <h3>💾 書き出す・読みこむ</h3>
+      <div class="help">スマホが 壊れても だいじょうぶなように、ときどき 書き出して 保存しておいてください。</div>
+      <div class="row wrap2" style="gap:8px;margin-top:12px">
+        <button class="mini" id="btnExpJson">📦 まるごと（JSON）</button>
+        <button class="mini" id="btnExpMd">📄 読む用（Markdown）</button>
+        <button class="mini" id="btnExpCsv">📊 表（CSV）</button>
+        <button class="mini" id="btnExpTxt">📝 文字だけ（テキスト）</button>
+      </div>
+      <div class="help" style="margin-top:14px">読みこむと、同じメモは 上書き・ないメモは 追加されます（消えません）。</div>
+      <button class="bigbtn sub" id="btnImp" style="margin-top:8px">📥 JSONから 読みこむ</button>
+      <input type="file" id="fileImp" accept="application/json,.json" class="hidden">
+    </div>
+
+    <div class="card">
+      <h3>🔄 最新か たしかめる</h3>
+      <div class="row sb">
+        <div class="dim">いまのバージョン: v<span class="verTxt">1</span></div>
+        <button class="mini" id="btnCheckUpd">たしかめる</button>
+      </div>
+      <div class="dim" id="updState" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card">
+      <h3>🗑 データ</h3>
+      <div class="dim" id="dataInfo" style="margin-bottom:10px"></div>
+      <button class="bigbtn danger" id="btnWipe">すべてのメモを 消す</button>
+    </div>
+  </section>
+
+</div>
+
+<div class="tabs"><div class="inner" id="tabBar"></div></div>
+<div class="toast" id="toast"></div>
+<div id="sheetHost"></div>
+<script type="text/plain" id="gasCode">/*  学びメモ — 毎日メールの しくみ（Google Apps Script）
+ *  つかいかた:
+ *    1. script.new をひらいて この中身を ぜんぶ はりつける
+ *    2. 下の SECRET を じぶんの あいことば に かえる
+ *    3. デプロイ → 新しいデプロイ → ウェブアプリ（実行:自分／アクセス:全員）
+ *    4. 出てきた URL を アプリの設定に はりつける
+ *    5. 関数えらびで setup を えらんで 実行（毎朝のメールが はじまる）
+ */
+
+const SECRET   = 'kaeru2026';   // ← アプリに入れる あいことば（かならず かえる）
+const MAIL_TO  = '';            // 空なら じぶんのGmailあて。別のアドレスに送るなら ここに書く
+const MAIL_N   = 5;             // 1通に入れる件数
+const MAIL_HOUR= 7;             // 何時台に とどけるか（0〜23）
+const APP_URL  = 'https://yuki08173123-svg.github.io/study-game/note/';
+
+const HEAD = ['id','created','updated','kind','src','url','title','body','tags',
+              'star','arc','del','mailedAt','mailCount','revCount'];
+const KIND_JA = { audio:'🎧 音声', youtube:'📺 動画', lecture:'🎓 講義', book:'📖 読書', other:'💭 その他' };
+
+/* ---------- シート ---------- */
+function sheet_(){
+  const pr = PropertiesService.getScriptProperties();
+  let id = pr.getProperty('SHEET_ID'), ss;
+  if(id){ try{ ss = SpreadsheetApp.openById(id); }catch(e){ ss = null; } }
+  if(!ss){
+    ss = SpreadsheetApp.create('学びメモ データ');
+    pr.setProperty('SHEET_ID', ss.getId());
+  }
+  let sh = ss.getSheetByName('notes');
+  if(!sh){
+    sh = ss.insertSheet('notes');
+    sh.getRange(1,1,1,HEAD.length).setValues([HEAD]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+function sheetUrl(){
+  const id = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+  const url = id ? 'https://docs.google.com/spreadsheets/d/' + id : '(まだ ありません)';
+  Logger.log(url); return url;
+}
+function mailAddr_(){ return MAIL_TO || Session.getEffectiveUser().getEmail(); }
+
+function rows_(sh){
+  const last = sh.getLastRow();
+  if(last &lt; 2) return [];
+  const v = sh.getRange(2,1,last-1,HEAD.length).getValues();
+  return v.map((r,i) =&gt; { const o = { _row: i+2 }; HEAD.forEach((h,j) =&gt; o[h] = r[j]); return o; });
+}
+
+/* ---------- 受け口 ---------- */
+function doGet(){ return json_({ ok:true, msg:'学びメモ サーバーは 動いています' }); }
+
+function doPost(e){
+  try{
+    const b = JSON.parse((e &amp;&amp; e.postData &amp;&amp; e.postData.contents) || '{}');
+    if(String(b.key || '') !== SECRET) return json_({ ok:false, error:'あいことばが ちがいます' });
+    if(b.action === 'ping'){
+      const sh = sheet_();
+      return json_({ ok:true, mail: mailAddr_(), count: Math.max(0, sh.getLastRow()-1), sheet: sheetUrl() });
+    }
+    if(b.action === 'sync'){
+      const n = upsert_(b.notes || []);
+      return json_({ ok:true, n: n });
+    }
+    return json_({ ok:false, error:'action が ふめいです' });
+  }catch(err){
+    return json_({ ok:false, error:String(err) });
+  }
+}
+function json_(o){
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/* ---------- 保存（id で 上書き） ---------- */
+function upsert_(list){
+  if(!list.length) return 0;
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try{
+    const sh = sheet_();
+    const map = {};
+    rows_(sh).forEach(r =&gt; map[String(r.id)] = r);
+    const adds = [];
+    list.forEach(n =&gt; {
+      const line = [
+        n.id, n.cre||'', n.upd||'', n.kind||'other', n.src||'', n.url||'',
+        n.title||'', n.body||'', (n.tags||[]).join(' '),
+        n.star?1:'', n.arc?1:'', n.del?1:'', '', '', n.rev||0
+      ];
+      const cur = map[String(n.id)];
+      if(cur){
+        line[12] = cur.mailedAt || '';   // メール履歴は のこす
+        line[13] = cur.mailCount || '';
+        sh.getRange(cur._row, 1, 1, HEAD.length).setValues([line]);
+      }else{
+        adds.push(line);
+      }
+    });
+    if(adds.length) sh.getRange(sh.getLastRow()+1, 1, adds.length, HEAD.length).setValues(adds);
+    return list.length;
+  } finally { lock.releaseLock(); }
+}
+
+/* ---------- 毎朝のメール ---------- */
+function sendDaily(){
+  const sh = sheet_();
+  const all = rows_(sh).filter(r =&gt; r.id &amp;&amp; !r.del &amp;&amp; !r.arc &amp;&amp; (r.title || r.body));
+  if(!all.length) return;
+
+  // メールに出た回数が少なく、久しく出ていないものを 優先 → その中から ランダム
+  all.sort((a,b) =&gt; (Number(a.mailCount||0) - Number(b.mailCount||0)) ||
+                    (Number(a.mailedAt||0)  - Number(b.mailedAt||0)));
+  const head = all.slice(0, Math.max(MAIL_N * 3, MAIL_N));
+  for(let i = head.length-1; i &gt; 0; i--){ const j = Math.floor(Math.random()*(i+1)); const t=head[i]; head[i]=head[j]; head[j]=t; }
+  const pick = head.slice(0, MAIL_N);
+
+  const today = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'M月d日(E)');
+  MailApp.sendEmail({
+    to: mailAddr_(),
+    subject: `📚 きょうの学びメモ ${MAIL_N}件（${today}）`,
+    htmlBody: html_(pick, all.length),
+    body: text_(pick)
+  });
+
+  const t = Date.now();
+  pick.forEach(r =&gt; {
+    sh.getRange(r._row, 13).setValue(t);
+    sh.getRange(r._row, 14).setValue(Number(r.mailCount||0) + 1);
+  });
+}
+
+function html_(list, total){
+  const C = { bg:'#f6f4ef', surf:'#ffffff', ink:'#1d2128', ink2:'#4a5261', dim:'#8a92a3', line:'#e5e1d8', pri:'#5b53d6' };
+  const bar = { audio:'#8b5cf6', youtube:'#e5484d', lecture:'#3b82f6', book:'#1f9d63', other:'#8a92a3' };
+  let s = `&lt;div style="background:${C.bg};padding:22px 12px;font-family:-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif"&gt;
+  &lt;div style="max-width:600px;margin:0 auto"&gt;
+    &lt;div style="font-size:19px;font-weight:800;color:${C.ink};letter-spacing:-.02em"&gt;📚 きょうの学びメモ&lt;/div&gt;
+    &lt;div style="font-size:12px;color:${C.dim};margin:4px 0 18px"&gt;
+      ${Utilities.formatDate(new Date(),'Asia/Tokyo','yyyy年M月d日')}　ぜんぶで ${total}件 の中から ${list.length}件&lt;/div&gt;`;
+  list.forEach((r,i) =&gt; {
+    const k = KIND_JA[r.kind] || KIND_JA.other;
+    const col = bar[r.kind] || bar.other;
+    const body = String(r.body||'').replace(/&amp;/g,'&amp;amp;').replace(/&lt;/g,'&amp;lt;').replace(/\n/g,'&lt;br&gt;');
+    const ttl  = String(r.title||'（見出しなし）').replace(/&amp;/g,'&amp;amp;').replace(/&lt;/g,'&amp;lt;');
+    const tags = String(r.tags||'').split(' ').filter(String)
+      .map(t =&gt; `&lt;span style="display:inline-block;background:#eceafc;color:${C.pri};border-radius:99px;padding:2px 10px;font-size:11px;font-weight:700;margin-right:5px"&gt;#${t}&lt;/span&gt;`).join('');
+    s += `&lt;table width="100%" cellpadding="0" cellspacing="0" style="background:${C.surf};border:1px solid ${C.line};border-radius:14px;margin-bottom:12px;overflow:hidden"&gt;
+      &lt;tr&gt;&lt;td width="5" style="background:${col}"&gt;&lt;/td&gt;
+      &lt;td style="padding:15px 16px"&gt;
+        &lt;div style="font-size:11px;color:${C.dim};font-weight:700;margin-bottom:5px"&gt;${i+1}. ${k}${r.src ? '　'+String(r.src).replace(/&lt;/g,'&amp;lt;') : ''}&lt;/div&gt;
+        &lt;div style="font-size:16px;font-weight:800;color:${C.ink};line-height:1.5;margin-bottom:7px"&gt;${ttl}&lt;/div&gt;
+        &lt;div style="font-size:14px;color:${C.ink2};line-height:1.85"&gt;${body}&lt;/div&gt;
+        ${tags ? `&lt;div style="margin-top:10px"&gt;${tags}&lt;/div&gt;` : ''}
+        ${r.url ? `&lt;div style="margin-top:9px;font-size:12px"&gt;&lt;a href="${r.url}" style="color:${C.pri}"&gt;🔗 もとの場所をひらく&lt;/a&gt;&lt;/div&gt;` : ''}
+      &lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;`;
+  });
+  s += `&lt;div style="text-align:center;margin-top:20px"&gt;
+      &lt;a href="${APP_URL}" style="display:inline-block;background:${C.pri};color:#fff;text-decoration:none;
+        padding:12px 26px;border-radius:12px;font-weight:800;font-size:14px"&gt;学びメモを ひらく&lt;/a&gt;&lt;/div&gt;
+    &lt;div style="text-align:center;font-size:11px;color:${C.dim};margin-top:14px"&gt;思い出せなかったものは、アプリの「ふりかえり」で もう一度&lt;/div&gt;
+  &lt;/div&gt;&lt;/div&gt;`;
+  return s;
+}
+function text_(list){
+  return list.map((r,i) =&gt; `${i+1}. ${r.title||'（見出しなし）'}\n${r.body||''}\n`).join('\n----------\n') + '\n\n' + APP_URL;
+}
+
+/* ---------- 毎朝の予約を セット（1回だけ 実行する） ---------- */
+function setup(){
+  ScriptApp.getProjectTriggers().forEach(t =&gt; {
+    if(t.getHandlerFunction() === 'sendDaily') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('sendDaily').timeBased().atHour(MAIL_HOUR).everyDays(1)
+    .inTimezone('Asia/Tokyo').create();
+  sheet_();
+  Logger.log('毎朝 ' + MAIL_HOUR + '時台に ' + mailAddr_() + ' へ とどきます');
+  Logger.log('データの置き場所: ' + sheetUrl());
+}
+
+/* ---------- いますぐ 1通 ためす ---------- */
+function testMail(){ sendDaily(); Logger.log('送りました → ' + mailAddr_()); }
+</script>
+<script>
+'use strict';
+/* ===================== 基本 ===================== */
+const VER = 1;
+const KEY_N = 'mn_notes', KEY_C = 'mn_cfg';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+const KINDS = [
+  { k:'audio',   em:'🎧', lbl:'音声' },
+  { k:'youtube', em:'📺', lbl:'動画' },
+  { k:'lecture', em:'🎓', lbl:'講義' },
+  { k:'book',    em:'📖', lbl:'読書' },
+  { k:'other',   em:'💭', lbl:'その他' },
+];
+const kindOf = k => KINDS.find(x => x.k === k) || KINDS[4];
+
+let notes = [];   // メモ本体
+let cfg = {};     // 設定
+let editId = null;
+
+function load(){
+  try{ notes = JSON.parse(localStorage.getItem(KEY_N) || '[]'); }catch(e){ notes = []; }
+  if(!Array.isArray(notes)) notes = [];
+  try{ cfg = JSON.parse(localStorage.getItem(KEY_C) || '{}'); }catch(e){ cfg = {}; }
+  cfg = Object.assign({ gasUrl:'', gasKey:'', lastSync:0, revN:5, kind:'book' }, cfg);
+}
+function saveNotes(){ localStorage.setItem(KEY_N, JSON.stringify(notes)); }
+function saveCfg(){ localStorage.setItem(KEY_C, JSON.stringify(cfg)); }
+
+const now = () => Date.now();
+const uid = () => 'n' + now().toString(36) + Math.random().toString(36).slice(2,7);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function fmtDate(ms){
+  const d = new Date(ms), t = new Date();
+  const same = d.toDateString() === t.toDateString();
+  if(same) return '今日 ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  const y = d.getFullYear() === t.getFullYear() ? '' : d.getFullYear() + '/';
+  return y + (d.getMonth()+1) + '/' + d.getDate();
+}
+function daysAgo(ms){ return Math.floor((now() - ms) / 86400000); }
+
+let toastT = null;
+function toast(msg){
+  const el = $('#toast'); el.textContent = msg; el.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2100);
+}
+
+/* 生きているメモ（消したもの以外） */
+const live = () => notes.filter(n => !n.del);
+
+/* ===================== タブ ===================== */
+const TABS = [
+  { id:'Write',  em:'📝', lbl:'かく' },
+  { id:'List',   em:'📚', lbl:'いちらん' },
+  { id:'Review', em:'🔁', lbl:'ふりかえり' },
+  { id:'Set',    em:'⚙️', lbl:'設定' },
+];
+let tab = 'Write';
+function buildTabs(){
+  $('#tabBar').innerHTML = TABS.map(t =>
+    `<button class="tab" data-tab="${t.id}"><span class="em">${t.em}</span>${t.lbl}</button>`).join('');
+  $$('#tabBar .tab').forEach(b => b.onclick = () => go(b.dataset.tab));
+}
+function go(id){
+  tab = id;
+  TABS.forEach(t => $('#pg'+t.id).classList.toggle('hidden', t.id !== id));
+  $$('#tabBar .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
+  window.scrollTo(0,0);
+  if(id === 'List') renderList();
+  if(id === 'Review') renderRevStart();
+  if(id === 'Set') renderSet();
+  if(id === 'Write') renderStats();
+}
+
+/* ===================== かく ===================== */
+function buildKinds(){
+  $('#kindPick').innerHTML = KINDS.map(k =>
+    `<button class="kindbtn" data-k="${k.k}"><span class="em">${k.em}</span><span class="lbl">${k.lbl}</span></button>`).join('');
+  $$('#kindPick .kindbtn').forEach(b => b.onclick = () => {
+    cfg.kind = b.dataset.k; saveCfg(); paintKinds();
+  });
+  paintKinds();
+}
+function paintKinds(){
+  $$('#kindPick .kindbtn').forEach(b => b.classList.toggle('on', b.dataset.k === cfg.kind));
+}
+
+function allTags(){
+  const m = new Map();
+  live().forEach(n => (n.tags||[]).forEach(t => m.set(t, (m.get(t)||0)+1)));
+  return [...m.entries()].sort((a,b) => b[1]-a[1]).map(e => e[0]);
+}
+function renderTagSuggest(){
+  const ts = allTags().slice(0,10);
+  $('#tagSuggest').innerHTML = ts.length
+    ? '<span class="dim" style="font-size:.72rem;align-self:center">よく使う:</span>' +
+      ts.map(t => `<button class="chip tag" data-t="${esc(t)}">${esc(t)}</button>`).join('')
+    : '';
+  $$('#tagSuggest .chip').forEach(b => b.onclick = () => {
+    const el = $('#inTags');
+    const cur = el.value.split(/\s+/).filter(Boolean);
+    if(!cur.includes(b.dataset.t)) cur.push(b.dataset.t);
+    el.value = cur.join(' ');
+  });
+}
+
+function clearForm(){
+  editId = null;
+  $('#inTitle').value = ''; $('#inBody').value = '';
+  $('#inSrc').value = ''; $('#inUrl').value = ''; $('#inTags').value = '';
+  $('#writeTitle').textContent = '📝 メモを かく';
+  $('#btnSave').textContent = 'ほぞんする';
+  $('#btnCancelEdit').classList.add('hidden');
+}
+
+function startEdit(id){
+  const n = notes.find(x => x.id === id); if(!n) return;
+  editId = id;
+  cfg.kind = n.kind; saveCfg(); paintKinds();
+  $('#inTitle').value = n.title || '';
+  $('#inBody').value = n.body || '';
+  $('#inSrc').value = n.src || '';
+  $('#inUrl').value = n.url || '';
+  $('#inTags').value = (n.tags||[]).join(' ');
+  $('#writeTitle').textContent = '✏️ メモを なおす';
+  $('#btnSave').textContent = 'なおして ほぞん';
+  $('#btnCancelEdit').classList.remove('hidden');
+  go('Write');
+}
+
+function doSave(){
+  const title = $('#inTitle').value.trim();
+  const body  = $('#inBody').value.trim();
+  if(!title && !body){ toast('なにか 書いてください'); return; }
+  const tags = $('#inTags').value.trim().split(/[\s,、]+/).filter(Boolean).slice(0,8);
+  const src = $('#inSrc').value.trim(), url = $('#inUrl').value.trim();
+
+  if(editId){
+    const n = notes.find(x => x.id === editId);
+    Object.assign(n, { title, body, src, url, tags, kind:cfg.kind, upd:now() });
+    toast('なおしました');
+  }else{
+    notes.unshift({
+      id:uid(), title, body, src, url, tags, kind:cfg.kind,
+      cre:now(), upd:now(), rev:0, ng:0, revAt:0, star:false, arc:false, del:false
+    });
+    toast('ほぞんしました 🎉');
+  }
+  saveNotes(); clearForm(); renderTagSuggest(); renderStats(); queueSync();
+}
+
+function renderStats(){
+  const L = live();
+  const today = L.filter(n => new Date(n.cre).toDateString() === new Date().toDateString()).length;
+  const week = L.filter(n => now() - n.cre < 7*86400000).length;
+  $('#statBox').innerHTML = `
+    <div class="stat"><b>${L.length}</b><span>ぜんぶ</span></div>
+    <div class="stat"><b style="color:#fcd34d">${today}</b><span>きょう</span></div>
+    <div class="stat"><b style="color:#93c5fd">${week}</b><span>7日間</span></div>`;
+}
+
+/* ===================== いちらん ===================== */
+let fKind = '', fTag = '', fStar = false, expanded = new Set();
+
+function renderFilters(){
+  $('#filterKind').innerHTML =
+    `<button class="chip ${fKind?'':'on'}" data-k="">すべて</button>` +
+    KINDS.map(k => `<button class="chip ${fKind===k.k?'on':''}" data-k="${k.k}">${k.em} ${k.lbl}</button>`).join('') +
+    `<button class="chip ${fStar?'on':''}" id="fStar">⭐️ 大事</button>`;
+  $$('#filterKind .chip[data-k]').forEach(b => b.onclick = () => { fKind = b.dataset.k; renderList(); });
+  $('#fStar').onclick = () => { fStar = !fStar; renderList(); };
+
+  const ts = allTags().slice(0,14);
+  $('#filterTag').innerHTML = ts.map(t =>
+    `<button class="chip tag ${fTag===t?'on':''}" data-t="${esc(t)}">#${esc(t)}</button>`).join('');
+  $$('#filterTag .chip').forEach(b => b.onclick = () => {
+    fTag = (fTag === b.dataset.t) ? '' : b.dataset.t; renderList();
+  });
+}
+
+function filtered(){
+  const q = $('#inSearch').value.trim().toLowerCase();
+  let a = live();
+  if(fKind) a = a.filter(n => n.kind === fKind);
+  if(fTag)  a = a.filter(n => (n.tags||[]).includes(fTag));
+  if(fStar) a = a.filter(n => n.star);
+  if(q) a = a.filter(n => (n.title+' '+n.body+' '+(n.src||'')+' '+(n.tags||[]).join(' ')).toLowerCase().includes(q));
+  const s = $('#selSort').value;
+  if(s === 'new') a.sort((x,y) => y.cre - x.cre);
+  if(s === 'old') a.sort((x,y) => x.cre - y.cre);
+  if(s === 'rev') a.sort((x,y) => (x.rev - y.rev) || (x.revAt - y.revAt));
+  return a;
+}
+
+function noteHtml(n){
+  const k = kindOf(n.kind);
+  const long = (n.body||'').length > 140 || (n.body||'').split('\n').length > 4;
+  const open = expanded.has(n.id);
+  return `<div class="note k-${n.kind} ${n.star?'star':''}" data-id="${n.id}">
+    <div class="meta">
+      <span>${k.em} ${k.lbl}</span>
+      <span>・</span><span class="mono">${fmtDate(n.cre)}</span>
+      ${n.src ? `<span>・</span><span>${esc(n.src)}</span>` : ''}
+      ${n.rev ? `<span>・</span><span>🔁${n.rev}</span>` : ''}
+      ${n.star ? '<span>⭐️</span>' : ''}
+    </div>
+    ${n.title ? `<div class="ttl">${esc(n.title)}</div>` : ''}
+    <div class="body ${long && !open ? 'clip':''}">${esc(n.body)}</div>
+    ${long ? `<div class="more" data-act="more">${open ? '▲ とじる' : '▼ ぜんぶ読む'}</div>` : ''}
+    ${n.url ? `<div style="margin-top:8px;font-size:.78rem">🔗 <a class="srclink" href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.url.slice(0,60))}</a></div>` : ''}
+    ${(n.tags||[]).length ? `<div class="chips tags">${n.tags.map(t=>`<span class="chip tag">#${esc(t)}</span>`).join('')}</div>` : ''}
+    <div class="acts">
+      <button data-act="star">${n.star?'⭐️ はずす':'☆ 大事'}</button>
+      <button data-act="edit">✏️ なおす</button>
+      <button data-act="copy">📋 コピー</button>
+      <button data-act="del">🗑 消す</button>
+    </div>
+  </div>`;
+}
+
+function renderList(){
+  renderFilters();
+  const a = filtered();
+  $('#listCount').textContent = a.length + '件';
+  $('#listBox').innerHTML = a.length ? a.map(noteHtml).join('')
+    : `<div class="empty"><span class="em">📭</span>まだ ありません<br>「かく」タブから ふやしましょう</div>`;
+  $$('#listBox .note').forEach(el => {
+    const id = el.dataset.id;
+    el.querySelectorAll('[data-act]').forEach(b => b.onclick = () => act(b.dataset.act, id));
+  });
+}
+
+function act(a, id){
+  const n = notes.find(x => x.id === id); if(!n) return;
+  if(a === 'more'){ expanded.has(id) ? expanded.delete(id) : expanded.add(id); renderList(); return; }
+  if(a === 'star'){ n.star = !n.star; n.upd = now(); saveNotes(); renderList(); queueSync(); return; }
+  if(a === 'edit'){ startEdit(id); return; }
+  if(a === 'copy'){
+    const txt = (n.title ? n.title + '\n' : '') + n.body + (n.src ? '\n（出典: ' + n.src + '）' : '');
+    navigator.clipboard.writeText(txt).then(() => toast('コピーしました'), () => toast('コピーできませんでした'));
+    return;
+  }
+  if(a === 'del'){
+    if(!confirm('このメモを 消しますか？\n（もどせません）')) return;
+    n.del = true; n.upd = now(); saveNotes(); renderList(); renderStats(); queueSync(); toast('消しました');
+  }
+}
+
+/* ===================== ふりかえり ===================== */
+let revQ = [], revI = 0, revOk = 0, revNg = 0;
+
+function pickReview(n){
+  const pool = live().filter(x => !x.arc);
+  if(!pool.length) return [];
+  // ふりかえり回数が少なく、久しく見ていないものを優先 → その中からランダム
+  const sorted = pool.slice().sort((a,b) => (a.rev - b.rev) || (a.revAt - b.revAt));
+  const head = sorted.slice(0, Math.max(n * 3, n));
+  for(let i = head.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i+1)); [head[i], head[j]] = [head[j], head[i]];
+  }
+  return head.slice(0, n);
+}
+
+function renderRevStart(){
+  $('#revStart').classList.remove('hidden');
+  $('#revCard').classList.add('hidden');
+  $('#revEnd').classList.add('hidden');
+  $('#revN').textContent = cfg.revN;
+  $$('#pgReview [data-revn]').forEach(b => b.classList.toggle('on', +b.dataset.revn === cfg.revN));
+  const L = live().filter(x => !x.arc);
+  const never = L.filter(x => !x.rev).length;
+  $('#revDone').textContent = L.length
+    ? `ぜんぶで ${L.length}件 ／ まだ 一度も見ていない ${never}件`
+    : 'メモが ありません';
+}
+
+function revStart(){
+  revQ = pickReview(cfg.revN); revI = 0; revOk = 0; revNg = 0;
+  if(!revQ.length){ toast('メモが ありません'); return; }
+  $('#revStart').classList.add('hidden');
+  $('#revEnd').classList.add('hidden');
+  $('#revCard').classList.remove('hidden');
+  showRev();
+}
+
+function showRev(){
+  const n = revQ[revI]; if(!n) return revEnd();
+  const k = kindOf(n.kind);
+  $('#revCount').textContent = (revI+1) + ' / ' + revQ.length;
+  $('#revMeta').textContent = `${k.em} ${k.lbl}` + (n.src ? ' ・ ' + n.src : '') +
+    ' ・ ' + fmtDate(n.cre) + (n.revAt ? ` ・ 前回 ${daysAgo(n.revAt)}日前` : ' ・ はじめて');
+  $('#revTtl').textContent = n.title || '（見出しなし）';
+  $('#revBody').textContent = n.body || '（本文なし）';
+  $('#revBody').classList.add('hide');
+  $('#revFootHide').classList.remove('hidden');
+  $('#revFootShow').classList.add('hidden');
+}
+
+function revAnswer(ok){
+  const n = revQ[revI];
+  if(n){
+    n.revAt = now();
+    if(ok){ n.rev = (n.rev||0) + 1; revOk++; }
+    else  { n.ng = (n.ng||0) + 1; revNg++; }
+    n.upd = now();
+  }
+  revI++;
+  if(revI >= revQ.length){ saveNotes(); queueSync(); revEnd(); }
+  else showRev();
+}
+
+function revEnd(){
+  $('#revCard').classList.add('hidden');
+  $('#revEnd').classList.remove('hidden');
+  $('#endAll').textContent = revOk + revNg;
+  $('#endOk').textContent = revOk;
+  $('#endNg').textContent = revNg;
+}
+
+/* ===================== 書き出し ===================== */
+function dl(name, text, type){
+  const b = new Blob([text], { type: type + ';charset=utf-8' });
+  const u = URL.createObjectURL(b);
+  const a = document.createElement('a');
+  a.href = u; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(u); a.remove(); }, 1000);
+  toast('書き出しました');
+}
+function stamp(){
+  const d = new Date(), p = x => String(x).padStart(2,'0');
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`;
+}
+function expJson(){ dl(`manabimemo-${stamp()}.json`, JSON.stringify({ app:'manabimemo', ver:VER, at:now(), notes }, null, 2), 'application/json'); }
+function expMd(){
+  const a = live().slice().sort((x,y) => y.cre - x.cre);
+  let s = `# 学びメモ（${a.length}件・${stamp()}）\n\n`;
+  a.forEach(n => {
+    const k = kindOf(n.kind);
+    s += `## ${n.title || '（見出しなし）'}\n\n`;
+    s += `- ${k.em} ${k.lbl}${n.src ? ' / ' + n.src : ''}\n- ${new Date(n.cre).toLocaleDateString('ja-JP')}\n`;
+    if(n.url) s += `- ${n.url}\n`;
+    if((n.tags||[]).length) s += `- ${n.tags.map(t=>'#'+t).join(' ')}\n`;
+    s += `\n${n.body}\n\n---\n\n`;
+  });
+  dl(`manabimemo-${stamp()}.md`, s, 'text/markdown');
+}
+function expCsv(){
+  const q = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
+  const rows = [['日付','種類','見出し','本文','出典','リンク','タグ','ふりかえり回数','大事']];
+  live().slice().sort((x,y)=>y.cre-x.cre).forEach(n => rows.push([
+    new Date(n.cre).toLocaleDateString('ja-JP'), kindOf(n.kind).lbl, n.title, n.body,
+    n.src, n.url, (n.tags||[]).join(' '), n.rev||0, n.star ? '★' : ''
+  ]));
+  dl(`manabimemo-${stamp()}.csv`, '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n'), 'text/csv');
+}
+function expTxt(){
+  const a = live().slice().sort((x,y) => y.cre - x.cre);
+  let s = `学びメモ　${a.length}件　${new Date().toLocaleDateString('ja-JP')}\n\n`;
+  a.forEach((n,i) => {
+    const k = kindOf(n.kind);
+    s += `${'─'.repeat(28)}\n${i+1}. ${n.title || '（見出しなし）'}\n`;
+    s += `${k.em}${k.lbl}${n.src ? ' / ' + n.src : ''}　${new Date(n.cre).toLocaleDateString('ja-JP')}\n\n${n.body}\n\n`;
+  });
+  dl(`manabimemo-${stamp()}.txt`, s, 'text/plain');
+}
+
+function doImport(file){
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const d = JSON.parse(r.result);
+      const arr = Array.isArray(d) ? d : d.notes;
+      if(!Array.isArray(arr)) throw 0;
+      let add = 0, upd = 0;
+      arr.forEach(x => {
+        if(!x || !x.id) return;
+        const cur = notes.find(n => n.id === x.id);
+        if(!cur){ notes.push(x); add++; }
+        else if((x.upd||0) > (cur.upd||0)){ Object.assign(cur, x); upd++; }
+      });
+      notes.sort((a,b) => b.cre - a.cre);
+      saveNotes(); renderSet(); renderStats();
+      toast(`追加 ${add}件 / 上書き ${upd}件`);
+      queueSync();
+    }catch(e){ alert('読みこめませんでした。学びメモから書き出した JSON を えらんでください。'); }
+  };
+  r.readAsText(file);
+}
+
+/* ===================== 同期（Apps Script） ===================== */
+let syncT = null;
+function queueSync(){
+  if(!cfg.gasUrl) return;
+  clearTimeout(syncT);
+  syncT = setTimeout(() => pushSync(false), 4000);
+}
+
+async function gasCall(action, extra){
+  if(!cfg.gasUrl) throw new Error('URLが 設定されていません');
+  const res = await fetch(cfg.gasUrl, {
+    method:'POST', redirect:'follow',
+    headers:{ 'Content-Type':'text/plain;charset=utf-8' },  // ← 事前確認(preflight)を出さないため
+    body: JSON.stringify(Object.assign({ action, key: cfg.gasKey }, extra||{}))
+  });
+  const t = await res.text();
+  let j; try{ j = JSON.parse(t); }catch(e){ throw new Error('へんじが おかしい: ' + t.slice(0,80)); }
+  if(!j.ok) throw new Error(j.error || 'エラー');
+  return j;
+}
+
+async function pushSync(all){
+  if(!cfg.gasUrl){ toast('先に URLを 入れてください'); return; }
+  const since = all ? 0 : (cfg.lastSync || 0);
+  const box = notes.filter(n => (n.upd || n.cre || 0) > since);
+  setSync('wait', '送っています…');
+  try{
+    if(box.length === 0 && !all){ setSync('ok', '送るものは ありません'); return; }
+    // 大きすぎると失敗するので 分けて送る
+    for(let i = 0; i < box.length; i += 40){
+      await gasCall('sync', { notes: box.slice(i, i+40) });
+    }
+    cfg.lastSync = now(); saveCfg();
+    setSync('ok', `${box.length}件 送りました（${fmtDate(cfg.lastSync)}）`);
+  }catch(e){
+    setSync('ng', 'うまくいきませんでした: ' + e.message);
+  }
+}
+
+function setSync(kind, msg){
+  const b = $('#syncBadge');
+  b.className = kind === 'ok' ? 'badge ok' : kind === 'ng' ? 'badge ng' : kind === 'wait' ? 'badge wait' : 'dim';
+  b.textContent = kind === 'ok' ? 'メール ON' : kind === 'ng' ? 'メール エラー' : kind === 'wait' ? '送信中' : 'メール 未設定';
+  const s = $('#gasState'); if(s) s.innerHTML = msg ? esc(msg) : '';
+}
+
+async function gasTest(){
+  cfg.gasUrl = $('#inGasUrl').value.trim(); cfg.gasKey = $('#inGasKey').value.trim(); saveCfg();
+  setSync('wait', 'ためしています…');
+  try{
+    const j = await gasCall('ping', {});
+    setSync('ok', `つながりました。とどけ先: ${j.mail || '(不明)'} ／ 保存ずみ ${j.count||0}件`);
+    if(j.mail) $('#mailAddr').textContent = j.mail;
+    toast('つながりました 🎉');
+  }catch(e){
+    setSync('ng', 'つながりません: ' + e.message);
+  }
+}
+
+/* ===================== 設定がめん ===================== */
+function renderSet(){
+  $('#inGasUrl').value = cfg.gasUrl || '';
+  $('#inGasKey').value = cfg.gasKey || '';
+  setSync(cfg.gasUrl ? (cfg.lastSync ? 'ok' : 'wait') : '', cfg.lastSync ? `さいごに 送ったのは ${fmtDate(cfg.lastSync)}` : '');
+  const L = live();
+  const kb = Math.round(JSON.stringify(notes).length / 1024);
+  $('#dataInfo').textContent = `メモ ${L.length}件・およそ ${kb}KB（この端末のなかに 入っています）`;
+}
+
+/* ===================== 更新チェック ===================== */
+async function checkUpd(quiet){
+  const st = $('#updState');
+  if(!quiet && st) st.textContent = 'たしかめています…';
+  try{
+    const r = await fetch('version.json?t=' + now(), { cache:'no-store' });
+    const j = await r.json();
+    if(+j.v > VER){
+      $('#updBox').classList.remove('hidden');
+      $('#updNote').textContent = 'v' + j.v + ' ' + (j.note || '');
+      if(st) st.textContent = '新しい v' + j.v + ' が あります';
+    }else if(st && !quiet){
+      st.textContent = 'これが 最新です（v' + VER + '）';
+    }
+  }catch(e){ if(st && !quiet) st.textContent = 'たしかめられませんでした'; }
+}
+async function doUpd(){
+  try{
+    if(window.caches) for(const k of await caches.keys()) await caches.delete(k);
+    if(navigator.serviceWorker){
+      const rs = await navigator.serviceWorker.getRegistrations();
+      for(const r of rs) await r.unregister();
+    }
+  }catch(e){}
+  location.replace(location.pathname + '?v=' + now());
+}
+
+/* ===================== シート（説明） ===================== */
+function sheet(html){
+  const host = $('#sheetHost');
+  host.innerHTML = `<div class="sheet"><div class="box"><div class="grab"></div>${html}
+    <button class="bigbtn sub" id="sheetClose" style="margin-top:14px">とじる</button></div></div>`;
+  const close = () => host.innerHTML = '';
+  $('#sheetClose').onclick = close;
+  host.querySelector('.sheet').onclick = e => { if(e.target.classList.contains('sheet')) close(); };
+}
+
+function showHelp(){
+  sheet(`<h3 style="font-size:1.05rem;margin-bottom:12px">つかいかた</h3>
+  <div class="help">
+    <b>📝 かく</b> — 音声・動画・講義・本で「なるほど」と思ったことを、その場で 1つ ずつ 書きます。
+    見出しは あとで思い出すための ひとこと。本文は じぶんの ことばで 書くほど 残ります。<br><br>
+    <b>📚 いちらん</b> — ことばで さがす／種類やタグで しぼる。大事なものは ⭐️ を つけておく。<br><br>
+    <b>🔁 ふりかえり</b> — しばらく 見ていないメモを 数件 えらんで、見出しだけ見て 中身を 思い出す 練習です。
+    「あいまい」を えらんだものは また 早めに 出てきます。<br><br>
+    <b>⚙️ 設定</b> — 毎日メールの 設定・まるごと書き出し。<br><br>
+    メモは <b>この端末のなか</b>に 入っています。ときどき「書き出す」で 保存してください。
+  </div>`);
+}
+
+function showGasGuide(){
+  const code = $('#gasCode').textContent;
+  sheet(`<h3 style="font-size:1.05rem;margin-bottom:6px">毎日メールの 設定</h3>
+  <div class="help" style="margin-bottom:12px">1回だけ 設定すれば、あとは 毎朝 じどうで とどきます。10分ほど。</div>
+  <ol class="steps">
+    <li><a class="srclink" href="https://script.new" target="_blank" rel="noopener">script.new</a> を ひらく（Googleに ログインした状態で）</li>
+    <li>まん中の 白いところの 文字を <b>ぜんぶ 消す</b></li>
+    <li>下の「コードを コピー」を おして、そこに <b>はりつける</b></li>
+    <li>コードの上のほうの <code>const SECRET = '...'</code> の '...' を、じぶんで きめた あいことば に かえる（例: manabi2026）</li>
+    <li>フロッピーの絵（保存）を おす</li>
+    <li>右上の <b>デプロイ</b> → <b>新しいデプロイ</b> → 歯車で <b>ウェブアプリ</b> をえらぶ</li>
+    <li>「次のユーザーとして実行」＝ <b>自分</b>、「アクセスできるユーザー」＝ <b>全員</b> にして <b>デプロイ</b></li>
+    <li>「アクセスを承認」→ 自分のGoogleアカウント → 「詳細」→「（安全ではないページ）に移動」→ <b>許可</b></li>
+    <li>出てきた <b>ウェブアプリのURL</b>（https://script.google.com/macros/s/… ）を コピー</li>
+    <li>この画面に もどって、URL と あいことば を 入れて「つながるか ためす」</li>
+    <li>さいごに Apps Script の画面で、上の関数えらびから <b>setup</b> を えらんで <b>実行</b>（毎朝のメールが 始まります）</li>
+  </ol>
+  <button class="bigbtn go" id="btnCopyCode" style="margin-top:14px">コードを コピー</button>
+  <div class="help" style="margin-top:12px">
+    うまくいかないときは、この画面のまま わたし（Claude）に 聞いてください。
+  </div>`);
+  $('#btnCopyCode').onclick = () => {
+    navigator.clipboard.writeText(code).then(() => toast('コピーしました'), () => {
+      const ta = document.createElement('textarea');
+      ta.value = code; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove(); toast('コピーしました');
+    });
+  };
+}
+
+/* ===================== 起動 ===================== */
+function boot(){
+  load();
+  $('#verTxt').textContent = VER;
+  $$('.verTxt').forEach(e => e.textContent = VER);
+  buildTabs(); buildKinds(); renderTagSuggest(); renderStats();
+
+  $('#btnSave').onclick = doSave;
+  $('#btnCancelEdit').onclick = () => { clearForm(); toast('やめました'); };
+  $('#btnHelp').onclick = showHelp;
+
+  $('#inSearch').oninput = renderList;
+  $('#selSort').onchange = renderList;
+
+  $$('#pgReview [data-revn]').forEach(b => b.onclick = () => {
+    cfg.revN = +b.dataset.revn; saveCfg(); renderRevStart();
+  });
+  $('#btnRevStart').onclick = revStart;
+  $('#btnRevShow').onclick = () => {
+    $('#revBody').classList.remove('hide');
+    $('#revFootHide').classList.add('hidden');
+    $('#revFootShow').classList.remove('hidden');
+  };
+  $('#btnRevOk').onclick = () => revAnswer(true);
+  $('#btnRevNg').onclick = () => revAnswer(false);
+  $('#btnRevQuit').onclick = () => { saveNotes(); queueSync(); renderRevStart(); };
+  $('#btnRevAgain').onclick = revStart;
+
+  $('#btnExpJson').onclick = expJson;
+  $('#btnExpMd').onclick = expMd;
+  $('#btnExpCsv').onclick = expCsv;
+  $('#btnExpTxt').onclick = expTxt;
+  $('#btnImp').onclick = () => $('#fileImp').click();
+  $('#fileImp').onchange = e => { if(e.target.files[0]) doImport(e.target.files[0]); e.target.value = ''; };
+
+  $('#btnGasTest').onclick = gasTest;
+  $('#btnGasSync').onclick = () => {
+    cfg.gasUrl = $('#inGasUrl').value.trim(); cfg.gasKey = $('#inGasKey').value.trim(); saveCfg();
+    pushSync(true);
+  };
+  $('#btnGasGuide').onclick = showGasGuide;
+
+  $('#btnCheckUpd').onclick = () => checkUpd(false);
+  $('#btnUpd').onclick = doUpd;
+  $('#btnWipe').onclick = () => {
+    if(!confirm('ぜんぶのメモを 消します。よろしいですか？')) return;
+    if(!confirm('ほんとうに 消しますか？ もどせません。')) return;
+    notes = []; saveNotes(); renderSet(); renderStats(); renderList(); toast('消しました');
+  };
+
+  go('Write');
+  checkUpd(true);
+  if(cfg.gasUrl){ setSync('ok', ''); setTimeout(() => pushSync(false), 2500); } else setSync('', '');
+  if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+boot();
+</script>
+</body>
+</html>

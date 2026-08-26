@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>瞑想</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0e13">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="瞑想">
+<style>
+:root{
+  --bg:#0a0e13;
+  --bg2:#111823;
+  --surf:rgba(255,255,255,.045);
+  --surf2:rgba(255,255,255,.075);
+  --line:rgba(255,255,255,.10);
+  --ink:#e9f0f4;
+  --ink2:#b3c1cc;
+  --dim:#778794;
+  --aqua:#9fd8d6;
+  --aqua2:#6fb6bd;
+  --warm:#e3c79a;
+  --r:20px;
+  --safeT:env(safe-area-inset-top,0px);
+  --safeB:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  font-size:16px; line-height:1.7; -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  overflow-x:hidden; overscroll-behavior-y:none;
+  letter-spacing:.02em;
+}
+button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-webkit-user-select:none;user-select:none}
+.mono{font-variant-numeric:tabular-nums}
+.hidden{display:none!important}
+
+/* ゆっくり流れる背景の光 */
+.sky{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:
+  radial-gradient(120% 90% at 50% -10%, #16202c 0%, #0a0e13 62%)}
+.sky i{position:absolute;display:block;border-radius:50%;filter:blur(60px);opacity:.5}
+.sky i:nth-child(1){width:70vw;height:70vw;left:-15vw;top:-10vh;background:radial-gradient(circle,rgba(90,160,170,.42),rgba(90,160,170,0) 70%);animation:drift1 46s ease-in-out infinite}
+.sky i:nth-child(2){width:60vw;height:60vw;right:-12vw;top:22vh;background:radial-gradient(circle,rgba(120,120,190,.30),rgba(120,120,190,0) 70%);animation:drift2 62s ease-in-out infinite}
+.sky i:nth-child(3){width:80vw;height:80vw;left:5vw;bottom:-25vh;background:radial-gradient(circle,rgba(200,170,120,.16),rgba(200,170,120,0) 70%);animation:drift1 74s ease-in-out infinite reverse}
+@keyframes drift1{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(6vw,7vh,0) scale(1.15)}}
+@keyframes drift2{0%,100%{transform:translate3d(0,0,0) scale(1.1)}50%{transform:translate3d(-7vw,-5vh,0) scale(.95)}}
+
+.app{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column;
+  max-width:520px;margin:0 auto;padding:calc(var(--safeT) + 14px) 20px calc(var(--safeB) + 88px)}
+
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;min-height:30px}
+.top h1{margin:0;font-size:.95rem;font-weight:600;letter-spacing:.32em;color:var(--ink2)}
+.top .t-sub{font-size:.78rem;color:var(--dim);letter-spacing:.06em}
+
+/* ── 瞑想タブ ── */
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;padding:12px 0 4px}
+
+.orb{position:relative;width:min(64vw,250px);aspect-ratio:1;display:grid;place-items:center}
+.orb .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(159,216,214,.22)}
+.orb .ring.r2{inset:-16px;border-color:rgba(159,216,214,.10)}
+.orb .ring.r3{inset:-32px;border-color:rgba(159,216,214,.05)}
+.orb .core{position:absolute;inset:12%;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%, rgba(255,255,255,.30), rgba(159,216,214,.16) 42%, rgba(90,150,160,.10) 68%, rgba(90,150,160,0) 78%);
+  box-shadow:0 0 60px rgba(120,190,195,.22), inset 0 0 40px rgba(255,255,255,.05);
+  animation:idle 9s ease-in-out infinite}
+@keyframes idle{0%,100%{transform:scale(.94);opacity:.86}50%{transform:scale(1.03);opacity:1}}
+.orb .label{position:relative;text-align:center;line-height:1.25}
+.orb .num{display:block;font-size:3.6rem;font-weight:200;letter-spacing:-.02em}
+.orb .unit{display:block;font-size:.8rem;color:var(--dim);letter-spacing:.34em;margin-top:6px}
+
+.picks{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.pick{min-width:64px;padding:11px 4px;border-radius:999px;background:var(--surf);
+  border:1px solid var(--line);color:var(--ink2);font-size:.95rem;transition:.25s}
+.pick .m{font-size:1.05rem;font-weight:500}
+.pick .s{font-size:.72rem;color:var(--dim);margin-left:3px}
+.pick[aria-pressed="true"]{background:rgba(159,216,214,.14);border-color:rgba(159,216,214,.45);color:#eafaf8;
+  box-shadow:0 0 22px rgba(120,190,195,.18)}
+
+.start{width:100%;max-width:290px;padding:17px;border-radius:999px;
+  background:linear-gradient(180deg,rgba(159,216,214,.95),rgba(111,182,189,.9));
+  color:#07222a;font-weight:700;font-size:1.05rem;letter-spacing:.16em;
+  box-shadow:0 10px 34px rgba(110,180,190,.22);transition:.2s}
+.start:active{transform:scale(.985);opacity:.9}
+.hint{font-size:.78rem;color:var(--dim);text-align:center;margin-top:-18px}
+
+/* ── 記録タブ ── */
+.pane{padding-top:18px;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:15px 16px}
+.card .k{font-size:.74rem;color:var(--dim);letter-spacing:.12em}
+.card .v{font-size:1.75rem;font-weight:300;margin-top:2px;line-height:1.25}
+.card .v small{font-size:.8rem;color:var(--ink2);margin-left:3px;font-weight:400}
+
+.sec{margin-top:24px}
+.sec h2{margin:0 0 12px;font-size:.8rem;font-weight:600;color:var(--dim);letter-spacing:.2em}
+
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.grid .d{aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.05);position:relative}
+.grid .d.on{background:radial-gradient(circle at 40% 35%, rgba(190,240,238,.95), rgba(120,190,195,.55) 70%);
+  border-color:transparent;box-shadow:0 0 12px rgba(120,190,195,.35)}
+.grid .d.today{outline:1px solid rgba(227,199,154,.8);outline-offset:2px}
+.wk{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:8px}
+.wk span{text-align:center;font-size:.66rem;color:var(--dim)}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:12px;background:var(--surf);border:1px solid var(--line);
+  border-radius:14px;padding:12px 14px}
+.row .dot{width:8px;height:8px;border-radius:50%;background:var(--aqua);flex:none;box-shadow:0 0 10px rgba(159,216,214,.6)}
+.row .r-main{flex:1;min-width:0}
+.row .r-d{font-size:.92rem}
+.row .r-t{font-size:.74rem;color:var(--dim)}
+.row .r-m{font-size:1.05rem;font-weight:500;color:var(--ink)}
+.row .r-m small{font-size:.72rem;color:var(--dim);margin-left:2px}
+.row .del{color:var(--dim);font-size:1.1rem;padding:4px 2px 4px 8px;opacity:.6}
+.empty{color:var(--dim);font-size:.86rem;text-align:center;padding:28px 10px;
+  border:1px dashed var(--line);border-radius:var(--r)}
+.more{width:100%;margin-top:10px;padding:12px;border-radius:14px;background:var(--surf);
+  border:1px solid var(--line);color:var(--ink2);font-size:.86rem}
+.foot{margin-top:26px;text-align:center;color:var(--dim);font-size:.72rem;line-height:2}
+.foot button{color:var(--dim);text-decoration:underline;text-underline-offset:3px;font-size:.72rem}
+
+/* ── タブバー ── */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;
+  padding:8px 20px calc(var(--safeB) + 10px);
+  background:linear-gradient(180deg,rgba(10,14,19,0),rgba(10,14,19,.86) 40%,rgba(10,14,19,.96));
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.tabs .in{max-width:520px;margin:0 auto;display:flex;gap:8px}
+.tab{flex:1;padding:11px;border-radius:14px;color:var(--dim);font-size:.85rem;letter-spacing:.1em;transition:.2s}
+.tab[aria-selected="true"]{background:var(--surf2);color:var(--ink)}
+
+/* ── セッション画面 ── */
+.run{position:fixed;inset:0;z-index:20;background:#070a0e;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  padding:calc(var(--safeT) + 20px) 20px calc(var(--safeB) + 20px);
+  animation:fadeIn .8s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.run .bsky{position:absolute;inset:0;background:radial-gradient(110% 80% at 50% 42%, #13202a 0%, #070a0e 66%)}
+.run .inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:26px}
+.breath{position:relative;width:min(78vw,320px);aspect-ratio:1;display:grid;place-items:center}
+.breath .halo{position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle, rgba(159,216,214,.20) 0%, rgba(120,190,195,.10) 45%, rgba(120,190,195,0) 72%);
+  animation:breathe 12s ease-in-out infinite}
+.breath .edge{position:absolute;inset:14%;border-radius:50%;border:1px solid rgba(159,216,214,.35);
+  box-shadow:0 0 50px rgba(120,190,195,.28), inset 0 0 30px rgba(159,216,214,.10);
+  animation:breathe 12s ease-in-out infinite}
+.breath .petal{position:absolute;inset:6%;border-radius:50%;border:1px solid rgba(159,216,214,.10);
+  animation:breathe 12s ease-in-out infinite;animation-delay:-.6s}
+@keyframes breathe{
+  0%{transform:scale(.60)}
+  33.3%{transform:scale(1)}
+  41.6%{transform:scale(1)}
+  91.6%{transform:scale(.60)}
+  100%{transform:scale(.60)}
+}
+.breath .txt{position:relative;text-align:center}
+.breath .rem{font-size:2.9rem;font-weight:200;letter-spacing:.04em}
+.breath .cue{font-size:.82rem;color:var(--aqua);letter-spacing:.42em;margin-top:8px;transition:opacity .6s;opacity:.9}
+.run .stop{margin-top:8px;padding:13px 34px;border-radius:999px;background:rgba(255,255,255,.06);
+  border:1px solid var(--line);color:var(--ink2);font-size:.88rem;letter-spacing:.18em}
+.run .prog{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.06)}
+.run .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,rgba(159,216,214,.5),rgba(227,199,154,.75));transition:width .3s linear}
+
+/* ── 終わりの画面 ── */
+.done{position:fixed;inset:0;z-index:30;background:radial-gradient(110% 80% at 50% 40%, #16222c 0%, #080c11 70%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  padding:40px 24px;text-align:center;animation:fadeIn 1.2s ease}
+.done .bloom{width:min(52vw,190px);aspect-ratio:1;border-radius:50%;margin-bottom:14px;
+  background:radial-gradient(circle at 44% 38%, rgba(255,255,255,.60), rgba(240,222,186,.34) 26%, rgba(159,216,214,.16) 52%, rgba(159,216,214,0) 74%);
+  box-shadow:0 0 70px rgba(200,190,160,.22);animation:bloom 3.4s ease-out both}
+@keyframes bloom{0%{transform:scale(.5);opacity:0}60%{opacity:1}100%{transform:scale(1);opacity:.95}}
+.done h2{margin:0;font-size:1.35rem;font-weight:300;letter-spacing:.12em}
+.done p{margin:6px 0 0;color:var(--dim);font-size:.88rem}
+.done .amt{margin-top:16px;font-size:1rem;color:var(--ink2)}
+.done .close{margin-top:30px;padding:14px 44px;border-radius:999px;
+  background:rgba(159,216,214,.14);border:1px solid rgba(159,216,214,.4);color:#eafaf8;letter-spacing:.2em}
+
+.sheet{position:fixed;inset:0;z-index:40;background:rgba(4,7,10,.72);display:flex;align-items:flex-end;
+  animation:fadeIn .2s ease}
+.sheet .box{width:100%;max-width:520px;margin:0 auto;background:#141b24;border:1px solid var(--line);
+  border-radius:22px 22px 0 0;padding:24px 22px calc(var(--safeB) + 20px);animation:up .28s ease}
+@keyframes up{from{transform:translateY(20px);opacity:.6}to{transform:none;opacity:1}}
+.sheet h3{margin:0 0 6px;font-size:1.05rem;font-weight:500}
+.sheet p{margin:0 0 18px;color:var(--dim);font-size:.86rem}
+.sheet .btns{display:flex;gap:10px}
+.sheet .btns button{flex:1;padding:14px;border-radius:14px;font-size:.92rem}
+.sheet .no{background:var(--surf);border:1px solid var(--line);color:var(--ink2)}
+.sheet .yes{background:rgba(227,120,120,.16);border:1px solid rgba(227,120,120,.4);color:#ffd7d7}
+
+.toast{position:fixed;left:50%;bottom:calc(var(--safeB) + 96px);transform:translateX(-50%);
+  z-index:50;background:rgba(20,27,36,.96);border:1px solid var(--line);color:var(--ink);
+  padding:11px 18px;border-radius:999px;font-size:.84rem;box-shadow:0 10px 30px rgba(0,0,0,.5);
+  animation:fadeIn .2s ease}
+
+@media (prefers-reduced-motion: reduce){
+  .sky i,.orb .core{animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="sky"><i></i><i></i><i></i></div>
+
+<div class="app">
+  <div class="top">
+    <h1>瞑想</h1>
+    <div class="t-sub" id="topSub"></div>
+  </div>
+
+  <!-- 瞑想タブ -->
+  <div class="stage" id="paneHome">
+    <div class="orb">
+      <div class="ring r3"></div><div class="ring r2"></div><div class="ring"></div>
+      <div class="core"></div>
+      <div class="label"><span class="num mono" id="pickNum">5</span><span class="unit">MINUTES</span></div>
+    </div>
+
+    <div class="picks" id="picks">
+      <button class="pick" data-min="1"><span class="m mono">1</span><span class="s">分</span></button>
+      <button class="pick" data-min="3"><span class="m mono">3</span><span class="s">分</span></button>
+      <button class="pick" data-min="5"><span class="m mono">5</span><span class="s">分</span></button>
+      <button class="pick" data-min="10"><span class="m mono">10</span><span class="s">分</span></button>
+    </div>
+
+    <button class="start" id="btnStart">はじめる</button>
+    <div class="hint">音が鳴ります。マナーモードの時は音量を確認してください。</div>
+  </div>
+
+  <!-- 記録タブ -->
+  <div class="pane hidden" id="paneLog">
+    <div class="cards">
+      <div class="card"><div class="k">つづけて</div><div class="v mono"><span id="stStreak">0</span><small>日</small></div></div>
+      <div class="card"><div class="k">今日</div><div class="v mono"><span id="stToday">0</span><small>分</small></div></div>
+      <div class="card"><div class="k">回数</div><div class="v mono"><span id="stCount">0</span><small>回</small></div></div>
+      <div class="card"><div class="k">合計</div><div class="v mono"><span id="stTotal">0</span><small id="stTotalUnit">分</small></div></div>
+    </div>
+
+    <div class="sec">
+      <h2>この5週間</h2>
+      <div class="wk"><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span><span>日</span></div>
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="sec">
+      <h2>これまでの記録</h2>
+      <div class="list" id="list"></div>
+      <button class="more hidden" id="btnMore">もっと見る</button>
+    </div>
+
+    <div class="foot">
+      瞑想 v1 ・ 記録はこの端末の中だけに保存されます<br>
+      <button id="btnBackup">記録をコピーして控える</button>
+    </div>
+  </div>
+</div>
+
+<!-- タブバー -->
+<nav class="tabs" id="tabs">
+  <div class="in">
+    <button class="tab" data-tab="home" aria-selected="true">瞑想</button>
+    <button class="tab" data-tab="log" aria-selected="false">記録</button>
+  </div>
+</nav>
+
+<!-- セッション -->
+<div class="run hidden" id="run">
+  <div class="bsky"></div>
+  <div class="inner">
+    <div class="breath">
+      <div class="halo"></div><div class="petal"></div><div class="edge"></div>
+      <div class="txt">
+        <div class="rem mono" id="remain">05:00</div>
+        <div class="cue" id="cue">吸 う</div>
+      </div>
+    </div>
+    <button class="stop" id="btnStop">やめる</button>
+  </div>
+  <div class="prog"><i id="prog"></i></div>
+</div>
+
+<!-- 終わり -->
+<div class="done hidden" id="done">
+  <div class="bloom"></div>
+  <h2>おつかれさまでした</h2>
+  <p>そのまま、ゆっくり目を開けてください。</p>
+  <div class="amt mono" id="doneAmt"></div>
+  <button class="close" id="btnClose">とじる</button>
+</div>
+
+<script>
+'use strict';
+const VER = 1;
+const KEY = 'med.log.v1';
+const KEY_PICK = 'med.pick.v1';
+const $ = id => document.getElementById(id);
+
+/* ───────── データ ───────── */
+let log = [];
+try{ log = JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(e){ log = []; }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(log)); }catch(e){} }
+
+const dayKey = ms => { const d = new Date(ms);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+const startOfDay = ms => { const d = new Date(ms); d.setHours(0,0,0,0); return d.getTime(); };
+const DAY = 86400000;
+
+/* ───────── 音（シンギングボウル風） ───────── */
+let ac = null, keepAlive = null, scheduled = [];
+function ensureAudio(){
+  if(!ac){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    ac = new AC();
+  }
+  if(ac.state === 'suspended') ac.resume();
+  return ac;
+}
+function bell(delay, base, dur, vol){
+  if(!ac) return;
+  const t0 = ac.currentTime + delay;
+  const out = ac.createGain();
+  out.gain.value = vol;
+  out.connect(ac.destination);
+  const partials = [[1,1,1],[2.01,.42,.72],[2.77,.30,.52],[4.07,.16,.36],[5.42,.09,.26],[8.1,.05,.18]];
+  partials.forEach(function(p){
+    const o = ac.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = base * p[0];
+    const g = ac.createGain();
+    const d = dur * p[2];
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(p[1] * .3, t0 + .012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+    o.connect(g); g.connect(out);
+    o.start(t0); o.stop(t0 + d + .05);
+    scheduled.push(o);
+  });
+}
+function clearScheduled(){
+  scheduled.forEach(function(o){ try{ o.stop(); o.disconnect(); }catch(e){} });
+  scheduled = [];
+}
+/* 端末が音を止めてしまわないよう、聞こえない音を流し続ける */
+function startKeepAlive(){
+  if(!ac || keepAlive) return;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.frequency.value = 60; g.gain.value = 0.0006;
+  o.connect(g); g.connect(ac.destination); o.start();
+  keepAlive = {o:o, g:g};
+}
+function stopKeepAlive(){
+  if(!keepAlive) return;
+  try{ keepAlive.o.stop(); keepAlive.o.disconnect(); keepAlive.g.disconnect(); }catch(e){}
+  keepAlive = null;
+}
+
+/* ───────── 画面を消さない ───────── */
+let wl = null;
+async function keepScreen(){
+  try{ if('wakeLock' in navigator) wl = await navigator.wakeLock.request('screen'); }catch(e){}
+}
+function releaseScreen(){ try{ if(wl){ wl.release(); wl = null; } }catch(e){} }
+
+/* ───────── タブ ───────── */
+let tab = 'home';
+function setTab(t){
+  tab = t;
+  $('paneHome').classList.toggle('hidden', t !== 'home');
+  $('paneLog').classList.toggle('hidden', t !== 'log');
+  document.querySelectorAll('.tab').forEach(function(b){
+    b.setAttribute('aria-selected', b.dataset.tab === t ? 'true' : 'false');
+  });
+  if(t === 'log') renderLog();
+}
+$('tabs').addEventListener('click', function(e){
+  const b = e.target.closest('.tab'); if(!b) return; setTab(b.dataset.tab);
+});
+
+/* ───────── 時間えらび ───────── */
+let picked = parseInt(localStorage.getItem(KEY_PICK) || '5', 10);
+if([1,3,5,10].indexOf(picked) < 0) picked = 5;
+function renderPick(){
+  $('pickNum').textContent = picked;
+  document.querySelectorAll('.pick').forEach(function(b){
+    b.setAttribute('aria-pressed', parseInt(b.dataset.min,10) === picked ? 'true' : 'false');
+  });
+}
+$('picks').addEventListener('click', function(e){
+  const b = e.target.closest('.pick'); if(!b) return;
+  picked = parseInt(b.dataset.min, 10);
+  localStorage.setItem(KEY_PICK, String(picked));
+  renderPick();
+});
+
+/* ───────── セッション ───────── */
+let sess = null, tick = null;
+const pad = n => String(n).padStart(2,'0');
+const fmt = s => pad(Math.floor(s/60)) + ':' + pad(Math.floor(s%60));
+
+function start(){
+  const min = picked, total = min * 60;
+  ensureAudio();
+  clearScheduled();
+  if(ac){
+    startKeepAlive();
+    bell(0, 210, 7, .9);                    // はじまりの鐘
+    bell(total, 196, 10, 1);                // 終わりの鐘（あらかじめ予約する）
+    bell(total + 4.5, 196, 10, .8);
+    bell(total + 9, 196, 11, .65);
+  }
+  sess = { min: min, total: total, endAt: Date.now() + total*1000, startAt: Date.now() };
+  $('run').classList.remove('hidden');
+  $('done').classList.add('hidden');
+  keepScreen();
+  update();
+  tick = setInterval(update, 200);
+}
+
+function update(){
+  if(!sess) return;
+  const left = Math.max(0, (sess.endAt - Date.now()) / 1000);
+  $('remain').textContent = fmt(Math.ceil(left));
+  $('prog').style.width = (100 * (1 - left / sess.total)) + '%';
+  const e = (Date.now() - sess.startAt) / 1000 % 12;
+  const cue = e < 4 ? '吸 う' : (e < 5 ? 'そ の ま ま' : (e < 11 ? '吐 く' : 'そ の ま ま'));
+  const el = $('cue');
+  if(el.textContent !== cue) el.textContent = cue;
+  if(left <= 0) finish();
+}
+
+function finish(){
+  if(!sess) return;
+  const min = sess.min;
+  clearInterval(tick); tick = null;
+  sess = null;
+  releaseScreen();
+  stopKeepAlive();
+  log.unshift({ at: Date.now(), min: min });
+  save();
+  try{ if(navigator.vibrate) navigator.vibrate([400,220,400,220,600]); }catch(e){}
+  $('run').classList.add('hidden');
+  $('doneAmt').textContent = min + '分 ・ 通算 ' + log.length + '回目';
+  $('done').classList.remove('hidden');
+  setTimeout(function(){ stopKeepAlive(); }, 14000);
+}
+
+function askStop(){
+  if(!sess) return;
+  const s = document.createElement('div');
+  s.className = 'sheet';
+  s.innerHTML = '<div class="box"><h3>やめますか？</h3>' +
+    '<p>途中でやめたぶんは記録されません。</p>' +
+    '<div class="btns"><button class="no">つづける</button><button class="yes">やめる</button></div></div>';
+  document.body.appendChild(s);
+  s.addEventListener('click', function(e){
+    if(e.target.classList.contains('yes')){ s.remove(); abort(); }
+    else if(e.target.classList.contains('no') || e.target === s){ s.remove(); }
+  });
+}
+function abort(){
+  clearInterval(tick); tick = null;
+  sess = null;
+  clearScheduled();
+  stopKeepAlive();
+  releaseScreen();
+  $('run').classList.add('hidden');
+}
+
+$('btnStart').addEventListener('click', start);
+$('btnStop').addEventListener('click', askStop);
+$('btnClose').addEventListener('click', function(){
+  $('done').classList.add('hidden');
+  renderTop(); if(tab === 'log') renderLog();
+});
+
+/* 画面に戻ってきたとき（裏に回っている間に終わっていたら締める） */
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState !== 'visible') return;
+  if(ac && ac.state === 'suspended' && sess) ac.resume();
+  if(sess){ keepScreen(); update(); }
+});
+
+/* ───────── 記録の表示 ───────── */
+function stats(){
+  const today = startOfDay(Date.now());
+  let todayMin = 0, totalMin = 0;
+  const days = {};
+  log.forEach(function(r){
+    totalMin += r.min;
+    const k = startOfDay(r.at);
+    days[k] = (days[k] || 0) + r.min;
+    if(k === today) todayMin += r.min;
+  });
+  let streak = 0, cur = today;
+  if(!days[cur]) cur -= DAY;              // 今日まだなら、昨日までの連続を見せる
+  while(days[cur]){ streak++; cur -= DAY; }
+  return { todayMin: todayMin, totalMin: totalMin, days: days, streak: streak };
+}
+
+function renderTop(){
+  const s = stats();
+  $('topSub').textContent = s.todayMin > 0
+    ? '今日 ' + s.todayMin + '分' + (s.streak > 1 ? ' ・ ' + s.streak + '日つづけて' : '')
+    : (s.streak > 0 ? s.streak + '日つづけて' : '');
+}
+
+let listLimit = 12;
+function renderLog(){
+  const s = stats();
+  $('stStreak').textContent = s.streak;
+  $('stToday').textContent = s.todayMin;
+  $('stCount').textContent = log.length;
+  if(s.totalMin >= 120){
+    $('stTotal').textContent = (s.totalMin / 60).toFixed(1);
+    $('stTotalUnit').textContent = '時間';
+  }else{
+    $('stTotal').textContent = s.totalMin;
+    $('stTotalUnit').textContent = '分';
+  }
+
+  // 5週間ぶんの丸（月曜はじまり）
+  const today = startOfDay(Date.now());
+  const dow = (new Date(today).getDay() + 6) % 7;      // 月=0
+  const end = today + (6 - dow) * DAY;                 // 今週の日曜
+  const g = $('grid'); g.innerHTML = '';
+  for(let i = 34; i >= 0; i--){
+    const d = end - i * DAY;
+    const el = document.createElement('div');
+    el.className = 'd' + (s.days[d] ? ' on' : '') + (d === today ? ' today' : '');
+    if(s.days[d]) el.style.opacity = Math.min(1, .80 + s.days[d] / 40);
+    if(d > today) el.style.opacity = .25;
+    el.title = dayKey(d) + (s.days[d] ? ' ' + s.days[d] + '分' : '');
+    g.appendChild(el);
+  }
+
+  // 履歴
+  const list = $('list'); list.innerHTML = '';
+  if(!log.length){
+    list.innerHTML = '<div class="empty">まだ記録はありません。<br>1分からで大丈夫です。</div>';
+    $('btnMore').classList.add('hidden');
+    return;
+  }
+  const W = ['日','月','火','水','木','金','土'];
+  log.slice(0, listLimit).forEach(function(r, i){
+    const d = new Date(r.at);
+    const k = startOfDay(r.at);
+    const label = k === today ? '今日' : (k === today - DAY ? '昨日'
+      : (d.getMonth()+1) + '月' + d.getDate() + '日（' + W[d.getDay()] + '）');
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = '<span class="dot"></span><div class="r-main">' +
+      '<div class="r-d">' + label + '</div>' +
+      '<div class="r-t mono">' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + '</div></div>' +
+      '<div class="r-m mono">' + r.min + '<small>分</small></div>' +
+      '<button class="del" data-i="' + i + '" aria-label="削除">×</button>';
+    list.appendChild(row);
+  });
+  $('btnMore').classList.toggle('hidden', log.length <= listLimit);
+}
+
+$('list').addEventListener('click', function(e){
+  const b = e.target.closest('.del'); if(!b) return;
+  const i = parseInt(b.dataset.i, 10);
+  const s = document.createElement('div');
+  s.className = 'sheet';
+  s.innerHTML = '<div class="box"><h3>この記録を消しますか？</h3>' +
+    '<p>' + log[i].min + '分の記録を1件消します。もどせません。</p>' +
+    '<div class="btns"><button class="no">やめる</button><button class="yes">消す</button></div></div>';
+  document.body.appendChild(s);
+  s.addEventListener('click', function(ev){
+    if(ev.target.classList.contains('yes')){
+      log.splice(i, 1); save(); s.remove(); renderLog(); renderTop();
+    }else if(ev.target.classList.contains('no') || ev.target === s){ s.remove(); }
+  });
+});
+
+$('btnMore').addEventListener('click', function(){ listLimit += 30; renderLog(); });
+
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 2200);
+}
+$('btnBackup').addEventListener('click', function(){
+  const txt = JSON.stringify(log);
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(
+      function(){ toast('記録をコピーしました'); },
+      function(){ toast('コピーできませんでした'); });
+  }else{ toast('コピーできませんでした'); }
+});
+
+/* ───────── 起動 ───────── */
+renderPick();
+renderTop();
+setTab('home');
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+}
+</script>
+</body>
+</html>

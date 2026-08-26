@@ -149,13 +149,27 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .memo-link{margin-top:20px;color:var(--ink2);font-size:.86rem;letter-spacing:.12em;
   text-decoration:underline;text-underline-offset:4px;opacity:.9}
 
+/* ── 使い方タブ ── */
+.guide{display:flex;flex-direction:column;gap:12px}
+.gcard{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 20px}
+.gcard h3{margin:0 0 12px;font-size:1.02rem;font-weight:600;color:var(--ink)}
+.gcard p{margin:0 0 10px;font-size:.92rem;line-height:1.9;color:var(--ink2)}
+.gcard p:last-child{margin-bottom:0}
+.gcard b{color:var(--ink);font-weight:600}
+.gcard ul,.gcard ol{margin:0 0 12px;padding-left:1.3em}
+.gcard li{font-size:.92rem;line-height:1.9;color:var(--ink2);margin-bottom:7px}
+.gcard li::marker{color:var(--aqua)}
+.gcard .g-dim{color:var(--dim);font-size:.82rem;line-height:1.8}
+.gcard .q{color:var(--aqua);font-weight:600;font-size:.92rem;margin:16px 0 4px}
+.gcard .q:first-of-type{margin-top:0}
+
 /* ── タブバー ── */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;
   padding:8px 20px calc(var(--safeB) + 10px);
   background:linear-gradient(180deg,rgba(10,14,19,0),rgba(10,14,19,.86) 40%,rgba(10,14,19,.96));
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .tabs .in{max-width:520px;margin:0 auto;display:flex;gap:8px}
-.tab{flex:1;padding:11px;border-radius:14px;color:var(--dim);font-size:.85rem;letter-spacing:.1em;transition:.2s}
+.tab{flex:1;padding:11px 6px;border-radius:14px;color:var(--dim);font-size:.85rem;letter-spacing:.06em;transition:.2s;white-space:nowrap}
 .tab[aria-selected="true"]{background:var(--surf2);color:var(--ink)}
 
 /* ── セッション画面 ── */
@@ -169,22 +183,19 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .breath{position:relative;width:min(78vw,320px);aspect-ratio:1;display:grid;place-items:center}
 .breath .halo{position:absolute;inset:0;border-radius:50%;
   background:radial-gradient(circle, rgba(159,216,214,.20) 0%, rgba(120,190,195,.10) 45%, rgba(120,190,195,0) 72%);
-  animation:breathe 12s ease-in-out infinite}
+  animation:slowGlow 16s ease-in-out infinite}
 .breath .edge{position:absolute;inset:14%;border-radius:50%;border:1px solid rgba(159,216,214,.35);
   box-shadow:0 0 50px rgba(120,190,195,.28), inset 0 0 30px rgba(159,216,214,.10);
-  animation:breathe 12s ease-in-out infinite}
+  animation:slowGlow 16s ease-in-out infinite}
 .breath .petal{position:absolute;inset:6%;border-radius:50%;border:1px solid rgba(159,216,214,.10);
-  animation:breathe 12s ease-in-out infinite;animation-delay:-.6s}
-@keyframes breathe{
-  0%{transform:scale(.60)}
-  33.3%{transform:scale(1)}
-  41.6%{transform:scale(1)}
-  91.6%{transform:scale(.60)}
-  100%{transform:scale(.60)}
+  animation:slowGlow 16s ease-in-out infinite;animation-delay:-1.2s}
+@keyframes slowGlow{
+  0%{transform:scale(.82);opacity:.85}
+  50%{transform:scale(1);opacity:1}
+  100%{transform:scale(.82);opacity:.85}
 }
 .breath .txt{position:relative;text-align:center}
 .breath .rem{font-size:2.9rem;font-weight:200;letter-spacing:.04em}
-.breath .cue{font-size:.82rem;color:var(--aqua);letter-spacing:.42em;margin-top:8px;transition:opacity .6s;opacity:.9}
 .run .stop{margin-top:8px;padding:13px 34px;border-radius:999px;background:rgba(255,255,255,.06);
   border:1px solid var(--line);color:var(--ink2);font-size:.88rem;letter-spacing:.18em}
 .run .prog{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.06)}
@@ -200,7 +211,11 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 @keyframes bloom{0%{transform:scale(.5);opacity:0}60%{opacity:1}100%{transform:scale(1);opacity:.95}}
 .done h2{margin:0;font-size:1.35rem;font-weight:300;letter-spacing:.12em}
 .done p{margin:6px 0 0;color:var(--dim);font-size:.88rem}
-.done .amt{margin-top:16px;font-size:1rem;color:var(--ink2)}
+.done .msg{max-width:23em;margin:14px auto 0;animation:fadeIn 2s ease both;animation-delay:.5s}
+.done .msg .tag{display:inline-block;font-size:.66rem;letter-spacing:.24em;color:var(--warm);
+  border:1px solid rgba(227,199,154,.38);border-radius:999px;padding:3px 13px;margin-bottom:11px}
+.done .msg p{margin:0;color:var(--ink2);font-size:.94rem;line-height:1.95}
+.done .amt{margin-top:20px;font-size:1rem;color:var(--dim)}
 .done .close{margin-top:30px;padding:14px 44px;border-radius:999px;
   background:rgba(159,216,214,.14);border:1px solid rgba(159,216,214,.4);color:#eafaf8;letter-spacing:.2em}
 
@@ -279,8 +294,73 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <div class="foot">
-      Mindrest v3 ・ 記録はこの端末の中だけに保存されます<br>
+      Mindrest v4 ・ 記録はこの端末の中だけに保存されます<br>
       <button id="btnBackup">記録をコピーして控える</button>
+    </div>
+  </div>
+  <!-- 使い方タブ -->
+  <div class="pane hidden" id="paneGuide">
+    <div class="guide">
+
+      <section class="gcard">
+        <h3>瞑想って、なに？</h3>
+        <p>目を閉じて、自分の呼吸や体の感じに気づきながら、静かに座る時間のことです。</p>
+        <p>「頭を空っぽにすること」だと思われがちですが、ちがいます。考えごとは、だまっていても勝手に浮かんできます。それでいいのです。<b>浮かんだことに気づいて、また呼吸に戻ってくる</b>。この行ったり来たりそのものが瞑想です。</p>
+      </section>
+
+      <section class="gcard">
+        <h3>やると、どうなる？</h3>
+        <ul>
+          <li>気持ちが落ち着きやすくなる</li>
+          <li>集中が切れたときに、早く戻ってこられる</li>
+          <li>自分が今つかれているのか、あせっているのかに気づける</li>
+        </ul>
+        <p class="g-dim">筋トレと同じで、1回やって別人になるものではありません。短くても、くり返すほど効いてきます。</p>
+      </section>
+
+      <section class="gcard">
+        <h3>やり方は3つだけ</h3>
+        <ol>
+          <li><b>座る</b>／いすでも床でもかまいません。背すじをのばして、肩の力は抜きます。</li>
+          <li><b>目を閉じる</b>／眠くなるときは、うっすら開けて、少し先の床をぼんやり見ます。</li>
+          <li><b>呼吸をそのまま感じる</b>／息を深くしようとしなくて大丈夫。鼻を通る空気や、お腹のふくらみを、ただ感じます。</li>
+        </ol>
+        <p>考えごとが出てきたら、「あ、考えていたな」と気づいて、また呼吸に戻ります。何回くり返してもかまいません。それが練習です。</p>
+      </section>
+
+      <section class="gcard">
+        <h3>このアプリの使い方</h3>
+        <ol>
+          <li>「瞑想」で時間を選んで、<b>はじめる</b>を押します。</li>
+          <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
+          <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
+          <li>終わると自動で記録されます。「ひとこと」に感じたことを残せます（声でも入れられます）。</li>
+          <li>「記録」で、続いた日数やこれまでの時間を見られます。</li>
+        </ol>
+        <p class="g-dim">途中でやめたぶんは記録されません。音はマナーモードだと鳴らないことがあるので、はじめる前に音量をたしかめてください。</p>
+      </section>
+
+      <section class="gcard">
+        <h3>よくある質問</h3>
+        <p class="q">集中できません。</p>
+        <p>ふつうです。気が散った回数が多い日は、それだけ「戻る練習」をたくさんした日、と考えてください。</p>
+        <p class="q">眠くなります。</p>
+        <p>体が休みたいというサインです。背すじをのばす、目をうっすら開ける、時間を短くする、で変わります。</p>
+        <p class="q">何分やればいいですか？</p>
+        <p>まずは1分か3分から。物足りなくなってきたら5分、10分にのばします。長さより回数です。</p>
+        <p class="q">いつやるといいですか？</p>
+        <p>朝起きたあと、勉強や仕事を始める前、寝る前などです。<b>やる時間を決めてしまう</b>と続きます。</p>
+      </section>
+
+      <section class="gcard">
+        <h3>続けるコツ</h3>
+        <ul>
+          <li>できなかった日があっても、気にしない。次に座ればまた続きです</li>
+          <li>調子が悪い日ほど、1分でいいので座ってみる</li>
+          <li>終わったあと、すぐスマホを見ない</li>
+        </ul>
+      </section>
+
     </div>
   </div>
 </div>
@@ -290,6 +370,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
   <div class="in">
     <button class="tab" data-tab="home" aria-selected="true">瞑想</button>
     <button class="tab" data-tab="log" aria-selected="false">記録</button>
+    <button class="tab" data-tab="guide" aria-selected="false">使い方</button>
   </div>
 </nav>
 
@@ -301,7 +382,6 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
       <div class="halo"></div><div class="petal"></div><div class="edge"></div>
       <div class="txt">
         <div class="rem mono" id="remain">05:00</div>
-        <div class="cue" id="cue">吸 う</div>
       </div>
     </div>
     <button class="stop" id="btnStop">やめる</button>
@@ -313,7 +393,10 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 <div class="done hidden" id="done">
   <div class="bloom"></div>
   <h2>おつかれさまでした</h2>
-  <p>そのまま、ゆっくり目を開けてください。</p>
+  <div class="msg">
+    <span class="tag hidden" id="doneTag">豆知識</span>
+    <p id="doneMsg">そのまま、ゆっくり目を開けてください。</p>
+  </div>
   <div class="amt mono" id="doneAmt"></div>
   <button class="memo-link" id="btnDoneMemo">ひとこと残す</button>
   <button class="close" id="btnClose">とじる</button>
@@ -321,7 +404,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 3;
+const VER = 4;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -401,6 +484,8 @@ function setTab(t){
   tab = t;
   $('paneHome').classList.toggle('hidden', t !== 'home');
   $('paneLog').classList.toggle('hidden', t !== 'log');
+  $('paneGuide').classList.toggle('hidden', t !== 'guide');
+  if(t !== 'home') window.scrollTo(0, 0);
   document.querySelectorAll('.tab').forEach(function(b){
     b.setAttribute('aria-selected', b.dataset.tab === t ? 'true' : 'false');
   });
@@ -455,10 +540,6 @@ function update(){
   const left = Math.max(0, (sess.endAt - Date.now()) / 1000);
   $('remain').textContent = fmt(Math.ceil(left));
   $('prog').style.width = (100 * (1 - left / sess.total)) + '%';
-  const e = (Date.now() - sess.startAt) / 1000 % 12;
-  const cue = e < 4 ? '吸 う' : (e < 5 ? 'そ の ま ま' : (e < 11 ? '吐 く' : 'そ の ま ま'));
-  const el = $('cue');
-  if(el.textContent !== cue) el.textContent = cue;
   if(left <= 0) finish();
 }
 
@@ -473,6 +554,7 @@ function finish(){
   save();
   try{ if(navigator.vibrate) navigator.vibrate([400,220,400,220,600]); }catch(e){}
   $('run').classList.add('hidden');
+  showMsg();
   $('doneAmt').textContent = min + '分 ・ 通算 ' + log.length + '回目';
   $('done').classList.remove('hidden');
   setTimeout(function(){ stopKeepAlive(); }, 14000);
@@ -514,6 +596,61 @@ document.addEventListener('visibilitychange', function(){
   if(ac && ac.state === 'suspended' && sess) ac.resume();
   if(sess){ keepScreen(); update(); }
 });
+
+/* ───────── 終わりのひとこと（30パターン） ───────── */
+/* k: 'p'=ほめる / 'c'=はげまし / 't'=豆知識（豆知識だけ見出しをつける） */
+const MSGS = [
+  { k:'p', t:'今日、自分のために時間を使えました。それだけで十分です。' },
+  { k:'p', t:'何もしない時間をつくれるのは、強さです。' },
+  { k:'p', t:'やろうと決めて、実際に座った。これがいちばん難しいところです。' },
+  { k:'p', t:'うまくできたかどうかは気にしなくて大丈夫。座れた時点で成功です。' },
+  { k:'p', t:'忙しい日ほど、この数分の値打ちは大きくなります。よく座りました。' },
+  { k:'p', t:'気が散っても、そのたびに戻ってこられました。それが練習そのものです。' },
+  { k:'p', t:'自分の呼吸に気づける人は、自分の心の変化にも気づけます。' },
+  { k:'p', t:'静かにしている時間を、自分で選び取りました。' },
+  { k:'p', t:'短くても、ちゃんと休めています。体は正直です。' },
+  { k:'p', t:'ここに戻ってきたということは、自分を大事にできているということです。' },
+
+  { k:'c', t:'気が散るのは失敗ではありません。気づいて戻ることが練習です。' },
+  { k:'c', t:'眠くなった日は、体が休みたがっているサインです。' },
+  { k:'c', t:'「うまくできない」と思えるのは、ちゃんと自分を見ている証拠です。' },
+  { k:'c', t:'毎日でなくて大丈夫。思い出したときに座れば、それで続いています。' },
+  { k:'c', t:'1分でも、ゼロとは大きくちがいます。' },
+  { k:'c', t:'考えごとが止まらない日もあります。それでも座った時間は残ります。' },
+  { k:'c', t:'心はもともと動き回るもの。むりに止めなくていいです。' },
+  { k:'c', t:'調子の悪い日の1回が、いちばん効きます。' },
+  { k:'c', t:'途中でやめた日があっても、次に座ればまた続きです。' },
+  { k:'c', t:'落ち着かない日は、時間を短くしてかまいません。続けるほうが大事です。' },
+
+  { k:'t', t:'瞑想は「頭を空っぽにすること」ではありません。気が散ったと気づいて、戻ってくる練習です。' },
+  { k:'t', t:'短い瞑想を毎日続けるほうが、長い瞑想をたまにやるより身につきやすいといわれています。' },
+  { k:'t', t:'息をゆっくり吐くと、体は休むほうへ切りかわります。あわてたときほど、長く吐いてみてください。' },
+  { k:'t', t:'座る場所と時間を決めておくと、続けやすくなります。歯みがきと同じで、順番を決めるのがコツです。' },
+  { k:'t', t:'目は閉じても、うっすら開けてもかまいません。眠いときは少し開けるほうがうまくいきます。' },
+  { k:'t', t:'背すじをのばすと呼吸が深くなり、眠気も減ります。力を入れる必要はありません。' },
+  { k:'t', t:'終わったあとすぐスマホを見ないほうが、落ち着きが長持ちします。' },
+  { k:'t', t:'「マインドフルネス」とは、今ここで起きていることに気づいている状態のことです。' },
+  { k:'t', t:'寝る前の数分の瞑想は、寝つきをよくすることがあります。' },
+  { k:'t', t:'慣れてくると、電車の中や順番待ちのあいだでも、静かに呼吸に戻れるようになります。' }
+];
+
+const KEY_MSG = 'med.msg.v1';
+function pickMsg(){
+  let recent = [];
+  try{ recent = JSON.parse(localStorage.getItem(KEY_MSG) || '[]'); }catch(e){}
+  let pool = [];
+  for(let i = 0; i < MSGS.length; i++) if(recent.indexOf(i) < 0) pool.push(i);
+  if(!pool.length) pool = MSGS.map(function(m, i){ return i; });
+  const i = pool[Math.floor(Math.random() * pool.length)];
+  recent.unshift(i);
+  try{ localStorage.setItem(KEY_MSG, JSON.stringify(recent.slice(0, 10))); }catch(e){}
+  return MSGS[i];
+}
+function showMsg(){
+  const m = pickMsg();
+  $('doneTag').classList.toggle('hidden', m.k !== 't');
+  $('doneMsg').textContent = m.t;
+}
 
 /* ───────── ひとこと（音声入力つき） ───────── */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;

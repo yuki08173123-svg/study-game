@@ -90,6 +90,44 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .start:active{transform:scale(.985);opacity:.9}
 .hint{font-size:.78rem;color:var(--dim);text-align:center;margin-top:-18px}
 
+/* ── レベル（ゲーム部分） ── */
+.lvcard{width:100%;text-align:left;background:var(--surf);border:1px solid var(--line);
+  border-radius:18px;padding:14px 16px 15px;transition:.2s}
+.lvcard:active{background:var(--surf2)}
+.lv-top{display:flex;align-items:center;gap:10px}
+.lv-num{font-size:.72rem;color:var(--dim);letter-spacing:.16em;flex:none}
+.lv-num b{font-size:1.55rem;color:var(--ink);font-weight:400;margin-left:5px;letter-spacing:0}
+.lv-title{flex:1;font-size:.95rem;color:var(--aqua);letter-spacing:.06em;text-align:right}
+.lv-arrow{color:var(--dim);font-size:1.05rem;flex:none}
+.lv-bar{height:6px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;margin:11px 0 7px}
+.lv-bar i{display:block;height:100%;width:0;border-radius:999px;
+  background:linear-gradient(90deg,rgba(159,216,214,.95),rgba(227,199,154,.95));
+  box-shadow:0 0 12px rgba(159,216,214,.45);transition:width .9s ease}
+.lv-sub{display:flex;justify-content:space-between;font-size:.72rem;color:var(--dim);letter-spacing:.04em}
+
+.bgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.bg{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:14px;
+  padding:11px 7px 10px;text-align:center}
+.bg .bn{font-size:.8rem;color:var(--dim)}
+.bg .bd{font-size:.63rem;color:var(--dim);opacity:.65;margin-top:3px;line-height:1.5}
+.bg.got{background:rgba(159,216,214,.10);border-color:rgba(159,216,214,.34);
+  box-shadow:0 0 18px rgba(120,190,195,.10)}
+.bg.got .bn{color:#eafaf8}
+.bg.got .bd{color:var(--ink2);opacity:1}
+
+.tlist{display:flex;flex-direction:column;gap:5px}
+.tl{display:flex;justify-content:space-between;gap:10px;font-size:.84rem;color:var(--dim);
+  padding:8px 12px;border-radius:11px}
+.tl.reached{color:var(--ink2)}
+.tl.now{background:rgba(159,216,214,.12);color:#eafaf8;border:1px solid rgba(159,216,214,.3)}
+
+.lvsheet h4{margin:18px 0 9px;font-size:.74rem;font-weight:600;color:var(--dim);letter-spacing:.18em}
+.lvsheet h4:first-of-type{margin-top:14px}
+.lvsheet .how{font-size:.8rem;color:var(--dim);line-height:1.85}
+.lvsheet .big{display:flex;align-items:baseline;gap:10px;margin-bottom:2px}
+.lvsheet .big .n{font-size:2.4rem;font-weight:200;line-height:1}
+.lvsheet .big .t{font-size:1rem;color:var(--aqua)}
+
 /* ── 記録タブ ── */
 .pane{padding-top:18px;animation:fade .35s ease}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -202,10 +240,10 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .run .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,rgba(159,216,214,.5),rgba(227,199,154,.75));transition:width .3s linear}
 
 /* ── 終わりの画面 ── */
-.done{position:fixed;inset:0;z-index:30;background:radial-gradient(110% 80% at 50% 40%, #16222c 0%, #080c11 70%);
+.done{position:fixed;inset:0;z-index:30;overflow:auto;background:radial-gradient(110% 80% at 50% 40%, #16222c 0%, #080c11 70%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
   padding:40px 24px;text-align:center;animation:fadeIn 1.2s ease}
-.done .bloom{width:min(52vw,190px);aspect-ratio:1;border-radius:50%;margin-bottom:14px;
+.done .bloom{width:min(42vw,150px);aspect-ratio:1;border-radius:50%;margin-bottom:14px;
   background:radial-gradient(circle at 44% 38%, rgba(255,255,255,.60), rgba(240,222,186,.34) 26%, rgba(159,216,214,.16) 52%, rgba(159,216,214,0) 74%);
   box-shadow:0 0 70px rgba(200,190,160,.22);animation:bloom 3.4s ease-out both}
 @keyframes bloom{0%{transform:scale(.5);opacity:0}60%{opacity:1}100%{transform:scale(1);opacity:.95}}
@@ -215,7 +253,20 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .done .msg .tag{display:inline-block;font-size:.66rem;letter-spacing:.24em;color:var(--warm);
   border:1px solid rgba(227,199,154,.38);border-radius:999px;padding:3px 13px;margin-bottom:11px}
 .done .msg p{margin:0;color:var(--ink2);font-size:.94rem;line-height:1.95}
-.done .amt{margin-top:20px;font-size:1rem;color:var(--dim)}
+.done .amt{margin-top:18px;font-size:.95rem;color:var(--dim)}
+.done .gain{width:min(78vw,290px);margin:14px auto 0;animation:fadeIn 1.4s ease both;animation-delay:.9s}
+.done .gain .gx{font-size:1.15rem;color:var(--warm);letter-spacing:.06em;margin-bottom:9px}
+.done .gain .gs{display:flex;justify-content:space-between;font-size:.72rem;color:var(--dim);margin-top:7px}
+.done .lvup{margin-top:22px;padding:16px 22px;border-radius:18px;
+  background:rgba(159,216,214,.10);border:1px solid rgba(159,216,214,.36);
+  box-shadow:0 0 34px rgba(120,190,195,.18);animation:popIn 1s ease both;animation-delay:1.4s}
+@keyframes popIn{0%{opacity:0;transform:scale(.9)}60%{opacity:1;transform:scale(1.02)}100%{transform:scale(1)}}
+.done .lvup .tg{font-size:.66rem;letter-spacing:.34em;color:var(--warm)}
+.done .lvup .lv{font-size:2rem;font-weight:200;margin:4px 0 2px}
+.done .lvup .tt{font-size:1rem;color:var(--aqua);letter-spacing:.08em}
+.done .newb{margin-top:14px;font-size:.84rem;color:var(--ink2);line-height:1.8;
+  animation:fadeIn 1.2s ease both;animation-delay:1.8s}
+.done .newb b{color:var(--warm);font-weight:600}
 .done .close{margin-top:30px;padding:14px 44px;border-radius:999px;
   background:rgba(159,216,214,.14);border:1px solid rgba(159,216,214,.4);color:#eafaf8;letter-spacing:.2em}
 
@@ -254,6 +305,16 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
   <!-- 瞑想タブ -->
   <div class="stage" id="paneHome">
+    <button class="lvcard" id="lvCard">
+      <div class="lv-top">
+        <span class="lv-num">LEVEL<b id="lvNum">1</b></span>
+        <span class="lv-title" id="lvTitle">はじまりの灯</span>
+        <span class="lv-arrow">›</span>
+      </div>
+      <div class="lv-bar"><i id="lvBar"></i></div>
+      <div class="lv-sub"><span id="lvSub">はじめると 経験値がたまります</span><span id="lvBadge"></span></div>
+    </button>
+
     <div class="orb">
       <div class="ring r3"></div><div class="ring r2"></div><div class="ring"></div>
       <div class="core"></div>
@@ -294,7 +355,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <div class="foot">
-      Mindrest v4 ・ 記録はこの端末の中だけに保存されます<br>
+      Mindrest v5 ・ 記録はこの端末の中だけに保存されます<br>
       <button id="btnBackup">記録をコピーして控える</button>
     </div>
   </div>
@@ -353,6 +414,19 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
       </section>
 
       <section class="gcard">
+        <h3>レベルについて</h3>
+        <p>瞑想を終えるたびに<b>経験値</b>がたまり、レベルが上がります。ゲームと同じで、続けるほど育っていきます。</p>
+        <ul>
+          <li>瞑想した1分ごとに <b>10</b></li>
+          <li>1回終えるごとに <b>20</b>（短くても座れば入ります）</li>
+          <li>その日の分に、続けている日数 × <b>5</b></li>
+        </ul>
+        <p>レベルが上がると<b>称号</b>が変わります。「はじまりの灯」から始まって、続けていくと「無風」まで進みます。</p>
+        <p>ほかに、はじめての瞑想や、3日つづけた、合計60分こえた、などで<b>しるし（バッジ）</b>が集まります。瞑想タブの上のカードを押すと、今のレベルと集めたしるしを全部見られます。</p>
+        <p class="g-dim">数字を増やすことが目的ではありません。続けた分がちゃんと見える、というだけのものです。気にしすぎないでください。</p>
+      </section>
+
+      <section class="gcard">
         <h3>続けるコツ</h3>
         <ul>
           <li>できなかった日があっても、気にしない。次に座ればまた続きです</li>
@@ -398,13 +472,24 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     <p id="doneMsg">そのまま、ゆっくり目を開けてください。</p>
   </div>
   <div class="amt mono" id="doneAmt"></div>
+  <div class="gain">
+    <div class="gx mono">+<span id="gainXp">0</span> XP</div>
+    <div class="lv-bar"><i id="doneBar"></i></div>
+    <div class="gs"><span id="gainLv">Lv 1</span><span id="gainNext"></span></div>
+  </div>
+  <div class="lvup hidden" id="lvUp">
+    <div class="tg">LEVEL UP</div>
+    <div class="lv mono">Lv <span id="lvUpNum">2</span></div>
+    <div class="tt" id="lvUpTitle"></div>
+  </div>
+  <div class="newb hidden" id="newB"></div>
   <button class="memo-link" id="btnDoneMemo">ひとこと残す</button>
   <button class="close" id="btnClose">とじる</button>
 </div>
 
 <script>
 'use strict';
-const VER = 4;
+const VER = 5;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -550,12 +635,40 @@ function finish(){
   sess = null;
   releaseScreen();
   stopKeepAlive();
+  const before = stats(), beforeGot = gotIds(before);
   log.unshift({ at: Date.now(), min: min });
   save();
+  const after = stats(), afterGot = gotIds(after);
   try{ if(navigator.vibrate) navigator.vibrate([400,220,400,220,600]); }catch(e){}
   $('run').classList.add('hidden');
   showMsg();
   $('doneAmt').textContent = min + '分 ・ 通算 ' + log.length + '回目';
+
+  // 経験値
+  const L = after.lv;
+  $('gainXp').textContent = after.xp - before.xp;
+  $('gainLv').textContent = 'Lv ' + L.lv + ' ' + L.title;
+  $('gainNext').textContent = '次まで あと ' + (L.need - L.into);
+  $('doneBar').style.width = '0%';
+  setTimeout(function(){ $('doneBar').style.width = Math.max(3, 100 * L.into / L.need) + '%'; }, 900);
+
+  // レベルアップ
+  const up = L.lv > before.lv.lv;
+  $('lvUp').classList.toggle('hidden', !up);
+  if(up){
+    $('lvUpNum').textContent = L.lv;
+    $('lvUpTitle').textContent = L.title;
+  }
+
+  // 新しく手に入れたしるし
+  const fresh = afterGot.filter(function(id){ return beforeGot.indexOf(id) < 0; });
+  $('newB').classList.toggle('hidden', fresh.length === 0);
+  if(fresh.length){
+    $('newB').innerHTML = fresh.map(function(id){
+      const b = BADGES.filter(function(x){ return x.id === id; })[0];
+      return 'しるしを手に入れた　<b>' + b.n + '</b>（' + b.d + '）';
+    }).join('<br>');
+  }
   $('done').classList.remove('hidden');
   setTimeout(function(){ stopKeepAlive(); }, 14000);
 }
@@ -596,6 +709,52 @@ document.addEventListener('visibilitychange', function(){
   if(ac && ac.state === 'suspended' && sess) ac.resume();
   if(sess){ keepScreen(); update(); }
 });
+
+/* ───────── レベル・称号・しるし ───────── */
+/* 経験値：1分=10 ／ 1回=20 ／ その日の分に「続けている日数×5」（最大100）
+   ぜんぶ記録から計算し直すので、記録を消せば経験値も減る（ごまかせない） */
+const TITLES = [
+  { lv: 1,  n: 'はじまりの灯' },
+  { lv: 3,  n: 'しずかな波' },
+  { lv: 5,  n: '澄みはじめ' },
+  { lv: 8,  n: '静かな湖' },
+  { lv: 12, n: '風のない朝' },
+  { lv: 16, n: '深い森' },
+  { lv: 21, n: '月の道' },
+  { lv: 26, n: '星の静けさ' },
+  { lv: 31, n: '無風' }
+];
+function titleOf(lv){
+  let t = TITLES[0].n;
+  TITLES.forEach(function(x){ if(lv >= x.lv) t = x.n; });
+  return t;
+}
+function levelOf(xp){
+  let lv = 1, need = 100, acc = 0;
+  while(xp >= acc + need && lv < 999){ acc += need; lv++; need += 60; }
+  return { lv: lv, into: xp - acc, need: need, title: titleOf(lv) };
+}
+
+const BADGES = [
+  { id:'first', n:'はじめの一歩', d:'はじめて瞑想した',    f:function(s){ return s.count >= 1; } },
+  { id:'n10',   n:'十度',        d:'通算10回',            f:function(s){ return s.count >= 10; } },
+  { id:'n50',   n:'五十度',      d:'通算50回',            f:function(s){ return s.count >= 50; } },
+  { id:'n100',  n:'百度',        d:'通算100回',           f:function(s){ return s.count >= 100; } },
+  { id:'s3',    n:'三日月',      d:'3日つづけた',          f:function(s){ return s.best >= 3; } },
+  { id:'s7',    n:'七日の道',    d:'7日つづけた',          f:function(s){ return s.best >= 7; } },
+  { id:'s30',   n:'満ちる月',    d:'30日つづけた',         f:function(s){ return s.best >= 30; } },
+  { id:'m60',   n:'一時間',      d:'合計60分をこえた',     f:function(s){ return s.totalMin >= 60; } },
+  { id:'m300',  n:'五時間',      d:'合計300分をこえた',    f:function(s){ return s.totalMin >= 300; } },
+  { id:'m1000', n:'千分',        d:'合計1000分をこえた',   f:function(s){ return s.totalMin >= 1000; } },
+  { id:'long',  n:'じっくり',    d:'10分を1回やりきった',  f:function(s){ return s.maxMin >= 10; } },
+  { id:'morn',  n:'朝の人',      d:'朝5〜9時に瞑想した',   f:function(s){ return s.morning; } },
+  { id:'night', n:'夜の人',      d:'夜10時すぎに瞑想した', f:function(s){ return s.night; } }
+];
+function gotIds(s){
+  const out = [];
+  BADGES.forEach(function(b){ if(b.f(s)) out.push(b.id); });
+  return out;
+}
 
 /* ───────── 終わりのひとこと（30パターン） ───────── */
 /* k: 'p'=ほめる / 'c'=はげまし / 't'=豆知識（豆知識だけ見出しをつける） */
@@ -752,20 +911,39 @@ function openMemo(i){
 }
 
 /* ───────── 記録の表示 ───────── */
-function stats(){
+function stats(list){
+  list = list || log;
   const today = startOfDay(Date.now());
-  let todayMin = 0, totalMin = 0;
-  const days = {};
-  log.forEach(function(r){
+  let todayMin = 0, totalMin = 0, maxMin = 0, morning = false, night = false;
+  const days = {}, dayN = {};
+  list.forEach(function(r){
     totalMin += r.min;
+    if(r.min > maxMin) maxMin = r.min;
+    const h = new Date(r.at).getHours();
+    if(h >= 5 && h < 9) morning = true;
+    if(h >= 22 || h < 3) night = true;
     const k = startOfDay(r.at);
     days[k] = (days[k] || 0) + r.min;
+    dayN[k] = (dayN[k] || 0) + 1;
     if(k === today) todayMin += r.min;
   });
   let streak = 0, cur = today;
   if(!days[cur]) cur -= DAY;              // 今日まだなら、昨日までの連続を見せる
   while(days[cur]){ streak++; cur -= DAY; }
-  return { todayMin: todayMin, totalMin: totalMin, days: days, streak: streak };
+
+  // これまででいちばん長い連続と、経験値（古い日から順に数える）
+  const keys = Object.keys(days).map(Number).sort(function(a, b){ return a - b; });
+  let xp = 0, run = 0, best = 0, prev = null;
+  keys.forEach(function(k){
+    run = (prev !== null && k - prev === DAY) ? run + 1 : 1;
+    prev = k;
+    if(run > best) best = run;
+    xp += days[k] * 10 + dayN[k] * 20 + Math.min(run, 20) * 5;
+  });
+
+  return { todayMin: todayMin, totalMin: totalMin, days: days, streak: streak,
+           count: list.length, maxMin: maxMin, morning: morning, night: night,
+           best: best, xp: xp, lv: levelOf(xp) };
 }
 
 function renderTop(){
@@ -773,7 +951,54 @@ function renderTop(){
   $('topSub').textContent = s.todayMin > 0
     ? '今日 ' + s.todayMin + '分' + (s.streak > 1 ? ' ・ ' + s.streak + '日つづけて' : '')
     : (s.streak > 0 ? s.streak + '日つづけて' : '');
+  renderLevel(s);
 }
+
+function renderLevel(s){
+  s = s || stats();
+  const L = s.lv;
+  $('lvNum').textContent = L.lv;
+  $('lvTitle').textContent = L.title;
+  $('lvBar').style.width = (L.into === 0 ? 1.5 : Math.max(3, 100 * L.into / L.need)) + '%';
+  $('lvSub').textContent = s.count === 0
+    ? 'はじめると 経験値がたまります'
+    : '次のレベルまで あと ' + (L.need - L.into);
+  const got = gotIds(s).length;
+  $('lvBadge').textContent = got > 0 ? 'しるし ' + got + '/' + BADGES.length : '';
+}
+
+/* レベルの詳しい画面 */
+$('lvCard').addEventListener('click', function(){
+  const s = stats(), L = s.lv, got = gotIds(s);
+  const tl = TITLES.map(function(x, i){
+    const nx = TITLES[i + 1];
+    const range = nx ? ('Lv ' + x.lv + '〜' + (nx.lv - 1)) : ('Lv ' + x.lv + '〜');
+    const cls = (L.title === x.n) ? 'tl now' : (L.lv >= x.lv ? 'tl reached' : 'tl');
+    return '<div class="' + cls + '"><span>' + x.n + '</span><span class="mono">' + range + '</span></div>';
+  }).join('');
+  const bg = BADGES.map(function(b){
+    const on = got.indexOf(b.id) >= 0;
+    return '<div class="bg' + (on ? ' got' : '') + '"><div class="bn">' + (on ? b.n : '？？？') +
+      '</div><div class="bd">' + b.d + '</div></div>';
+  }).join('');
+
+  const sh = document.createElement('div');
+  sh.className = 'sheet';
+  sh.innerHTML = '<div class="box lvsheet">' +
+    '<div class="big"><span class="n mono">Lv ' + L.lv + '</span><span class="t">' + L.title + '</span></div>' +
+    '<div class="lv-bar"><i style="width:' + Math.max(3, 100 * L.into / L.need) + '%"></i></div>' +
+    '<div class="lv-sub"><span class="mono">' + L.into + ' / ' + L.need + '</span>' +
+    '<span>ぜんぶで ' + s.xp + ' XP</span></div>' +
+    '<h4>経験値のたまり方</h4>' +
+    '<div class="how">瞑想した1分ごとに 10<br>1回終えるごとに 20<br>その日の分に、続けている日数 × 5</div>' +
+    '<h4>称号</h4><div class="tlist">' + tl + '</div>' +
+    '<h4>しるし　' + got.length + ' / ' + BADGES.length + '</h4><div class="bgrid">' + bg + '</div>' +
+    '<div class="btns" style="margin-top:20px"><button class="no">とじる</button></div></div>';
+  document.body.appendChild(sh);
+  sh.addEventListener('click', function(e){
+    if(e.target.classList.contains('no') || e.target === sh) sh.remove();
+  });
+});
 
 let listLimit = 12;
 function renderLog(){

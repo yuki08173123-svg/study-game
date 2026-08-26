@@ -76,6 +76,18 @@ main{max-width:620px;margin:0 auto;padding:4px 18px calc(var(--tabh) + 48px + en
 
 /* ---------- グループ行 ---------- */
 .label{font-size:.72rem;font-weight:700;color:var(--ink3);letter-spacing:.06em;margin:26px 4px 9px}
+.labelrow{display:flex;align-items:flex-end;justify-content:space-between}
+.labelrow .label{margin-bottom:9px}
+.linkbtn{font-size:.78rem;font-weight:700;color:var(--ink2);padding:4px 6px 9px;letter-spacing:.03em}
+.linkbtn:active{opacity:.5}
+.rrow{display:flex;align-items:center;gap:12px;padding:11px 14px;min-height:54px;position:relative}
+.rrow + .rrow::before{content:'';position:absolute;left:51px;right:0;top:0;height:1px;background:var(--line)}
+.rrow .nm{flex:1;font-size:.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow .ct{font-size:.8rem;color:var(--ink3);margin-right:2px}
+.arrow{width:36px;height:36px;border-radius:10px;background:var(--surf2);color:var(--ink2);
+  display:flex;align-items:center;justify-content:center;transition:.12s}
+.arrow:active{opacity:.5}
+.arrow[disabled]{opacity:.25}
 .group{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
   overflow:hidden;box-shadow:var(--shadow)}
 .item{display:flex;align-items:center;gap:13px;padding:14px 15px;min-height:56px;
@@ -261,7 +273,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 6;
+const VER = 7;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -294,6 +306,8 @@ const ICO = {
   book:   o => svg('<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>', o),
   info:   o => svg('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>', o),
   check:  o => svg('<path d="m20 6-11 11-5-5"/>', o),
+  chevU:  o => svg('<path d="m18 15-6-6-6 6"/>', o),
+  chevD:  o => svg('<path d="m6 9 6 6 6-6"/>', o),
 };
 
 /* ===================== データ ===================== */
@@ -468,7 +482,10 @@ function renderHome(){
     <div class="group">
       ${item({ ic: ICO.inbox({s:21}), nm:'すべてのノート', ct:L.length, attr:'data-open="*"' })}
     </div>
-    <div class="label">フォルダ</div>
+    <div class="labelrow">
+      <div class="label">フォルダ</div>
+      ${folders.length > 1 ? `<button class="linkbtn" data-reorder>並べ替え</button>` : ''}
+    </div>
     <div class="group">
       ${rows}
       ${un ? item({ ic: `<span style="color:var(--line2)">${ICO.folderFill({s:21})}</span>`, nm:'未分類', ct:un, attr:'data-open=""' }) : ''}
@@ -485,6 +502,8 @@ function renderHome(){
     go('list', { fid: v === '*' ? null : v, q:'' });
   });
   $('#main [data-newfolder]').onclick = () => folderSheet(null);
+  const ro = $('#main [data-reorder]');
+  if(ro) ro.onclick = reorderSheet;
 }
 function item(o){
   return `<button class="item" ${o.attr||''}>
@@ -891,6 +910,33 @@ function folderSheet(f, onCreate){
     };
   });
 }
+function reorderSheet(){
+  const paint = () => {
+    $('#rlist').innerHTML = folders.map((f,i) => `<div class="rrow">
+        <span class="ic" style="width:26px;display:flex;justify-content:center;color:${f.color}">${ICO.folderFill({s:20})}</span>
+        <span class="nm">${esc(f.name)}</span>
+        <span class="ct">${countIn(f.id)}</span>
+        <button class="arrow" data-up="${i}" ${i===0?'disabled':''}>${ICO.chevU({s:18,w:2.1})}</button>
+        <button class="arrow" data-down="${i}" ${i===folders.length-1?'disabled':''}>${ICO.chevD({s:18,w:2.1})}</button>
+      </div>`).join('');
+    $$('#rlist [data-up]').forEach(b => b.onclick = () => swap(+b.dataset.up, -1));
+    $$('#rlist [data-down]').forEach(b => b.onclick = () => swap(+b.dataset.down, 1));
+  };
+  const swap = (i, d) => {
+    const j = i + d;
+    if(j < 0 || j >= folders.length) return;
+    const t = folders[i]; folders[i] = folders[j]; folders[j] = t;
+    saveFolders(); paint();
+  };
+  sheet(`<h3>フォルダの並べ替え</h3>
+    <div class="note-txt" style="margin:-8px 2px 14px">矢印で順番を入れかえます。ホームの並びがそのまま変わります。</div>
+    <div class="group" id="rlist"></div>
+    <button class="btn pri" id="rdone" style="margin-top:18px">完了</button>`, close => {
+    paint();
+    $('#rdone').onclick = () => { close(); render(); toast('並べ替えました'); };
+  });
+}
+
 function moveSheet(n){
   const all = [{ id:'', name:'未分類', color:'var(--ink3)' }].concat(folders);
   sheet(`<h3>フォルダを移動</h3>

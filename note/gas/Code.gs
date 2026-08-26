@@ -1,4 +1,4 @@
-/*  学びメモ — 毎日メール配信（Google Apps Script）
+/*  ReNote — 毎日メール配信（Google Apps Script）
  *  設定手順:
  *    1. script.new を開き、この内容をすべて貼り付ける
  *    2. 下の SECRET を自分の合言葉に書き換える
@@ -13,7 +13,7 @@ const MAIL_N   = 5;             // 1通に含める件数
 const MAIL_HOUR= 7;             // 配信する時刻（0〜23、その時間台に届く）
 const APP_URL  = 'https://yuki08173123-svg.github.io/study-game/note/';
 
-const HEAD = ['id','created','updated','body','star','del','mailedAt','mailCount','revCount'];
+const HEAD = ['id','created','updated','body','photos','star','del','mailedAt','mailCount','revCount'];
 
 /* ---------- シート ---------- */
 function sheet_(){
@@ -21,7 +21,7 @@ function sheet_(){
   let id = pr.getProperty('SHEET_ID'), ss = null;
   if(id){ try{ ss = SpreadsheetApp.openById(id); }catch(e){ ss = null; } }
   if(!ss){
-    ss = SpreadsheetApp.create('学びメモ データ');
+    ss = SpreadsheetApp.create('ReNote データ');
     pr.setProperty('SHEET_ID', ss.getId());
   }
   let sh = ss.getSheetByName('notes');
@@ -48,7 +48,7 @@ function rows_(sh){
 }
 
 /* ---------- 受け口 ---------- */
-function doGet(){ return json_({ ok:true, msg:'学びメモのサーバーは稼働しています' }); }
+function doGet(){ return json_({ ok:true, msg:'ReNoteのサーバーは稼働しています' }); }
 
 function doPost(e){
   try{
@@ -79,11 +79,11 @@ function upsert_(list){
     rows_(sh).forEach(r => map[String(r.id)] = r);
     const adds = [];
     list.forEach(n => {
-      const line = [n.id, n.cre||'', n.upd||'', n.body||'', n.star?1:'', n.del?1:'', '', '', n.rev||0];
+      const line = [n.id, n.cre||'', n.upd||'', n.body||'', (n.imgs||[]).length || '', n.star?1:'', n.del?1:'', '', '', n.rev||0];
       const cur = map[String(n.id)];
       if(cur){
-        line[6] = cur.mailedAt || '';    // 配信履歴は残す
-        line[7] = cur.mailCount || '';
+        line[7] = cur.mailedAt || '';    // 配信履歴は残す
+        line[8] = cur.mailCount || '';
         sh.getRange(cur._row, 1, 1, HEAD.length).setValues([line]);
       }else{
         adds.push(line);
@@ -97,7 +97,7 @@ function upsert_(list){
 /* ---------- 毎朝の配信 ---------- */
 function sendDaily(){
   const sh = sheet_();
-  const all = rows_(sh).filter(r => r.id && !r.del && String(r.body||'').trim());
+  const all = rows_(sh).filter(r => r.id && !r.del && (String(r.body||'').trim() || Number(r.photos||0)));
   if(!all.length) return;
 
   // 配信回数が少なく、久しく送っていないものを優先し、その中からランダムに選ぶ
@@ -111,15 +111,15 @@ function sendDaily(){
 
   MailApp.sendEmail({
     to: mailAddr_(),
-    subject: '学びメモ ' + pick.length + '件（' + Utilities.formatDate(new Date(),'Asia/Tokyo','M月d日(E)') + '）',
+    subject: 'ReNote ' + pick.length + '件（' + Utilities.formatDate(new Date(),'Asia/Tokyo','M月d日(E)') + '）',
     htmlBody: html_(pick, all.length),
     body: text_(pick)
   });
 
   const t = Date.now();
   pick.forEach(r => {
-    sh.getRange(r._row, 7).setValue(t);
-    sh.getRange(r._row, 8).setValue(Number(r.mailCount||0) + 1);
+    sh.getRange(r._row, 8).setValue(t);
+    sh.getRange(r._row, 9).setValue(Number(r.mailCount||0) + 1);
   });
 }
 
@@ -127,7 +127,7 @@ function html_(list, total){
   const C = { bg:'#f6f4ef', surf:'#ffffff', ink:'#1d2128', ink2:'#4a5261', dim:'#8a92a3', line:'#e5e1d8', pri:'#5b53d6' };
   let s = '<div style="background:' + C.bg + ';padding:24px 12px;font-family:-apple-system,\'Hiragino Sans\',\'Noto Sans JP\',sans-serif">'
         + '<div style="max-width:600px;margin:0 auto">'
-        + '<div style="font-size:18px;font-weight:800;color:' + C.ink + ';letter-spacing:-.02em">学びメモ</div>'
+        + '<div style="font-size:18px;font-weight:800;color:' + C.ink + ';letter-spacing:-.02em">ReNote</div>'
         + '<div style="font-size:12px;color:' + C.dim + ';margin:4px 0 18px">'
         + Utilities.formatDate(new Date(),'Asia/Tokyo','yyyy年M月d日')
         + '　全' + total + '件から' + list.length + '件</div>';
@@ -139,11 +139,12 @@ function html_(list, total){
        + '<div style="font-size:11px;color:' + C.dim + ';font-weight:700;margin-bottom:7px">'
        + (i+1) + '　' + Utilities.formatDate(new Date(Number(r.created)||Date.now()),'Asia/Tokyo','yyyy/M/d') + '</div>'
        + '<div style="font-size:15px;color:' + C.ink + ';line-height:1.9">' + body + '</div>'
+       + (Number(r.photos||0) ? '<div style="font-size:12px;color:' + C.dim + ';margin-top:9px">写真' + r.photos + '枚（アプリで確認）</div>' : '')
        + '</td></tr></table>';
   });
   s += '<div style="text-align:center;margin-top:22px">'
      + '<a href="' + APP_URL + '" style="display:inline-block;background:' + C.pri
-     + ';color:#fff;text-decoration:none;padding:12px 26px;border-radius:12px;font-weight:800;font-size:14px">学びメモを開く</a></div>'
+     + ';color:#fff;text-decoration:none;padding:12px 26px;border-radius:12px;font-weight:800;font-size:14px">ReNoteを開く</a></div>'
      + '<div style="text-align:center;font-size:11px;color:' + C.dim + ';margin-top:14px">'
      + '思い出せなかったものは、アプリの「振り返り」で確認してください</div></div></div>';
   return s;

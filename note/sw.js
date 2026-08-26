@@ -1,8 +1,8 @@
-/* 学びメモ の service worker
+/* ReNote の service worker
    ほうしん:「ネットワーク優先」。まずネットから最新をとり、とれたものをキャッシュに控える。
    ネットがないときだけキャッシュで動く。キャッシュを先に見る方式にすると
    「直したのに古い画面が出る」事故になるので、ぜったいにしない。 */
-const VER = 'mn-v2';
+const VER = 'mn-v3';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {

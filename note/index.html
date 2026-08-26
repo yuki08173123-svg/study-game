@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-store">
-<title>学びメモ</title>
+<title>ReNote</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121319" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="学びメモ">
+<meta name="apple-mobile-web-app-title" content="ReNote">
 <style>
 :root{
   --paper:#f6f4ef; --surf:#ffffff; --surf2:#f3f1ec;
@@ -115,6 +115,7 @@ select.mini{-webkit-appearance:none;appearance:none;padding-right:26px;
 .rev .rest{white-space:pre-wrap;word-break:break-word;font-size:1rem;color:var(--ink2);
   line-height:1.95;margin-top:12px;flex:1}
 .rev .rest.hide{filter:blur(8px);opacity:.4;user-select:none}
+.thumbs.hide{filter:blur(9px);opacity:.5;pointer-events:none}
 .rev .foot{margin-top:20px;display:flex;gap:9px}
 .rev .foot button{flex:1;border-radius:14px;padding:15px;font-weight:800;font-size:.95rem;transition:.12s}
 .rev .foot button:active{transform:scale(.97)}
@@ -165,6 +166,31 @@ ol.steps li{margin-bottom:9px;padding-left:3px}
 ol.steps li::marker{color:var(--pri);font-weight:800}
 code{background:var(--surf2);border-radius:7px;padding:2px 7px;font-size:.82rem;
   word-break:break-all;font-family:ui-monospace,Menlo,monospace;color:var(--pri)}
+
+/* ---- 写真 ---- */
+.thumbs{display:flex;flex-wrap:wrap;gap:8px}
+.thumbs:empty{display:none}
+.thumb{position:relative;width:78px;height:78px;border-radius:12px;overflow:hidden;
+  background:var(--surf2);border:1px solid var(--line);flex:none}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .x{position:absolute;top:3px;right:3px;width:23px;height:23px;border-radius:50%;
+  background:rgba(18,20,26,.74);color:#fff;font-size:.74rem;font-weight:800;
+  display:flex;align-items:center;justify-content:center}
+#draftThumbs{margin-top:12px}
+.note .thumbs{margin-top:12px}
+.note .thumb{width:88px;height:88px}
+.rev .thumbs{margin-top:14px}
+.rev .thumb{width:98px;height:98px}
+.addphoto{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
+  border:1.5px dashed var(--line2);border-radius:13px;padding:13px;color:var(--dim);
+  font-weight:700;font-size:.88rem;margin-top:12px;background:var(--surf2);transition:.15s}
+.addphoto:active{transform:scale(.985)}
+.viewer{position:fixed;inset:0;z-index:300;background:rgba(12,13,17,.95);
+  display:flex;align-items:center;justify-content:center;padding:18px}
+.viewer img{max-width:100%;max-height:84vh;border-radius:12px;object-fit:contain}
+.viewer .close{position:absolute;top:calc(16px + env(safe-area-inset-top));right:18px;
+  width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;
+  font-size:1.1rem;font-weight:800;display:flex;align-items:center;justify-content:center}
 </style>
 </head>
 <body>
@@ -173,8 +199,8 @@ code{background:var(--surf2);border-radius:7px;padding:2px 7px;font-size:.82rem;
 
   <div class="head">
     <div>
-      <div class="name">学びメモ</div>
-      <div class="ver">v<span id="verTxt">2</span> ・ <span id="syncBadge" class="badge">—</span></div>
+      <div class="name">ReNote</div>
+      <div class="ver">v<span id="verTxt">3</span> ・ <span id="syncBadge" class="badge">—</span></div>
     </div>
     <button class="iconbtn" id="btnHelp" title="使い方">?</button>
   </div>
@@ -192,6 +218,9 @@ code{background:var(--surf2);border-radius:7px;padding:2px 7px;font-size:.82rem;
       <h3 id="writeTitle">メモを書く</h3>
       <textarea class="in" id="inBody" placeholder="学んだこと、気づいたことを書く"></textarea>
       <div class="dim" style="margin-top:8px">1行目は一覧と振り返りで最初に表示されます。要点を短く書いておくと読み返しやすくなります。</div>
+      <div class="thumbs" id="draftThumbs"></div>
+      <button class="addphoto" id="btnPhoto">写真を追加</button>
+      <input type="file" id="filePhoto" accept="image/*" multiple class="hidden">
       <button class="bigbtn go" id="btnSave" style="margin-top:14px">保存</button>
       <button class="bigbtn sub hidden" id="btnCancelEdit" style="margin-top:8px">編集をやめる</button>
     </div>
@@ -244,6 +273,7 @@ code{background:var(--surf2);border-radius:7px;padding:2px 7px;font-size:.82rem;
         <div class="when" id="revWhen"></div>
         <div class="lead" id="revLead"></div>
         <div class="rest hide" id="revRest"></div>
+        <div class="thumbs hide" id="revThumbs"></div>
         <div class="foot" id="revFootHide">
           <button class="b-show" id="btnRevShow">続きを表示</button>
         </div>
@@ -304,7 +334,7 @@ code{background:var(--surf2);border-radius:7px;padding:2px 7px;font-size:.82rem;
     <div class="card">
       <h3>バージョン</h3>
       <div class="row sb">
-        <div class="dim">現在 v<span class="verTxt">2</span></div>
+        <div class="dim">現在 v<span class="verTxt">3</span></div>
         <button class="mini" id="btnCheckUpd">更新を確認</button>
       </div>
       <div class="dim" id="updState" style="margin-top:8px"></div>
@@ -322,7 +352,7 @@ code{background:var(--surf2);border-radius:7px;padding:2px 7px;font-size:.82rem;
 <div class="tabs"><div class="inner" id="tabBar"></div></div>
 <div class="toast" id="toast"></div>
 <div id="sheetHost"></div>
-<script type="text/plain" id="gasCode">/*  学びメモ — 毎日メール配信（Google Apps Script）
+<script type="text/plain" id="gasCode">/*  ReNote — 毎日メール配信（Google Apps Script）
  *  設定手順:
  *    1. script.new を開き、この内容をすべて貼り付ける
  *    2. 下の SECRET を自分の合言葉に書き換える
@@ -337,7 +367,7 @@ const MAIL_N   = 5;             // 1通に含める件数
 const MAIL_HOUR= 7;             // 配信する時刻（0〜23、その時間台に届く）
 const APP_URL  = 'https://yuki08173123-svg.github.io/study-game/note/';
 
-const HEAD = ['id','created','updated','body','star','del','mailedAt','mailCount','revCount'];
+const HEAD = ['id','created','updated','body','photos','star','del','mailedAt','mailCount','revCount'];
 
 /* ---------- シート ---------- */
 function sheet_(){
@@ -345,7 +375,7 @@ function sheet_(){
   let id = pr.getProperty('SHEET_ID'), ss = null;
   if(id){ try{ ss = SpreadsheetApp.openById(id); }catch(e){ ss = null; } }
   if(!ss){
-    ss = SpreadsheetApp.create('学びメモ データ');
+    ss = SpreadsheetApp.create('ReNote データ');
     pr.setProperty('SHEET_ID', ss.getId());
   }
   let sh = ss.getSheetByName('notes');
@@ -372,7 +402,7 @@ function rows_(sh){
 }
 
 /* ---------- 受け口 ---------- */
-function doGet(){ return json_({ ok:true, msg:'学びメモのサーバーは稼働しています' }); }
+function doGet(){ return json_({ ok:true, msg:'ReNoteのサーバーは稼働しています' }); }
 
 function doPost(e){
   try{
@@ -403,11 +433,11 @@ function upsert_(list){
     rows_(sh).forEach(r =&gt; map[String(r.id)] = r);
     const adds = [];
     list.forEach(n =&gt; {
-      const line = [n.id, n.cre||'', n.upd||'', n.body||'', n.star?1:'', n.del?1:'', '', '', n.rev||0];
+      const line = [n.id, n.cre||'', n.upd||'', n.body||'', (n.imgs||[]).length || '', n.star?1:'', n.del?1:'', '', '', n.rev||0];
       const cur = map[String(n.id)];
       if(cur){
-        line[6] = cur.mailedAt || '';    // 配信履歴は残す
-        line[7] = cur.mailCount || '';
+        line[7] = cur.mailedAt || '';    // 配信履歴は残す
+        line[8] = cur.mailCount || '';
         sh.getRange(cur._row, 1, 1, HEAD.length).setValues([line]);
       }else{
         adds.push(line);
@@ -421,7 +451,7 @@ function upsert_(list){
 /* ---------- 毎朝の配信 ---------- */
 function sendDaily(){
   const sh = sheet_();
-  const all = rows_(sh).filter(r =&gt; r.id &amp;&amp; !r.del &amp;&amp; String(r.body||'').trim());
+  const all = rows_(sh).filter(r =&gt; r.id &amp;&amp; !r.del &amp;&amp; (String(r.body||'').trim() || Number(r.photos||0)));
   if(!all.length) return;
 
   // 配信回数が少なく、久しく送っていないものを優先し、その中からランダムに選ぶ
@@ -435,15 +465,15 @@ function sendDaily(){
 
   MailApp.sendEmail({
     to: mailAddr_(),
-    subject: '学びメモ ' + pick.length + '件（' + Utilities.formatDate(new Date(),'Asia/Tokyo','M月d日(E)') + '）',
+    subject: 'ReNote ' + pick.length + '件（' + Utilities.formatDate(new Date(),'Asia/Tokyo','M月d日(E)') + '）',
     htmlBody: html_(pick, all.length),
     body: text_(pick)
   });
 
   const t = Date.now();
   pick.forEach(r =&gt; {
-    sh.getRange(r._row, 7).setValue(t);
-    sh.getRange(r._row, 8).setValue(Number(r.mailCount||0) + 1);
+    sh.getRange(r._row, 8).setValue(t);
+    sh.getRange(r._row, 9).setValue(Number(r.mailCount||0) + 1);
   });
 }
 
@@ -451,7 +481,7 @@ function html_(list, total){
   const C = { bg:'#f6f4ef', surf:'#ffffff', ink:'#1d2128', ink2:'#4a5261', dim:'#8a92a3', line:'#e5e1d8', pri:'#5b53d6' };
   let s = '&lt;div style="background:' + C.bg + ';padding:24px 12px;font-family:-apple-system,\'Hiragino Sans\',\'Noto Sans JP\',sans-serif"&gt;'
         + '&lt;div style="max-width:600px;margin:0 auto"&gt;'
-        + '&lt;div style="font-size:18px;font-weight:800;color:' + C.ink + ';letter-spacing:-.02em"&gt;学びメモ&lt;/div&gt;'
+        + '&lt;div style="font-size:18px;font-weight:800;color:' + C.ink + ';letter-spacing:-.02em"&gt;ReNote&lt;/div&gt;'
         + '&lt;div style="font-size:12px;color:' + C.dim + ';margin:4px 0 18px"&gt;'
         + Utilities.formatDate(new Date(),'Asia/Tokyo','yyyy年M月d日')
         + '　全' + total + '件から' + list.length + '件&lt;/div&gt;';
@@ -463,11 +493,12 @@ function html_(list, total){
        + '&lt;div style="font-size:11px;color:' + C.dim + ';font-weight:700;margin-bottom:7px"&gt;'
        + (i+1) + '　' + Utilities.formatDate(new Date(Number(r.created)||Date.now()),'Asia/Tokyo','yyyy/M/d') + '&lt;/div&gt;'
        + '&lt;div style="font-size:15px;color:' + C.ink + ';line-height:1.9"&gt;' + body + '&lt;/div&gt;'
+       + (Number(r.photos||0) ? '&lt;div style="font-size:12px;color:' + C.dim + ';margin-top:9px"&gt;写真' + r.photos + '枚（アプリで確認）&lt;/div&gt;' : '')
        + '&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;';
   });
   s += '&lt;div style="text-align:center;margin-top:22px"&gt;'
      + '&lt;a href="' + APP_URL + '" style="display:inline-block;background:' + C.pri
-     + ';color:#fff;text-decoration:none;padding:12px 26px;border-radius:12px;font-weight:800;font-size:14px"&gt;学びメモを開く&lt;/a&gt;&lt;/div&gt;'
+     + ';color:#fff;text-decoration:none;padding:12px 26px;border-radius:12px;font-weight:800;font-size:14px"&gt;ReNoteを開く&lt;/a&gt;&lt;/div&gt;'
      + '&lt;div style="text-align:center;font-size:11px;color:' + C.dim + ';margin-top:14px"&gt;'
      + '思い出せなかったものは、アプリの「振り返り」で確認してください&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;';
   return s;
@@ -494,7 +525,7 @@ function testMail(){ sendDaily(); Logger.log('送信しました → ' + mailAdd
 <script>
 'use strict';
 /* ===================== 基本 ===================== */
-const VER = 2;
+const VER = 3;
 const KEY_N = 'mn_notes', KEY_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -527,6 +558,125 @@ const now = () => Date.now();
 const uid = () => 'n' + now().toString(36) + Math.random().toString(36).slice(2,7);
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const live = () => notes.filter(n => !n.del);
+
+/* ===================== 写真（IndexedDB） ===================== */
+/* 画像は容量が大きく localStorage に入らないため、IndexedDB に別保存する。
+   メモ側は画像のid（n.imgs）だけを持つ。 */
+const DB = 'renote', STORE = 'imgs';
+let _db = null;
+const urlCache = new Map();
+
+function idb(){
+  if(_db) return Promise.resolve(_db);
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB, 1);
+    r.onupgradeneeded = () => { if(!r.result.objectStoreNames.contains(STORE)) r.result.createObjectStore(STORE); };
+    r.onsuccess = () => { _db = r.result; res(_db); };
+    r.onerror = () => rej(r.error);
+  });
+}
+async function tx_(mode, fn){
+  const d = await idb();
+  return new Promise((res, rej) => {
+    const t = d.transaction(STORE, mode);
+    const req = fn(t.objectStore(STORE));
+    t.oncomplete = () => res(req && req.result);
+    t.onerror = () => rej(t.error);
+  });
+}
+const putImg = (id, blob) => tx_('readwrite', st => st.put(blob, id));
+const getImg = id => tx_('readonly', st => st.get(id));
+const delImg = id => tx_('readwrite', st => st.delete(id));
+const clearImgs = () => tx_('readwrite', st => st.clear());
+
+async function imgUrl(id){
+  if(urlCache.has(id)) return urlCache.get(id);
+  const b = await getImg(id);
+  if(!b) return '';
+  const u = URL.createObjectURL(b);
+  urlCache.set(id, u);
+  return u;
+}
+/* 画面に並べた <img data-img="id"> を後から埋める */
+async function fillImgs(root){
+  for(const el of (root || document).querySelectorAll('img[data-img]:not([src])')){
+    const u = await imgUrl(el.dataset.img);
+    if(u) el.src = u;
+  }
+}
+const thumbsHtml = ids => (ids||[]).map(id =>
+  `<div class="thumb"><img data-img="${id}" alt=""></div>`).join('');
+
+/* 取り込んだ写真は長辺1600pxのJPEGに縮小する（1枚あたり数百KBに収める） */
+async function shrink(file){
+  const MAX = 1600;
+  let src = null, w = 0, h = 0, bmp = null, tmpUrl = '';
+  try{ bmp = await createImageBitmap(file, { imageOrientation:'from-image' }); }
+  catch(e){ try{ bmp = await createImageBitmap(file); }catch(e2){ bmp = null; } }
+  if(bmp){ src = bmp; w = bmp.width; h = bmp.height; }
+  else{
+    tmpUrl = URL.createObjectURL(file);
+    src = await new Promise((res, rej) => {
+      const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = tmpUrl;
+    });
+    w = src.naturalWidth; h = src.naturalHeight;
+  }
+  const sc = Math.min(1, MAX / Math.max(w, h));
+  const cw = Math.max(1, Math.round(w * sc)), ch = Math.max(1, Math.round(h * sc));
+  const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+  c.getContext('2d').drawImage(src, 0, 0, cw, ch);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.82));
+  if(bmp && bmp.close) bmp.close();
+  if(tmpUrl) URL.revokeObjectURL(tmpUrl);
+  return blob || file;
+}
+
+/* どのメモからも参照されていない写真を消す（保存せずに離脱した分の後始末） */
+async function sweepImgs(){
+  try{
+    const keys = await tx_('readonly', st => st.getAllKeys()) || [];
+    const used = new Set();
+    notes.forEach(n => (n.imgs || []).forEach(i => used.add(i)));
+    for(const k of keys) if(!used.has(k) && !draft.some(d => d.id === k)) await delImg(k);
+  }catch(e){}
+}
+
+/* 下書き中の写真 */
+let draft = [];   // [{ id, blob }]
+
+function renderDraft(){
+  const box = $('#draftThumbs');
+  box.innerHTML = draft.map(d =>
+    `<div class="thumb"><img data-img="${d.id}" alt=""><button class="x" data-rm="${d.id}">✕</button></div>`).join('');
+  box.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
+    draft = draft.filter(d => d.id !== b.dataset.rm);
+    renderDraft();
+  });
+  fillImgs(box);
+  $('#btnPhoto').textContent = draft.length ? `写真を追加（${draft.length}枚）` : '写真を追加';
+}
+
+async function addPhotos(files){
+  const list = [...files].slice(0, 8);
+  if(!list.length) return;
+  toast('写真を読み込み中…');
+  for(const f of list){
+    if(!/^image\//.test(f.type)) continue;
+    try{
+      const blob = await shrink(f);
+      const id = 'i' + now().toString(36) + Math.random().toString(36).slice(2,7);
+      await putImg(id, blob);
+      draft.push({ id, blob });
+    }catch(e){ toast('読み込めない写真がありました'); }
+  }
+  renderDraft();
+}
+
+function openViewer(src){
+  const host = $('#sheetHost');
+  host.innerHTML = `<div class="viewer"><button class="close">✕</button><img src="${src}" alt=""></div>`;
+  host.querySelector('.viewer').onclick = () => host.innerHTML = '';
+}
 
 function fmtDate(ms){
   const d = new Date(ms), t = new Date();
@@ -568,6 +718,8 @@ function go(id){
 /* ===================== 書く ===================== */
 function clearForm(){
   editId = null;
+  draft = [];
+  renderDraft();
   $('#inBody').value = '';
   $('#writeTitle').textContent = 'メモを書く';
   $('#btnSave').textContent = '保存';
@@ -577,6 +729,8 @@ function startEdit(id){
   const n = notes.find(x => x.id === id); if(!n) return;
   editId = id;
   $('#inBody').value = n.body || '';
+  draft = (n.imgs || []).map(i => ({ id:i, blob:null }));
+  renderDraft();
   $('#writeTitle').textContent = 'メモを編集';
   $('#btnSave').textContent = '上書き保存';
   $('#btnCancelEdit').classList.remove('hidden');
@@ -585,13 +739,15 @@ function startEdit(id){
 }
 function doSave(){
   const body = $('#inBody').value.trim();
-  if(!body){ toast('本文が空です'); return; }
+  const imgs = draft.map(d => d.id);
+  if(!body && !imgs.length){ toast('本文が空です'); return; }
   if(editId){
     const n = notes.find(x => x.id === editId);
-    n.body = body; n.upd = now();
+    (n.imgs || []).forEach(i => { if(!imgs.includes(i)) delImg(i).catch(()=>{}); });  // 外した写真は削除
+    n.body = body; n.imgs = imgs; n.upd = now();
     toast('上書きしました');
   }else{
-    notes.unshift({ id:uid(), body, cre:now(), upd:now(), rev:0, ng:0, revAt:0, star:false, del:false });
+    notes.unshift({ id:uid(), body, imgs, cre:now(), upd:now(), rev:0, ng:0, revAt:0, star:false, del:false });
     toast('保存しました');
   }
   saveNotes(); clearForm(); renderStats(); queueSync();
@@ -630,8 +786,9 @@ function noteHtml(n){
       ${n.rev ? `<span>振り返り ${n.rev}回</span>` : ''}
       ${n.star ? '<span>重要</span>' : ''}
     </div>
-    <div class="body ${long && !open ? 'clip':''}">${esc(n.body)}</div>
+    <div class="body ${long && !open ? 'clip':''}">${n.body ? esc(n.body) : '<span class="dim">（写真のみ）</span>'}</div>
     ${long ? `<div class="more" data-act="more">${open ? '折りたたむ' : 'すべて表示'}</div>` : ''}
+    <div class="thumbs">${thumbsHtml(n.imgs)}</div>
     <div class="acts">
       <button data-act="star">${n.star?'重要を外す':'重要'}</button>
       <button data-act="edit">編集</button>
@@ -646,6 +803,7 @@ function renderList(){
   $('#listCount').textContent = a.length + '件';
   $('#listBox').innerHTML = a.length ? a.map(noteHtml).join('')
     : `<div class="empty"><span class="em">📭</span>該当するメモがありません</div>`;
+  fillImgs($('#listBox'));
   $$('#listBox .note').forEach(el => {
     const id = el.dataset.id;
     el.querySelectorAll('[data-act]').forEach(b => b.onclick = () => act(b.dataset.act, id));
@@ -662,7 +820,8 @@ function act(a, id){
   }
   if(a === 'del'){
     if(!confirm('このメモを削除します。元に戻せません。')) return;
-    n.del = true; n.upd = now(); saveNotes(); renderList(); renderStats(); queueSync(); toast('削除しました');
+    (n.imgs || []).forEach(i => { urlCache.delete(i); delImg(i).catch(()=>{}); });
+    n.del = true; n.imgs = []; n.upd = now(); saveNotes(); renderList(); renderStats(); queueSync(); toast('削除しました');
   }
 }
 
@@ -702,19 +861,24 @@ function revStart(){
 function showRev(){
   const n = revQ[revI]; if(!n) return revEnd();
   const lines = (n.body || '').split('\n');
-  const lead = lines[0] || '（空）';
+  const lead = lines[0] || '（写真のみ）';
   const rest = lines.slice(1).join('\n').trim();
+  const imgs = n.imgs || [];
+  $('#revThumbs').innerHTML = thumbsHtml(imgs);
+  fillImgs($('#revThumbs'));
   $('#revCount').textContent = (revI+1) + ' / ' + revQ.length;
   $('#revWhen').textContent = fmtDate(n.cre) + 'に記録' +
     (n.revAt ? `　前回の確認は${daysAgo(n.revAt)}日前` : '　未確認');
   $('#revLead').textContent = lead;
   $('#revRest').textContent = rest;
-  if(rest){
+  if(rest || imgs.length){
     $('#revRest').classList.add('hide');
+    $('#revThumbs').classList.add('hide');
     $('#revFootHide').classList.remove('hidden');
     $('#revFootShow').classList.add('hidden');
   }else{
     $('#revRest').classList.remove('hide');
+    $('#revThumbs').classList.remove('hide');
     $('#revFootHide').classList.add('hidden');
     $('#revFootShow').classList.remove('hidden');
   }
@@ -752,50 +916,75 @@ function stamp(){ const d = new Date(), p = x => String(x).padStart(2,'0');
   return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`; }
 const sortedLive = () => live().slice().sort((x,y) => y.cre - x.cre);
 
-function expJson(){ dl(`manabimemo-${stamp()}.json`, JSON.stringify({ app:'manabimemo', ver:VER, at:now(), notes }, null, 2), 'application/json'); }
+const blobToData = b => new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); });
+const dataToBlob = async d => (await fetch(d)).blob();
+
+async function expJson(){
+  const has = notes.some(n => (n.imgs||[]).length);
+  if(has) toast('写真を含めて準備中…');
+  const out = [];
+  for(const n of notes){
+    const o = Object.assign({}, n), data = [];
+    for(const id of (n.imgs || [])){
+      const b = await getImg(id);
+      if(b) data.push({ id, d: await blobToData(b) });
+    }
+    if(data.length) o.imgData = data;
+    out.push(o);
+  }
+  dl(`renote-${stamp()}.json`, JSON.stringify({ app:'renote', ver:VER, at:now(), notes: out }, null, 2), 'application/json');
+}
 function expMd(){
   const a = sortedLive();
-  let s = `# 学びメモ（${a.length}件・${stamp()}）\n\n`;
+  let s = `# ReNote（${a.length}件・${stamp()}）\n\n`;
   a.forEach(n => {
-    s += `### ${new Date(n.cre).toLocaleDateString('ja-JP')}${n.star ? '　★' : ''}\n\n${n.body}\n\n---\n\n`;
+    const ph = (n.imgs||[]).length ? `\n\n（写真${n.imgs.length}枚・アプリ内に保存）` : '';
+    s += `### ${new Date(n.cre).toLocaleDateString('ja-JP')}${n.star ? '　★' : ''}\n\n${n.body}${ph}\n\n---\n\n`;
   });
-  dl(`manabimemo-${stamp()}.md`, s, 'text/markdown');
+  dl(`renote-${stamp()}.md`, s, 'text/markdown');
 }
 function expCsv(){
   const q = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
-  const rows = [['日付','本文','振り返り回数','重要']];
+  const rows = [['日付','本文','写真','振り返り回数','重要']];
   sortedLive().forEach(n => rows.push([
-    new Date(n.cre).toLocaleDateString('ja-JP'), n.body, n.rev||0, n.star ? '★' : ''
+    new Date(n.cre).toLocaleDateString('ja-JP'), n.body, (n.imgs||[]).length, n.rev||0, n.star ? '★' : ''
   ]));
-  dl(`manabimemo-${stamp()}.csv`, '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n'), 'text/csv');
+  dl(`renote-${stamp()}.csv`, '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n'), 'text/csv');
 }
 function expTxt(){
   const a = sortedLive();
-  let s = `学びメモ　${a.length}件　${new Date().toLocaleDateString('ja-JP')}\n\n`;
+  let s = `ReNote　${a.length}件　${new Date().toLocaleDateString('ja-JP')}\n\n`;
   a.forEach((n,i) => {
-    s += `${'─'.repeat(30)}\n${i+1}. ${new Date(n.cre).toLocaleDateString('ja-JP')}\n\n${n.body}\n\n`;
+    const ph = (n.imgs||[]).length ? `\n（写真${n.imgs.length}枚）` : '';
+    s += `${'─'.repeat(30)}\n${i+1}. ${new Date(n.cre).toLocaleDateString('ja-JP')}\n\n${n.body}${ph}\n\n`;
   });
-  dl(`manabimemo-${stamp()}.txt`, s, 'text/plain');
+  dl(`renote-${stamp()}.txt`, s, 'text/plain');
 }
 function doImport(file){
   const r = new FileReader();
-  r.onload = () => {
+  r.onload = async () => {
     try{
       const d = JSON.parse(r.result);
       const arr = Array.isArray(d) ? d : d.notes;
       if(!Array.isArray(arr)) throw 0;
-      let add = 0, upd = 0;
-      arr.forEach(x => {
-        if(!x || !x.id) return;
+      let add = 0, upd = 0, pic = 0;
+      for(const x of arr){
+        if(!x || !x.id) continue;
+        if(Array.isArray(x.imgData)){                      // 写真を IndexedDB に戻す
+          for(const im of x.imgData){
+            try{ await putImg(im.id, await dataToBlob(im.d)); pic++; }catch(e){}
+          }
+          delete x.imgData;
+        }
         const cur = notes.find(n => n.id === x.id);
         if(!cur){ notes.push(x); add++; }
         else if((x.upd||0) > (cur.upd||0)){ Object.assign(cur, x); upd++; }
-      });
+      }
       notes.sort((a,b) => b.cre - a.cre);
       saveNotes(); load(); renderSet(); renderStats();
-      toast(`追加 ${add}件 / 上書き ${upd}件`);
+      toast(`追加 ${add}件 / 上書き ${upd}件` + (pic ? ` / 写真 ${pic}枚` : ''));
       queueSync();
-    }catch(e){ alert('読み込めませんでした。学びメモから書き出したJSONを選んでください。'); }
+    }catch(e){ alert('読み込めませんでした。ReNoteから書き出したJSONを選んでください。'); }
   };
   r.readAsText(file);
 }
@@ -853,8 +1042,15 @@ function renderSet(){
   $('#inGasUrl').value = cfg.gasUrl || '';
   $('#inGasKey').value = cfg.gasKey || '';
   setSync(cfg.gasUrl ? 'ok' : '', cfg.lastSync ? `最終送信 ${fmtDate(cfg.lastSync)}` : '');
+  const pics = live().reduce((a,n) => a + (n.imgs||[]).length, 0);
   const kb = Math.round(JSON.stringify(notes).length / 1024);
-  $('#dataInfo').textContent = `メモ ${live().length}件・約${kb}KB（この端末内に保存）`;
+  $('#dataInfo').textContent = `メモ ${live().length}件・写真 ${pics}枚・文章 約${kb}KB（この端末内に保存）`;
+  if(navigator.storage && navigator.storage.estimate){
+    navigator.storage.estimate().then(e => {
+      if(!e || !e.usage) return;
+      $('#dataInfo').textContent += `　使用容量 約${(e.usage/1048576).toFixed(1)}MB`;
+    }).catch(()=>{});
+  }
 }
 
 /* ===================== 更新チェック ===================== */
@@ -895,12 +1091,14 @@ function showHelp(){
   sheet(`<h3 style="font-size:1.05rem;margin-bottom:12px">使い方</h3>
   <div class="help">
     <b>書く</b>　音声・動画・講義・読書などで学んだことを、1件ずつ書き留めます。
-    1行目が一覧と振り返りで最初に表示されるので、要点を短く書いておくと後から読み返しやすくなります。<br><br>
+    1行目が一覧と振り返りで最初に表示されるので、要点を短く書いておくと後から読み返しやすくなります。
+    写真は1件につき8枚まで添付でき、取り込み時に自動で縮小されます（本文が空でも写真だけで保存できます）。<br><br>
     <b>一覧</b>　キーワード検索、重要のみ表示、並び替え。編集・コピー・削除もここから。<br><br>
     <b>振り返り</b>　しばらく開いていないメモを数件選び、1行目だけを表示します。
     内容を思い出してから続きを表示してください。「あいまい」を選んだメモは早めに再登場します。<br><br>
     <b>設定</b>　毎日メールの設定と、全データの書き出し・読み込み。<br><br>
-    メモは端末内に保存されます。定期的に書き出して保管しておくと安全です。
+    メモと写真は端末内に保存されます。定期的にJSONで書き出して保管しておくと安全です（写真も一緒に書き出されます）。
+    毎日届くメールには本文のみが載ります（写真はアプリで確認してください）。
   </div>`);
 }
 function showGasGuide(){
@@ -936,9 +1134,15 @@ function boot(){
   load();
   $('#verTxt').textContent = VER;
   $$('.verTxt').forEach(e => e.textContent = VER);
-  buildTabs(); renderStats();
+  buildTabs(); renderStats(); renderDraft();
 
   $('#btnSave').onclick = doSave;
+  $('#btnPhoto').onclick = () => $('#filePhoto').click();
+  $('#filePhoto').onchange = e => { addPhotos(e.target.files); e.target.value = ''; };
+  document.addEventListener('click', e => {          // 写真をタップで拡大
+    const t = e.target.closest('#listBox .thumb, #revThumbs .thumb');
+    if(t && t.querySelector('img') && t.querySelector('img').src) openViewer(t.querySelector('img').src);
+  });
   $('#btnCancelEdit').onclick = () => { clearForm(); toast('編集をやめました'); };
   $('#btnHelp').onclick = showHelp;
 
@@ -952,6 +1156,7 @@ function boot(){
   $('#btnRevStart').onclick = revStart;
   $('#btnRevShow').onclick = () => {
     $('#revRest').classList.remove('hide');
+    $('#revThumbs').classList.remove('hide');
     $('#revFootHide').classList.add('hidden');
     $('#revFootShow').classList.remove('hidden');
   };
@@ -979,12 +1184,14 @@ function boot(){
   $('#btnWipe').onclick = () => {
     if(!confirm('すべてのメモを削除します。よろしいですか？')) return;
     if(!confirm('元に戻せません。本当に削除しますか？')) return;
-    notes = []; saveNotes(); renderSet(); renderStats(); renderList(); toast('削除しました');
+    notes = []; saveNotes(); clearImgs().catch(()=>{}); urlCache.clear();
+    renderSet(); renderStats(); renderList(); toast('削除しました');
   };
 
   go('Write');
   checkUpd(true);
   if(cfg.gasUrl){ setSync('ok'); setTimeout(() => pushSync(false), 2500); } else setSync('');
+  setTimeout(sweepImgs, 4000);
   if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 }

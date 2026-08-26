@@ -201,13 +201,62 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .gcard .q{color:var(--aqua);font-weight:600;font-size:.92rem;margin:16px 0 4px}
 .gcard .q:first-of-type{margin-top:0}
 
+/* ── 学ぶタブ ── */
+.lrn-top{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:16px 17px 17px}
+.lrn-h{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;color:var(--dim)}
+.lrn-h b{font-size:1.5rem;color:var(--ink);font-weight:300;margin-right:2px}
+.lrn-list{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+.lrn{display:flex;align-items:center;gap:13px;width:100%;text-align:left;
+  background:var(--surf);border:1px solid var(--line);border-radius:15px;padding:13px 15px;transition:.2s}
+.lrn:active{background:var(--surf2)}
+.lrn .no{width:26px;height:26px;flex:none;border-radius:50%;border:1px solid var(--line);
+  display:grid;place-items:center;font-size:.74rem;color:var(--dim)}
+.lrn.on .no{background:rgba(159,216,214,.16);border-color:rgba(159,216,214,.5);color:#eafaf8}
+.lrn .ln{flex:1;min-width:0;display:block}
+.lrn .lt,.lrn .ld{display:block}
+.lrn .lt{font-size:.94rem;color:var(--ink)}
+.lrn .ld{font-size:.74rem;color:var(--dim);margin-top:1px}
+.lrn .lc{flex:none;font-size:.95rem;color:var(--dim);opacity:.35}
+.lrn.on .lc{color:var(--aqua);opacity:1}
+
+/* 読む画面 */
+.reader{position:fixed;inset:0;z-index:35;background:var(--bg);display:flex;flex-direction:column;
+  animation:fade .25s ease}
+.rd-head{display:flex;align-items:center;gap:12px;padding:calc(var(--safeT) + 10px) 18px 10px;
+  border-bottom:1px solid var(--line);background:rgba(10,14,19,.9);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.rd-head .x{font-size:1.2rem;color:var(--ink2);padding:4px 8px 4px 0}
+.rd-head .n{flex:1;text-align:right;font-size:.74rem;color:var(--dim);letter-spacing:.1em}
+.rd-body{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:22px 20px 30px;
+  max-width:520px;margin:0 auto;width:100%}
+.rd-body h2{margin:0 0 6px;font-size:1.3rem;font-weight:600;line-height:1.5;letter-spacing:.01em}
+.rd-body .lead{color:var(--aqua);font-size:.84rem;letter-spacing:.06em;margin:0 0 4px}
+.rd-body p{font-size:.95rem;line-height:1.95;color:var(--ink2);margin:0 0 14px}
+.rd-body p:last-child{margin-bottom:0}
+.rd-body b{color:var(--ink);font-weight:600}
+.rd-body .fig{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:16px;
+  padding:14px 12px;margin:18px 0}
+.rd-body .fig svg{display:block;width:100%;height:auto}
+.rd-body .fig figcaption{margin-top:9px;text-align:center;font-size:.72rem;color:var(--dim);line-height:1.6}
+.rd-body .ref{background:rgba(227,199,154,.06);border:1px solid rgba(227,199,154,.24);
+  border-radius:16px;padding:15px 16px;margin-top:22px}
+.rd-body .ref h3{margin:0 0 9px;font-size:.72rem;font-weight:600;color:var(--warm);letter-spacing:.2em}
+.rd-body .ref p{font-size:.84rem;line-height:1.85;color:var(--ink2);margin:0 0 9px}
+.rd-body .ref .src{font-size:.72rem;color:var(--dim);line-height:1.7;margin:0}
+.rd-foot{display:flex;gap:10px;padding:12px 18px calc(var(--safeB) + 14px);
+  border-top:1px solid var(--line);background:rgba(10,14,19,.92)}
+.rd-foot button{flex:1;padding:14px;border-radius:14px;font-size:.92rem;letter-spacing:.06em}
+.rd-check{background:rgba(159,216,214,.14);border:1px solid rgba(159,216,214,.42);color:#eafaf8}
+.rd-check.on{background:rgba(159,216,214,.30);color:#04202a;font-weight:600}
+.rd-next{background:var(--surf);border:1px solid var(--line);color:var(--ink2);max-width:38%}
+
 /* ── タブバー ── */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;
   padding:8px 20px calc(var(--safeB) + 10px);
   background:linear-gradient(180deg,rgba(10,14,19,0),rgba(10,14,19,.86) 40%,rgba(10,14,19,.96));
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.tabs .in{max-width:520px;margin:0 auto;display:flex;gap:8px}
-.tab{flex:1;padding:11px 6px;border-radius:14px;color:var(--dim);font-size:.85rem;letter-spacing:.06em;transition:.2s;white-space:nowrap}
+.tabs .in{max-width:520px;margin:0 auto;display:flex;gap:6px}
+.tab{flex:1;padding:11px 3px;border-radius:14px;color:var(--dim);font-size:.82rem;letter-spacing:.01em;transition:.2s;white-space:nowrap}
 .tab[aria-selected="true"]{background:var(--surf2);color:var(--ink)}
 
 /* ── セッション画面 ── */
@@ -355,10 +404,20 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <div class="foot">
-      Mindrest v5 ・ 記録はこの端末の中だけに保存されます<br>
+      Mindrest v6 ・ 記録はこの端末の中だけに保存されます<br>
       <button id="btnBackup">記録をコピーして控える</button>
     </div>
   </div>
+  <!-- 学ぶタブ -->
+  <div class="pane hidden" id="paneLearn">
+    <div class="lrn-top">
+      <div class="lrn-h"><span>学んだ数</span><span class="mono"><b id="lrnDone">0</b> / <span id="lrnAll">12</span></span></div>
+      <div class="lv-bar"><i id="lrnBar"></i></div>
+      <div class="hint2" style="margin:11px 0 0">瞑想について、研究で分かっていることを1つずつ読めます。1つ2〜3分。読み終えたら「学んだ」を押すとチェックがつきます。</div>
+    </div>
+    <div class="lrn-list" id="lrnList"></div>
+  </div>
+
   <!-- 使い方タブ -->
   <div class="pane hidden" id="paneGuide">
     <div class="guide">
@@ -397,6 +456,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
           <li>終わると自動で記録されます。「ひとこと」に感じたことを残せます（声でも入れられます）。</li>
           <li>「記録」で、続いた日数やこれまでの時間を見られます。</li>
+          <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。</li>
         </ol>
         <p class="g-dim">途中でやめたぶんは記録されません。音はマナーモードだと鳴らないことがあるので、はじめる前に音量をたしかめてください。</p>
       </section>
@@ -444,6 +504,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
   <div class="in">
     <button class="tab" data-tab="home" aria-selected="true">瞑想</button>
     <button class="tab" data-tab="log" aria-selected="false">記録</button>
+    <button class="tab" data-tab="learn" aria-selected="false">学ぶ</button>
     <button class="tab" data-tab="guide" aria-selected="false">使い方</button>
   </div>
 </nav>
@@ -461,6 +522,19 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     <button class="stop" id="btnStop">やめる</button>
   </div>
   <div class="prog"><i id="prog"></i></div>
+</div>
+
+<!-- 学ぶ：読む画面 -->
+<div class="reader hidden" id="reader">
+  <div class="rd-head">
+    <button class="x" id="rdClose">✕</button>
+    <span class="n mono" id="rdNo"></span>
+  </div>
+  <div class="rd-body" id="rdBody"></div>
+  <div class="rd-foot">
+    <button class="rd-check" id="rdCheck">学んだ</button>
+    <button class="rd-next" id="rdNext">次へ ›</button>
+  </div>
 </div>
 
 <!-- 終わり -->
@@ -489,7 +563,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 5;
+const VER = 6;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -569,12 +643,14 @@ function setTab(t){
   tab = t;
   $('paneHome').classList.toggle('hidden', t !== 'home');
   $('paneLog').classList.toggle('hidden', t !== 'log');
+  $('paneLearn').classList.toggle('hidden', t !== 'learn');
   $('paneGuide').classList.toggle('hidden', t !== 'guide');
   if(t !== 'home') window.scrollTo(0, 0);
   document.querySelectorAll('.tab').forEach(function(b){
     b.setAttribute('aria-selected', b.dataset.tab === t ? 'true' : 'false');
   });
   if(t === 'log') renderLog();
+  if(t === 'learn') renderLearn();
 }
 $('tabs').addEventListener('click', function(e){
   const b = e.target.closest('.tab'); if(!b) return; setTab(b.dataset.tab);
@@ -710,6 +786,324 @@ document.addEventListener('visibilitychange', function(){
   if(sess){ keepScreen(); update(); }
 });
 
+/* ───────── 学ぶ（瞑想の科学） ─────────
+   出典は研究者名・年・雑誌まで書く。数字は元の研究のものだけを使い、
+   分かっていないことは「分かっていない」と書く（誇張しない）。 */
+const LESSONS = [
+{ id:'l1', n:'瞑想って、なんだろう', d:'まず、言葉の意味から',
+  fig:`<svg viewBox="0 0 320 168" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="70" cy="40" rx="52" ry="25" fill="rgba(255,255,255,.05)" stroke="#4a5866" stroke-dasharray="5 4"/>
+    <text x="70" y="45" text-anchor="middle" fill="#b3c1cc" font-size="12.5">考えごと</text>
+    <circle cx="248" cy="106" r="34" fill="rgba(159,216,214,.10)" stroke="#9fd8d6"/>
+    <circle cx="248" cy="106" r="6" fill="#9fd8d6"/>
+    <text x="248" y="158" text-anchor="middle" fill="#9fd8d6" font-size="12">いま・ここ</text>
+    <path d="M222 88 C 186 68 152 56 124 50" fill="none" stroke="#4a5866" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <polygon points="122,49 133,45 131,55" fill="#4a5866"/>
+    <text x="176" y="60" text-anchor="middle" fill="#778794" font-size="11.5">気が散る</text>
+    <path d="M78 68 C 110 104 160 118 212 116" fill="none" stroke="#9fd8d6" stroke-width="1.8"/>
+    <polygon points="214,116 203,111 204,121" fill="#9fd8d6"/>
+    <text x="140" y="140" text-anchor="middle" fill="#9fd8d6" font-size="11.5">気づいて、戻る</text>
+  </svg>`,
+  cap:'この1往復が、練習の1回',
+  body:`<p>瞑想とは、いまの自分に注意を向けて、静かに座っている時間のことです。研究の世界では「マインドフルネス瞑想」と呼ばれ、<b>いま起きていることに、良い悪いを決めずに気づいている状態</b>と説明されます。</p>
+  <p>大事なのは、考えごとを止めることではありません。人の頭は、放っておくと勝手に動きます。<b>気が散る → 気づく → 戻る</b>。この1往復が、練習の1回です。筋トレでいえば、1回持ち上げたのと同じです。</p>
+  <p>だから「今日は気が散ってばかりだった」という日は、失敗した日ではなく、たくさん練習できた日ということになります。</p>`,
+  ref:`<p>今の研究のほとんどは、1979年にマサチューセッツ大学のジョン・カバットジンが作った「MBSR（マインドフルネス・ストレス低減法）」という8週間のプログラムか、それを短くしたものを使っています。医療の現場で始まったもので、宗教とは切りはなされています。</p>
+  <p class="src">Kabat-Zinn J. (1982) General Hospital Psychiatry ほか</p>` },
+
+{ id:'l2', n:'心は、時間の半分ちかく迷子になる', d:'2250人をスマホで追いかけた研究',
+  fig:`<svg viewBox="0 0 320 208" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(160,78)">
+      <circle r="52" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="20"/>
+      <circle r="52" fill="none" stroke="#9fd8d6" stroke-width="20" stroke-dasharray="153.5 173.2" transform="rotate(-90)"/>
+      <text y="4" text-anchor="middle" fill="#e9f0f4" font-size="30">47%</text>
+      <text y="24" text-anchor="middle" fill="#778794" font-size="11">の時間</text>
+    </g>
+    <g transform="translate(0,162)">
+      <rect x="30" y="0" width="11" height="11" rx="3" fill="#9fd8d6"/>
+      <text x="48" y="10" fill="#b3c1cc" font-size="11.5">別のことを考えている</text>
+      <rect x="30" y="24" width="11" height="11" rx="3" fill="rgba(255,255,255,.16)"/>
+      <text x="48" y="34" fill="#b3c1cc" font-size="11.5">目の前のことに集中している</text>
+    </g>
+  </svg>`,
+  cap:'起きている時間のうち、心がよそへ行っている割合',
+  body:`<p>ハーバード大学の研究者が、スマホのアプリを使って2250人に1日なんども、こう聞きました。「いま何をしていますか」「そのこと以外を考えていますか」「いまどのくらい幸せですか」。</p>
+  <p>集まった25万回の答えを調べると、人は起きている時間の<b>約47%</b>を、目の前のこととは別のことを考えて過ごしていました。ほぼ半分です。</p>
+  <p>さらに、心がさまよっているときは、<b>何をしていたかに関係なく気分が下がっていました</b>。「何をするか」より「そこに心があるかどうか」のほうが、気分に効いていた、ということです。</p>`,
+  ref:`<p>約2250人・25万回分の回答を分析。心がさまよっているときは、たとえ楽しいことを考えていても、目の前のことに集中しているときより幸福度が低いという結果でした。</p>
+  <p>ただしこれは、そのときの様子を観察した研究です。時間をずらして調べた分析では「さまよいが先で、気分の下がりが後」という順番が示されましたが、原因だと完全に決まったわけではありません。</p>
+  <p class="src">Killingsworth M. & Gilbert D. (2010) A Wandering Mind Is an Unhappy Mind. Science</p>` },
+
+{ id:'l3', n:'気が散るのは、脳のふつうの働き', d:'何もしないときに動く場所がある',
+  fig:`<svg viewBox="0 0 320 178" xmlns="http://www.w3.org/2000/svg">
+    <path d="M58 106 C 44 66 80 34 124 38 C 158 20 212 30 230 58 C 258 72 256 112 230 124 C 206 144 116 146 92 128 Z"
+      fill="rgba(255,255,255,.04)" stroke="#4a5866"/>
+    <g stroke="#9fd8d6" stroke-width="1.3" opacity=".85">
+      <line x1="106" y1="94" x2="158" y2="68"/><line x1="158" y1="68" x2="208" y2="92"/>
+      <line x1="106" y1="94" x2="150" y2="116"/><line x1="150" y1="116" x2="208" y2="92"/>
+    </g>
+    <g fill="#9fd8d6">
+      <circle cx="106" cy="94" r="6"/><circle cx="158" cy="68" r="6"/>
+      <circle cx="208" cy="92" r="6"/><circle cx="150" cy="116" r="6"/>
+    </g>
+    <text x="160" y="168" text-anchor="middle" fill="#9fd8d6" font-size="11.5">デフォルト・モード・ネットワーク</text>
+  </svg>`,
+  cap:'ぼーっとしているときに活発になる場所',
+  body:`<p>何もしていないとき、脳の中では「デフォルト・モード・ネットワーク」と呼ばれる場所が活発になります。過去を思い出したり、これからのことを心配したり、自分について考えたりする場所です。</p>
+  <p>つまり、ぼーっとすると考えごとが浮かぶのは、あなたの集中力が弱いからではなく、<b>脳がそういう作りだから</b>です。</p>
+  <p>瞑想を長く続けている人を調べると、瞑想中はこの場所の働きが弱くなっていました。そして「あ、気が散った」と気づいたときに、注意を戻す回路がすばやく働いていました。うまくなるのは「散らないこと」ではなく「気づいて戻ること」のほうなのです。</p>`,
+  ref:`<p>瞑想の経験が長い人（平均10年以上）と初心者を、脳を撮影しながら比べた研究です。経験者はデフォルト・モード・ネットワークの活動が小さく、注意を戻す働きが強く出ていました。</p>
+  <p>参加者は各グループ10人ほどの小さな研究なので、ここから「誰でもこうなる」とまでは言えません。</p>
+  <p class="src">Brewer J. et al. (2011) PNAS（米国科学アカデミー紀要）</p>` },
+
+{ id:'l4', n:'8週間で、脳のかたちが変わった', d:'MRIで前と後をくらべた',
+  fig:`<svg viewBox="0 0 320 212" xmlns="http://www.w3.org/2000/svg">
+    <path d="M56 100 C 42 62 78 32 122 36 C 156 18 210 28 228 56 C 256 70 254 110 228 122 C 204 142 114 144 90 126 Z"
+      fill="rgba(255,255,255,.04)" stroke="#4a5866"/>
+    <ellipse cx="118" cy="96" rx="19" ry="12" fill="rgba(159,216,214,.30)" stroke="#9fd8d6"/>
+    <text x="118" y="100" text-anchor="middle" fill="#eafaf8" font-size="10.5">海馬</text>
+    <text x="118" y="126" text-anchor="middle" fill="#9fd8d6" font-size="11">▲ ふえた</text>
+    <ellipse cx="198" cy="86" rx="18" ry="11" fill="rgba(227,199,154,.22)" stroke="#e3c79a"/>
+    <text x="198" y="90" text-anchor="middle" fill="#f4e8d2" font-size="10.5">扁桃体</text>
+    <text x="198" y="62" text-anchor="middle" fill="#e3c79a" font-size="11">▼ へった</text>
+    <rect x="34" y="172" width="252" height="9" rx="5" fill="rgba(255,255,255,.08)"/>
+    <rect x="34" y="172" width="252" height="9" rx="5" fill="rgba(159,216,214,.45)"/>
+    <text x="34" y="198" fill="#778794" font-size="11">はじめ</text>
+    <text x="286" y="198" text-anchor="end" fill="#9fd8d6" font-size="11">8週間後</text>
+  </svg>`,
+  cap:'記憶の場所はふえ、警報の場所はへった',
+  body:`<p>瞑想をしたことがない16人に、8週間のマインドフルネス講座を受けてもらい、その前と後で脳を撮影した研究があります。</p>
+  <p>すると、記憶や学習に関わる<b>海馬</b>という場所で、神経細胞のあつまり（灰白質）が増えていました。同じチームの別の研究では、不安や恐怖の「警報係」である<b>扁桃体</b>の灰白質が減り、その減り方が大きい人ほど、ストレスの感じ方も小さくなっていました。</p>
+  <p>練習は1日平均27分ほど。特別な才能ではなく、続けた時間が変化につながっていました。</p>`,
+  ref:`<p>8週間のMBSRを受けた16人と、受けなかった17人をくらべた研究です。海馬・後帯状皮質・小脳などで灰白質の密度が増えていました。</p>
+  <p><b>人数の少ない研究</b>である点は覚えておいてください。似た結果は他の研究でも報告されていますが、「変化ははっきりしない」という報告もあり、まだ議論の途中です。</p>
+  <p class="src">Hölzel B. et al. (2011) Psychiatry Research: Neuroimaging ／ Hölzel B. et al. (2010) SCAN</p>` },
+
+{ id:'l5', n:'ストレスの「警報」が小さくなる', d:'気持ちが消えるのではなく、飲み込まれにくくなる',
+  fig:`<svg viewBox="0 0 320 196" xmlns="http://www.w3.org/2000/svg">
+    <rect x="8" y="16" width="78" height="34" rx="10" fill="rgba(255,255,255,.05)" stroke="#4a5866"/>
+    <text x="47" y="37" text-anchor="middle" fill="#b3c1cc" font-size="11">いやなこと</text>
+    <text x="92" y="38" fill="#778794" font-size="13">→</text>
+    <rect x="110" y="9" width="90" height="48" rx="10" fill="rgba(231,136,136,.16)" stroke="#e78888"/>
+    <text x="155" y="30" text-anchor="middle" fill="#ffd9d9" font-size="12">警報！</text>
+    <text x="155" y="46" text-anchor="middle" fill="#e78888" font-size="10">扁桃体</text>
+    <text x="206" y="38" fill="#778794" font-size="13">→</text>
+    <rect x="224" y="16" width="88" height="34" rx="10" fill="rgba(255,255,255,.05)" stroke="#4a5866"/>
+    <text x="268" y="37" text-anchor="middle" fill="#b3c1cc" font-size="11">体がこわばる</text>
+    <text x="160" y="88" text-anchor="middle" fill="#778794" font-size="11.5">練習をつづけると…</text>
+    <rect x="8" y="116" width="78" height="34" rx="10" fill="rgba(255,255,255,.05)" stroke="#4a5866"/>
+    <text x="47" y="137" text-anchor="middle" fill="#b3c1cc" font-size="11">いやなこと</text>
+    <text x="92" y="138" fill="#778794" font-size="13">→</text>
+    <rect x="122" y="124" width="66" height="20" rx="8" fill="rgba(231,136,136,.10)" stroke="rgba(231,136,136,.45)"/>
+    <text x="155" y="138" text-anchor="middle" fill="#e78888" font-size="10">警報（小）</text>
+    <text x="194" y="138" fill="#778794" font-size="13">→</text>
+    <rect x="212" y="116" width="100" height="34" rx="10" fill="rgba(159,216,214,.12)" stroke="#9fd8d6"/>
+    <text x="262" y="137" text-anchor="middle" fill="#eafaf8" font-size="11">気づいて、選べる</text>
+  </svg>`,
+  cap:'反応そのものは残るが、大きさが変わる',
+  body:`<p>いやなことが起きると、脳の扁桃体が「危ない！」と警報を鳴らし、体は戦うか逃げるかの準備をします。心臓が速くなり、コルチゾールというストレスホルモンが出ます。</p>
+  <p>本当に危ないときには役に立つしくみですが、テストの心配や人間関係の悩みのように、逃げても解決しない場面でも同じ警報が鳴ります。すると、体だけが疲れていきます。</p>
+  <p>瞑想の練習をすると、この警報の鳴り方が小さくなることが分かっています。いやな気持ちが消えるわけではありません。<b>気持ちに飲み込まれるまでの、ほんの少しのすき間ができる</b>、というイメージです。</p>`,
+  ref:`<p>8週間の訓練を受けた人たちは、訓練のあと、<b>瞑想していないふだんの状態でも</b>、いやな写真を見たときの扁桃体の反応が小さくなっていました。練習中だけの効果ではない、という点が注目されました。</p>
+  <p class="src">Desbordes G. et al. (2012) Frontiers in Human Neuroscience</p>` },
+
+{ id:'l6', n:'集中力が上がり、テストの点も上がった', d:'2週間の訓練を受けた大学生48人',
+  fig:`<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
+    <text x="14" y="16" fill="#b3c1cc" font-size="11.5">文章を読むテストの点</text>
+    <rect x="14" y="26" width="116" height="17" rx="5" fill="rgba(255,255,255,.13)"/>
+    <text x="138" y="39" fill="#778794" font-size="10.5">訓練の前</text>
+    <rect x="14" y="50" width="170" height="17" rx="5" fill="#9fd8d6"/>
+    <text x="192" y="63" fill="#9fd8d6" font-size="10.5">2週間後</text>
+    <text x="14" y="112" fill="#b3c1cc" font-size="11.5">テスト中に気が散った回数</text>
+    <rect x="14" y="122" width="170" height="17" rx="5" fill="rgba(255,255,255,.13)"/>
+    <text x="192" y="135" fill="#778794" font-size="10.5">訓練の前</text>
+    <rect x="14" y="146" width="98" height="17" rx="5" fill="#e3c79a"/>
+    <text x="120" y="159" fill="#e3c79a" font-size="10.5">2週間後</text>
+    <text x="14" y="188" fill="#778794" font-size="10.5">※ 図は結果の向きを表したもの</text>
+  </svg>`,
+  cap:'点は上がり、気が散る回数は減った',
+  body:`<p>大学生48人を2つのグループに分け、片方は2週間のマインドフルネス訓練（週4回・1回45分）、もう片方は栄養について学ぶ授業を受けました。どちらも「何かを学ぶ」時間は同じです。</p>
+  <p>2週間後、マインドフルネスのグループは、文章を読んで答えるテストの点が上がり、頭の中に一度にとどめておける量（ワーキングメモリ）も増えていました。そして<b>テスト中に気が散った回数が減っていました</b>。</p>
+  <p>とくに、もともと気が散りやすかった人ほど、伸びが大きかったと報告されています。</p>`,
+  ref:`<p>アメリカの大学院入学試験（GRE）の読解問題を使った実験です。点数の伸びは、気が散る回数の減り方で説明できる、という分析結果でした。</p>
+  <p>48人・2週間という短く小さな研究です。「2週間やれば誰でも点が上がる」という意味ではなく、<b>注意の力は練習で変えられる</b>ことを示した研究として読んでください。</p>
+  <p class="src">Mrazek M. et al. (2013) Psychological Science</p>` },
+
+{ id:'l7', n:'眠りが浅い人の、眠りがよくなった', d:'「睡眠のコツ」を学ぶ講座とくらべた',
+  fig:`<svg viewBox="0 0 320 186" xmlns="http://www.w3.org/2000/svg">
+    <text x="14" y="18" fill="#b3c1cc" font-size="11.5">6週間後の 睡眠の質（よくなった度合い）</text>
+    <text x="14" y="48" fill="#9fd8d6" font-size="11">マインドフルネス講座</text>
+    <rect x="14" y="56" width="222" height="19" rx="5" fill="#9fd8d6"/>
+    <text x="14" y="106" fill="#778794" font-size="11">睡眠のコツを学ぶ講座</text>
+    <rect x="14" y="114" width="112" height="19" rx="5" fill="rgba(255,255,255,.14)"/>
+    <text x="14" y="168" fill="#778794" font-size="10.5">※ どちらもよくなったが、差がついた</text>
+  </svg>`,
+  cap:'49人の高齢者を2グループに分けて比較',
+  body:`<p>眠りに悩みのある49人の高齢者を2つに分け、片方は6週間のマインドフルネス講座を、もう片方は「睡眠のコツ」を学ぶ講座を受けました。</p>
+  <p>6週間後、<b>マインドフルネスのグループのほうが睡眠の質がよくなっていました</b>。日中の疲れや、気分の落ち込みも軽くなっていました。</p>
+  <p>寝る前に考えごとがぐるぐるして眠れない、というタイプの人に、とくに合うと考えられています。眠るための道具というより、頭の回転をゆるめる練習だと思ってください。</p>`,
+  ref:`<p>ランダムに2つのグループに分けて比べる、質の高い方法（ランダム化比較試験）で行われました。</p>
+  <p>参加者は49人の高齢者です。中学生や働いている大人にそのまま同じ結果があてはまるとは限りません。眠れない状態が長く続くときは、医療機関に相談してください。</p>
+  <p class="src">Black D. et al. (2015) JAMA Internal Medicine</p>` },
+
+{ id:'l8', n:'痛みの「いやな感じ」が減る', d:'痛みは届いているのに、受け取り方が変わる',
+  fig:`<svg viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg">
+    <text x="14" y="18" fill="#b3c1cc" font-size="11.5">痛みの 強さ</text>
+    <rect x="14" y="28" width="230" height="18" rx="5" fill="rgba(255,255,255,.13)"/>
+    <rect x="14" y="28" width="138" height="18" rx="5" fill="#9fd8d6"/>
+    <text x="252" y="42" fill="#9fd8d6" font-size="11.5">−40%</text>
+    <text x="14" y="92" fill="#b3c1cc" font-size="11.5">痛みの いやな感じ</text>
+    <rect x="14" y="102" width="230" height="18" rx="5" fill="rgba(255,255,255,.13)"/>
+    <rect x="14" y="102" width="99" height="18" rx="5" fill="#e3c79a"/>
+    <text x="252" y="116" fill="#e3c79a" font-size="11.5">−57%</text>
+    <text x="14" y="164" fill="#778794" font-size="10.5">うすい部分＝瞑想の訓練を受ける前の感じ方</text>
+  </svg>`,
+  cap:'4日間の訓練のあと、同じ熱さを感じたとき',
+  body:`<p>熱による痛みを与える実験で、4日間（1日20分）だけ瞑想の訓練を受けた人たちの感じ方を調べました。</p>
+  <p>訓練のあとは、痛みの<b>強さ</b>の感じ方が約40%、痛みの<b>いやな感じ</b>が約57%減っていました。</p>
+  <p>おもしろいのは、痛みの信号そのものが消えたわけではないことです。信号は届いているのに、それを受け取る側の反応が変わりました。「痛い」と「つらい」は、別のものだということです。</p>`,
+  ref:`<p>参加者15人の、実験室で行われた小さな研究です。脳の画像では、痛みの信号を受け取る場所の活動が減り、注意や受け止め方に関わる場所の活動が増えていました。</p>
+  <p>ここに出てくる数字はこの研究のものです。誰にでも同じだけ効くという意味ではありません。強い痛みが続くときは、医療機関で診てもらってください。</p>
+  <p class="src">Zeidan F. et al. (2011) Journal of Neuroscience</p>` },
+
+{ id:'l9', n:'ゆっくり吐くと、体にブレーキがかかる', d:'呼吸は、自分で触れるスイッチ',
+  fig:`<svg viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg">
+    <path d="M16 104 C 34 52 56 52 74 104" fill="none" stroke="#e3c79a" stroke-width="2.4"/>
+    <path d="M74 104 C 104 156 152 156 174 104" fill="none" stroke="#9fd8d6" stroke-width="2.4"/>
+    <path d="M174 104 C 192 52 214 52 232 104" fill="none" stroke="#e3c79a" stroke-width="2.4"/>
+    <path d="M232 104 C 262 156 300 152 308 118" fill="none" stroke="#9fd8d6" stroke-width="2.4"/>
+    <text x="45" y="40" text-anchor="middle" fill="#e3c79a" font-size="11">吸う</text>
+    <text x="124" y="176" text-anchor="middle" fill="#9fd8d6" font-size="11">吐く（長め）</text>
+    <line x1="8" y1="104" x2="312" y2="104" stroke="rgba(255,255,255,.10)"/>
+    <text x="308" y="40" text-anchor="end" fill="#e3c79a" font-size="10.5">アクセル（交感神経）</text>
+    <text x="308" y="176" text-anchor="end" fill="#9fd8d6" font-size="10.5">ブレーキ（副交感神経）</text>
+  </svg>`,
+  cap:'吸うとアクセル、吐くとブレーキが少し強くなる',
+  body:`<p>体には、アクセル（交感神経）とブレーキ（副交感神経）があります。緊張するとアクセル、休むときはブレーキが働きます。ふだんは自分で切りかえられません。</p>
+  <p>ところが呼吸だけは、自分で変えられます。そして<b>息を吸うとアクセル、吐くとブレーキ</b>が少し強くなります。だから、吐く息を長くすると、心臓の打ち方がゆるやかになり、体は休むほうへ切りかわります。</p>
+  <p>あせったとき、深く吸うことより<b>長く吐くこと</b>を意識してみてください。瞑想中に呼吸を感じるのは、気持ちだけでなく体にも直接はたらいています。</p>`,
+  ref:`<p>ゆっくりした呼吸をすると、心臓の打つ間隔の「ゆらぎ」（心拍変動）が大きくなり、休息の神経が優位になることは、多くの研究で確かめられています。研究では1分間に6回ほどのゆっくりした呼吸がよく使われます。</p>
+  <p>ただし、無理に深く吸いすぎると、かえって苦しくなることがあります。自然にできる範囲でどうぞ。</p>
+  <p class="src">Lehrer P. & Gevirtz R. (2014) Frontiers in Psychology ほか</p>` },
+
+{ id:'l10', n:'1日13分でも、8週間で変わった', d:'ただし4週間ではまだだった',
+  fig:`<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
+    <line x1="40" y1="150" x2="300" y2="150" stroke="rgba(255,255,255,.14)"/>
+    <line x1="40" y1="20" x2="40" y2="150" stroke="rgba(255,255,255,.14)"/>
+    <polyline points="40,132 170,124 300,60" fill="none" stroke="#9fd8d6" stroke-width="2.4"/>
+    <circle cx="40" cy="132" r="4" fill="#9fd8d6"/><circle cx="170" cy="124" r="4" fill="#9fd8d6"/><circle cx="300" cy="60" r="4" fill="#9fd8d6"/>
+    <polyline points="40,134 170,132 300,128" fill="none" stroke="#778794" stroke-width="2" stroke-dasharray="5 4"/>
+    <text x="40" y="168" text-anchor="middle" fill="#778794" font-size="11">0週</text>
+    <text x="170" y="168" text-anchor="middle" fill="#778794" font-size="11">4週</text>
+    <text x="300" y="168" text-anchor="end" fill="#9fd8d6" font-size="11">8週</text>
+    <text x="16" y="30" fill="#778794" font-size="11">注意力・記憶</text>
+    <text x="196" y="52" fill="#9fd8d6" font-size="11">13分の瞑想</text>
+    <text x="196" y="146" fill="#778794" font-size="11">くらべたグループ</text>
+  </svg>`,
+  cap:'4週間では差が出ず、8週間で差がついた',
+  body:`<p>瞑想をしたことがない人に、1日<b>13分</b>のガイド音声を聞いてもらう研究があります。長い時間ではありません。</p>
+  <p>8週間後、注意力と記憶のテストの成績が上がり、気分もよくなっていました。ところが<b>4週間の時点では、はっきりした差は出ていませんでした</b>。</p>
+  <p>ここが大事なところです。数日やって「変わらないな」と思うのは、当たり前なのです。長い時間を1回やるより、短い時間を続けるほうが現実的で、結果にもつながります。まずは1分から10分を、しばらく続けてみてください。</p>`,
+  ref:`<p>瞑想の経験がない人を対象に、1日13分・8週間の練習をした場合と、別の音声を聞いた場合を比べました。8週間後に、注意・記憶・気分・不安の指標で差が出ました。</p>
+  <p class="src">Basso J. et al. (2019) Behavioural Brain Research</p>` },
+
+{ id:'l11', n:'効果は「魔法」ではない', d:'47の試験・3515人をまとめた結果',
+  fig:`<svg viewBox="0 0 320 216" xmlns="http://www.w3.org/2000/svg">
+    <text x="14" y="16" fill="#b3c1cc" font-size="11.5">効果が確かめられたもの</text>
+    <rect x="14" y="26" width="150" height="16" rx="5" fill="#9fd8d6"/><text x="172" y="39" fill="#b3c1cc" font-size="11">不安</text>
+    <rect x="14" y="50" width="146" height="16" rx="5" fill="#9fd8d6"/><text x="168" y="63" fill="#b3c1cc" font-size="11">気分の落ち込み</text>
+    <rect x="14" y="74" width="132" height="16" rx="5" fill="#9fd8d6"/><text x="154" y="87" fill="#b3c1cc" font-size="11">痛み</text>
+    <text x="14" y="124" fill="#778794" font-size="11.5">はっきりした証拠がないもの</text>
+    <rect x="14" y="134" width="60" height="16" rx="5" fill="none" stroke="#4a5866" stroke-dasharray="4 4"/><text x="82" y="147" fill="#778794" font-size="11">気分の明るさ</text>
+    <rect x="14" y="158" width="52" height="16" rx="5" fill="none" stroke="#4a5866" stroke-dasharray="4 4"/><text x="74" y="171" fill="#778794" font-size="11">体重・くせ</text>
+    <rect x="14" y="182" width="44" height="16" rx="5" fill="none" stroke="#4a5866" stroke-dasharray="4 4"/><text x="66" y="195" fill="#778794" font-size="11">睡眠（この分析では）</text>
+  </svg>`,
+  cap:'効くところと、そうでないところがある',
+  body:`<p>ここまで良い話が続きましたが、大事なのはここからです。これまでの研究をまとめて調べ直した、大きな報告があります。</p>
+  <p>質の高い47の試験・3515人分をまとめると、瞑想には<b>不安・気分の落ち込み・痛みをやわらげる「中くらいの」効果</b>が確かにありました。効果の大きさは、心の治療によく使われる薬と同じくらいか、少し小さいくらいです。</p>
+  <p>一方で、性格や体重、くせなど<b>多くのことについては、はっきりした証拠はない</b>と結論づけられています。「瞑想をすれば何でもよくなる」という話を見かけたら、少し疑ってください。</p>
+  <p>また、まれに、瞑想中に不安や落ち着かなさが強くなる人もいます。つらいと感じたら、時間を短くするか、いったんやめてかまいません。それも正しい判断です。</p>`,
+  ref:`<p>アメリカの研究チームが、1万8千件以上の論文から、質の高い47の試験（3515人）だけを選んでまとめました（メタ分析）。</p>
+  <p>効果の大きさは0.3前後。これは「まったく変わらない」ではないが「劇的に変わる」でもない、という程度です。なお、この分析は「別の活動をしたグループ」ときちんと比べた研究だけを選んでいるため、ふだん見かける数字より控えめに出ています。</p>
+  <p class="src">Goyal M. et al. (2014) JAMA Internal Medicine ／ つらい体験については Britton W. et al. (2021) Clinical Psychological Science</p>` },
+
+{ id:'l12', n:'続けるための、ちょっとしたしかけ', d:'意志の強さより、決め方',
+  fig:`<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
+    <rect x="12" y="20" width="118" height="44" rx="12" fill="rgba(255,255,255,.05)" stroke="#4a5866"/>
+    <text x="71" y="47" text-anchor="middle" fill="#b3c1cc" font-size="11.5">歯をみがく</text>
+    <text x="140" y="48" fill="#778794" font-size="15">→</text>
+    <rect x="166" y="20" width="142" height="44" rx="12" fill="rgba(159,216,214,.12)" stroke="#9fd8d6"/>
+    <text x="237" y="47" text-anchor="middle" fill="#eafaf8" font-size="11.5">いすに座って3分</text>
+    <text x="160" y="92" text-anchor="middle" fill="#778794" font-size="11">すでにある習慣に、くっつける</text>
+    <rect x="26" y="112" width="268" height="66" rx="14" fill="rgba(227,199,154,.07)" stroke="rgba(227,199,154,.3)"/>
+    <text x="160" y="140" text-anchor="middle" fill="#e3c79a" font-size="12">もし〈　　　　　〉したら、</text>
+    <text x="160" y="162" text-anchor="middle" fill="#e3c79a" font-size="12">〈　　　　　〉で瞑想する</text>
+  </svg>`,
+  cap:'「いつ・どこで」を先に決めておく',
+  body:`<p>どんなに効果があっても、続かなければ意味がありません。ここは、瞑想そのものより大事かもしれません。</p>
+  <p>心理学の研究では、<b>「いつ・どこで やるか」を前もって具体的に決めておく</b>と、実際にやれる確率がはっきり上がることが分かっています。「やる気が出たらやる」は、いちばん続かない決め方です。</p>
+  <p>おすすめは、すでにある習慣にくっつけること。「朝、歯をみがいたら、いすに座って3分」のように決めてしまえば、思い出す必要すらなくなります。</p>
+  <p>そして、新しい行動が「自然にやること」になるまでには、平均で<b>2か月ほど</b>かかると報告されています。数日できなくても、あなたの意志が弱いわけではありません。またくっつけ直せば大丈夫です。</p>`,
+  ref:`<p>「もし〜したら、〜する」と前もって決めておく方法は、実行意図（if-thenプラン）と呼ばれ、運動や勉強など多くの行動で効果が確かめられています。</p>
+  <p>習慣になるまでの日数を調べた研究では、平均66日、人によって18日から254日まで大きな幅がありました。「21日で習慣になる」という話には、根拠がありません。</p>
+  <p class="src">Gollwitzer P. (1999) American Psychologist ／ Lally P. et al. (2010) European Journal of Social Psychology</p>` }
+];
+
+let learned = [];
+try{ learned = JSON.parse(localStorage.getItem('med.learn.v1') || '[]'); }catch(e){ learned = []; }
+function saveLearned(){ try{ localStorage.setItem('med.learn.v1', JSON.stringify(learned)); }catch(e){} }
+const isLearned = id => learned.indexOf(id) >= 0;
+
+function renderLearn(){
+  $('lrnAll').textContent = LESSONS.length;
+  $('lrnDone').textContent = learned.length;
+  $('lrnBar').style.width = Math.max(1.5, 100 * learned.length / LESSONS.length) + '%';
+  $('lrnList').innerHTML = LESSONS.map(function(L, i){
+    const on = isLearned(L.id);
+    return '<button class="lrn' + (on ? ' on' : '') + '" data-i="' + i + '">' +
+      '<span class="no mono">' + (i + 1) + '</span>' +
+      '<span class="ln"><span class="lt">' + L.n + '</span><span class="ld">' + L.d + '</span></span>' +
+      '<span class="lc">' + (on ? '✓' : '○') + '</span></button>';
+  }).join('');
+}
+$('lrnList').addEventListener('click', function(e){
+  const b = e.target.closest('.lrn'); if(!b) return;
+  openLesson(parseInt(b.dataset.i, 10));
+});
+
+let curLesson = 0;
+function openLesson(i){
+  curLesson = i;
+  const L = LESSONS[i];
+  $('rdNo').textContent = (i + 1) + ' / ' + LESSONS.length;
+  $('rdBody').innerHTML =
+    '<p class="lead">' + L.d + '</p>' +
+    '<h2>' + L.n + '</h2>' +
+    '<figure class="fig">' + L.fig + '<figcaption>' + L.cap + '</figcaption></figure>' +
+    L.body +
+    '<div class="ref"><h3>研究のはなし</h3>' + L.ref + '</div>';
+  $('rdBody').scrollTop = 0;
+  $('rdNext').textContent = (i < LESSONS.length - 1) ? '次へ ›' : 'おわり';
+  markCheck();
+  $('reader').classList.remove('hidden');
+}
+function markCheck(){
+  const on = isLearned(LESSONS[curLesson].id);
+  $('rdCheck').classList.toggle('on', on);
+  $('rdCheck').textContent = on ? '✓ 学んだ' : '学んだ';
+}
+$('rdCheck').addEventListener('click', function(){
+  const id = LESSONS[curLesson].id;
+  if(isLearned(id)) learned = learned.filter(function(x){ return x !== id; });
+  else { learned.push(id); toast('チェックをつけました'); }
+  saveLearned(); markCheck(); renderLearn(); renderTop();
+});
+$('rdNext').addEventListener('click', function(){
+  if(curLesson < LESSONS.length - 1) openLesson(curLesson + 1);
+  else { $('reader').classList.add('hidden'); renderLearn(); }
+});
+$('rdClose').addEventListener('click', function(){ $('reader').classList.add('hidden'); renderLearn(); });
+
 /* ───────── レベル・称号・しるし ───────── */
 /* 経験値：1分=10 ／ 1回=20 ／ その日の分に「続けている日数×5」（最大100）
    ぜんぶ記録から計算し直すので、記録を消せば経験値も減る（ごまかせない） */
@@ -748,7 +1142,9 @@ const BADGES = [
   { id:'m1000', n:'千分',        d:'合計1000分をこえた',   f:function(s){ return s.totalMin >= 1000; } },
   { id:'long',  n:'じっくり',    d:'10分を1回やりきった',  f:function(s){ return s.maxMin >= 10; } },
   { id:'morn',  n:'朝の人',      d:'朝5〜9時に瞑想した',   f:function(s){ return s.morning; } },
-  { id:'night', n:'夜の人',      d:'夜10時すぎに瞑想した', f:function(s){ return s.night; } }
+  { id:'night', n:'夜の人',      d:'夜10時すぎに瞑想した', f:function(s){ return s.night; } },
+  { id:'lrn1',  n:'学びはじめ',  d:'学ぶを1つ読んだ',      f:function(s){ return s.learned >= 1; } },
+  { id:'lrnAll',n:'物知り',      d:'学ぶをぜんぶ読んだ',   f:function(s){ return s.learned >= LESSONS.length; } }
 ];
 function gotIds(s){
   const out = [];
@@ -943,7 +1339,7 @@ function stats(list){
 
   return { todayMin: todayMin, totalMin: totalMin, days: days, streak: streak,
            count: list.length, maxMin: maxMin, morning: morning, night: night,
-           best: best, xp: xp, lv: levelOf(xp) };
+           best: best, xp: xp, lv: levelOf(xp), learned: learned.length };
 }
 
 function renderTop(){

@@ -206,7 +206,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .lrn-h{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;color:var(--dim)}
 .lrn-h b{font-size:1.5rem;color:var(--ink);font-weight:300;margin-right:2px}
 .lrn-list{display:flex;flex-direction:column;gap:9px;margin-top:14px}
-.lrn{display:flex;align-items:center;gap:13px;width:100%;text-align:left;
+.lrn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
   background:var(--surf);border:1px solid var(--line);border-radius:15px;padding:13px 15px;transition:.2s}
 .lrn:active{background:var(--surf2)}
 .lrn .no{width:26px;height:26px;flex:none;border-radius:50%;border:1px solid var(--line);
@@ -218,6 +218,18 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .lrn .ld{font-size:.74rem;color:var(--dim);margin-top:1px}
 .lrn .lc{flex:none;font-size:.95rem;color:var(--dim);opacity:.35}
 .lrn.on .lc{color:var(--aqua);opacity:1}
+
+.lrn-btns{display:flex;gap:8px;margin-top:12px}
+.lrn-btns button{flex:1;padding:11px;border-radius:12px;font-size:.85rem;
+  background:var(--surf2);border:1px solid var(--line);color:var(--ink2)}
+.lrn-btns button.go{background:rgba(227,199,154,.16);border-color:rgba(227,199,154,.45);color:#f6e9d2}
+.lrn-btns button:disabled{opacity:.4}
+.lrn .st{flex:none;font-size:.66rem;color:var(--dim);text-align:right;line-height:1.5;min-width:44px}
+.lrn.due .st{color:var(--warm)}
+.lrn.mst .no{background:rgba(227,199,154,.18);border-color:rgba(227,199,154,.5);color:#f6e9d2}
+.tabdot{display:inline-block;min-width:16px;height:16px;line-height:16px;margin-left:5px;
+  border-radius:999px;background:rgba(227,199,154,.9);color:#20180a;font-size:.64rem;
+  font-weight:700;text-align:center;padding:0 4px;vertical-align:1px}
 
 /* 読む画面 */
 .reader{position:fixed;inset:0;z-index:35;background:var(--bg);display:flex;flex-direction:column;
@@ -249,6 +261,29 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .rd-check{background:rgba(159,216,214,.14);border:1px solid rgba(159,216,214,.42);color:#eafaf8}
 .rd-check.on{background:rgba(159,216,214,.30);color:#04202a;font-weight:600}
 .rd-next{background:var(--surf);border:1px solid var(--line);color:var(--ink2);max-width:38%}
+
+/* ── 聞く（読み上げ） ── */
+.rd-head .listen{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;
+  background:rgba(159,216,214,.13);border:1px solid rgba(159,216,214,.38);color:#dff6f4;font-size:.8rem}
+.rd-head .listen.on{background:rgba(227,199,154,.18);border-color:rgba(227,199,154,.5);color:#f6e9d2}
+.player{border-top:1px solid var(--line);background:rgba(13,18,25,.97);
+  padding:12px 18px 10px;animation:fade .25s ease}
+.player .txt{font-size:.88rem;line-height:1.7;color:var(--ink);min-height:3.4em;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.player .bar{height:3px;border-radius:999px;background:rgba(255,255,255,.08);margin:9px 0 10px;overflow:hidden}
+.player .bar i{display:block;height:100%;width:0;background:rgba(159,216,214,.8);transition:width .4s linear}
+.player .row{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.player .row button{padding:9px 11px;border-radius:11px;background:var(--surf);
+  border:1px solid var(--line);color:var(--ink2);font-size:.75rem;white-space:nowrap}
+.player .row .main{background:rgba(159,216,214,.16);border-color:rgba(159,216,214,.4);color:#eafaf8;
+  min-width:48px;font-size:.88rem}
+.player .row .sp{display:none}
+.player .row button.on{background:rgba(159,216,214,.16);border-color:rgba(159,216,214,.4);color:#eafaf8}
+.vlist{display:flex;flex-direction:column;gap:7px;margin-bottom:6px}
+.vrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;
+  border-radius:12px;background:var(--surf);border:1px solid var(--line);font-size:.88rem;color:var(--ink2)}
+.vrow.now{background:rgba(159,216,214,.12);border-color:rgba(159,216,214,.4);color:#eafaf8}
+.vrow .try{font-size:.72rem;color:var(--dim);text-decoration:underline;text-underline-offset:3px}
 
 /* ── タブバー ── */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;
@@ -404,16 +439,20 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <div class="foot">
-      Mindrest v6 ・ 記録はこの端末の中だけに保存されます<br>
+      Mindrest v7 ・ 記録はこの端末の中だけに保存されます<br>
       <button id="btnBackup">記録をコピーして控える</button>
     </div>
   </div>
   <!-- 学ぶタブ -->
   <div class="pane hidden" id="paneLearn">
     <div class="lrn-top">
-      <div class="lrn-h"><span>学んだ数</span><span class="mono"><b id="lrnDone">0</b> / <span id="lrnAll">12</span></span></div>
+      <div class="lrn-h"><span>身についた数</span><span class="mono"><b id="lrnDone">0</b> / <span id="lrnAll">12</span></span></div>
       <div class="lv-bar"><i id="lrnBar"></i></div>
-      <div class="hint2" style="margin:11px 0 0">瞑想について、研究で分かっていることを1つずつ読めます。1つ2〜3分。読み終えたら「学んだ」を押すとチェックがつきます。</div>
+      <div class="hint2" style="margin:11px 0 0" id="lrnMsg">瞑想について、研究で分かっていることを1つずつ読めます。1つ2〜3分。</div>
+      <div class="lrn-btns">
+        <button id="btnReview" class="go">今日の復習</button>
+        <button id="btnNextNew">まだ読んでいないもの</button>
+      </div>
     </div>
     <div class="lrn-list" id="lrnList"></div>
   </div>
@@ -456,7 +495,8 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
           <li>終わると自動で記録されます。「ひとこと」に感じたことを残せます（声でも入れられます）。</li>
           <li>「記録」で、続いた日数やこれまでの時間を見られます。</li>
-          <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。</li>
+          <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。1日後・3日後・7日後…と<b>復習</b>が出てくるので、そのたびに読み直すと記憶に残ります。</li>
+          <li>読む画面の右上の<b>「聞く」</b>を押すと、声で読み上げます。目を閉じたまま、ラジオのように聞けます。</li>
         </ol>
         <p class="g-dim">途中でやめたぶんは記録されません。音はマナーモードだと鳴らないことがあるので、はじめる前に音量をたしかめてください。</p>
       </section>
@@ -529,11 +569,29 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
   <div class="rd-head">
     <button class="x" id="rdClose">✕</button>
     <span class="n mono" id="rdNo"></span>
+    <button class="listen hidden" id="btnListen">▶ 聞く</button>
   </div>
   <div class="rd-body" id="rdBody"></div>
-  <div class="rd-foot">
+  <div class="player hidden" id="player">
+    <div class="txt" id="plTxt"></div>
+    <div class="bar"><i id="plBar"></i></div>
+    <div class="row">
+      <button class="main" id="plPlay">⏸</button>
+      <button id="plBack">◀◀</button>
+      <button id="plFwd">▶▶</button>
+      <span class="sp"></span>
+      <button id="plRate">1.0×</button>
+      <button id="plCont" class="on">連続</button>
+      <button id="plVoice">声</button>
+    </div>
+  </div>
+  <div class="rd-foot" id="rdFoot">
     <button class="rd-check" id="rdCheck">学んだ</button>
     <button class="rd-next" id="rdNext">次へ ›</button>
+  </div>
+  <div class="rd-foot hidden" id="rdFootRev">
+    <button class="rd-next" id="rdVague" style="max-width:none">あやふや</button>
+    <button class="rd-check" id="rdGot">覚えていた</button>
   </div>
 </div>
 
@@ -563,7 +621,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 6;
+const VER = 7;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -678,6 +736,7 @@ const pad = n => String(n).padStart(2,'0');
 const fmt = s => pad(Math.floor(s/60)) + ':' + pad(Math.floor(s%60));
 
 function start(){
+  if(typeof plStop === 'function') plStop();
   const min = picked, total = min * 60;
   ensureAudio();
   clearScheduled();
@@ -1049,33 +1108,306 @@ const LESSONS = [
   <p class="src">Gollwitzer P. (1999) American Psychologist ／ Lally P. et al. (2010) European Journal of Social Psychology</p>` }
 ];
 
-let learned = [];
-try{ learned = JSON.parse(localStorage.getItem('med.learn.v1') || '[]'); }catch(e){ learned = []; }
-function saveLearned(){ try{ localStorage.setItem('med.learn.v1', JSON.stringify(learned)); }catch(e){} }
-const isLearned = id => learned.indexOf(id) >= 0;
+/* 学びの進み具合。
+   間隔をあけて読み直すほうが記憶に残る（分散学習）ので、
+   1日 → 3日 → 7日 → 16日 → 35日 とあけて復習を出す。ぜんぶ終えたら「身についた」。 */
+const STEPS = [1, 3, 7, 16, 35];
+let learn = {};
+try{ learn = JSON.parse(localStorage.getItem('med.learn2.v1') || 'null') || {}; }catch(e){ learn = {}; }
+function saveLearn(){ try{ localStorage.setItem('med.learn2.v1', JSON.stringify(learn)); }catch(e){} }
+(function migrate(){                      // v6 までの「読んだidの配列」から引き継ぐ
+  if(Object.keys(learn).length) return;
+  let old = [];
+  try{ old = JSON.parse(localStorage.getItem('med.learn.v1') || '[]'); }catch(e){}
+  if(!old.length) return;
+  const now = Date.now();
+  old.forEach(function(id){ learn[id] = { step: 0, last: now, next: now + STEPS[0] * DAY, times: 1 }; });
+  saveLearn();
+})();
+
+const stOf = id => learn[id] || null;
+const isDone = id => !!learn[id];
+const isMastered = id => !!learn[id] && learn[id].step >= STEPS.length;
+const isDue = id => !!learn[id] && !isMastered(id) && Date.now() >= learn[id].next;
+function dueList(){ return LESSONS.filter(function(L){ return isDue(L.id); }); }
+function doneCount(){ return LESSONS.filter(function(L){ return isDone(L.id); }).length; }
+function masterCount(){ return LESSONS.filter(function(L){ return isMastered(L.id); }).length; }
+
+function markRead(id){                    // はじめて読んだ
+  learn[id] = { step: 0, last: Date.now(), next: Date.now() + STEPS[0] * DAY, times: 1 };
+  saveLearn();
+}
+function markGot(id){                     // 復習で「覚えていた」
+  const r = learn[id]; if(!r) return markRead(id);
+  r.step = Math.min(r.step + 1, STEPS.length);
+  r.times = (r.times || 1) + 1;
+  r.last = Date.now();
+  r.next = Date.now() + (STEPS[Math.min(r.step, STEPS.length - 1)]) * DAY;
+  saveLearn();
+}
+function markVague(id){                   // 復習で「あやふや」
+  const r = learn[id]; if(!r) return markRead(id);
+  r.step = Math.max(0, r.step - 1);
+  r.times = (r.times || 1) + 1;
+  r.last = Date.now();
+  r.next = Date.now() + DAY;
+  saveLearn();
+}
+function reviewTimes(){
+  let n = 0;
+  LESSONS.forEach(function(L){ const r = learn[L.id]; if(r) n += (r.times || 1) - 1; });
+  return n;
+}
+function whenText(id){
+  if(!learn[id]) return '';
+  if(isMastered(id)) return '身についた';
+  if(isDue(id)) return '今日 復習';
+  const d = Math.ceil((learn[id].next - Date.now()) / DAY);
+  return d <= 1 ? 'あす 復習' : 'あと' + d + '日';
+}
 
 function renderLearn(){
+  const due = dueList(), done = doneCount(), mst = masterCount();
   $('lrnAll').textContent = LESSONS.length;
-  $('lrnDone').textContent = learned.length;
-  $('lrnBar').style.width = Math.max(1.5, 100 * learned.length / LESSONS.length) + '%';
+  $('lrnDone').textContent = mst;
+  $('lrnBar').style.width = Math.max(1.5, 100 * (mst + (done - mst) * 0.4) / LESSONS.length) + '%';
+  $('lrnMsg').textContent = due.length
+    ? '今日は ' + due.length + '本 の復習があります。読み直すと記憶に残りやすくなります。'
+    : (done < LESSONS.length
+        ? '瞑想について、研究で分かっていることを1つずつ読めます。1つ2〜3分。'
+        : (mst < LESSONS.length ? '新しく読むものはありません。復習の日を待ちましょう。'
+                                : 'ぜんぶ身につきました。いつでも読み返せます。'));
+  $('btnReview').textContent = due.length ? '今日の復習（' + due.length + '本）' : '復習はありません';
+  $('btnReview').disabled = due.length === 0;
+  const firstNew = LESSONS.filter(function(L){ return !isDone(L.id); })[0];
+  $('btnNextNew').textContent = firstNew ? 'まだ読んでいないもの' : 'ぜんぶ読みました';
+  $('btnNextNew').disabled = !firstNew;
+
   $('lrnList').innerHTML = LESSONS.map(function(L, i){
-    const on = isLearned(L.id);
-    return '<button class="lrn' + (on ? ' on' : '') + '" data-i="' + i + '">' +
+    const on = isDone(L.id), due2 = isDue(L.id), mst2 = isMastered(L.id);
+    return '<button class="lrn' + (on ? ' on' : '') + (due2 ? ' due' : '') + (mst2 ? ' mst' : '') + '" data-i="' + i + '">' +
       '<span class="no mono">' + (i + 1) + '</span>' +
       '<span class="ln"><span class="lt">' + L.n + '</span><span class="ld">' + L.d + '</span></span>' +
-      '<span class="lc">' + (on ? '✓' : '○') + '</span></button>';
+      (on ? '<span class="st">' + whenText(L.id) + '</span>' : '') +
+      '<span class="lc">' + (mst2 ? '★' : (on ? '✓' : '○')) + '</span></button>';
   }).join('');
+
+  const t = document.querySelector('.tab[data-tab="learn"]');
+  t.innerHTML = '学ぶ' + (due.length ? '<span class="tabdot">' + due.length + '</span>' : '');
 }
 $('lrnList').addEventListener('click', function(e){
   const b = e.target.closest('.lrn'); if(!b) return;
-  openLesson(parseInt(b.dataset.i, 10));
+  const i = parseInt(b.dataset.i, 10);
+  openLesson(i, isDue(LESSONS[i].id) ? 'review' : 'read');
+  if(plOn) plStart();
+});
+$('btnReview').addEventListener('click', function(){
+  const d = dueList(); if(!d.length) return;
+  openLesson(LESSONS.indexOf(d[0]), 'review');
+});
+$('btnNextNew').addEventListener('click', function(){
+  const n = LESSONS.filter(function(L){ return !isDone(L.id); })[0]; if(!n) return;
+  openLesson(LESSONS.indexOf(n), 'read');
 });
 
-let curLesson = 0;
-function openLesson(i){
-  curLesson = i;
+/* ───────── 聞く（端末の音声で読み上げ） ─────────
+   iPhone/Mac に入っている日本語の声を使う（Kyoko＝女性 を優先）。
+   長い文章を一度に渡すと途中で止まる端末があるので、文ごとに分けて順に読ませる。 */
+const SYN = window.speechSynthesis || null;
+let voices = [], vSel = null, plOn = false, plPause = false, plQ = [], plI = 0, plU = null;
+let plRate = parseFloat(localStorage.getItem('med.rate.v1') || '1') || 1;
+let plCont = localStorage.getItem('med.cont.v1') !== 'off';
+
+function pickVoice(){
+  if(!SYN) return;
+  const all = SYN.getVoices() || [];
+  voices = all.filter(function(v){ return /^ja/i.test(v.lang) || /japan/i.test(v.name); });
+  const saved = localStorage.getItem('med.voice.v1');
+  vSel = voices.filter(function(v){ return v.name === saved; })[0]
+      || voices.filter(function(v){ return /kyoko/i.test(v.name); })[0]
+      || voices.filter(function(v){ return /o-?ren|sayaka|haruka|nanami|mizuki|ayumi/i.test(v.name); })[0]
+      || voices[0] || null;
+}
+if(SYN){
+  pickVoice();
+  SYN.onvoiceschanged = function(){ pickVoice(); };
+  setTimeout(pickVoice, 400);
+}
+
+function plainText(html){
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  return (d.textContent || '').replace(/\s+/g, ' ').trim();
+}
+function toSentences(t){
+  const m = t.match(/[^。！？]+[。！？]?/g) || [];
+  const out = [];
+  m.forEach(function(x){
+    x = x.trim();
+    if(!x) return;
+    // 長すぎる文は読点でも切る（途中で止まるのを防ぐ）
+    if(x.length > 60){
+      const parts = x.split('、');
+      let buf = '';
+      parts.forEach(function(pp, k){
+        buf += pp + (k < parts.length - 1 ? '、' : '');
+        if(buf.length > 34){ out.push(buf); buf = ''; }
+      });
+      if(buf) out.push(buf);
+    }else out.push(x);
+  });
+  return out;
+}
+function lessonSpeech(L){
+  const t = [];
+  t.push(L.n + '。');
+  t.push(L.d + '。');
+  t.push('図の説明。' + L.cap + '。');
+  toSentences(plainText(L.body)).forEach(function(x){ t.push(x); });
+  t.push('研究のはなしです。');
+  toSentences(plainText(L.ref)).forEach(function(x){ t.push(x); });
+  return t;
+}
+
+function plShow(){
+  $('player').classList.remove('hidden');
+  $('btnListen').classList.add('on');
+  $('btnListen').textContent = '■ 止める';
+  $('plRate').textContent = plRate.toFixed(1) + '×';
+  $('plCont').classList.toggle('on', plCont);
+}
+function plHide(){
+  $('player').classList.add('hidden');
+  $('btnListen').classList.remove('on');
+  $('btnListen').textContent = '▶ 聞く';
+}
+function plStop(){
+  plOn = false; plPause = false; plU = null;
+  try{ if(SYN) SYN.cancel(); }catch(e){}
+  releaseScreen();
+  plHide();
+}
+function plStart(){
+  if(!SYN) return;
+  try{ SYN.cancel(); }catch(e){}
+  plQ = lessonSpeech(LESSONS[curLesson]);
+  plI = 0; plOn = true; plPause = false;
+  plShow(); keepScreen();
+  plSay();
+}
+function plSay(){
+  if(!plOn || plI >= plQ.length) return plDone();
+  const u = new SpeechSynthesisUtterance(plQ[plI]);
+  if(vSel) u.voice = vSel;
+  u.lang = (vSel && vSel.lang) || 'ja-JP';
+  u.rate = plRate; u.pitch = 1; u.volume = 1;
+  u.onend = function(){
+    if(!plOn || plPause) return;
+    plI++;
+    if(plI < plQ.length) plSay(); else plDone();
+  };
+  u.onerror = function(e){
+    if(!plOn || plPause) return;
+    if(e && e.error === 'interrupted') return;
+    plI++;
+    if(plI < plQ.length) setTimeout(plSay, 120); else plDone();
+  };
+  plU = u;
+  $('plTxt').textContent = plQ[plI];
+  $('plBar').style.width = (100 * plI / Math.max(1, plQ.length - 1)) + '%';
+  try{ SYN.speak(u); }catch(err){ plStop(); }
+}
+function plDone(){
+  $('plBar').style.width = '100%';
+  if(plCont && curLesson < LESSONS.length - 1){
+    $('plTxt').textContent = 'つぎの話に進みます…';
+    setTimeout(function(){
+      if(!plOn) return;
+      openLesson(curLesson + 1, isDue(LESSONS[curLesson + 1].id) ? 'review' : 'read');
+      plStart();
+    }, 1400);
+  }else{
+    $('plTxt').textContent = 'おわりです。';
+    plOn = false;
+    setTimeout(function(){ if(!plOn){ releaseScreen(); plHide(); } }, 2500);
+  }
+}
+
+$('btnListen').addEventListener('click', function(){
+  if(plOn || !$('player').classList.contains('hidden')) plStop();
+  else plStart();
+});
+$('plPlay').addEventListener('click', function(){
+  if(!SYN || !plOn) return;
+  if(plPause){
+    plPause = false; $('plPlay').textContent = '⏸';
+    plSay();                                   // 止めた文から読み直す（iPhone の resume は不安定）
+  }else{
+    plPause = true; $('plPlay').textContent = '▶';
+    try{ SYN.cancel(); }catch(e){}
+  }
+});
+$('plBack').addEventListener('click', function(){
+  if(!plOn) return;
+  plI = Math.max(0, plI - 1); plPause = false; $('plPlay').textContent = '⏸';
+  try{ SYN.cancel(); }catch(e){}
+  setTimeout(plSay, 100);
+});
+$('plFwd').addEventListener('click', function(){
+  if(!plOn) return;
+  plI = Math.min(plQ.length - 1, plI + 1); plPause = false; $('plPlay').textContent = '⏸';
+  try{ SYN.cancel(); }catch(e){}
+  setTimeout(plSay, 100);
+});
+$('plRate').addEventListener('click', function(){
+  const list = [0.8, 0.9, 1.0, 1.1, 1.2, 1.4];
+  let k = list.indexOf(Math.round(plRate * 10) / 10);
+  plRate = list[(k + 1) % list.length];
+  localStorage.setItem('med.rate.v1', String(plRate));
+  $('plRate').textContent = plRate.toFixed(1) + '×';
+  if(plOn && !plPause){ try{ SYN.cancel(); }catch(e){} setTimeout(plSay, 100); }
+});
+$('plCont').addEventListener('click', function(){
+  plCont = !plCont;
+  localStorage.setItem('med.cont.v1', plCont ? 'on' : 'off');
+  $('plCont').classList.toggle('on', plCont);
+  toast(plCont ? '最後まで続けて読みます' : 'この話だけ読みます');
+});
+$('plVoice').addEventListener('click', function(){
+  pickVoice();
+  const sh = document.createElement('div');
+  sh.className = 'sheet';
+  const rows = voices.length
+    ? voices.map(function(v, i){
+        return '<div class="vrow' + (vSel && v.name === vSel.name ? ' now' : '') + '" data-i="' + i + '">' +
+          '<span>' + v.name + '</span><span class="try">これにする</span></div>';
+      }).join('')
+    : '<div class="vrow">この端末には日本語の声が入っていません</div>';
+  sh.innerHTML = '<div class="box"><h3>声をえらぶ</h3>' +
+    '<p>端末に入っている日本語の声です。iPhone なら Kyoko が女性の声です。' +
+    '（設定 → アクセシビリティ → 読み上げコンテンツ → 声 から、きれいな声を追加できます）</p>' +
+    '<div class="vlist">' + rows + '</div>' +
+    '<div class="btns"><button class="no">とじる</button></div></div>';
+  document.body.appendChild(sh);
+  sh.addEventListener('click', function(e){
+    const r = e.target.closest('.vrow');
+    if(r && r.dataset.i !== undefined){
+      vSel = voices[parseInt(r.dataset.i, 10)];
+      localStorage.setItem('med.voice.v1', vSel.name);
+      sh.remove();
+      toast(vSel.name + ' にしました');
+      if(plOn && !plPause){ try{ SYN.cancel(); }catch(e2){} setTimeout(plSay, 120); }
+      return;
+    }
+    if(e.target.classList.contains('no') || e.target === sh) sh.remove();
+  });
+});
+
+let curLesson = 0, curMode = 'read';
+function openLesson(i, mode){
+  curLesson = i; curMode = mode || 'read';
   const L = LESSONS[i];
-  $('rdNo').textContent = (i + 1) + ' / ' + LESSONS.length;
+  $('rdNo').textContent = (i + 1) + ' / ' + LESSONS.length + (curMode === 'review' ? '　復習' : '');
   $('rdBody').innerHTML =
     '<p class="lead">' + L.d + '</p>' +
     '<h2>' + L.n + '</h2>' +
@@ -1084,25 +1416,45 @@ function openLesson(i){
     '<div class="ref"><h3>研究のはなし</h3>' + L.ref + '</div>';
   $('rdBody').scrollTop = 0;
   $('rdNext').textContent = (i < LESSONS.length - 1) ? '次へ ›' : 'おわり';
+  $('rdFoot').classList.toggle('hidden', curMode === 'review');
+  $('btnListen').classList.toggle('hidden', !SYN);
+  $('rdFootRev').classList.toggle('hidden', curMode !== 'review');
   markCheck();
   $('reader').classList.remove('hidden');
 }
 function markCheck(){
-  const on = isLearned(LESSONS[curLesson].id);
+  const on = isDone(LESSONS[curLesson].id);
   $('rdCheck').classList.toggle('on', on);
-  $('rdCheck').textContent = on ? '✓ 学んだ' : '学んだ';
+  $('rdCheck').textContent = on ? (isMastered(LESSONS[curLesson].id) ? '★ 身についた' : '✓ ' + whenText(LESSONS[curLesson].id)) : '学んだ';
 }
 $('rdCheck').addEventListener('click', function(){
   const id = LESSONS[curLesson].id;
-  if(isLearned(id)) learned = learned.filter(function(x){ return x !== id; });
-  else { learned.push(id); toast('チェックをつけました'); }
-  saveLearned(); markCheck(); renderLearn(); renderTop();
+  if(isDone(id)){ delete learn[id]; saveLearn(); }
+  else { markRead(id); toast('チェックをつけました。' + STEPS[0] + '日後に復習が出ます'); }
+  markCheck(); renderLearn(); renderTop();
+});
+function afterReview(){
+  renderLearn(); renderTop();
+  const d = dueList();
+  if(d.length){ openLesson(LESSONS.indexOf(d[0]), 'review'); if(plOn) plStart(); }
+  else { plStop(); $('reader').classList.add('hidden'); toast('今日の復習はおしまいです'); }
+}
+$('rdGot').addEventListener('click', function(){
+  const id = LESSONS[curLesson].id;
+  markGot(id);
+  toast(isMastered(id) ? '身につきました' : '次は ' + whenText(id).replace('あと', '') + '後に出ます');
+  afterReview();
+});
+$('rdVague').addEventListener('click', function(){
+  markVague(LESSONS[curLesson].id);
+  toast('あすもう一度出ます');
+  afterReview();
 });
 $('rdNext').addEventListener('click', function(){
-  if(curLesson < LESSONS.length - 1) openLesson(curLesson + 1);
-  else { $('reader').classList.add('hidden'); renderLearn(); }
+  if(curLesson < LESSONS.length - 1){ openLesson(curLesson + 1, 'read'); if(plOn) plStart(); }
+  else { plStop(); $('reader').classList.add('hidden'); renderLearn(); }
 });
-$('rdClose').addEventListener('click', function(){ $('reader').classList.add('hidden'); renderLearn(); });
+$('rdClose').addEventListener('click', function(){ plStop(); $('reader').classList.add('hidden'); renderLearn(); });
 
 /* ───────── レベル・称号・しるし ───────── */
 /* 経験値：1分=10 ／ 1回=20 ／ その日の分に「続けている日数×5」（最大100）
@@ -1144,7 +1496,9 @@ const BADGES = [
   { id:'morn',  n:'朝の人',      d:'朝5〜9時に瞑想した',   f:function(s){ return s.morning; } },
   { id:'night', n:'夜の人',      d:'夜10時すぎに瞑想した', f:function(s){ return s.night; } },
   { id:'lrn1',  n:'学びはじめ',  d:'学ぶを1つ読んだ',      f:function(s){ return s.learned >= 1; } },
-  { id:'lrnAll',n:'物知り',      d:'学ぶをぜんぶ読んだ',   f:function(s){ return s.learned >= LESSONS.length; } }
+  { id:'lrnAll',n:'物知り',      d:'学ぶをぜんぶ読んだ',   f:function(s){ return s.learned >= LESSONS.length; } },
+  { id:'rev10', n:'おさらい上手', d:'復習を10回した',       f:function(s){ return s.reviews >= 10; } },
+  { id:'mstAll',n:'身についた',   d:'学ぶをぜんぶ身につけた', f:function(s){ return s.mastered >= LESSONS.length; } }
 ];
 function gotIds(s){
   const out = [];
@@ -1339,7 +1693,7 @@ function stats(list){
 
   return { todayMin: todayMin, totalMin: totalMin, days: days, streak: streak,
            count: list.length, maxMin: maxMin, morning: morning, night: night,
-           best: best, xp: xp, lv: levelOf(xp), learned: learned.length };
+           best: best, xp: xp, lv: levelOf(xp), learned: doneCount(), mastered: masterCount(), reviews: reviewTimes() };
 }
 
 function renderTop(){
@@ -1486,6 +1840,7 @@ $('btnBackup').addEventListener('click', function(){
 /* ───────── 起動 ───────── */
 renderPick();
 renderTop();
+renderLearn();
 setTab('home');
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });

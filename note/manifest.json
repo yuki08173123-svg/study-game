@@ -1,14 +1,14 @@
 {
   "name": "ReNote",
   "short_name": "ReNote",
-  "description": "学んだことを1件ずつ書き留めて、毎日振り返るメモアプリ",
+  "description": "学んだことをフォルダに分けて書き留め、あとから振り返るメモアプリ",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f6f4ef",
-  "theme_color": "#f6f4ef",
+  "background_color": "#f6f5f2",
+  "theme_color": "#f6f5f2",
   "icons": [
     {
       "src": "icon-192.png",

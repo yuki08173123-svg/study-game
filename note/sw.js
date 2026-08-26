@@ -2,7 +2,7 @@
    ほうしん:「ネットワーク優先」。まずネットから最新をとり、とれたものをキャッシュに控える。
    ネットがないときだけキャッシュで動く。キャッシュを先に見る方式にすると
    「直したのに古い画面が出る」事故になるので、ぜったいにしない。 */
-const VER = 'mn-v4';
+const VER = 'mn-v5';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {

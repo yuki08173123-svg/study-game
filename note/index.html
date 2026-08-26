@@ -184,6 +184,30 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .addbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
   border:1px dashed var(--line2);border-radius:13px;padding:13px;color:var(--ink2);
   font-weight:600;font-size:.87rem;background:var(--surf);letter-spacing:.03em}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.pcell{position:relative;aspect-ratio:1;background:var(--surf2);overflow:hidden;
+  border-radius:8px;transition:opacity .12s}
+.pcell:active{opacity:.7}
+.pcell img{width:100%;height:100%;object-fit:cover;display:block}
+.pdate{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 4px;color:#fff;font-size:.6rem;
+  font-weight:700;letter-spacing:.03em;background:linear-gradient(transparent,rgba(0,0,0,.5))}
+
+.gal{position:fixed;inset:0;z-index:300;background:#0b0c0f;display:flex;flex-direction:column}
+.gal .gbar{display:flex;align-items:center;justify-content:space-between;color:#fff;
+  padding:calc(10px + env(safe-area-inset-top)) 8px 8px}
+.gal .gbar button{width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;color:#fff}
+.gal .gct{font-size:.82rem;font-weight:700;letter-spacing:.06em;font-variant-numeric:tabular-nums;opacity:.85}
+.gal .track{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none}
+.gal .track::-webkit-scrollbar{display:none}
+.gal .fr{flex:0 0 100%;scroll-snap-align:center;display:flex;align-items:center;
+  justify-content:center;padding:6px 10px}
+.gal .fr img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+.gal .gfoot{padding:14px 18px calc(20px + env(safe-area-inset-bottom));text-align:center}
+.gal .gfoot button{color:#fff;background:rgba(255,255,255,.14);border-radius:12px;
+  padding:12px 22px;font-size:.88rem;font-weight:700;letter-spacing:.04em}
+
 .viewer{position:fixed;inset:0;z-index:300;background:rgba(10,11,14,.97);
   display:flex;align-items:center;justify-content:center;padding:18px}
 .viewer img{max-width:100%;max-height:84vh;border-radius:8px;object-fit:contain}
@@ -279,7 +303,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 10;
+const VER = 11;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -401,6 +425,16 @@ async function imgUrl(id){
   if(!b) return '';
   const u = URL.createObjectURL(b); urlCache.set(id, u); return u;
 }
+let _io = null;
+function lazyImgs(root){        // 画面に入った写真だけ読み込む
+  if(!_io) _io = new IntersectionObserver(es => es.forEach(async e => {
+    if(!e.isIntersecting) return;
+    const el = e.target; _io.unobserve(el);
+    const u = await imgUrl(el.dataset.img);
+    if(u) el.src = u;
+  }), { rootMargin:'300px' });
+  (root || document).querySelectorAll('img[data-img]:not([src])').forEach(el => _io.observe(el));
+}
 async function fillImgs(root){
   for(const el of (root || document).querySelectorAll('img[data-img]:not([src])')){
     const u = await imgUrl(el.dataset.img);
@@ -439,6 +473,43 @@ async function sweepImgs(){
     for(const k of keys) if(!used.has(k)) await delImg(k);
   }catch(e){}
 }
+function openGallery(items, start){
+  if(!items.length) return;
+  let i = Math.max(0, Math.min(items.length - 1, start || 0));
+  const host = $('#host');
+  host.innerHTML = `<div class="gal">
+      <div class="gbar">
+        <button data-gclose>${ICO.x({s:20,w:2.1})}</button>
+        <span class="gct" id="gct">${i+1} / ${items.length}</span>
+        <span style="width:42px"></span>
+      </div>
+      <div class="track" id="gtrack">
+        ${items.map(x => `<div class="fr"><img data-img="${x.id}" alt=""></div>`).join('')}
+      </div>
+      <div class="gfoot">${items[0].nid ? `<button id="gopen">このメモを開く</button>` : ''}</div>
+    </div>`;
+  const track = $('#gtrack');
+  const near = async () => {                       // 前後2枚だけ先に読み込む
+    for(let k = Math.max(0,i-2); k <= Math.min(items.length-1, i+2); k++){
+      const el = track.children[k].querySelector('img');
+      if(!el.getAttribute('src')){ const u = await imgUrl(items[k].id); if(u) el.src = u; }
+    }
+  };
+  const jump = () => { track.scrollLeft = track.clientWidth * i; };
+  near().then(() => requestAnimationFrame(jump));
+  track.addEventListener('scroll', () => {
+    clearTimeout(track._t);
+    track._t = setTimeout(() => {
+      i = Math.round(track.scrollLeft / track.clientWidth);
+      $('#gct').textContent = (i+1) + ' / ' + items.length;
+      near();
+    }, 70);
+  }, { passive:true });
+  $('#host [data-gclose]').onclick = () => host.innerHTML = '';
+  const go2 = $('#gopen');
+  if(go2) go2.onclick = () => { const nid = items[i].nid; host.innerHTML = ''; if(nid) go('note', { nid }); };
+}
+
 function openViewer(src){
   const host = $('#host');
   host.innerHTML = `<div class="viewer"><button class="close">${ICO.x({s:19,w:2.2})}</button><img src="${src}" alt=""></div>`;
@@ -506,7 +577,7 @@ function renderHome(){
     </div>`;
   $$('#main [data-open]').forEach(b => b.onclick = () => {
     const v = b.dataset.open;
-    go('list', { fid: v === '*' ? null : v, q:'' });
+    go('list', { fid: v === '*' ? null : v, q:'', view:'list' });
   });
   $('#main [data-newfolder]').onclick = () => folderSheet(null);
   const ro = $('#main [data-reorder]');
@@ -533,18 +604,41 @@ function inScope(){
   const a = live();
   return S.fid === null ? a : a.filter(n => n.fid === S.fid);
 }
+function photosInScope(){
+  const out = [];
+  inScope().slice().sort((x,y) => y.cre - x.cre)
+    .forEach(n => (n.imgs || []).forEach(id => out.push({ id, nid:n.id, cre:n.cre })));
+  return out;
+}
 function renderList(){
   const f = S.fid ? folderOf(S.fid) : null;
   bar(btnBack(), esc(listTitle()),
     f ? `<button class="tbtn" data-editfolder>編集</button>` : '');
+  const pics = photosInScope();
+  const photoView = S.view === 'photos' && pics.length;
   $('#main').innerHTML = `
-    <div class="search">${ICO.search({s:17,w:2})}<input id="q" placeholder="このフォルダ内を検索" value="${esc(S.q)}" autocomplete="off"></div>
+    ${pics.length ? `<div class="seg" id="vsw" style="margin-bottom:12px">
+      <button data-v="list" class="${photoView?'':'on'}">メモ ${inScope().length}</button>
+      <button data-v="photos" class="${photoView?'on':''}">写真 ${pics.length}</button>
+    </div>` : ''}
+    ${photoView ? `<div class="pgrid" id="pgrid">${pics.map((x,i) =>
+        `<button class="pcell" data-p="${i}"><img data-img="${x.id}" alt=""><span class="pdate">${fmtDate(x.cre)}</span></button>`).join('')}</div>`
+      : `<div class="search">${ICO.search({s:17,w:2})}<input id="q" placeholder="${f ? 'このフォルダ内を検索' : 'キーワードで検索'}" value="${esc(S.q)}" autocomplete="off"></div>
     <div class="seg" id="sort">
       <button data-s="new" class="${S.sort==='new'?'on':''}">新しい順</button>
       <button data-s="old" class="${S.sort==='old'?'on':''}">古い順</button>
       <button data-s="rev" class="${S.sort==='rev'?'on':''}">未確認順</button>
     </div>
-    <div id="notelist" style="margin-top:14px"></div>`;
+    <div id="notelist" style="margin-top:14px"></div>`}`;
+
+  $$('#vsw button').forEach(b => b.onclick = () => { S.view = b.dataset.v; render(); });
+  if(photoView){
+    lazyImgs($('#pgrid'));
+    $$('#pgrid [data-p]').forEach(b => b.onclick = () => openGallery(pics, +b.dataset.p));
+    const ef0 = $('#tbar [data-editfolder]');
+    if(ef0) ef0.onclick = () => folderSheet(f);
+    return;
+  }
   $('#q').oninput = e => { S.q = e.target.value; paintNotes(); };
   $$('#sort button').forEach(b => b.onclick = () => {
     S.sort = b.dataset.s;
@@ -621,7 +715,8 @@ function renderNote(){
     </div>`;
   $('#tbar [data-edit]').onclick = () => startEdit(n.id);
   $$('#main [data-a]').forEach(b => b.onclick = () => noteAct(b.dataset.a, n));
-  $$('#main .thumb').forEach(t => t.onclick = () => { const i = t.querySelector('img'); if(i.src) openViewer(i.src); });
+  $$('#main .thumb').forEach((t, k) => t.onclick = () =>
+    openGallery((n.imgs||[]).map(id => ({ id })), k));
 }
 function noteAct(a, n){
   if(a === 'star'){ n.star = !n.star; n.upd = now(); saveNotes(); render(); toast(n.star ? '重要にしました' : '重要をはずしました'); }
@@ -1229,8 +1324,11 @@ function boot(){
 
   addEventListener('scroll', () => $('#top').classList.toggle('scrolled', scrollY > 4), { passive:true });
   document.addEventListener('click', e => {
-    const t = e.target.closest('#notelist .thumb, .rev .thumb');
-    if(t){ const i = t.querySelector('img'); if(i && i.src) openViewer(i.src); }
+    const t = e.target.closest('.rev .thumb');
+    if(!t) return;
+    const wrap = t.parentElement;
+    const ids = [...wrap.querySelectorAll('.thumb')].map(x => ({ id:x.dataset.t }));
+    openGallery(ids, ids.findIndex(x => x.id === t.dataset.t));
   });
 
   go('home');

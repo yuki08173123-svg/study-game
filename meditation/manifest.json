@@ -1,6 +1,6 @@
 {
-  "name": "マインドレスト",
-  "short_name": "マインドレスト",
+  "name": "Mindrest",
+  "short_name": "Mindrest",
   "description": "1分・3分・5分・10分の瞑想。終わりに鐘が鳴り、ひとことを添えて記録できます。",
   "lang": "ja",
   "start_url": "./",

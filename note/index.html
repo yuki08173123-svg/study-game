@@ -208,6 +208,8 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .b-ok{background:var(--ok-soft);color:var(--ok)}
 .b-ng{background:var(--ng-soft);color:var(--ng)}
 .b-show{background:var(--pri);color:var(--on-pri)}
+.b-sub{background:var(--surf2);color:var(--ink2)}
+.b-sub[disabled]{opacity:.35}
 
 /* ---------- そのほか ---------- */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
@@ -277,7 +279,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 8;
+const VER = 9;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -722,7 +724,7 @@ function doSave(){
 }
 
 /* ===================== 振り返り ===================== */
-let revQ = [], revI = 0, revOk = 0, revNg = 0, revOpen = false;
+let revQ = [], revI = 0, revOk = 0, revNg = 0, revOpen = false, revMode = 'quiz';
 
 function pickReview(k){
   const pool = live();
@@ -761,10 +763,15 @@ function renderReview(){
           <div class="stat"><b>${L.filter(x => x.revAt && daysAgo(x.revAt) >= 14).length}</b><span>2週間以上</span></div>
         </div>
       </div>
-      <button class="btn pri" id="start" style="margin-top:14px">はじめる</button>`;
-    if(done) $('#again').onclick = startRev;
+      <button class="btn pri" id="start" style="margin-top:14px">はじめる</button>
+      <button class="btn sec" id="shuffle" style="margin-top:10px">シャッフル</button>
+      <div class="note-txt" style="margin:10px 4px 0">
+        シャッフルは、${L.length}件すべてをランダムな順に1件ずつ見ていくだけの機能です。
+        覚えているかどうかは記録されません。</div>`;
+    if(done) $('#again').onclick = () => startRev(revMode);
     else{
-      $('#start').onclick = startRev;
+      $('#start').onclick = () => startRev('quiz');
+      $('#shuffle').onclick = () => startRev('shuffle');
       $$('#revn button').forEach(b => b.onclick = () => {
         cfg.revN = +b.dataset.k; saveCfg();
         $$('#revn button').forEach(x => x.classList.toggle('on', x === b));
@@ -777,6 +784,29 @@ function renderReview(){
   const lead = lines[0] || '（写真のみ）';
   const rest = lines.slice(1).join('\n').trim();
   const imgs = n.imgs || [];
+
+  if(revMode === 'shuffle'){
+    const f = n.fid ? folderOf(n.fid) : null;
+    const last = revI >= revQ.length - 1;
+    $('#main').innerHTML = `
+      <div class="rev">
+        <div class="step">シャッフル　${revI+1} / ${revQ.length}</div>
+        <div class="when">${f ? esc(f.name) + '　' : ''}${fmtDate(n.cre)}</div>
+        <div class="lead">${esc(lead)}</div>
+        <div class="rest">${esc(rest)}</div>
+        <div class="thumbs" style="margin-top:14px">${thumbsHtml(imgs)}</div>
+        <div class="acts">
+          <button class="b-sub" id="sprev" ${revI === 0 ? 'disabled' : ''}>前へ</button>
+          <button class="b-show" id="snext2">${last ? '終わる' : '次へ'}</button>
+        </div>
+      </div>
+      <button class="btn sec" id="rquit" style="margin-top:12px">やめる</button>`;
+    fillImgs($('#main'));
+    $('#sprev').onclick = () => { if(revI > 0){ revI--; render(); } };
+    $('#snext2').onclick = () => { if(last){ revQ = []; revI = 0; } else revI++; render(); };
+    $('#rquit').onclick = () => { revQ = []; revI = 0; render(); };
+    return;
+  }
   const hasMore = !!(rest || imgs.length);
   const veiled = hasMore && !revOpen;
   $('#main').innerHTML = `
@@ -797,8 +827,16 @@ function renderReview(){
   else{ $('#rok').onclick = () => revAnswer(true); $('#rng').onclick = () => revAnswer(false); }
   $('#rquit').onclick = () => { revQ = []; revI = 0; saveNotes(); render(); };
 }
-function startRev(){
-  revQ = pickReview(cfg.revN); revI = 0; revOk = 0; revNg = 0; revOpen = false;
+function startRev(mode){
+  revMode = mode || 'quiz';
+  if(revMode === 'shuffle'){
+    const pool = live().slice();
+    for(let i = pool.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [pool[i],pool[j]] = [pool[j],pool[i]]; }
+    revQ = pool;
+  }else{
+    revQ = pickReview(cfg.revN);
+  }
+  revI = 0; revOk = 0; revNg = 0; revOpen = false;
   if(!revQ.length){ toast('メモがありません'); return; }
   render();
 }

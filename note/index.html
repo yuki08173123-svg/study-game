@@ -80,14 +80,18 @@ main{max-width:620px;margin:0 auto;padding:4px 18px calc(var(--tabh) + 48px + en
 .labelrow .label{margin-bottom:9px}
 .linkbtn{font-size:.78rem;font-weight:700;color:var(--ink2);padding:4px 6px 9px;letter-spacing:.03em}
 .linkbtn:active{opacity:.5}
-.rrow{display:flex;align-items:center;gap:12px;padding:11px 14px;min-height:54px;position:relative}
+.rlist{position:relative;background:var(--surf);border:1px solid var(--line);
+  border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.rrow{display:flex;align-items:center;gap:12px;padding:13px 14px;height:58px;position:relative;
+  background:var(--surf);transition:transform .18s cubic-bezier(.2,.9,.3,1)}
 .rrow + .rrow::before{content:'';position:absolute;left:51px;right:0;top:0;height:1px;background:var(--line)}
-.rrow .nm{flex:1;font-size:.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rrow .ct{font-size:.8rem;color:var(--ink3);margin-right:2px}
-.arrow{width:36px;height:36px;border-radius:10px;background:var(--surf2);color:var(--ink2);
-  display:flex;align-items:center;justify-content:center;transition:.12s}
-.arrow:active{opacity:.5}
-.arrow[disabled]{opacity:.25}
+.rrow .nm{flex:1;font-size:.97rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow .ct{font-size:.82rem;color:var(--ink3)}
+.grip{width:42px;height:42px;margin-right:-8px;color:var(--ink3);display:flex;
+  align-items:center;justify-content:center;touch-action:none;cursor:grab}
+.rrow.lift{transition:none;z-index:6;box-shadow:0 12px 28px rgba(23,24,28,.20);border-radius:12px}
+.rrow.lift::before,.rrow.lift + .rrow::before{opacity:0}
+.rrow.lift .grip{color:var(--ink)}
 .group{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
   overflow:hidden;box-shadow:var(--shadow)}
 .item{display:flex;align-items:center;gap:13px;padding:14px 15px;min-height:56px;
@@ -246,16 +250,16 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
   -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none;margin:0 -18px}
 .slides::-webkit-scrollbar{display:none}
 .slide{flex:0 0 100%;scroll-snap-align:center;padding:0 18px}
-.slide .badge{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;
+.slide .badge{width:56px;height:56px;border-radius:17px;display:flex;align-items:center;
   justify-content:center;margin-bottom:16px}
-.slide h4{font-family:var(--serif);font-size:1.3rem;font-weight:600;letter-spacing:.04em;margin:0 0 4px}
-.slide .sub{font-size:.72rem;font-weight:700;letter-spacing:.1em;margin-bottom:14px}
-.slide p{margin:0 0 10px;font-size:.9rem;line-height:1.95;color:var(--ink2)}
-.slide .kv{display:flex;gap:10px;align-items:flex-start;background:var(--surf);border:1px solid var(--line);
-  border-radius:12px;padding:12px 13px;margin-top:10px;box-shadow:var(--shadow)}
-.slide .kv b{font-size:.84rem;font-weight:700;display:block;margin-bottom:1px}
-.slide .kv span{font-size:.79rem;color:var(--ink2);line-height:1.7}
-.slide .kv .n{font-family:var(--serif);font-size:.95rem;width:20px;flex:none;text-align:center;opacity:.55}
+.slide h4{font-family:var(--serif);font-size:1.62rem;font-weight:600;letter-spacing:.04em;margin:0 0 6px}
+.slide .sub{font-size:.76rem;font-weight:700;letter-spacing:.12em;margin-bottom:14px}
+.slide p{margin:0 0 12px;font-size:1.02rem;line-height:1.95;color:var(--ink2)}
+.slide .kv{display:flex;gap:11px;align-items:flex-start;background:var(--surf);border:1px solid var(--line);
+  border-radius:13px;padding:14px 15px;margin-top:11px;box-shadow:var(--shadow)}
+.slide .kv b{font-size:1rem;font-weight:700;display:block;margin-bottom:3px;letter-spacing:.01em}
+.slide .kv span{font-size:.93rem;color:var(--ink2);line-height:1.8}
+.slide .kv .n{font-family:var(--serif);font-size:1.05rem;width:22px;flex:none;text-align:center;opacity:.5}
 .dots{display:flex;justify-content:center;gap:7px;margin:20px 0 16px}
 .dots i{width:6px;height:6px;border-radius:50%;background:var(--line2);transition:.25s}
 .dots i.on{background:var(--ink);width:20px;border-radius:3px}
@@ -273,7 +277,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 7;
+const VER = 8;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -306,6 +310,7 @@ const ICO = {
   book:   o => svg('<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>', o),
   info:   o => svg('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>', o),
   check:  o => svg('<path d="m20 6-11 11-5-5"/>', o),
+  grip:   o => svg('<path d="M4 9h16M4 15h16"/>', o),
   chevU:  o => svg('<path d="m18 15-6-6-6 6"/>', o),
   chevD:  o => svg('<path d="m6 9 6 6 6-6"/>', o),
 };
@@ -911,28 +916,75 @@ function folderSheet(f, onCreate){
   });
 }
 function reorderSheet(){
-  const paint = () => {
-    $('#rlist').innerHTML = folders.map((f,i) => `<div class="rrow">
-        <span class="ic" style="width:26px;display:flex;justify-content:center;color:${f.color}">${ICO.folderFill({s:20})}</span>
-        <span class="nm">${esc(f.name)}</span>
-        <span class="ct">${countIn(f.id)}</span>
-        <button class="arrow" data-up="${i}" ${i===0?'disabled':''}>${ICO.chevU({s:18,w:2.1})}</button>
-        <button class="arrow" data-down="${i}" ${i===folders.length-1?'disabled':''}>${ICO.chevD({s:18,w:2.1})}</button>
-      </div>`).join('');
-    $$('#rlist [data-up]').forEach(b => b.onclick = () => swap(+b.dataset.up, -1));
-    $$('#rlist [data-down]').forEach(b => b.onclick = () => swap(+b.dataset.down, 1));
-  };
-  const swap = (i, d) => {
-    const j = i + d;
-    if(j < 0 || j >= folders.length) return;
-    const t = folders[i]; folders[i] = folders[j]; folders[j] = t;
-    saveFolders(); paint();
-  };
+  const rowHtml = (f) => `<div class="rrow" data-id="${f.id}">
+      <span class="ic" style="width:26px;display:flex;justify-content:center;color:${f.color}">${ICO.folderFill({s:20})}</span>
+      <span class="nm">${esc(f.name)}</span>
+      <span class="ct">${countIn(f.id)}</span>
+      <span class="grip">${ICO.grip({s:20,w:2})}</span>
+    </div>`;
+
   sheet(`<h3>フォルダの並べ替え</h3>
-    <div class="note-txt" style="margin:-8px 2px 14px">矢印で順番を入れかえます。ホームの並びがそのまま変わります。</div>
-    <div class="group" id="rlist"></div>
+    <div class="note-txt" style="margin:-8px 2px 16px">右の ≡ をつまんだまま、動かしたい位置まで指を上下に滑らせてください。</div>
+    <div class="rlist" id="rlist">${folders.map(rowHtml).join('')}</div>
     <button class="btn pri" id="rdone" style="margin-top:18px">完了</button>`, close => {
-    paint();
+
+    const list = $('#rlist');
+    let rows = [...list.children];
+    const H = rows.length ? rows[0].offsetHeight : 58;
+    let from = -1, to = -1, startY = 0, moved = false;
+
+    const setY = (el, y) => el.style.transform = y ? `translateY(${y}px)` : '';
+
+    function start(e, i){
+      from = i; to = i; startY = e.clientY; moved = false;
+      rows = [...list.children];
+      rows[i].classList.add('lift');
+      try{ e.currentTarget.setPointerCapture(e.pointerId); }catch(err){}
+      e.preventDefault();
+    }
+    function move(e){
+      if(from < 0) return;
+      const dy = e.clientY - startY;
+      if(Math.abs(dy) > 3) moved = true;
+      setY(rows[from], dy);
+      const next = Math.max(0, Math.min(rows.length - 1, from + Math.round(dy / H)));
+      if(next !== to){
+        to = next;
+        rows.forEach((r, j) => {
+          if(j === from) return;
+          let off = 0;
+          if(from < to && j > from && j <= to) off = -H;
+          if(from > to && j >= to && j < from) off = H;
+          setY(r, off);
+        });
+        if(navigator.vibrate) navigator.vibrate(6);
+      }
+      e.preventDefault();
+    }
+    function end(){
+      if(from < 0) return;
+      rows[from].classList.remove('lift');
+      rows.forEach(r => setY(r, 0));
+      if(moved && to !== from){
+        const f = folders.splice(from, 1)[0];
+        folders.splice(to, 0, f);
+        saveFolders();
+        list.innerHTML = folders.map(rowHtml).join('');
+        bind();
+      }
+      from = -1;
+    }
+    function bind(){
+      rows = [...list.children];
+      rows.forEach((r, i) => {
+        const g = r.querySelector('.grip');
+        g.onpointerdown = e => start(e, i);
+        g.onpointermove = move;
+        g.onpointerup = end;
+        g.onpointercancel = end;
+      });
+    }
+    bind();
     $('#rdone').onclick = () => { close(); render(); toast('並べ替えました'); };
   });
 }
@@ -969,24 +1021,24 @@ function helpSheet(){
          'することは3つだけ。<b>書く</b> ・ <b>分ける</b> ・ <b>思い出す</b>。',
          '左右にスワイプすると続きが読めます。'] }),
     slide({ c:C.blue, ic:ICO.pencil({s:23,w:1.7}), sub:'WRITE', t:'書く',
-      p:['右下の丸いボタンから、新しいメモを書きます。'],
-      kv:[['1行目が見出しになる','一覧と振り返りで最初に表示されます。要点を短く書いておくと、あとで探しやすくなります。'],
-          ['写真は8枚まで','取り込むときに自動で縮小されるので、容量をあまり気にせず使えます。'],
-          ['写真だけでも保存できる','板書やスライドを撮っておくだけでも構いません。']] }),
+      p:['右下の丸いボタンから書きます。'],
+      kv:[['1行目が見出しになる','一覧と振り返りで最初に表示されます。要点を短く。'],
+          ['写真は8枚まで','取り込むときに自動で縮小されます。'],
+          ['写真だけでも保存できる','板書やスライドを撮るだけでも構いません。']] }),
     slide({ c:C.green, ic:ICO.folderFill({s:23}), sub:'FOLDER', t:'フォルダ',
       p:['読書・講義・仕事など、分け方は自由です。'],
-      kv:[['あとから作れる','先に書きためて、あとで整理しても構いません。'],
-          ['いつでも移せる','メモを開いて「フォルダを移動」から変えられます。'],
-          ['消しても中身は残る','フォルダを削除しても、中のメモは未分類に移るだけです。']] }),
+      kv:[['あとから作れる','先に書きためて、あとで整理しても大丈夫。'],
+          ['いつでも移せる','メモを開いて「フォルダを移動」から。'],
+          ['消しても中身は残る','中のメモは未分類に移るだけです。']] }),
     slide({ c:C.gold, ic:ICO.loop({s:23,w:1.7}), sub:'REVIEW', t:'振り返り',
-      p:['しばらく開いていないメモを数件えらび、1行目だけを表示します。'],
-      kv:[['まず思い出す','1行目を読んで、続きを頭の中で言ってみます。'],
+      p:['しばらく開いていないメモを数件えらびます。'],
+      kv:[['まず思い出す','1行目を読んで、続きを頭の中で言ってみる。'],
           ['それから開く','「続きを表示」で本文と写真が出ます。'],
-          ['あいまいは早く戻る','「あいまい」を選んだメモは、次から早めに出てきます。']] }),
+          ['あいまいは早く戻る','選んだメモは次から早めに出てきます。']] }),
     slide({ c:C.gray, ic:ICO.down({s:23,w:1.7}), sub:'KEEP', t:'保管',
-      p:['メモと写真は、この端末の中だけに保存されています。どこにも送っていません。'],
+      p:['メモと写真は、この端末の中だけにあります。どこにも送っていません。'],
       kv:[['JSONで書き出す','写真ごと1つのファイルにまとまります。設定から。'],
-          ['読み込みで元どおり','機種変更のときは、そのファイルから戻せます。']] }),
+          ['読み込みで元どおり','機種変更のときは、そこから戻せます。']] }),
   ];
 
   sheet(`

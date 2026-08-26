@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-store">
-<title>瞑想</title>
+<title>マインドレスト</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0e13">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="瞑想">
+<meta name="apple-mobile-web-app-title" content="マインドレスト">
 <style>
 :root{
   --bg:#0a0e13;
@@ -55,7 +55,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .app{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column;
   max-width:520px;margin:0 auto;padding:calc(var(--safeT) + 14px) 20px calc(var(--safeB) + 88px)}
 
-.top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;min-height:30px}
+.top{display:flex;align-items:baseline;gap:10px;min-height:26px}
 .top h1{margin:0;font-size:.95rem;font-weight:600;letter-spacing:.32em;color:var(--ink2)}
 .top .t-sub{font-size:.78rem;color:var(--dim);letter-spacing:.06em}
 
@@ -128,6 +128,27 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .foot{margin-top:26px;text-align:center;color:var(--dim);font-size:.72rem;line-height:2}
 .foot button{color:var(--dim);text-decoration:underline;text-underline-offset:3px;font-size:.72rem}
 
+.r-memo{font-size:.8rem;color:var(--ink2);margin-top:4px;white-space:pre-wrap;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.row .r-main{cursor:pointer}
+.hint2{color:var(--dim);font-size:.76rem;line-height:1.7;margin:-4px 0 12px}
+
+/* ── ひとこと（音声入力つき） ── */
+.memo-ta{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);
+  border-radius:14px;color:var(--ink);padding:13px 14px;font-size:1rem;line-height:1.7;
+  resize:none;outline:none;font-family:inherit;-webkit-appearance:none}
+.memo-ta:focus{border-color:rgba(159,216,214,.45)}
+.mic-row{display:flex;align-items:center;gap:12px;margin:12px 0 18px}
+.mic{display:inline-flex;align-items:center;gap:9px;padding:11px 18px;border-radius:999px;flex:none;
+  background:rgba(159,216,214,.12);border:1px solid rgba(159,216,214,.35);color:#dff6f4;font-size:.88rem}
+.mic .ic{font-size:1.02rem;line-height:1}
+.mic.on{background:rgba(230,110,110,.18);border-color:rgba(230,110,110,.55);color:#ffdcdc;
+  animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(230,110,110,.34)}50%{box-shadow:0 0 0 11px rgba(230,110,110,0)}}
+.mic-note{font-size:.74rem;color:var(--dim);line-height:1.55}
+.memo-link{margin-top:20px;color:var(--ink2);font-size:.86rem;letter-spacing:.12em;
+  text-decoration:underline;text-underline-offset:4px;opacity:.9}
+
 /* ── タブバー ── */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;
   padding:8px 20px calc(var(--safeB) + 10px);
@@ -194,6 +215,8 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .sheet .btns button{flex:1;padding:14px;border-radius:14px;font-size:.92rem}
 .sheet .no{background:var(--surf);border:1px solid var(--line);color:var(--ink2)}
 .sheet .yes{background:rgba(227,120,120,.16);border:1px solid rgba(227,120,120,.4);color:#ffd7d7}
+.sheet .ok{background:rgba(159,216,214,.16);border:1px solid rgba(159,216,214,.45);color:#eafaf8}
+.sheet .box{max-height:88vh;overflow:auto;-webkit-overflow-scrolling:touch}
 
 .toast{position:fixed;left:50%;bottom:calc(var(--safeB) + 96px);transform:translateX(-50%);
   z-index:50;background:rgba(20,27,36,.96);border:1px solid var(--line);color:var(--ink);
@@ -211,7 +234,6 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <div class="app">
   <div class="top">
-    <h1>瞑想</h1>
     <div class="t-sub" id="topSub"></div>
   </div>
 
@@ -251,12 +273,13 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
     <div class="sec">
       <h2>これまでの記録</h2>
+      <div class="hint2">記録をタップすると「ひとこと」を書き残せます。声でも入れられます。</div>
       <div class="list" id="list"></div>
       <button class="more hidden" id="btnMore">もっと見る</button>
     </div>
 
     <div class="foot">
-      瞑想 v1 ・ 記録はこの端末の中だけに保存されます<br>
+      マインドレスト v2 ・ 記録はこの端末の中だけに保存されます<br>
       <button id="btnBackup">記録をコピーして控える</button>
     </div>
   </div>
@@ -292,12 +315,13 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
   <h2>おつかれさまでした</h2>
   <p>そのまま、ゆっくり目を開けてください。</p>
   <div class="amt mono" id="doneAmt"></div>
+  <button class="memo-link" id="btnDoneMemo">ひとこと残す</button>
   <button class="close" id="btnClose">とじる</button>
 </div>
 
 <script>
 'use strict';
-const VER = 1;
+const VER = 2;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -307,6 +331,8 @@ let log = [];
 try{ log = JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(e){ log = []; }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(log)); }catch(e){} }
 
+const W_ = ['日','月','火','水','木','金','土'];
+const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const dayKey = ms => { const d = new Date(ms);
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
 const startOfDay = ms => { const d = new Date(ms); d.setHours(0,0,0,0); return d.getTime(); };
@@ -476,6 +502,7 @@ function abort(){
 
 $('btnStart').addEventListener('click', start);
 $('btnStop').addEventListener('click', askStop);
+$('btnDoneMemo').addEventListener('click', function(){ openMemo(0); });
 $('btnClose').addEventListener('click', function(){
   $('done').classList.add('hidden');
   renderTop(); if(tab === 'log') renderLog();
@@ -487,6 +514,105 @@ document.addEventListener('visibilitychange', function(){
   if(ac && ac.state === 'suspended' && sess) ac.resume();
   if(sess){ keepScreen(); update(); }
 });
+
+/* ───────── ひとこと（音声入力つき） ───────── */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, recOn = false;
+
+function dateLabel(at){
+  const today = startOfDay(Date.now()), k = startOfDay(at), d = new Date(at);
+  if(k === today) return '今日';
+  if(k === today - DAY) return '昨日';
+  return (d.getMonth()+1) + '月' + d.getDate() + '日（' + W_[d.getDay()] + '）';
+}
+
+function stopRec(){
+  recOn = false;
+  if(rec){ try{ rec.onend = null; rec.stop(); }catch(e){} rec = null; }
+}
+
+function startRec(ta, btn, note, getBase, setBase){
+  if(!SR){ note.textContent = 'この端末では声の入力が使えません。キーボードのマイクをお使いください。'; return; }
+  let r;
+  try{ r = new SR(); }catch(e){ note.textContent = '声の入力を始められませんでした。'; return; }
+  rec = r; recOn = true;
+  r.lang = 'ja-JP'; r.continuous = true; r.interimResults = true;
+  btn.classList.add('on');
+  btn.querySelector('.lb').textContent = 'とめる';
+  note.textContent = '聞いています…';
+  r.onresult = function(e){
+    let fin = '', itr = '';
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const t = e.results[i][0].transcript;
+      if(e.results[i].isFinal) fin += t; else itr += t;
+    }
+    if(fin) setBase(getBase() + fin);
+    ta.value = getBase() + itr;
+    ta.scrollTop = ta.scrollHeight;
+  };
+  r.onerror = function(e){
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+      note.textContent = 'マイクが許可されていません。設定でマイクを許可するか、キーボードのマイクをお使いください。';
+      endMic(btn, null); recOn = false;
+    }else if(e.error === 'no-speech'){
+      note.textContent = '聞いています…';
+    }else{
+      note.textContent = '声の入力が止まりました。もう一度押してください。';
+    }
+  };
+  r.onend = function(){
+    // iPhone は少し黙ると勝手に止まるので、こちらから止めていなければ続ける
+    if(recOn){ try{ r.start(); }catch(e){} }
+    else endMic(btn, note);
+  };
+  try{ r.start(); }
+  catch(e){ note.textContent = '声の入力を始められませんでした。'; endMic(btn, note); recOn = false; }
+}
+
+function endMic(btn, note){
+  btn.classList.remove('on');
+  btn.querySelector('.lb').textContent = '声で入れる';
+  if(note && note.textContent === '聞いています…') note.textContent = '';
+}
+
+function openMemo(i){
+  const r = log[i];
+  if(!r) return;
+  const s = document.createElement('div');
+  s.className = 'sheet';
+  s.innerHTML = '<div class="box">' +
+    '<h3>ひとこと</h3>' +
+    '<p>' + dateLabel(r.at) + ' ・ ' + r.min + '分 の記録</p>' +
+    '<textarea class="memo-ta" rows="4" placeholder="感じたこと、気づいたこと"></textarea>' +
+    '<div class="mic-row"><button class="mic"><span class="ic">🎙</span><span class="lb">声で入れる</span></button>' +
+    '<span class="mic-note"></span></div>' +
+    '<div class="btns"><button class="no">やめる</button><button class="ok">保存する</button></div></div>';
+  document.body.appendChild(s);
+
+  const ta = s.querySelector('.memo-ta');
+  const btn = s.querySelector('.mic');
+  const note = s.querySelector('.mic-note');
+  ta.value = r.memo || '';
+  let base = ta.value;
+  if(!SR) note.textContent = 'この端末では声の入力が使えません。キーボードのマイクをお使いください。';
+
+  ta.addEventListener('input', function(){ if(!recOn) base = ta.value; });
+  btn.addEventListener('click', function(){
+    if(recOn){ stopRec(); endMic(btn, note); return; }
+    base = ta.value;
+    startRec(ta, btn, note, function(){ return base; }, function(v){ base = v; });
+  });
+
+  function close(){ stopRec(); s.remove(); }
+  s.addEventListener('click', function(e){
+    if(e.target.classList.contains('ok')){
+      const v = (recOn ? base : ta.value).trim();
+      if(v) log[i].memo = v; else delete log[i].memo;
+      save(); close(); renderLog(); renderTop();
+      toast(v ? 'ひとことを残しました' : 'ひとことを消しました');
+    }else if(e.target.classList.contains('no') || e.target === s){ close(); }
+  });
+}
 
 /* ───────── 記録の表示 ───────── */
 function stats(){
@@ -548,17 +674,15 @@ function renderLog(){
     $('btnMore').classList.add('hidden');
     return;
   }
-  const W = ['日','月','火','水','木','金','土'];
   log.slice(0, listLimit).forEach(function(r, i){
     const d = new Date(r.at);
-    const k = startOfDay(r.at);
-    const label = k === today ? '今日' : (k === today - DAY ? '昨日'
-      : (d.getMonth()+1) + '月' + d.getDate() + '日（' + W[d.getDay()] + '）');
     const row = document.createElement('div');
     row.className = 'row';
-    row.innerHTML = '<span class="dot"></span><div class="r-main">' +
-      '<div class="r-d">' + label + '</div>' +
-      '<div class="r-t mono">' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + '</div></div>' +
+    row.innerHTML = '<span class="dot"></span><div class="r-main" data-i="' + i + '">' +
+      '<div class="r-d">' + dateLabel(r.at) + '</div>' +
+      '<div class="r-t mono">' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + '</div>' +
+      (r.memo ? '<div class="r-memo">' + esc(r.memo) + '</div>' : '') +
+      '</div>' +
       '<div class="r-m mono">' + r.min + '<small>分</small></div>' +
       '<button class="del" data-i="' + i + '" aria-label="削除">×</button>';
     list.appendChild(row);
@@ -567,6 +691,8 @@ function renderLog(){
 }
 
 $('list').addEventListener('click', function(e){
+  const m = e.target.closest('.r-main');
+  if(m){ openMemo(parseInt(m.dataset.i, 10)); return; }
   const b = e.target.closest('.del'); if(!b) return;
   const i = parseInt(b.dataset.i, 10);
   const s = document.createElement('div');

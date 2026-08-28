@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>Theater</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0c0f">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Theater">
+<style>
+:root{
+  --bg:#0b0c0f; --surf:#15171c; --surf2:#1c1f26; --surf3:#242830;
+  --line:#22252c; --line2:#2f333c;
+  --ink:#edeff3; --ink2:#a3a8b3; --ink3:#6d727d;
+  --acc:#d9b26a; --acc-soft:#2a2317; --acc-ink:#12130f;
+  --ok:#4bb98a;
+  --r:14px;
+  --tabh:60px;
+  --serif:"Hiragino Mincho ProN","Yu Mincho",YuMincho,serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  font-feature-settings:"palt" 1;
+  font-size:16px; line-height:1.7; -webkit-font-smoothing:antialiased;
+  overflow-x:hidden; overscroll-behavior-y:none;
+}
+button,input,select,textarea{font-family:inherit;color:inherit;font-size:1rem}
+button{cursor:pointer;border:none;background:none;color:inherit;padding:0;
+  -webkit-user-select:none;user-select:none}
+input,textarea{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
+  padding:11px 12px;width:100%;outline:none}
+input:focus,textarea:focus{border-color:var(--acc)}
+.hidden{display:none!important}
+svg{display:block;flex:none}
+img{display:block}
+
+/* ---------- 骨格 ---------- */
+#top{position:sticky;top:0;z-index:40;background:linear-gradient(var(--bg) 70%,rgba(11,12,15,0));
+  padding-top:env(safe-area-inset-top)}
+.tbar{max-width:680px;margin:0 auto;min-height:52px;display:flex;align-items:center;gap:8px;padding:8px 16px}
+.tbar .ttl{font-size:1.34rem;font-weight:700;letter-spacing:.06em;flex:1}
+.tbar .ttl small{display:block;font-size:.68rem;font-weight:600;color:var(--ink3);
+  letter-spacing:.14em;margin-top:-4px}
+.tbtn{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  color:var(--ink2);background:var(--surf);border:1px solid var(--line)}
+.tbtn:active{opacity:.55}
+main{max-width:680px;margin:0 auto;
+  padding:2px 16px calc(var(--tabh) + 40px + env(safe-area-inset-bottom))}
+
+/* ---------- 見出し ---------- */
+.sec{display:flex;align-items:baseline;justify-content:space-between;margin:26px 2px 11px}
+.sec h2{font-size:.96rem;font-weight:700;letter-spacing:.04em;margin:0}
+.sec .more{font-size:.78rem;font-weight:700;color:var(--ink3);padding:4px}
+.sec .more:active{opacity:.5}
+.lead{color:var(--ink2);font-size:.86rem;margin:2px 2px 0}
+
+/* ---------- 動画カード（横並び） ---------- */
+.vlist{display:flex;flex-direction:column;gap:10px}
+.vcard{display:flex;gap:12px;width:100%;text-align:left;background:var(--surf);
+  border:1px solid var(--line);border-radius:var(--r);padding:9px;transition:transform .12s}
+.vcard:active{transform:scale(.988);background:var(--surf2)}
+.thumb{position:relative;width:132px;flex:none;aspect-ratio:16/9;border-radius:9px;overflow:hidden;
+  background:var(--surf3)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .dur{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.78);color:#fff;
+  font-size:.66rem;font-weight:700;padding:1px 5px;border-radius:5px;
+  font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.thumb .pbar{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.22)}
+.thumb .pbar i{display:block;height:100%;background:var(--acc)}
+.thumb .seen{position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(11,12,15,.55);
+  display:flex;align-items:center;justify-content:center;color:var(--acc)}
+.vmeta{flex:1;min-width:0;padding:2px 2px 0 0;display:flex;flex-direction:column}
+.vt{font-size:.93rem;font-weight:700;line-height:1.45;letter-spacing:.01em;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vs{margin-top:auto;font-size:.72rem;color:var(--ink3);font-weight:600;letter-spacing:.03em;
+  display:flex;align-items:center;gap:6px;padding-top:5px}
+.tag{color:var(--acc);background:var(--acc-soft);border-radius:20px;padding:2px 8px;font-size:.68rem;
+  font-weight:700;letter-spacing:.04em;white-space:nowrap}
+
+/* ---------- 続きから（大きいカード） ---------- */
+.big{display:block;width:100%;text-align:left;background:var(--surf);border:1px solid var(--line);
+  border-radius:var(--r);overflow:hidden}
+.big:active{transform:scale(.993)}
+.big .thumb{width:100%;border-radius:0}
+.big .thumb .play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:54px;height:54px;border-radius:50%;background:rgba(11,12,15,.72);
+  display:flex;align-items:center;justify-content:center;color:#fff;backdrop-filter:blur(4px)}
+.big .bt{padding:12px 14px 14px}
+.big .bt .vt{-webkit-line-clamp:2}
+.big .bt .vs{padding-top:7px}
+
+/* ---------- チップ ---------- */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 16px 2px;margin:0 -16px;
+  scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:7px 14px;border-radius:20px;background:var(--surf);border:1px solid var(--line);
+  font-size:.83rem;font-weight:700;color:var(--ink2);letter-spacing:.02em}
+.chip.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.chip:active{opacity:.6}
+
+/* ---------- 空・注意 ---------- */
+.empty{text-align:center;color:var(--ink3);font-size:.88rem;padding:56px 20px;line-height:2}
+.note{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px 15px;color:var(--ink2);font-size:.85rem;line-height:1.85}
+
+/* ---------- 行 ---------- */
+.group{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.item{display:flex;align-items:center;gap:12px;padding:14px 15px;min-height:54px;width:100%;
+  text-align:left;position:relative}
+.item + .item::before{content:'';position:absolute;left:15px;right:0;top:0;height:1px;background:var(--line)}
+.item:active{background:var(--surf2)}
+.item .nm{flex:1;font-size:.93rem;font-weight:600}
+.item .ct{font-size:.82rem;color:var(--ink3)}
+.item .chev{color:var(--ink3);opacity:.6}
+.sw{width:46px;height:28px;border-radius:20px;background:var(--surf3);position:relative;flex:none;
+  transition:background .18s}
+.sw i{position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;
+  transition:transform .18s}
+.sw.on{background:var(--acc)}
+.sw.on i{transform:translateX(18px)}
+
+/* ---------- ボタン ---------- */
+.btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;height:48px;
+  border-radius:12px;background:var(--surf2);border:1px solid var(--line2);
+  font-size:.93rem;font-weight:700;letter-spacing:.02em}
+.btn:active{opacity:.6}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.btn.sm{height:40px;font-size:.85rem}
+
+/* ---------- タブバー ---------- */
+#tabs{position:fixed;left:0;right:0;bottom:0;z-index:45;background:rgba(11,12,15,.92);
+  backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom)}
+#tabs .in{max-width:680px;margin:0 auto;height:var(--tabh);display:flex}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--ink3);font-size:.66rem;font-weight:700;letter-spacing:.04em}
+.tab.on{color:var(--acc)}
+.tab:active{opacity:.6}
+
+/* ---------- 再生画面 ---------- */
+#pv{position:fixed;inset:0;z-index:70;background:var(--bg);overflow-y:auto;
+  overscroll-behavior:contain}
+.pvtop{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;
+  padding:calc(env(safe-area-inset-top) + 8px) 14px 8px;background:var(--bg)}
+.pvtop .nm{flex:1;font-size:.82rem;font-weight:700;color:var(--ink2);letter-spacing:.03em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stage{background:#000}
+.vwrap{position:relative;width:100%;aspect-ratio:16/9;margin:0 auto;background:#000;overflow:hidden}
+.vwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+/* iframe への直接タップを止め、YouTubeへ飛ばさない */
+.catch{position:absolute;inset:0;z-index:2}
+.catch.off{pointer-events:none}
+.poster{position:absolute;inset:0;z-index:4;background:#000;display:flex;
+  align-items:center;justify-content:center}
+.poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5}
+.bigplay{position:relative;width:68px;height:68px;border-radius:50%;background:var(--acc);
+  color:var(--acc-ink);display:flex;align-items:center;justify-content:center}
+.bigplay:active{transform:scale(.94)}
+.phint{position:absolute;left:0;right:0;bottom:14px;text-align:center;color:#cfd3da;
+  font-size:.76rem;font-weight:600;text-shadow:0 1px 6px #000}
+.ctrl{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:26px 10px 8px;
+  background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.82));transition:opacity .22s}
+.ctrl.fade{opacity:0;pointer-events:none}
+.seekrow{display:flex;align-items:center;gap:9px;padding:0 4px}
+.tm{font-size:.7rem;font-weight:700;color:#dfe2e8;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.seek{-webkit-appearance:none;appearance:none;flex:1;height:22px;background:none;padding:0;border:0}
+.seek::-webkit-slider-runnable-track{height:4px;border-radius:3px;
+  background:linear-gradient(var(--acc),var(--acc)) 0/var(--p,0%) 100% no-repeat,rgba(255,255,255,.3)}
+.seek::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--acc);margin-top:-4.5px}
+.seek::-moz-range-track{height:4px;border-radius:3px;background:rgba(255,255,255,.3)}
+.seek::-moz-range-thumb{width:13px;height:13px;border:0;border-radius:50%;background:var(--acc)}
+.btnrow{display:flex;align-items:center;gap:4px;padding:2px 2px 0}
+.pb{height:40px;min-width:40px;padding:0 8px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;gap:3px;color:#fff;font-size:.72rem;font-weight:700}
+.pb:active{background:rgba(255,255,255,.14)}
+.pb.main{background:rgba(255,255,255,.14)}
+.pb .n{font-size:.6rem;font-weight:800;letter-spacing:0}
+.sp{flex:1}
+.endcard{position:absolute;inset:0;z-index:5;background:rgba(6,7,9,.93);display:flex;
+  flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px;text-align:center}
+.endcard .ttl{font-size:.94rem;font-weight:700}
+.endcard .row{display:flex;gap:9px;width:100%;max-width:340px}
+.pvbody{max-width:680px;margin:0 auto;padding:16px 16px calc(30px + env(safe-area-inset-bottom))}
+.pvbody h1{font-size:1.06rem;font-weight:700;line-height:1.55;margin:0 0 8px;letter-spacing:.01em}
+.pvbody .desc{color:var(--ink2);font-size:.88rem;line-height:1.9;white-space:pre-wrap;margin-top:12px}
+.acts{display:flex;gap:9px;margin-top:14px}
+.acts .btn{flex:1}
+#pv.exp{overflow:hidden}
+#pv.exp .stage{position:fixed;inset:0;z-index:80;background:#000;display:flex;
+  align-items:center;justify-content:center}
+/* flexの中で縮まないように flex:none を付ける（付けないと動画が小さくなる） */
+#pv.exp .vwrap{flex:none;width:min(100vw,177.78vh)}
+#pv.exp.rot .vwrap{flex:none;width:min(100vh,177.78vw);transform:rotate(90deg)}
+
+/* ---------- そのほか ---------- */
+.toast{position:fixed;left:50%;bottom:calc(var(--tabh) + 26px + env(safe-area-inset-bottom));
+  transform:translate(-50%,14px);z-index:90;background:var(--surf3);border:1px solid var(--line2);
+  color:var(--ink);padding:10px 18px;border-radius:24px;font-size:.85rem;font-weight:700;
+  opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;max-width:86vw;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.ver{text-align:center;color:var(--ink3);font-size:.72rem;letter-spacing:.06em;
+  margin:26px 0 4px;font-weight:600}
+.fld{margin-top:14px}
+.fld label{display:block;font-size:.76rem;font-weight:700;color:var(--ink3);
+  letter-spacing:.05em;margin-bottom:6px}
+textarea{min-height:96px;resize:vertical;line-height:1.7;font-size:.88rem}
+select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;padding:11px 12px;
+  width:100%;outline:none;-webkit-appearance:none;appearance:none}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="top"><div class="tbar" id="tbar"></div></div>
+<main id="main"></main>
+<nav id="tabs"><div class="in" id="tabin"></div></nav>
+<div class="toast" id="toast"></div>
+
+<div id="pv" class="hidden">
+  <div class="pvtop">
+    <button class="tbtn" id="pvback" aria-label="もどる"></button>
+    <div class="nm" id="pvnm"></div>
+  </div>
+  <div class="stage" id="stage">
+    <div class="vwrap" id="vwrap">
+      <div id="yt"></div>
+      <div class="catch" id="catch"></div>
+      <div class="ctrl fade" id="ctrl"></div>
+      <div class="poster" id="poster"><img id="posterimg" alt=""><button class="bigplay" id="bigplay"></button><div class="phint hidden" id="phint"></div></div>
+      <div class="endcard hidden" id="endcard"></div>
+    </div>
+  </div>
+  <div class="pvbody" id="pvbody"></div>
+</div>
+
+<script>
+'use strict';
+/* ===================== 定数 ===================== */
+const VER = 1;
+const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const now = () => Date.now();
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const svg = (p,o) => `<svg width="${(o&&o.s)||22}" height="${(o&&o.s)||22}" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="${(o&&o.w)||1.8}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const fill = (p,o) => `<svg width="${(o&&o.s)||22}" height="${(o&&o.s)||22}" viewBox="0 0 24 24"
+  fill="currentColor">${p}</svg>`;
+const ICO = {
+  home:  o => svg('<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/>',o),
+  search:o => svg('<circle cx="11" cy="11" r="7.5"/><path d="m21 21-4.4-4.4"/>',o),
+  star:  o => svg('<path d="m12 3 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z"/>',o),
+  starF: o => fill('<path d="m12 3 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z"/>',o),
+  gear:  o => svg('<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',o),
+  play:  o => fill('<path d="M7 4.5v15a1 1 0 0 0 1.53.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5z"/>',o),
+  pause: o => fill('<rect x="6.5" y="4.5" width="4" height="15" rx="1.2"/><rect x="13.5" y="4.5" width="4" height="15" rx="1.2"/>',o),
+  back:  o => svg('<path d="m15 18-6-6 6-6"/>',o),
+  down:  o => svg('<path d="m6 9 6 6 6-6"/>',o),
+  check: o => svg('<path d="m4.5 12.5 5 5 10-11"/>',{s:(o&&o.s)||22,w:2.2}),
+  exp:   o => svg('<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>',o),
+  shr:   o => svg('<path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5"/>',o),
+  b10:   o => svg('<path d="M11 4a8 8 0 1 1-8 8"/><path d="M3 4v5h5"/>',o),
+  f10:   o => svg('<path d="M13 4a8 8 0 1 0 8 8"/><path d="M21 4v5h-5"/>',o),
+  plus:  o => svg('<path d="M12 5v14M5 12h14"/>',o),
+  trash: o => svg('<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',o),
+  x:     o => svg('<path d="M18 6 6 18M6 6l12 12"/>',o),
+  chev:  o => svg('<path d="m9 18 6-6-6-6"/>',o),
+};
+
+/* ===================== 状態 ===================== */
+let DATA = { cats:[], videos:[] };
+let prog = {};            /* {動画id: {t:秒, d:全体の秒, done:1, last:時刻}} */
+let favs = [];
+let cfg  = { speed:1, autonext:true };
+let view = { name:'home' };
+let admin = null;         /* 管理画面のしたがき */
+
+function load(){
+  try{ prog = JSON.parse(localStorage.getItem(K_PROG) || '{}'); }catch(e){ prog = {}; }
+  try{ favs = JSON.parse(localStorage.getItem(K_FAV)  || '[]'); }catch(e){ favs = []; }
+  try{ Object.assign(cfg, JSON.parse(localStorage.getItem(K_CFG) || '{}')); }catch(e){}
+}
+const saveProg = () => localStorage.setItem(K_PROG, JSON.stringify(prog));
+const saveFav  = () => localStorage.setItem(K_FAV,  JSON.stringify(favs));
+const saveCfg  = () => localStorage.setItem(K_CFG,  JSON.stringify(cfg));
+
+/* ===================== 小道具 ===================== */
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 2000);
+}
+function hhmm(sec){
+  sec = Math.max(0, Math.round(sec || 0));
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
+  return h ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+           : `${m}:${String(s).padStart(2,'0')}`;
+}
+function ymd(d){
+  if(!d) return '';
+  const m = String(d).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  return m ? `${+m[2]}/${+m[3]}` : String(d);
+}
+const vid = id => DATA.videos.find(v => v.id === id);
+const catName = c => (DATA.cats.find(x => x.id === c) || {}).name || '';
+const thumbURL = id => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+/* 動画の長さは videos.json に書かなくてよい。再生したときに覚える */
+const durOf = v => (prog[v.id] && prog[v.id].d) || v.sec || 0;
+const ratio = v => { const p = prog[v.id]; const d = durOf(v);
+  return (p && d) ? Math.min(1, p.t / d) : 0; };
+const isDone = v => !!(prog[v.id] && prog[v.id].done);
+const isFav  = id => favs.includes(id);
+
+/* YouTubeのURL・IDのどんな形からでも 11文字のIDを取り出す */
+function ytId(s){
+  s = String(s || '').trim();
+  if(/^[\w-]{11}$/.test(s)) return s;
+  const m = s.match(/(?:v=|\/embed\/|youtu\.be\/|\/live\/|\/shorts\/|\/v\/)([\w-]{11})/);
+  return m ? m[1] : '';
+}
+
+/* ===================== 動画リストの取りこみ ===================== */
+async function fetchData(){
+  try{
+    const r = await fetch('videos.json?t=' + now(), { cache:'no-store' });
+    const j = await r.json();
+    if(!j || !Array.isArray(j.videos)) throw 0;
+    DATA = normalize(j);
+    localStorage.setItem(K_CACHE, JSON.stringify(j));   /* 圏外でも一覧が出るように控える */
+  }catch(e){
+    try{ DATA = normalize(JSON.parse(localStorage.getItem(K_CACHE) || 'null') || {}); }
+    catch(e2){ DATA = { cats:[], videos:[] }; }
+  }
+}
+function normalize(j){
+  const cats = Array.isArray(j.cats) ? j.cats.slice() : [];
+  const videos = (Array.isArray(j.videos) ? j.videos : [])
+    .map(v => ({ id:ytId(v.id || v.url || ''), t:v.t || v.title || '(無題)',
+                 cat:v.cat || '', d:v.d || v.desc || '', date:v.date || '', sec:+v.sec || 0 }))
+    .filter(v => v.id);
+  /* 新しいものが上。日付がなければ書いた順を保つ */
+  videos.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+  return { cats, videos };
+}
+
+/* ===================== 画面のふりわけ ===================== */
+const TABS = [
+  { id:'home',  ic:ICO.home,   lbl:'ホーム' },
+  { id:'find',  ic:ICO.search, lbl:'さがす' },
+  { id:'saved', ic:ICO.star,   lbl:'保存' },
+  { id:'set',   ic:ICO.gear,   lbl:'設定' },
+];
+function go(name, p){ view = { name, p }; render(); window.scrollTo(0,0); }
+
+function render(){
+  const tabId = ({ home:'home', find:'find', saved:'saved', set:'set', admin:'set' })[view.name] || 'home';
+  $$('#tabin .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tabId));
+  ({ home:vHome, find:vFind, saved:vSaved, set:vSet, admin:vAdmin }[view.name] || vHome)();
+}
+
+/* ---------- カードの部品 ---------- */
+function card(v){
+  const r = ratio(v), d = durOf(v), done = isDone(v);
+  return `<button class="vcard" data-go="${v.id}">
+    <div class="thumb">
+      <img src="${thumbURL(v.id)}" alt="" loading="lazy">
+      ${d ? `<span class="dur">${hhmm(d)}</span>` : ''}
+      ${(r > .01 && !done) ? `<span class="pbar"><i style="width:${Math.round(r*100)}%"></i></span>` : ''}
+      ${done ? `<span class="seen">${ICO.check({s:26})}</span>` : ''}
+    </div>
+    <div class="vmeta">
+      <div class="vt">${esc(v.t)}</div>
+      <div class="vs">${v.cat ? `<span class="tag">${esc(catName(v.cat))}</span>` : ''}
+        ${v.date ? `<span>${ymd(v.date)}</span>` : ''}</div>
+    </div>
+  </button>`;
+}
+function bigCard(v){
+  const r = ratio(v), d = durOf(v);
+  return `<button class="big" data-go="${v.id}">
+    <div class="thumb">
+      <img src="${thumbURL(v.id)}" alt="">
+      <span class="play">${ICO.play({s:22})}</span>
+      ${d ? `<span class="dur">のこり ${hhmm(d - (prog[v.id]||{}).t)}</span>` : ''}
+      <span class="pbar"><i style="width:${Math.round(r*100)}%"></i></span>
+    </div>
+    <div class="bt">
+      <div class="vt">${esc(v.t)}</div>
+      <div class="vs">${v.cat ? `<span class="tag">${esc(catName(v.cat))}</span>` : ''}
+        <span>つづきから見る</span></div>
+    </div>
+  </button>`;
+}
+const emptyBox = msg => `<div class="empty">${msg}</div>`;
+
+/* ---------- ホーム ---------- */
+function vHome(){
+  $('#tbar').innerHTML = `<div class="ttl">Theater<small>THEATER</small></div>`;
+  if(!DATA.videos.length){
+    $('#main').innerHTML = emptyBox('動画がまだ登録されていません。<br>登録されるとここに並びます。');
+    return;
+  }
+  /* つづき = 少し見て、まだ見終わっていないもの。いちばん最近のもの1本 */
+  const cont = DATA.videos
+    .filter(v => !isDone(v) && ratio(v) > .02 && ratio(v) < .95 && prog[v.id])
+    .sort((a,b) => (prog[b.id].last||0) - (prog[a.id].last||0))[0];
+
+  let h = '';
+  if(cont) h += `<div class="sec"><h2>つづきから</h2></div>${bigCard(cont)}`;
+
+  /* カテゴリごとに新しい順で3本ずつ */
+  const cats = DATA.cats.filter(c => DATA.videos.some(v => v.cat === c.id));
+  const other = DATA.videos.filter(v => !cats.some(c => c.id === v.cat));
+  for(const c of cats){
+    const list = DATA.videos.filter(v => v.cat === c.id);
+    h += `<div class="sec"><h2>${esc(c.name)}</h2>
+      ${list.length > 3 ? `<button class="more" data-cat="${esc(c.id)}">すべて見る（${list.length}）</button>` : ''}</div>
+      <div class="vlist">${list.slice(0,3).map(card).join('')}</div>`;
+  }
+  if(other.length){
+    h += `<div class="sec"><h2>そのほか</h2></div>
+      <div class="vlist">${other.slice(0,3).map(card).join('')}</div>`;
+  }
+  $('#main').innerHTML = h;
+}
+
+/* ---------- さがす ---------- */
+let findQ = '', findCat = 'all', findUnseen = false;
+function vFind(){
+  $('#tbar').innerHTML = `<div class="ttl">さがす</div>`;
+  const cats = [{ id:'all', name:'すべて' }]
+    .concat(DATA.cats.filter(c => DATA.videos.some(v => v.cat === c.id)))
+    .concat([{ id:'__un', name:'未視聴だけ' }]);
+  const list = DATA.videos.filter(v => {
+    if(findCat === '__un'){ if(isDone(v)) return false; }
+    else if(findCat !== 'all' && v.cat !== findCat) return false;
+    if(!findQ) return true;
+    const q = findQ.toLowerCase();
+    return (v.t + ' ' + v.d).toLowerCase().includes(q);
+  });
+  $('#main').innerHTML = `
+    <div style="margin-top:6px"><input id="q" type="search" placeholder="タイトルで検索" value="${esc(findQ)}"></div>
+    <div class="chips" style="margin-top:12px">
+      ${cats.map(c => `<button class="chip ${findCat===c.id?'on':''}" data-cat="${esc(c.id)}">${esc(c.name)}</button>`).join('')}
+    </div>
+    <div class="vlist" style="margin-top:14px">
+      ${list.length ? list.map(card).join('') : emptyBox('見つかりませんでした')}
+    </div>`;
+  const q = $('#q');
+  q.oninput = () => { findQ = q.value; const s = q.selectionStart; vFind();
+    const n = $('#q'); n.focus(); try{ n.setSelectionRange(s,s); }catch(e){} };
+  $$('#main .chip').forEach(b => b.onclick = () => { findCat = b.dataset.cat; vFind(); });
+}
+
+/* ---------- 保存 ---------- */
+function vSaved(){
+  $('#tbar').innerHTML = `<div class="ttl">保存</div>`;
+  const list = favs.map(id => vid(id)).filter(Boolean);
+  $('#main').innerHTML = list.length
+    ? `<div class="vlist" style="margin-top:10px">${list.map(card).join('')}</div>`
+    : emptyBox('あとで見たい動画は、再生画面の<br>「保存」で ここにためられます。');
+}
+
+/* ---------- 設定 ---------- */
+function vSet(){
+  $('#tbar').innerHTML = `<div class="ttl">設定</div>`;
+  const seen = DATA.videos.filter(isDone).length;
+  $('#main').innerHTML = `
+    <div class="sec"><h2>再生</h2></div>
+    <div class="group">
+      <div class="item"><div class="nm">見終わったら次の動画へ</div>
+        <div class="sw ${cfg.autonext?'on':''}" id="swNext"><i></i></div></div>
+      <div class="item"><div class="nm">再生の速さ</div>
+        <div class="ct" id="spdLbl">${cfg.speed}倍</div>
+        <button class="pb" id="spdBtn" style="color:var(--ink2)">${ICO.down({s:20})}</button></div>
+    </div>
+
+    <div class="sec"><h2>視聴の記録</h2></div>
+    <div class="group">
+      <div class="item"><div class="nm">見終わった動画</div><div class="ct">${seen}本</div></div>
+      <button class="item" id="clr"><div class="nm">記録をぜんぶ消す</div><div class="chev">${ICO.chev({s:20})}</div></button>
+    </div>
+    <div class="lead" style="margin-top:8px">記録はこの端末の中だけに残ります。外には送られません。</div>
+
+    <div class="sec"><h2>アプリ</h2></div>
+    <div class="group">
+      <button class="item" id="upd"><div class="nm">最新か たしかめる</div>
+        <div class="ct" id="updState">v${VER}</div></button>
+      <button class="item" id="howto"><div class="nm">ホーム画面に置く方法</div></button>
+      <button class="item" id="adm"><div class="nm">動画を管理する（配信者用）</div></button>
+    </div>
+    <div class="ver">Theater v${VER}</div>`;
+
+  $('#swNext').onclick = () => { cfg.autonext = !cfg.autonext; saveCfg(); vSet(); };
+  $('#spdBtn').onclick = $('#spdLbl').onclick = () => {
+    const S = [0.75,1,1.25,1.5,1.75,2];
+    cfg.speed = S[(S.indexOf(cfg.speed) + 1) % S.length]; saveCfg();
+    if(player && player.setPlaybackRate) player.setPlaybackRate(cfg.speed);
+    vSet();
+  };
+  $('#clr').onclick = () => {
+    if(!confirm('見た記録・つづきの位置をぜんぶ消します。よろしいですか？')) return;
+    prog = {}; saveProg(); vSet(); toast('記録を消しました');
+  };
+  $('#upd').onclick = () => checkUpd();
+  $('#howto').onclick = () => alert(
+    'iPhone / iPad の場合\n' +
+    '1. Safari でこのページを開く\n' +
+    '2. 下（または右上）の共有ボタンを押す\n' +
+    '3.「ホーム画面に追加」を選ぶ\n\n' +
+    'Android の場合\n' +
+    '1. Chrome でこのページを開く\n' +
+    '2. 右上の … を押す\n' +
+    '3.「ホーム画面に追加」を選ぶ');
+  $('#adm').onclick = () => go('admin');
+}
+
+/* ===================== 更新の確認 ===================== */
+async function checkUpd(quiet){
+  const st = $('#updState');
+  if(!quiet && st) st.textContent = '確認中…';
+  try{
+    const r = await fetch('version.json?t=' + now(), { cache:'no-store' });
+    const j = await r.json();
+    if(+j.v > VER){
+      if(confirm(`新しいバージョン v${j.v} があります。${j.note ? '\n（' + j.note + '）' : ''}\n更新しますか？`)) doUpd();
+      else if(st) st.textContent = `v${j.v} あり`;
+    }else if(st && !quiet) st.textContent = `最新（v${VER}）`;
+  }catch(e){ if(st && !quiet) st.textContent = '確認できません'; }
+}
+async function doUpd(){
+  try{
+    if(window.caches) for(const k of await caches.keys()) await caches.delete(k);
+    if(navigator.serviceWorker)
+      for(const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+  }catch(e){}
+  location.replace(location.pathname + '?v=' + now());
+}
+
+/* ===================== 再生 ===================== */
+let player = null, playerReady = false, curId = '', tick = null, seeking = false, started = false;
+
+/* YouTube の再生部品を読みこむ（1回だけ） */
+let ytLoading = null;
+function loadYT(){
+  if(window.YT && window.YT.Player) return Promise.resolve();
+  if(ytLoading) return ytLoading;
+  ytLoading = new Promise(res => {
+    window.onYouTubeIframeAPIReady = res;
+    const s = document.createElement('script');
+    s.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(s);
+  });
+  return ytLoading;
+}
+async function makePlayer(){
+  await loadYT();
+  if(player) return;
+  await new Promise(res => {
+    player = new YT.Player('yt', {
+      host: 'https://www.youtube-nocookie.com',
+      videoId: curId,
+      playerVars: {
+        /* YouTube の画面を出さない。関連動画・ロゴ・キーボード操作もふさぐ */
+        controls:0, rel:0, modestbranding:1, playsinline:1, disablekb:1,
+        iv_load_policy:3, fs:0, cc_load_policy:0, origin:location.origin
+      },
+      events: {
+        onReady: () => { playerReady = true; res(); },
+        onStateChange: onState,
+        onError: () => { $('#phint').classList.remove('hidden');
+          $('#phint').textContent = 'この動画は再生できませんでした（限定公開の設定をご確認ください）'; }
+      }
+    });
+  });
+}
+
+function openPlay(id, push){
+  const v = vid(id); if(!v) return;
+  curId = id; started = false;
+  history_push(push);
+  $('#pv').classList.remove('hidden');
+  $('#pv').classList.remove('exp','rot');
+  $('#pv').scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+  $('#pvnm').textContent = catName(v.cat) || 'Theater';
+  $('#posterimg').src = thumbURL(id);
+  $('#poster').classList.remove('hidden');
+  $('#phint').classList.add('hidden');
+  $('#endcard').classList.add('hidden');
+  $('#ctrl').classList.add('fade');
+  drawCtrl(); drawBody();
+
+  const start = startSecOf(v);
+  if(player && playerReady){
+    /* すでに用意ができていれば、タップと同じ流れで再生に入る（iPhone対策） */
+    try{ player.loadVideoById({ videoId:id, startSeconds:start }); }catch(e){}
+    setTimeout(() => { if(!started) $('#phint').classList.remove('hidden'); }, 1600);
+    $('#phint').textContent = 'もう一度 再生ボタンを押してください';
+  }else{
+    makePlayer().then(() => {
+      if(curId !== id) return;
+      try{ player.seekTo(start, true); player.playVideo(); }catch(e){}
+    });
+  }
+}
+function startSecOf(v){
+  const p = prog[v.id];
+  if(!p || !p.t) return 0;
+  if(p.done || (p.d && p.t / p.d > .97)) return 0;   /* 見終わったものは最初から */
+  return Math.max(0, p.t - 3);                        /* 少し戻して再開すると分かりやすい */
+}
+function closePlay(){
+  saveNow();
+  stopTick();
+  try{ player && player.pauseVideo(); }catch(e){}
+  $('#pv').classList.add('hidden');
+  $('#pv').classList.remove('exp','rot');
+  document.body.style.overflow = '';
+  curId = '';
+  render();
+}
+
+function onState(e){
+  const S = YT.PlayerState;
+  if(e.data === S.PLAYING){
+    started = true;
+    $('#poster').classList.add('hidden');
+    $('#endcard').classList.add('hidden');
+    try{ player.setPlaybackRate(cfg.speed); }catch(err){}
+    startTick(); showCtrl(); drawCtrl();
+  }else if(e.data === S.PAUSED){
+    saveNow(); stopTick(); showCtrl(true); drawCtrl();
+  }else if(e.data === S.ENDED){
+    stopTick();
+    const p = prog[curId] || (prog[curId] = { t:0, d:0 });
+    p.done = 1; p.t = 0; p.last = now(); saveProg();
+    onEnded();
+  }
+}
+function onEnded(){
+  const nx = nextVideo();
+  if(cfg.autonext && nx){ openPlay(nx.id); toast('次の動画へ'); return; }
+  $('#endcard').innerHTML = `<div class="ttl">見終わりました</div>
+    <div class="row">
+      <button class="btn sm" id="again">もう一度</button>
+      ${nx ? `<button class="btn sm pri" id="next">次の動画</button>` : ''}
+    </div>`;
+  $('#endcard').classList.remove('hidden');
+  $('#again').onclick = () => { $('#endcard').classList.add('hidden');
+    try{ player.seekTo(0,true); player.playVideo(); }catch(e){} };
+  if(nx) $('#next').onclick = () => openPlay(nx.id);
+}
+/* 次の動画 = 同じカテゴリの、ひとつ下（古い方）。なければ全体のつぎ */
+function nextVideo(){
+  const v = vid(curId); if(!v) return null;
+  const same = DATA.videos.filter(x => x.cat === v.cat);
+  const i = same.findIndex(x => x.id === curId);
+  if(i >= 0 && same[i+1]) return same[i+1];
+  const j = DATA.videos.findIndex(x => x.id === curId);
+  return DATA.videos[j+1] || null;
+}
+
+function startTick(){ stopTick(); tick = setInterval(onTick, 250); }
+function stopTick(){ if(tick){ clearInterval(tick); tick = null; } }
+let saveCount = 0;
+function onTick(){
+  if(!player || !playerReady) return;
+  const t = player.getCurrentTime() || 0, d = player.getDuration() || 0;
+  if(!seeking) drawTime(t, d);
+  if(++saveCount % 20 === 0) saveNow();   /* 5秒に1回だけ書きこむ */
+}
+function saveNow(){
+  /* まだ一度も再生していないときは書きこまない。
+     （iPhoneで自動再生されずに閉じたとき、つづきの位置が0で消えてしまうため） */
+  if(!curId || !player || !playerReady || !started) return;
+  try{
+    const t = player.getCurrentTime() || 0, d = player.getDuration() || 0;
+    if(!d) return;
+    const p = prog[curId] || (prog[curId] = {});
+    p.t = t; p.d = d; p.last = now();
+    if(t / d > .97) p.done = 1;
+    saveProg();
+  }catch(e){}
+}
+
+/* ---------- 再生の操作パネル ---------- */
+function drawCtrl(){
+  $('#ctrl').innerHTML = `
+    <div class="seekrow">
+      <span class="tm" id="tmNow">0:00</span>
+      <input class="seek" id="seek" type="range" min="0" max="1000" value="0">
+      <span class="tm" id="tmAll">0:00</span>
+    </div>
+    <div class="btnrow">
+      <button class="pb" id="b10">${ICO.b10({s:21})}<span class="n">10</span></button>
+      <button class="pb main" id="pp">${ICO.play({s:20})}</button>
+      <button class="pb" id="f10">${ICO.f10({s:21})}<span class="n">10</span></button>
+      <span class="sp"></span>
+      <button class="pb" id="spd">${cfg.speed}x</button>
+      <button class="pb" id="exp">${ICO.exp({s:19})}</button>
+    </div>`;
+  const seek = $('#seek');
+  const grab = () => { seeking = true; };
+  const move = () => {
+    const d = (player && playerReady && player.getDuration()) || 0;
+    drawTime(d * seek.value / 1000, d, true);
+  };
+  const drop = () => {
+    const d = (player && playerReady && player.getDuration()) || 0;
+    if(d) try{ player.seekTo(d * seek.value / 1000, true); }catch(e){}
+    seeking = false; showCtrl();
+  };
+  seek.addEventListener('pointerdown', grab);
+  seek.addEventListener('input', move);
+  seek.addEventListener('change', drop);
+  seek.addEventListener('pointerup', drop);
+  $('#pp').onclick  = togglePlay;
+  $('#b10').onclick = () => jump(-10);
+  $('#f10').onclick = () => jump(10);
+  $('#spd').onclick = () => {
+    const S = [1,1.25,1.5,1.75,2,0.75];
+    cfg.speed = S[(S.indexOf(cfg.speed) + 1) % S.length]; saveCfg();
+    try{ player.setPlaybackRate(cfg.speed); }catch(e){}
+    $('#spd').textContent = cfg.speed + 'x'; showCtrl();
+  };
+  $('#exp').onclick = toggleExp;
+  drawTime((player && playerReady && player.getCurrentTime()) || 0,
+           (player && playerReady && player.getDuration()) || 0);
+}
+function drawTime(t, d, force){
+  const s = $('#seek'); if(!s) return;
+  const r = d ? Math.min(1, t/d) : 0;
+  if(!seeking || force){ s.value = Math.round(r*1000); s.style.setProperty('--p', (r*100) + '%'); }
+  $('#tmNow').textContent = hhmm(t);
+  $('#tmAll').textContent = hhmm(d);
+  const pp = $('#pp');
+  if(pp && player && playerReady)
+    pp.innerHTML = (player.getPlayerState() === 1) ? ICO.pause({s:20}) : ICO.play({s:20});
+}
+function togglePlay(){
+  if(!player || !playerReady) return;
+  try{
+    if(player.getPlayerState() === 1){ player.pauseVideo(); }
+    else{ player.playVideo(); }
+  }catch(e){}
+  showCtrl();
+}
+function jump(sec){
+  if(!player || !playerReady) return;
+  try{ player.seekTo(Math.max(0, (player.getCurrentTime()||0) + sec), true); }catch(e){}
+  showCtrl();
+}
+function toggleExp(){
+  const pv = $('#pv');
+  const on = !pv.classList.contains('exp');
+  pv.classList.toggle('exp', on);
+  /* 縦持ちのスマホは横向きに回して大きく見せる */
+  pv.classList.toggle('rot', on && innerHeight > innerWidth && innerWidth < 700);
+  $('#exp').innerHTML = on ? ICO.shr({s:19}) : ICO.exp({s:19});
+  showCtrl();
+}
+let ctrlTimer = null;
+function showCtrl(keep){
+  $('#ctrl').classList.remove('fade');
+  clearTimeout(ctrlTimer);
+  if(!keep) ctrlTimer = setTimeout(() => {
+    if(player && playerReady && player.getPlayerState() === 1) $('#ctrl').classList.add('fade');
+  }, 3200);
+}
+
+/* ---------- 再生画面の下（タイトル・説明） ---------- */
+function drawBody(){
+  const v = vid(curId); if(!v) return;
+  $('#pvbody').innerHTML = `
+    <h1>${esc(v.t)}</h1>
+    <div class="vs">${v.cat ? `<span class="tag">${esc(catName(v.cat))}</span>` : ''}
+      ${v.date ? `<span>${ymd(v.date)}</span>` : ''}</div>
+    <div class="acts">
+      <button class="btn sm" id="fav">${isFav(v.id) ? ICO.starF({s:18}) : ICO.star({s:18})}
+        <span>${isFav(v.id) ? '保存ずみ' : '保存'}</span></button>
+      <button class="btn sm ${isDone(v)?'pri':''}" id="done">${ICO.check({s:18})}
+        <span>${isDone(v) ? '見終わった' : '見終わりにする'}</span></button>
+    </div>
+    ${v.d ? `<div class="desc">${esc(v.d)}</div>` : ''}
+    ${nextVideo() ? `<div class="sec"><h2>次の動画</h2></div>
+      <div class="vlist">${card(nextVideo())}</div>` : ''}`;
+  $('#fav').onclick = () => {
+    if(isFav(v.id)) favs = favs.filter(x => x !== v.id); else favs.unshift(v.id);
+    saveFav(); drawBody(); toast(isFav(v.id) ? '保存しました' : '保存をはずしました');
+  };
+  $('#done').onclick = () => {
+    const p = prog[v.id] || (prog[v.id] = { t:0, d:0 });
+    p.done = p.done ? 0 : 1; p.last = now(); if(p.done) p.t = 0;
+    saveProg(); drawBody();
+  };
+}
+
+/* ===================== 管理（動画を追加する） ===================== */
+function loadAdmin(){
+  if(admin) return;
+  try{ admin = JSON.parse(localStorage.getItem(K_ADM) || 'null'); }catch(e){}
+  if(!admin) admin = JSON.parse(JSON.stringify({ cats:DATA.cats, videos:DATA.videos }));
+}
+const saveAdmin = () => localStorage.setItem(K_ADM, JSON.stringify(admin));
+
+function vAdmin(){
+  loadAdmin();
+  $('#tbar').innerHTML = `<button class="tbtn" id="back">${ICO.back({s:20})}</button>
+    <div class="ttl" style="font-size:1.06rem;letter-spacing:.02em">動画の管理</div>`;
+  $('#back').onclick = () => go('set');
+
+  $('#main').innerHTML = `
+    <div class="note">ここで動画のリストを作り、最後に「JSONをコピー」を押して
+      平山さんが <b>videos.json</b> に貼りかえると、生徒の画面に反映されます。<br>
+      YouTube は<b>限定公開</b>のままで大丈夫です。</div>
+
+    <div class="sec"><h2>動画を追加</h2></div>
+    <div class="fld"><label>YouTubeのURL</label>
+      <input id="aUrl" placeholder="https://youtu.be/xxxxxxxxxxx"></div>
+    <div class="fld"><label>タイトル</label><input id="aTtl" placeholder="例）朝のマインドセット #12"></div>
+    <div class="fld"><label>区分</label>
+      <select id="aCat">${admin.cats.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}</select></div>
+    <div class="fld"><label>公開日（省略可）</label><input id="aDate" type="date"></div>
+    <div class="fld"><label>説明（省略可）</label><textarea id="aDesc"></textarea></div>
+    <button class="btn pri" id="aAdd" style="margin-top:14px">${ICO.plus({s:19})}<span>リストに追加</span></button>
+
+    <div class="sec"><h2>いまのリスト（${admin.videos.length}本）</h2></div>
+    <div class="vlist" id="alist">
+      ${admin.videos.length ? admin.videos.map((v,i) => `
+        <div class="vcard" style="align-items:center">
+          <div class="thumb" style="width:96px"><img src="${thumbURL(v.id)}" alt=""></div>
+          <div class="vmeta"><div class="vt">${esc(v.t)}</div>
+            <div class="vs"><span class="tag">${esc(catName2(v.cat))}</span>${v.date ? `<span>${ymd(v.date)}</span>` : ''}</div></div>
+          <button class="tbtn" data-del="${i}" style="align-self:center">${ICO.trash({s:18})}</button>
+        </div>`).join('') : emptyBox('まだ1本もありません')}
+    </div>
+
+    <div class="sec"><h2>書き出す</h2></div>
+    <button class="btn" id="aCopy">JSONをコピー</button>
+    <button class="btn" id="aReload" style="margin-top:9px">公開中のリストを読み直す</button>
+    <div class="lead" style="margin-top:10px">「読み直す」を押すと、いま公開されている videos.json の内容に戻します。</div>
+    <div class="ver">&nbsp;</div>`;
+
+  $('#aAdd').onclick = () => {
+    const id = ytId($('#aUrl').value);
+    if(!id) return alert('YouTubeのURLを正しく貼りつけてください。');
+    if(!$('#aTtl').value.trim()) return alert('タイトルを入れてください。');
+    if(admin.videos.some(v => v.id === id)) return alert('この動画はもうリストにあります。');
+    admin.videos.unshift({ id, t:$('#aTtl').value.trim(), cat:$('#aCat').value,
+      d:$('#aDesc').value.trim(), date:$('#aDate').value || '' });
+    saveAdmin(); vAdmin(); toast('追加しました');
+  };
+  $$('#alist [data-del]').forEach(b => b.onclick = () => {
+    if(!confirm('リストから外しますか？')) return;
+    admin.videos.splice(+b.dataset.del, 1); saveAdmin(); vAdmin();
+  });
+  $('#aCopy').onclick = async () => {
+    const out = JSON.stringify({ updated:new Date().toISOString().slice(0,10),
+      cats:admin.cats, videos:admin.videos }, null, 2);
+    try{ await navigator.clipboard.writeText(out); toast('コピーしました'); }
+    catch(e){ prompt('コピーしてください', out); }
+  };
+  $('#aReload').onclick = () => {
+    if(!confirm('いま公開されているリストに戻します。ここでの編集は消えます。')) return;
+    admin = JSON.parse(JSON.stringify({ cats:DATA.cats, videos:DATA.videos }));
+    saveAdmin(); vAdmin();
+  };
+}
+const catName2 = c => (admin.cats.find(x => x.id === c) || {}).name || 'そのほか';
+
+/* ===================== もどる（端末の戻る操作） ===================== */
+function history_push(push){
+  if(push === false) return;
+  try{ history.pushState({ pv:1 }, ''); }catch(e){}
+}
+addEventListener('popstate', () => {
+  if(!$('#pv').classList.contains('hidden')){
+    if($('#pv').classList.contains('exp')){ toggleExp(); history_push(); return; }
+    closePlay();
+  }
+});
+
+/* ===================== 起動 ===================== */
+async function boot(){
+  load();
+  $('#tabin').innerHTML = TABS.map(t =>
+    `<button class="tab" data-tab="${t.id}">${t.ic({s:21,w:1.9})}<span>${t.lbl}</span></button>`).join('');
+  $$('#tabin .tab').forEach(b => b.onclick = () => go(b.dataset.tab));
+  $('#pvback').innerHTML = ICO.back({ s:20 });
+  $('#bigplay').innerHTML = ICO.play({ s:26 });
+  $('#pvback').onclick = () => { closePlay(); try{ history.back(); }catch(e){} };
+
+  /* 動画の上をタップ = 操作パネルの出し入れ。YouTubeへは絶対に飛ばさない */
+  $('#catch').onclick = () => {
+    if($('#ctrl').classList.contains('fade')) showCtrl();
+    else togglePlay();
+  };
+  $('#bigplay').onclick = async () => {
+    $('#phint').classList.add('hidden');
+    await makePlayer();
+    try{
+      if(player.getVideoData && player.getVideoData().video_id !== curId){
+        player.loadVideoById({ videoId:curId, startSeconds:startSecOf(vid(curId)) });
+      }else{
+        player.playVideo();
+      }
+    }catch(e){}
+  };
+
+  /* 一覧のカードから再生をひらく */
+  document.addEventListener('click', e => {
+    const c = e.target.closest('[data-go]');
+    if(c){ openPlay(c.dataset.go); return; }
+    const m = e.target.closest('[data-cat]');
+    if(m && m.classList.contains('more')){ findCat = m.dataset.cat; go('find'); }
+  });
+
+  render();
+  await fetchData();
+  render();
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  setTimeout(() => checkUpd(true), 2500);
+  addEventListener('pagehide', saveNow);
+  document.addEventListener('visibilitychange', () => { if(document.hidden) saveNow(); });
+}
+boot();
+</script>
+</body>
+</html>

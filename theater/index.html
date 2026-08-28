@@ -69,6 +69,9 @@ main{max-width:680px;margin:0 auto;
 .thumb{position:relative;width:132px;flex:none;aspect-ratio:16/9;border-radius:9px;overflow:hidden;
   background:var(--surf3)}
 .thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .lm{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;background:linear-gradient(140deg,#2b2f3a,#171a20);color:var(--acc)}
+.thumb .lm b{font-size:.6rem;font-weight:800;letter-spacing:.14em;color:var(--ink3)}
 .thumb .dur{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.78);color:#fff;
   font-size:.66rem;font-weight:700;padding:1px 5px;border-radius:5px;
   font-variant-numeric:tabular-nums;letter-spacing:.02em}
@@ -154,6 +157,9 @@ main{max-width:680px;margin:0 auto;
 .stage{background:#000}
 .vwrap{position:relative;width:100%;aspect-ratio:16/9;margin:0 auto;background:#000;overflow:hidden}
 .vwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+/* Loom はプレーヤーを差し替えられないので、Loom自身の画面をそのまま使う。
+   おすすめ動画に流されるつくりではないので、これで問題ない */
+#loomfr{z-index:3}
 /* iframe への直接タップを止め、YouTubeへ飛ばさない */
 .catch{position:absolute;inset:0;z-index:2}
 .catch.off{pointer-events:none}
@@ -231,6 +237,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
   <div class="stage" id="stage">
     <div class="vwrap" id="vwrap">
       <div id="yt"></div>
+      <iframe id="loomfr" class="hidden" allowfullscreen></iframe>
       <div class="catch" id="catch"></div>
       <div class="ctrl fade" id="ctrl"></div>
       <div class="poster" id="poster"><img id="posterimg" alt=""><button class="bigplay" id="bigplay"></button><div class="phint hidden" id="phint"></div></div>
@@ -243,7 +250,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 1;
+const VER = 2;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -310,8 +317,17 @@ function ymd(d){
   return m ? `${+m[2]}/${+m[3]}` : String(d);
 }
 const vid = id => DATA.videos.find(v => v.id === id);
+/* videos は新しい順で持っている。asc のカテゴリだけ ひっくり返して古い順にする */
+const catAsc = c => !!(DATA.cats.find(x => x.id === c) || {}).asc;
+const inCat  = c => { const l = DATA.videos.filter(v => v.cat === c);
+  return catAsc(c)
+    ? l.slice().sort((a,b) => (a.date||'').localeCompare(b.date||'') || a._i - b._i)
+    : l; };
 const catName = c => (DATA.cats.find(x => x.id === c) || {}).name || '';
-const thumbURL = id => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+/* Loom のサムネイルは外から取れないので、代わりの絵を描く */
+const thumbHTML = id => isLoom(id)
+  ? `<span class="lm">${ICO.play({s:20})}<b>Loom</b></span>`
+  : `<img src="https://i.ytimg.com/vi/${id}/mqdefault.jpg" alt="" loading="lazy">`;
 /* 動画の長さは videos.json に書かなくてよい。再生したときに覚える */
 const durOf = v => (prog[v.id] && prog[v.id].d) || v.sec || 0;
 const ratio = v => { const p = prog[v.id]; const d = durOf(v);
@@ -319,13 +335,17 @@ const ratio = v => { const p = prog[v.id]; const d = durOf(v);
 const isDone = v => !!(prog[v.id] && prog[v.id].done);
 const isFav  = id => favs.includes(id);
 
-/* YouTubeのURL・IDのどんな形からでも 11文字のIDを取り出す */
+/* YouTube・Loom のURLやIDのどんな形からでも、扱えるIDを取り出す。
+   Loom は 'loom:' を付けた32桁で持つ（プレミア動画がLoomのため） */
 function ytId(s){
   s = String(s || '').trim();
+  const l = s.match(/^loom:([0-9a-f]{32})$/) || s.match(/loom\.com\/(?:share|embed)\/([0-9a-f]{32})/);
+  if(l) return 'loom:' + l[1];
   if(/^[\w-]{11}$/.test(s)) return s;
   const m = s.match(/(?:v=|\/embed\/|youtu\.be\/|\/live\/|\/shorts\/|\/v\/)([\w-]{11})/);
   return m ? m[1] : '';
 }
+const isLoom = id => String(id).startsWith('loom:');
 
 /* ===================== 動画リストの取りこみ ===================== */
 async function fetchData(){
@@ -346,6 +366,9 @@ function normalize(j){
     .map(v => ({ id:ytId(v.id || v.url || ''), t:v.t || v.title || '(無題)',
                  cat:v.cat || '', d:v.d || v.desc || '', date:v.date || '', sec:+v.sec || 0 }))
     .filter(v => v.id);
+  /* 元の並び順を覚えておく。同じ日に何本も投稿されたとき、
+     古い順に並べ直しても 1・2・3・4 の順が崩れないようにするため */
+  videos.forEach((v,i) => v._i = i);
   /* 新しいものが上。日付がなければ書いた順を保つ */
   videos.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
   return { cats, videos };
@@ -371,7 +394,7 @@ function card(v){
   const r = ratio(v), d = durOf(v), done = isDone(v);
   return `<button class="vcard" data-go="${v.id}">
     <div class="thumb">
-      <img src="${thumbURL(v.id)}" alt="" loading="lazy">
+      ${thumbHTML(v.id)}
       ${d ? `<span class="dur">${hhmm(d)}</span>` : ''}
       ${(r > .01 && !done) ? `<span class="pbar"><i style="width:${Math.round(r*100)}%"></i></span>` : ''}
       ${done ? `<span class="seen">${ICO.check({s:26})}</span>` : ''}
@@ -387,7 +410,7 @@ function bigCard(v){
   const r = ratio(v), d = durOf(v);
   return `<button class="big" data-go="${v.id}">
     <div class="thumb">
-      <img src="${thumbURL(v.id)}" alt="">
+      ${thumbHTML(v.id)}
       <span class="play">${ICO.play({s:22})}</span>
       ${d ? `<span class="dur">のこり ${hhmm(d - (prog[v.id]||{}).t)}</span>` : ''}
       <span class="pbar"><i style="width:${Math.round(r*100)}%"></i></span>
@@ -420,7 +443,7 @@ function vHome(){
   const cats = DATA.cats.filter(c => DATA.videos.some(v => v.cat === c.id));
   const other = DATA.videos.filter(v => !cats.some(c => c.id === v.cat));
   for(const c of cats){
-    const list = DATA.videos.filter(v => v.cat === c.id);
+    const list = inCat(c.id);
     h += `<div class="sec"><h2>${esc(c.name)}</h2>
       ${list.length > 3 ? `<button class="more" data-cat="${esc(c.id)}">すべて見る（${list.length}）</button>` : ''}</div>
       <div class="vlist">${list.slice(0,3).map(card).join('')}</div>`;
@@ -439,13 +462,14 @@ function vFind(){
   const cats = [{ id:'all', name:'すべて' }]
     .concat(DATA.cats.filter(c => DATA.videos.some(v => v.cat === c.id)))
     .concat([{ id:'__un', name:'未視聴だけ' }]);
-  const list = DATA.videos.filter(v => {
+  let list = DATA.videos.filter(v => {
     if(findCat === '__un'){ if(isDone(v)) return false; }
     else if(findCat !== 'all' && v.cat !== findCat) return false;
     if(!findQ) return true;
     const q = findQ.toLowerCase();
     return (v.t + ' ' + v.d).toLowerCase().includes(q);
   });
+  if(catAsc(findCat)) list = list.sort((a,b) => (a.date||'').localeCompare(b.date||'') || a._i - b._i);
   $('#main').innerHTML = `
     <div style="margin-top:6px"><input id="q" type="search" placeholder="タイトルで検索" value="${esc(findQ)}"></div>
     <div class="chips" style="margin-top:12px">
@@ -592,13 +616,29 @@ function openPlay(id, push){
   $('#pv').scrollTop = 0;
   document.body.style.overflow = 'hidden';
   $('#pvnm').textContent = catName(v.cat) || 'Theater';
-  $('#posterimg').src = thumbURL(id);
+  if(isLoom(id)) $('#posterimg').removeAttribute('src');
+  else $('#posterimg').src = `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
   $('#poster').classList.remove('hidden');
   $('#phint').classList.add('hidden');
   $('#endcard').classList.add('hidden');
   $('#ctrl').classList.add('fade');
   drawCtrl(); drawBody();
 
+  if(isLoom(id)){
+    /* Loom: 自作の操作パネルは使えないので、Loomのプレーヤーをそのまま出す */
+    try{ player && playerReady && player.pauseVideo(); }catch(e){}
+    stopTick();
+    $('#poster').classList.add('hidden');
+    $('#catch').classList.add('hidden');
+    $('#ctrl').classList.add('hidden');
+    $('#loomfr').classList.remove('hidden');
+    $('#loomfr').src = `https://www.loom.com/embed/${id.slice(5)}?hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true`;
+    return;
+  }
+  $('#loomfr').classList.add('hidden');
+  $('#loomfr').removeAttribute('src');
+  $('#catch').classList.remove('hidden');
+  $('#ctrl').classList.remove('hidden');
   const start = startSecOf(v);
   if(player && playerReady){
     /* すでに用意ができていれば、タップと同じ流れで再生に入る（iPhone対策） */
@@ -621,6 +661,8 @@ function startSecOf(v){
 function closePlay(){
   saveNow();
   stopTick();
+  $('#loomfr').classList.add('hidden');
+  $('#loomfr').removeAttribute('src');   /* これを消さないと裏で音が鳴り続ける */
   try{ player && player.pauseVideo(); }catch(e){}
   $('#pv').classList.add('hidden');
   $('#pv').classList.remove('exp','rot');
@@ -662,7 +704,7 @@ function onEnded(){
 /* 次の動画 = 同じカテゴリの、ひとつ下（古い方）。なければ全体のつぎ */
 function nextVideo(){
   const v = vid(curId); if(!v) return null;
-  const same = DATA.videos.filter(x => x.cat === v.cat);
+  const same = inCat(v.cat);
   const i = same.findIndex(x => x.id === curId);
   if(i >= 0 && same[i+1]) return same[i+1];
   const j = DATA.videos.findIndex(x => x.id === curId);
@@ -765,7 +807,7 @@ function toggleExp(){
   pv.classList.toggle('exp', on);
   /* 縦持ちのスマホは横向きに回して大きく見せる */
   pv.classList.toggle('rot', on && innerHeight > innerWidth && innerWidth < 700);
-  $('#exp').innerHTML = on ? ICO.shr({s:19}) : ICO.exp({s:19});
+  const eb = $('#exp'); if(eb) eb.innerHTML = on ? ICO.shr({s:19}) : ICO.exp({s:19});
   showCtrl();
 }
 let ctrlTimer = null;
@@ -837,7 +879,7 @@ function vAdmin(){
     <div class="vlist" id="alist">
       ${admin.videos.length ? admin.videos.map((v,i) => `
         <div class="vcard" style="align-items:center">
-          <div class="thumb" style="width:96px"><img src="${thumbURL(v.id)}" alt=""></div>
+          <div class="thumb" style="width:96px">${thumbHTML(v.id)}</div>
           <div class="vmeta"><div class="vt">${esc(v.t)}</div>
             <div class="vs"><span class="tag">${esc(catName2(v.cat))}</span>${v.date ? `<span>${ymd(v.date)}</span>` : ''}</div></div>
           <button class="tbtn" data-del="${i}" style="align-self:center">${ICO.trash({s:18})}</button>

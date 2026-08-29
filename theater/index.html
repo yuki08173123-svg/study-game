@@ -319,6 +319,28 @@ main{max-width:680px;margin:0 auto;
 .mrow.seen .mx{color:var(--ink3)}
 .mrow .mk{flex:none;color:var(--acc);font-size:.72rem;font-weight:800}
 
+/* ---------- レベルのルール ---------- */
+.rule{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
+  padding:6px 15px;margin-top:2px}
+.rr{display:flex;gap:14px;padding:14px 0;align-items:flex-start}
+.rr + .rr{border-top:1px solid var(--line)}
+.rr .rp{flex:none;min-width:52px;color:var(--acc);font-weight:800;font-size:1.06rem;
+  font-variant-numeric:tabular-nums}
+.rr .rt{font-size:.94rem;line-height:1.7;font-weight:700}
+.rr .rs{font-size:.79rem;color:var(--ink3);font-weight:600}
+.tr{display:flex;align-items:center;gap:12px;padding:11px 0;color:var(--ink3)}
+.tr + .tr{border-top:1px solid var(--line)}
+.tr .tl{flex:none;min-width:52px;font-size:.78rem;font-weight:800;letter-spacing:.03em;
+  font-variant-numeric:tabular-nums}
+.tr .tn2{flex:1;font-family:var(--serif);font-size:1.02rem;font-weight:600;letter-spacing:.04em}
+.tr.on{color:var(--ink2)}
+.tr.now{color:var(--acc)}
+.tr.now .tn2{color:var(--acc)}
+.tr .tnow{font-size:.68rem;font-weight:800;background:var(--acc);color:var(--acc-ink);
+  border-radius:20px;padding:2px 9px;letter-spacing:.04em}
+.tr .tnext{font-size:.68rem;font-weight:800;color:var(--ink3);border:1px solid var(--line2);
+  border-radius:20px;padding:2px 9px;letter-spacing:.04em}
+
 /* ---------- アウトプット ---------- */
 .opc{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
   padding:14px 15px;margin-bottom:10px}
@@ -437,7 +459,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 18;
+const VER = 19;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out';
 const $ = s => document.querySelector(s);
@@ -847,7 +869,7 @@ function vHome(){
         <div><b>${totalViews()}</b><span>のべ回数</span></div>
         <div><b>${totalOuts()}</b><span>アウトプット</span></div>
       </div>
-      <div class="dt">${new Date().toLocaleDateString('ja-JP')} 時点</div>
+      <div class="dt">${new Date().toLocaleDateString('ja-JP')} 時点 ・ 押すと上がり方がわかります</div>
     </button>`;
 
   if(cont) h += `<div class="sec"><h2>つづきから</h2></div>${bigCard(cont)}`;
@@ -1038,12 +1060,36 @@ function vLv(){
       <div class="st">ぜんぶで ${exp} ／ つぎまで あと ${L.need - L.cur}</div>
       <div class="bar"><i style="width:${Math.round(L.cur / L.need * 100)}%"></i></div>
     </div>
-    <div class="note" style="margin-top:16px">
-      <b>レベルの上がり方</b><br>
-      ・動画を<b>最後まで</b>見ると ＋${EXP_VIEW}（くり返すたびに ＋${EXP_VIEW}）<br>
-      ・アウトプットを書くと ＋${EXP_OUT}（1本の動画につき1回ぶん）<br>
-      上限はありません。反復するほど上がっていきます。<br>
-      <span style="color:var(--ink3)">回数は<b>手では増やせません</b>。最後まで見たときだけ、自動で1つ増えます。</span>
+    <div class="sec"><h2>レベルの上がり方</h2></div>
+    <div class="rule">
+      <div class="rr"><span class="rp">＋${EXP_VIEW}</span>
+        <span class="rt">動画を<b>最後まで</b>見る<br>
+          <span class="rs">くり返すたびに ＋${EXP_VIEW}。何回でも。</span></span></div>
+      <div class="rr"><span class="rp">＋${EXP_OUT}</span>
+        <span class="rt"><b>アウトプット</b>を書く<br>
+          <span class="rs">1本の動画につき1回ぶん。たくさん書いても増えません。</span></span></div>
+    </div>
+    <div class="note" style="margin-top:12px">
+      <b>だいじなこと</b><br>
+      ・回数は<b>自分ではふやせません</b>。<b>最後まで見たときだけ</b>、自動で1つふえます。<br>
+      ・<b>倍速でも大丈夫</b>です。とばした分は数えません。<br>
+      ・レベルに<b>上限はありません</b>。反復するほど、ずっと上がっていきます。<br>
+      ・つぎのレベルまでに必要な数は <b>40 → 60 → 80 …</b> と20ずつ増えます。
+      上に行くほど1段が重くなります。<br>
+      ・レベルは<b>下がりません</b>。
+    </div>
+    <div class="sec"><h2>称号</h2></div>
+    <div class="rule">
+      ${TITLES.map(([n,name],i) => {
+        const done = L.lv >= n, isNow = titleOf(L.lv) === name;
+        const nx = TITLES[i+1];
+        return `<div class="tr ${done?'on':''} ${isNow?'now':''}">
+          <span class="tl">Lv${n}</span>
+          <span class="tn2">${esc(name)}</span>
+          ${isNow ? `<span class="tnow">いまここ</span>`
+                  : (!done && (i===0 || L.lv >= TITLES[i-1][0]) ? `<span class="tnext">つぎ</span>` : '')}
+        </div>`; }).join('')}
+      <div class="tr"><span class="tl">Lv66〜</span><span class="tn2">そのまま伸びていきます</span></div>
     </div>
     <div class="sec"><h2>書いたアウトプット（${all.length}）</h2></div>
     ${all.length ? all.map(x => {
@@ -1255,7 +1301,7 @@ const GUIDE = [
   { ic:'check',  t:'最後まで見ると 1回ふえる',
     d:'回数は<b>自分ではふやせません</b>。<br>動画を<b>最後まで見たときだけ</b>、自動で1つふえます。<br>倍速でも大丈夫。とばした分は数えません。' },
   { ic:'star',   t:'レベルが上がっていく',
-    d:'見た回数とアウトプットで<b>レベル</b>が上がります。<br>上限はありません。ホームのいちばん上に出るので、<br>先生に見せるときはそこを見せてください。' },
+    d:'動画を最後まで見ると <b>＋10</b>。<br>アウトプットを書くと <b>＋15</b>。<br>上限はありません。ホームのいちばん上のカードを押すと、<br>上がり方と称号がぜんぶ見られます。' },
   { ic:'pencil', t:'アウトプットを書こう',
     d:'動画の下の「アウトプットを書く」から、<br>気づいたこと・やってみることを書けます。<br>書くとレベルも上がります。' },
   { ic:'book',   t:'迷ったら「使用マニュアル」',

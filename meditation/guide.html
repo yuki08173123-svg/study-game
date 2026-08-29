@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e13">
+<meta name="description" content="瞑想アプリ Mindrest の入れ方と使い方">
+<title>Mindrest のはじめ方</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#0a0e13; --card:rgba(255,255,255,.045); --card2:rgba(255,255,255,.075);
+  --line:rgba(255,255,255,.11);
+  --ink:#e9f0f4; --ink2:#b3c1cc; --dim:#7b8b98;
+  --aqua:#9fd8d6; --warm:#e3c79a;
+  --r:20px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Zen Kaku Gothic New",-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;
+  font-size:16px; line-height:1.9; letter-spacing:.02em;
+  -webkit-font-smoothing:antialiased;
+}
+.sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+  background:radial-gradient(120% 80% at 50% -10%, #16202c 0%, #0a0e13 62%)}
+.sky i{position:absolute;display:block;border-radius:50%;filter:blur(70px);opacity:.45}
+.sky i:nth-child(1){width:70vw;height:70vw;left:-18vw;top:-8vh;background:radial-gradient(circle,rgba(90,160,170,.4),rgba(90,160,170,0) 70%)}
+.sky i:nth-child(2){width:60vw;height:60vw;right:-14vw;top:34vh;background:radial-gradient(circle,rgba(120,120,190,.28),rgba(120,120,190,0) 70%)}
+
+.wrap{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:34px 20px 70px}
+
+.hero{text-align:center;padding:8px 0 18px}
+.hero .chr{width:min(46vw,170px);margin:0 auto 6px}
+.hero .chr svg{display:block;width:100%;height:auto}
+.hero h1{margin:0;font-size:2rem;font-weight:700;letter-spacing:.06em}
+.hero .sub{margin:4px 0 0;color:var(--aqua);font-size:.92rem;letter-spacing:.1em}
+.hero p{margin:14px auto 0;max-width:26em;color:var(--ink2);font-size:.95rem}
+
+.sec{margin-top:30px}
+.sec > h2{display:flex;align-items:center;gap:11px;margin:0 0 14px;font-size:1.12rem;font-weight:700}
+.sec > h2 .n{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(159,216,214,.16);border:1px solid rgba(159,216,214,.45);
+  color:#eafaf8;font-size:.9rem;font-weight:700}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 18px}
+.card + .card{margin-top:11px}
+
+.qr{text-align:center;padding:24px 18px 22px}
+.qr img{width:min(62vw,230px);height:auto;border-radius:14px;background:#fff;padding:10px;display:block;margin:0 auto}
+.qr .url{display:inline-block;max-width:100%;margin-top:14px;padding:9px 14px;border-radius:11px;
+  background:rgba(255,255,255,.06);border:1px solid var(--line);
+  font-size:.78rem;color:var(--ink2);word-break:break-all;line-height:1.6}
+.qr .cap{margin:14px 0 0;color:var(--dim);font-size:.82rem}
+
+.steps{counter-reset:s;list-style:none;margin:0;padding:0}
+.steps li{position:relative;padding:0 0 0 40px;margin-bottom:16px}
+.steps li:last-child{margin-bottom:0}
+.steps li::before{counter-increment:s;content:counter(s);
+  position:absolute;left:0;top:2px;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;background:rgba(255,255,255,.07);
+  border:1px solid var(--line);color:var(--aqua);font-size:.8rem;font-weight:700}
+.steps b{color:var(--ink)}
+.steps .memo{display:block;color:var(--dim);font-size:.84rem;line-height:1.75;margin-top:2px}
+
+.tag{display:inline-block;padding:3px 11px;border-radius:999px;font-size:.74rem;letter-spacing:.08em;
+  background:rgba(159,216,214,.14);border:1px solid rgba(159,216,214,.38);color:#dff6f4;margin-bottom:11px}
+.tag.and{background:rgba(227,199,154,.12);border-color:rgba(227,199,154,.38);color:#f2e6cf}
+
+.tabs{display:flex;flex-direction:column;gap:10px}
+.tabrow{display:flex;gap:13px;align-items:flex-start}
+.tabrow .nm{flex:none;width:64px;text-align:center;padding:8px 0;border-radius:12px;
+  background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:.84rem;color:var(--aqua)}
+.tabrow .tx{flex:1;font-size:.92rem;color:var(--ink2);line-height:1.8}
+.tabrow .tx b{color:var(--ink)}
+
+.qa{margin:0}
+.qa dt{color:var(--aqua);font-weight:700;font-size:.94rem;margin-top:16px}
+.qa dt:first-child{margin-top:0}
+.qa dd{margin:3px 0 0;color:var(--ink2);font-size:.92rem;line-height:1.85}
+
+.note{background:rgba(227,199,154,.08);border:1px solid rgba(227,199,154,.28);
+  border-radius:var(--r);padding:17px 18px;color:var(--ink2);font-size:.9rem;line-height:1.85}
+.note b{color:#f4e8d2}
+
+.end{margin-top:34px;text-align:center;color:var(--dim);font-size:.84rem;line-height:2}
+.end .big{color:var(--ink2);font-size:.95rem}
+
+@media print{
+  body{background:#fff;color:#111}
+  .sky{display:none}
+  .card,.note{background:#fff;border:1px solid #ccc}
+  .hero h1,.tabrow .tx b,.steps b,.note b{color:#111}
+  .hero .sub,.qa dt,.tabrow .nm{color:#0a6b78}
+  .qr img{border:1px solid #ddd}
+  .sec > h2 .n{background:#eef;border-color:#99c;color:#123}
+  .tabrow .nm{background:#f4f6f8;border-color:#ccc}
+  .steps li::before{background:#f4f6f8;border-color:#ccc;color:#0a6b78}
+  .end,.qa dd,.tabrow .tx,.steps .memo,.qr .cap,.qr .url{color:#333}
+}
+</style>
+</head>
+<body>
+
+<div class="sky"><i></i><i></i></div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="chr"><svg viewBox="0 0 200 210" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bg" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="#bfe3e3"/><stop offset=".52" stop-color="#96c5ca"/><stop offset="1" stop-color="#6d99a1"/></linearGradient><radialGradient id="hg" cx=".33" cy=".2" r=".78"><stop offset="0" stop-color="#ffffff" stop-opacity=".5"/><stop offset=".38" stop-color="#ffffff" stop-opacity=".1"/><stop offset=".72" stop-color="#ffffff" stop-opacity="0"/><stop offset="1" stop-color="#ffffff" stop-opacity=".07"/></radialGradient><radialGradient id="fg" cx=".5" cy=".38" r=".64"><stop offset="0" stop-color="#ffffff" stop-opacity=".075"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/><stop offset="1" stop-color="#0d181e" stop-opacity=".13"/></radialGradient><radialGradient id="gg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#bfe3e3" stop-opacity=".26"/><stop offset=".55" stop-color="#bfe3e3" stop-opacity=".08"/><stop offset="1" stop-color="#bfe3e3" stop-opacity="0"/></radialGradient></defs><g><circle cx="100" cy="108" r="86" fill="url(#gg)"/><circle cx="100" cy="96" r="66" fill="none" stroke="#bfe3e3" stroke-opacity=".28" stroke-width="1"/><ellipse cx="100" cy="197" rx="58" ry="8" fill="#bfe3e3" opacity=".12"/><g><path d="M100,29 C120.5,29 134,45.5 134,65.5 C134,74 132.5,80 129.5,84.5 C127.5,88.5 126,91.5 124,94.5 C141,101 153,114 159,131 C163,142 165,151 166.5,157 C172,165 178.5,174 179.5,181.5 C180,188.5 156,192.5 100,192.5 C44,192.5 20,188.5 20.5,181.5 C21.5,174 28,165 33.5,157 C35,151 37,142 41,131 C47,114 59,101 76,94.5 C74,91.5 72.5,88.5 70.5,84.5 C67.5,80 66,74 66,65.5 C66,45.5 79.5,29 100,29 Z" fill="url(#bg)" fill-opacity=".95"/><path d="M100,29 C120.5,29 134,45.5 134,65.5 C134,74 132.5,80 129.5,84.5 C127.5,88.5 126,91.5 124,94.5 C141,101 153,114 159,131 C163,142 165,151 166.5,157 C172,165 178.5,174 179.5,181.5 C180,188.5 156,192.5 100,192.5 C44,192.5 20,188.5 20.5,181.5 C21.5,174 28,165 33.5,157 C35,151 37,142 41,131 C47,114 59,101 76,94.5 C74,91.5 72.5,88.5 70.5,84.5 C67.5,80 66,74 66,65.5 C66,45.5 79.5,29 100,29 Z" fill="url(#hg)"/><path d="M100,29 C120.5,29 134,45.5 134,65.5 C134,74 132.5,80 129.5,84.5 C127.5,88.5 126,91.5 124,94.5 C141,101 153,114 159,131 C163,142 165,151 166.5,157 C172,165 178.5,174 179.5,181.5 C180,188.5 156,192.5 100,192.5 C44,192.5 20,188.5 20.5,181.5 C21.5,174 28,165 33.5,157 C35,151 37,142 41,131 C47,114 59,101 76,94.5 C74,91.5 72.5,88.5 70.5,84.5 C67.5,80 66,74 66,65.5 C66,45.5 79.5,29 100,29 Z" fill="none" stroke="#e8f7f8" stroke-opacity=".2" stroke-width=".9"/><path d="M55,181 C70,166 86,161 100,169 C114,161 130,166 145,181" fill="none" stroke="#6d99a1" stroke-opacity=".36" stroke-width="1.3"/><path d="M100,169 C100,176 100,181 100,186" fill="none" stroke="#6d99a1" stroke-opacity=".18" stroke-width="1"/><path d="M44,186.5 C64,179 136,179 156,186.5" fill="none" stroke="#eafaff" stroke-opacity=".14" stroke-width="2.2" stroke-linecap="round"/><path d="M78,152 C88,161 112,161 122,152" fill="none" stroke="#f2fbfb" stroke-opacity=".18" stroke-width="1.2"/><ellipse cx="100" cy="157" rx="22" ry="7" fill="#ffffff" opacity=".07"/><path d="M124,94.5 C133,104 138,116 140,128" fill="none" stroke="#0e181d" stroke-opacity=".07" stroke-width="2"/><path d="M76,94.5 C67,104 62,116 60,128" fill="none" stroke="#0e181d" stroke-opacity=".07" stroke-width="2"/><ellipse cx="100" cy="70" rx="28" ry="30" fill="url(#fg)"/><path d="M83.8,74 C87.43,75.5 93.37,75.5 97,74" fill="none" stroke="#2b4650" stroke-opacity="0.58" stroke-width="1.35" stroke-linecap="round"/><path d="M103,74 C106.63,75.5 112.57,75.5 116.2,74" fill="none" stroke="#2b4650" stroke-opacity="0.58" stroke-width="1.35" stroke-linecap="round"/><path d="M97.4,85.8 C98.7,86.7 101.3,86.7 102.6,85.8" fill="none" stroke="#2b4650" stroke-opacity=".15" stroke-width="1.1" stroke-linecap="round"/></g><circle cx="100" cy="12" r="12" fill="#efe3c6" opacity=".07"/><circle cx="100" cy="12" r="3.4" fill="#f4e9d2" opacity=".8"/></g></svg></div>
+    <h1>Mindrest</h1>
+    <p class="sub">マインドレスト</p>
+    <p>1分から始められる瞑想アプリです。時間を選んで目を閉じるだけ。終わると鐘が鳴り、記録が残ります。</p>
+  </div>
+
+  <div class="sec">
+    <h2><span class="n">1</span>スマホに入れる</h2>
+
+    <div class="card qr">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAdQAAAHUAQMAAAC56UsvAAAABlBMVEUKFBj///8Ej/KJAAACGUlEQVR42u2cW6rDMAxERTfg/e/SO3Ab/NDDcLkUChKcUIJNc37KdBjLcmR8fXWBhYWFhYWFhf0v2+Vcn5m08YzaM5jT5/75yj82+ku+v2Bhf8GK+0d0Fe0zmMKeV/OPoWfYzHruS8PHudfUS909hp5hK+j52PLR8Eod6Bm2nJ5vQ95xGj3D1svPYziLHnttKEJ+hq2iZ532vz7UN2AL6Nlfs1J3bPlMr1ofvzNs3vwcwvMMzOs+8/NOGnvM7wybNW803TcJC0CV8VY1eQM2ed7QpZ+46pw15CNy9Ayb35/PXd04lDia31tHz7C5/XlJ2u59b50760bPsMnrG3vRp9FCRANGyNLUn2FLrAe7c+CwKrRFPPQMm9yfbf357Gtri51RO/U62Oz+LFvAZovQxg8ta7AehM2/Hmxuf9DlZN+bRP0ZNr8/qwm3YTe4Y41uUH+GLVPfCM11qupr2wU9w6b2Z3v8xHbcNVW4dW/0DJvan0OiaNpoZ7uSyBuwZfzZHuJuUdhW6ugZNnt9w1SbbbFOU3Sn/xm2kj/bE4JhLPblG/RvwBbKz6a5To8TGuWTN2Dz+7Odii1Kt+t1HPQjwebPG+F895Wiw0EV9AybPT+b92+cCH3WiS4/48+wVfQ8vIyvJn/0DFvLn2Nvkndm9AxbKz/f1Qwtd/C+Atha9Q3jwMuTxwjfsh6ETa1n3v0OCwsLCwsL+0P2DabZB1TgQDlXAAAAAElFTkSuQmCC" alt="Mindrest のQRコード">
+      <div class="url">https://yuki08173123-svg.github.io/study-game/meditation/</div>
+      <p class="cap">カメラアプリでこのQRコードを読み取ると開きます。<br>上のアドレスを直接入力してもかまいません。</p>
+    </div>
+
+    <div class="card">
+      <span class="tag">iPhone の人</span>
+      <ol class="steps">
+        <li><b>Safari で</b>上のQRコードかアドレスを開く
+          <span class="memo">カメラを向けて、出てきたリンクを押します。</span></li>
+        <li>画面の下にある<b>共有ボタン</b>（□に↑の矢印）を押す</li>
+        <li>出てきた一覧を下にたどって<b>「ホーム画面に追加」</b>を押す</li>
+        <li>右上の<b>「追加」</b>を押す
+          <span class="memo">ホーム画面にアイコンができます。次からはそこから開きます。</span></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <span class="tag and">Android の人</span>
+      <ol class="steps">
+        <li><b>Chrome で</b>上のQRコードかアドレスを開く</li>
+        <li>右上の<b>「⋮」</b>（点が3つ）を押す</li>
+        <li><b>「ホーム画面に追加」</b>を押す</li>
+      </ol>
+    </div>
+
+    <div class="note">
+      <b>ホーム画面に追加してから使ってください。</b>そのほうが画面が広く使えて、動きもなめらかです。
+      アプリストアからのダウンロードは必要ありません。お金もかかりません。
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2><span class="n">2</span>やってみる</h2>
+    <div class="card">
+      <ol class="steps">
+        <li><b>時間を選ぶ</b>（1分・3分・5分・10分）
+          <span class="memo">はじめは1分か3分で十分です。</span></li>
+        <li><b>「はじめる」</b>を押す
+          <span class="memo">鐘が1回鳴ります。そうしたら目を閉じてください。画面は見なくて大丈夫です。</span></li>
+        <li>背すじをのばして、<b>呼吸をただ感じる</b>
+          <span class="memo">考えごとが浮かんだら「あ、考えていたな」と気づいて、また呼吸に戻ります。何回くり返してもかまいません。それが練習です。</span></li>
+        <li>時間になると<b>鐘が3回</b>鳴ります
+          <span class="memo">これが終わりの合図です。記録は自動で残ります。</span></li>
+      </ol>
+    </div>
+    <div class="note">
+      <b>音が鳴ります。</b>始める前に音量を確かめてください。マナーモードだと鳴らないことがあります。
+      まわりに人がいるときは、イヤホンを使ってください。
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2><span class="n">3</span>画面の見かた</h2>
+    <div class="card tabs">
+      <div class="tabrow"><span class="nm">瞑想</span><span class="tx">時間を選んで始める画面です。上には<b>レベル</b>と<b>キャラクター</b>がいます。続けるとレベルが上がり、キャラが育ちます。見習いから始まって、いちばん上は「悟りの境地」です。</span></div>
+      <div class="tabrow"><span class="nm">記録</span><span class="tx">続いた日数、今日の時間、これまでの合計が見られます。記録をタップすると<b>「ひとこと」</b>を書き残せます（声でも入れられます）。</span></div>
+      <div class="tabrow"><span class="nm">学ぶ</span><span class="tx">瞑想について<b>研究で分かっていること</b>を、図つきで12本読めます。1本2〜3分。読み終えたら「学んだ」を押すとチェックがつき、しばらくすると<b>復習</b>が出ます。</span></div>
+      <div class="tabrow"><span class="nm">使い方</span><span class="tx">やり方、よくある質問、レベルのしくみが書いてあります。困ったらここを見てください。</span></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2><span class="n">4</span>知っておいてほしいこと</h2>
+    <div class="card">
+      <dl class="qa">
+        <dt>記録はどこに残るの？</dt>
+        <dd>使っているスマホの中だけです。どこかに送られたり、先生や他の人に見られたりすることはありません。そのかわり、アプリを削除すると記録も消えます。</dd>
+
+        <dt>毎日やらないとダメ？</dt>
+        <dd>いいえ。思い出したときに座れば、それで続いています。数日空いてもかまいません。ただし何日も空くとキャラクターが元気をなくすので、そのときはまた1分から。</dd>
+
+        <dt>集中できないんだけど…</dt>
+        <dd>ふつうです。気が散った回数が多い日は、それだけ「戻る練習」をたくさんした日だと考えてください。うまくできたかどうかは気にしなくて大丈夫です。</dd>
+
+        <dt>眠くなる</dt>
+        <dd>体が休みたいというサインです。背すじをのばす、目をうっすら開ける、時間を短くする、で変わります。</dd>
+
+        <dt>途中でやめてもいい？</dt>
+        <dd>いいです。「やめる」を押せば終われます。ただし途中でやめたぶんは記録に残りません。</dd>
+
+        <dt>新しくなったと言われたら</dt>
+        <dd>アプリを開くと、上に<b>「新しいバージョンがあります」</b>と出ることがあります。その横の<b>「更新する」</b>を押してください。記録は消えません。</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="end">
+    <span class="big">うまくやろうとしなくて大丈夫です。</span><br>
+    座った時間は、そのまま残ります。
+  </div>
+
+</div>
+
+</body>
+</html>

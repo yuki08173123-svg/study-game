@@ -213,6 +213,14 @@ main{max-width:680px;margin:0 auto;
 #loomfr{z-index:3}
 /* iframe への直接タップを止め、YouTubeへ飛ばさない */
 .catch{position:absolute;inset:0;z-index:2}
+/* 一時停止するとYouTubeがタイトルとロゴを出すので、自前の幕でかぶせる。
+   タップは下の .catch に通すので pointer-events:none にしておく */
+.scrim{position:absolute;inset:0;z-index:2;background:#000;pointer-events:none;
+  display:flex;align-items:center;justify-content:center}
+.scrim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4}
+.scrim .pb2{position:relative;width:64px;height:64px;border-radius:50%;
+  background:rgba(217,178,106,.94);color:var(--acc-ink);
+  display:flex;align-items:center;justify-content:center}
 .catch.off{pointer-events:none}
 .poster{position:absolute;inset:0;z-index:4;background:#000;display:flex;
   align-items:center;justify-content:center}
@@ -239,6 +247,7 @@ main{max-width:680px;margin:0 auto;
   justify-content:center;gap:3px;color:#fff;font-size:.72rem;font-weight:700}
 .pb:active{background:rgba(255,255,255,.14)}
 .pb.main{background:rgba(255,255,255,.14)}
+.pb.on{color:var(--acc);background:rgba(217,178,106,.18)}
 .pb .n{font-size:.6rem;font-weight:800;letter-spacing:0}
 .sp{flex:1}
 .endcard{position:absolute;inset:0;z-index:5;background:rgba(6,7,9,.93);display:flex;
@@ -385,6 +394,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
       <div id="yt"></div>
       <iframe id="loomfr" class="hidden" allowfullscreen></iframe>
       <div class="catch" id="catch"></div>
+      <div class="scrim hidden" id="scrim"><img id="scrimimg" alt=""><span class="pb2">${''}</span></div>
       <div class="ctrl fade" id="ctrl"></div>
       <div class="poster" id="poster"><img id="posterimg" alt=""><button class="bigplay" id="bigplay"></button><div class="phint hidden" id="phint"></div></div>
       <div class="endcard hidden" id="endcard"></div>
@@ -396,7 +406,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 16;
+const VER = 17;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders';
 const $ = s => document.querySelector(s);
@@ -442,7 +452,7 @@ let MAN = null;         /* 使用マニュアル（どんなときに何を見�
 let prog = {};            /* {動画id: {t:秒, d:全体の秒, done:1, last:時刻}} */
 let favs = [];
 let folders = [];       /* 生徒が自分で作るフォルダ [{id, name, ids:[]}] */
-let cfg  = { speed:1, autonext:true };
+let cfg  = { speed:1, autonext:true, loop:false };
 let view = { name:'home' };
 let admin = null;         /* 管理画面のしたがき */
 
@@ -1028,7 +1038,10 @@ function vSet(){
   $('#main').innerHTML = `
     <div class="sec"><h2>再生</h2></div>
     <div class="group">
-      <div class="item"><div class="nm">見終わったら次の動画へ</div>
+      <div class="item"><div class="nm">ループ再生<br>
+        <span style="font-size:.76rem;color:var(--ink3);font-weight:600">同じ動画をくり返す</span></div>
+        <div class="sw ${cfg.loop?'on':''}" id="swLoop"><i></i></div></div>
+      <div class="item" ${cfg.loop?'style="opacity:.45"':''}><div class="nm">見終わったら次の動画へ</div>
         <div class="sw ${cfg.autonext?'on':''}" id="swNext"><i></i></div></div>
       <div class="item"><div class="nm">はじめの再生の速さ</div>
         <div class="ct" id="spdLbl">${cfg.speed}倍</div>
@@ -1040,6 +1053,9 @@ function vSet(){
       <div class="item"><div class="nm">見終わった動画</div><div class="ct">${seen}本 / のべ${tot}回</div></div>
       <button class="item" id="clr"><div class="nm">記録をぜんぶ消す</div><div class="chev">${ICO.chev({s:20})}</div></button>
     </div>
+    <div class="lead" style="margin-top:8px">${cfg.loop
+      ? 'ループ再生が入っているので、次の動画には進みません。同じ動画をくり返します（くり返すたびに「見た回数」が1つ増えます）。'
+      : '見終わったら、下の動画へ自動で進みます。'}</div>
     <div class="lead" style="margin-top:8px">速さは動画ごとに覚えます。ここで決めるのは、まだ速さを変えていない動画の速さです。</div>
     <div class="lead" style="margin-top:8px">記録はこの端末の中だけに残ります。外には送られません。</div>
 
@@ -1063,6 +1079,8 @@ function vSet(){
     </div>
     <div class="ver">Theater v${VER}</div>`;
 
+  $('#swLoop').onclick = () => { cfg.loop = !cfg.loop; saveCfg(); vSet();
+    toast(cfg.loop ? 'くり返し再生にしました' : 'くり返しをやめました'); };
   $('#swNext').onclick = () => { cfg.autonext = !cfg.autonext; saveCfg(); vSet(); };
   $('#spdBtn').onclick = $('#spdLbl').onclick = () => {
     cfg.speed = SPEEDS[(SPEEDS.indexOf(cfg.speed) + 1) % SPEEDS.length]; saveCfg();
@@ -1377,6 +1395,8 @@ function openPlay(id, push){
   if(isLoom(id)) $('#posterimg').removeAttribute('src');
   else $('#posterimg').src = `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
   $('#poster').classList.remove('hidden');
+  $('#scrim').classList.add('hidden');
+  $('#scrimimg').src = isLoom(id) ? '' : `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
   $('#phint').classList.add('hidden');
   $('#endcard').classList.add('hidden');
   $('#ctrl').classList.add('fade');
@@ -1434,10 +1454,13 @@ function onState(e){
   if(e.data === S.PLAYING){
     started = true;
     $('#poster').classList.add('hidden');
+    $('#scrim').classList.add('hidden');
     $('#endcard').classList.add('hidden');
     try{ player.setPlaybackRate(speedOf(curId)); }catch(err){}
     startTick(); showCtrl(); drawCtrl();
   }else if(e.data === S.PAUSED){
+    /* 止めた瞬間にYouTubeの画面が出るので、すぐ幕をかける */
+    if(!isLoom(curId)) $('#scrim').classList.remove('hidden');
     saveNow(); stopTick(); showCtrl(true); drawCtrl();
   }else if(e.data === S.ENDED){
     stopTick();
@@ -1447,6 +1470,13 @@ function onState(e){
   }
 }
 function onEnded(){
+  /* ループ再生が入っていれば、次へは行かず 同じ動画をもう一度。
+     反復した回数はそのたびに1つ増える（それが目的なので） */
+  if(cfg.loop){
+    try{ player.seekTo(0, true); player.playVideo(); }catch(e){}
+    toast('もう一度 くり返します');
+    return;
+  }
   const nx = nextVideo();
   if(cfg.autonext && nx){ openPlay(nx.id); toast('次の動画へ'); return; }
   $('#endcard').innerHTML = `<div class="ttl">見終わりました</div>
@@ -1504,6 +1534,7 @@ function drawCtrl(){
       <button class="pb main" id="pp">${ICO.play({s:20})}</button>
       <button class="pb" id="f10">${ICO.f10({s:21})}<span class="n">10</span></button>
       <span class="sp"></span>
+      <button class="pb ${cfg.loop ? 'on' : ''}" id="loop">${ICO.loop({s:19})}</button>
       <button class="pb" id="spd">${speedOf(curId)}x</button>
       <button class="pb" id="exp">${ICO.exp({s:19})}</button>
     </div>`;
@@ -1532,6 +1563,12 @@ function drawCtrl(){
     setSpeed(curId, next);
     $('#spd').textContent = next + 'x';
     toast(`この動画は ${next}倍速`);
+    showCtrl();
+  };
+  $('#loop').onclick = () => {
+    cfg.loop = !cfg.loop; saveCfg();
+    $('#loop').classList.toggle('on', cfg.loop);
+    toast(cfg.loop ? 'くり返し再生：オン' : 'くり返し再生：オフ');
     showCtrl();
   };
   $('#exp').onclick = toggleExp;
@@ -1719,6 +1756,7 @@ async function boot(){
   $$('#tabin .tab').forEach(b => b.onclick = () => go(b.dataset.tab));
   $('#pvback').innerHTML = ICO.back({ s:20 });
   $('#bigplay').innerHTML = ICO.play({ s:26 });
+  $('#scrim').querySelector('.pb2').innerHTML = ICO.play({ s:24 });
   $('#pvback').onclick = () => { closePlay(); try{ history.back(); }catch(e){} };
 
   /* 動画の上をタップ = 操作パネルの出し入れ。YouTubeへは絶対に飛ばさない */

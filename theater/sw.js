@@ -3,7 +3,7 @@
    ネットがないときだけキャッシュで動く。キャッシュを先に見る方式にすると
    「直したのに古い画面が出る」事故になるので、ぜったいにしない。
    動画は YouTube から流すので、ここではキャッシュしない（同じサイトのファイルだけ扱う）。 */
-const VER = 'th-v16';
+const VER = 'th-v17';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {

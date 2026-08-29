@@ -46,6 +46,9 @@ img{display:block}
   padding-top:env(safe-area-inset-top)}
 .tbar{max-width:680px;margin:0 auto;min-height:52px;display:flex;align-items:center;gap:8px;padding:8px 16px}
 .tbar .ttl{font-size:1.34rem;font-weight:700;letter-spacing:.06em;flex:1}
+/* ホームのタイトルだけ 真ん中に大きく */
+.tbar .ttl.home{font-size:2rem;font-weight:800;letter-spacing:.16em;text-align:center;
+  padding:10px 0 6px;line-height:1.2}
 .tbtn{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;
   color:var(--ink2);background:var(--surf);border:1px solid var(--line)}
 .tbtn:active{opacity:.55}
@@ -393,7 +396,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 15;
+const VER = 16;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders';
 const $ = s => document.querySelector(s);
@@ -725,7 +728,7 @@ function dots(n){
 
 /* ---------- ホーム ---------- */
 function vHome(){
-  $('#tbar').innerHTML = `<div class="ttl">Theater</div>`;
+  $('#tbar').innerHTML = `<div class="ttl home">Theater</div>`;
   if(!DATA.videos.length){
     $('#main').innerHTML = emptyBox('動画がまだ登録されていません。<br>登録されるとここに並びます。');
     return;
@@ -737,15 +740,6 @@ function vHome(){
 
   let h = '';
   if(cont) h += `<div class="sec"><h2>つづきから</h2></div>${bigCard(cont)}`;
-
-  /* 使用マニュアル。区分とは別のもの（目的から引く手引き）なので見た目も分ける */
-  if(MAN && MAN.groups){
-    h += `<div class="sec"><h2>こんなときは</h2></div>
-      <button class="mban" data-man="1">
-        <div class="mt">${ICO.book({s:20})}<span>使用マニュアル</span></div>
-        <div class="ms">どういうときに、どの動画を見ればいいか</div>
-      </button>`;
-  }
 
   /* 区分をタイルで見せる。中に入ってから探す形にして、ホームを短く保つ */
   const cats = DATA.cats.filter(c => DATA.videos.some(v => v.cat === c.id));
@@ -761,6 +755,15 @@ function vHome(){
         <div class="bar"><i style="width:${pct}%"></i></div>
       </button>`;
     }).join('')}</div>`;
+
+  /* 使用マニュアル。区分とは別のもの（目的から引く手引き）なので見た目も分ける */
+  if(MAN && MAN.groups){
+    h += `<div class="sec"><h2>こんなときは</h2></div>
+      <button class="mban" data-man="1">
+        <div class="mt">${ICO.book({s:20})}<span>使用マニュアル</span></div>
+        <div class="ms">どういうときに、どの動画を見ればいいか</div>
+      </button>`;
+  }
 
   /* 最近ふえたもの */
   const recent = DATA.videos.filter(v => v.date).slice(0, 4);

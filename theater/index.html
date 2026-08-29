@@ -274,7 +274,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 4;
+const VER = 5;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -356,10 +356,13 @@ function numOf(v){
   const m = t.match(/(\d+)/);
   return m ? m[1] : null;
 }
-const inCat  = c => { const l = DATA.videos.filter(v => v.cat === c);
-  return catAsc(c)
-    ? l.slice().sort((a,b) => (a.date||'').localeCompare(b.date||'') || a._i - b._i)
-    : l; };
+const inCat  = c => {
+  let l = DATA.videos.filter(v => v.cat === c);
+  if(catAsc(c)) l = l.slice().sort((a,b) => (a.date||'').localeCompare(b.date||'') || a._i - b._i);
+  /* pin を付けた動画（実績動画についてなど）は、いつも先頭に置く */
+  const pinned = l.filter(v => v.pin);
+  return pinned.length ? pinned.concat(l.filter(v => !v.pin)) : l;
+};
 const catName = c => (DATA.cats.find(x => x.id === c) || {}).name || '';
 /* Loom のサムネイルは外から取れないので、代わりの絵を描く */
 const thumbHTML = id => isLoom(id)
@@ -401,7 +404,8 @@ function normalize(j){
   const cats = Array.isArray(j.cats) ? j.cats.slice() : [];
   const videos = (Array.isArray(j.videos) ? j.videos : [])
     .map(v => ({ id:ytId(v.id || v.url || ''), t:v.t || v.title || '(無題)',
-                 cat:v.cat || '', g:v.g || '', d:v.d || v.desc || '', date:v.date || '', sec:+v.sec || 0 }))
+                 cat:v.cat || '', g:v.g || '', d:v.d || v.desc || '', date:v.date || '',
+                 sec:+v.sec || 0, pin:v.pin ? 1 : 0 }))
     .filter(v => v.id);
   /* 元の並び順を覚えておく。同じ日に何本も投稿されたとき、
      古い順に並べ直しても 1・2・3・4 の順が崩れないようにするため */

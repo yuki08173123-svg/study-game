@@ -63,11 +63,12 @@ main{max-width:680px;margin:0 auto;
 
 /* ---------- 動画カード（横並び） ---------- */
 .vlist{display:flex;flex-direction:column;gap:10px}
-.vcard{display:flex;gap:12px;width:100%;text-align:left;background:var(--surf);
-  border:1px solid var(--line);border-radius:var(--r);padding:9px;transition:transform .12s}
+.vcard{display:flex;gap:13px;width:100%;text-align:left;background:var(--surf);
+  border:1px solid var(--line);border-radius:var(--r);padding:10px;transition:transform .12s}
 .vcard:active{transform:scale(.988);background:var(--surf2)}
-.thumb{position:relative;width:132px;flex:none;aspect-ratio:16/9;border-radius:9px;overflow:hidden;
+.thumb{position:relative;width:152px;flex:none;aspect-ratio:16/9;border-radius:10px;overflow:hidden;
   background:var(--surf3)}
+@media (max-width:359px){ .thumb{width:126px} }
 .thumb img{width:100%;height:100%;object-fit:cover}
 .thumb .lm{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:3px;background:linear-gradient(140deg,#2b2f3a,#171a20);color:var(--acc)}
@@ -80,7 +81,7 @@ main{max-width:680px;margin:0 auto;
 .thumb .seen{position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(11,12,15,.55);
   display:flex;align-items:center;justify-content:center;color:var(--acc)}
 .vmeta{flex:1;min-width:0;padding:2px 2px 0 0;display:flex;flex-direction:column}
-.vt{font-size:.93rem;font-weight:700;line-height:1.45;letter-spacing:.01em;
+.vt{font-size:1rem;font-weight:700;line-height:1.45;letter-spacing:.01em;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .vs{margin-top:auto;font-size:.72rem;color:var(--ink3);font-weight:600;letter-spacing:.03em;
   display:flex;align-items:center;gap:6px;padding-top:5px}
@@ -98,6 +99,29 @@ main{max-width:680px;margin:0 auto;
 .big .bt{padding:12px 14px 14px}
 .big .bt .vt{-webkit-line-clamp:2}
 .big .bt .vs{padding-top:7px}
+
+/* ---------- 区分タイル（ホーム） ---------- */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:12px}
+.tile{background:var(--surf);border:1px solid var(--line);border-radius:16px;
+  padding:15px 15px 14px;text-align:left;display:flex;flex-direction:column;gap:10px;
+  min-height:100px;transition:transform .12s}
+.tile:active{transform:scale(.985);background:var(--surf2)}
+.tile .tn{font-size:1.02rem;font-weight:700;letter-spacing:.02em;line-height:1.35}
+.tile .tc{font-size:.74rem;color:var(--ink3);font-weight:700;letter-spacing:.03em;
+  font-variant-numeric:tabular-nums;margin-top:auto}
+.bar{height:5px;border-radius:3px;background:var(--surf3);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc);border-radius:3px;transition:width .3s}
+
+/* ---------- 区分の中（ジャンル見出し） ---------- */
+.chead{margin:4px 2px 0}
+.chead h1{font-size:1.46rem;font-weight:700;letter-spacing:.03em;margin:0 0 7px;line-height:1.3}
+.chead .st{font-size:.79rem;color:var(--ink3);font-weight:700;letter-spacing:.03em;
+  font-variant-numeric:tabular-nums}
+.chead .bar{margin-top:11px}
+.gsec{display:flex;align-items:center;gap:10px;margin:26px 2px 11px;
+  font-size:.85rem;font-weight:800;color:var(--acc);letter-spacing:.06em}
+.gsec::after{content:'';flex:1;height:1px;background:var(--line)}
+.gsec .n{color:var(--ink3);font-weight:700;font-size:.72rem}
 
 /* ---------- チップ ---------- */
 .chips{display:flex;gap:8px;overflow-x:auto;padding:4px 16px 2px;margin:0 -16px;
@@ -250,7 +274,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 3;
+const VER = 4;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -319,6 +343,19 @@ function ymd(d){
 const vid = id => DATA.videos.find(v => v.id === id);
 /* videos は新しい順で持っている。asc のカテゴリだけ ひっくり返して古い順にする */
 const catAsc = c => !!(DATA.cats.find(x => x.id === c) || {}).asc;
+const catOf  = c => DATA.cats.find(x => x.id === c) || {};
+/* その区分に出てくるジャンルを、videos.json の genreOrder の順に並べて返す */
+function genresIn(c){
+  const gs = [...new Set(inCat(c).map(v => v.g).filter(Boolean))];
+  const o = DATA.genreOrder || [];
+  return gs.sort((a,b) => (o.indexOf(a) + 1 || 99) - (o.indexOf(b) + 1 || 99));
+}
+/* タイトルの中の数字（【マインド動画５７】→ 57）。範囲チップの見出しに使う */
+function numOf(v){
+  const t = String(v.t).replace(/[０-９]/g, c => '０１２３４５６７８９'.indexOf(c));
+  const m = t.match(/(\d+)/);
+  return m ? m[1] : null;
+}
 const inCat  = c => { const l = DATA.videos.filter(v => v.cat === c);
   return catAsc(c)
     ? l.slice().sort((a,b) => (a.date||'').localeCompare(b.date||'') || a._i - b._i)
@@ -364,14 +401,14 @@ function normalize(j){
   const cats = Array.isArray(j.cats) ? j.cats.slice() : [];
   const videos = (Array.isArray(j.videos) ? j.videos : [])
     .map(v => ({ id:ytId(v.id || v.url || ''), t:v.t || v.title || '(無題)',
-                 cat:v.cat || '', d:v.d || v.desc || '', date:v.date || '', sec:+v.sec || 0 }))
+                 cat:v.cat || '', g:v.g || '', d:v.d || v.desc || '', date:v.date || '', sec:+v.sec || 0 }))
     .filter(v => v.id);
   /* 元の並び順を覚えておく。同じ日に何本も投稿されたとき、
      古い順に並べ直しても 1・2・3・4 の順が崩れないようにするため */
   videos.forEach((v,i) => v._i = i);
   /* 新しいものが上。日付がなければ書いた順を保つ */
   videos.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
-  return { cats, videos };
+  return { cats, videos, genreOrder: Array.isArray(j.genreOrder) ? j.genreOrder : [] };
 }
 
 /* ===================== 画面のふりわけ ===================== */
@@ -384,13 +421,13 @@ const TABS = [
 function go(name, p){ view = { name, p }; render(); window.scrollTo(0,0); }
 
 function render(){
-  const tabId = ({ home:'home', find:'find', saved:'saved', set:'set', admin:'set' })[view.name] || 'home';
+  const tabId = ({ home:'home', cat:'home', find:'find', saved:'saved', set:'set', admin:'set' })[view.name] || 'home';
   $$('#tabin .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tabId));
-  ({ home:vHome, find:vFind, saved:vSaved, set:vSet, admin:vAdmin }[view.name] || vHome)();
+  ({ home:vHome, cat:vCat, find:vFind, saved:vSaved, set:vSet, admin:vAdmin }[view.name] || vHome)();
 }
 
 /* ---------- カードの部品 ---------- */
-function card(v){
+function card(v, opt){
   const r = ratio(v), d = durOf(v), done = isDone(v);
   return `<button class="vcard" data-go="${v.id}">
     <div class="thumb">
@@ -401,7 +438,8 @@ function card(v){
     </div>
     <div class="vmeta">
       <div class="vt">${esc(v.t)}</div>
-      <div class="vs">${v.cat ? `<span class="tag">${esc(catName(v.cat))}</span>` : ''}
+      <div class="vs">${(opt && opt.tag === false) ? '' :
+          `<span class="tag">${esc(v.g || catName(v.cat))}</span>`}
         ${v.date ? `<span>${ymd(v.date)}</span>` : ''}</div>
     </div>
   </button>`;
@@ -439,49 +477,128 @@ function vHome(){
   let h = '';
   if(cont) h += `<div class="sec"><h2>つづきから</h2></div>${bigCard(cont)}`;
 
-  /* カテゴリごとに新しい順で3本ずつ */
+  /* 区分をタイルで見せる。中に入ってから探す形にして、ホームを短く保つ */
   const cats = DATA.cats.filter(c => DATA.videos.some(v => v.cat === c.id));
-  const other = DATA.videos.filter(v => !cats.some(c => c.id === v.cat));
-  for(const c of cats){
-    const list = inCat(c.id);
-    h += `<div class="sec"><h2>${esc(c.name)}</h2>
-      ${list.length > 3 ? `<button class="more" data-cat="${esc(c.id)}">すべて見る（${list.length}）</button>` : ''}</div>
-      <div class="vlist">${list.slice(0,3).map(card).join('')}</div>`;
-  }
-  if(other.length){
-    h += `<div class="sec"><h2>そのほか</h2></div>
-      <div class="vlist">${other.slice(0,3).map(card).join('')}</div>`;
+  h += `<div class="sec"><h2>どれを見る？</h2></div>
+    <div class="tiles">${cats.map(c => {
+      const list = inCat(c.id), done = list.filter(isDone).length;
+      const pct = list.length ? Math.round(done / list.length * 100) : 0;
+      return `<button class="tile" data-tile="${esc(c.id)}">
+        <div class="tn">${esc(c.name)}</div>
+        <div class="tc">${list.length}本${done ? ` ・ ${done}本見た` : ''}</div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+      </button>`;
+    }).join('')}</div>`;
+
+  /* 最近ふえたもの */
+  const recent = DATA.videos.filter(v => v.date).slice(0, 4);
+  if(recent.length){
+    h += `<div class="sec"><h2>最近ふえた動画</h2></div>
+      <div class="vlist">${recent.map(v => card(v)).join('')}</div>`;
   }
   $('#main').innerHTML = h;
 }
 
+/* ---------- 区分の中 ---------- */
+let catG = 'all';       /* 選んでいるジャンル、または 範囲チップの番号 */
+function vCat(){
+  const c = catOf(view.p);
+  if(!c.id) return go('home');
+  $('#tbar').innerHTML = `<button class="tbtn" id="cback">${ICO.back({s:20})}</button>
+    <div class="ttl"></div>
+    <button class="tbtn" id="cfind">${ICO.search({s:19})}</button>`;
+  $('#cback').onclick = () => go('home');
+  $('#cfind').onclick = () => { findCat = c.id; findQ = ''; go('find'); };
+
+  const all = inCat(c.id);
+  const done = all.filter(isDone).length;
+  const pct = all.length ? Math.round(done / all.length * 100) : 0;
+  const gs = c.genres ? genresIn(c.id) : [];
+  /* ジャンルがない区分で本数が多いときは、番号の範囲でとべるようにする */
+  const ranges = (!gs.length && all.length > 40) ? chunkRanges(all, 20) : [];
+
+  let chips = '';
+  if(gs.length){
+    chips = `<div class="chips" style="margin-top:14px">
+      <button class="chip ${catG==='all'?'on':''}" data-g="all">すべて（${all.length}）</button>
+      ${gs.map(g => `<button class="chip ${catG===g?'on':''}" data-g="${esc(g)}">${esc(g)}（${all.filter(v=>v.g===g).length}）</button>`).join('')}
+    </div>`;
+  }else if(ranges.length){
+    chips = `<div class="chips" style="margin-top:14px">
+      <button class="chip ${catG==='all'?'on':''}" data-g="all">すべて</button>
+      ${ranges.map((r,i) => `<button class="chip ${catG===('r'+i)?'on':''}" data-g="r${i}">${esc(r.label)}</button>`).join('')}
+    </div>`;
+  }
+
+  let body = '';
+  if(gs.length && catG === 'all'){
+    /* ジャンルごとに見出しをつけて並べる */
+    body = gs.map(g => {
+      const l = all.filter(v => v.g === g);
+      return `<div class="gsec">${esc(g)}<span class="n">${l.length}</span></div>
+        <div class="vlist">${l.map(v => card(v, {tag:false})).join('')}</div>`;
+    }).join('');
+  }else{
+    let l = all;
+    if(gs.length && catG !== 'all') l = all.filter(v => v.g === catG);
+    if(ranges.length && catG !== 'all'){
+      const r = ranges[+String(catG).slice(1)];
+      if(r) l = all.slice(r.s, r.e);
+    }
+    body = `<div class="vlist" style="margin-top:16px">
+      ${l.length ? l.map(v => card(v, {tag:false})).join('') : emptyBox('ありません')}</div>`;
+  }
+
+  $('#main').innerHTML = `
+    <div class="chead">
+      <h1>${esc(c.name)}</h1>
+      <div class="st">${all.length}本${done ? ` ・ ${done}本 見終わりました` : ''}</div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+    </div>
+    ${chips}
+    ${body}`;
+  $$('#main .chip').forEach(b => b.onclick = () => { catG = b.dataset.g; vCat(); window.scrollTo(0,0); });
+}
+/* 20本ずつの範囲を作る。見出しはタイトルの中の数字を使う（【マインド動画５７】→ 57） */
+function chunkRanges(list, size){
+  const out = [];
+  for(let s = 0; s < list.length; s += size){
+    const e = Math.min(s + size, list.length);
+    const a = numOf(list[s]), b = numOf(list[e-1]);
+    const lbl = (a !== null && b !== null) ? (a === b ? `${a}` : `${a}〜${b}`) : `${s+1}〜${e}`;
+    out.push({ s, e, label: lbl });
+  }
+  return out;
+}
+
 /* ---------- さがす ---------- */
-let findQ = '', findCat = 'all', findUnseen = false;
+let findQ = '', findCat = 'all';
 function vFind(){
   $('#tbar').innerHTML = `<div class="ttl">さがす</div>`;
   const cats = [{ id:'all', name:'すべて' }]
     .concat(DATA.cats.filter(c => DATA.videos.some(v => v.cat === c.id)))
-    .concat([{ id:'__un', name:'未視聴だけ' }]);
+    .concat([{ id:'__un', name:'まだ見ていない' }]);
   let list = DATA.videos.filter(v => {
     if(findCat === '__un'){ if(isDone(v)) return false; }
     else if(findCat !== 'all' && v.cat !== findCat) return false;
     if(!findQ) return true;
     const q = findQ.toLowerCase();
-    return (v.t + ' ' + v.d).toLowerCase().includes(q);
+    return (v.t + ' ' + v.g + ' ' + v.d).toLowerCase().includes(q);
   });
   if(catAsc(findCat)) list = list.sort((a,b) => (a.date||'').localeCompare(b.date||'') || a._i - b._i);
   $('#main').innerHTML = `
-    <div style="margin-top:6px"><input id="q" type="search" placeholder="タイトルで検索" value="${esc(findQ)}"></div>
+    <div style="margin-top:6px"><input id="q" type="search" placeholder="タイトル・ジャンルで検索" value="${esc(findQ)}"></div>
     <div class="chips" style="margin-top:12px">
-      ${cats.map(c => `<button class="chip ${findCat===c.id?'on':''}" data-cat="${esc(c.id)}">${esc(c.name)}</button>`).join('')}
+      ${cats.map(c => `<button class="chip ${findCat===c.id?'on':''}" data-fc="${esc(c.id)}">${esc(c.name)}</button>`).join('')}
     </div>
-    <div class="vlist" style="margin-top:14px">
-      ${list.length ? list.map(card).join('') : emptyBox('見つかりませんでした')}
+    <div class="lead" style="margin-top:14px">${list.length}本</div>
+    <div class="vlist" style="margin-top:8px">
+      ${list.length ? list.map(v => card(v)).join('') : emptyBox('見つかりませんでした')}
     </div>`;
   const q = $('#q');
   q.oninput = () => { findQ = q.value; const s = q.selectionStart; vFind();
     const n = $('#q'); n.focus(); try{ n.setSelectionRange(s,s); }catch(e){} };
-  $$('#main .chip').forEach(b => b.onclick = () => { findCat = b.dataset.cat; vFind(); });
+  $$('#main .chip').forEach(b => b.onclick = () => { findCat = b.dataset.fc; vFind(); window.scrollTo(0,0); });
 }
 
 /* ---------- 保存 ---------- */
@@ -489,7 +606,7 @@ function vSaved(){
   $('#tbar').innerHTML = `<div class="ttl">保存</div>`;
   const list = favs.map(id => vid(id)).filter(Boolean);
   $('#main').innerHTML = list.length
-    ? `<div class="vlist" style="margin-top:10px">${list.map(card).join('')}</div>`
+    ? `<div class="vlist" style="margin-top:10px">${list.map(v => card(v)).join('')}</div>`
     : emptyBox('あとで見たい動画は、再生画面の<br>「保存」で ここにためられます。');
 }
 
@@ -824,7 +941,8 @@ function drawBody(){
   const v = vid(curId); if(!v) return;
   $('#pvbody').innerHTML = `
     <h1>${esc(v.t)}</h1>
-    <div class="vs">${v.cat ? `<span class="tag">${esc(catName(v.cat))}</span>` : ''}
+    <div class="vs"><span class="tag">${esc(catName(v.cat))}</span>
+      ${v.g ? `<span class="tag">${esc(v.g)}</span>` : ''}
       ${v.date ? `<span>${ymd(v.date)}</span>` : ''}</div>
     <div class="acts">
       <button class="btn sm" id="fav">${isFav(v.id) ? ICO.starF({s:18}) : ICO.star({s:18})}
@@ -962,8 +1080,8 @@ async function boot(){
   document.addEventListener('click', e => {
     const c = e.target.closest('[data-go]');
     if(c){ openPlay(c.dataset.go); return; }
-    const m = e.target.closest('[data-cat]');
-    if(m && m.classList.contains('more')){ findCat = m.dataset.cat; go('find'); }
+    const t = e.target.closest('[data-tile]');
+    if(t){ catG = 'all'; go('cat', t.dataset.tile); }
   });
 
   render();

@@ -473,7 +473,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <div class="foot">
-      Mindrest v12 ・ 記録はこの端末の中だけに保存されます<br>
+      Mindrest v13 ・ 記録はこの端末の中だけに保存されます<br>
       <button id="btnBackup">記録をコピーして控える</button>
     </div>
   </div>
@@ -642,7 +642,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 12;
+const VER = 13;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1319,12 +1319,15 @@ const CHR_FADE = [
   { a:'#9aa8ad', b:'#7e8d94', c:'#626e74' }
 ];
 // 体の輪郭：頭 → 肩 → 腕 → 組んだ脚 までを一本の曲線でつなぐ
-const CHR_BODY = 'M100,30 C120,30 133,47 133,67 C133,79 129.5,88 124,94.5 ' +
+const CHR_BODY = 'M100,29 C120.5,29 134,45.5 134,65.5 ' +          // 側頭部
+  'C134,74 132.5,80 129.5,84.5 C127.5,88.5 126,91.5 124,94.5 ' +     // 頬から顎、そして肩へ
+  '' +
   'C141,101 153,114 159,131 C163,142 165,151 166.5,157 ' +      // 肩から腕、そこで少しくびれる
   'C172,165 178.5,174 179.5,181.5 ' +                            // 組んだ脚（ひざ）の張り出し
   'C180,188.5 156,192.5 100,192.5 C44,192.5 20,188.5 20.5,181.5 ' +
   'C21.5,174 28,165 33.5,157 C35,151 37,142 41,131 ' +
-  'C47,114 59,101 76,94.5 C70.5,88 67,79 67,67 C67,47 80,30 100,30 Z';
+  'C47,114 59,101 76,94.5 C74,91.5 72.5,88.5 70.5,84.5 ' +
+  'C67.5,80 66,74 66,65.5 C66,45.5 79.5,29 100,29 Z';
 
 let chrUid = 0;
 function charSVG(stage, mood, still){
@@ -1381,26 +1384,31 @@ function charSVG(stage, mood, still){
           '<path d="M124,94.5 C133,104 138,116 140,128" fill="none" stroke="#0e181d" stroke-opacity=".07" stroke-width="2"/>' +
           '<path d="M76,94.5 C67,104 62,116 60,128" fill="none" stroke="#0e181d" stroke-opacity=".07" stroke-width="2"/>';
 
-  // 顔（小さく、控えめに）
-  const ey = 71;
-  if(stage === 0 && mood >= 2){
-    body += '<circle cx="88.5" cy="' + ey + '" r="2.1" fill="' + line + '" opacity=".8"/>' +
-            '<circle cx="111.5" cy="' + ey + '" r="2.1" fill="' + line + '" opacity=".8"/>';
-  }else if(mood >= 2){
-    body += '<path d="M84,' + ey + ' C87,' + (ey - 2.6) + ' 90,' + (ey - 2.6) + ' 93,' + ey + '" fill="none" stroke="' + line + '" stroke-opacity=".78" stroke-width="1.5" stroke-linecap="round"/>' +
-            '<path d="M107,' + ey + ' C110,' + (ey - 2.6) + ' 113,' + (ey - 2.6) + ' 116,' + ey + '" fill="none" stroke="' + line + '" stroke-opacity=".78" stroke-width="1.5" stroke-linecap="round"/>';
+  // 顔：ふせた目の細い曲線だけ。口はほとんど見えない程度にとどめる
+  body += '<ellipse cx="100" cy="70" rx="28" ry="30" fill="url(#f' + u + ')"/>';   // 平面に見せないための、ごく薄い陰影
+  const ey = 74, ew = 6.6;
+  const dip  = mood >= 3 ? 1.5 : mood === 2 ? 1.8 : mood === 1 ? 2.0 : 1.0;  // ふせ具合
+  const tilt = mood <= 1 ? 1.5 : 0;                                          // 元気がないと目尻が下がる
+  const eop  = mood >= 2 ? .58 : .48;
+  const eye = function(cx, outLeft){
+    const x1 = cx - ew, x2 = cx + ew;
+    const y1 = ey + (outLeft ? tilt : 0), y2 = ey + (outLeft ? 0 : tilt);
+    return '<path d="M' + x1 + ',' + y1 + ' C' + (cx - ew * .45) + ',' + (ey + dip) +
+      ' ' + (cx + ew * .45) + ',' + (ey + dip) + ' ' + x2 + ',' + y2 +
+      '" fill="none" stroke="' + line + '" stroke-opacity="' + eop + '" stroke-width="1.35" stroke-linecap="round"/>';
+  };
+  body += eye(90.4, true) + eye(109.6, false);
+  if(mood >= 2){
+    body += '<path d="M97.4,85.8 C98.7,86.7 101.3,86.7 102.6,85.8" fill="none" stroke="' + line +
+            '" stroke-opacity=".15" stroke-width="1.1" stroke-linecap="round"/>';
   }else{
-    body += '<path d="M84,' + (ey - 1) + ' C87,' + (ey + 2) + ' 90,' + (ey + 2) + ' 93,' + (ey - 1) + '" fill="none" stroke="' + line + '" stroke-opacity=".6" stroke-width="1.4" stroke-linecap="round"/>' +
-            '<path d="M107,' + (ey - 1) + ' C110,' + (ey + 2) + ' 113,' + (ey + 2) + ' 116,' + (ey - 1) + '" fill="none" stroke="' + line + '" stroke-opacity=".6" stroke-width="1.4" stroke-linecap="round"/>';
+    body += '<path d="M97.6,86.2 h4.8" stroke="' + line + '" stroke-opacity=".12" stroke-width="1.1" stroke-linecap="round"/>';
   }
-  if(mood >= 3) body += '<path d="M96,82 C98,84.4 102,84.4 104,82" fill="none" stroke="' + line + '" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/>';
-  else if(mood === 2) body += '<path d="M96.5,82.5 h7" stroke="' + line + '" stroke-opacity=".42" stroke-width="1.3" stroke-linecap="round"/>';
-  else body += '<path d="M96,83.5 C98,81.6 102,81.6 104,83.5" fill="none" stroke="' + line + '" stroke-opacity=".42" stroke-width="1.3" stroke-linecap="round"/>';
 
   // 眉・ひげ（色を置かず、淡い陰影で示す）
   if(stage >= 5 && calm){
-    body += '<path d="M81,62.5 C85,59.6 90,59.2 93.5,60.6" fill="none" stroke="#f4fcfc" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/>' +
-            '<path d="M119,62.5 C115,59.6 110,59.2 106.5,60.6" fill="none" stroke="#f4fcfc" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/>';
+    body += '<path d="M82,65.5 C86,62.8 90.5,62.5 93.8,63.8" fill="none" stroke="#f4fcfc" stroke-opacity=".34" stroke-width="1.5" stroke-linecap="round"/>' +
+            '<path d="M118,65.5 C114,62.8 109.5,62.5 106.2,63.8" fill="none" stroke="#f4fcfc" stroke-opacity=".34" stroke-width="1.5" stroke-linecap="round"/>';
   }
   if(stage >= 7 && calm){
     body += '<path d="M92,90 C95,112 105,112 108,90 C110,116 105,134 100,140 C95,134 90,116 92,90 Z" fill="#f4fcfc" opacity=".2"/>' +
@@ -1428,6 +1436,10 @@ function charSVG(stage, mood, still){
         '<stop offset=".38" stop-color="#ffffff" stop-opacity=".1"/>' +
         '<stop offset=".72" stop-color="#ffffff" stop-opacity="0"/>' +
         '<stop offset="1" stop-color="#ffffff" stop-opacity=".07"/></radialGradient>' +
+      '<radialGradient id="f' + u + '" cx=".5" cy=".38" r=".64">' +
+        '<stop offset="0" stop-color="#ffffff" stop-opacity=".075"/>' +
+        '<stop offset=".5" stop-color="#ffffff" stop-opacity="0"/>' +
+        '<stop offset="1" stop-color="#0d181e" stop-opacity=".13"/></radialGradient>' +
       '<radialGradient id="g' + u + '" cx=".5" cy=".5" r=".5">' +
         '<stop offset="0" stop-color="' + sk.a + '" stop-opacity=".26"/>' +
         '<stop offset=".55" stop-color="' + sk.a + '" stop-opacity=".08"/>' +

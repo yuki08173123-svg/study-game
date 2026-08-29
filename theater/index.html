@@ -338,7 +338,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 11;
+const VER = 12;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders';
 const $ = s => document.querySelector(s);
@@ -785,7 +785,8 @@ function vFind(){
 
 /* ---------- 保存（フォルダの一覧） ---------- */
 function vSaved(){
-  $('#tbar').innerHTML = `<div class="ttl">保存</div>`;
+  $('#tbar').innerHTML = `<div class="ttl">保存</div>
+    <button class="tbtn" id="mkf" aria-label="新しいフォルダを作る">${ICO.plus({s:20})}</button>`;
   const row = (id, name, n) => `<button class="frow" data-fopen="${esc(id)}">
       <span style="color:var(--acc)">${id === '__fav' ? ICO.starF({s:20}) : ICO.folder({s:20})}</span>
       <span class="fn">${esc(name)}</span><span class="fc">${n}本</span>
@@ -795,14 +796,13 @@ function vSaved(){
       ${row('__fav', '保存', favs.length)}
       ${folders.map(f => row(f.id, f.name, f.ids.length)).join('')}
     </div>
-    <button class="btn" id="mkf" style="margin-top:10px">${ICO.plus({s:19})}<span>新しいフォルダを作る</span></button>
-    <div class="lead" style="margin-top:12px">動画の画面の「フォルダ」から、好きなフォルダに入れられます。</div>`;
+    <div class="lead" style="margin-top:14px">
+      動画の画面の「フォルダ」から、好きなフォルダに入れられます。<br>
+      右上の ＋ で、自分のフォルダを作れます。</div>`;
   $$('#main [data-fopen]').forEach(b => b.onclick = () => go('folder', b.dataset.fopen));
-  $('#mkf').onclick = () => {
-    const nm = prompt('フォルダの名前を入れてください（例：テスト前に見る）');
-    if(!nm || !nm.trim()) return;
-    newFolder(nm); vSaved(); toast('フォルダを作りました');
-  };
+  $('#mkf').onclick = () => askText(
+    { title:'新しいフォルダ', ph:'例：テスト前に見る', ok:'作る' },
+    nm => { const f = newFolder(nm); vSaved(); toast(`「${f.name}」を作りました`); });
 }
 
 /* ---------- フォルダの中 ---------- */
@@ -829,16 +829,13 @@ function vFolder(){
       <button class="btn" id="fdel" style="margin-top:9px;color:var(--ng)">このフォルダを消す</button>
       <button class="btn" id="fcl" style="margin-top:9px">とじる</button>
     `, () => {
-      $('#fren').onclick = () => {
-        const nm = prompt('新しい名前', f.name);
-        if(!nm || !nm.trim()) return;
-        f.name = nm.trim().slice(0,24); saveFold(); closeSheet(); vFolder();
-      };
-      $('#fdel').onclick = () => {
-        if(!confirm(`「${f.name}」を消しますか？（動画そのものは消えません）`)) return;
-        folders = folders.filter(x => x.id !== f.id); saveFold(); closeSheet(); go('saved');
-        toast('フォルダを消しました');
-      };
+      $('#fren').onclick = () => askText(
+        { title:'フォルダの名前', value:f.name, ok:'かえる' },
+        nm => { f.name = nm.slice(0,24); saveFold(); vFolder(); toast('名前をかえました'); });
+      $('#fdel').onclick = () => askYes(
+        { title:`「${f.name}」を消しますか？`, msg:'中の動画そのものは消えません。', ok:'消す', danger:true },
+        () => { folders = folders.filter(x => x.id !== f.id); saveFold(); go('saved');
+                toast('フォルダを消しました'); });
       $('#fcl').onclick = closeSheet;
     });
   };
@@ -883,21 +880,17 @@ function vSet(){
     cfg.speed = SPEEDS[(SPEEDS.indexOf(cfg.speed) + 1) % SPEEDS.length]; saveCfg();
     vSet();
   };
-  $('#clr').onclick = () => {
-    if(!confirm('見た記録・つづきの位置をぜんぶ消します。よろしいですか？')) return;
-    prog = {}; saveProg(); vSet(); toast('記録を消しました');
-  };
+  $('#clr').onclick = () => askYes(
+    { title:'記録をぜんぶ消しますか？', msg:'見た回数・つづきの位置がすべて消えます。フォルダは残ります。',
+      ok:'ぜんぶ消す', danger:true },
+    () => { prog = {}; saveProg(); vSet(); toast('記録を消しました'); });
   $('#upd').onclick = () => checkUpd();
   $('#guide2').onclick = () => showGuide(0);
-  $('#howto').onclick = () => alert(
-    'iPhone / iPad の場合\n' +
-    '1. Safari でこのページを開く\n' +
-    '2. 下（または右上）の共有ボタンを押す\n' +
-    '3.「ホーム画面に追加」を選ぶ\n\n' +
-    'Android の場合\n' +
-    '1. Chrome でこのページを開く\n' +
-    '2. 右上の … を押す\n' +
-    '3.「ホーム画面に追加」を選ぶ');
+  $('#howto').onclick = () => info('ホーム画面に置く方法',
+    '<b>iPhone / iPad</b><br>1. Safari でこのページを開く<br>' +
+    '2. 下（または右上）の共有ボタンを押す<br>3.「ホーム画面に追加」を選ぶ<br><br>' +
+    '<b>Android</b><br>1. Chrome でこのページを開く<br>' +
+    '2. 右上の … を押す<br>3.「ホーム画面に追加」を選ぶ');
   $('#adm').onclick = () => go('admin');
 }
 
@@ -959,6 +952,45 @@ function closeSheet(){
   if($('#pv').classList.contains('hidden')) document.body.style.overflow = '';
 }
 
+/* 文字を入れてもらう */
+function askText(o, cb){
+  openSheet(`
+    <h3>${esc(o.title)}</h3>
+    <input id="askIn" type="text" maxlength="24" placeholder="${esc(o.ph || '')}">
+    <div class="acts" style="margin-top:14px">
+      <button class="btn" id="askNo">やめる</button>
+      <button class="btn pri" id="askOk">${esc(o.ok || '決定')}</button>
+    </div>`, () => {
+    const i = $('#askIn');
+    i.value = o.value || '';
+    setTimeout(() => { try{ i.focus(); }catch(e){} }, 80);
+    const done = () => { const v = i.value.trim(); if(!v) return; closeSheet(); cb(v); };
+    i.onkeydown = e => { if(e.key === 'Enter') done(); };
+    $('#askOk').onclick = done;
+    $('#askNo').onclick = closeSheet;
+  });
+}
+/* はい／いいえ */
+function askYes(o, cb){
+  openSheet(`
+    <h3>${esc(o.title)}</h3>
+    ${o.msg ? `<div class="lead" style="margin:-4px 2px 4px">${o.msg}</div>` : ''}
+    <div class="acts" style="margin-top:14px">
+      <button class="btn" id="askNo">やめる</button>
+      <button class="btn pri" id="askOk" ${o.danger ? 'style="background:var(--ng);border-color:var(--ng);color:#fff"' : ''}>${esc(o.ok || 'はい')}</button>
+    </div>`, () => {
+    $('#askOk').onclick = () => { closeSheet(); cb(); };
+    $('#askNo').onclick = closeSheet;
+  });
+}
+/* お知らせ */
+function info(title, html){
+  openSheet(`<h3>${esc(title)}</h3>
+    <div class="lead" style="margin:-4px 2px 6px;line-height:2">${html}</div>
+    <button class="btn" id="askOk" style="margin-top:12px">とじる</button>`,
+    () => { $('#askOk').onclick = closeSheet; });
+}
+
 /* この動画をどのフォルダに入れるか選ぶ */
 function pickFolder(id, after){
   const draw = () => {
@@ -981,13 +1013,10 @@ function pickFolder(id, after){
         }else toggleFold(b.dataset.f, id);
         draw(); if(after) after();
       });
-      $('#fnew').onclick = () => {
-        const nm = prompt('フォルダの名前を入れてください（例：くり返し見る）');
-        if(!nm || !nm.trim()) return;
-        const f = newFolder(nm);
-        toggleFold(f.id, id);
-        draw(); if(after) after();
-      };
+      $('#fnew').onclick = () => askText(
+        { title:'新しいフォルダ', ph:'例：くり返し見る', ok:'作る' },
+        nm => { const f = newFolder(nm); toggleFold(f.id, id); draw(); if(after) after();
+                toast(`「${f.name}」に入れました`); });
       $('#fclose').onclick = closeSheet;
     });
   };
@@ -1002,8 +1031,9 @@ async function checkUpd(quiet){
     const r = await fetch('version.json?t=' + now(), { cache:'no-store' });
     const j = await r.json();
     if(+j.v > VER){
-      if(confirm(`新しいバージョン v${j.v} があります。${j.note ? '\n（' + j.note + '）' : ''}\n更新しますか？`)) doUpd();
-      else if(st) st.textContent = `v${j.v} あり`;
+      askYes({ title:'新しいバージョンがあります', msg:`v${j.v}${j.note ? '（' + esc(j.note) + '）' : ''}`, ok:'更新する' },
+        doUpd);
+      if(st) st.textContent = `v${j.v} あり`;
     }else if(st && !quiet) st.textContent = `最新（v${VER}）`;
   }catch(e){ if(st && !quiet) st.textContent = '確認できません'; }
 }
@@ -1301,10 +1331,9 @@ function drawBody(){
     drawBody(); toast(n ? `${n}回にしました` : '0回にもどしました');
   };
   $('#done').onclick = () => bumpSeen(v.id, drawBody);
-  if($('#undo')) $('#undo').onclick = () => {
-    if(!confirm(`この動画は いま ${seenN(v.id)}回です。0にもどしますか？`)) return;
-    clearSeen(v.id); drawBody(); toast('0回にもどしました');
-  };
+  if($('#undo')) $('#undo').onclick = () => askYes(
+    { title:'見た回数を0にもどしますか？', msg:`この動画は いま ${seenN(v.id)}回です。`, ok:'0にもどす' },
+    () => { clearSeen(v.id); drawBody(); toast('0回にもどしました'); });
 }
 
 /* ===================== 管理（動画を追加する） ===================== */
@@ -1362,21 +1391,19 @@ function vAdmin(){
       d:$('#aDesc').value.trim(), date:$('#aDate').value || '' });
     saveAdmin(); vAdmin(); toast('追加しました');
   };
-  $$('#alist [data-del]').forEach(b => b.onclick = () => {
-    if(!confirm('リストから外しますか？')) return;
-    admin.videos.splice(+b.dataset.del, 1); saveAdmin(); vAdmin();
-  });
+  $$('#alist [data-del]').forEach(b => b.onclick = () => askYes(
+    { title:'リストから外しますか？', ok:'外す', danger:true },
+    () => { admin.videos.splice(+b.dataset.del, 1); saveAdmin(); vAdmin(); }));
   $('#aCopy').onclick = async () => {
     const out = JSON.stringify({ updated:new Date().toISOString().slice(0,10),
       cats:admin.cats, videos:admin.videos }, null, 2);
     try{ await navigator.clipboard.writeText(out); toast('コピーしました'); }
     catch(e){ prompt('コピーしてください', out); }
   };
-  $('#aReload').onclick = () => {
-    if(!confirm('いま公開されているリストに戻します。ここでの編集は消えます。')) return;
-    admin = JSON.parse(JSON.stringify({ cats:DATA.cats, videos:DATA.videos }));
-    saveAdmin(); vAdmin();
-  };
+  $('#aReload').onclick = () => askYes(
+    { title:'公開中のリストに戻しますか？', msg:'ここでの編集は消えます。', ok:'戻す', danger:true },
+    () => { admin = JSON.parse(JSON.stringify({ cats:DATA.cats, videos:DATA.videos }));
+            saveAdmin(); vAdmin(); });
 }
 const catName2 = c => (admin.cats.find(x => x.id === c) || {}).name || 'そのほか';
 
@@ -1427,12 +1454,11 @@ async function boot(){
     held = false;
     holdT = setTimeout(() => {
       held = true;
-      const cur = seenN(b.dataset.seen);
-      if(cur && confirm(`この動画は いま ${cur}回です。0にもどしますか？`)){
-        clearSeen(b.dataset.seen);
-        if(view.name === 'find') drawFind(); else render();
-        toast('0回にもどしました');
-      }
+      const tid = b.dataset.seen, cur = seenN(tid);
+      if(cur) askYes({ title:'見た回数を0にもどしますか？', msg:`この動画は いま ${cur}回です。`, ok:'0にもどす' },
+        () => { clearSeen(tid);
+                if(view.name === 'find') drawFind(); else render();
+                toast('0回にもどしました'); });
     }, 600);
   });
   document.addEventListener('pointerup',     () => clearTimeout(holdT));

@@ -60,7 +60,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .top .t-sub{font-size:.78rem;color:var(--dim);letter-spacing:.06em}
 
 /* ── 瞑想タブ ── */
-.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;padding:12px 0 4px}
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:10px 0 4px}
 
 .orb{position:relative;width:min(64vw,250px);aspect-ratio:1;display:grid;place-items:center}
 .orb .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(159,216,214,.22)}
@@ -71,9 +71,36 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
   box-shadow:0 0 60px rgba(120,190,195,.22), inset 0 0 40px rgba(255,255,255,.05);
   animation:idle 9s ease-in-out infinite}
 @keyframes idle{0%,100%{transform:scale(.94);opacity:.86}50%{transform:scale(1.03);opacity:1}}
-.orb .label{position:relative;text-align:center;line-height:1.25}
-.orb .num{display:block;font-size:3.6rem;font-weight:200;letter-spacing:-.02em}
-.orb .unit{display:block;font-size:.8rem;color:var(--dim);letter-spacing:.34em;margin-top:6px}
+.orb{-webkit-appearance:none;background:none;border:none;padding:0}
+.orb .chr{position:relative;width:82%;display:grid;place-items:center;transition:transform .4s ease}
+.orb .chr svg{display:block;width:100%;height:auto;overflow:visible}
+.orb:active .chr{transform:scale(.97)}
+@keyframes hop{0%,100%{transform:translateY(0)}30%{transform:translateY(-7px)}60%{transform:translateY(0)}}
+.orb .chr.hop{animation:hop .9s ease}
+
+.chr-line{display:flex;align-items:center;gap:9px;margin-top:-8px}
+.chr-line .cn{font-size:1rem;color:var(--ink);letter-spacing:.08em}
+.chr-line .cm{font-size:.72rem;color:var(--aqua);border:1px solid rgba(159,216,214,.34);
+  border-radius:999px;padding:3px 11px}
+.chr-line .cm.low{color:var(--warm);border-color:rgba(227,199,154,.4)}
+.chr-line .cm.bad{color:#e78888;border-color:rgba(231,136,136,.4)}
+
+/* キャラの詳しい画面 */
+.chrsheet .now{display:flex;align-items:center;gap:16px;margin-bottom:4px}
+.chrsheet .now .pic{width:96px;flex:none}
+.chrsheet .now .pic svg{display:block;width:100%;height:auto;overflow:visible}
+.chrsheet .now .t1{font-size:1.15rem;color:var(--ink)}
+.chrsheet .now .t2{font-size:.8rem;color:var(--dim);margin-top:3px;line-height:1.7}
+.chrgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.chrcell{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:14px;
+  padding:9px 6px 10px;text-align:center}
+.chrcell.on{background:rgba(159,216,214,.10);border-color:rgba(159,216,214,.34)}
+.chrcell.next{border-color:rgba(227,199,154,.45);background:rgba(227,199,154,.07)}
+.chrcell svg{display:block;width:74%;margin:0 auto;height:auto;overflow:visible}
+.chrcell .cl{font-size:.72rem;color:var(--dim);margin-top:5px}
+.chrcell.on .cl{color:var(--ink2)}
+.chrcell.next .cl{color:var(--warm)}
+.chrcell .lock{filter:brightness(.18) saturate(0)}
 
 .picks{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .pick{min-width:64px;padding:11px 4px;border-radius:999px;background:var(--surf);
@@ -387,10 +414,14 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
       <div class="lv-sub"><span id="lvSub">はじめると 経験値がたまります</span><span id="lvBadge"></span></div>
     </button>
 
-    <div class="orb">
+    <button class="orb" id="charBox" aria-label="キャラクター">
       <div class="ring r3"></div><div class="ring r2"></div><div class="ring"></div>
       <div class="core"></div>
-      <div class="label"><span class="num mono" id="pickNum">5</span><span class="unit">MINUTES</span></div>
+      <div class="chr" id="chr"></div>
+    </button>
+    <div class="chr-line">
+      <span class="cn" id="chrName">見習い</span>
+      <span class="cm" id="chrMood">げんき</span>
     </div>
 
     <div class="picks" id="picks">
@@ -427,7 +458,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <div class="foot">
-      Mindrest v10 ・ 記録はこの端末の中だけに保存されます<br>
+      Mindrest v11 ・ 記録はこの端末の中だけに保存されます<br>
       <button id="btnBackup">記録をコピーして控える</button>
     </div>
   </div>
@@ -509,6 +540,8 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
           <li>その日の分に、続けている日数 × <b>5</b></li>
         </ul>
         <p>レベルが上がると<b>称号</b>が変わります。「見習い」から始まり、初級・中級・上級・達人・名人・師範・仙人と上がって、いちばん上は「悟りの境地」です。</p>
+        <p>レベルが上がると、まん中の<b>キャラクターの姿も変わります</b>。キャラを押すと、これまでの姿と育ち方を見られます。次にどんな姿になるかは、なってからのお楽しみです。</p>
+        <p><b>数日 瞑想しないと、キャラは元気をなくします。</b>2日で静かになり、3〜4日で元気がなくなり、5日あくと しぼんで光や飾りが消えます。ただし<b>レベルは下がりません</b>。もう一度座れば、その場で元の姿に戻ります。</p>
         <p>ほかに、はじめての瞑想や、3日つづけた、合計60分こえた、などで<b>しるし（バッジ）</b>が集まります。瞑想タブの上のカードを押すと、今のレベルと集めたしるしを全部見られます。</p>
         <p class="g-dim">数字を増やすことが目的ではありません。続けた分がちゃんと見える、というだけのものです。気にしすぎないでください。</p>
       </section>
@@ -594,7 +627,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 10;
+const VER = 11;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -691,7 +724,6 @@ $('tabs').addEventListener('click', function(e){
 let picked = parseInt(localStorage.getItem(KEY_PICK) || '5', 10);
 if([1,3,5,10].indexOf(picked) < 0) picked = 5;
 function renderPick(){
-  $('pickNum').textContent = picked;
   document.querySelectorAll('.pick').forEach(function(b){
     b.setAttribute('aria-pressed', parseInt(b.dataset.min,10) === picked ? 'true' : 'false');
   });
@@ -808,7 +840,9 @@ $('btnStop').addEventListener('click', askStop);
 $('btnDoneMemo').addEventListener('click', function(){ openMemo(0); });
 $('btnClose').addEventListener('click', function(){
   $('done').classList.add('hidden');
-  renderTop(); if(tab === 'log') renderLog();
+  renderTop();
+  renderChar(null, true);
+  if(tab === 'log') renderLog();
 });
 
 /* 画面に戻ってきたとき（裏に回っている間に終わっていたら締める） */
@@ -1234,6 +1268,170 @@ $('rdNext').addEventListener('click', function(){
 });
 $('rdClose').addEventListener('click', function(){ $('reader').classList.add('hidden'); renderLearn(); });
 
+/* ───────── キャラクター ─────────
+   称号と同じ9段階。毎日座ると元気、空くとしおれて飾りが消える（レベルは下がらない） */
+const CHR_COL = ['#7ea3aa','#8cbdbd','#9fd8d6','#a9ded9','#b6e6e0','#c6ece4','#d8f2ea','#e9f8f1','#f6fcf8'];
+const MOODS = [
+  { n:'しおれている', d:'5日以上あいています。もう一度座れば、すぐ元に戻ります。' },
+  { n:'元気がない',   d:'3〜4日あいています。今日座ると元気になります。' },
+  { n:'ふつう',       d:'2日あいています。' },
+  { n:'げんき',       d:'よく続いています。この調子です。' }
+];
+
+function star(x, y, r, c, o){
+  return '<polygon opacity="' + (o || 1) + '" fill="' + c + '" points="' +
+    x + ',' + (y - r) + ' ' + (x + r * .3) + ',' + (y - r * .3) + ' ' + (x + r) + ',' + y + ' ' +
+    (x + r * .3) + ',' + (y + r * .3) + ' ' + x + ',' + (y + r) + ' ' + (x - r * .3) + ',' + (y + r * .3) + ' ' +
+    (x - r) + ',' + y + ' ' + (x - r * .3) + ',' + (y - r * .3) + '"/>';
+}
+
+function charSVG(stage, mood){
+  stage = Math.max(0, Math.min(8, stage));
+  const col = CHR_COL[stage], ink = '#16222b', W = '#eef9f6';
+  const deco = mood >= 2;                       // 光や飾りは元気なときだけ
+  const sx = mood === 0 ? .82 : mood === 1 ? .92 : 1;
+  const sy = mood === 0 ? .87 : mood === 1 ? .95 : 1;
+  const dull = mood === 0 ? 'opacity:.68;filter:saturate(.2)'
+             : mood === 1 ? 'opacity:.88;filter:saturate(.6)' : '';
+  let g = '';
+
+  // うしろの光と輪
+  if(deco && stage >= 3){
+    g += '<circle cx="100" cy="92" r="' + (stage >= 7 ? 62 : 54) + '" fill="none" stroke="' + col +
+         '" stroke-opacity=".45" stroke-width="1.6"/>';
+  }
+  if(deco && stage >= 8){
+    g += '<circle cx="100" cy="94" r="84" fill="rgba(227,199,154,.08)"/>' +
+         '<circle cx="100" cy="92" r="74" fill="none" stroke="#e3c79a" stroke-opacity=".45" stroke-width="1.4"/>';
+  }
+  // 星
+  if(deco && stage >= 5){
+    g += star(44, 66, 7, '#e3c79a', .85) + star(158, 56, 6, '#e3c79a', .7) + star(163, 124, 5, col, .7);
+  }
+  if(deco && stage >= 8){
+    g += star(100, 20, 9, '#f3e6c8', .9) + star(36, 132, 6, '#e3c79a', .6);
+  }
+
+  // 下（雲・光の台・ざぶとん）
+  if(stage >= 6){
+    g += '<g><ellipse cx="100" cy="181" rx="58" ry="14" fill="#cfe7ea" opacity=".20"/>' +
+         '<ellipse cx="72" cy="175" rx="24" ry="12" fill="#cfe7ea" opacity=".16"/>' +
+         '<ellipse cx="130" cy="176" rx="26" ry="13" fill="#cfe7ea" opacity=".16"/></g>';
+  }else if(stage >= 4){
+    g += '<ellipse cx="100" cy="184" rx="48" ry="10" fill="' + col + '" opacity="' + (deco ? .20 : .10) + '"/>';
+  }else if(stage >= 1){
+    g += '<ellipse cx="100" cy="181" rx="52" ry="14" fill="#28323d"/>' +
+         '<ellipse cx="100" cy="178" rx="52" ry="13" fill="#394753"/>';
+  }
+
+  // からだ・うで・手
+  g += '<ellipse cx="62" cy="152" rx="13" ry="10" fill="' + col + '"/>' +
+       '<ellipse cx="138" cy="152" rx="13" ry="10" fill="' + col + '"/>' +
+       '<ellipse cx="100" cy="145" rx="45" ry="34" fill="' + col + '"/>' +
+       '<ellipse cx="100" cy="159" rx="19" ry="8" fill="#ffffff" fill-opacity=".20"/>';
+
+  // あたま
+  g += '<circle cx="100" cy="92" r="35" fill="' + col + '"/>';
+
+  // ひげ（上級から）
+  if(stage >= 7) g += '<ellipse cx="100" cy="141" rx="15" ry="27" fill="' + W + '" stroke="#8fb4ba" stroke-width="1.4" stroke-opacity=".55"/>';
+  else if(stage >= 6) g += '<path d="M88 118 q12 26 24 0 q-4 22 -12 24 q-8 -2 -12 -24 z" fill="' + W + '" stroke="#8fb4ba" stroke-width="1.3" stroke-opacity=".5"/>';
+
+  // 顔
+  if(stage === 0 && mood >= 2){
+    g += '<circle cx="88" cy="91" r="3.6" fill="' + ink + '"/><circle cx="112" cy="91" r="3.6" fill="' + ink + '"/>';
+  }else if(mood >= 3){
+    g += '<path d="M81 92 q7 -8 14 0" fill="none" stroke="' + ink + '" stroke-width="2.6" stroke-linecap="round"/>' +
+         '<path d="M105 92 q7 -8 14 0" fill="none" stroke="' + ink + '" stroke-width="2.6" stroke-linecap="round"/>';
+  }else if(mood === 2){
+    g += '<path d="M82 92 h12" stroke="' + ink + '" stroke-width="2.6" stroke-linecap="round"/>' +
+         '<path d="M106 92 h12" stroke="' + ink + '" stroke-width="2.6" stroke-linecap="round"/>';
+  }else{
+    g += '<path d="M81 90 q7 8 14 0" fill="none" stroke="' + ink + '" stroke-width="2.4" stroke-linecap="round"/>' +
+         '<path d="M105 90 q7 8 14 0" fill="none" stroke="' + ink + '" stroke-width="2.4" stroke-linecap="round"/>' +
+         '<path d="M78 79 l15 5" stroke="' + ink + '" stroke-width="2.2" stroke-linecap="round" opacity=".65"/>' +
+         '<path d="M122 79 l-15 5" stroke="' + ink + '" stroke-width="2.2" stroke-linecap="round" opacity=".65"/>';
+  }
+  // くち
+  if(mood >= 3) g += '<path d="M93 106 q7 7 14 0" fill="none" stroke="' + ink + '" stroke-width="2.2" stroke-linecap="round"/>';
+  else if(mood === 2) g += '<circle cx="100" cy="107" r="2.6" fill="' + ink + '"/>';
+  else if(mood === 1) g += '<path d="M93 108 h14" stroke="' + ink + '" stroke-width="2.2" stroke-linecap="round"/>';
+  else g += '<path d="M92 109 q4 -4 8 0 q4 4 8 0" fill="none" stroke="' + ink + '" stroke-width="2" stroke-linecap="round"/>';
+
+  // まゆ（名人から白いまゆ）
+  if(stage >= 5 && mood >= 2){
+    g += '<path d="M76 78 q10 -7 21 -3" fill="none" stroke="' + W + '" stroke-width="3.2" stroke-linecap="round" opacity=".9"/>' +
+         '<path d="M124 78 q-10 -7 -21 -3" fill="none" stroke="' + W + '" stroke-width="3.2" stroke-linecap="round" opacity=".9"/>';
+  }
+  // 頭の上の光
+  if(deco && stage >= 2){
+    g += '<circle cx="100" cy="' + (stage >= 4 ? 40 : 46) + '" r="' + (stage >= 4 ? 5.5 : 4) + '" fill="#f0e2c2" opacity=".92"/>' +
+         '<circle cx="100" cy="' + (stage >= 4 ? 40 : 46) + '" r="' + (stage >= 4 ? 13 : 10) + '" fill="#e3c79a" opacity=".16"/>';
+  }
+
+  return '<svg viewBox="0 0 200 208" xmlns="http://www.w3.org/2000/svg" style="' + dull + '">' +
+    '<g transform="translate(100,190) scale(' + sx + ',' + sy + ') translate(-100,-190)">' + g + '</g></svg>';
+}
+
+function stageOf(lv){
+  let n = 0;
+  TITLES.forEach(function(t, i){ if(lv >= t.lv) n = i; });
+  return n;
+}
+function moodOf(){
+  if(!log.length) return 3;
+  const d = Math.round((startOfDay(Date.now()) - startOfDay(log[0].at)) / DAY);
+  if(d <= 1) return 3;
+  if(d === 2) return 2;
+  if(d <= 4) return 1;
+  return 0;
+}
+
+function renderChar(s, hop){
+  s = s || stats();
+  const st = stageOf(s.lv.lv), mo = moodOf();
+  $('chr').innerHTML = charSVG(st, mo);
+  $('chrName').textContent = TITLES[st].n;
+  const m = $('chrMood');
+  m.textContent = MOODS[mo].n;
+  m.className = 'cm' + (mo === 0 ? ' bad' : mo === 1 ? ' low' : '');
+  if(hop){
+    const c = $('chr');
+    c.classList.remove('hop');
+    void c.offsetWidth;
+    c.classList.add('hop');
+  }
+}
+
+$('charBox').addEventListener('click', function(){
+  const s = stats(), st = stageOf(s.lv.lv), mo = moodOf();
+  const cells = TITLES.map(function(t, i){
+    const got = i <= st, next = i === st + 1;
+    return '<div class="chrcell' + (got ? ' on' : '') + (next ? ' next' : '') + '">' +
+      '<div class="' + (got ? '' : 'lock') + '">' + charSVG(i, 3) + '</div>' +
+      '<div class="cl">' + (got ? (i + 1) + '. ' + t.n : (next ? '次の姿' : '？？？')) + '</div></div>';
+  }).join('');
+  const sh = document.createElement('div');
+  sh.className = 'sheet';
+  sh.innerHTML = '<div class="box chrsheet">' +
+    '<div class="now"><div class="pic">' + charSVG(st, mo) + '</div>' +
+    '<div><div class="t1">' + TITLES[st].n + '　<span style="color:var(--aqua);font-size:.86rem">' + MOODS[mo].n + '</span></div>' +
+    '<div class="t2">' + MOODS[mo].d + '</div></div></div>' +
+    '<h4>育ち方</h4>' +
+    '<div class="how">瞑想して経験値がたまると、レベルが上がって<b style="color:var(--ink)">姿が変わります</b>。' +
+    '次にどんな姿になるかは、なってからのお楽しみです。</div>' +
+    '<h4>元気について</h4>' +
+    '<div class="how">2日あくと静かになり、3〜4日で元気がなくなり、' +
+    '<b style="color:var(--ink)">5日あくと しぼんで、光や飾りが消えます</b>。<br>' +
+    'でも、<b style="color:var(--ink)">レベルは下がりません</b>。もう一度座れば、その場で元の姿に戻ります。</div>' +
+    '<h4>姿　' + (st + 1) + ' / ' + TITLES.length + '</h4>' +
+    '<div class="chrgrid">' + cells + '</div>' +
+    '<div class="btns" style="margin-top:20px"><button class="no">とじる</button></div></div>';
+  document.body.appendChild(sh);
+  const closeC = initSheet(sh);
+  sh.addEventListener('click', function(e){ if(e.target.classList.contains('no')) closeC(); });
+});
+
 /* ───────── レベル・称号・しるし ───────── */
 /* 経験値：1分=10 ／ 1回=20 ／ その日の分に「続けている日数×5」（最大100）
    ぜんぶ記録から計算し直すので、記録を消せば経験値も減る（ごまかせない） */
@@ -1493,6 +1691,7 @@ function renderLevel(s){
     : '次のレベルまで あと ' + (L.need - L.into);
   const got = gotIds(s).length;
   $('lvBadge').textContent = got > 0 ? 'しるし ' + got + '/' + BADGES.length : '';
+  renderChar(s);
 }
 
 /* レベルの詳しい画面 */

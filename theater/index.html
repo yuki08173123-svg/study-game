@@ -459,7 +459,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 19;
+const VER = 20;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out';
 const $ = s => document.querySelector(s);
@@ -1078,6 +1078,10 @@ function vLv(){
       上に行くほど1段が重くなります。<br>
       ・レベルは<b>下がりません</b>。
     </div>
+    <div class="lead" style="margin-top:12px">
+      書いたアウトプットは この端末の中に残ります。先生に見せるときは
+      「まとめてコピー」で貼りつけるか、この画面のスクショを送ってください。</div>
+
     <div class="sec"><h2>称号</h2></div>
     <div class="rule">
       ${TITLES.map(([n,name],i) => {
@@ -1091,7 +1095,8 @@ function vLv(){
         </div>`; }).join('')}
       <div class="tr"><span class="tl">Lv66〜</span><span class="tn2">そのまま伸びていきます</span></div>
     </div>
-    <div class="sec"><h2>書いたアウトプット（${all.length}）</h2></div>
+    <div class="sec"><h2>書いたアウトプット（${all.length}）</h2>
+      ${all.length ? `<button class="more" id="opcopy">まとめてコピー</button>` : ''}</div>
     ${all.length ? all.map(x => {
       const v = vid(x.id);
       return `<div class="opc">
@@ -1102,6 +1107,23 @@ function vLv(){
       </div>`; }).join('')
       : emptyBox('まだありません。<br>動画を見たあと「アウトプットを書く」から書けます。')}
     <div class="ver">&nbsp;</div>`;
+  if($('#opcopy')) $('#opcopy').onclick = () => {
+    /* 先生に見せる用。そのままDiscordに貼れる形にする */
+    const head = `${cfg.name ? cfg.name + ' ／ ' : ''}レベル${L.lv}・${titleOf(L.lv)}\n`
+      + `見た動画 ${DATA.videos.filter(isDone).length}本 ／ のべ ${totalViews()}回 ／ アウトプット ${totalOuts()}件\n`
+      + `${new Date().toLocaleDateString('ja-JP')} 時点\n`;
+    const body = all.map(x => {
+      const v = vid(x.id);
+      return `\n■ ${v ? v.t : '(不明)'}（${new Date(x.o.at).toLocaleDateString('ja-JP')}）\n${x.o.t}`;
+    }).join('\n');
+    const txt = head + body;
+    navigator.clipboard.writeText(txt)
+      .then(() => toast('コピーしました。貼りつけて送れます'))
+      .catch(() => openSheet(`<h3>この文字をコピーして送ってください</h3>
+        <textarea id="opTa" class="mono" style="min-height:220px"></textarea>
+        <button class="btn" id="opTaC" style="margin-top:10px">とじる</button>`,
+        () => { $('#opTa').value = txt; $('#opTa').select(); $('#opTaC').onclick = closeSheet; }));
+  };
   $$('#main .opdel').forEach(b => b.onclick = () => askYes(
     { title:'このアウトプットを消しますか？', ok:'消す', danger:true },
     () => { delOut(b.dataset.od, +b.dataset.oi); vLv(); toast('消しました'); }));

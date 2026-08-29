@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F6F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101217" media="(prefers-color-scheme: dark)">
+<meta name="description" content="オンラインコミュニティ塾【ヒラ】の動画アプリ Theater のつかいかた。">
+<title>Theater つかいかた</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Zen+Old+Mincho:wght@600;700;900&display=swap">
+<style>
+:root{
+  --paper:#F5F6F8;
+  --card:#FFFFFF;
+  --ink:#14161B;
+  --ink2:#3D434F;
+  --mute:#5C6270;
+  --rule:#DCE0E7;
+  --gold:#8B6A24;
+  --gold-bg:#F3EDDF;
+  --blue:#2C6489;
+  --blue-bg:#E6EEF4;
+  --screen:#0B0C0F;
+  --screen-ink:#EDEFF3;
+  --screen-mute:#8A909C;
+  --screen-gold:#D9B26A;
+  --red:#B03A32;
+  --shadow:0 1px 2px rgba(20,22,27,.05), 0 8px 24px rgba(20,22,27,.06);
+  --serif:"Zen Old Mincho", "Hiragino Mincho ProN", serif;
+  --sans:"Zen Kaku Gothic New", "Hiragino Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#101217;
+    --card:#181B21;
+    --ink:#EDEFF3;
+    --ink2:#C3C8D2;
+    --mute:#8A909C;
+    --rule:#282C34;
+    --gold:#D9B26A;
+    --gold-bg:#241E12;
+    --blue:#8FB8D9;
+    --blue-bg:#151D26;
+    --screen:#05060A;
+    --red:#E07B72;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101217;
+  --card:#181B21;
+  --ink:#EDEFF3;
+  --ink2:#C3C8D2;
+  --mute:#8A909C;
+  --rule:#282C34;
+  --gold:#D9B26A;
+  --gold-bg:#241E12;
+  --blue:#8FB8D9;
+  --blue-bg:#151D26;
+  --screen:#05060A;
+  --red:#E07B72;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:17px;
+  line-height:1.95;
+  font-feature-settings:"palt" 1;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:660px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong{font-weight:700}
+
+/* ---------- 見出し ---------- */
+.eyebrow{
+  font-size:.72rem;font-weight:700;letter-spacing:.22em;color:var(--gold);
+  text-transform:uppercase;
+}
+h1{
+  font-family:var(--serif);font-weight:900;
+  font-size:clamp(2.3rem, 9vw, 3.1rem);
+  line-height:1.25;letter-spacing:.02em;margin:10px 0 0;text-wrap:balance;
+}
+.lede{margin-top:14px;color:var(--ink2);font-size:1.02rem;line-height:1.95}
+
+h2{
+  font-family:var(--serif);font-weight:700;
+  font-size:1.5rem;line-height:1.5;letter-spacing:.04em;
+  margin:0;text-wrap:balance;
+}
+.sec{margin-top:56px;padding-top:26px;border-top:1px solid var(--rule)}
+.sec > .no{
+  font-family:var(--sans);font-size:.72rem;font-weight:700;letter-spacing:.18em;
+  color:var(--mute);display:block;margin-bottom:8px;font-variant-numeric:tabular-nums;
+}
+h3{font-size:1.02rem;font-weight:700;margin:0;letter-spacing:.02em}
+.sub{margin-top:12px;color:var(--ink2)}
+
+/* ---------- はじめのカード ---------- */
+.hero{
+  margin-top:30px;background:var(--card);border:1px solid var(--rule);
+  border-radius:20px;padding:24px;box-shadow:var(--shadow);
+  display:flex;gap:24px;align-items:center;flex-wrap:wrap;
+}
+.qr{
+  width:132px;height:132px;flex:none;background:#fff;border-radius:12px;
+  padding:9px;border:1px solid var(--rule);
+}
+.qr svg{width:100%;height:100%;display:block;color:#111}
+.heroright{flex:1;min-width:220px}
+.heroright .lab{font-size:.74rem;font-weight:700;letter-spacing:.14em;color:var(--mute)}
+.url{
+  display:inline-block;margin-top:8px;font-size:.94rem;font-weight:700;
+  color:var(--gold);word-break:break-all;line-height:1.7;text-decoration:none;
+  border-bottom:2px solid var(--gold-bg);
+}
+.url:hover,.url:focus-visible{border-bottom-color:var(--gold)}
+.heronote{margin-top:12px;font-size:.86rem;color:var(--mute);line-height:1.85}
+
+/* ---------- 手順（順番があるものだけ番号をつける） ---------- */
+.steps{margin-top:22px;display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:18px;padding:16px 0;border-top:1px solid var(--rule)}
+.step:first-child{border-top:0}
+.step .n{
+  flex:none;width:30px;height:30px;border-radius:50%;
+  background:var(--gold);color:var(--paper);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.86rem;font-weight:700;font-variant-numeric:tabular-nums;margin-top:4px;
+}
+.step .t{flex:1;line-height:1.85}
+.step .t b{font-weight:700}
+.plat{
+  margin-top:26px;font-family:var(--serif);font-size:1.12rem;font-weight:700;
+  letter-spacing:.06em;color:var(--ink);
+}
+
+/* ---------- アプリの画面（紙に対して、これは画面） ---------- */
+.screen{
+  margin-top:20px;background:var(--screen);border-radius:16px;padding:20px;
+  color:var(--screen-ink);border:1px solid rgba(255,255,255,.06);
+}
+.screen .cap{
+  font-size:.7rem;font-weight:700;letter-spacing:.16em;color:var(--screen-mute);
+  margin-bottom:14px;
+}
+.lvbox{
+  border-radius:14px;padding:16px 18px;
+  background:linear-gradient(150deg,#221c10,#14161b 60%);
+  border:1px solid #3b3222;
+}
+.lvbox .nm{font-size:.72rem;font-weight:700;color:var(--screen-gold);letter-spacing:.1em}
+.lvbox .row{display:flex;align-items:flex-end;gap:10px;margin-top:4px}
+.lvbox .l{font-size:.7rem;font-weight:700;color:var(--screen-mute);letter-spacing:.14em;padding-bottom:8px}
+.lvbox .num{
+  font-size:2.9rem;font-weight:900;line-height:.95;color:var(--screen-gold);
+  font-variant-numeric:tabular-nums;
+}
+.lvbox .tt{
+  font-family:var(--serif);font-size:1.02rem;font-weight:700;letter-spacing:.08em;
+  margin-left:auto;padding-bottom:8px;
+}
+.lvbox .bar{height:6px;border-radius:3px;background:#2a2a2c;margin-top:12px;overflow:hidden}
+.lvbox .bar i{display:block;height:100%;width:62%;background:var(--screen-gold);border-radius:3px}
+.lvbox .st{display:flex;margin-top:14px;border-top:1px solid #2c2619;padding-top:12px}
+.lvbox .st div{flex:1;text-align:center}
+.lvbox .st b{display:block;font-size:1.15rem;font-weight:800;font-variant-numeric:tabular-nums}
+.lvbox .st span{font-size:.64rem;color:var(--screen-mute);font-weight:700}
+.screen .lines{font-size:.9rem;line-height:2;color:#C7CCD6}
+.screen .lines em{font-style:normal;color:var(--screen-gold);font-weight:700}
+
+/* ---------- 大事なところ ---------- */
+.alert{
+  margin-top:22px;background:var(--gold-bg);border-radius:16px;padding:22px 24px;
+  border:1px solid color-mix(in srgb, var(--gold) 26%, transparent);
+}
+.alert h3{color:var(--gold);font-size:1.12rem;font-family:var(--serif);letter-spacing:.04em}
+.alert p{margin-top:12px;line-height:1.95}
+.alert ul{margin:12px 0 0;padding-left:1.15em}
+.alert li{margin-top:7px}
+
+/* ---------- 説明の並び ---------- */
+.cards{margin-top:20px;display:flex;flex-direction:column;gap:12px}
+.card{
+  background:var(--card);border:1px solid var(--rule);border-radius:14px;
+  padding:18px 20px;box-shadow:var(--shadow);
+}
+.card .k{
+  font-size:.7rem;font-weight:700;letter-spacing:.14em;color:var(--gold);
+}
+.card.blue .k{color:var(--blue)}
+.card h3{margin-top:6px}
+.card p{margin-top:8px;color:var(--ink2);font-size:.96rem;line-height:1.9}
+
+/* ---------- レベル表 ---------- */
+.tbl{margin-top:18px;border-top:1px solid var(--rule)}
+.tr{display:flex;align-items:baseline;gap:16px;padding:11px 2px;border-bottom:1px solid var(--rule)}
+.tr .lv{
+  flex:none;width:64px;font-size:.8rem;font-weight:700;color:var(--mute);
+  font-variant-numeric:tabular-nums;letter-spacing:.04em;
+}
+.tr .nm{font-family:var(--serif);font-size:1.06rem;font-weight:700;letter-spacing:.04em}
+.exp{display:flex;gap:14px;margin-top:18px;flex-wrap:wrap}
+.expitem{
+  flex:1;min-width:210px;background:var(--card);border:1px solid var(--rule);
+  border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);
+}
+.expitem b{display:block;font-size:1.5rem;font-weight:900;color:var(--gold);font-variant-numeric:tabular-nums}
+.expitem span{display:block;margin-top:4px;font-weight:700}
+.expitem em{display:block;margin-top:5px;font-style:normal;font-size:.86rem;color:var(--mute);line-height:1.8}
+
+/* ---------- 注意 ---------- */
+.warn{margin-top:18px;display:flex;flex-direction:column;gap:0}
+.wrow{display:flex;gap:14px;padding:14px 0;border-top:1px solid var(--rule)}
+.wrow:first-child{border-top:0}
+.wrow .m{flex:none;width:8px;height:8px;border-radius:50%;background:var(--red);margin-top:12px}
+.wrow .t{flex:1;line-height:1.85}
+.wrow .t b{display:block;font-weight:700}
+.wrow .t span{color:var(--ink2);font-size:.95rem}
+
+footer{
+  margin-top:64px;padding-top:24px;border-top:1px solid var(--rule);
+  color:var(--mute);font-size:.86rem;line-height:1.9;
+}
+@media (max-width:520px){
+  body{font-size:16px}
+  .wrap{padding:32px 18px 70px}
+  .hero{gap:18px}
+  .qr{width:112px;height:112px;margin:0 auto}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+a:focus-visible,.url:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:3px}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+
+  <span class="eyebrow">オンラインコミュニティ塾【ヒラ】</span>
+  <h1>Theater の<br>つかいかた</h1>
+  <p class="lede">
+    ヒラ先生の動画<strong>だけ</strong>が入っているアプリです。<br>
+    YouTube を開かずに見られるので、ほかの動画に気をとられません。
+  </p>
+
+  <div class="hero">
+    <div class="qr"><svg viewBox="0 0 37 37" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Theater を開くQRコード"><path stroke="currentColor" d="M2 2.5h7m4 0h2m1 0h1m1 0h1m2 0h6m1 0h7m-33 1h1m5 0h1m2 0h2m1 0h1m2 0h1m1 0h2m1 0h3m1 0h1m1 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m1 0h2m4 0h2m2 0h1m1 0h3m1 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m8 0h4m3 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m1 0h3m1 0h3m2 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h3m3 0h1m2 0h2m1 0h2m4 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h1m2 0h2m1 0h1m1 0h1m3 0h2m-22 1h1m1 0h5m3 0h1m2 0h2m2 0h1m5 0h1m2 0h5m-31 1h2m1 0h1m3 0h1m2 0h1m2 0h1m2 0h2m1 0h1m2 0h3m1 0h2m1 0h2m1 0h1m-32 1h1m1 0h4m4 0h1m1 0h3m1 0h1m2 0h1m1 0h1m2 0h1m2 0h1m1 0h2m-31 1h1m5 0h3m1 0h3m1 0h2m2 0h1m1 0h2m1 0h1m3 0h4m-32 1h1m1 0h2m1 0h2m2 0h1m1 0h1m2 0h3m1 0h1m3 0h4m1 0h3m2 0h1m-33 1h2m1 0h1m4 0h1m3 0h2m1 0h1m2 0h6m1 0h2m2 0h1m1 0h2m-33 1h1m3 0h1m1 0h1m2 0h2m2 0h1m1 0h3m3 0h1m3 0h2m2 0h1m1 0h1m-32 1h1m1 0h1m1 0h2m1 0h1m3 0h3m1 0h1m2 0h1m1 0h3m1 0h3m3 0h1m-29 1h1m1 0h1m1 0h1m4 0h1m1 0h1m1 0h3m2 0h1m3 0h2m1 0h2m3 0h1m-32 1h2m4 0h2m3 0h3m1 0h1m1 0h2m1 0h3m1 0h3m1 0h2m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h3m3 0h3m1 0h1m2 0h2m3 0h3m1 0h2m-31 1h1m2 0h2m1 0h1m1 0h1m1 0h2m1 0h2m2 0h2m1 0h1m1 0h3m1 0h4m1 0h1m-33 1h1m3 0h3m3 0h1m1 0h1m1 0h1m3 0h1m1 0h1m1 0h3m3 0h2m1 0h2m-33 1h1m2 0h1m4 0h2m3 0h1m1 0h2m1 0h4m1 0h1m2 0h1m2 0h1m2 0h1m-33 1h1m1 0h1m1 0h1m1 0h1m1 0h4m1 0h1m3 0h1m2 0h1m1 0h1m3 0h2m1 0h1m1 0h1m-32 1h1m1 0h1m2 0h1m8 0h1m1 0h1m4 0h3m1 0h1m3 0h2m1 0h1m-33 1h1m2 0h5m1 0h3m1 0h2m2 0h2m1 0h1m3 0h6m1 0h1m-24 1h1m4 0h1m2 0h4m2 0h1m1 0h1m3 0h1m1 0h1m1 0h1m-33 1h7m4 0h1m3 0h3m2 0h2m1 0h2m1 0h1m1 0h1m1 0h1m-31 1h1m5 0h1m1 0h1m2 0h3m2 0h3m2 0h1m1 0h2m3 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m1 0h7m5 0h1m1 0h6m-30 1h1m1 0h3m1 0h1m1 0h1m5 0h2m1 0h5m1 0h3m2 0h1m1 0h3m-33 1h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h1m1 0h3m2 0h1m2 0h5m1 0h1m-30 1h1m5 0h1m3 0h4m1 0h1m2 0h1m1 0h3m2 0h2m1 0h3m-31 1h7m1 0h2m1 0h3m1 0h1m1 0h1m2 0h1m2 0h3m1 0h1m1 0h1m1 0h1"/></svg></div>
+    <div class="heroright">
+      <div class="lab">ここをひらく</div>
+      <a class="url" href="https://yuki08173123-svg.github.io/study-game/theater/">yuki08173123-svg.github.io/study-game/theater/</a>
+      <p class="heronote">
+        アプリストアからは入れません。<br>
+        このリンクを <strong>Safari（iPhone）</strong> か <strong>Chrome（Android）</strong> で開いてください。
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ 1 ============ -->
+  <section class="sec">
+    <span class="no">STEP 1</span>
+    <h2>ホーム画面に置く</h2>
+    <p class="sub">
+      置いておくと、ふつうのアプリと同じように開けます。<br>
+      置かないと <strong>記録が消えてしまうことがある</strong>ので、必ずやってください。
+    </p>
+
+    <div class="plat">iPhone・iPad</div>
+    <div class="steps">
+      <div class="step"><span class="n">1</span><span class="t"><b>Safari</b> で上のリンクを開く</span></div>
+      <div class="step"><span class="n">2</span><span class="t">下（または右上）の <b>共有ボタン</b>（□に↑）を押す</span></div>
+      <div class="step"><span class="n">3</span><span class="t"><b>「ホーム画面に追加」</b> を選ぶ</span></div>
+      <div class="step"><span class="n">4</span><span class="t">右上の <b>「追加」</b> を押す。ホーム画面にアイコンが出ます</span></div>
+    </div>
+
+    <div class="plat">Android</div>
+    <div class="steps">
+      <div class="step"><span class="n">1</span><span class="t"><b>Chrome</b> で上のリンクを開く</span></div>
+      <div class="step"><span class="n">2</span><span class="t">右上の <b>「⋮」</b> を押す</span></div>
+      <div class="step"><span class="n">3</span><span class="t"><b>「ホーム画面に追加」</b> を選ぶ</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 2 ============ -->
+  <section class="sec">
+    <span class="no">STEP 2</span>
+    <h2>見たい動画をさがす</h2>
+
+    <div class="cards">
+      <div class="card">
+        <div class="k">ホーム</div>
+        <h3>区分から入る</h3>
+        <p>マインド動画・シークレット会・プレミア動画・コンテンツ動画・勉強法・ヒラマップ・ヒラ会・塾生実績。<br>
+          <strong>マインド動画は上から順番に</strong>見てください。0〜19、20〜39…のボタンで番号にとべます。</p>
+      </div>
+      <div class="card blue">
+        <div class="k">こんなときは</div>
+        <h3>使用マニュアル</h3>
+        <p>「どういうときに、どの動画を見ればいいか」がまとまっています。<br>
+          <strong>先延ばしグセを直す・集中力を上げる・定期テスト対策</strong>…のように、悩みから引けます。何を見ればいいか迷ったら、まずここ。</p>
+      </div>
+      <div class="card">
+        <div class="k">さがす</div>
+        <h3>話の中身から探せる</h3>
+        <p>タイトルだけでなく、<strong>動画の中で話している内容</strong>からも探せます。「模試」「先延ばし」などで入れてみてください。<br>
+          動画の下の<strong>目次</strong>を押すと、その場面まで飛べます。</p>
+      </div>
+      <div class="card">
+        <div class="k">つづき・速さ・保存</div>
+        <h3>とちゅうでやめても大丈夫</h3>
+        <p>見たところを覚えているので、次に開くと「つづきから」が出ます。<br>
+          速さ（1.5倍など）は<strong>動画ごと</strong>に覚えます。気になった動画は「保存」や自分で作った<strong>フォルダ</strong>に入れておけます。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3 ============ -->
+  <section class="sec">
+    <span class="no">STEP 3</span>
+    <h2>見た回数のしくみ</h2>
+
+    <div class="alert">
+      <h3>回数は、自分ではふやせません</h3>
+      <p>
+        動画を<strong>最後まで見たときだけ</strong>、自動で1つふえます。<br>
+        ボタンを押して増やすことはできません。
+      </p>
+      <ul>
+        <li><strong>倍速でも大丈夫</strong>です。2倍で見ても1回として数えます。</li>
+        <li><strong>とばした分は数えません。</strong>最後までシークしても増えません。</li>
+        <li>再生画面に「<strong>あと ○分 見ると 1回 ふえます</strong>」と出ます。</li>
+        <li>もう一度最後まで見れば、また1つふえます。<strong>反復した数がそのまま残ります。</strong></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 4 ============ -->
+  <section class="sec">
+    <span class="no">STEP 4</span>
+    <h2>レベルを上げる</h2>
+    <p class="sub">
+      ホームのいちばん上に出ます。<strong>上限はありません。</strong><br>
+      先生に進み具合を聞かれたら、この画面を見せてください。
+    </p>
+
+    <div class="screen">
+      <div class="cap">ホームのいちばん上</div>
+      <div class="lvbox">
+        <div class="nm">たろう</div>
+        <div class="row">
+          <span class="l">LEVEL</span>
+          <span class="num">7</span>
+          <span class="tt">努力家</span>
+        </div>
+        <div class="bar"><i></i></div>
+        <div class="st">
+          <div><b>23</b><span>見た動画</span></div>
+          <div><b>41</b><span>のべ回数</span></div>
+          <div><b>8</b><span>アウトプット</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="exp">
+      <div class="expitem">
+        <b>＋10</b>
+        <span>動画を最後まで見る</span>
+        <em>くり返すたびに ＋10。何回でも。</em>
+      </div>
+      <div class="expitem">
+        <b>＋15</b>
+        <span>アウトプットを書く</span>
+        <em>1本の動画につき1回ぶん。たくさん書いても増えません。</em>
+      </div>
+    </div>
+
+    <p class="sub">
+      つぎのレベルまでに必要な数は <strong>40 → 60 → 80 …</strong> と20ずつ増えます。<br>
+      上に行くほど1段が重くなりますが、<strong>レベルは下がりません。</strong>
+    </p>
+
+    <div class="tbl">
+      <div class="tr"><span class="lv">Lv 1</span><span class="nm">はじめの一歩</span></div>
+      <div class="tr"><span class="lv">Lv 3</span><span class="nm">見習い</span></div>
+      <div class="tr"><span class="lv">Lv 5</span><span class="nm">挑戦者</span></div>
+      <div class="tr"><span class="lv">Lv 8</span><span class="nm">努力家</span></div>
+      <div class="tr"><span class="lv">Lv 12</span><span class="nm">習慣の人</span></div>
+      <div class="tr"><span class="lv">Lv 16</span><span class="nm">継続者</span></div>
+      <div class="tr"><span class="lv">Lv 21</span><span class="nm">実行者</span></div>
+      <div class="tr"><span class="lv">Lv 27</span><span class="nm">分析家</span></div>
+      <div class="tr"><span class="lv">Lv 34</span><span class="nm">極める人</span></div>
+      <div class="tr"><span class="lv">Lv 42</span><span class="nm">一流</span></div>
+      <div class="tr"><span class="lv">Lv 51</span><span class="nm">達人</span></div>
+      <div class="tr"><span class="lv">Lv 65</span><span class="nm">仙人</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 5 ============ -->
+  <section class="sec">
+    <span class="no">STEP 5</span>
+    <h2>アウトプットを書く</h2>
+    <p class="sub">
+      動画の下の <strong>「アウトプットを書く（＋15）」</strong> から、
+      気づいたこと・やってみることを書けます。<br>
+      書いたものは、レベル画面にぜんぶ残ります。
+    </p>
+
+    <div class="screen">
+      <div class="cap">まとめてコピー を押すと、この形で出ます</div>
+      <p class="lines">
+        たろう ／ レベル7・努力家<br>
+        見た動画 23本 ／ のべ 41回 ／ アウトプット 8件<br>
+        2026/8/29 時点<br><br>
+        <em>■ 【マインド動画１】素直さ（8/29）</em><br>
+        言われたことを、まず1回そのままやってみる。
+      </p>
+    </div>
+
+    <p class="sub">
+      レベル画面の「書いたアウトプット」の横にある <strong>「まとめてコピー」</strong> を押して、
+      Discord に貼りつけて送ってください。<br>
+      画面のスクショを送るのでも大丈夫です。
+    </p>
+  </section>
+
+  <!-- ============ 6 ============ -->
+  <section class="sec">
+    <span class="no">CHECK</span>
+    <h2>気をつけること</h2>
+
+    <div class="warn">
+      <div class="wrow"><span class="m"></span><span class="t">
+        <b>記録は、その端末の中だけにあります</b>
+        <span>スマホを買いかえる前に、必ず「設定 → 記録を書き出す」でファイルにしてください。何もしないと、見た回数もフォルダも消えます。</span>
+      </span></div>
+      <div class="wrow"><span class="m"></span><span class="t">
+        <b>アプリを閉じると、音も止まります</b>
+        <span>画面を消したままの再生（ラジオのような聴き方）はできません。YouTube 側のきまりで、こちらでは変えられません。</span>
+      </span></div>
+      <div class="wrow"><span class="m"></span><span class="t">
+        <b>できれば Wi-Fi で見てください</b>
+        <span>画質を選べないので、外の回線だと通信量が大きくなります。</span>
+      </span></div>
+      <div class="wrow"><span class="m"></span><span class="t">
+        <b>プレミア動画だけ、少し操作が違います</b>
+        <span>別のしくみ（Loom）で作られているため、倍速や「つづきから」「回数の自動カウント」は使えません。速さはその画面の中で変えられます。</span>
+      </span></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      動画が増えると、区分に <strong>NEW</strong> が付きます。<br>
+      アプリを更新するときは <strong>設定 →「最新か たしかめる」</strong> を押してください。<br>
+      うまく動かないときは、ヒラ先生に聞いてください。
+    </p>
+  </footer>
+
+</div>
+
+</body>
+</html>

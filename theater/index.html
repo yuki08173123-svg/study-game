@@ -247,7 +247,13 @@ main{max-width:680px;margin:0 auto;
 .toast{position:fixed;left:50%;bottom:calc(var(--tabh) + 26px + env(safe-area-inset-bottom));
   transform:translate(-50%,14px);z-index:90;background:var(--surf3);border:1px solid var(--line2);
   color:var(--ink);padding:10px 18px;border-radius:24px;font-size:.85rem;font-weight:700;
-  opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;max-width:86vw;text-align:center}
+  opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;max-width:86vw;
+  display:flex;align-items:center;gap:14px}
+.toast.act{pointer-events:auto;padding-right:8px;padding-left:20px;max-width:94vw}
+.toast.act span{white-space:nowrap}
+.toast .undo{color:var(--acc);font-weight:800;font-size:.85rem;padding:6px 12px;
+  border-radius:16px;background:var(--acc-soft);flex:none}
+.toast .undo:active{opacity:.6}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .ver{text-align:center;color:var(--ink3);font-size:.72rem;letter-spacing:.06em;
   margin:26px 0 4px;font-weight:600}
@@ -287,7 +293,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 7;
+const VER = 8;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -339,9 +345,19 @@ const saveFav  = () => localStorage.setItem(K_FAV,  JSON.stringify(favs));
 const saveCfg  = () => localStorage.setItem(K_CFG,  JSON.stringify(cfg));
 
 /* ===================== 小道具 ===================== */
-function toast(msg){
-  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 2000);
+function toast(msg, action){
+  const t = $('#toast');
+  t.innerHTML = `<span>${esc(msg)}</span>`;
+  t.classList.toggle('act', !!action);
+  if(action){
+    const b = document.createElement('button');
+    b.className = 'undo'; b.textContent = action.label;
+    b.onclick = () => { t.classList.remove('on'); action.fn(); };
+    t.appendChild(b);
+  }
+  t.classList.add('on');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('on'), action ? 5000 : 2000);
 }
 function hhmm(sec){
   sec = Math.max(0, Math.round(sec || 0));
@@ -399,6 +415,24 @@ function addSeen(id, delta){
   p.n = n; p.done = n > 0 ? 1 : 0; p.last = now();
   saveProg();
   return n;
+}
+/* 連打で数が跳ね上がらないようにする。
+   同じ動画を 1.5秒以内にもう一度押しても数えない。
+   押したあとは「もどす」を出して、すぐ取り消せるようにする。 */
+let lastBump = { id:'', at:0 };
+function bumpSeen(id, after){
+  const t = now();
+  if(lastBump.id === id && t - lastBump.at < 1500){
+    lastBump.at = t;
+    toast(`${seenN(id)}回のまま（続けて押しても数えません）`);
+    return;
+  }
+  lastBump = { id, at:t };
+  const n = addSeen(id, 1);
+  if(after) after();
+  toast(n === 1 ? '見終わりにしました' : `${n}回目にしました`,
+    { label:'もどす', fn: () => { addSeen(id, -1); lastBump = { id:'', at:0 };
+                                  if(after) after(); toast(`${seenN(id)}回にもどしました`); } });
 }
 function clearSeen(id){
   const p = prog[id]; if(!p) return;
@@ -881,9 +915,8 @@ function onState(e){
     saveNow(); stopTick(); showCtrl(true); drawCtrl();
   }else if(e.data === S.ENDED){
     stopTick();
-    const n = addSeen(curId, 1);
-    const p = prog[curId]; p.t = 0; saveProg();
-    toast(n === 1 ? '見終わりました' : `${n}回目を見終わりました`);
+    const id = curId;
+    bumpSeen(id, () => { const p = prog[id]; if(p){ p.t = 0; saveProg(); } });
     onEnded();
   }
 }
@@ -1043,13 +1076,9 @@ function drawBody(){
     if(isFav(v.id)) favs = favs.filter(x => x !== v.id); else favs.unshift(v.id);
     saveFav(); drawBody(); toast(isFav(v.id) ? '保存しました' : '保存をはずしました');
   };
-  $('#done').onclick = () => {
-    const n = addSeen(v.id, 1);
-    toast(n === 1 ? '見終わりにしました' : `${n}回目にしました`);
-    drawBody();
-  };
+  $('#done').onclick = () => bumpSeen(v.id, drawBody);
   if($('#undo')) $('#undo').onclick = () => {
-    if(!confirm('この動画の「見た回数」を0にもどしますか？')) return;
+    if(!confirm(`この動画は いま ${seenN(v.id)}回です。0にもどしますか？`)) return;
     clearSeen(v.id); drawBody(); toast('0回にもどしました');
   };
 }
@@ -1174,7 +1203,8 @@ async function boot(){
     held = false;
     holdT = setTimeout(() => {
       held = true;
-      if(seenN(b.dataset.seen) && confirm('この動画の「見た回数」を0にもどしますか？')){
+      const cur = seenN(b.dataset.seen);
+      if(cur && confirm(`この動画は いま ${cur}回です。0にもどしますか？`)){
         clearSeen(b.dataset.seen);
         if(view.name === 'find') drawFind(); else render();
         toast('0回にもどしました');
@@ -1190,9 +1220,7 @@ async function boot(){
     if(sb){
       clearTimeout(holdT);
       if(held){ held = false; return; }        /* 長押しで処理ずみ */
-      const n = addSeen(sb.dataset.seen, 1);
-      toast(n === 1 ? '見終わりにしました' : `${n}回目にしました`);
-      if(view.name === 'find') drawFind(); else render();
+      bumpSeen(sb.dataset.seen, () => { if(view.name === 'find') drawFind(); else render(); });
       return;
     }
     const c = e.target.closest('[data-go]');

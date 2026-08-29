@@ -389,6 +389,27 @@ main{max-width:680px;margin:0 auto;
 
 /* ---------- 使い方スライド（小中学生でも読めるよう 大きめの文字） ---------- */
 #guide{position:fixed;inset:0;z-index:98;background:var(--bg);display:flex;flex-direction:column}
+/* 入口（塾生かどうかをたしかめる画面） */
+#gate{position:fixed;inset:0;z-index:120;background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;overflow-y:auto;
+  padding:44px 26px calc(44px + env(safe-area-inset-bottom))}
+#gate .gmark{font-family:var(--serif);font-size:1.9rem;letter-spacing:.3em;color:var(--acc);
+  margin-left:.3em;line-height:1}
+#gate .gsub{color:var(--ink3);font-size:.7rem;letter-spacing:.24em;margin-top:9px}
+#gate .gttl{font-size:1.04rem;font-weight:700;margin-top:40px;letter-spacing:.02em}
+#gate .gtxt{color:var(--ink2);font-size:.87rem;line-height:1.95;margin-top:12px;max-width:20em}
+#gate .gbtn{margin-top:28px;background:#5865f2;color:#fff;border-radius:13px;
+  padding:15px 28px;font-weight:700;font-size:.95rem;display:inline-flex;align-items:center;gap:9px;
+  min-width:230px;justify-content:center}
+#gate .gbtn.sub{background:var(--surf2);color:var(--ink2);border:1px solid var(--line2);
+  font-weight:600;font-size:.85rem;padding:12px 20px;margin-top:12px}
+#gate .gnote{color:var(--ink3);font-size:.75rem;line-height:1.85;margin-top:26px;max-width:20em}
+#gate .gcode{margin-top:22px;width:100%;max-width:20em}
+#gate .gcode textarea{min-height:78px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:.72rem;line-height:1.55;text-align:left}
+#gate .gspin{width:22px;height:22px;border-radius:50%;border:2px solid var(--line2);
+  border-top-color:var(--acc);animation:gsp .8s linear infinite;margin-top:34px}
+@keyframes gsp{to{transform:rotate(360deg)}}
 .gtop{display:flex;justify-content:flex-end;padding:calc(env(safe-area-inset-top) + 8px) 12px 0;min-height:46px}
 .gskip{color:var(--ink3);font-size:.92rem;font-weight:700;padding:10px 12px}
 .gbody{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -436,6 +457,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <div class="toast" id="toast"></div>
 <div id="sheet" class="hidden"><div class="sh" id="shin"></div></div>
 <div id="guide" class="hidden"></div>
+<div id="gate" class="hidden"></div>
 
 <div id="pv" class="hidden">
   <div class="pvtop">
@@ -459,9 +481,18 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 20;
+const VER = 21;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
-      K_FOLD='th_folders', K_OUT='th_out';
+      K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
+      K_TOK='th_tok', K_OKAT='th_okat';
+
+/* 塾生かどうかをたしかめる入口。中身（動画リスト）は公開の場所には置いていない。
+   ここに毎回聞きにいって、Discordのサーバーに「いま」いる人にだけ渡してもらう。 */
+const API = 'https://theater-auth.yuki08173123.workers.dev';
+/* ネットにつながらないとき、前に読みこんだ控えで動かしてよい期間 */
+const GRACE = 3 * 24 * 60 * 60 * 1000;
+/* アプリに戻ってきたとき、前の確認からこれだけ経っていたら もう一度たしかめる */
+const RECHECK = 60 * 1000;
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const now = () => Date.now();
@@ -724,15 +755,6 @@ const isLoom = id => String(id).startsWith('loom:');
 
 /* ===================== 動画リストの取りこみ ===================== */
 /* 目次（チャプター）。検索にも使うので videos.json といっしょに読む */
-async function fetchChapters(){
-  try{
-    const r = await fetch('chapters.json?t=' + now(), { cache:'no-store' });
-    CHAP = await r.json();
-    localStorage.setItem('th_chap', JSON.stringify(CHAP));
-  }catch(e){
-    try{ CHAP = JSON.parse(localStorage.getItem('th_chap') || '{}'); }catch(e2){ CHAP = {}; }
-  }
-}
 const chapOf = id => CHAP[id] || [];
 /* 検索用に 目次を1本のテキストにしておく（毎回つなぎ直さないよう覚える） */
 const _ctext = {};
@@ -742,27 +764,26 @@ function chapText(id){
 }
 
 /* 使用マニュアル。ヒラさんが #使用マニュアル に書いている見出しをそのまま使う */
-async function fetchManual(){
-  try{
-    const r = await fetch('manual.json?t=' + now(), { cache:'no-store' });
-    MAN = await r.json();
-    localStorage.setItem('th_man', JSON.stringify(MAN));
-  }catch(e){
-    try{ MAN = JSON.parse(localStorage.getItem('th_man') || 'null'); }catch(e2){ MAN = null; }
-  }
-}
 
-async function fetchData(){
+/* 入口から返ってきた中身を、画面で使う形にする */
+function applyData(j){
+  DATA = normalize(j.videos || {});
+  CHAP = j.chapters || {};
+  MAN  = j.manual || null;
   try{
-    const r = await fetch('videos.json?t=' + now(), { cache:'no-store' });
-    const j = await r.json();
-    if(!j || !Array.isArray(j.videos)) throw 0;
-    DATA = normalize(j);
-    localStorage.setItem(K_CACHE, JSON.stringify(j));   /* 圏外でも一覧が出るように控える */
-  }catch(e){
-    try{ DATA = normalize(JSON.parse(localStorage.getItem(K_CACHE) || 'null') || {}); }
-    catch(e2){ DATA = { cats:[], videos:[] }; }
-  }
+    localStorage.setItem(K_CACHE, JSON.stringify(j.videos || {}));
+    localStorage.setItem(K_CHAP,  JSON.stringify(CHAP));
+    localStorage.setItem(K_MAN,   JSON.stringify(MAN));
+    localStorage.setItem(K_OKAT,  String(now()));   /* いつ確認できたか */
+  }catch(e){}
+}
+/* 圏外のときだけ使う、前に読みこんだ控え */
+function loadCached(){
+  try{ DATA = normalize(JSON.parse(localStorage.getItem(K_CACHE) || 'null') || {}); }
+  catch(e){ DATA = { cats:[], videos:[] }; }
+  try{ CHAP = JSON.parse(localStorage.getItem(K_CHAP) || '{}'); }catch(e){ CHAP = {}; }
+  try{ MAN  = JSON.parse(localStorage.getItem(K_MAN)  || 'null'); }catch(e){ MAN = null; }
+  return !!(DATA.videos && DATA.videos.length);
 }
 function normalize(j){
   const cats = Array.isArray(j.cats) ? j.cats.slice() : [];
@@ -1928,7 +1949,7 @@ function vAdmin(){
 
   $('#main').innerHTML = `
     <div class="note">ここで動画のリストを作り、最後に「JSONをコピー」を押して
-      平山さんが <b>videos.json</b> に貼りかえると、生徒の画面に反映されます。<br>
+      平山さんが <b>theater-data</b>（非公開リポジトリ）の videos.json に貼りかえると、生徒の画面に反映されます。<br>
       YouTube は<b>限定公開</b>のままで大丈夫です。</div>
 
     <div class="sec"><h2>動画を追加</h2></div>
@@ -1955,7 +1976,7 @@ function vAdmin(){
     <div class="sec"><h2>書き出す</h2></div>
     <button class="btn" id="aCopy">JSONをコピー</button>
     <button class="btn" id="aReload" style="margin-top:9px">公開中のリストを読み直す</button>
-    <div class="lead" style="margin-top:10px">「読み直す」を押すと、いま公開されている videos.json の内容に戻します。</div>
+    <div class="lead" style="margin-top:10px">「読み直す」を押すと、いま配信されている videos.json の内容に戻します。</div>
     <div class="ver">&nbsp;</div>`;
 
   $('#aAdd').onclick = () => {
@@ -1994,6 +2015,188 @@ addEventListener('popstate', () => {
     closePlay();
   }
 });
+
+/* ===================== 入口（塾生かどうかをたしかめる） ===================== */
+const tokGet = () => { try{ return localStorage.getItem(K_TOK) || ''; }catch(e){ return ''; } };
+const tokSet = t => { try{ localStorage.setItem(K_TOK, t); }catch(e){} };
+
+/* 退塾・BAN のとき。動画の中身と通行証をこの端末から消す。
+   自分で書いたアウトプットや記録は本人のものなので残す。 */
+function wipeContent(){
+  [K_CACHE, K_CHAP, K_MAN, K_TOK, K_OKAT, K_ADM].forEach(k => {
+    try{ localStorage.removeItem(k); }catch(e){}
+  });
+  DATA = { cats:[], videos:[] }; CHAP = {}; MAN = null; admin = null;
+}
+
+/* ログインから戻ってきたときに # についてくる合図を受けとる */
+function readAuthHash(){
+  const h = (location.hash || '').replace(/^#/, '');
+  if(!h || h.indexOf('auth=') < 0) return null;
+  const q = new URLSearchParams(h);
+  const a = q.get('auth');
+  const t = q.get('t') || '';
+  try{ history.replaceState(null, '', location.pathname + location.search); }
+  catch(e){ location.hash = ''; }
+  if(a === 'ok' && t){ tokSet(t); return { ok:true, t }; }
+  return { ok:false, why:a || 'failed' };
+}
+
+/* 入口に聞きにいく。ここが毎回はしるので、BANされた瞬間から中身は渡らない */
+async function pull(){
+  const t = tokGet();
+  if(!t) return { st:'need_login' };
+  let r;
+  try{
+    r = await fetch(API + '/data?t=' + encodeURIComponent(t) + '&_=' + now(), { cache:'no-store' });
+  }catch(e){ return { st:'offline' }; }
+  let j = null;
+  try{ j = await r.json(); }catch(e){}
+  if(!j) return { st:'offline' };
+  if(j.ok){ if(j.t) tokSet(j.t); return { st:'ok', j }; }
+  return { st:j.error || 'need_login' };
+}
+
+const loginUrl = () => API + '/login?back=' +
+  encodeURIComponent(location.origin + location.pathname);
+
+const standalone = () =>
+  window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+function hideGate(){ $('#gate').classList.add('hidden'); }
+
+const GMARK = '<div class="gmark">THEATER</div><div class="gsub">オンラインコミュニティ塾【ヒラ】</div>';
+
+function showGate(kind, extra){
+  const g = $('#gate');
+  g.classList.remove('hidden');
+  closePlay && closePlay();
+
+  if(kind === 'wait'){
+    g.innerHTML = GMARK + '<div class="gspin"></div>';
+    return;
+  }
+
+  if(kind === 'code'){
+    /* ホーム画面のアプリに移すための合言葉を見せる（iPhoneでの受けわたし用） */
+    g.innerHTML = GMARK +
+      '<div class="gttl">ログインできました</div>' +
+      '<div class="gtxt">ホーム画面に <b>Theater</b> を入れている人は、' +
+      'この合言葉をコピーして、アプリの「合言葉を貼りつける」に入れてください。</div>' +
+      '<div class="gcode"><textarea id="gOut" readonly>' + esc(extra || '') + '</textarea></div>' +
+      '<button class="gbtn" id="gCopy">合言葉をコピー</button>' +
+      '<button class="gbtn sub" id="gGo">このままブラウザで使う</button>' +
+      '<div class="gnote">ホーム画面に入れていない人は「このままブラウザで使う」でそのまま見られます。</div>';
+    $('#gCopy').onclick = async () => {
+      const el = $('#gOut');
+      try{ await navigator.clipboard.writeText(el.value); toast('コピーしました'); }
+      catch(e){ el.focus(); el.select(); toast('長押しして「コピー」を選んでください'); }
+    };
+    $('#gGo').onclick = () => { hideGate(); startData(); };
+    return;
+  }
+
+  const M = {
+    login: {
+      ttl:'塾生のためのアプリです',
+      txt:'オンラインコミュニティ塾【ヒラ】の Discord に入っている人だけが見られます。' +
+          'いつも使っている Discord でログインしてください。',
+      note:'ログインしても、こちらから Discord に書きこんだり、あなたの発言を読んだりすることはありません。' +
+           '「塾のサーバーに入っているか」だけを見ています。'
+    },
+    member: {
+      ttl:'いまは見られません',
+      txt:'塾の Discord に入っていないため、動画を開くことができません。' +
+          '心あたりがないときは、ヒラ先生に聞いてください。',
+      note:'入りなおしたあとは、もう一度ログインすれば すぐに見られるようになります。'
+    },
+    failed: {
+      ttl:'ログインできませんでした',
+      txt:'とちゅうで止まってしまったようです。もう一度ためしてください。',
+      note:''
+    },
+    offline: {
+      ttl:'つながりませんでした',
+      txt:'電波の届くところで、もう一度ひらいてください。',
+      note:''
+    }
+  };
+  const m = M[kind] || M.login;
+  const btn = kind === 'offline'
+    ? '<button class="gbtn" id="gRetry">もう一度ためす</button>'
+    : '<button class="gbtn" id="gLogin">' + ICO.play({ s:19 }) + '<span>Discordでログイン</span></button>' +
+      '<button class="gbtn sub" id="gPaste">合言葉を貼りつける</button>';
+
+  g.innerHTML = GMARK +
+    '<div class="gttl">' + m.ttl + '</div>' +
+    '<div class="gtxt">' + m.txt + '</div>' + btn +
+    (m.note ? '<div class="gnote">' + m.note + '</div>' : '');
+
+  if($('#gRetry')) $('#gRetry').onclick = () => startAuth();
+  if($('#gLogin')) $('#gLogin').onclick = () => { location.href = loginUrl(); };
+  if($('#gPaste')) $('#gPaste').onclick = () => {
+    g.innerHTML = GMARK +
+      '<div class="gttl">合言葉を貼りつける</div>' +
+      '<div class="gtxt">ブラウザでログインしたときに出た合言葉を、下に貼りつけてください。</div>' +
+      '<div class="gcode"><textarea id="gIn" placeholder="ここに貼りつける"></textarea></div>' +
+      '<button class="gbtn" id="gIn2">これでログイン</button>' +
+      '<button class="gbtn sub" id="gBack">もどる</button>';
+    $('#gBack').onclick = () => showGate('login');
+    $('#gIn2').onclick = () => {
+      const v = ($('#gIn').value || '').trim();
+      if(v.indexOf('.') < 0) return toast('合言葉がちがうようです');
+      tokSet(v); startAuth();
+    };
+  };
+}
+
+/* 起動と、アプリに戻ってきたときの確認 */
+async function startAuth(){
+  showGate('wait');
+  const r = await pull();
+
+  if(r.st === 'ok'){
+    applyData(r.j);
+    /* iPhoneでホーム画面のアプリに移す人のために、ログイン直後に合言葉を見せる */
+    if(justLoggedIn && !standalone()){ justLoggedIn = false; return showGate('code', tokGet()); }
+    justLoggedIn = false;
+    hideGate(); startData(); return;
+  }
+  if(r.st === 'not_member' || r.st === 'no_role'){ wipeContent(); return showGate('member'); }
+  if(r.st === 'need_login'){ wipeContent(); return showGate('login'); }
+
+  /* つながらなかった。少し前に確認できていれば、控えで開く */
+  const okat = +(localStorage.getItem(K_OKAT) || 0);
+  if(now() - okat < GRACE && loadCached()){
+    hideGate(); startData();
+    toast('つながらないので、前に読みこんだ内容で開いています');
+    return;
+  }
+  showGate('offline');
+}
+
+/* 中身がそろったあとの、ふつうの起動 */
+let opened = false;
+function startData(){
+  markNew();
+  render();
+  if(!opened){
+    opened = true;
+    if(!cfg.guided) showGuide(0);
+    setTimeout(() => checkUpd(true), 2500);
+  }
+}
+
+/* アプリに戻ってきたら、もう一度たしかめる（BANがすぐ効くように） */
+let justLoggedIn = false;
+async function recheck(){
+  if(!tokGet()) return;
+  if(now() - (+(localStorage.getItem(K_OKAT) || 0)) < RECHECK) return;
+  const r = await pull();
+  if(r.st === 'ok'){ applyData(r.j); if(!$('#gate').classList.contains('hidden')){ hideGate(); startData(); } return; }
+  if(r.st === 'not_member' || r.st === 'no_role'){ wipeContent(); showGate('member'); }
+  else if(r.st === 'need_login'){ wipeContent(); showGate('login'); }
+}
 
 /* ===================== 起動 ===================== */
 async function boot(){
@@ -2034,14 +2237,22 @@ async function boot(){
   });
 
   render();
-  await Promise.all([fetchData(), fetchChapters(), fetchManual()]);
-  markNew();
-  render();
-  if(!cfg.guided) showGuide(0);   /* はじめて開いた人に 使い方を見せる */
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
-  setTimeout(() => checkUpd(true), 2500);
   addEventListener('pagehide', saveNow);
-  document.addEventListener('visibilitychange', () => { if(document.hidden) saveNow(); });
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden) saveNow();
+    else recheck();          /* 戻ってきたら 塾生かどうかをもう一度たしかめる */
+  });
+
+  /* ログインから戻ってきたか */
+  const a = readAuthHash();
+  if(a && a.ok) justLoggedIn = true;
+  if(a && !a.ok){
+    if(a.why === 'not_member' || a.why === 'no_role'){ wipeContent(); return showGate('member'); }
+    wipeContent(); return showGate('failed');
+  }
+  if(!tokGet()) return showGate('login');
+  await startAuth();
 }
 boot();
 </script>

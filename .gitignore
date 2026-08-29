@@ -1,2 +1,8 @@
 .DS_Store
 .claude/
+
+# Theater の動画リストは 非公開リポジトリ theater-data に置く
+theater/videos.json
+theater/chapters.json
+theater/manual.json
+theater/_source/

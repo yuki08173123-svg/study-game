@@ -50,7 +50,7 @@ export default {
 
 /* ---------- Discord へ送り出す ---------- */
 function login(url, env) {
-  const back = url.searchParams.get('back') || appUrl(env);
+  const back = safeBack(url.searchParams.get('back'), env);
   const state = b64url(JSON.stringify({ back }));
   const scope = env.ROLE_ID ? 'identify guilds guilds.members.read' : 'identify guilds';
   const a = new URL('https://discord.com/oauth2/authorize');
@@ -65,7 +65,7 @@ function login(url, env) {
 /* ---------- Discord から戻ってきた ---------- */
 async function callback(url, env) {
   let back = appUrl(env);
-  try { back = JSON.parse(fromB64url(url.searchParams.get('state'))).back || back; } catch (e) {}
+  try { back = safeBack(JSON.parse(fromB64url(url.searchParams.get('state'))).back, env); } catch (e) {}
 
   if (url.searchParams.get('error')) return go(back, 'auth=' + url.searchParams.get('error'));
   const code = url.searchParams.get('code');
@@ -179,6 +179,12 @@ async function aesKey(env) {
 
 /* ---------- 小道具 ---------- */
 const appUrl = env => (env.APP_ORIGIN || '').replace(/\/+$/, '') + '/study-game/theater/';
+/* 戻り先は かならず このアプリの中。よそのサイトを指定されても無視する
+   （ここを素通しにすると、細工したリンクで通行証を持ち出されてしまう） */
+const safeBack = (b, env) => {
+  const o = (env.APP_ORIGIN || '').replace(/\/+$/, '');
+  return (b && o && String(b).indexOf(o + '/') === 0) ? String(b) : appUrl(env);
+};
 const redirectUri = env => (env.WORKER_URL || '').replace(/\/+$/, '') + '/callback';
 const go = (back, hash) => Response.redirect(back + '#' + hash, 302);
 const bin = u8 => String.fromCharCode.apply(null, u8);

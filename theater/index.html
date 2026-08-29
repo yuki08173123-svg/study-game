@@ -93,6 +93,9 @@ main{max-width:680px;margin:0 auto;
 .thumb .lm{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:3px;background:linear-gradient(140deg,#2b2f3a,#171a20);color:var(--acc)}
 .thumb .lm b{font-size:.6rem;font-weight:800;letter-spacing:.14em;color:var(--ink3)}
+.thumb .newb{position:absolute;left:5px;top:5px;background:#e0483f;color:#fff;
+  font-size:.6rem;font-weight:800;letter-spacing:.08em;padding:2px 6px;border-radius:5px;
+  box-shadow:0 1px 6px rgba(0,0,0,.5)}
 .thumb .dur{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.78);color:#fff;
   font-size:.66rem;font-weight:700;padding:1px 5px;border-radius:5px;
   font-variant-numeric:tabular-nums;letter-spacing:.02em}
@@ -126,6 +129,8 @@ main{max-width:680px;margin:0 auto;
   min-height:100px;transition:transform .12s}
 .tile:active{transform:scale(.985);background:var(--surf2)}
 .tile .tn{font-size:1.02rem;font-weight:700;letter-spacing:.02em;line-height:1.35}
+.tile .tnew{display:inline-block;background:#e0483f;color:#fff;font-size:.62rem;font-weight:800;
+  border-radius:20px;padding:1px 7px;margin-left:7px;vertical-align:middle}
 .tile .tc{font-size:.74rem;color:var(--ink3);font-weight:700;letter-spacing:.03em;
   font-variant-numeric:tabular-nums;margin-top:auto}
 .bar{height:5px;border-radius:3px;background:var(--surf3);overflow:hidden}
@@ -249,6 +254,15 @@ main{max-width:680px;margin:0 auto;
 #pv.exp .vwrap{flex:none;width:min(100vw,177.78vh)}
 #pv.exp.rot .vwrap{flex:none;width:min(100vh,177.78vw);transform:rotate(90deg)}
 
+/* ---------- 目次 ---------- */
+.chaps{display:flex;flex-direction:column;gap:2px}
+.chap{display:flex;gap:12px;width:100%;text-align:left;padding:11px 10px;border-radius:10px;
+  align-items:flex-start}
+.chap:active{background:var(--surf2)}
+.chap .ct{color:var(--acc);font-weight:800;font-size:.82rem;font-variant-numeric:tabular-nums;
+  min-width:52px;flex:none;padding-top:1px}
+.chap .cx{font-size:.92rem;line-height:1.6;color:var(--ink2);font-weight:600}
+
 /* ---------- 下から出るシート ---------- */
 #sheet{position:fixed;inset:0;z-index:95;background:rgba(4,5,7,.66);
   display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
@@ -338,7 +352,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 12;
+const VER = 13;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders';
 const $ = s => document.querySelector(s);
@@ -377,6 +391,7 @@ const ICO = {
 
 /* ===================== 状態 ===================== */
 let DATA = { cats:[], videos:[] };
+let CHAP = {};          /* 動画ID → [[秒, 見出し], ...] 目次 */
 let prog = {};            /* {動画id: {t:秒, d:全体の秒, done:1, last:時刻}} */
 let favs = [];
 let folders = [];       /* 生徒が自分で作るフォルダ [{id, name, ids:[]}] */
@@ -502,6 +517,21 @@ function clearSeen(id){
   p.n = 0; p.done = 0; p.last = now(); saveProg();
 }
 const isDone = v => seenN(v.id) > 0;
+
+/* 前に開いたときになかった動画に「NEW」を付ける。
+   はじめて使う人には付けない（278本ぜんぶNEWになってしまうため） */
+let NEWIDS = new Set();
+function markNew(){
+  let known = [];
+  try{ known = JSON.parse(localStorage.getItem('th_known') || 'null'); }catch(e){}
+  const ids = DATA.videos.map(v => v.id);
+  if(!Array.isArray(known)){ localStorage.setItem('th_known', JSON.stringify(ids)); return; }
+  const k = new Set(known);
+  NEWIDS = new Set(ids.filter(id => !k.has(id)));
+  localStorage.setItem('th_known', JSON.stringify(ids));
+}
+const isNew = id => NEWIDS.has(id);
+const newIn = c => inCat(c).filter(v => isNew(v.id)).length;
 /* 倍速は動画ごとに覚える。まだ決めていない動画は 設定の「はじめの速さ」を使う */
 const SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2];
 const speedOf = id => (prog[id] && prog[id].sp) || cfg.speed || 1;
@@ -525,6 +555,24 @@ function ytId(s){
 const isLoom = id => String(id).startsWith('loom:');
 
 /* ===================== 動画リストの取りこみ ===================== */
+/* 目次（チャプター）。検索にも使うので videos.json といっしょに読む */
+async function fetchChapters(){
+  try{
+    const r = await fetch('chapters.json?t=' + now(), { cache:'no-store' });
+    CHAP = await r.json();
+    localStorage.setItem('th_chap', JSON.stringify(CHAP));
+  }catch(e){
+    try{ CHAP = JSON.parse(localStorage.getItem('th_chap') || '{}'); }catch(e2){ CHAP = {}; }
+  }
+}
+const chapOf = id => CHAP[id] || [];
+/* 検索用に 目次を1本のテキストにしておく（毎回つなぎ直さないよう覚える） */
+const _ctext = {};
+function chapText(id){
+  if(_ctext[id] == null) _ctext[id] = chapOf(id).map(c => c[1]).join(' ').toLowerCase();
+  return _ctext[id];
+}
+
 async function fetchData(){
   try{
     const r = await fetch('videos.json?t=' + now(), { cache:'no-store' });
@@ -576,6 +624,7 @@ function card(v, opt){
     <button class="vmain" data-go="${v.id}">
       <div class="thumb ${n ? 'on' : ''}">
         ${thumbHTML(v.id)}
+        ${isNew(v.id) ? `<span class="newb">NEW</span>` : ''}
         ${d ? `<span class="dur">${hhmm(d)}</span>` : ''}
         ${(r > .01 && !n) ? `<span class="pbar"><i style="width:${Math.round(r*100)}%"></i></span>` : ''}
       </div>
@@ -640,8 +689,9 @@ function vHome(){
       const list = inCat(c.id), done = list.filter(isDone).length;
       const tot = list.reduce((a,v) => a + seenN(v.id), 0);
       const pct = list.length ? Math.round(done / list.length * 100) : 0;
+      const nw = list.filter(v => isNew(v.id)).length;
       return `<button class="tile" data-tile="${esc(c.id)}">
-        <div class="tn">${esc(c.name)}</div>
+        <div class="tn">${esc(c.name)}${nw ? `<span class="tnew">${nw}</span>` : ''}</div>
         <div class="tc">${list.length}本${done ? ` ・ ${done}本見た` : ''}${tot > done ? `（のべ${tot}）` : ''}</div>
         <div class="bar"><i style="width:${pct}%"></i></div>
       </button>`;
@@ -742,7 +792,8 @@ function findList(){
     if(!findQ) return true;
     const q = findQ.trim().toLowerCase();
     if(!q) return true;
-    return (v.t + ' ' + v.g + ' ' + v.d).toLowerCase().includes(q);
+    /* タイトル・ジャンル・説明に加えて、動画の中の目次からも探す */
+    return (v.t + ' ' + v.g + ' ' + v.d).toLowerCase().includes(q) || chapText(v.id).includes(q);
   });
   if(catAsc(findCat)) list = list.sort((a,b) => (a.date||'').localeCompare(b.date||'') || a._i - b._i);
   return list;
@@ -864,6 +915,15 @@ function vSet(){
     <div class="lead" style="margin-top:8px">速さは動画ごとに覚えます。ここで決めるのは、まだ速さを変えていない動画の速さです。</div>
     <div class="lead" style="margin-top:8px">記録はこの端末の中だけに残ります。外には送られません。</div>
 
+    <div class="sec"><h2>記録の持ち出し</h2></div>
+    <div class="group">
+      <button class="item" id="expo"><div class="nm">記録を書き出す</div>
+        <div class="chev">${ICO.chev({s:20})}</div></button>
+      <button class="item" id="impo"><div class="nm">記録を読みこむ</div>
+        <div class="chev">${ICO.chev({s:20})}</div></button>
+    </div>
+    <div class="lead" style="margin-top:8px">スマホを買いかえるときは、先に書き出しておいてください。記録はこの端末の中だけにあるので、何もしないと消えます。</div>
+
     <div class="sec"><h2>アプリ</h2></div>
     <div class="group">
       <button class="item" id="upd"><div class="nm">最新か たしかめる</div>
@@ -884,6 +944,8 @@ function vSet(){
     { title:'記録をぜんぶ消しますか？', msg:'見た回数・つづきの位置がすべて消えます。フォルダは残ります。',
       ok:'ぜんぶ消す', danger:true },
     () => { prog = {}; saveProg(); vSet(); toast('記録を消しました'); });
+  $('#expo').onclick = doExport;
+  $('#impo').onclick = doImport;
   $('#upd').onclick = () => checkUpd();
   $('#guide2').onclick = () => showGuide(0);
   $('#howto').onclick = () => info('ホーム画面に置く方法',
@@ -902,6 +964,8 @@ const GUIDE = [
     d:'ホームの四角をタップすると、<br>その種類の動画が<b>ぜんぶ</b>出てきます。<br>マインド動画は<b>上から順番に</b>見てください。' },
   { ic:'check',  t:'見たら「✓」を押す',
     d:'動画の右下のボタンを押すと「見た」になります。<br>もう一度見たら、もう一度押す。<br><b>数字がふえていきます。</b><br>まちがえたら、左の「−」でへらせます。' },
+  { ic:'search', t:'話の中身から探せる',
+    d:'「さがす」では、<b>動画の中で話している内容</b>からも探せます。<br>「模試」「先延ばし」などで入れてみてください。<br>動画の下の<b>目次</b>を押すと、その場面まで飛べます。' },
   { ic:'folder', t:'気になった動画は入れておく',
     d:'動画の画面の「保存」や「フォルダ」から、<br>自分の<b>フォルダ</b>に入れられます。<br>「テスト前に見る」など、名前は自由です。' },
   { ic:'loop',   t:'とちゅうでやめても大丈夫',
@@ -1023,6 +1087,92 @@ function pickFolder(id, after){
   draw();
 }
 
+/* ===================== 記録の持ち出し ===================== */
+/* 機種変更で記録が消えるのを防ぐ。見た回数・フォルダ・保存・設定をまとめて出し入れする */
+function backupData(){
+  return { app:'Theater', v:VER, at:new Date().toISOString(),
+           prog, favs, folders, cfg };
+}
+function backupName(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return `theater-kiroku-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}.json`;
+}
+function doExport(){
+  const txt = JSON.stringify(backupData());
+  openSheet(`
+    <h3>記録を書き出す</h3>
+    <div class="lead" style="margin:-4px 2px 10px;line-height:1.9">
+      見た回数・フォルダ・保存を1つのファイルにまとめます。<br>
+      スマホを買いかえる前に書き出して、新しい端末で読みこんでください。</div>
+    <button class="btn pri" id="exDl">ファイルに保存する</button>
+    <button class="btn" id="exCp" style="margin-top:9px">文字でコピーする</button>
+    <button class="btn" id="exNo" style="margin-top:9px">とじる</button>
+    <div class="lead" style="margin-top:12px">
+      見た回数 ${DATA.videos.filter(isDone).length}本 ・ フォルダ ${folders.length}個 ・ 保存 ${favs.length}本</div>`,
+  () => {
+    $('#exDl').onclick = () => {
+      try{
+        const b = new Blob([txt], { type:'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(b); a.download = backupName();
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        toast('書き出しました');
+      }catch(e){ toast('保存できませんでした。文字でコピーをお試しください'); }
+    };
+    $('#exCp').onclick = async () => {
+      try{ await navigator.clipboard.writeText(txt); closeSheet(); toast('コピーしました'); }
+      catch(e){
+        openSheet(`<h3>この文字をコピーしてください</h3>
+          <textarea id="exTa" style="min-height:180px" class="mono"></textarea>
+          <button class="btn" id="exNo2" style="margin-top:10px">とじる</button>`,
+          () => { $('#exTa').value = txt; $('#exTa').select(); $('#exNo2').onclick = closeSheet; });
+      }
+    };
+    $('#exNo').onclick = closeSheet;
+  });
+}
+function applyBackup(j){
+  if(!j || typeof j !== 'object' || !j.prog) throw new Error('形式が違います');
+  prog = j.prog || {};
+  favs = Array.isArray(j.favs) ? j.favs : [];
+  folders = Array.isArray(j.folders) ? j.folders : [];
+  if(j.cfg && typeof j.cfg === 'object') Object.assign(cfg, j.cfg);
+  saveProg(); saveFav(); saveFold(); saveCfg();
+}
+function doImport(){
+  openSheet(`
+    <h3>記録を読みこむ</h3>
+    <div class="lead" style="margin:-4px 2px 10px;line-height:1.9">
+      書き出したファイルを選ぶか、コピーした文字を貼りつけてください。<br>
+      <b>いまの記録は上書きされます。</b></div>
+    <input type="file" id="imF" accept=".json,application/json" style="padding:10px">
+    <div class="lead" style="margin:12px 2px 6px">または 文字を貼りつける</div>
+    <textarea id="imT" class="mono" placeholder="ここに貼りつけ"></textarea>
+    <div class="acts" style="margin-top:12px">
+      <button class="btn" id="imNo">やめる</button>
+      <button class="btn pri" id="imOk">読みこむ</button>
+    </div>`,
+  () => {
+    const load = txt => {
+      try{
+        applyBackup(JSON.parse(txt));
+        closeSheet(); render(); toast('読みこみました');
+      }catch(e){ toast('読みこめませんでした（ファイルを確認してください）'); }
+    };
+    $('#imF').onchange = e => {
+      const f = e.target.files && e.target.files[0]; if(!f) return;
+      const r = new FileReader();
+      r.onload = () => load(String(r.result));
+      r.onerror = () => toast('ファイルを読めませんでした');
+      r.readAsText(f);
+    };
+    $('#imOk').onclick = () => { const t = $('#imT').value.trim(); if(t) load(t); };
+    $('#imNo').onclick = closeSheet;
+  });
+}
+
 /* ===================== 更新の確認 ===================== */
 async function checkUpd(quiet){
   const st = $('#updState');
@@ -1086,6 +1236,7 @@ async function makePlayer(){
 
 function openPlay(id, push){
   const v = vid(id); if(!v) return;
+  if(NEWIDS.delete(id)){ /* 一度開いたらNEWを外す */ }
   curId = id; started = false;
   history_push(push);
   $('#pv').classList.remove('hidden');
@@ -1318,7 +1469,13 @@ function drawBody(){
         <span>${seenN(v.id) ? `見た ${seenN(v.id)}回` : '見終わりにする'}</span></button>
       ${seenN(v.id) ? `<button class="btn sm" id="undo" style="flex:0 0 58px">${ICO.loop({s:18})}</button>` : ''}
     </div>
+    ${isLoom(v.id) ? `<div class="note" style="margin-top:14px">
+      この動画は <b>Loom</b> です。Theater の倍速・つづきから・自動の回数カウントは使えません。
+      速さは Loom の画面の中で変えられます。</div>` : ''}
     ${v.d ? `<div class="desc">${esc(v.d)}</div>` : ''}
+    ${chapOf(v.id).length ? `<div class="sec"><h2>目次（押すとそこへ飛びます）</h2></div>
+      <div class="chaps">${chapOf(v.id).map(c =>
+        `<button class="chap" data-sec="${c[0]}"><span class="ct">${hhmm(c[0])}</span><span class="cx">${esc(c[1])}</span></button>`).join('')}</div>` : ''}
     ${nextVideo() ? `<div class="sec"><h2>次の動画</h2></div>
       <div class="vlist">${card(nextVideo())}</div>` : ''}`;
   $('#fav').onclick = () => {
@@ -1326,6 +1483,11 @@ function drawBody(){
     saveFav(); drawBody(); toast(isFav(v.id) ? '保存しました' : '保存をはずしました');
   };
   $('#fold').onclick = () => pickFolder(v.id, drawBody);
+  $$('#pvbody .chap').forEach(b => b.onclick = () => {
+    const sec = +b.dataset.sec;
+    try{ player.seekTo(sec, true); player.playVideo(); }catch(e){}
+    $('#pv').scrollTop = 0; showCtrl();
+  });
   if($('#minus')) $('#minus').onclick = () => {
     const n = addSeen(v.id, -1); lastBump = { id:'', at:0 };
     drawBody(); toast(n ? `${n}回にしました` : '0回にもどしました');
@@ -1488,7 +1650,8 @@ async function boot(){
   });
 
   render();
-  await fetchData();
+  await Promise.all([fetchData(), fetchChapters()]);
+  markNew();
   render();
   if(!cfg.guided) showGuide(0);   /* はじめて開いた人に 使い方を見せる */
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

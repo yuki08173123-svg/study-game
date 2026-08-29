@@ -69,19 +69,10 @@ main{max-width:680px;margin:0 auto;
 .vcard:active{transform:scale(.988)}
 .vmain{flex:1;min-width:0;display:flex;gap:13px;text-align:left}
 .vmain:active{opacity:.7}
-/* 見終わりの丸ボタン。押すたびに1回ずつ増える */
-.ctr{position:absolute;right:9px;bottom:9px;display:flex;align-items:center;gap:6px}
-.seenbtn{width:40px;height:40px;flex:none;
-  display:flex;align-items:center;justify-content:center;
-  color:var(--ink3);border-radius:12px;
-  border:1px solid var(--line2);background:var(--surf2)}
-/* 押し間違えたら すぐ1つ減らせるように、数字の左に置く */
-.minusbtn{width:36px;height:36px;flex:none;display:flex;align-items:center;justify-content:center;
-  border-radius:10px;border:1px solid var(--line2);background:var(--surf2);color:var(--ink2)}
-.minusbtn:active{transform:scale(.9);background:var(--surf3)}
-.seenbtn:active{transform:scale(.9)}
-.seenbtn.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
-.seenbtn .cnt{font-size:1rem;font-weight:800;font-variant-numeric:tabular-nums}
+/* 見た回数。手では増やせないので ボタンではなく ただの表示 */
+.cnt2{position:absolute;right:10px;bottom:10px;display:flex;align-items:center;gap:3px;
+  background:var(--acc);color:var(--acc-ink);border-radius:20px;padding:3px 9px 3px 7px;
+  font-size:.74rem;font-weight:800;font-variant-numeric:tabular-nums}
 /* 見た動画は サムネに金のふちを付ける（タイトル画像を隠さないように） */
 .thumb.on::after{content:'';position:absolute;inset:0;border-radius:10px;
   box-shadow:inset 0 0 0 2px var(--acc);pointer-events:none}
@@ -108,8 +99,8 @@ main{max-width:680px;margin:0 auto;
 .vt{font-size:1rem;font-weight:700;line-height:1.45;letter-spacing:.01em;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .vs{margin-top:auto;font-size:.72rem;color:var(--ink3);font-weight:600;letter-spacing:.03em;
-  display:flex;align-items:center;gap:6px;padding-top:5px;padding-right:46px;min-height:22px}
-.vcard.n .vs{padding-right:92px}
+  display:flex;align-items:center;gap:6px;padding-top:5px;min-height:22px}
+.vcard.n .vs{padding-right:62px}
 .tag{color:var(--acc);background:var(--acc-soft);border-radius:20px;padding:2px 8px;font-size:.68rem;
   font-weight:700;letter-spacing:.04em;white-space:nowrap}
 
@@ -124,6 +115,27 @@ main{max-width:680px;margin:0 auto;
 .big .bt{padding:12px 14px 14px}
 .big .bt .vt{-webkit-line-clamp:2}
 .big .bt .vs{padding-top:7px}
+
+/* ---------- レベル（ホームのいちばん上。スクショを撮る前提で作る） ---------- */
+.lvcard{display:block;width:100%;text-align:left;border-radius:18px;padding:20px 20px 18px;
+  background:linear-gradient(150deg,#221c10,#14161b 60%);border:1px solid #3b3222;
+  position:relative;overflow:hidden}
+.lvcard:active{transform:scale(.995)}
+.lvcard .nm2{font-size:.76rem;font-weight:800;color:var(--acc);letter-spacing:.1em}
+.lvcard .lvrow{display:flex;align-items:flex-end;gap:10px;margin-top:6px}
+.lvcard .lvl{font-size:.8rem;font-weight:800;color:var(--ink3);letter-spacing:.14em;padding-bottom:9px}
+.lvcard .lvn{font-size:3.6rem;font-weight:800;line-height:.95;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;color:var(--acc)}
+.lvcard .ttlj{font-family:var(--serif);font-size:1.16rem;font-weight:600;letter-spacing:.08em;
+  color:var(--ink);padding-bottom:10px;margin-left:auto}
+.lvcard .bar{margin-top:14px;height:7px}
+.lvcard .exp{margin-top:7px;font-size:.74rem;color:var(--ink3);font-weight:700;
+  font-variant-numeric:tabular-nums;display:flex;justify-content:space-between}
+.lvcard .st3{display:flex;gap:0;margin-top:15px;border-top:1px solid #2c2619;padding-top:13px}
+.lvcard .st3 div{flex:1;text-align:center}
+.lvcard .st3 b{display:block;font-size:1.3rem;font-weight:800;font-variant-numeric:tabular-nums}
+.lvcard .st3 span{font-size:.68rem;color:var(--ink3);font-weight:700;letter-spacing:.04em}
+.lvcard .dt{margin-top:12px;font-size:.68rem;color:var(--ink3);font-weight:600;text-align:right}
 
 /* ---------- 区分タイル（ホーム） ---------- */
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:12px}
@@ -307,6 +319,25 @@ main{max-width:680px;margin:0 auto;
 .mrow.seen .mx{color:var(--ink3)}
 .mrow .mk{flex:none;color:var(--acc);font-size:.72rem;font-weight:800}
 
+/* ---------- アウトプット ---------- */
+.opc{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px 15px;margin-bottom:10px}
+.opc .oph{font-size:.76rem;font-weight:800;color:var(--acc);letter-spacing:.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opc .opt{margin-top:8px;font-size:.93rem;line-height:1.85;white-space:pre-wrap}
+.opc .opf{margin-top:10px;display:flex;justify-content:space-between;align-items:center;
+  font-size:.7rem;color:var(--ink3);font-weight:700}
+.opc .opdel{color:var(--ng);font-size:.72rem;font-weight:800;padding:4px 6px}
+
+/* ---------- 見た回数の出しかた（再生画面） ---------- */
+.cnt3{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px 15px;margin-top:12px}
+.cnt3 .c1{display:flex;align-items:center;gap:7px;color:var(--acc);font-weight:800;
+  font-size:.88rem;letter-spacing:.03em}
+.cnt3 .c1 b{font-size:1.5rem;font-variant-numeric:tabular-nums;margin-left:2px}
+.cnt3 .bar{margin-top:11px}
+.cnt3 .c2{margin-top:8px;font-size:.79rem;color:var(--ink3);font-weight:600}
+
 /* ---------- 目次 ---------- */
 .chaps{display:flex;flex-direction:column;gap:2px}
 .chap{display:flex;gap:12px;width:100%;text-align:left;padding:11px 10px;border-radius:10px;
@@ -406,9 +437,9 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 17;
+const VER = 18;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
-      K_FOLD='th_folders';
+      K_FOLD='th_folders', K_OUT='th_out';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const now = () => Date.now();
@@ -443,6 +474,7 @@ const ICO = {
   minus: o => svg('<path d="M5 12h14"/>',{s:(o&&o.s)||22,w:2.4}),
   folder: o => svg('<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',o),
   book:  o => svg('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',o),
+  pencil: o => svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',o),
 };
 
 /* ===================== 状態 ===================== */
@@ -452,6 +484,7 @@ let MAN = null;         /* 使用マニュアル（どんなときに何を見�
 let prog = {};            /* {動画id: {t:秒, d:全体の秒, done:1, last:時刻}} */
 let favs = [];
 let folders = [];       /* 生徒が自分で作るフォルダ [{id, name, ids:[]}] */
+let outs = {};          /* アウトプット {動画id: [{at:時刻, t:本文}]} */
 let cfg  = { speed:1, autonext:true, loop:false };
 let view = { name:'home' };
 let admin = null;         /* 管理画面のしたがき */
@@ -461,11 +494,25 @@ function load(){
   try{ favs = JSON.parse(localStorage.getItem(K_FAV)  || '[]'); }catch(e){ favs = []; }
   try{ folders = JSON.parse(localStorage.getItem(K_FOLD) || '[]'); }catch(e){ folders = []; }
   if(!Array.isArray(folders)) folders = [];
+  try{ outs = JSON.parse(localStorage.getItem(K_OUT) || '{}'); }catch(e){ outs = {}; }
+  if(!outs || typeof outs !== 'object') outs = {};
   try{ Object.assign(cfg, JSON.parse(localStorage.getItem(K_CFG) || '{}')); }catch(e){}
 }
 const saveProg = () => localStorage.setItem(K_PROG, JSON.stringify(prog));
 const saveFav  = () => localStorage.setItem(K_FAV,  JSON.stringify(favs));
 const saveFold = () => localStorage.setItem(K_FOLD, JSON.stringify(folders));
+const saveOut  = () => localStorage.setItem(K_OUT,  JSON.stringify(outs));
+const outOf    = id => outs[id] || [];
+function addOut(id, text){
+  (outs[id] || (outs[id] = [])).unshift({ at:now(), t:String(text).trim().slice(0,2000) });
+  saveOut();
+}
+function delOut(id, i){
+  if(!outs[id]) return;
+  outs[id].splice(i,1);
+  if(!outs[id].length) delete outs[id];
+  saveOut();
+}
 const foldOf   = fid => folders.find(f => f.id === fid);
 const foldCount = id => folders.filter(f => f.ids.includes(id)).length;
 const inFold   = (fid, id) => { const f = foldOf(fid); return !!(f && f.ids.includes(id)); };
@@ -553,27 +600,69 @@ function addSeen(id, delta){
   saveProg();
   return n;
 }
-/* 連打で数が跳ね上がらないようにする。
-   同じ動画を 1.5秒以内にもう一度押しても数えない。
-   押したあとは「もどす」を出して、すぐ取り消せるようにする。 */
-let lastBump = { id:'', at:0 };
-function bumpSeen(id, after){
-  const t = now();
-  if(lastBump.id === id && t - lastBump.at < 1500){
-    lastBump.at = t;
-    toast(`${seenN(id)}回のまま（続けて押しても数えません）`);
-    return;
-  }
-  lastBump = { id, at:t };
+/* 見た回数は 手では増やせない。
+   「本当に最後まで見たときだけ1つ増える」ようにする（保護者からの要望）。
+   実際に流れた分だけ w に足していき、動画の長さの85%に届いたら1回と数える。
+   早送りやシークでは増えない（とんだ分は足さないため）。 */
+const FULL = 0.85;
+function watched(id){ const p = prog[id]; return (p && p.w) || 0; }
+function countView(id){
   const n = addSeen(id, 1);
-  if(after) after();
-  toast(n === 1 ? '見終わりにしました' : `${n}回目にしました`);
+  const p = prog[id]; if(p){ p.w = 0; saveProg(); }
+  toast(n === 1 ? '最後まで見ました（1回）' : `最後まで見ました（${n}回目）`);
+  if(!$('#pv').classList.contains('hidden')) drawBody();
+  return n;
+}
+/* いま見ている動画が 1回ぶんに届いたか調べる */
+function checkFull(atEnd){
+  if(!curId || isLoom(curId)) return;
+  const p = prog[curId]; if(!p || !p.d) return;
+  const need = p.d * (atEnd ? 0.6 : FULL);
+  if((p.w || 0) >= need) countView(curId);
+}
+/* いまの周回が どこまで進んでいるか（0〜1） */
+function fullPct(id){
+  const p = prog[id];
+  if(!p || !p.d) return 0;
+  return Math.min(1, (p.w || 0) / (p.d * FULL));
+}
+function fullMsg(id){
+  const p = prog[id];
+  if(!p || !p.d) return '最後まで見ると 1回 ふえます';
+  const left = Math.max(0, p.d * FULL - (p.w || 0));
+  if(left <= 1) return 'もう少しで 1回 ふえます';
+  return `あと ${hhmm(left)} 見ると 1回 ふえます`;
 }
 function clearSeen(id){
   const p = prog[id]; if(!p) return;
   p.n = 0; p.done = 0; p.last = now(); saveProg();
 }
 const isDone = v => seenN(v.id) > 0;
+
+/* ===== レベル =====
+   動画を最後まで見るたび +10、アウトプットを書くと +15。
+   上限はなし。次のレベルまでに必要な数は 40 → 60 → 80 … と増えていくので、
+   反復するほど伸びるが、あとになるほど1段が重くなる。 */
+const EXP_VIEW = 10, EXP_OUT = 15;
+const totalViews = () => DATA.videos.reduce((a,v) => a + seenN(v.id), 0);
+const totalOuts  = () => Object.keys(outs).reduce((a,k) => a + outs[k].length, 0);
+/* レベルに数えるのは 動画1本につき1つまで。たくさん書いても増えないので、
+   数を稼ぐより「見て、書く」を続けるほうが上がる */
+const expOuts    = () => Object.keys(outs).filter(k => outs[k].length).length;
+const totalExp   = () => totalViews() * EXP_VIEW + expOuts() * EXP_OUT;
+/* レベルに合わせた呼び名。上限はないので、最後は そのまま伸びていく */
+const TITLES = [[1,'はじめの一歩'],[3,'見習い'],[5,'挑戦者'],[8,'努力家'],[12,'習慣の人'],
+  [16,'継続者'],[21,'実行者'],[27,'分析家'],[34,'極める人'],[42,'一流'],[51,'達人'],[65,'仙人']];
+function titleOf(lv){
+  let t = TITLES[0][1];
+  for(const [n,name] of TITLES) if(lv >= n) t = name;
+  return t;
+}
+function levelOf(exp){
+  let lv = 1, need = 40, acc = 0;
+  while(exp >= acc + need && lv < 9999){ acc += need; lv++; need = 40 + 20 * (lv - 1); }
+  return { lv, cur: exp - acc, need, next: acc + need };
+}
 
 /* 前に開いたときになかった動画に「NEW」を付ける。
    はじめて使う人には付けない（278本ぜんぶNEWになってしまうため） */
@@ -678,11 +767,11 @@ const TABS = [
 function go(name, p){ view = { name, p }; render(); window.scrollTo(0,0); }
 
 function render(){
-  const tabId = ({ home:'home', cat:'home', man:'home', find:'find', saved:'saved', folder:'saved',
-                   set:'set', admin:'set' })[view.name] || 'home';
+  const tabId = ({ home:'home', cat:'home', man:'home', lv:'home', find:'find', saved:'saved',
+                   folder:'saved', set:'set', admin:'set' })[view.name] || 'home';
   $$('#tabin .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tabId));
   $('#main').classList.toggle('man', view.name === 'man');
-  ({ home:vHome, cat:vCat, man:vMan, find:vFind, saved:vSaved, folder:vFolder,
+  ({ home:vHome, cat:vCat, man:vMan, lv:vLv, find:vFind, saved:vSaved, folder:vFolder,
      set:vSet, admin:vAdmin }[view.name] || vHome)();
 }
 
@@ -704,12 +793,7 @@ function card(v, opt){
           ${v.date ? `<span>${ymd(v.date)}</span>` : ''}</div>
       </div>
     </button>
-    <div class="ctr">
-      ${n ? `<button class="minusbtn" data-minus="${v.id}" aria-label="1回へらす">${ICO.minus({s:20})}</button>` : ''}
-      <button class="seenbtn ${n ? 'on' : ''}" data-seen="${v.id}" aria-label="1回ふやす">
-        ${n ? `<span class="cnt">${n}</span>` : ICO.check({s:20})}
-      </button>
-    </div>
+    ${n ? `<span class="cnt2">${ICO.check({s:14})}<b>${n}</b></span>` : ''}
   </div>`;
 }
 function bigCard(v){
@@ -748,7 +832,24 @@ function vHome(){
     .filter(v => !isDone(v) && ratio(v) > .02 && ratio(v) < .95 && prog[v.id])
     .sort((a,b) => (prog[b.id].last||0) - (prog[a.id].last||0))[0];
 
-  let h = '';
+  const exp = totalExp(), L = levelOf(exp);
+  let h = `<button class="lvcard" data-lv="1">
+      ${cfg.name ? `<div class="nm2">${esc(cfg.name)}</div>` : `<div class="nm2">わたしのレベル</div>`}
+      <div class="lvrow">
+        <span class="lvl">LEVEL</span>
+        <span class="lvn">${L.lv}</span>
+        <span class="ttlj">${esc(titleOf(L.lv))}</span>
+      </div>
+      <div class="bar"><i style="width:${Math.round(L.cur / L.need * 100)}%"></i></div>
+      <div class="exp"><span>つぎのレベルまで あと ${L.need - L.cur}</span><span>${exp}</span></div>
+      <div class="st3">
+        <div><b>${DATA.videos.filter(isDone).length}</b><span>見た動画</span></div>
+        <div><b>${totalViews()}</b><span>のべ回数</span></div>
+        <div><b>${totalOuts()}</b><span>アウトプット</span></div>
+      </div>
+      <div class="dt">${new Date().toLocaleDateString('ja-JP')} 時点</div>
+    </button>`;
+
   if(cont) h += `<div class="sec"><h2>つづきから</h2></div>${bigCard(cont)}`;
 
   /* 区分をタイルで見せる。中に入ってから探す形にして、ホームを短く保つ */
@@ -915,6 +1016,49 @@ function vMan(){
     const el = $$('#main .msec')[+b.dataset.ms];
     if(manOpen[key] && el) el.scrollIntoView({ block:'nearest' });
   });
+}
+
+/* ---------- レベルの中身 ---------- */
+function vLv(){
+  const exp = totalExp(), L = levelOf(exp);
+  $('#tbar').innerHTML = `<button class="tbtn" id="lback">${ICO.back({s:20})}</button>
+    <div class="ttl"></div>
+    <button class="tbtn" id="lname">${ICO.pencil({s:18})}</button>`;
+  $('#lback').onclick = () => go('home');
+  $('#lname').onclick = () => askText(
+    { title:'名前（先生に見せるとき用）', value:cfg.name || '', ph:'例：たろう', ok:'決定' },
+    v => { cfg.name = v.slice(0,16); saveCfg(); vLv(); });
+
+  const all = [];
+  for(const id in outs) for(let i=0;i<outs[id].length;i++) all.push({ id, i, o:outs[id][i] });
+  all.sort((a,b) => b.o.at - a.o.at);
+
+  $('#main').innerHTML = `
+    <div class="chead"><h1>レベル ${L.lv}・${esc(titleOf(L.lv))}</h1>
+      <div class="st">ぜんぶで ${exp} ／ つぎまで あと ${L.need - L.cur}</div>
+      <div class="bar"><i style="width:${Math.round(L.cur / L.need * 100)}%"></i></div>
+    </div>
+    <div class="note" style="margin-top:16px">
+      <b>レベルの上がり方</b><br>
+      ・動画を<b>最後まで</b>見ると ＋${EXP_VIEW}（くり返すたびに ＋${EXP_VIEW}）<br>
+      ・アウトプットを書くと ＋${EXP_OUT}（1本の動画につき1回ぶん）<br>
+      上限はありません。反復するほど上がっていきます。<br>
+      <span style="color:var(--ink3)">回数は<b>手では増やせません</b>。最後まで見たときだけ、自動で1つ増えます。</span>
+    </div>
+    <div class="sec"><h2>書いたアウトプット（${all.length}）</h2></div>
+    ${all.length ? all.map(x => {
+      const v = vid(x.id);
+      return `<div class="opc">
+        <div class="oph">${v ? esc(v.t) : '（見つかりません）'}</div>
+        <div class="opt">${esc(x.o.t)}</div>
+        <div class="opf"><span>${new Date(x.o.at).toLocaleDateString('ja-JP')}</span>
+          <button class="opdel" data-od="${esc(x.id)}" data-oi="${x.i}">消す</button></div>
+      </div>`; }).join('')
+      : emptyBox('まだありません。<br>動画を見たあと「アウトプットを書く」から書けます。')}
+    <div class="ver">&nbsp;</div>`;
+  $$('#main .opdel').forEach(b => b.onclick = () => askYes(
+    { title:'このアウトプットを消しますか？', ok:'消す', danger:true },
+    () => { delOut(b.dataset.od, +b.dataset.oi); vLv(); toast('消しました'); }));
 }
 
 /* ---------- さがす ---------- */
@@ -1108,8 +1252,12 @@ const GUIDE = [
     d:'ヒラ先生の動画<b>だけ</b>が入っているアプリです。<br>YouTube を開かなくても見られるので、<br>ほかの動画に気をとられません。' },
   { ic:'home',   t:'まず、見たい種類をえらぶ',
     d:'ホームの四角をタップすると、<br>その種類の動画が<b>ぜんぶ</b>出てきます。<br>マインド動画は<b>上から順番に</b>見てください。' },
-  { ic:'check',  t:'見たら「✓」を押す',
-    d:'動画の右下のボタンを押すと「見た」になります。<br>もう一度見たら、もう一度押す。<br><b>数字がふえていきます。</b><br>まちがえたら、左の「−」でへらせます。' },
+  { ic:'check',  t:'最後まで見ると 1回ふえる',
+    d:'回数は<b>自分ではふやせません</b>。<br>動画を<b>最後まで見たときだけ</b>、自動で1つふえます。<br>倍速でも大丈夫。とばした分は数えません。' },
+  { ic:'star',   t:'レベルが上がっていく',
+    d:'見た回数とアウトプットで<b>レベル</b>が上がります。<br>上限はありません。ホームのいちばん上に出るので、<br>先生に見せるときはそこを見せてください。' },
+  { ic:'pencil', t:'アウトプットを書こう',
+    d:'動画の下の「アウトプットを書く」から、<br>気づいたこと・やってみることを書けます。<br>書くとレベルも上がります。' },
   { ic:'book',   t:'迷ったら「使用マニュアル」',
     d:'ホームの上にある<b>使用マニュアル</b>には、<br>「こんなときは、これを見る」がまとまっています。<br>何を見ればいいか迷ったら、まずここを開いてください。' },
   { ic:'search', t:'話の中身から探せる',
@@ -1239,7 +1387,7 @@ function pickFolder(id, after){
 /* 機種変更で記録が消えるのを防ぐ。見た回数・フォルダ・保存・設定をまとめて出し入れする */
 function backupData(){
   return { app:'Theater', v:VER, at:new Date().toISOString(),
-           prog, favs, folders, cfg };
+           prog, favs, folders, cfg, outs };
 }
 function backupName(){
   const d = new Date();
@@ -1287,7 +1435,8 @@ function applyBackup(j){
   favs = Array.isArray(j.favs) ? j.favs : [];
   folders = Array.isArray(j.folders) ? j.folders : [];
   if(j.cfg && typeof j.cfg === 'object') Object.assign(cfg, j.cfg);
-  saveProg(); saveFav(); saveFold(); saveCfg();
+  outs = (j.outs && typeof j.outs === 'object') ? j.outs : {};
+  saveProg(); saveFav(); saveFold(); saveCfg(); saveOut();
 }
 function doImport(){
   openSheet(`
@@ -1464,8 +1613,8 @@ function onState(e){
     saveNow(); stopTick(); showCtrl(true); drawCtrl();
   }else if(e.data === S.ENDED){
     stopTick();
-    const id = curId;
-    bumpSeen(id, () => { const p = prog[id]; if(p){ p.t = 0; saveProg(); } });
+    checkFull(true);                       /* 最後まで来たので もう一度みる */
+    const p = prog[curId]; if(p){ p.t = 0; saveProg(); }
     onEnded();
   }
 }
@@ -1499,13 +1648,21 @@ function nextVideo(){
   return DATA.videos[j+1] || null;
 }
 
-function startTick(){ stopTick(); tick = setInterval(onTick, 250); }
+function startTick(){ stopTick(); lastT = -1; tick = setInterval(onTick, 250); }
 function stopTick(){ if(tick){ clearInterval(tick); tick = null; } }
-let saveCount = 0;
+let saveCount = 0, lastT = -1;
 function onTick(){
   if(!player || !playerReady) return;
   const t = player.getCurrentTime() || 0, d = player.getDuration() || 0;
   if(!seeking) drawTime(t, d);
+  /* 実際に流れた分だけ足す。とんだ分（シーク・早送り）は足さないので、
+     最後まで飛ばした人は1回にならない。倍速でも中身は流れているので数える。 */
+  if(lastT >= 0 && t > lastT && t - lastT < 2 && d){
+    const p = prog[curId] || (prog[curId] = { t:0, d:0 });
+    p.d = d; p.w = (p.w || 0) + (t - lastT);
+    checkFull(false);
+  }
+  lastT = t;
   if(++saveCount % 20 === 0) saveNow();   /* 5秒に1回だけ書きこむ */
 }
 function saveNow(){
@@ -1630,12 +1787,19 @@ function drawBody(){
       <button class="btn sm" id="fold">${ICO.folder({s:18})}
         <span>フォルダ${foldCount(v.id) ? `（${foldCount(v.id)}）` : ''}</span></button>
     </div>
-    <div class="acts" style="margin-top:9px">
-      ${seenN(v.id) ? `<button class="btn sm" id="minus" style="flex:0 0 58px">${ICO.minus({s:20})}</button>` : ''}
-      <button class="btn sm ${seenN(v.id)?'pri':''}" id="done">${ICO.check({s:18})}
-        <span>${seenN(v.id) ? `見た ${seenN(v.id)}回` : '見終わりにする'}</span></button>
-      ${seenN(v.id) ? `<button class="btn sm" id="undo" style="flex:0 0 58px">${ICO.loop({s:18})}</button>` : ''}
-    </div>
+    ${isLoom(v.id) ? '' : `<div class="cnt3">
+      <div class="c1">${ICO.check({s:19})}<span>見た回数</span><b>${seenN(v.id)}</b><span>回</span></div>
+      <div class="bar"><i style="width:${Math.round(fullPct(v.id)*100)}%"></i></div>
+      <div class="c2">${fullMsg(v.id)}</div>
+    </div>`}
+    <div class="sec"><h2>アウトプット</h2>
+      ${outOf(v.id).length ? `<span class="more">${outOf(v.id).length}件</span>` : ''}</div>
+    <button class="btn" id="wout">${ICO.pencil({s:18})}<span>アウトプットを書く（＋${EXP_OUT}）</span></button>
+    ${outOf(v.id).map((o,i) => `<div class="opc" style="margin-top:10px">
+        <div class="opt">${esc(o.t)}</div>
+        <div class="opf"><span>${new Date(o.at).toLocaleDateString('ja-JP')}</span>
+          <button class="opdel" data-oi="${i}">消す</button></div>
+      </div>`).join('')}
     ${isLoom(v.id) ? `<div class="note" style="margin-top:14px">
       この動画は <b>Loom</b> です。Theater の倍速・つづきから・自動の回数カウントは使えません。
       速さは Loom の画面の中で変えられます。</div>` : ''}
@@ -1650,19 +1814,34 @@ function drawBody(){
     saveFav(); drawBody(); toast(isFav(v.id) ? '保存しました' : '保存をはずしました');
   };
   $('#fold').onclick = () => pickFolder(v.id, drawBody);
+  $('#wout').onclick = () => openSheet(`
+    <h3>アウトプット</h3>
+    <div class="lead" style="margin:-4px 2px 10px;line-height:1.9">
+      この動画で気づいたこと、やってみることを書きましょう。<br>
+      書くと レベルが ＋${EXP_OUT}（1本の動画につき1回ぶん）。</div>
+    <textarea id="opIn" placeholder="例）今日から寝る前に10分だけ暗記をやる" style="min-height:150px"></textarea>
+    <div class="acts" style="margin-top:12px">
+      <button class="btn" id="opNo">やめる</button>
+      <button class="btn pri" id="opOk">書きこむ</button>
+    </div>`, () => {
+    setTimeout(() => { try{ $('#opIn').focus(); }catch(e){} }, 80);
+    $('#opOk').onclick = () => {
+      const t = $('#opIn').value.trim();
+      if(t.length < 5) return toast('もう少し くわしく書いてください');
+      addOut(v.id, t); closeSheet(); drawBody(); toast('書きました');
+    };
+    $('#opNo').onclick = closeSheet;
+  });
+  $$('#pvbody .opdel').forEach(b => b.onclick = () => askYes(
+    { title:'このアウトプットを消しますか？', ok:'消す', danger:true },
+    () => { delOut(v.id, +b.dataset.oi); drawBody(); toast('消しました'); }));
   $$('#pvbody .chap').forEach(b => b.onclick = () => {
     const sec = +b.dataset.sec;
     try{ player.seekTo(sec, true); player.playVideo(); }catch(e){}
     $('#pv').scrollTop = 0; showCtrl();
   });
-  if($('#minus')) $('#minus').onclick = () => {
-    const n = addSeen(v.id, -1); lastBump = { id:'', at:0 };
-    drawBody(); toast(n ? `${n}回にしました` : '0回にもどしました');
-  };
-  $('#done').onclick = () => bumpSeen(v.id, drawBody);
-  if($('#undo')) $('#undo').onclick = () => askYes(
-    { title:'見た回数を0にもどしますか？', msg:`この動画は いま ${seenN(v.id)}回です。`, ok:'0にもどす' },
-    () => { clearSeen(v.id); drawBody(); toast('0回にもどしました'); });
+
+
 }
 
 /* ===================== 管理（動画を追加する） ===================== */
@@ -1776,46 +1955,14 @@ async function boot(){
     }catch(e){}
   };
 
-  /* 見終わりの丸ボタン。長押しは 0 にもどす */
-  let holdT = null, held = false;
-  document.addEventListener('pointerdown', e => {
-    const b = e.target.closest('[data-seen]');
-    if(!b) return;
-    held = false;
-    holdT = setTimeout(() => {
-      held = true;
-      const tid = b.dataset.seen, cur = seenN(tid);
-      if(cur) askYes({ title:'見た回数を0にもどしますか？', msg:`この動画は いま ${cur}回です。`, ok:'0にもどす' },
-        () => { clearSeen(tid);
-                if(view.name === 'find') drawFind(); else render();
-                toast('0回にもどしました'); });
-    }, 600);
-  });
-  document.addEventListener('pointerup',     () => clearTimeout(holdT));
-  document.addEventListener('pointercancel', () => clearTimeout(holdT));
-
   /* 一覧のカードから再生をひらく */
   document.addEventListener('click', e => {
-    const mb = e.target.closest('[data-minus]');
-    if(mb){
-      const n = addSeen(mb.dataset.minus, -1);
-      lastBump = { id:'', at:0 };            /* 減らした直後は 連打ガードを解く */
-      toast(n ? `${n}回にしました` : '0回にもどしました');
-      if(view.name === 'find') drawFind(); else render();
-      return;
-    }
-    const sb = e.target.closest('[data-seen]');
-    if(sb){
-      clearTimeout(holdT);
-      if(held){ held = false; return; }        /* 長押しで処理ずみ */
-      bumpSeen(sb.dataset.seen, () => { if(view.name === 'find') drawFind(); else render(); });
-      return;
-    }
     const c = e.target.closest('[data-go]');
     if(c){ openPlay(c.dataset.go); return; }
     const t = e.target.closest('[data-tile]');
     if(t){ catG = 'all'; go('cat', t.dataset.tile); return; }
-    if(e.target.closest('[data-man]')){ go('man'); }
+    if(e.target.closest('[data-man]')){ go('man'); return; }
+    if(e.target.closest('[data-lv]')){ go('lv'); }
   });
 
   render();

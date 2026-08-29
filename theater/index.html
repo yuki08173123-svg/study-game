@@ -254,6 +254,47 @@ main{max-width:680px;margin:0 auto;
 #pv.exp .vwrap{flex:none;width:min(100vw,177.78vh)}
 #pv.exp.rot .vwrap{flex:none;width:min(100vh,177.78vw);transform:rotate(90deg)}
 
+/* ---------- 使用マニュアル ----------
+   8つの区分（金＋カード）とは別の見え方にする。
+   落ち着いた藍色＋明朝の見出しで「手引き」らしくした。 */
+:root{ --mn:#8fb8d9; --mn-soft:#151d26; --mn-line:#22323f; }
+.mban{display:block;width:100%;text-align:left;border-radius:16px;padding:16px 17px;
+  background:linear-gradient(135deg,#182430,#121a22);border:1px solid var(--mn-line);
+  transition:transform .12s}
+.mban:active{transform:scale(.99)}
+.mban .mt{font-family:var(--serif);font-size:1.2rem;font-weight:600;letter-spacing:.05em;
+  color:var(--mn);display:flex;align-items:center;gap:9px}
+.mban .ms{font-size:.8rem;color:var(--ink3);font-weight:600;margin-top:5px;letter-spacing:.02em}
+#main.man{background:transparent}
+.mhead{margin:6px 2px 0}
+.mhead h1{font-family:var(--serif);font-size:1.5rem;font-weight:600;letter-spacing:.07em;
+  color:var(--mn);margin:0 0 8px}
+.mhead .ms{font-size:.86rem;color:var(--ink2);line-height:1.85}
+.mtabs{display:flex;gap:9px;margin-top:16px}
+.mtab{flex:1;padding:12px 8px;border-radius:12px;border:1px solid var(--mn-line);
+  background:var(--mn-soft);text-align:center}
+.mtab .n{font-family:var(--serif);font-size:1rem;font-weight:600;letter-spacing:.04em;color:var(--ink2)}
+.mtab .c{font-size:.68rem;color:var(--ink3);font-weight:700;margin-top:3px}
+.mtab.on{background:var(--mn);border-color:var(--mn)}
+.mtab.on .n,.mtab.on .c{color:#0d151c}
+.mlist{margin-top:18px;border-top:1px solid var(--mn-line)}
+.msec{border-bottom:1px solid var(--mn-line)}
+.mq{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:16px 4px}
+.mq:active{opacity:.6}
+.mq .qh{flex:1;font-family:var(--serif);font-size:1.06rem;font-weight:600;letter-spacing:.03em;
+  line-height:1.5}
+.mq .qn{font-size:.7rem;color:var(--ink3);font-weight:700;font-variant-numeric:tabular-nums}
+.mq .qi{color:var(--mn);transition:transform .2s}
+.msec.open .qi{transform:rotate(90deg)}
+.mv{display:flex;flex-direction:column;gap:1px;padding:0 0 12px}
+.mrow{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:10px 8px;
+  border-radius:9px}
+.mrow:active{background:var(--mn-soft)}
+.mrow .mi{width:22px;flex:none;color:var(--mn);opacity:.8}
+.mrow .mx{flex:1;font-size:.93rem;line-height:1.55;font-weight:600;color:var(--ink2)}
+.mrow.seen .mx{color:var(--ink3)}
+.mrow .mk{flex:none;color:var(--acc);font-size:.72rem;font-weight:800}
+
 /* ---------- 目次 ---------- */
 .chaps{display:flex;flex-direction:column;gap:2px}
 .chap{display:flex;gap:12px;width:100%;text-align:left;padding:11px 10px;border-radius:10px;
@@ -352,7 +393,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 13;
+const VER = 14;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders';
 const $ = s => document.querySelector(s);
@@ -375,6 +416,7 @@ const ICO = {
   pause: o => fill('<rect x="6.5" y="4.5" width="4" height="15" rx="1.2"/><rect x="13.5" y="4.5" width="4" height="15" rx="1.2"/>',o),
   back:  o => svg('<path d="m15 18-6-6 6-6"/>',o),
   down:  o => svg('<path d="m6 9 6 6 6-6"/>',o),
+  up:    o => svg('<path d="m6 15 6-6 6 6"/>',o),
   check: o => svg('<path d="m4.5 12.5 5 5 10-11"/>',{s:(o&&o.s)||22,w:2.2}),
   exp:   o => svg('<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>',o),
   shr:   o => svg('<path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5"/>',o),
@@ -387,11 +429,13 @@ const ICO = {
   loop:  o => svg('<path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',o),
   minus: o => svg('<path d="M5 12h14"/>',{s:(o&&o.s)||22,w:2.4}),
   folder: o => svg('<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',o),
+  book:  o => svg('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',o),
 };
 
 /* ===================== 状態 ===================== */
 let DATA = { cats:[], videos:[] };
 let CHAP = {};          /* 動画ID → [[秒, 見出し], ...] 目次 */
+let MAN = null;         /* 使用マニュアル（どんなときに何を見るか） */
 let prog = {};            /* {動画id: {t:秒, d:全体の秒, done:1, last:時刻}} */
 let favs = [];
 let folders = [];       /* 生徒が自分で作るフォルダ [{id, name, ids:[]}] */
@@ -573,6 +617,17 @@ function chapText(id){
   return _ctext[id];
 }
 
+/* 使用マニュアル。ヒラさんが #使用マニュアル に書いている見出しをそのまま使う */
+async function fetchManual(){
+  try{
+    const r = await fetch('manual.json?t=' + now(), { cache:'no-store' });
+    MAN = await r.json();
+    localStorage.setItem('th_man', JSON.stringify(MAN));
+  }catch(e){
+    try{ MAN = JSON.parse(localStorage.getItem('th_man') || 'null'); }catch(e2){ MAN = null; }
+  }
+}
+
 async function fetchData(){
   try{
     const r = await fetch('videos.json?t=' + now(), { cache:'no-store' });
@@ -610,10 +665,11 @@ const TABS = [
 function go(name, p){ view = { name, p }; render(); window.scrollTo(0,0); }
 
 function render(){
-  const tabId = ({ home:'home', cat:'home', find:'find', saved:'saved', folder:'saved',
+  const tabId = ({ home:'home', cat:'home', man:'home', find:'find', saved:'saved', folder:'saved',
                    set:'set', admin:'set' })[view.name] || 'home';
   $$('#tabin .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tabId));
-  ({ home:vHome, cat:vCat, find:vFind, saved:vSaved, folder:vFolder,
+  $('#main').classList.toggle('man', view.name === 'man');
+  ({ home:vHome, cat:vCat, man:vMan, find:vFind, saved:vSaved, folder:vFolder,
      set:vSet, admin:vAdmin }[view.name] || vHome)();
 }
 
@@ -681,6 +737,15 @@ function vHome(){
 
   let h = '';
   if(cont) h += `<div class="sec"><h2>つづきから</h2></div>${bigCard(cont)}`;
+
+  /* 使用マニュアル。区分とは別のもの（目的から引く手引き）なので見た目も分ける */
+  if(MAN && MAN.groups){
+    h += `<div class="sec"><h2>こんなときは</h2></div>
+      <button class="mban" data-man="1">
+        <div class="mt">${ICO.book({s:20})}<span>使用マニュアル</span></div>
+        <div class="ms">どういうときに、どの動画を見ればいいか</div>
+      </button>`;
+  }
 
   /* 区分をタイルで見せる。中に入ってから探す形にして、ホームを短く保つ */
   const cats = DATA.cats.filter(c => DATA.videos.some(v => v.cat === c.id));
@@ -777,6 +842,66 @@ function chunkRanges(list, size){
     out.push({ s, e, label: lbl });
   }
   return out;
+}
+
+/* ---------- 使用マニュアル ---------- */
+let manG = 0;                    /* 開いているグループ */
+let manOpen = {};                /* 開いている見出し */
+function vMan(){
+  if(!MAN || !MAN.groups) return go('home');
+  $('#tbar').innerHTML = `<button class="tbtn" id="mback">${ICO.back({s:20})}</button>
+    <div class="ttl"></div>
+    <button class="tbtn" id="mall">${ICO.chev({s:18})}</button>`;
+  $('#mback').onclick = () => go('home');
+
+  const g = MAN.groups[manG] || MAN.groups[0];
+  const allOpen = g.secs.every((_,i) => manOpen[manG + '-' + i]);
+
+  $('#main').innerHTML = `
+    <div class="mhead">
+      <h1>使用マニュアル</h1>
+      <div class="ms">「こんなときは、これを見る」をまとめた手引きです。<br>
+        見出しを押すと、おすすめの動画が出てきます。</div>
+    </div>
+    <div class="mtabs">
+      ${MAN.groups.map((x,i) => `<button class="mtab ${i===manG?'on':''}" data-mg="${i}">
+        <div class="n">${esc(x.name)}</div><div class="c">${esc(x.sub)}</div></button>`).join('')}
+    </div>
+    <div class="mlist">
+      ${g.secs.map((sec,i) => {
+        const key = manG + '-' + i, open = !!manOpen[key];
+        const vs = sec.ids.map(id => vid(id)).filter(Boolean);
+        return `<div class="msec ${open?'open':''}">
+          <button class="mq" data-ms="${i}">
+            <span class="qi">${ICO.chev({s:17})}</span>
+            <span class="qh">${esc(sec.h)}</span>
+            <span class="qn">${vs.length}</span>
+          </button>
+          ${open ? `<div class="mv">${vs.map(v => {
+            const n = seenN(v.id);
+            return `<button class="mrow ${n?'seen':''}" data-go="${v.id}">
+              <span class="mi">${ICO.play({s:15})}</span>
+              <span class="mx">${esc(v.t)}</span>
+              ${n ? `<span class="mk">${ICO.check({s:15})}${n>1?n:''}</span>` : ''}
+            </button>`; }).join('')}</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="ver">見出し ${g.secs.length}・動画 ${[...new Set(g.secs.flatMap(x=>x.ids))].length}本</div>`;
+
+  $('#mall').innerHTML = allOpen ? ICO.up({s:18}) : ICO.down({s:18});
+  $('#mall').onclick = () => {
+    g.secs.forEach((_,i) => manOpen[manG + '-' + i] = !allOpen);
+    vMan();
+  };
+  $$('#main .mtab').forEach(b => b.onclick = () => { manG = +b.dataset.mg; vMan(); window.scrollTo(0,0); });
+  $$('#main .mq').forEach(b => b.onclick = () => {
+    const key = manG + '-' + b.dataset.ms;
+    manOpen[key] = !manOpen[key];
+    vMan();
+    const el = $$('#main .msec')[+b.dataset.ms];
+    if(manOpen[key] && el) el.scrollIntoView({ block:'nearest' });
+  });
 }
 
 /* ---------- さがす ---------- */
@@ -964,6 +1089,8 @@ const GUIDE = [
     d:'ホームの四角をタップすると、<br>その種類の動画が<b>ぜんぶ</b>出てきます。<br>マインド動画は<b>上から順番に</b>見てください。' },
   { ic:'check',  t:'見たら「✓」を押す',
     d:'動画の右下のボタンを押すと「見た」になります。<br>もう一度見たら、もう一度押す。<br><b>数字がふえていきます。</b><br>まちがえたら、左の「−」でへらせます。' },
+  { ic:'book',   t:'迷ったら「使用マニュアル」',
+    d:'ホームの上にある<b>使用マニュアル</b>には、<br>「こんなときは、これを見る」がまとまっています。<br>何を見ればいいか迷ったら、まずここを開いてください。' },
   { ic:'search', t:'話の中身から探せる',
     d:'「さがす」では、<b>動画の中で話している内容</b>からも探せます。<br>「模試」「先延ばし」などで入れてみてください。<br>動画の下の<b>目次</b>を押すと、その場面まで飛べます。' },
   { ic:'folder', t:'気になった動画は入れておく',
@@ -1646,11 +1773,12 @@ async function boot(){
     const c = e.target.closest('[data-go]');
     if(c){ openPlay(c.dataset.go); return; }
     const t = e.target.closest('[data-tile]');
-    if(t){ catG = 'all'; go('cat', t.dataset.tile); }
+    if(t){ catG = 'all'; go('cat', t.dataset.tile); return; }
+    if(e.target.closest('[data-man]')){ go('man'); }
   });
 
   render();
-  await Promise.all([fetchData(), fetchChapters()]);
+  await Promise.all([fetchData(), fetchChapters(), fetchManual()]);
   markNew();
   render();
   if(!cfg.guided) showGuide(0);   /* はじめて開いた人に 使い方を見せる */

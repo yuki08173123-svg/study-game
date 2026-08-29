@@ -2124,7 +2124,7 @@ function showGate(kind, extra){
   const m = M[kind] || M.login;
   const btn = kind === 'offline'
     ? '<button class="gbtn" id="gRetry">もう一度ためす</button>'
-    : '<button class="gbtn" id="gLogin">' + ICO.play({ s:19 }) + '<span>Discordでログイン</span></button>' +
+    : '<button class="gbtn" id="gLogin">Discordでログイン</button>' +
       '<button class="gbtn sub" id="gPaste">合言葉を貼りつける</button>';
 
   g.innerHTML = GMARK +

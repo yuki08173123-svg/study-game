@@ -67,10 +67,15 @@ main{max-width:680px;margin:0 auto;
 .vmain{flex:1;min-width:0;display:flex;gap:13px;text-align:left}
 .vmain:active{opacity:.7}
 /* 見終わりの丸ボタン。押すたびに1回ずつ増える */
-.seenbtn{position:absolute;right:9px;bottom:9px;width:40px;height:40px;
+.ctr{position:absolute;right:9px;bottom:9px;display:flex;align-items:center;gap:6px}
+.seenbtn{width:40px;height:40px;flex:none;
   display:flex;align-items:center;justify-content:center;
   color:var(--ink3);border-radius:12px;
   border:1px solid var(--line2);background:var(--surf2)}
+/* 押し間違えたら すぐ1つ減らせるように、数字の左に置く */
+.minusbtn{width:36px;height:36px;flex:none;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;border:1px solid var(--line2);background:var(--surf2);color:var(--ink2)}
+.minusbtn:active{transform:scale(.9);background:var(--surf3)}
 .seenbtn:active{transform:scale(.9)}
 .seenbtn.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
 .seenbtn .cnt{font-size:1rem;font-weight:800;font-variant-numeric:tabular-nums}
@@ -98,6 +103,7 @@ main{max-width:680px;margin:0 auto;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .vs{margin-top:auto;font-size:.72rem;color:var(--ink3);font-weight:600;letter-spacing:.03em;
   display:flex;align-items:center;gap:6px;padding-top:5px;padding-right:46px;min-height:22px}
+.vcard.n .vs{padding-right:92px}
 .tag{color:var(--acc);background:var(--acc-soft);border-radius:20px;padding:2px 8px;font-size:.68rem;
   font-weight:700;letter-spacing:.04em;white-space:nowrap}
 
@@ -243,6 +249,24 @@ main{max-width:680px;margin:0 auto;
 #pv.exp .vwrap{flex:none;width:min(100vw,177.78vh)}
 #pv.exp.rot .vwrap{flex:none;width:min(100vh,177.78vw);transform:rotate(90deg)}
 
+/* ---------- 下から出るシート ---------- */
+#sheet{position:fixed;inset:0;z-index:95;background:rgba(4,5,7,.66);
+  display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
+.sh{width:100%;max-width:680px;background:var(--surf);border:1px solid var(--line);
+  border-bottom:0;border-radius:20px 20px 0 0;padding:8px 16px calc(16px + env(safe-area-inset-bottom));
+  max-height:78vh;overflow-y:auto}
+.sh .grip{width:40px;height:4px;border-radius:3px;background:var(--surf3);margin:0 auto 12px}
+.sh h3{font-size:1.02rem;font-weight:700;margin:2px 2px 12px;letter-spacing:.02em}
+.frow{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:13px 12px;
+  border-radius:12px;background:var(--surf2);border:1px solid var(--line2);margin-bottom:9px}
+.frow:active{opacity:.7}
+.frow.on{border-color:var(--acc);background:var(--acc-soft)}
+.frow .fn{flex:1;font-size:.96rem;font-weight:700}
+.frow .fc{font-size:.76rem;color:var(--ink3);font-weight:700}
+.frow .bx{width:24px;height:24px;border-radius:8px;border:2px solid var(--line2);flex:none;
+  display:flex;align-items:center;justify-content:center;color:var(--acc-ink)}
+.frow.on .bx{background:var(--acc);border-color:var(--acc)}
+
 /* ---------- そのほか ---------- */
 .toast{position:fixed;left:50%;bottom:calc(var(--tabh) + 26px + env(safe-area-inset-bottom));
   transform:translate(-50%,14px);z-index:90;background:var(--surf3);border:1px solid var(--line2);
@@ -271,6 +295,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <main id="main"></main>
 <nav id="tabs"><div class="in" id="tabin"></div></nav>
 <div class="toast" id="toast"></div>
+<div id="sheet" class="hidden"><div class="sh" id="shin"></div></div>
 
 <div id="pv" class="hidden">
   <div class="pvtop">
@@ -293,8 +318,9 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 9;
-const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm';
+const VER = 10;
+const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
+      K_FOLD='th_folders';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const now = () => Date.now();
@@ -325,12 +351,15 @@ const ICO = {
   x:     o => svg('<path d="M18 6 6 18M6 6l12 12"/>',o),
   chev:  o => svg('<path d="m9 18 6-6-6-6"/>',o),
   loop:  o => svg('<path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',o),
+  minus: o => svg('<path d="M5 12h14"/>',{s:(o&&o.s)||22,w:2.4}),
+  folder: o => svg('<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',o),
 };
 
 /* ===================== 状態 ===================== */
 let DATA = { cats:[], videos:[] };
 let prog = {};            /* {動画id: {t:秒, d:全体の秒, done:1, last:時刻}} */
 let favs = [];
+let folders = [];       /* 生徒が自分で作るフォルダ [{id, name, ids:[]}] */
 let cfg  = { speed:1, autonext:true };
 let view = { name:'home' };
 let admin = null;         /* 管理画面のしたがき */
@@ -338,10 +367,26 @@ let admin = null;         /* 管理画面のしたがき */
 function load(){
   try{ prog = JSON.parse(localStorage.getItem(K_PROG) || '{}'); }catch(e){ prog = {}; }
   try{ favs = JSON.parse(localStorage.getItem(K_FAV)  || '[]'); }catch(e){ favs = []; }
+  try{ folders = JSON.parse(localStorage.getItem(K_FOLD) || '[]'); }catch(e){ folders = []; }
+  if(!Array.isArray(folders)) folders = [];
   try{ Object.assign(cfg, JSON.parse(localStorage.getItem(K_CFG) || '{}')); }catch(e){}
 }
 const saveProg = () => localStorage.setItem(K_PROG, JSON.stringify(prog));
 const saveFav  = () => localStorage.setItem(K_FAV,  JSON.stringify(favs));
+const saveFold = () => localStorage.setItem(K_FOLD, JSON.stringify(folders));
+const foldOf   = fid => folders.find(f => f.id === fid);
+const foldCount = id => folders.filter(f => f.ids.includes(id)).length;
+const inFold   = (fid, id) => { const f = foldOf(fid); return !!(f && f.ids.includes(id)); };
+function toggleFold(fid, id){
+  const f = foldOf(fid); if(!f) return;
+  if(f.ids.includes(id)) f.ids = f.ids.filter(x => x !== id);
+  else f.ids.unshift(id);
+  saveFold();
+}
+function newFolder(name){
+  const f = { id:'f' + now() + Math.floor(Math.random()*1000), name:name.trim().slice(0,24), ids:[] };
+  folders.push(f); saveFold(); return f;
+}
 const saveCfg  = () => localStorage.setItem(K_CFG,  JSON.stringify(cfg));
 
 /* ===================== 小道具 ===================== */
@@ -430,9 +475,7 @@ function bumpSeen(id, after){
   lastBump = { id, at:t };
   const n = addSeen(id, 1);
   if(after) after();
-  toast(n === 1 ? '見終わりにしました' : `${n}回目にしました`,
-    { label:'もどす', fn: () => { addSeen(id, -1); lastBump = { id:'', at:0 };
-                                  if(after) after(); toast(`${seenN(id)}回にもどしました`); } });
+  toast(n === 1 ? '見終わりにしました' : `${n}回目にしました`);
 }
 function clearSeen(id){
   const p = prog[id]; if(!p) return;
@@ -499,15 +542,17 @@ const TABS = [
 function go(name, p){ view = { name, p }; render(); window.scrollTo(0,0); }
 
 function render(){
-  const tabId = ({ home:'home', cat:'home', find:'find', saved:'saved', set:'set', admin:'set' })[view.name] || 'home';
+  const tabId = ({ home:'home', cat:'home', find:'find', saved:'saved', folder:'saved',
+                   set:'set', admin:'set' })[view.name] || 'home';
   $$('#tabin .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tabId));
-  ({ home:vHome, cat:vCat, find:vFind, saved:vSaved, set:vSet, admin:vAdmin }[view.name] || vHome)();
+  ({ home:vHome, cat:vCat, find:vFind, saved:vSaved, folder:vFolder,
+     set:vSet, admin:vAdmin }[view.name] || vHome)();
 }
 
 /* ---------- カードの部品 ---------- */
 function card(v, opt){
   const r = ratio(v), d = durOf(v), n = seenN(v.id);
-  return `<div class="vcard">
+  return `<div class="vcard ${n ? 'n' : ''}">
     <button class="vmain" data-go="${v.id}">
       <div class="thumb ${n ? 'on' : ''}">
         ${thumbHTML(v.id)}
@@ -516,15 +561,17 @@ function card(v, opt){
       </div>
       <div class="vmeta">
         <div class="vt">${esc(v.t)}</div>
-        <div class="vs">${(opt && opt.tag === false) ? '' :
+        <div class="vs">${((opt && opt.tag === false) || n) ? '' :
             `<span class="tag">${esc(v.g || catName(v.cat))}</span>`}
-          ${v.date ? `<span>${ymd(v.date)}</span>` : ''}
-          ${dots(n)}</div>
+          ${v.date ? `<span>${ymd(v.date)}</span>` : ''}</div>
       </div>
     </button>
-    <button class="seenbtn ${n ? 'on' : ''}" data-seen="${v.id}" aria-label="見終わりにする">
-      ${n ? `<span class="cnt">${n}</span>` : ICO.check({s:20})}
-    </button>
+    <div class="ctr">
+      ${n ? `<button class="minusbtn" data-minus="${v.id}" aria-label="1回へらす">${ICO.minus({s:20})}</button>` : ''}
+      <button class="seenbtn ${n ? 'on' : ''}" data-seen="${v.id}" aria-label="1回ふやす">
+        ${n ? `<span class="cnt">${n}</span>` : ICO.check({s:20})}
+      </button>
+    </div>
   </div>`;
 }
 function bigCard(v){
@@ -716,13 +763,65 @@ function vFind(){
   drawFind();
 }
 
-/* ---------- 保存 ---------- */
+/* ---------- 保存（フォルダの一覧） ---------- */
 function vSaved(){
   $('#tbar').innerHTML = `<div class="ttl">保存</div>`;
-  const list = favs.map(id => vid(id)).filter(Boolean);
-  $('#main').innerHTML = list.length
-    ? `<div class="vlist" style="margin-top:10px">${list.map(v => card(v)).join('')}</div>`
-    : emptyBox('あとで見たい動画は、再生画面の<br>「保存」で ここにためられます。');
+  const row = (id, name, n) => `<button class="frow" data-fopen="${esc(id)}">
+      <span style="color:var(--acc)">${id === '__fav' ? ICO.starF({s:20}) : ICO.folder({s:20})}</span>
+      <span class="fn">${esc(name)}</span><span class="fc">${n}本</span>
+      <span style="color:var(--ink3)">${ICO.chev({s:18})}</span></button>`;
+  $('#main').innerHTML = `
+    <div style="margin-top:12px">
+      ${row('__fav', '保存', favs.length)}
+      ${folders.map(f => row(f.id, f.name, f.ids.length)).join('')}
+    </div>
+    <button class="btn" id="mkf" style="margin-top:10px">${ICO.plus({s:19})}<span>新しいフォルダを作る</span></button>
+    <div class="lead" style="margin-top:12px">動画の画面の「フォルダ」から、好きなフォルダに入れられます。</div>`;
+  $$('#main [data-fopen]').forEach(b => b.onclick = () => go('folder', b.dataset.fopen));
+  $('#mkf').onclick = () => {
+    const nm = prompt('フォルダの名前を入れてください（例：テスト前に見る）');
+    if(!nm || !nm.trim()) return;
+    newFolder(nm); vSaved(); toast('フォルダを作りました');
+  };
+}
+
+/* ---------- フォルダの中 ---------- */
+function vFolder(){
+  const fid = view.p;
+  const isFavF = fid === '__fav';
+  const f = isFavF ? { id:'__fav', name:'保存', ids:favs } : foldOf(fid);
+  if(!f) return go('saved');
+  $('#tbar').innerHTML = `<button class="tbtn" id="fback">${ICO.back({s:20})}</button>
+    <div class="ttl"></div>
+    ${isFavF ? '' : `<button class="tbtn" id="fmenu">${ICO.gear({s:18})}</button>`}`;
+  $('#fback').onclick = () => go('saved');
+  const list = f.ids.map(id => vid(id)).filter(Boolean);
+  $('#main').innerHTML = `
+    <div class="chead"><h1>${esc(f.name)}</h1><div class="st">${list.length}本</div></div>
+    <div class="vlist" style="margin-top:16px">
+      ${list.length ? list.map(v => card(v)).join('')
+                    : emptyBox('まだ入っていません。<br>動画の画面の「フォルダ」から入れられます。')}
+    </div>`;
+  if($('#fmenu')) $('#fmenu').onclick = () => {
+    openSheet(`
+      <h3>${esc(f.name)}</h3>
+      <button class="btn" id="fren">名前を変える</button>
+      <button class="btn" id="fdel" style="margin-top:9px;color:var(--ng)">このフォルダを消す</button>
+      <button class="btn" id="fcl" style="margin-top:9px">とじる</button>
+    `, () => {
+      $('#fren').onclick = () => {
+        const nm = prompt('新しい名前', f.name);
+        if(!nm || !nm.trim()) return;
+        f.name = nm.trim().slice(0,24); saveFold(); closeSheet(); vFolder();
+      };
+      $('#fdel').onclick = () => {
+        if(!confirm(`「${f.name}」を消しますか？（動画そのものは消えません）`)) return;
+        folders = folders.filter(x => x.id !== f.id); saveFold(); closeSheet(); go('saved');
+        toast('フォルダを消しました');
+      };
+      $('#fcl').onclick = closeSheet;
+    });
+  };
 }
 
 /* ---------- 設定 ---------- */
@@ -777,6 +876,54 @@ function vSet(){
     '2. 右上の … を押す\n' +
     '3.「ホーム画面に追加」を選ぶ');
   $('#adm').onclick = () => go('admin');
+}
+
+/* ===================== 下から出るシート ===================== */
+function openSheet(html, after){
+  $('#shin').innerHTML = `<div class="grip"></div>` + html;
+  $('#sheet').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  $('#sheet').onclick = e => { if(e.target.id === 'sheet') closeSheet(); };
+  if(after) after();
+}
+function closeSheet(){
+  $('#sheet').classList.add('hidden');
+  if($('#pv').classList.contains('hidden')) document.body.style.overflow = '';
+}
+
+/* この動画をどのフォルダに入れるか選ぶ */
+function pickFolder(id, after){
+  const draw = () => {
+    openSheet(`
+      <h3>フォルダに入れる</h3>
+      <button class="frow ${isFav(id) ? 'on' : ''}" data-f="__fav">
+        <span class="bx">${isFav(id) ? ICO.check({s:16}) : ''}</span>
+        <span class="fn">保存</span><span class="fc">${favs.length}</span></button>
+      ${folders.map(f => `
+        <button class="frow ${inFold(f.id, id) ? 'on' : ''}" data-f="${f.id}">
+          <span class="bx">${inFold(f.id, id) ? ICO.check({s:16}) : ''}</span>
+          <span class="fn">${esc(f.name)}</span><span class="fc">${f.ids.length}</span></button>`).join('')}
+      <button class="btn" id="fnew" style="margin-top:6px">${ICO.plus({s:19})}<span>新しいフォルダを作る</span></button>
+      <button class="btn" id="fclose" style="margin-top:9px">とじる</button>
+    `, () => {
+      $$('#shin .frow').forEach(b => b.onclick = () => {
+        if(b.dataset.f === '__fav'){
+          if(isFav(id)) favs = favs.filter(x => x !== id); else favs.unshift(id);
+          saveFav();
+        }else toggleFold(b.dataset.f, id);
+        draw(); if(after) after();
+      });
+      $('#fnew').onclick = () => {
+        const nm = prompt('フォルダの名前を入れてください（例：くり返し見る）');
+        if(!nm || !nm.trim()) return;
+        const f = newFolder(nm);
+        toggleFold(f.id, id);
+        draw(); if(after) after();
+      };
+      $('#fclose').onclick = closeSheet;
+    });
+  };
+  draw();
 }
 
 /* ===================== 更新の確認 ===================== */
@@ -1064,17 +1211,26 @@ function drawBody(){
     <div class="acts">
       <button class="btn sm" id="fav">${isFav(v.id) ? ICO.starF({s:18}) : ICO.star({s:18})}
         <span>${isFav(v.id) ? '保存ずみ' : '保存'}</span></button>
+      <button class="btn sm" id="fold">${ICO.folder({s:18})}
+        <span>フォルダ${foldCount(v.id) ? `（${foldCount(v.id)}）` : ''}</span></button>
+    </div>
+    <div class="acts" style="margin-top:9px">
+      ${seenN(v.id) ? `<button class="btn sm" id="minus" style="flex:0 0 58px">${ICO.minus({s:20})}</button>` : ''}
       <button class="btn sm ${seenN(v.id)?'pri':''}" id="done">${ICO.check({s:18})}
         <span>${seenN(v.id) ? `見た ${seenN(v.id)}回` : '見終わりにする'}</span></button>
-      ${seenN(v.id) ? `<button class="btn sm" id="undo" style="flex:0 0 54px">${ICO.loop({s:18})}</button>` : ''}
+      ${seenN(v.id) ? `<button class="btn sm" id="undo" style="flex:0 0 58px">${ICO.loop({s:18})}</button>` : ''}
     </div>
-    ${seenN(v.id) ? `<div class="lead" style="margin-top:9px">${dots(seenN(v.id))} 反復した回数です</div>` : ''}
     ${v.d ? `<div class="desc">${esc(v.d)}</div>` : ''}
     ${nextVideo() ? `<div class="sec"><h2>次の動画</h2></div>
       <div class="vlist">${card(nextVideo())}</div>` : ''}`;
   $('#fav').onclick = () => {
     if(isFav(v.id)) favs = favs.filter(x => x !== v.id); else favs.unshift(v.id);
     saveFav(); drawBody(); toast(isFav(v.id) ? '保存しました' : '保存をはずしました');
+  };
+  $('#fold').onclick = () => pickFolder(v.id, drawBody);
+  if($('#minus')) $('#minus').onclick = () => {
+    const n = addSeen(v.id, -1); lastBump = { id:'', at:0 };
+    drawBody(); toast(n ? `${n}回にしました` : '0回にもどしました');
   };
   $('#done').onclick = () => bumpSeen(v.id, drawBody);
   if($('#undo')) $('#undo').onclick = () => {
@@ -1216,6 +1372,14 @@ async function boot(){
 
   /* 一覧のカードから再生をひらく */
   document.addEventListener('click', e => {
+    const mb = e.target.closest('[data-minus]');
+    if(mb){
+      const n = addSeen(mb.dataset.minus, -1);
+      lastBump = { id:'', at:0 };            /* 減らした直後は 連打ガードを解く */
+      toast(n ? `${n}回にしました` : '0回にもどしました');
+      if(view.name === 'find') drawFind(); else render();
+      return;
+    }
     const sb = e.target.closest('[data-seen]');
     if(sb){
       clearTimeout(holdT);

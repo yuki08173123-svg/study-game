@@ -59,6 +59,15 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .top h1{margin:0;font-size:.95rem;font-weight:600;letter-spacing:.32em;color:var(--ink2)}
 .top .t-sub{font-size:.78rem;color:var(--dim);letter-spacing:.06em}
 
+/* ── 更新のお知らせ ── */
+.upd{display:flex;align-items:center;gap:11px;margin:12px 0 0;padding:12px 14px;border-radius:16px;
+  background:rgba(227,199,154,.10);border:1px solid rgba(227,199,154,.34)}
+.upd .ut{flex:1;min-width:0;font-size:.79rem;color:#f2e6cf;line-height:1.65}
+.upd .ut b{display:block;font-size:.86rem;color:#f8eeda}
+.upd .ub{flex:none;padding:10px 15px;border-radius:12px;background:rgba(227,199,154,.92);
+  color:#241a08;font-size:.8rem;font-weight:700;letter-spacing:.04em}
+.upd .ub:active{opacity:.85}
+
 /* ── 瞑想タブ ── */
 .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:10px 0 4px}
 
@@ -417,6 +426,11 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     <div class="t-sub" id="topSub"></div>
   </div>
 
+  <div class="upd hidden" id="updBar">
+    <span class="ut" id="updTxt"></span>
+    <button class="ub" id="updBtn">更新する</button>
+  </div>
+
   <!-- 瞑想タブ -->
   <div class="stage" id="paneHome">
     <button class="lvcard" id="lvCard">
@@ -473,8 +487,8 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <div class="foot">
-      Mindrest v13 ・ 記録はこの端末の中だけに保存されます<br>
-      <button id="btnBackup">記録をコピーして控える</button>
+      Mindrest v<span id="verNum">1</span> ・ 記録はこの端末の中だけに保存されます<br>
+      <button id="btnBackup">記録をコピーして控える</button>　·　<button id="btnCheck">更新をたしかめる</button>
     </div>
   </div>
   <!-- 学ぶタブ -->
@@ -642,7 +656,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 13;
+const VER = 14;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -865,6 +879,7 @@ document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
   if(ac && ac.state === 'suspended' && sess) ac.resume();
   if(sess){ keepScreen(); update(); }
+  if(!sess && Date.now() - lastCheck > 600000) checkUpdate(false);
 });
 
 /* ───────── 学ぶ（瞑想の科学） ─────────
@@ -1955,7 +1970,50 @@ $('btnBackup').addEventListener('click', function(){
   }else{ toast('コピーできませんでした'); }
 });
 
+/* ───────── 更新の確認 ───────── */
+/* version.json を毎回とりに行き、いまの VER より新しければ知らせる。
+   更新ボタンはキャッシュとサービスワーカーだけを捨てる。localStorage は触らないので記録は残る。 */
+let lastCheck = 0;
+async function checkUpdate(manual){
+  if(manual) toast('たしかめています…');
+  try{
+    const res = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+    if(!res.ok) throw new Error('ng');
+    const d = await res.json();
+    lastCheck = Date.now();
+    const nv = parseInt(d.v, 10) || 0;
+    const newer = nv > VER;
+    $('updBar').classList.toggle('hidden', !newer);
+    if(newer){
+      $('updTxt').innerHTML = '<b>新しいバージョン v' + nv + ' があります</b>' +
+        (d.note ? esc(d.note) : '「更新する」を押すと切りかわります');
+    }
+    if(manual) toast(newer ? '新しいバージョン v' + nv + ' があります' : 'いまが最新です（v' + VER + '）');
+    return newer;
+  }catch(e){
+    if(manual) toast('たしかめられませんでした。通信を確かめてください');
+    return false;
+  }
+}
+async function doUpdate(){
+  $('updBtn').textContent = '更新中…';
+  try{
+    if('serviceWorker' in navigator){
+      const rs = await navigator.serviceWorker.getRegistrations();
+      for(const r of rs) await r.unregister();
+    }
+    if(window.caches){
+      const ks = await caches.keys();
+      for(const k of ks) await caches.delete(k);
+    }
+  }catch(e){}
+  location.replace(location.pathname + '?v=' + Date.now());
+}
+$('updBtn').addEventListener('click', doUpdate);
+$('btnCheck').addEventListener('click', function(){ checkUpdate(true); });
+
 /* ───────── 起動 ───────── */
+$('verNum').textContent = VER;
 renderPick();
 renderTop();
 renderLearn();
@@ -1963,6 +2021,7 @@ setTab('home');
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
 }
+setTimeout(function(){ checkUpdate(false); }, 1800);
 </script>
 </body>
 </html>

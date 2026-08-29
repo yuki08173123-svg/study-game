@@ -267,6 +267,25 @@ main{max-width:680px;margin:0 auto;
   display:flex;align-items:center;justify-content:center;color:var(--acc-ink)}
 .frow.on .bx{background:var(--acc);border-color:var(--acc)}
 
+/* ---------- 使い方スライド（小中学生でも読めるよう 大きめの文字） ---------- */
+#guide{position:fixed;inset:0;z-index:98;background:var(--bg);display:flex;flex-direction:column}
+.gtop{display:flex;justify-content:flex-end;padding:calc(env(safe-area-inset-top) + 8px) 12px 0;min-height:46px}
+.gskip{color:var(--ink3);font-size:.92rem;font-weight:700;padding:10px 12px}
+.gbody{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:10px 24px;gap:24px}
+.gic{width:108px;height:108px;border-radius:50%;background:var(--acc-soft);color:var(--acc);
+  display:flex;align-items:center;justify-content:center;flex:none}
+.gt{font-size:1.66rem;font-weight:800;line-height:1.45;letter-spacing:.02em}
+.gd{font-size:1.1rem;line-height:2;color:var(--ink2);font-weight:600;max-width:430px}
+.gd b{color:var(--ink);font-weight:800}
+.gfoot{padding:0 20px calc(26px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;align-items:center;gap:18px}
+.gdots{display:flex;gap:7px}
+.gdots i{width:9px;height:9px;border-radius:50%;background:var(--surf3);display:block;transition:width .2s}
+.gdots i.on{background:var(--acc);width:24px;border-radius:5px}
+.gbtns{display:flex;gap:10px;width:100%;max-width:430px}
+.gbtns .btn{height:58px;font-size:1.06rem;font-weight:800}
+
 /* ---------- そのほか ---------- */
 .toast{position:fixed;left:50%;bottom:calc(var(--tabh) + 26px + env(safe-area-inset-bottom));
   transform:translate(-50%,14px);z-index:90;background:var(--surf3);border:1px solid var(--line2);
@@ -296,6 +315,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <nav id="tabs"><div class="in" id="tabin"></div></nav>
 <div class="toast" id="toast"></div>
 <div id="sheet" class="hidden"><div class="sh" id="shin"></div></div>
+<div id="guide" class="hidden"></div>
 
 <div id="pv" class="hidden">
   <div class="pvtop">
@@ -318,7 +338,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 10;
+const VER = 11;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders';
 const $ = s => document.querySelector(s);
@@ -851,6 +871,8 @@ function vSet(){
     <div class="group">
       <button class="item" id="upd"><div class="nm">最新か たしかめる</div>
         <div class="ct" id="updState">v${VER}</div></button>
+      <button class="item" id="guide2"><div class="nm">使い方を見る</div>
+        <div class="chev">${ICO.chev({s:20})}</div></button>
       <button class="item" id="howto"><div class="nm">ホーム画面に置く方法</div></button>
       <button class="item" id="adm"><div class="nm">動画を管理する（配信者用）</div></button>
     </div>
@@ -866,6 +888,7 @@ function vSet(){
     prog = {}; saveProg(); vSet(); toast('記録を消しました');
   };
   $('#upd').onclick = () => checkUpd();
+  $('#guide2').onclick = () => showGuide(0);
   $('#howto').onclick = () => alert(
     'iPhone / iPad の場合\n' +
     '1. Safari でこのページを開く\n' +
@@ -876,6 +899,51 @@ function vSet(){
     '2. 右上の … を押す\n' +
     '3.「ホーム画面に追加」を選ぶ');
   $('#adm').onclick = () => go('admin');
+}
+
+/* ===================== 使い方スライド ===================== */
+const GUIDE = [
+  { ic:'play',   t:'Theater へようこそ',
+    d:'ヒラ先生の動画<b>だけ</b>が入っているアプリです。<br>YouTube を開かなくても見られるので、<br>ほかの動画に気をとられません。' },
+  { ic:'home',   t:'まず、見たい種類をえらぶ',
+    d:'ホームの四角をタップすると、<br>その種類の動画が<b>ぜんぶ</b>出てきます。<br>マインド動画は<b>上から順番に</b>見てください。' },
+  { ic:'check',  t:'見たら「✓」を押す',
+    d:'動画の右下のボタンを押すと「見た」になります。<br>もう一度見たら、もう一度押す。<br><b>数字がふえていきます。</b><br>まちがえたら、左の「−」でへらせます。' },
+  { ic:'folder', t:'気になった動画は入れておく',
+    d:'動画の画面の「保存」や「フォルダ」から、<br>自分の<b>フォルダ</b>に入れられます。<br>「テスト前に見る」など、名前は自由です。' },
+  { ic:'loop',   t:'とちゅうでやめても大丈夫',
+    d:'見たところを覚えているので、<br>次に開くと<b>「つづきから」</b>が出てきます。<br>速さ（1.5倍など）も<b>動画ごとに</b>変えられます。' },
+  { ic:'plus',   t:'ホーム画面に置いておこう',
+    d:'アプリのように使えて、開くのが早くなります。<br><b>iPhone</b>：下の共有ボタン →「ホーム画面に追加」<br><b>Android</b>：右上の … →「ホーム画面に追加」' },
+];
+let gi = 0;
+function showGuide(i){
+  gi = Math.max(0, Math.min(GUIDE.length - 1, i));
+  const g = GUIDE[gi], last = gi === GUIDE.length - 1;
+  $('#guide').innerHTML = `
+    <div class="gtop">${last ? '' : `<button class="gskip" id="gskip">とばす</button>`}</div>
+    <div class="gbody">
+      <div class="gic">${(ICO[g.ic] || ICO.play)({ s:52, w:1.7 })}</div>
+      <div class="gt">${g.t}</div>
+      <div class="gd">${g.d}</div>
+    </div>
+    <div class="gfoot">
+      <div class="gdots">${GUIDE.map((_,k) => `<i class="${k===gi?'on':''}"></i>`).join('')}</div>
+      <div class="gbtns">
+        ${gi ? `<button class="btn" id="gprev" style="flex:0 0 96px">もどる</button>` : ''}
+        <button class="btn pri" id="gnext">${last ? 'はじめる' : 'つぎへ'}</button>
+      </div>
+    </div>`;
+  $('#guide').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  if($('#gskip')) $('#gskip').onclick = endGuide;
+  if($('#gprev')) $('#gprev').onclick = () => showGuide(gi - 1);
+  $('#gnext').onclick = () => last ? endGuide() : showGuide(gi + 1);
+}
+function endGuide(){
+  $('#guide').classList.add('hidden');
+  document.body.style.overflow = '';
+  cfg.guided = 1; saveCfg();
 }
 
 /* ===================== 下から出るシート ===================== */
@@ -1396,6 +1464,7 @@ async function boot(){
   render();
   await fetchData();
   render();
+  if(!cfg.guided) showGuide(0);   /* はじめて開いた人に 使い方を見せる */
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
   setTimeout(() => checkUpd(true), 2500);
   addEventListener('pagehide', saveNow);

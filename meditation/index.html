@@ -78,6 +78,21 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 @keyframes hop{0%,100%{transform:translateY(0)}30%{transform:translateY(-7px)}60%{transform:translateY(0)}}
 .orb .chr.hop{animation:hop .9s ease}
 
+/* 呼吸に合わせて、ほんの少しだけ上下する */
+@keyframes chrBreathe{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-2.2px) scale(1.015)}
+}
+@keyframes chrGlow{0%,100%{opacity:.55}50%{opacity:.95}}
+.chr svg .breathe,.chrsheet .pic svg .breathe{
+  animation:chrBreathe 8s ease-in-out infinite;
+  transform-box:fill-box;transform-origin:50% 100%}
+.chr svg .glowlayer,.chrsheet .pic svg .glowlayer{animation:chrGlow 8s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){
+  .chr svg .breathe,.chr svg .glowlayer,
+  .chrsheet .pic svg .breathe,.chrsheet .pic svg .glowlayer{animation:none!important}
+}
+
 .chr-line{display:flex;align-items:center;gap:9px;margin-top:-8px}
 .chr-line .cn{font-size:1rem;color:var(--ink);letter-spacing:.08em}
 .chr-line .cm{font-size:.72rem;color:var(--aqua);border:1px solid rgba(159,216,214,.34);
@@ -458,7 +473,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <div class="foot">
-      Mindrest v11 ・ 記録はこの端末の中だけに保存されます<br>
+      Mindrest v12 ・ 記録はこの端末の中だけに保存されます<br>
       <button id="btnBackup">記録をコピーして控える</button>
     </div>
   </div>
@@ -627,7 +642,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 11;
+const VER = 12;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1285,92 +1300,142 @@ function star(x, y, r, c, o){
     (x - r) + ',' + y + ' ' + (x - r * .3) + ',' + (y - r * .3) + '"/>';
 }
 
-function charSVG(stage, mood){
+/* 座禅を組んだ小さな精霊。頭・肩・腕・脚を1本の輪郭でつなぎ、
+   陶器のような淡いグラデーションと薄いハイライトで質感を出す。
+   強い発光・太い輪郭・派手な立体表現は使わない。 */
+const CHR_SKIN = [
+  { a:'#8fb4bd', b:'#6f97a3', c:'#54727d' },   // 1 見習い
+  { a:'#9cc3ca', b:'#79a4af', c:'#5b7d88' },   // 2 初級
+  { a:'#a9d2d6', b:'#84b2bb', c:'#628892' },   // 3 中級
+  { a:'#b4dbdd', b:'#8dbcc3', c:'#68919a' },   // 4 上級
+  { a:'#bfe3e3', b:'#96c5ca', c:'#6d99a1' },   // 5 達人
+  { a:'#c9eae9', b:'#a0cdd1', c:'#73a0a7' },   // 6 名人
+  { a:'#d4f0ee', b:'#aad5d8', c:'#79a7ad' },   // 7 師範
+  { a:'#e0f5f2', b:'#b7dde0', c:'#80aeb3' },   // 8 仙人
+  { a:'#eefaf7', b:'#c8e8e8', c:'#8ab8bc' }    // 9 悟りの境地
+];
+const CHR_FADE = [
+  { a:'#8d979c', b:'#727d83', c:'#5a6469' },   // しおれているとき
+  { a:'#9aa8ad', b:'#7e8d94', c:'#626e74' }
+];
+// 体の輪郭：頭 → 肩 → 腕 → 組んだ脚 までを一本の曲線でつなぐ
+const CHR_BODY = 'M100,30 C120,30 133,47 133,67 C133,79 129.5,88 124,94.5 ' +
+  'C141,101 153,114 159,131 C163,142 165,151 166.5,157 ' +      // 肩から腕、そこで少しくびれる
+  'C172,165 178.5,174 179.5,181.5 ' +                            // 組んだ脚（ひざ）の張り出し
+  'C180,188.5 156,192.5 100,192.5 C44,192.5 20,188.5 20.5,181.5 ' +
+  'C21.5,174 28,165 33.5,157 C35,151 37,142 41,131 ' +
+  'C47,114 59,101 76,94.5 C70.5,88 67,79 67,67 C67,47 80,30 100,30 Z';
+
+let chrUid = 0;
+function charSVG(stage, mood, still){
   stage = Math.max(0, Math.min(8, stage));
-  const col = CHR_COL[stage], ink = '#16222b', W = '#eef9f6';
-  const deco = mood >= 2;                       // 光や飾りは元気なときだけ
-  const sx = mood === 0 ? .82 : mood === 1 ? .92 : 1;
-  const sy = mood === 0 ? .87 : mood === 1 ? .95 : 1;
-  const dull = mood === 0 ? 'opacity:.68;filter:saturate(.2)'
-             : mood === 1 ? 'opacity:.88;filter:saturate(.6)' : '';
-  let g = '';
+  const u = 'c' + (++chrUid);
+  const calm = mood >= 2;                        // 光や飾りは元気なときだけ
+  const sk = mood === 0 ? CHR_FADE[0] : mood === 1 ? CHR_FADE[1] : CHR_SKIN[stage];
+  const line = mood <= 1 ? '#3b464b' : '#2b4650';
+  const sx = mood === 0 ? .88 : mood === 1 ? .95 : 1;
+  const sy = mood === 0 ? .9  : mood === 1 ? .96 : 1;
+  const bcls = still ? '' : ' class="breathe"';
+  const gcls = still ? '' : ' class="glowlayer"';
+  let back = '', front = '', deco = '';
 
-  // うしろの光と輪
-  if(deco && stage >= 3){
-    g += '<circle cx="100" cy="92" r="' + (stage >= 7 ? 62 : 54) + '" fill="none" stroke="' + col +
-         '" stroke-opacity=".45" stroke-width="1.6"/>';
-  }
-  if(deco && stage >= 8){
-    g += '<circle cx="100" cy="94" r="84" fill="rgba(227,199,154,.08)"/>' +
-         '<circle cx="100" cy="92" r="74" fill="none" stroke="#e3c79a" stroke-opacity=".45" stroke-width="1.4"/>';
-  }
-  // 星
-  if(deco && stage >= 5){
-    g += star(44, 66, 7, '#e3c79a', .85) + star(158, 56, 6, '#e3c79a', .7) + star(163, 124, 5, col, .7);
-  }
-  if(deco && stage >= 8){
-    g += star(100, 20, 9, '#f3e6c8', .9) + star(36, 132, 6, '#e3c79a', .6);
+  // ── うしろの光と、静かな輪 ──
+  if(calm){
+    back += '<circle cx="100" cy="108" r="' + (78 + stage * 2) + '" fill="url(#g' + u + ')"' + gcls + '/>';
+    if(stage >= 3) back += '<circle cx="100" cy="96" r="' + (stage >= 7 ? 74 : 66) +
+      '" fill="none" stroke="' + sk.a + '" stroke-opacity=".28" stroke-width="1"/>';
+    if(stage >= 5) back += '<circle cx="100" cy="96" r="' + (stage >= 7 ? 86 : 80) +
+      '" fill="none" stroke="' + sk.a + '" stroke-opacity=".14" stroke-width=".8"/>';
+    if(stage >= 8){
+      back += '<circle cx="100" cy="96" r="96" fill="none" stroke="#e3c79a" stroke-opacity=".3" stroke-width=".8"/>';
+      deco += star(100, 16, 5, '#f0e3c8', .65) + star(38, 74, 4, '#e3c79a', .45) + star(164, 62, 3.4, '#e3c79a', .4);
+    }else if(stage >= 5){
+      deco += star(44, 70, 3.6, sk.a, .5) + star(158, 60, 3, sk.a, .38);
+    }
   }
 
-  // 下（雲・光の台・ざぶとん）
-  if(stage >= 6){
-    g += '<g><ellipse cx="100" cy="181" rx="58" ry="14" fill="#cfe7ea" opacity=".20"/>' +
-         '<ellipse cx="72" cy="175" rx="24" ry="12" fill="#cfe7ea" opacity=".16"/>' +
-         '<ellipse cx="130" cy="176" rx="26" ry="13" fill="#cfe7ea" opacity=".16"/></g>';
-  }else if(stage >= 4){
-    g += '<ellipse cx="100" cy="184" rx="48" ry="10" fill="' + col + '" opacity="' + (deco ? .20 : .10) + '"/>';
+  // ── 座（下の支え）──
+  if(stage >= 6 && calm){
+    back += '<ellipse cx="100" cy="196" rx="66" ry="10" fill="' + sk.a + '" opacity=".10"/>' +
+            '<ellipse cx="100" cy="199" rx="44" ry="6" fill="' + sk.a + '" opacity=".08"/>';
+  }else if(stage >= 4 && calm){
+    back += '<ellipse cx="100" cy="197" rx="58" ry="8" fill="' + sk.a + '" opacity=".12"/>';
   }else if(stage >= 1){
-    g += '<ellipse cx="100" cy="181" rx="52" ry="14" fill="#28323d"/>' +
-         '<ellipse cx="100" cy="178" rx="52" ry="13" fill="#394753"/>';
-  }
-
-  // からだ・うで・手
-  g += '<ellipse cx="62" cy="152" rx="13" ry="10" fill="' + col + '"/>' +
-       '<ellipse cx="138" cy="152" rx="13" ry="10" fill="' + col + '"/>' +
-       '<ellipse cx="100" cy="145" rx="45" ry="34" fill="' + col + '"/>' +
-       '<ellipse cx="100" cy="159" rx="19" ry="8" fill="#ffffff" fill-opacity=".20"/>';
-
-  // あたま
-  g += '<circle cx="100" cy="92" r="35" fill="' + col + '"/>';
-
-  // ひげ（上級から）
-  if(stage >= 7) g += '<ellipse cx="100" cy="141" rx="15" ry="27" fill="' + W + '" stroke="#8fb4ba" stroke-width="1.4" stroke-opacity=".55"/>';
-  else if(stage >= 6) g += '<path d="M88 118 q12 26 24 0 q-4 22 -12 24 q-8 -2 -12 -24 z" fill="' + W + '" stroke="#8fb4ba" stroke-width="1.3" stroke-opacity=".5"/>';
-
-  // 顔
-  if(stage === 0 && mood >= 2){
-    g += '<circle cx="88" cy="91" r="3.6" fill="' + ink + '"/><circle cx="112" cy="91" r="3.6" fill="' + ink + '"/>';
-  }else if(mood >= 3){
-    g += '<path d="M81 92 q7 -8 14 0" fill="none" stroke="' + ink + '" stroke-width="2.6" stroke-linecap="round"/>' +
-         '<path d="M105 92 q7 -8 14 0" fill="none" stroke="' + ink + '" stroke-width="2.6" stroke-linecap="round"/>';
-  }else if(mood === 2){
-    g += '<path d="M82 92 h12" stroke="' + ink + '" stroke-width="2.6" stroke-linecap="round"/>' +
-         '<path d="M106 92 h12" stroke="' + ink + '" stroke-width="2.6" stroke-linecap="round"/>';
+    back += '<ellipse cx="100" cy="197" rx="66" ry="8.5" fill="#0d1319" opacity=".5"/>' +
+            '<ellipse cx="100" cy="195.5" rx="66" ry="7.5" fill="#2b3641" opacity=".85"/>';
   }else{
-    g += '<path d="M81 90 q7 8 14 0" fill="none" stroke="' + ink + '" stroke-width="2.4" stroke-linecap="round"/>' +
-         '<path d="M105 90 q7 8 14 0" fill="none" stroke="' + ink + '" stroke-width="2.4" stroke-linecap="round"/>' +
-         '<path d="M78 79 l15 5" stroke="' + ink + '" stroke-width="2.2" stroke-linecap="round" opacity=".65"/>' +
-         '<path d="M122 79 l-15 5" stroke="' + ink + '" stroke-width="2.2" stroke-linecap="round" opacity=".65"/>';
-  }
-  // くち
-  if(mood >= 3) g += '<path d="M93 106 q7 7 14 0" fill="none" stroke="' + ink + '" stroke-width="2.2" stroke-linecap="round"/>';
-  else if(mood === 2) g += '<circle cx="100" cy="107" r="2.6" fill="' + ink + '"/>';
-  else if(mood === 1) g += '<path d="M93 108 h14" stroke="' + ink + '" stroke-width="2.2" stroke-linecap="round"/>';
-  else g += '<path d="M92 109 q4 -4 8 0 q4 4 8 0" fill="none" stroke="' + ink + '" stroke-width="2" stroke-linecap="round"/>';
-
-  // まゆ（名人から白いまゆ）
-  if(stage >= 5 && mood >= 2){
-    g += '<path d="M76 78 q10 -7 21 -3" fill="none" stroke="' + W + '" stroke-width="3.2" stroke-linecap="round" opacity=".9"/>' +
-         '<path d="M124 78 q-10 -7 -21 -3" fill="none" stroke="' + W + '" stroke-width="3.2" stroke-linecap="round" opacity=".9"/>';
-  }
-  // 頭の上の光
-  if(deco && stage >= 2){
-    g += '<circle cx="100" cy="' + (stage >= 4 ? 40 : 46) + '" r="' + (stage >= 4 ? 5.5 : 4) + '" fill="#f0e2c2" opacity=".92"/>' +
-         '<circle cx="100" cy="' + (stage >= 4 ? 40 : 46) + '" r="' + (stage >= 4 ? 13 : 10) + '" fill="#e3c79a" opacity=".16"/>';
+    back += '<ellipse cx="100" cy="196" rx="54" ry="6.5" fill="#0d1319" opacity=".42"/>';
   }
 
-  return '<svg viewBox="0 0 200 208" xmlns="http://www.w3.org/2000/svg" style="' + dull + '">' +
-    '<g transform="translate(100,190) scale(' + sx + ',' + sy + ') translate(-100,-190)">' + g + '</g></svg>';
+  // ── 体 ──
+  let body = '<path d="' + CHR_BODY + '" fill="url(#b' + u + ')" fill-opacity=".95"/>' +
+             '<path d="' + CHR_BODY + '" fill="url(#h' + u + ')"/>' +
+             '<path d="' + CHR_BODY + '" fill="none" stroke="#e8f7f8" stroke-opacity=".2" stroke-width=".9"/>';
+
+  // 組んだ手と、あぐらの陰影（線は細く、影で示す）
+  body += '<path d="M55,181 C70,166 86,161 100,169 C114,161 130,166 145,181" fill="none" stroke="' + sk.c + '" stroke-opacity=".36" stroke-width="1.3"/>' +
+          '<path d="M100,169 C100,176 100,181 100,186" fill="none" stroke="' + sk.c + '" stroke-opacity=".18" stroke-width="1"/>' +
+          '<path d="M44,186.5 C64,179 136,179 156,186.5" fill="none" stroke="#eafaff" stroke-opacity=".14" stroke-width="2.2" stroke-linecap="round"/>' +
+          '<path d="M78,152 C88,161 112,161 122,152" fill="none" stroke="#f2fbfb" stroke-opacity=".18" stroke-width="1.2"/>' +
+          '<ellipse cx="100" cy="157" rx="22" ry="7" fill="#ffffff" opacity=".07"/>' +
+          '<path d="M124,94.5 C133,104 138,116 140,128" fill="none" stroke="#0e181d" stroke-opacity=".07" stroke-width="2"/>' +
+          '<path d="M76,94.5 C67,104 62,116 60,128" fill="none" stroke="#0e181d" stroke-opacity=".07" stroke-width="2"/>';
+
+  // 顔（小さく、控えめに）
+  const ey = 71;
+  if(stage === 0 && mood >= 2){
+    body += '<circle cx="88.5" cy="' + ey + '" r="2.1" fill="' + line + '" opacity=".8"/>' +
+            '<circle cx="111.5" cy="' + ey + '" r="2.1" fill="' + line + '" opacity=".8"/>';
+  }else if(mood >= 2){
+    body += '<path d="M84,' + ey + ' C87,' + (ey - 2.6) + ' 90,' + (ey - 2.6) + ' 93,' + ey + '" fill="none" stroke="' + line + '" stroke-opacity=".78" stroke-width="1.5" stroke-linecap="round"/>' +
+            '<path d="M107,' + ey + ' C110,' + (ey - 2.6) + ' 113,' + (ey - 2.6) + ' 116,' + ey + '" fill="none" stroke="' + line + '" stroke-opacity=".78" stroke-width="1.5" stroke-linecap="round"/>';
+  }else{
+    body += '<path d="M84,' + (ey - 1) + ' C87,' + (ey + 2) + ' 90,' + (ey + 2) + ' 93,' + (ey - 1) + '" fill="none" stroke="' + line + '" stroke-opacity=".6" stroke-width="1.4" stroke-linecap="round"/>' +
+            '<path d="M107,' + (ey - 1) + ' C110,' + (ey + 2) + ' 113,' + (ey + 2) + ' 116,' + (ey - 1) + '" fill="none" stroke="' + line + '" stroke-opacity=".6" stroke-width="1.4" stroke-linecap="round"/>';
+  }
+  if(mood >= 3) body += '<path d="M96,82 C98,84.4 102,84.4 104,82" fill="none" stroke="' + line + '" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/>';
+  else if(mood === 2) body += '<path d="M96.5,82.5 h7" stroke="' + line + '" stroke-opacity=".42" stroke-width="1.3" stroke-linecap="round"/>';
+  else body += '<path d="M96,83.5 C98,81.6 102,81.6 104,83.5" fill="none" stroke="' + line + '" stroke-opacity=".42" stroke-width="1.3" stroke-linecap="round"/>';
+
+  // 眉・ひげ（色を置かず、淡い陰影で示す）
+  if(stage >= 5 && calm){
+    body += '<path d="M81,62.5 C85,59.6 90,59.2 93.5,60.6" fill="none" stroke="#f4fcfc" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/>' +
+            '<path d="M119,62.5 C115,59.6 110,59.2 106.5,60.6" fill="none" stroke="#f4fcfc" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/>';
+  }
+  if(stage >= 7 && calm){
+    body += '<path d="M92,90 C95,112 105,112 108,90 C110,116 105,134 100,140 C95,134 90,116 92,90 Z" fill="#f4fcfc" opacity=".2"/>' +
+            '<path d="M100,92 C100,112 100,128 100,139" fill="none" stroke="#ffffff" stroke-opacity=".14" stroke-width="1"/>';
+  }else if(stage >= 6 && calm){
+    body += '<path d="M93,90 C96,104 104,104 107,90 C108,106 104,116 100,120 C96,116 92,106 93,90 Z" fill="#f4fcfc" opacity=".17"/>';
+  }
+  // 頭の上の小さな灯り
+  if(calm && stage >= 2){
+    const ly = stage >= 4 ? 12 : 18;
+    deco += '<circle cx="100" cy="' + ly + '" r="' + (stage >= 4 ? 12 : 10) + '" fill="#efe3c6" opacity=".07"/>' +
+            '<circle cx="100" cy="' + ly + '" r="' + (stage >= 4 ? 3.4 : 2.6) + '" fill="#f4e9d2" opacity=".8"/>';
+  }
+
+  front = '<g' + bcls + '>' + body + '</g>';
+
+  return '<svg viewBox="0 0 200 210" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs>' +
+      '<linearGradient id="b' + u + '" x1="0" y1="0" x2="0.25" y2="1">' +
+        '<stop offset="0" stop-color="' + sk.a + '"/>' +
+        '<stop offset=".52" stop-color="' + sk.b + '"/>' +
+        '<stop offset="1" stop-color="' + sk.c + '"/></linearGradient>' +
+      '<radialGradient id="h' + u + '" cx=".33" cy=".2" r=".78">' +
+        '<stop offset="0" stop-color="#ffffff" stop-opacity=".5"/>' +
+        '<stop offset=".38" stop-color="#ffffff" stop-opacity=".1"/>' +
+        '<stop offset=".72" stop-color="#ffffff" stop-opacity="0"/>' +
+        '<stop offset="1" stop-color="#ffffff" stop-opacity=".07"/></radialGradient>' +
+      '<radialGradient id="g' + u + '" cx=".5" cy=".5" r=".5">' +
+        '<stop offset="0" stop-color="' + sk.a + '" stop-opacity=".26"/>' +
+        '<stop offset=".55" stop-color="' + sk.a + '" stop-opacity=".08"/>' +
+        '<stop offset="1" stop-color="' + sk.a + '" stop-opacity="0"/></radialGradient>' +
+    '</defs>' +
+    '<g transform="translate(100,196) scale(' + sx + ',' + sy + ') translate(-100,-196)">' +
+      back + front + deco +
+    '</g></svg>';
 }
 
 function stageOf(lv){
@@ -1408,7 +1473,7 @@ $('charBox').addEventListener('click', function(){
   const cells = TITLES.map(function(t, i){
     const got = i <= st, next = i === st + 1;
     return '<div class="chrcell' + (got ? ' on' : '') + (next ? ' next' : '') + '">' +
-      '<div class="' + (got ? '' : 'lock') + '">' + charSVG(i, 3) + '</div>' +
+      '<div class="' + (got ? '' : 'lock') + '">' + charSVG(i, 3, true) + '</div>' +
       '<div class="cl">' + (got ? (i + 1) + '. ' + t.n : (next ? '次の姿' : '？？？')) + '</div></div>';
   }).join('');
   const sh = document.createElement('div');

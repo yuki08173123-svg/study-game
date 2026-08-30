@@ -59,6 +59,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 @keyframes drift1{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(6vw,7vh,0) scale(1.15)}}
 @keyframes drift2{0%,100%{transform:translate3d(0,0,0) scale(1.1)}50%{transform:translate3d(-7vw,-5vh,0) scale(.95)}}
 
+body.tab-home:not(.bgm):not(.wc):not(.upd) .app{overflow-y:hidden}
 .app{position:relative;z-index:1;flex:1;min-height:0;
   width:100%;overflow-y:auto;overflow-x:hidden;
   -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
@@ -80,11 +81,11 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 /* ── 瞑想タブ ── */
 .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-  gap:clamp(6px,1.2vh,12px);padding:2px 0}
+  gap:clamp(6px,1.2vh,12px);gap:clamp(6px,1.2dvh,12px);padding:2px 0}
 .stage > :first-child{margin-top:auto}
 .stage > :last-child{margin-bottom:auto}
 
-.orb{position:relative;width:min(48vw,178px,19vh);aspect-ratio:1;display:grid;place-items:center;margin-top:clamp(8px,1.8vh,16px)}
+.orb{position:relative;width:min(48vw,178px,19vh);width:min(48vw,178px,19dvh);aspect-ratio:1;display:grid;place-items:center;margin-top:clamp(8px,1.8vh,16px);margin-top:clamp(8px,1.8dvh,16px)}
 .orb .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(159,216,214,.22)}
 .orb .ring.r2{inset:-11px;border-color:rgba(159,216,214,.10)}
 .orb .ring.r3{inset:-22px;border-color:rgba(159,216,214,.05)}
@@ -111,7 +112,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
   transform-box:fill-box;transform-origin:50% 100%}
 .chr svg .glowlayer,.chrsheet .pic svg .glowlayer{animation:chrGlow 8s ease-in-out infinite}
 @media (max-height:700px){          /* 画面の小さい端末では、さらに詰める */
-  .orb{width:min(40vw,132px,17vh);margin-top:10px}
+  .orb{width:min(40vw,132px,17vh);width:min(40vw,132px,17dvh);margin-top:10px}
   .stage{gap:7px;padding:0}
   .hint{display:none}
   .lvcard{padding:9px 14px 10px}
@@ -156,7 +157,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .chrcell .lock{filter:brightness(.18) saturate(0)}
 
 .picks{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;max-width:276px}
-.pick{width:60px;min-width:60px;padding:clamp(7px,1.1vh,10px) 0;border-radius:999px;background:var(--surf);
+.pick{width:60px;min-width:60px;padding:clamp(7px,1.1vh,10px) 0;padding:clamp(7px,1.1dvh,10px) 0;border-radius:999px;background:var(--surf);
   border:1px solid var(--line);color:var(--ink2);font-size:.95rem;transition:.25s}
 .pick .m{font-size:1.05rem;font-weight:500}
 .pick .s{font-size:.72rem;color:var(--dim);margin-left:3px}
@@ -165,7 +166,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 .ambs{width:100%;max-width:300px}
 .ambhead{display:flex;align-items:center;justify-content:center;gap:14px}
-.ambtoggle{display:inline-flex;align-items:center;gap:7px;padding:clamp(6px,1vh,8px) 14px;border-radius:999px;
+.ambtoggle{display:inline-flex;align-items:center;gap:7px;padding:clamp(6px,1vh,8px) 14px;padding:clamp(6px,1dvh,8px) 14px;border-radius:999px;
   background:var(--surf);border:1px solid var(--line);color:var(--dim);font-size:.78rem;letter-spacing:.04em}
 .ambtoggle b{color:var(--ink);font-weight:500}
 .ambtoggle .cv{font-size:.7rem;color:var(--dim);transition:.25s}
@@ -193,7 +194,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
   color:var(--dim);font-size:.8rem;text-align:center;transition:.2s}
 .amb[aria-pressed="true"]{background:rgba(159,216,214,.13);border-color:rgba(159,216,214,.42);color:#eafaf8}
 
-.start{width:100%;max-width:290px;padding:clamp(13px,2vh,17px);border-radius:999px;
+.start{width:100%;max-width:290px;padding:clamp(13px,2vh,17px);padding:clamp(13px,2dvh,17px);border-radius:999px;
   background:linear-gradient(180deg,rgba(159,216,214,.95),rgba(111,182,189,.9));
   color:#07222a;font-weight:700;font-size:1.05rem;letter-spacing:.16em;
   box-shadow:0 10px 34px rgba(110,180,190,.22);transition:.2s}
@@ -225,14 +226,14 @@ body.bgm .stage{gap:14px}
 
 /* ── レベル（ゲーム部分） ── */
 .lvcard{width:100%;text-align:left;background:var(--surf);border:1px solid var(--line);
-  border-radius:18px;padding:clamp(10px,1.6vh,14px) 16px clamp(11px,1.7vh,15px);transition:.2s}
+  border-radius:18px;padding:clamp(10px,1.6vh,14px) 16px clamp(11px,1.7vh,15px);padding:clamp(10px,1.6dvh,14px) 16px clamp(11px,1.7dvh,15px);transition:.2s}
 .lvcard:active{background:var(--surf2)}
 .lv-top{display:flex;align-items:center;gap:10px}
 .lv-num{font-size:.72rem;color:var(--dim);letter-spacing:.16em;flex:none}
 .lv-num b{font-size:1.55rem;color:var(--ink);font-weight:400;margin-left:5px;letter-spacing:0}
 .lv-title{flex:1;font-size:.95rem;color:var(--aqua);letter-spacing:.06em;text-align:right}
 .lv-arrow{color:var(--dim);font-size:1.05rem;flex:none}
-.lv-bar{height:6px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;margin:clamp(7px,1.2vh,11px) 0 clamp(5px,.8vh,7px)}
+.lv-bar{height:6px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;margin:clamp(7px,1.2vh,11px) 0 clamp(5px,.8vh,7px);margin:clamp(7px,1.2dvh,11px) 0 clamp(5px,.8dvh,7px)}
 .lv-bar i{display:block;height:100%;width:0;border-radius:999px;
   background:linear-gradient(90deg,rgba(159,216,214,.95),rgba(227,199,154,.95));
   box-shadow:0 0 12px rgba(159,216,214,.45);transition:width .9s ease}
@@ -920,7 +921,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 32;
+const VER = 33;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1338,6 +1339,7 @@ function setTab(t){
   $('paneLearn').classList.toggle('hidden', t !== 'learn');
   $('paneGuide').classList.toggle('hidden', t !== 'guide');
   const ap = document.querySelector('.app'); if(ap && t !== 'home') ap.scrollTop = 0;
+  document.body.classList.toggle('tab-home', t === 'home');
   document.querySelectorAll('.tab').forEach(function(b){
     b.setAttribute('aria-selected', b.dataset.tab === t ? 'true' : 'false');
   });
@@ -2668,6 +2670,7 @@ function openDay(ts){
 /* 何日かあいて戻ってきた人に、ひとこと。1日1回だけ出す */
 const KEY_WC = 'med.wc.v1';
 function renderWelcome(){
+  document.body.classList.remove('wc');
   const el = $('welcome');
   if(!log.length){ el.classList.add('hidden'); return; }
   const today = startOfDay(Date.now());
@@ -2683,6 +2686,7 @@ function renderWelcome(){
       : '<b>おかえりなさい。</b>' + gap + '日ぶりですね。<b>まずは1分から</b>で大丈夫です。';
   $('wcText').innerHTML = txt;
   el.classList.remove('hidden');
+  document.body.classList.add('wc');
 }
 $('wcClose').addEventListener('click', function(){
   try{ localStorage.setItem(KEY_WC, String(startOfDay(Date.now()))); }catch(e){}
@@ -3006,6 +3010,7 @@ async function checkUpdate(manual){
     const nv = parseInt(d.v, 10) || 0;
     const newer = nv > VER;
     $('updBar').classList.toggle('hidden', !newer);
+    document.body.classList.toggle('upd', newer);
     if(newer){
       $('updTxt').innerHTML = '<b>新しいバージョン v' + nv + ' があります</b>' +
         (d.note ? esc(d.note) : '「更新する」を押すと切りかわります');

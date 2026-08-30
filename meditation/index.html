@@ -136,6 +136,23 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 .ambs{display:flex;align-items:center;gap:9px;justify-content:center;flex-wrap:wrap;max-width:246px}
 .ambs .alabel{width:100%;text-align:center;font-size:.72rem;color:var(--dim);letter-spacing:.08em;margin-bottom:1px}
+.acfg{margin-left:10px;font-size:.72rem;color:var(--aqua);text-decoration:underline;
+  text-underline-offset:3px;padding:2px 0}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;
+  border-bottom:1px solid var(--line)}
+.srow:last-of-type{border-bottom:none}
+.srow .sk{flex:1;min-width:0;font-size:.9rem;color:var(--ink)}
+.srow .sk small{display:block;font-size:.74rem;color:var(--dim);line-height:1.6;margin-top:2px}
+.seg{display:flex;gap:5px;flex:none}
+.seg button{padding:7px 12px;border-radius:10px;background:rgba(255,255,255,.05);
+  border:1px solid var(--line);color:var(--dim);font-size:.8rem}
+.seg button[aria-pressed="true"]{background:rgba(159,216,214,.15);border-color:rgba(159,216,214,.42);color:#eafaf8}
+.tgl{width:52px;height:30px;border-radius:999px;background:rgba(255,255,255,.09);
+  border:1px solid var(--line);position:relative;flex:none;transition:.2s}
+.tgl i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+  background:var(--dim);transition:.2s}
+.tgl[aria-pressed="true"]{background:rgba(159,216,214,.28);border-color:rgba(159,216,214,.5)}
+.tgl[aria-pressed="true"] i{left:25px;background:#eafaf8}
 .amb{width:76px;min-width:76px;padding:8px 0;border-radius:999px;background:var(--surf);border:1px solid var(--line);
   color:var(--dim);font-size:.8rem;text-align:center;transition:.2s}
 .amb[aria-pressed="true"]{background:rgba(159,216,214,.13);border-color:rgba(159,216,214,.42);color:#eafaf8}
@@ -518,7 +535,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <div class="ambs" id="ambs">
-      <span class="alabel">瞑想中の音</span>
+      <span class="alabel">瞑想中の音<button class="acfg" id="btnSnd">音の設定</button></span>
       <button class="amb" data-amb="none">なし</button>
       <button class="amb" data-amb="rain">雨</button>
       <button class="amb" data-amb="wave">波</button>
@@ -607,6 +624,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
         <ol>
           <li>「瞑想」で時間を選んで、<b>はじめる</b>を押します（1分から60分まで）。</li>
           <li>時間の下で<b>瞑想中の音</b>（雨・波・風・たき火・せせらぎ）を選べます。押すと少しだけ試し聞きできます。音が気になる人は「なし」のままで大丈夫です。</li>
+          <li>その横の<b>「音の設定」</b>で、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。</li>
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
           <li>終わると自動で記録されます。「ひとこと」に感じたことを残せます（声でも入れられます）。</li>
@@ -618,6 +636,8 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
       <section class="gcard">
         <h3>よくある質問</h3>
+        <p class="q">スマホを消音にしていると、鐘が鳴りません。</p>
+        <p>「瞑想中の音」の横にある<b>「音の設定」</b>を開いて、<b>「消音モードでも鳴らす」をオン</b>にしてください（はじめからオンになっています）。iPhone横のスイッチを消音にしたままでも、鐘と瞑想中の音が鳴るようになります。それでも鳴らない端末では、消音モードを解除してください。</p>
         <p class="q">クラスのようす（ランキング）って何ですか？</p>
         <p>「記録」タブのいちばん上にあります。参加すると、<b>クラスのみんなで座った合計時間</b>と、ひとりずつの積み重ねが見られます。参加は自由で、あとからやめられます。送られるのは<b>ニックネーム・合計時間・回数・続けた日数・レベル</b>だけです。ひとことの中身や、いつ何をしたかは送られません。</p>
         <p class="q">3分で始めて、途中でやめたらどうなりますか？</p>
@@ -761,7 +781,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 21;
+const VER = 22;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -780,6 +800,27 @@ const DAY = 86400000;
 
 /* ───────── 音（シンギングボウル風） ───────── */
 let ac = null, keepAlive = null, scheduled = [];
+/* ───────── 音の設定 ─────────
+   iPhoneの消音モード（横のスイッチ）では、ふつう web の音は鳴らない。
+   Audio Session API に対応した端末では type を 'playback' にすると、
+   音楽アプリと同じ扱いになり、消音モードでも鳴る。 */
+const KEY_SND = 'med.snd.v1';
+let snd = { loud: true, bell: 1, amb: 1, ring: 3 };
+try{
+  const j = JSON.parse(localStorage.getItem(KEY_SND) || 'null');
+  if(j && typeof j === 'object'){
+    if(typeof j.loud === 'boolean') snd.loud = j.loud;
+    if(typeof j.bell === 'number') snd.bell = j.bell;
+    if(typeof j.amb === 'number') snd.amb = j.amb;
+    if(j.ring === 1 || j.ring === 3) snd.ring = j.ring;
+  }
+}catch(e){}
+function saveSnd(){ try{ localStorage.setItem(KEY_SND, JSON.stringify(snd)); }catch(e){} }
+const canLoud = !!(navigator.audioSession);
+function applySession(){
+  try{ if(navigator.audioSession) navigator.audioSession.type = snd.loud ? 'playback' : 'ambient'; }catch(e){}
+}
+
 function ensureAudio(){
   if(!ac){
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -787,13 +828,14 @@ function ensureAudio(){
     ac = new AC();
   }
   if(ac.state === 'suspended') ac.resume();
+  applySession();
   return ac;
 }
 function bell(delay, base, dur, vol){
   if(!ac) return;
   const t0 = ac.currentTime + delay;
   const out = ac.createGain();
-  out.gain.value = vol;
+  out.gain.value = vol * snd.bell;
   out.connect(ac.destination);
   const partials = [[1,1,1],[2.01,.42,.72],[2.77,.30,.52],[4.07,.16,.36],[5.42,.09,.26],[8.1,.05,.18]];
   partials.forEach(function(p){
@@ -928,7 +970,7 @@ function startAmb(){
 
   const vol = ambKind === 'rain' ? 0.075 : ambKind === 'wave' ? 0.15
             : ambKind === 'wind' ? 0.11 : ambKind === 'fire' ? 0.10 : 0.07;
-  out.gain.setTargetAtTime(vol, now, 3.2);       // 3秒ほどかけて、そっと入る
+  out.gain.setTargetAtTime(vol * snd.amb, now, 3.2);   // 3秒ほどかけて、そっと入る
 
   if(ambKind === 'fire' || ambKind === 'creek'){
     amb.pop = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.09), ac.sampleRate);
@@ -988,6 +1030,57 @@ function renderAmb(){
     b.setAttribute('aria-pressed', b.dataset.amb === ambKind ? 'true' : 'false');
   });
 }
+$('btnSnd').addEventListener('click', function(e){
+  e.stopPropagation();
+  ensureAudio();
+  const sh = document.createElement('div');
+  sh.className = 'sheet';
+  const seg = function(id, opts, cur){
+    return '<div class="seg" id="' + id + '">' + opts.map(function(o){
+      return '<button data-v="' + o[1] + '" aria-pressed="' + (o[1] === cur ? 'true' : 'false') + '">' + o[0] + '</button>';
+    }).join('') + '</div>';
+  };
+  sh.innerHTML = '<div class="box"><h3>音の設定</h3>' +
+    '<div class="srow"><span class="sk">消音モードでも鳴らす' +
+      '<small>' + (canLoud
+        ? 'iPhone横のスイッチを消音にしていても、鐘と瞑想中の音が鳴ります。'
+        : 'この端末では切りかえられません。鳴らないときは消音モードを解除してください。') + '</small></span>' +
+      '<button class="tgl" id="tglLoud" aria-pressed="' + (snd.loud ? 'true' : 'false') + '"' +
+      (canLoud ? '' : ' disabled style="opacity:.4"') + '><i></i></button></div>' +
+    '<div class="srow"><span class="sk">鐘の大きさ</span>' + seg('segBell', [['小',0.5],['中',1],['大',1.6]], snd.bell) + '</div>' +
+    '<div class="srow"><span class="sk">瞑想中の音の大きさ</span>' + seg('segAmb', [['小',0.5],['中',1],['大',1.7]], snd.amb) + '</div>' +
+    '<div class="srow"><span class="sk">終わりの鐘<small>3回鳴らすか、1回だけにするか</small></span>' +
+      seg('segRing', [['1回',1],['3回',3]], snd.ring) + '</div>' +
+    '<div class="btns" style="margin-top:18px"><button class="no" id="sndTry">鐘を鳴らしてみる</button>' +
+    '<button class="ok">とじる</button></div></div>';
+  document.body.appendChild(sh);
+  const close = initSheet(sh);
+  sh.addEventListener('click', function(ev){
+    const t = ev.target.closest('#tglLoud');
+    if(t){
+      snd.loud = !snd.loud; saveSnd(); applySession();
+      t.setAttribute('aria-pressed', snd.loud ? 'true' : 'false');
+      return;
+    }
+    const b = ev.target.closest('.seg button');
+    if(b){
+      const v = parseFloat(b.dataset.v);
+      const id = b.parentNode.id;
+      if(id === 'segBell') snd.bell = v;
+      else if(id === 'segAmb') snd.amb = v;
+      else snd.ring = v;
+      saveSnd();
+      b.parentNode.querySelectorAll('button').forEach(function(x){
+        x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+      });
+      if(id === 'segBell'){ ensureAudio(); clearScheduled(); bell(0, 210, 5, .9); }
+      return;
+    }
+    if(ev.target.id === 'sndTry'){ ensureAudio(); clearScheduled(); bell(0, 210, 6, .9); return; }
+    if(ev.target.classList.contains('ok')) close();
+  });
+});
+
 $('ambs').addEventListener('click', function(e){
   const b = e.target.closest('.amb'); if(!b) return;
   ambKind = b.dataset.amb;
@@ -1059,8 +1152,10 @@ function start(){
     startKeepAlive();
     bell(0, 210, 7, .9);                    // はじまりの鐘
     bell(total, 196, 10, 1);                // 終わりの鐘（あらかじめ予約する）
-    bell(total + 4.5, 196, 10, .8);
-    bell(total + 9, 196, 11, .65);
+    if(snd.ring >= 3){
+      bell(total + 4.5, 196, 10, .8);
+      bell(total + 9, 196, 11, .65);
+    }
   }
   startAmb();
   sess = { min: min, total: total, endAt: Date.now() + total*1000, startAt: Date.now() };

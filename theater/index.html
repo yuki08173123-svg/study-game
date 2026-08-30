@@ -483,7 +483,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 22;
+const VER = 23;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat';
@@ -2058,7 +2058,7 @@ async function pull(){
   try{ j = await r.json(); }catch(e){}
   if(!j){ why = 'bad-json:' + r.status; return { st:'offline' }; }
   if(j.ok){ if(j.t) tokSet(j.t); why = ''; return { st:'ok', j }; }
-  why = 'data:' + (j.error || '?') + ' (' + r.status + ')';
+  why = 'data:' + (j.error || '?') + '/' + (j.why || '?') + ' (' + r.status + ')';
   return { st:j.error || 'need_login' };
 }
 
@@ -2124,10 +2124,15 @@ function showGate(kind, extra){
       ttl:'つながりませんでした',
       txt:'電波の届くところで、もう一度ひらいてください。',
       note:''
+    },
+    busy: {
+      ttl:'少し こんでいます',
+      txt:'すこし待ってから、もう一度ためしてください。',
+      note:''
     }
   };
   const m = M[kind] || M.login;
-  const btn = kind === 'offline'
+  const btn = (kind === 'offline' || kind === 'busy')
     ? '<button class="gbtn" id="gRetry">もう一度ためす</button>'
     : '<button class="gbtn" id="gLogin">Discordでログイン</button>' +
       '<button class="gbtn sub" id="gPaste">合言葉を貼りつける</button>';
@@ -2171,14 +2176,16 @@ async function startAuth(){
   if(r.st === 'not_member' || r.st === 'no_role'){ wipeContent(); return showGate('member'); }
   if(r.st === 'need_login'){ wipeContent(); return showGate('login'); }
 
-  /* つながらなかった。少し前に確認できていれば、控えで開く */
+  /* こんでいる・つながらない。ここで通行証を消すと ふつうの塾生が締め出されるので消さない。
+     少し前に確認できていれば、控えで開く */
   const okat = +(localStorage.getItem(K_OKAT) || 0);
   if(now() - okat < GRACE && loadCached()){
     hideGate(); startData();
-    toast('つながらないので、前に読みこんだ内容で開いています');
+    toast(r.st === 'busy' ? 'こんでいるので、前に読みこんだ内容で開いています'
+                          : 'つながらないので、前に読みこんだ内容で開いています');
     return;
   }
-  showGate('offline');
+  showGate(r.st === 'busy' ? 'busy' : 'offline');
 }
 
 /* 中身がそろったあとの、ふつうの起動 */
@@ -2202,6 +2209,7 @@ async function recheck(){
   if(r.st === 'ok'){ applyData(r.j); if(!$('#gate').classList.contains('hidden')){ hideGate(); startData(); } return; }
   if(r.st === 'not_member' || r.st === 'no_role'){ wipeContent(); showGate('member'); }
   else if(r.st === 'need_login'){ wipeContent(); showGate('login'); }
+  /* busy・圏外のときは、そのまま使わせる。次にひらいたときに また確かめる */
 }
 
 /* ===================== 起動 ===================== */

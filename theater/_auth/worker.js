@@ -52,7 +52,7 @@ export default {
 function login(url, env) {
   const back = safeBack(url.searchParams.get('back'), env);
   const state = b64url(JSON.stringify({ back }));
-  const scope = env.ROLE_ID ? 'identify guilds guilds.members.read' : 'identify guilds';
+  const scope = 'identify guilds.members.read';
   const a = new URL('https://discord.com/oauth2/authorize');
   a.searchParams.set('client_id', env.DISCORD_CLIENT_ID);
   a.searchParams.set('redirect_uri', redirectUri(env));
@@ -84,7 +84,7 @@ async function callback(url, env) {
 /* ---------- 動画データを渡す（毎回たしかめる） ---------- */
 async function data(url, env) {
   let s = await unpack(env, url.searchParams.get('t'));
-  if (!s) return json({ ok: false, error: 'need_login' }, 401);
+  if (!s) return json({ ok: false, error: 'need_login', why: 'bad_token' }, 401);
 
   /* いま サーバーにいるか、Discord に聞く。ここを毎回やるのが肝 */
   let who = await check(s.a, env);
@@ -99,7 +99,13 @@ async function data(url, env) {
   }
   if (!who.ok) {
     /* not_member ＝ BAN・キック・退出。アプリ側はこれを見て中身を消す */
-    return json({ ok: false, error: who.why === 'not_member' || who.why === 'no_role' ? 'not_member' : 'need_login' }, 403);
+    if (who.why === 'not_member' || who.why === 'no_role')
+      return json({ ok: false, error: 'not_member', why: who.why }, 403);
+    /* こんでいる・一時的な不調。ここで締め出すと ふつうの塾生が困るので、消させない */
+    if (who.why === 'busy' || String(who.why).indexOf('check_failed') === 0)
+      return json({ ok: false, error: 'busy', why: who.why }, 503);
+    /* 通行証が古い。入りなおしてもらう */
+    return json({ ok: false, error: 'need_login', why: who.why }, 401);
   }
 
   const out = { ok: true, name: who.name };
@@ -111,35 +117,28 @@ async function data(url, env) {
                    accept: 'application/vnd.github.raw', 'user-agent': 'theater-worker' } });
     if (r.ok) out[f.replace('.json', '')] = JSON.parse(await r.text());
   }
-  if (!out.videos) return json({ ok: false, error: 'data_failed' }, 502);
+  if (!out.videos) return json({ ok: false, error: 'busy', why: 'data_failed' }, 502);
   return json(out);
 }
 
-/* ---------- サーバーにいるか ---------- */
+/* ---------- サーバーにいるか ----------
+   「参加中サーバーの一覧」ではなく「このサーバーのメンバーか」を直接きく。
+   一覧のほうは連続で呼ぶと Discord に断られるため（ログイン直後に必ず2回呼ぶので当たる）。 */
 async function check(access, env) {
-  const h = { authorization: 'Bearer ' + access };
+  const r = await fetch(
+    `https://discord.com/api/users/@me/guilds/${env.GUILD_ID}/member`,
+    { headers: { authorization: 'Bearer ' + access } });
 
-  const ur = await fetch('https://discord.com/api/users/@me', { headers: h });
-  if (ur.status === 401) return { ok: false, why: 'token_expired' };
-  if (!ur.ok) return { ok: false, why: 'user_failed' };
-  const u = await ur.json();
-  const name = u.global_name || u.username || '';
+  if (r.status === 401) return { ok: false, why: 'token_expired' };
+  if (r.status === 404) return { ok: false, why: 'not_member' };   /* BAN・キック・退出 */
+  if (r.status === 403) return { ok: false, why: 'not_member' };
+  if (r.status === 429) return { ok: false, why: 'busy' };         /* こんでいるだけ。締め出さない */
+  if (!r.ok)            return { ok: false, why: 'check_failed_' + r.status };
 
-  if (env.ROLE_ID) {
-    const mr = await fetch(`https://discord.com/api/users/@me/guilds/${env.GUILD_ID}/member`, { headers: h });
-    if (mr.status === 401) return { ok: false, why: 'token_expired' };
-    if (!mr.ok) return { ok: false, why: 'not_member' };
-    const m = await mr.json();
-    if (!(m.roles || []).includes(env.ROLE_ID)) return { ok: false, why: 'no_role' };
-    return { ok: true, id: u.id, name };
-  }
-
-  const gr = await fetch('https://discord.com/api/users/@me/guilds', { headers: h });
-  if (gr.status === 401) return { ok: false, why: 'token_expired' };
-  if (!gr.ok) return { ok: false, why: 'guilds_failed' };
-  const gs = await gr.json();
-  if (!Array.isArray(gs) || !gs.some(g => g.id === env.GUILD_ID)) return { ok: false, why: 'not_member' };
-  return { ok: true, id: u.id, name };
+  const m = await r.json();
+  if (env.ROLE_ID && !(m.roles || []).includes(env.ROLE_ID)) return { ok: false, why: 'no_role' };
+  const u = m.user || {};
+  return { ok: true, id: u.id, name: u.global_name || u.username || '' };
 }
 
 /* ---------- Discord のトークンをもらう ---------- */

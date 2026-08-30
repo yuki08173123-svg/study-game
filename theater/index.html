@@ -407,6 +407,8 @@ main{max-width:680px;margin:0 auto;
 #gate .gcode{margin-top:22px;width:100%;max-width:20em}
 #gate .gcode textarea{min-height:78px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   font-size:.72rem;line-height:1.55;text-align:left}
+#gate .gwhy{color:var(--ink3);font-size:.66rem;margin-top:20px;opacity:.7;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;max-width:22em}
 #gate .gspin{width:22px;height:22px;border-radius:50%;border:2px solid var(--line2);
   border-top-color:var(--acc);animation:gsp .8s linear infinite;margin-top:34px}
 @keyframes gsp{to{transform:rotate(360deg)}}
@@ -481,7 +483,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 21;
+const VER = 22;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat';
@@ -2017,6 +2019,7 @@ addEventListener('popstate', () => {
 });
 
 /* ===================== 入口（塾生かどうかをたしかめる） ===================== */
+let why = '';   /* うまくいかなかったときの理由。画面の下に小さく出す */
 const tokGet = () => { try{ return localStorage.getItem(K_TOK) || ''; }catch(e){ return ''; } };
 const tokSet = t => { try{ localStorage.setItem(K_TOK, t); }catch(e){} };
 
@@ -2032,13 +2035,14 @@ function wipeContent(){
 /* ログインから戻ってきたときに # についてくる合図を受けとる */
 function readAuthHash(){
   const h = (location.hash || '').replace(/^#/, '');
-  if(!h || h.indexOf('auth=') < 0) return null;
+  if(!h || h.indexOf('auth=') < 0){ if(h) why = 'hash:' + h.slice(0,24); return null; }
   const q = new URLSearchParams(h);
   const a = q.get('auth');
   const t = q.get('t') || '';
   try{ history.replaceState(null, '', location.pathname + location.search); }
   catch(e){ location.hash = ''; }
-  if(a === 'ok' && t){ tokSet(t); return { ok:true, t }; }
+  if(a === 'ok' && t){ tokSet(t); why = ''; return { ok:true, t }; }
+  why = 'callback:' + (a || '?') + (a === 'ok' && !t ? ' (合言葉が届いていません)' : '');
   return { ok:false, why:a || 'failed' };
 }
 
@@ -2049,11 +2053,12 @@ async function pull(){
   let r;
   try{
     r = await fetch(API + '/data?t=' + encodeURIComponent(t) + '&_=' + now(), { cache:'no-store' });
-  }catch(e){ return { st:'offline' }; }
+  }catch(e){ why = 'network:' + (e && e.message ? e.message : '?'); return { st:'offline' }; }
   let j = null;
   try{ j = await r.json(); }catch(e){}
-  if(!j) return { st:'offline' };
-  if(j.ok){ if(j.t) tokSet(j.t); return { st:'ok', j }; }
+  if(!j){ why = 'bad-json:' + r.status; return { st:'offline' }; }
+  if(j.ok){ if(j.t) tokSet(j.t); why = ''; return { st:'ok', j }; }
+  why = 'data:' + (j.error || '?') + ' (' + r.status + ')';
   return { st:j.error || 'need_login' };
 }
 
@@ -2130,7 +2135,8 @@ function showGate(kind, extra){
   g.innerHTML = GMARK +
     '<div class="gttl">' + m.ttl + '</div>' +
     '<div class="gtxt">' + m.txt + '</div>' + btn +
-    (m.note ? '<div class="gnote">' + m.note + '</div>' : '');
+    (m.note ? '<div class="gnote">' + m.note + '</div>' : '') +
+    (why ? '<div class="gwhy">' + esc(why) + '</div>' : '');
 
   if($('#gRetry')) $('#gRetry').onclick = () => startAuth();
   if($('#gLogin')) $('#gLogin').onclick = () => { location.href = loginUrl(); };

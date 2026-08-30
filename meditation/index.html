@@ -181,6 +181,17 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .lvsheet .big .n{font-size:2.4rem;font-weight:200;line-height:1.25}
 .lvsheet .big .t{font-size:1rem;color:var(--aqua)}
 
+.ltab{display:flex;flex-direction:column;gap:3px;margin-top:2px}
+.lr{display:flex;justify-content:space-between;gap:10px;font-size:.84rem;color:var(--dim);
+  padding:7px 12px;border-radius:10px}
+.lr.now{background:rgba(159,216,214,.12);border:1px solid rgba(159,216,214,.3);color:#eafaf8}
+.lr.more{color:var(--dim);opacity:.65;font-size:.78rem;background:none;border:none;padding-top:2px}
+.sheet .btns.col{flex-direction:column}
+.sheet .btns.col button{width:100%}
+.sheet .hi{color:var(--aqua)}
+.ptag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:.62rem;
+  color:var(--warm);border:1px solid rgba(227,199,154,.35);vertical-align:1px}
+
 /* ── 記録タブ ── */
 .pane{padding-top:18px;animation:fade .35s ease}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -545,11 +556,13 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
           <li>「記録」で、続いた日数やこれまでの時間を見られます。</li>
           <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。1日後・3日後・7日後…と<b>復習</b>が出てくるので、そのたびに読み直すと記憶に残ります。</li>
         </ol>
-        <p class="g-dim">途中でやめたぶんは記録されません。音はマナーモードだと鳴らないことがあるので、はじめる前に音量をたしかめてください。</p>
+        <p class="g-dim">途中でやめるときは、そこまで1分以上すわっていれば「◯分を記録してやめる」を選べます（1分未満は記録されません）。音はマナーモードだと鳴らないことがあるので、はじめる前に音量をたしかめてください。</p>
       </section>
 
       <section class="gcard">
         <h3>よくある質問</h3>
+        <p class="q">3分で始めて、途中でやめたらどうなりますか？</p>
+        <p>「やめる」を押すと、そこまで何分すわったかが出ます。<b>1分以上すわっていれば、その分を記録に残せます</b>（3分のうち2分すわったなら2分。秒は切り捨て）。記録には「途中まで」と印がつき、経験値もその分だけ入ります。1分たっていないときは記録されません。</p>
         <p class="q">集中できません。</p>
         <p>ふつうです。気が散った回数が多い日は、それだけ「戻る練習」をたくさんした日、と考えてください。</p>
         <p class="q">眠くなります。</p>
@@ -656,7 +669,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 14;
+const VER = 15;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -796,21 +809,24 @@ function update(){
   if(left <= 0) finish();
 }
 
-function finish(){
+function finish(overMin, partial){
   if(!sess) return;
-  const min = sess.min;
+  const min = overMin || sess.min;
   clearInterval(tick); tick = null;
+  if(partial) clearScheduled();          // 途中でやめたら、予約してある終わりの鐘は鳴らさない
   sess = null;
   releaseScreen();
   stopKeepAlive();
   const before = stats(), beforeGot = gotIds(before);
-  log.unshift({ at: Date.now(), min: min });
+  const rec = { at: Date.now(), min: min };
+  if(partial) rec.p = 1;                 // 途中までの記録
+  log.unshift(rec);
   save();
   const after = stats(), afterGot = gotIds(after);
   try{ if(navigator.vibrate) navigator.vibrate([400,220,400,220,600]); }catch(e){}
   $('run').classList.add('hidden');
   showMsg();
-  $('doneAmt').textContent = min + '分 ・ 通算 ' + log.length + '回目';
+  $('doneAmt').textContent = min + '分' + (partial ? '（途中まで）' : '') + ' ・ 通算 ' + log.length + '回目';
 
   // 経験値
   const L = after.lv;
@@ -843,15 +859,25 @@ function finish(){
 
 function askStop(){
   if(!sess) return;
+  const sec = Math.max(0, Math.floor((Date.now() - sess.startAt) / 1000));
+  const m = Math.floor(sec / 60);
   const s = document.createElement('div');
   s.className = 'sheet';
-  s.innerHTML = '<div class="box"><h3>やめますか？</h3>' +
-    '<p>途中でやめたぶんは記録されません。</p>' +
-    '<div class="btns"><button class="no">つづける</button><button class="yes">やめる</button></div></div>';
+  const inner = m >= 1
+    ? '<p>ここまで <b class="hi">' + m + '分' + (sec % 60) + '秒</b> すわりました。<br>' +
+      'ここまでの <b class="hi">' + m + '分</b> を記録に残すこともできます。</p>' +
+      '<div class="btns col">' +
+        '<button class="ok">' + m + '分を記録してやめる</button>' +
+        '<button class="yes">記録せずにやめる</button>' +
+        '<button class="no">つづける</button></div>'
+    : '<p>まだ1分たっていないので、記録は残りません。</p>' +
+      '<div class="btns"><button class="no">つづける</button><button class="yes">やめる</button></div>';
+  s.innerHTML = '<div class="box"><h3>やめますか？</h3>' + inner + '</div>';
   document.body.appendChild(s);
   const closeS = initSheet(s);
   s.addEventListener('click', function(e){
-    if(e.target.classList.contains('yes')){ closeS(); abort(); }
+    if(e.target.classList.contains('ok')){ closeS(); finish(m, true); }
+    else if(e.target.classList.contains('yes')){ closeS(); abort(); }
     else if(e.target.classList.contains('no')){ closeS(); }
   });
 }
@@ -1543,6 +1569,19 @@ function titleOf(lv){
   TITLES.forEach(function(x){ if(lv >= x.lv) t = x.n; });
   return t;
 }
+/* 次のレベルまでに必要な量を、いまの前後だけ表にして見せる */
+function needFor(lv){ return 100 + (lv - 1) * 60; }
+function levelRows(cur){
+  const from = Math.max(1, cur - 1);
+  let out = '';
+  for(let lv = from; lv < from + 6; lv++){
+    out += '<div class="lr' + (lv === cur ? ' now' : '') + '">' +
+      '<span>Lv ' + lv + ' → ' + (lv + 1) + '</span>' +
+      '<span class="mono">' + needFor(lv) + '</span></div>';
+  }
+  out += '<div class="lr more"><span>このあとも 60ずつ増えていきます</span><span class="mono">…</span></div>';
+  return out;
+}
 function levelOf(xp){
   let lv = 1, need = 100, acc = 0;
   while(xp >= acc + need && lv < 999){ acc += need; lv++; need += 60; }
@@ -1810,7 +1849,11 @@ $('lvCard').addEventListener('click', function(){
     '<div class="lv-sub"><span class="mono">' + L.into + ' / ' + L.need + '</span>' +
     '<span>ぜんぶで ' + s.xp + ' XP</span></div>' +
     '<h4>経験値のたまり方</h4>' +
-    '<div class="how">瞑想した1分ごとに 10<br>1回終えるごとに 20<br>その日の分に、続けている日数 × 5</div>' +
+    '<div class="how">瞑想した1分ごとに 10<br>1回終えるごとに 20<br>その日の分に、続けている日数 × 5' +
+    '<br><span style="color:var(--ink2)">目安：5分の瞑想1回で 70〜120 くらい</span></div>' +
+    '<h4>レベルの上がり方</h4>' +
+    '<div class="how">レベルが1つ上がるごとに、<b style="color:var(--ink)">次に必要な経験値が60ずつ増えます</b>。</div>' +
+    '<div class="ltab">' + levelRows(L.lv) + '</div>' +
     '<h4>称号</h4><div class="tlist">' + tl + '</div>' +
     '<h4>しるし　' + got.length + ' / ' + BADGES.length + '</h4><div class="bgrid">' + bg + '</div>' +
     '<div class="btns" style="margin-top:20px"><button class="no">とじる</button></div></div>';
@@ -1863,7 +1906,8 @@ function renderLog(){
     row.className = 'row';
     row.innerHTML = '<span class="dot"></span><div class="r-main" data-i="' + i + '">' +
       '<div class="r-d">' + dateLabel(r.at) + '</div>' +
-      '<div class="r-t mono">' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + '</div>' +
+      '<div class="r-t mono">' + pad(d.getHours()) + ':' + pad(d.getMinutes()) +
+        (r.p ? '<span class="ptag">途中まで</span>' : '') + '</div>' +
       (r.memo ? '<div class="r-memo">' + esc(r.memo) + '</div>' : '') +
       '</div>' +
       '<div class="r-m mono">' + r.min + '<small>分</small></div>' +

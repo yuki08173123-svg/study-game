@@ -69,9 +69,9 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .upd .ub:active{opacity:.85}
 
 /* ── 瞑想タブ ── */
-.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:8px 0 4px}
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:4px 0 2px}
 
-.orb{position:relative;width:min(52vw,200px);aspect-ratio:1;display:grid;place-items:center}
+.orb{position:relative;width:min(48vw,178px);aspect-ratio:1;display:grid;place-items:center}
 .orb .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(159,216,214,.22)}
 .orb .ring.r2{inset:-16px;border-color:rgba(159,216,214,.10)}
 .orb .ring.r3{inset:-32px;border-color:rgba(159,216,214,.05)}
@@ -126,18 +126,18 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .chrcell.next .cl{color:var(--warm)}
 .chrcell .lock{filter:brightness(.18) saturate(0)}
 
-.picks{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:334px}
-.pick{min-width:58px;padding:10px 4px;border-radius:999px;background:var(--surf);
+.picks{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;max-width:276px}
+.pick{width:60px;min-width:60px;padding:10px 0;border-radius:999px;background:var(--surf);
   border:1px solid var(--line);color:var(--ink2);font-size:.95rem;transition:.25s}
 .pick .m{font-size:1.05rem;font-weight:500}
 .pick .s{font-size:.72rem;color:var(--dim);margin-left:3px}
 .pick[aria-pressed="true"]{background:rgba(159,216,214,.14);border-color:rgba(159,216,214,.45);color:#eafaf8;
   box-shadow:0 0 22px rgba(120,190,195,.18)}
 
-.ambs{display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap;max-width:340px}
+.ambs{display:flex;align-items:center;gap:9px;justify-content:center;flex-wrap:wrap;max-width:246px}
 .ambs .alabel{width:100%;text-align:center;font-size:.72rem;color:var(--dim);letter-spacing:.08em;margin-bottom:1px}
-.amb{padding:7px 13px;border-radius:999px;background:var(--surf);border:1px solid var(--line);
-  color:var(--dim);font-size:.8rem;transition:.2s}
+.amb{width:76px;min-width:76px;padding:8px 0;border-radius:999px;background:var(--surf);border:1px solid var(--line);
+  color:var(--dim);font-size:.8rem;text-align:center;transition:.2s}
 .amb[aria-pressed="true"]{background:rgba(159,216,214,.13);border-color:rgba(159,216,214,.42);color:#eafaf8}
 
 .start{width:100%;max-width:290px;padding:17px;border-radius:999px;
@@ -145,7 +145,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
   color:#07222a;font-weight:700;font-size:1.05rem;letter-spacing:.16em;
   box-shadow:0 10px 34px rgba(110,180,190,.22);transition:.2s}
 .start:active{transform:scale(.985);opacity:.9}
-.hint{font-size:.78rem;color:var(--dim);text-align:center;margin-top:-18px}
+.hint{font-size:.74rem;color:var(--dim);text-align:center;margin-top:-14px;line-height:1.6}
 
 /* ── レベル（ゲーム部分） ── */
 .lvcard{width:100%;text-align:left;background:var(--surf);border:1px solid var(--line);
@@ -521,7 +521,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <button class="start" id="btnStart">はじめる</button>
-    <div class="hint">音が鳴ります。マナーモードの時は音量を確認してください。</div>
+    <div class="hint">はじめと終わりに鐘が鳴ります。音量をたしかめてください。</div>
   </div>
 
   <!-- 記録タブ -->
@@ -722,7 +722,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 17;
+const VER = 18;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);

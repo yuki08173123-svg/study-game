@@ -159,7 +159,7 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
 
   <!-- ===== ホーム ===== -->
   <div id="view-home" class="stack">
-    <div class="tabs"><button class="on">試合</button><button id="tab-to-notes">分析・課題</button></div>
+    <div class="tabs"><button class="on">試合</button><button id="tab-to-serve">サーブ練習</button><button id="tab-to-notes">分析・課題</button></div>
     <button class="primary hidden" id="upd-note" style="background:var(--win);border-color:var(--win)">🆕 新しいバージョンがあります — タップして更新</button>
     <button class="primary pt-btn" id="btn-new">＋ 新しい試合をはじめる</button>
     <div class="label">試合の記録</div>
@@ -176,9 +176,30 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
     </div>
   </div>
 
+  <!-- ===== サーブ練習タブ ===== -->
+  <div id="view-serve" class="stack hidden">
+    <div class="tabs"><button id="tab-to-home2">試合</button><button class="on">サーブ練習</button><button id="tab-to-notes2">分析・課題</button></div>
+    <div class="tiles" id="serve-tiles"></div>
+    <div id="serve-step1" class="btn-grid">
+      <button class="pt-btn w" id="sv-1in">◯ 1st 入った</button>
+      <button class="pt-btn l" id="sv-1out">✕ 1st フォルト</button>
+    </div>
+    <div id="serve-step2" class="btn-grid hidden">
+      <button class="pt-btn w" id="sv-2in">◯ 2nd 入った</button>
+      <button class="pt-btn l" id="sv-2out">✕ 2nd フォルト</button>
+    </div>
+    <button class="ghost small" id="sv-undo">↩︎ ひとつ前を取り消す</button>
+    <div class="rowline">
+      <button class="small" id="sv-save">この練習を保存する</button>
+      <button class="ghost small" id="sv-reset" style="color:var(--lose)">リセット</button>
+    </div>
+    <div class="label">過去のサーブ練習</div>
+    <div id="serve-list" class="stack"></div>
+  </div>
+
   <!-- ===== 分析・課題タブ ===== -->
   <div id="view-notes" class="stack hidden">
-    <div class="tabs"><button id="tab-to-home">試合</button><button class="on">分析・課題</button></div>
+    <div class="tabs"><button id="tab-to-home">試合</button><button id="tab-to-serve2">サーブ練習</button><button class="on">分析・課題</button></div>
     <button class="primary pt-btn" id="btn-new-note">＋ 分析・課題を保存する</button>
     <div class="label">保存した分析・課題</div>
     <div id="note-list" class="stack"></div>
@@ -353,15 +374,17 @@ function load(){
     const d = JSON.parse(localStorage.getItem(KEY));
     if(d && Array.isArray(d.matches)){
       if(!Array.isArray(d.notes)) d.notes = [];
+      if(!Array.isArray(d.serves)) d.serves = [];
+      if(!d.serveLive || !Array.isArray(d.serveLive.attempts)) d.serveLive = {attempts:[], pending:false};
       return d;
     }
   }catch(e){}
-  return {matches:[], notes:[]};
+  return {matches:[], notes:[], serves:[], serveLive:{attempts:[], pending:false}};
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){ toast("保存できませんでした（容量不足かも）"); } }
 
 /* ---------- 画面切り替え ---------- */
-const views = ["view-home","view-notes","view-note-edit","view-new","view-rec","view-sum"];
+const views = ["view-home","view-serve","view-notes","view-note-edit","view-new","view-rec","view-sum"];
 function show(v){
   views.forEach(x => $(x).classList.toggle("hidden", x !== v));
   $("foot-rec").classList.toggle("hidden", v !== "view-rec");
@@ -419,6 +442,78 @@ function renderHome(){
     box.appendChild(b);
   });
 }
+
+/* ---------- サーブ練習タブ ---------- */
+function serveStats(atts){
+  const s1n = atts.length, s1in = atts.filter(a=>a.first).length;
+  const done2 = atts.filter(a=>!a.first && a.second!==null);
+  const s2n = done2.length, s2in = done2.filter(a=>a.second).length;
+  const df = done2.filter(a=>!a.second).length;
+  return {s1n, s1in, s2n, s2in, df};
+}
+const svpct = (w,n) => n>0 ? Math.round(w/n*100)+"%" : "—";
+function renderServe(){
+  const L = db.serveLive;
+  const s = serveStats(L.attempts);
+  $("serve-tiles").innerHTML =
+    '<div class="tile good"><div class="v num">'+svpct(s.s1in,s.s1n)+'</div><div class="k">1stサーブ '+s.s1in+"/"+s.s1n+'</div></div>' +
+    '<div class="tile good"><div class="v num">'+svpct(s.s2in,s.s2n)+'</div><div class="k">2ndサーブ '+s.s2in+"/"+s.s2n+'</div></div>' +
+    '<div class="tile bad"><div class="v num">'+s.df+'</div><div class="k">ダブルフォルト</div></div>' +
+    '<div class="tile"><div class="v num">'+s.s1n+'</div><div class="k">打ったポイント数</div></div>';
+  $("serve-step1").classList.toggle("hidden", L.pending);
+  $("serve-step2").classList.toggle("hidden", !L.pending);
+  const box = $("serve-list"); box.innerHTML = "";
+  if(db.serves.length === 0){
+    box.innerHTML = '<div class="card empty">保存した練習はまだありません。</div>';
+  }
+  [...db.serves].reverse().forEach(r=>{
+    const b = document.createElement("button");
+    b.className = "card note-item";
+    b.innerHTML = '<span class="t">'+r.date+'</span><span class="p">1st '+svpct(r.s1in,r.s1n)+"（"+r.s1in+"/"+r.s1n+"）・2nd "+svpct(r.s2in,r.s2n)+"（"+r.s2in+"/"+r.s2n+"）・DF "+r.df+"</span>";
+    b.addEventListener("click", ()=>{
+      if(confirm(r.date+" の練習記録を削除しますか？")){
+        db.serves = db.serves.filter(x=>x.id!==r.id);
+        save(); renderServe(); toast("削除しました");
+      }
+    });
+    box.appendChild(b);
+  });
+  show("view-serve");
+}
+$("sv-1in").addEventListener("click", ()=>{ db.serveLive.attempts.push({first:true, second:null}); save(); renderServe(); });
+$("sv-1out").addEventListener("click", ()=>{ db.serveLive.attempts.push({first:false, second:null}); db.serveLive.pending = true; save(); renderServe(); });
+$("sv-2in").addEventListener("click", ()=>{ const a = db.serveLive.attempts; a[a.length-1].second = true; db.serveLive.pending = false; save(); renderServe(); });
+$("sv-2out").addEventListener("click", ()=>{ const a = db.serveLive.attempts; a[a.length-1].second = false; db.serveLive.pending = false; save(); renderServe(); toast("ダブルフォルト"); });
+$("sv-undo").addEventListener("click", ()=>{
+  const L = db.serveLive;
+  if(L.attempts.length === 0){ toast("取り消すものがありません"); return; }
+  if(L.pending){ L.attempts.pop(); L.pending = false; }
+  else{
+    const last = L.attempts[L.attempts.length-1];
+    if(!last.first && last.second !== null){ last.second = null; L.pending = true; } // 2ndの入力だけ取り消す
+    else L.attempts.pop();
+  }
+  save(); renderServe(); toast("ひとつ取り消しました");
+});
+$("sv-reset").addEventListener("click", ()=>{
+  if(db.serveLive.attempts.length === 0) return;
+  if(!confirm("いまのカウントを保存せずに消しますか？")) return;
+  db.serveLive = {attempts:[], pending:false};
+  save(); renderServe();
+});
+$("sv-save").addEventListener("click", ()=>{
+  const L = db.serveLive;
+  if(L.pending){ toast("2ndサーブの結果を入力してください"); return; }
+  if(L.attempts.length === 0){ toast("まだ記録がありません"); return; }
+  const s = serveStats(L.attempts);
+  db.serves.push({id:"s"+Math.random().toString(36).slice(2,10), date:today(), ...s});
+  db.serveLive = {attempts:[], pending:false};
+  save(); renderServe(); toast("練習を保存しました");
+});
+$("tab-to-serve").addEventListener("click", renderServe);
+$("tab-to-serve2").addEventListener("click", renderServe);
+$("tab-to-home2").addEventListener("click", ()=>{ renderHome(); show("view-home"); });
+$("tab-to-notes2").addEventListener("click", ()=>{ renderNotes(); show("view-notes"); });
 
 /* ---------- 分析・課題タブ ---------- */
 let editingNoteId = null;
@@ -771,7 +866,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 6; // リリースのたびに version.json の v と一緒に上げる
+const VER = 7; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

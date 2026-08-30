@@ -69,9 +69,9 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .upd .ub:active{opacity:.85}
 
 /* ── 瞑想タブ ── */
-.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:10px 0 4px}
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:8px 0 4px}
 
-.orb{position:relative;width:min(64vw,250px);aspect-ratio:1;display:grid;place-items:center}
+.orb{position:relative;width:min(52vw,200px);aspect-ratio:1;display:grid;place-items:center}
 .orb .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(159,216,214,.22)}
 .orb .ring.r2{inset:-16px;border-color:rgba(159,216,214,.10)}
 .orb .ring.r3{inset:-32px;border-color:rgba(159,216,214,.05)}
@@ -126,13 +126,19 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .chrcell.next .cl{color:var(--warm)}
 .chrcell .lock{filter:brightness(.18) saturate(0)}
 
-.picks{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.pick{min-width:64px;padding:11px 4px;border-radius:999px;background:var(--surf);
+.picks{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:334px}
+.pick{min-width:58px;padding:10px 4px;border-radius:999px;background:var(--surf);
   border:1px solid var(--line);color:var(--ink2);font-size:.95rem;transition:.25s}
 .pick .m{font-size:1.05rem;font-weight:500}
 .pick .s{font-size:.72rem;color:var(--dim);margin-left:3px}
 .pick[aria-pressed="true"]{background:rgba(159,216,214,.14);border-color:rgba(159,216,214,.45);color:#eafaf8;
   box-shadow:0 0 22px rgba(120,190,195,.18)}
+
+.ambs{display:flex;align-items:center;gap:7px;justify-content:center;flex-wrap:wrap}
+.ambs .alabel{font-size:.72rem;color:var(--dim);letter-spacing:.08em;margin-right:2px}
+.amb{padding:8px 14px;border-radius:999px;background:var(--surf);border:1px solid var(--line);
+  color:var(--dim);font-size:.82rem;transition:.2s}
+.amb[aria-pressed="true"]{background:rgba(159,216,214,.13);border-color:rgba(159,216,214,.42);color:#eafaf8}
 
 .start{width:100%;max-width:290px;padding:17px;border-radius:999px;
   background:linear-gradient(180deg,rgba(159,216,214,.95),rgba(111,182,189,.9));
@@ -191,6 +197,36 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .sheet .hi{color:var(--aqua)}
 .ptag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:.62rem;
   color:var(--warm);border:1px solid rgba(227,199,154,.35);vertical-align:1px}
+
+/* ── クラスのようす（ランキング） ── */
+.rank{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
+  padding:16px 17px;margin-bottom:14px;width:100%;text-align:left;transition:.2s}
+.rank:active{background:var(--surf2)}
+.rank .rk-k{font-size:.74rem;color:var(--dim);letter-spacing:.12em}
+.rank .rk-v{font-size:1.5rem;font-weight:300;margin-top:2px;line-height:1.3}
+.rank .rk-v small{font-size:.8rem;color:var(--ink2);margin-left:3px}
+.rank .rk-sub{display:flex;justify-content:space-between;gap:10px;margin-top:8px;
+  font-size:.76rem;color:var(--dim)}
+.rank .rk-me{color:var(--aqua)}
+.rank .rk-join{margin-top:11px;width:100%;padding:11px;border-radius:12px;
+  background:rgba(159,216,214,.14);border:1px solid rgba(159,216,214,.42);color:#eafaf8;font-size:.86rem}
+
+.rlist{display:flex;flex-direction:column;gap:6px}
+.rrow{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;
+  background:rgba(255,255,255,.04);border:1px solid transparent;font-size:.9rem}
+.rrow.me{background:rgba(159,216,214,.12);border-color:rgba(159,216,214,.34)}
+.rrow .rk{flex:none;width:26px;text-align:center;color:var(--dim);font-size:.8rem}
+.rrow.top1 .rk{color:#f0dfb4}
+.rrow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rrow .mn{flex:none;color:var(--ink2);font-size:.86rem}
+.rrow .lv{flex:none;width:64px;text-align:right;color:var(--dim);font-size:.74rem}
+.rsum{background:rgba(159,216,214,.08);border:1px solid rgba(159,216,214,.26);
+  border-radius:16px;padding:15px 16px;margin-bottom:14px;text-align:center}
+.rsum .t{font-size:1.7rem;font-weight:300;line-height:1.3}
+.rsum .s{font-size:.78rem;color:var(--dim);margin-top:3px}
+.nick{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);
+  border-radius:14px;color:var(--ink);padding:13px 14px;font-size:1rem;outline:none;font-family:inherit}
+.nick:focus{border-color:rgba(159,216,214,.45)}
 
 /* ── 記録タブ ── */
 .pane{padding-top:18px;animation:fade .35s ease}
@@ -469,6 +505,17 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
       <button class="pick" data-min="3"><span class="m mono">3</span><span class="s">分</span></button>
       <button class="pick" data-min="5"><span class="m mono">5</span><span class="s">分</span></button>
       <button class="pick" data-min="10"><span class="m mono">10</span><span class="s">分</span></button>
+      <button class="pick" data-min="15"><span class="m mono">15</span><span class="s">分</span></button>
+      <button class="pick" data-min="20"><span class="m mono">20</span><span class="s">分</span></button>
+      <button class="pick" data-min="30"><span class="m mono">30</span><span class="s">分</span></button>
+    </div>
+
+    <div class="ambs" id="ambs">
+      <span class="alabel">瞑想中の音</span>
+      <button class="amb" data-amb="none">なし</button>
+      <button class="amb" data-amb="rain">雨</button>
+      <button class="amb" data-amb="wave">波</button>
+      <button class="amb" data-amb="wind">風</button>
     </div>
 
     <button class="start" id="btnStart">はじめる</button>
@@ -477,6 +524,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
   <!-- 記録タブ -->
   <div class="pane hidden" id="paneLog">
+    <button class="rank hidden" id="rankCard"></button>
     <div class="cards">
       <div class="card"><div class="k">つづけて</div><div class="v mono"><span id="stStreak">0</span><small>日</small></div></div>
       <div class="card"><div class="k">今日</div><div class="v mono"><span id="stToday">0</span><small>分</small></div></div>
@@ -549,7 +597,8 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
       <section class="gcard">
         <h3>このアプリの使い方</h3>
         <ol>
-          <li>「瞑想」で時間を選んで、<b>はじめる</b>を押します。</li>
+          <li>「瞑想」で時間を選んで、<b>はじめる</b>を押します（1分から30分まで）。</li>
+          <li>時間の下で<b>瞑想中の音</b>（雨・波・風）を選べます。押すと少しだけ試し聞きできます。音が気になる人は「なし」のままで大丈夫です。</li>
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
           <li>終わると自動で記録されます。「ひとこと」に感じたことを残せます（声でも入れられます）。</li>
@@ -561,6 +610,8 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
       <section class="gcard">
         <h3>よくある質問</h3>
+        <p class="q">クラスのようす（ランキング）って何ですか？</p>
+        <p>「記録」タブのいちばん上にあります。参加すると、<b>クラスのみんなで座った合計時間</b>と、ひとりずつの積み重ねが見られます。参加は自由で、あとからやめられます。送られるのは<b>ニックネーム・合計時間・回数・続けた日数・レベル</b>だけです。ひとことの中身や、いつ何をしたかは送られません。</p>
         <p class="q">3分で始めて、途中でやめたらどうなりますか？</p>
         <p>「やめる」を押すと、そこまで何分すわったかが出ます。<b>1分以上すわっていれば、その分を記録に残せます</b>（3分のうち2分すわったなら2分。秒は切り捨て）。記録には「途中まで」と印がつき、経験値もその分だけ入ります。1分たっていないときは記録されません。</p>
         <p class="q">集中できません。</p>
@@ -669,7 +720,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 15;
+const VER = 16;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -736,6 +787,94 @@ function stopKeepAlive(){
   keepAlive = null;
 }
 
+/* ───────── 瞑想中の音（雨・波・風） ─────────
+   ノイズを作ってフィルタに通し、ゆっくり揺らして自然音に近づける。音源ファイルは使わない。 */
+let ambKind = localStorage.getItem('med.amb.v1') || 'none';
+let amb = null;
+
+function noiseBuf(sec, brown){
+  const len = Math.floor(ac.sampleRate * sec);
+  const b = ac.createBuffer(1, len, ac.sampleRate);
+  const d = b.getChannelData(0);
+  if(brown){
+    let last = 0;
+    for(let i = 0; i < len; i++){ const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; d[i] = last * 3.2; }
+  }else{
+    for(let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  }
+  return b;
+}
+function startAmb(){
+  if(!ac || ambKind === 'none' || amb) return;
+  const out = ac.createGain();
+  out.gain.value = 0.0001;
+  out.connect(ac.destination);
+  const src = ac.createBufferSource();
+  src.buffer = noiseBuf(5, ambKind !== 'rain');
+  src.loop = true;
+  const extra = [];
+  let node = src;
+
+  if(ambKind === 'rain'){
+    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 380;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass';  lp.frequency.value = 2600;
+    node.connect(hp); hp.connect(lp); node = lp;
+    const lfo = ac.createOscillator(); lfo.frequency.value = 0.07;
+    const lg = ac.createGain(); lg.gain.value = 600;
+    lfo.connect(lg); lg.connect(lp.frequency); lfo.start();
+    extra.push(lfo);
+  }else if(ambKind === 'wave'){
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 620;
+    node.connect(lp);
+    const swell = ac.createGain(); swell.gain.value = 0.45;
+    lp.connect(swell); node = swell;
+    const lfo = ac.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 1 / 9;   // 9秒でひと寄せ
+    const lg = ac.createGain(); lg.gain.value = 0.4;
+    lfo.connect(lg); lg.connect(swell.gain); lfo.start();
+    extra.push(lfo);
+  }else{
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 480; bp.Q.value = 0.9;
+    node.connect(bp); node = bp;
+    const lfo = ac.createOscillator(); lfo.frequency.value = 0.05;
+    const lg = ac.createGain(); lg.gain.value = 260;
+    lfo.connect(lg); lg.connect(bp.frequency); lfo.start();
+    extra.push(lfo);
+  }
+  node.connect(out);
+  src.start();
+  amb = { src: src, out: out, extra: extra };
+  const vol = ambKind === 'rain' ? 0.075 : ambKind === 'wave' ? 0.13 : 0.1;
+  out.gain.setTargetAtTime(vol, ac.currentTime, 2.2);
+}
+function stopAmb(slow){
+  if(!amb) return;
+  const a = amb; amb = null;
+  try{
+    a.out.gain.setTargetAtTime(0.0001, ac.currentTime, slow ? 1.2 : 0.05);
+    setTimeout(function(){
+      try{ a.src.stop(); a.src.disconnect(); a.out.disconnect(); }catch(e){}
+      a.extra.forEach(function(o){ try{ o.stop(); o.disconnect(); }catch(e){} });
+    }, slow ? 4000 : 300);
+  }catch(e){}
+}
+function renderAmb(){
+  document.querySelectorAll('.amb').forEach(function(b){
+    b.setAttribute('aria-pressed', b.dataset.amb === ambKind ? 'true' : 'false');
+  });
+}
+$('ambs').addEventListener('click', function(e){
+  const b = e.target.closest('.amb'); if(!b) return;
+  ambKind = b.dataset.amb;
+  try{ localStorage.setItem('med.amb.v1', ambKind); }catch(err){}
+  renderAmb();
+  ensureAudio();
+  stopAmb(false);
+  if(ambKind !== 'none' && !sess){            // 選んだ音を少しだけ聞かせる
+    startAmb();
+    setTimeout(function(){ if(!sess) stopAmb(true); }, 3800);
+  }
+});
+
 /* ───────── 画面を消さない ───────── */
 let wl = null;
 async function keepScreen(){
@@ -755,7 +894,11 @@ function setTab(t){
   document.querySelectorAll('.tab').forEach(function(b){
     b.setAttribute('aria-selected', b.dataset.tab === t ? 'true' : 'false');
   });
-  if(t === 'log') renderLog();
+  if(t === 'log'){
+    renderLog();
+    renderRank();
+    if(RANK_URL && Date.now() - rankAt > 60000) rankFetch().then(function(){ renderRank(); });
+  }
   if(t === 'learn') renderLearn();
 }
 $('tabs').addEventListener('click', function(e){
@@ -764,7 +907,7 @@ $('tabs').addEventListener('click', function(e){
 
 /* ───────── 時間えらび ───────── */
 let picked = parseInt(localStorage.getItem(KEY_PICK) || '5', 10);
-if([1,3,5,10].indexOf(picked) < 0) picked = 5;
+if([1,3,5,10,15,20,30].indexOf(picked) < 0) picked = 5;
 function renderPick(){
   document.querySelectorAll('.pick').forEach(function(b){
     b.setAttribute('aria-pressed', parseInt(b.dataset.min,10) === picked ? 'true' : 'false');
@@ -793,6 +936,7 @@ function start(){
     bell(total + 4.5, 196, 10, .8);
     bell(total + 9, 196, 11, .65);
   }
+  startAmb();
   sess = { min: min, total: total, endAt: Date.now() + total*1000, startAt: Date.now() };
   $('run').classList.remove('hidden');
   $('done').classList.add('hidden');
@@ -817,6 +961,7 @@ function finish(overMin, partial){
   sess = null;
   releaseScreen();
   stopKeepAlive();
+  stopAmb(true);
   const before = stats(), beforeGot = gotIds(before);
   const rec = { at: Date.now(), min: min };
   if(partial) rec.p = 1;                 // 途中までの記録
@@ -855,6 +1000,7 @@ function finish(overMin, partial){
   }
   $('done').classList.remove('hidden');
   setTimeout(function(){ stopKeepAlive(); }, 14000);
+  rankSend('put');
 }
 
 function askStop(){
@@ -885,6 +1031,7 @@ function abort(){
   clearInterval(tick); tick = null;
   sess = null;
   clearScheduled();
+  stopAmb(false);
   stopKeepAlive();
   releaseScreen();
   $('run').classList.add('hidden');
@@ -1767,6 +1914,155 @@ function openMemo(i){
   });
 }
 
+/* ───────── クラスのようす（ランキング） ─────────
+   送るのは ニックネーム・合計時間・回数・続けた日数・レベル・経験値 だけ。
+   ひとことの中身や、いつ何分やったかの細かい記録は送らない。
+   参加は自分で選ぶ（何もしなければ何も送られない）。 */
+const RANK_URL = 'https://script.google.com/macros/s/AKfycbx6lB6RHvX9TLWxR2gYWyQC9o4Kij91InIy7abi8XKxn6Q4nfrcxleGGACjykt-YGuH/exec';
+const RANK_PASS = 'mindrest-2026';
+const KEY_RANK = 'med.rank.v1';
+
+let rankMe = null;
+try{ rankMe = JSON.parse(localStorage.getItem(KEY_RANK) || 'null'); }catch(e){ rankMe = null; }
+function saveRankMe(){
+  try{ if(rankMe) localStorage.setItem(KEY_RANK, JSON.stringify(rankMe)); else localStorage.removeItem(KEY_RANK); }catch(e){}
+}
+function newId(){ return 'u' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+const hm = m => m >= 60 ? (Math.floor(m / 60) + '時間' + (m % 60 ? (m % 60) + '分' : '')) : (m + '分');
+
+let rankList = null, rankAt = 0;
+
+async function rankSend(action){
+  if(!RANK_URL || !rankMe) return;
+  const s = stats();
+  const body = JSON.stringify({
+    k: RANK_PASS, action: action || 'put', id: rankMe.id, name: rankMe.name,
+    min: s.totalMin, n: s.count, streak: s.streak, lv: s.lv.lv, xp: s.xp
+  });
+  try{
+    await fetch(RANK_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: body });
+  }catch(e){}
+}
+async function rankFetch(){
+  if(!RANK_URL) return null;
+  try{
+    const r = await fetch(RANK_URL + '?k=' + encodeURIComponent(RANK_PASS) + '&t=' + Date.now(), { cache: 'no-store' });
+    const d = await r.json();
+    if(d && d.list){ rankList = d.list; rankAt = Date.now(); return rankList; }
+  }catch(e){}
+  return null;
+}
+
+function renderRank(){
+  const card = $('rankCard');
+  if(!RANK_URL){ card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  if(!rankMe){
+    card.innerHTML = '<div class="rk-k">クラスのようす</div>' +
+      '<div class="rk-v" style="font-size:.95rem;font-weight:400;line-height:1.7">' +
+      'クラスのみんなで、どれくらい座ったかを見られます。</div>' +
+      '<div class="rk-sub"><span>参加するとニックネームが出ます。あとからやめられます。</span></div>' +
+      '<button class="rk-join">参加する</button>';
+    return;
+  }
+  const list = (rankList || []).slice().sort(function(a, b){ return (b.xp || 0) - (a.xp || 0); });
+  const total = list.reduce(function(t, x){ return t + (x.min || 0); }, 0);
+  const my = list.map(function(x){ return x.name; }).indexOf(rankMe.name);
+  card.innerHTML = '<div class="rk-k">クラスのようす</div>' +
+    '<div class="rk-v mono">' + (list.length ? hm(total) : '—') + '<small>みんなの合計</small></div>' +
+    '<div class="rk-sub"><span>' + (list.length ? list.length + '人が参加中' : '読みこみ中…') + '</span>' +
+    '<span class="rk-me">' + (my >= 0 ? 'あなたは ' + (my + 1) + '番目' : rankMe.name) + '</span></div>';
+}
+
+function openRank(){
+  const list = (rankList || []).slice().sort(function(a, b){ return (b.xp || 0) - (a.xp || 0); });
+  const total = list.reduce(function(t, x){ return t + (x.min || 0); }, 0);
+  const rows = list.length
+    ? list.map(function(x, i){
+        const me = rankMe && x.name === rankMe.name;
+        return '<div class="rrow' + (me ? ' me' : '') + (i === 0 ? ' top1' : '') + '">' +
+          '<span class="rk mono">' + (i + 1) + '</span>' +
+          '<span class="nm">' + esc(x.name || '') + '</span>' +
+          '<span class="mn mono">' + hm(x.min || 0) + '</span>' +
+          '<span class="lv mono">Lv ' + (x.lv || 1) + '</span></div>';
+      }).join('')
+    : '<div class="empty">まだ誰も参加していません</div>';
+
+  const sh = document.createElement('div');
+  sh.className = 'sheet';
+  sh.innerHTML = '<div class="box">' +
+    '<h3>クラスのようす</h3>' +
+    '<div class="rsum"><div class="t mono">' + hm(total) + '</div>' +
+    '<div class="s">みんなで座った時間　・　' + list.length + '人</div></div>' +
+    '<div class="rlist">' + rows + '</div>' +
+    '<p style="margin-top:16px;font-size:.76rem;color:var(--dim);line-height:1.8">' +
+    '並び順は経験値の多い順です。送っているのは、ニックネーム・合計時間・回数・続けた日数・レベルだけ。' +
+    'ひとことの中身や、いつ何をしたかは送っていません。</p>' +
+    '<div class="btns" style="margin-top:16px">' +
+    (rankMe ? '<button class="no" id="rkLeave">参加をやめる</button>' : '') +
+    '<button class="ok">とじる</button></div></div>';
+  document.body.appendChild(sh);
+  const close = initSheet(sh);
+  sh.addEventListener('click', function(e){
+    if(e.target.id === 'rkLeave'){ close(); askLeaveRank(); }
+    else if(e.target.classList.contains('ok')) close();
+  });
+}
+
+function askJoinRank(){
+  const sh = document.createElement('div');
+  sh.className = 'sheet';
+  sh.innerHTML = '<div class="box"><h3>クラスのようすに参加する</h3>' +
+    '<p>クラスのみんなの合計時間と、ひとりずつの積み重ねが見られるようになります。</p>' +
+    '<input class="nick" id="nickIn" maxlength="12" placeholder="ニックネーム（12文字まで）">' +
+    '<p style="margin-top:12px;font-size:.78rem;color:var(--dim);line-height:1.8">' +
+    '送るのは <b style="color:var(--ink2)">ニックネーム・合計時間・回数・続けた日数・レベル</b> だけです。' +
+    'ひとことの中身や、いつ何分やったかは送りません。本名は使わないでください。あとからやめられます。</p>' +
+    '<div class="btns" style="margin-top:16px"><button class="no">やめる</button>' +
+    '<button class="ok">参加する</button></div></div>';
+  document.body.appendChild(sh);
+  const close = initSheet(sh);
+  sh.addEventListener('click', async function(e){
+    if(e.target.classList.contains('ok')){
+      const v = ($('nickIn').value || '').trim().slice(0, 12);
+      if(!v){ toast('ニックネームを入れてください'); return; }
+      rankMe = { id: newId(), name: v };
+      saveRankMe();
+      close();
+      toast('参加しました');
+      renderRank();
+      await rankSend('put');
+      await rankFetch();
+      renderRank();
+    }else if(e.target.classList.contains('no')) close();
+  });
+  setTimeout(function(){ try{ $('nickIn').focus(); }catch(e){} }, 250);
+}
+
+function askLeaveRank(){
+  const sh = document.createElement('div');
+  sh.className = 'sheet';
+  sh.innerHTML = '<div class="box"><h3>参加をやめますか？</h3>' +
+    '<p>あなたの記録は一覧から消えます。アプリの中の記録はそのまま残ります。</p>' +
+    '<div class="btns"><button class="no">やめない</button><button class="yes">参加をやめる</button></div></div>';
+  document.body.appendChild(sh);
+  const close = initSheet(sh);
+  sh.addEventListener('click', async function(e){
+    if(e.target.classList.contains('yes')){
+      await rankSend('del');
+      rankMe = null; saveRankMe(); rankList = null;
+      close(); renderRank(); toast('参加をやめました');
+      await rankFetch(); renderRank();
+    }else if(e.target.classList.contains('no')) close();
+  });
+}
+
+$('rankCard').addEventListener('click', function(e){
+  if(e.target.classList.contains('rk-join')){ askJoinRank(); return; }
+  if(!rankMe){ askJoinRank(); return; }
+  openRank();
+});
+
 /* ───────── 記録の表示 ───────── */
 function stats(list){
   list = list || log;
@@ -2059,6 +2355,7 @@ $('btnCheck').addEventListener('click', function(){ checkUpdate(true); });
 /* ───────── 起動 ───────── */
 $('verNum').textContent = VER;
 renderPick();
+renderAmb();
 renderTop();
 renderLearn();
 setTab('home');

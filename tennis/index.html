@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>マッチノート</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F3F5F0">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#F3F5F0; --card:#FFFFFF; --ink:#212820; --muted:#68725F; --line:#DBE1D4;
+  --accent:#2F6BBF; --accent-soft:#E3ECF8; --accent-ink:#FFFFFF;
+  --win:#2E7D4F; --win-soft:#E2F0E6; --lose:#C4482F; --lose-soft:#F8E7E1;
+  --chip:#EEF1EA; --shadow:0 1px 3px rgba(30,40,30,.08);
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141915; --card:#1D241E; --ink:#E8ECE4; --muted:#95A18E; --line:#2D372D;
+    --accent:#79A8E8; --accent-soft:#22334A; --accent-ink:#101720;
+    --win:#63C08A; --win-soft:#1E3527; --lose:#E57B60; --lose-soft:#3E241C;
+    --chip:#27302A; --shadow:0 1px 3px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141915; --card:#1D241E; --ink:#E8ECE4; --muted:#95A18E; --line:#2D372D;
+  --accent:#79A8E8; --accent-soft:#22334A; --accent-ink:#101720;
+  --win:#63C08A; --win-soft:#1E3527; --lose:#E57B60; --lose-soft:#3E241C;
+  --chip:#27302A; --shadow:0 1px 3px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Zen Kaku Gothic New', 'Hiragino Sans', sans-serif;
+  font-size:16px; line-height:1.6; min-height:100vh;
+}
+.num{font-family:'Archivo','Zen Kaku Gothic New',sans-serif; font-variant-numeric:tabular-nums;}
+.wrap{max-width:480px; margin:0 auto; padding:16px 16px 96px;}
+header.app{
+  display:flex; align-items:baseline; gap:8px; padding:14px 4px 10px;
+}
+header.app h1{font-family:'Archivo',sans-serif; font-size:20px; font-weight:800; letter-spacing:.02em;}
+header.app .sub{font-size:12px; color:var(--muted);}
+.card{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:16px;}
+.stack{display:flex; flex-direction:column; gap:12px;}
+button{
+  font-family:inherit; font-size:16px; color:var(--ink);
+  background:var(--card); border:1px solid var(--line); border-radius:12px;
+  padding:12px 14px; cursor:pointer; touch-action:manipulation;
+}
+button:active{transform:scale(.98);}
+button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+button.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700;}
+button.ghost{background:transparent;}
+button.small{font-size:13px; padding:7px 12px; border-radius:10px;}
+.label{font-size:12px; font-weight:700; letter-spacing:.08em; color:var(--muted); text-transform:uppercase;}
+input[type=text], input[type=date], textarea{
+  width:100%; font-family:inherit; font-size:16px; color:var(--ink);
+  background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+}
+input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+.hidden{display:none !important;}
+/* ---------- home ---------- */
+.match-item{display:flex; align-items:center; gap:12px; width:100%; text-align:left;}
+.match-item .score{font-size:22px; font-weight:800;}
+.match-item .meta{flex:1; min-width:0;}
+.match-item .meta .t{font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.match-item .meta .d{font-size:12px; color:var(--muted);}
+.badge{font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px;}
+.badge.live{background:var(--lose-soft); color:var(--lose);}
+.badge.done{background:var(--chip); color:var(--muted);}
+.empty{color:var(--muted); text-align:center; padding:32px 8px; font-size:14px;}
+/* ---------- record ---------- */
+.scoreboard{display:flex; align-items:stretch; gap:10px;}
+.scoreboard .box{flex:1; text-align:center; padding:10px 6px; border-radius:12px; background:var(--card); border:1px solid var(--line);}
+.scoreboard .big{font-size:34px; font-weight:800; line-height:1.1;}
+.scoreboard .who{font-size:12px; color:var(--muted); font-weight:700;}
+.gamehead{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.gamehead .gnum{font-weight:800; font-size:17px;}
+.serve-pill{font-size:13px; font-weight:700; border-radius:999px; padding:6px 14px; border:1px solid var(--line); background:var(--chip);}
+.serve-pill.mine{background:var(--accent-soft); color:var(--accent); border-color:transparent;}
+.ptscore{text-align:center; font-size:44px; font-weight:800; letter-spacing:.04em; padding:4px 0 8px;}
+.ptscore .sep{color:var(--muted); font-weight:500; padding:0 10px;}
+.dots{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; min-height:22px;}
+.dot{width:20px; height:20px; border-radius:999px; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;}
+.dot.w{background:var(--win-soft); color:var(--win);}
+.dot.l{background:var(--lose-soft); color:var(--lose);}
+.btn-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.btn-grid .full{grid-column:1 / -1;}
+.pt-btn{font-size:17px; font-weight:700; padding:16px 8px; border-radius:14px;}
+.pt-btn small{display:block; font-size:12px; font-weight:500; color:inherit; opacity:.75;}
+.pt-btn.w{background:var(--win-soft); color:var(--win); border-color:transparent;}
+.pt-btn.l{background:var(--lose-soft); color:var(--lose); border-color:transparent;}
+.chips{display:flex; flex-wrap:wrap; gap:8px;}
+.chips button{background:var(--chip); border-color:transparent; border-radius:999px; font-size:14px; font-weight:500; padding:9px 14px;}
+.sheet-title{font-weight:700; font-size:15px;}
+.rowline{display:flex; gap:8px; align-items:center;}
+.rowline > *{flex:1;}
+.toast{
+  position:fixed; left:50%; bottom:88px; transform:translateX(-50%);
+  background:var(--ink); color:var(--bg); font-size:14px; font-weight:700;
+  padding:10px 18px; border-radius:999px; opacity:0; transition:opacity .25s; pointer-events:none;
+  max-width:90vw; text-align:center; z-index:50;
+}
+.toast.show{opacity:1;}
+.footbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:40;
+  background:var(--card); border-top:1px solid var(--line);
+}
+.footbar .in{max-width:480px; margin:0 auto; display:flex; gap:10px; padding:10px 16px calc(10px + env(safe-area-inset-bottom));}
+.footbar button{flex:1;}
+/* ---------- summary ---------- */
+.tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.tile{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center;}
+.tile .v{font-size:26px; font-weight:800;}
+.tile .k{font-size:12px; color:var(--muted); font-weight:700;}
+.tile.good .v{color:var(--win);}
+.tile.bad .v{color:var(--lose);}
+.bar-row{display:flex; align-items:center; gap:10px; font-size:14px;}
+.bar-row .name{width:9.5em; flex:none; color:var(--ink);}
+.bar-row .track, .svrow .track{display:block; height:10px; background:var(--chip); border-radius:999px; overflow:hidden;}
+.bar-row .track{flex:1;}
+.bar-row .fill, .svrow .fill{display:block; height:100%; border-radius:999px; background:var(--accent);}
+.svrow{display:flex; flex-direction:column; gap:5px;}
+.svrow .svtop{display:flex; justify-content:space-between; align-items:baseline; font-size:14px;}
+.svrow .svtop .v{font-weight:700;}
+.bar-row.badfill .fill{background:var(--lose);}
+.bar-row .n{width:2em; text-align:right; font-weight:700;}
+.h2{font-size:15px; font-weight:700; padding:6px 2px 0;}
+.loglist{display:flex; flex-direction:column; gap:10px; font-size:14px;}
+.logg{border-top:1px solid var(--line); padding-top:8px;}
+.logg:first-child{border-top:none; padding-top:0;}
+.logg .gt{font-weight:700; display:flex; gap:8px; align-items:center;}
+.logg .gt .res{font-size:12px; padding:1px 8px; border-radius:999px; font-weight:700;}
+.logg .gt .res.w{background:var(--win-soft); color:var(--win);}
+.logg .gt .res.l{background:var(--lose-soft); color:var(--lose);}
+.logpts{color:var(--muted); font-size:13px; line-height:1.9;}
+.logpts b{font-weight:700;}
+.logpts b.w{color:var(--win);} .logpts b.l{color:var(--lose);}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app"><h1>マッチノート</h1><span class="sub">テニス試合レコーダー</span></header>
+
+  <!-- ===== ホーム ===== -->
+  <div id="view-home" class="stack">
+    <button class="primary pt-btn" id="btn-new">＋ 新しい試合をはじめる</button>
+    <div class="label">試合の記録</div>
+    <div id="match-list" class="stack"></div>
+    <div class="card stack" style="gap:8px">
+      <div class="label">データ</div>
+      <div class="rowline">
+        <button class="small" id="btn-export">書き出す（コピー）</button>
+        <button class="small" id="btn-import">読み込む（貼り付け）</button>
+      </div>
+      <textarea id="io-area" rows="3" class="hidden" placeholder="ここに貼り付けてから「読み込む」をもう一度押してください"></textarea>
+      <div style="font-size:12px;color:var(--muted)">記録はこの端末のブラウザ内だけに保存されます。<br>マッチノート v1</div>
+    </div>
+  </div>
+
+  <!-- ===== 新規試合 ===== -->
+  <div id="view-new" class="stack hidden">
+    <div class="card stack">
+      <div><div class="label">日付</div><input type="date" id="in-date"></div>
+      <div><div class="label">大会・試合名</div><input type="text" id="in-title" placeholder="例：園田大会 1回戦"></div>
+      <div><div class="label">最初のサーブ</div>
+        <div class="rowline">
+          <button id="first-serve-me" class="primary">自分</button>
+          <button id="first-serve-opp">相手</button>
+        </div>
+      </div>
+      <button class="primary pt-btn" id="btn-start">記録をはじめる</button>
+      <button class="ghost small" id="btn-cancel-new">やめる</button>
+    </div>
+  </div>
+
+  <!-- ===== 記録 ===== -->
+  <div id="view-rec" class="stack hidden">
+    <div class="scoreboard num">
+      <div class="box"><div class="who">自分</div><div class="big" id="sc-me">0</div></div>
+      <div class="box"><div class="who">相手</div><div class="big" id="sc-opp">0</div></div>
+    </div>
+    <div class="card stack" style="gap:10px">
+      <div class="gamehead">
+        <span class="gnum" id="g-num">第1ゲーム</span>
+        <button class="serve-pill" id="serve-toggle">サーブ：自分</button>
+      </div>
+      <div class="ptscore num" id="pt-score">0<span class="sep">-</span>0</div>
+      <div class="dots" id="pt-dots"></div>
+    </div>
+
+    <!-- 手順1：結果ボタン -->
+    <div id="step1" class="stack">
+      <div class="btn-grid" id="btns-serve">
+        <button class="pt-btn w" data-act="w1">◯ 取った<small>1stサーブで</small></button>
+        <button class="pt-btn w" data-act="w2">◯ 取った<small>2ndサーブで</small></button>
+        <button class="pt-btn l" data-act="l1">✕ 落とした<small>1stサーブで</small></button>
+        <button class="pt-btn l" data-act="l2">✕ 落とした<small>2ndサーブで</small></button>
+        <button class="pt-btn l full" data-act="df">✕ ダブルフォルト</button>
+      </div>
+      <div class="btn-grid hidden" id="btns-return">
+        <button class="pt-btn w" data-act="w">◯ 取った</button>
+        <button class="pt-btn l" data-act="l">✕ 落とした</button>
+      </div>
+      <button class="ghost small" id="btn-undo">↩︎ ひとつ前を取り消す</button>
+    </div>
+
+    <!-- 手順2：理由チップ -->
+    <div id="step2" class="card stack hidden">
+      <div class="sheet-title" id="sheet-title">どうやって？</div>
+      <div class="chips" id="chip-box"></div>
+      <input type="text" id="in-memo" placeholder="ひとことメモ（例：深いフォア）※なくてOK">
+      <div class="rowline">
+        <button class="small" id="btn-skip-reason">理由なしで記録</button>
+        <button class="ghost small" id="btn-cancel-pt">もどる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 集計 ===== -->
+  <div id="view-sum" class="stack hidden">
+    <div class="card" style="text-align:center">
+      <div id="sum-title" style="font-weight:700"></div>
+      <div class="num" id="sum-score" style="font-size:46px;font-weight:800;letter-spacing:.03em"></div>
+      <div id="sum-keep" style="font-size:13px;color:var(--muted)"></div>
+    </div>
+    <div class="tiles" id="sum-tiles"></div>
+    <div class="card stack" id="sum-serve-card" style="gap:8px"></div>
+    <div class="card stack" style="gap:8px">
+      <div class="h2">◯ ポイントの取り方</div>
+      <div class="stack" id="sum-winways" style="gap:8px"></div>
+      <div class="h2">✕ ポイントの落とし方</div>
+      <div class="stack" id="sum-loseways" style="gap:8px"></div>
+    </div>
+    <div class="card stack" style="gap:8px">
+      <div class="h2">ポイントログ（ノートと同じ形式）</div>
+      <div class="loglist" id="sum-log"></div>
+    </div>
+    <button id="btn-copy-review">振り返り用テキストをコピー（Claudeに貼って相談できます）</button>
+  </div>
+</div>
+
+<!-- 下部バー -->
+<div class="footbar hidden" id="foot-rec"><div class="in">
+  <button class="small ghost" id="btn-home1">ホーム</button>
+  <button class="small" id="btn-finish">試合を終える</button>
+</div></div>
+<div class="footbar hidden" id="foot-sum"><div class="in">
+  <button class="small ghost" id="btn-home2">ホーム</button>
+  <button class="small" id="btn-resume">記録をつづける</button>
+</div></div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const KEY = "matchnote-v1";
+
+/* ---------- 理由の定義 ---------- */
+const R = {
+  win: [
+    {id:"ace",  label:"サービスエース", group:"winner", serveOnly:true},
+    {id:"rm",   label:"相手リターンミス", group:"oppErr", serveOnly:true},
+    {id:"oout", label:"相手アウト",   group:"oppErr"},
+    {id:"onet", label:"相手ネット",   group:"oppErr"},
+    {id:"odf",  label:"相手ダブルフォルト", group:"oppErr", returnOnly:true},
+    {id:"fw",   label:"フォアで決めた", group:"winner"},
+    {id:"bw",   label:"バックで決めた", group:"winner"},
+    {id:"vw",   label:"ボレー・スマッシュ", group:"winner"},
+    {id:"pass", label:"パッシング",   group:"winner"},
+    {id:"wother", label:"その他", group:"other"},
+  ],
+  lose: [
+    {id:"fout", label:"フォア アウト", group:"myErr"},
+    {id:"fnet", label:"フォア ネット", group:"myErr"},
+    {id:"bout", label:"バック アウト", group:"myErr"},
+    {id:"bnet", label:"バック ネット", group:"myErr"},
+    {id:"vmiss",label:"ボレーミス",  group:"myErr"},
+    {id:"rmiss",label:"リターンミス", group:"myErr", returnOnly:true},
+    {id:"oace", label:"相手エース",  group:"oppGood", returnOnly:true},
+    {id:"ow",   label:"相手に決められた", group:"oppGood"},
+    {id:"lother", label:"その他", group:"other"},
+  ],
+  df: {id:"df", label:"ダブルフォルト", group:"myErr"},
+};
+const reasonLabel = id => {
+  if(id === "df") return R.df.label;
+  const all = R.win.concat(R.lose);
+  const f = all.find(r => r.id === id);
+  return f ? f.label : "";
+};
+
+/* ---------- データ ---------- */
+let db = load();
+let cur = null;            // 記録中の試合オブジェクト
+let pending = null;        // 手順1で選んだ内容 {win, serve}
+function load(){
+  try{ const d = JSON.parse(localStorage.getItem(KEY)); if(d && Array.isArray(d.matches)) return d; }catch(e){}
+  return {matches:[]};
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){ toast("保存できませんでした（容量不足かも）"); } }
+
+/* ---------- 画面切り替え ---------- */
+const views = ["view-home","view-new","view-rec","view-sum"];
+function show(v){
+  views.forEach(x => $(x).classList.toggle("hidden", x !== v));
+  $("foot-rec").classList.toggle("hidden", v !== "view-rec");
+  $("foot-sum").classList.toggle("hidden", v !== "view-sum");
+  window.scrollTo(0,0);
+}
+let toastTimer = null;
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+
+/* ---------- スコア計算 ---------- */
+function gameScore(pts){ // 現在ゲームのポイント数 → 表示
+  let me=0, op=0;
+  pts.forEach(p => p.win ? me++ : op++);
+  const disp = n => ["0","15","30","40"][Math.min(n,3)];
+  if(me>=3 && op>=3){
+    if(me===op) return {t:"デュース", me, op, done:false};
+    if(Math.abs(me-op)===1) return {t:(me>op?"Ad 自分":"Ad 相手"), me, op, done:false};
+  }
+  const done = (me>=4 || op>=4) && Math.abs(me-op)>=2;
+  return {t:disp(me)+"|"+disp(op), me, op, done, iWon:me>op};
+}
+function gameDone(pts){
+  let me=0, op=0;
+  pts.forEach(p => p.win ? me++ : op++);
+  if((me>=4 || op>=4) && Math.abs(me-op)>=2) return {done:true, iWon:me>op};
+  return {done:false};
+}
+function matchGames(m){ // 終了ゲームの取得数
+  let me=0, op=0;
+  m.games.forEach(g => { if(g.won===true) me++; else if(g.won===false) op++; });
+  return {me, op};
+}
+function curGame(m){ return m.games[m.games.length-1]; }
+
+/* ---------- ホーム ---------- */
+function renderHome(){
+  const box = $("match-list"); box.innerHTML = "";
+  if(db.matches.length === 0){
+    box.innerHTML = '<div class="card empty">まだ記録がありません。<br>「新しい試合をはじめる」から！</div>';
+    return;
+  }
+  [...db.matches].reverse().forEach(m => {
+    const {me, op} = matchGames(m);
+    const b = document.createElement("button");
+    b.className = "card match-item";
+    b.innerHTML =
+      '<span class="score num">'+me+"-"+op+'</span>'+
+      '<span class="meta"><span class="t"></span><span class="d">'+m.date+"</span></span>"+
+      '<span class="badge '+(m.finished?"done":"live")+'">'+(m.finished?"終了":"記録中")+"</span>";
+    b.querySelector(".t").textContent = m.title || "（名前なし）";
+    b.addEventListener("click", ()=>{ cur = m; m.finished ? renderSummary() : renderRec(); });
+    box.appendChild(b);
+  });
+}
+
+/* ---------- 新規試合 ---------- */
+let firstServeMine = true;
+function setFirstServe(mine){
+  firstServeMine = mine;
+  $("first-serve-me").className = mine ? "primary" : "";
+  $("first-serve-opp").className = mine ? "" : "primary";
+}
+$("btn-new").addEventListener("click", ()=>{
+  $("in-date").value = new Date().toISOString().slice(0,10);
+  $("in-title").value = "";
+  setFirstServe(true);
+  show("view-new");
+});
+$("first-serve-me").addEventListener("click", ()=>setFirstServe(true));
+$("first-serve-opp").addEventListener("click", ()=>setFirstServe(false));
+$("btn-cancel-new").addEventListener("click", ()=>show("view-home"));
+$("btn-start").addEventListener("click", ()=>{
+  cur = {
+    id: "m"+Math.random().toString(36).slice(2,10),
+    date: $("in-date").value || new Date().toISOString().slice(0,10),
+    title: $("in-title").value.trim(),
+    finished: false,
+    games: [{n:1, myServe:firstServeMine, points:[], won:null}],
+  };
+  db.matches.push(cur); save();
+  renderRec();
+});
+
+/* ---------- 記録画面 ---------- */
+function renderRec(){
+  const g = curGame(cur);
+  const {me, op} = matchGames(cur);
+  $("sc-me").textContent = me;
+  $("sc-opp").textContent = op;
+  $("g-num").textContent = "第"+g.n+"ゲーム";
+  const st = $("serve-toggle");
+  st.textContent = "サーブ：" + (g.myServe ? "自分" : "相手");
+  st.classList.toggle("mine", g.myServe);
+  const gs = gameScore(g.points);
+  $("pt-score").innerHTML = gs.t.includes("|")
+    ? gs.t.split("|")[0] + '<span class="sep">-</span>' + gs.t.split("|")[1]
+    : gs.t;
+  const dots = $("pt-dots"); dots.innerHTML = "";
+  g.points.forEach(p=>{
+    const d = document.createElement("span");
+    d.className = "dot " + (p.win ? "w" : "l");
+    d.textContent = p.win ? "○" : "×";
+    dots.appendChild(d);
+  });
+  $("btns-serve").classList.toggle("hidden", !g.myServe);
+  $("btns-return").classList.toggle("hidden", g.myServe);
+  $("step2").classList.add("hidden");
+  $("step1").classList.remove("hidden");
+  pending = null;
+  show("view-rec");
+}
+$("serve-toggle").addEventListener("click", ()=>{
+  const g = curGame(cur);
+  if(g.points.length > 0){ toast("ポイント記録後はサーブを変えられません"); return; }
+  g.myServe = !g.myServe; save(); renderRec();
+});
+
+/* 手順1 → 手順2 */
+document.querySelectorAll("#btns-serve button, #btns-return button").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    const act = b.dataset.act;
+    if(act === "df"){ addPoint(false, "2nd-df", "df", ""); return; }
+    const win = act[0] === "w";
+    const serve = curGame(cur).myServe ? (act[1]==="1" ? "1st" : "2nd") : null;
+    pending = {win, serve};
+    openReasonSheet();
+  });
+});
+function openReasonSheet(){
+  const g = curGame(cur);
+  const list = (pending.win ? R.win : R.lose).filter(r=>{
+    if(r.serveOnly && !g.myServe) return false;
+    if(r.returnOnly && g.myServe) return false;
+    return true;
+  });
+  $("sheet-title").textContent = pending.win ? "◯ どうやって取った？" : "✕ どうして落とした？";
+  const box = $("chip-box"); box.innerHTML = "";
+  list.forEach(r=>{
+    const c = document.createElement("button");
+    c.textContent = r.label;
+    c.addEventListener("click", ()=> addPoint(pending.win, pending.serve, r.id, $("in-memo").value.trim()));
+    box.appendChild(c);
+  });
+  $("in-memo").value = "";
+  $("step1").classList.add("hidden");
+  $("step2").classList.remove("hidden");
+}
+$("btn-skip-reason").addEventListener("click", ()=> addPoint(pending.win, pending.serve, null, $("in-memo").value.trim()));
+$("btn-cancel-pt").addEventListener("click", ()=>{ pending = null; renderRec(); });
+
+function addPoint(win, serve, reason, memo){
+  const g = curGame(cur);
+  g.points.push({win, serve, reason, memo});
+  const d = gameDone(g.points);
+  if(d.done){
+    g.won = d.iWon;
+    const msg = g.myServe
+      ? (d.iWon ? "第"+g.n+"ゲーム キープ！" : "第"+g.n+"ゲーム ブレークされた…")
+      : (d.iWon ? "第"+g.n+"ゲーム ブレーク！！" : "第"+g.n+"ゲーム 相手キープ");
+    toast(msg);
+    cur.games.push({n:g.n+1, myServe:!g.myServe, points:[], won:null});
+  }
+  save(); renderRec();
+}
+$("btn-undo").addEventListener("click", ()=>{
+  let g = curGame(cur);
+  if(g.points.length === 0){
+    if(cur.games.length <= 1){ toast("取り消すポイントがありません"); return; }
+    cur.games.pop();               // 空の新ゲームを消して前ゲームへ
+    g = curGame(cur);
+    g.won = null;
+  }
+  g.points.pop(); save(); renderRec();
+  toast("ひとつ取り消しました");
+});
+$("btn-home1").addEventListener("click", ()=>{ renderHome(); show("view-home"); });
+$("btn-finish").addEventListener("click", ()=>{
+  const g = curGame(cur);
+  if(g.points.length === 0 && cur.games.length > 1) cur.games.pop(); // 空ゲームは消す
+  cur.finished = true; save();
+  renderSummary();
+});
+$("btn-resume").addEventListener("click", ()=>{
+  cur.finished = false;
+  const g = curGame(cur);
+  if(g.won !== null) cur.games.push({n:g.n+1, myServe:!g.myServe, points:[], won:null});
+  save(); renderRec();
+});
+$("btn-home2").addEventListener("click", ()=>{ renderHome(); show("view-home"); });
+
+/* ---------- 集計 ---------- */
+function collectStats(m){
+  const s = {
+    gMe:0,gOp:0, keep:0, serveG:0, brk:0, retG:0,
+    ptWin:0, ptLose:0, ace:0, df:0,
+    myErr:0, myErrDetail:{}, oppErr:0, winner:0, oppGood:0,
+    sv1:{w:0,n:0}, sv2:{w:0,n:0},
+    winWays:{}, loseWays:{},
+  };
+  m.games.forEach(g=>{
+    if(g.won === true){ s.gMe++; if(g.myServe) s.keep++; else s.brk++; }
+    if(g.won === false) s.gOp++;
+    if(g.won !== null){ g.myServe ? s.serveG++ : s.retG++; }
+    g.points.forEach(p=>{
+      p.win ? s.ptWin++ : s.ptLose++;
+      if(p.serve === "1st"){ s.sv1.n++; if(p.win) s.sv1.w++; }
+      if(p.serve === "2nd" || p.serve === "2nd-df"){ s.sv2.n++; if(p.win) s.sv2.w++; }
+      if(p.reason === "df") s.df++;
+      if(p.reason === "ace") s.ace++;
+      const all = R.win.concat(R.lose);
+      const r = p.reason === "df" ? R.df : all.find(x=>x.id===p.reason);
+      if(r){
+        if(p.win){ s.winWays[r.label] = (s.winWays[r.label]||0)+1; }
+        else{ s.loseWays[r.label] = (s.loseWays[r.label]||0)+1; }
+        if(!p.win && r.group === "myErr"){ s.myErr++; s.myErrDetail[r.label]=(s.myErrDetail[r.label]||0)+1; }
+        if(p.win && r.group === "oppErr") s.oppErr++;
+        if(p.win && r.group === "winner") s.winner++;
+        if(!p.win && r.group === "oppGood") s.oppGood++;
+      }
+    });
+  });
+  return s;
+}
+function bars(box, obj, bad){
+  box.innerHTML = "";
+  const entries = Object.entries(obj).sort((a,b)=>b[1]-a[1]);
+  if(entries.length === 0){ box.innerHTML = '<div style="font-size:13px;color:var(--muted)">記録なし</div>'; return; }
+  const max = entries[0][1];
+  entries.forEach(([name,n])=>{
+    const row = document.createElement("div");
+    row.className = "bar-row" + (bad ? " badfill" : "");
+    row.innerHTML = '<span class="name"></span><span class="track"><span class="fill" style="width:'+Math.round(n/max*100)+'%"></span></span><span class="n num">'+n+"</span>";
+    row.querySelector(".name").textContent = name;
+    box.appendChild(row);
+  });
+}
+function renderSummary(){
+  const m = cur, s = collectStats(m);
+  $("sum-title").textContent = (m.title || "試合") + "（" + m.date + "）";
+  $("sum-score").textContent = s.gMe + " - " + s.gOp;
+  $("sum-keep").textContent =
+    "キープ " + s.keep + "/" + s.serveG + "ゲーム ・ ブレーク " + s.brk + "/" + s.retG + "ゲーム";
+  const tiles = $("sum-tiles");
+  const pct = (w,n)=> n>0 ? Math.round(w/n*100)+"%" : "—";
+  tiles.innerHTML =
+    tile(s.ptWin+" / "+(s.ptWin+s.ptLose), "取ったポイント", "good") +
+    tile(s.myErr, "自分のミスでの失点", "bad") +
+    tile(s.ace, "サービスエース", "good") +
+    tile(s.df, "ダブルフォルト", "bad") +
+    tile(s.winner, "自分で決めた（ウィナー）", "good") +
+    tile(s.oppErr, "相手のミスで取った", "");
+  function tile(v,k,cls){ return '<div class="tile '+cls+'"><div class="v num">'+v+'</div><div class="k">'+k+"</div></div>"; }
+  const svrow = (name, o) =>
+    '<div class="svrow"><div class="svtop"><span>'+name+'</span><span class="v num">'+pct(o.w,o.n)+"（"+o.w+"/"+o.n+'）</span></div>'+
+    '<span class="track"><span class="fill" style="width:'+(o.n? o.w/o.n*100:0)+'%"></span></span></div>';
+  $("sum-serve-card").innerHTML =
+    '<div class="h2">サービスポイント</div>' +
+    svrow("1stサーブで取った率", s.sv1) +
+    svrow("2ndサーブで取った率", s.sv2);
+  bars($("sum-winways"), s.winWays, false);
+  bars($("sum-loseways"), s.loseWays, true);
+  // ポイントログ
+  const log = $("sum-log"); log.innerHTML = "";
+  m.games.forEach(g=>{
+    if(g.points.length === 0) return;
+    const d = document.createElement("div"); d.className = "logg";
+    const res = g.won === null ? "" :
+      '<span class="res '+(g.won?"w":"l")+'">'+(g.won?(g.myServe?"キープ":"ブレーク"):(g.myServe?"ブレークされた":"相手キープ"))+"</span>";
+    let pts = "";
+    g.points.forEach((p,i)=>{
+      const mark = p.win ? '<b class="w">○</b>' : '<b class="l">×</b>';
+      const sv = p.serve === "2nd" ? "(2nd)" : p.serve === "2nd-df" ? "" : "";
+      const r = p.reason ? reasonLabel(p.reason) : "";
+      const memo = p.memo ? "「"+esc(p.memo)+"」" : "";
+      pts += mark + sv + (r||memo ? " " + esc(r) + memo : "") + (i < g.points.length-1 ? "　/　" : "");
+    });
+    d.innerHTML = '<div class="gt">第'+g.n+"ゲーム（サーブ："+(g.myServe?"自分":"相手")+"）"+res+'</div><div class="logpts">'+pts+"</div>";
+    log.appendChild(d);
+  });
+  show("view-sum");
+}
+function esc(t){ const d=document.createElement("span"); d.textContent=t; return d.innerHTML; }
+
+/* 振り返りテキスト */
+$("btn-copy-review").addEventListener("click", ()=>{
+  const m = cur, s = collectStats(m);
+  let t = "テニスの試合の振り返りです。アドバイスをください。\n";
+  t += "■ " + (m.title||"試合") + "（" + m.date + "）\n";
+  t += "スコア " + s.gMe + "-" + s.gOp + "（キープ" + s.keep + "/" + s.serveG + "、ブレーク" + s.brk + "/" + s.retG + "）\n";
+  t += "取ったポイント " + s.ptWin + "/" + (s.ptWin+s.ptLose) + "\n";
+  t += "エース" + s.ace + " / ダブルフォルト" + s.df + " / 自分のミス失点" + s.myErr + " / ウィナー" + s.winner + " / 相手ミスでの得点" + s.oppErr + "\n";
+  t += "1stサーブポイント " + s.sv1.w + "/" + s.sv1.n + "、2nd " + s.sv2.w + "/" + s.sv2.n + "\n";
+  t += "◯取り方: " + Object.entries(s.winWays).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+"×"+v).join("、") + "\n";
+  t += "✕落とし方: " + Object.entries(s.loseWays).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+"×"+v).join("、") + "\n";
+  t += "\n■ ポイントログ\n";
+  m.games.forEach(g=>{
+    if(g.points.length===0) return;
+    t += "第"+g.n+"G("+(g.myServe?"自分":"相手")+"サーブ"+(g.won===null?"":g.won?"・取":"・落")+") ";
+    t += g.points.map(p=>{
+      let x = p.win?"○":"×";
+      if(p.serve==="2nd") x+="(2nd)";
+      if(p.reason) x+= reasonLabel(p.reason);
+      if(p.memo) x+="「"+p.memo+"」";
+      return x;
+    }).join(" / ") + "\n";
+  });
+  navigator.clipboard.writeText(t).then(()=>toast("コピーしました"), ()=>{
+    $("io-area").value = t; toast("コピーできませんでした");
+  });
+});
+
+/* ---------- 書き出し・読み込み ---------- */
+$("btn-export").addEventListener("click", ()=>{
+  const t = JSON.stringify(db);
+  navigator.clipboard.writeText(t).then(()=>toast("全データをコピーしました。メモ帳などに保存してください"), ()=>{
+    const a = $("io-area"); a.classList.remove("hidden"); a.value = t; a.select();
+    toast("下の欄を全選択してコピーしてください");
+  });
+});
+$("btn-import").addEventListener("click", ()=>{
+  const a = $("io-area");
+  if(a.classList.contains("hidden") || !a.value.trim()){
+    a.classList.remove("hidden"); a.value=""; a.focus();
+    toast("書き出したデータを貼り付けて、もう一度押してください");
+    return;
+  }
+  try{
+    const d = JSON.parse(a.value);
+    if(!d || !Array.isArray(d.matches)) throw 0;
+    db = d; save(); a.classList.add("hidden"); a.value="";
+    renderHome(); toast("読み込みました");
+  }catch(e){ toast("読み込めませんでした。データを確認してください"); }
+});
+
+/* ---------- 起動 ---------- */
+if(navigator.storage && navigator.storage.persist){ navigator.storage.persist(); } // 記録が消えにくくなるようブラウザに依頼
+renderHome();
+const liveMatch = db.matches.find(m=>!m.finished);
+if(liveMatch){ cur = liveMatch; renderRec(); } else { show("view-home"); }
+</script>
+</body>
+</html>

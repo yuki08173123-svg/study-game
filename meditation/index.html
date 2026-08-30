@@ -79,10 +79,10 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 /* ── 瞑想タブ ── */
 .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:4px 0 2px}
 
-.orb{position:relative;width:min(48vw,178px);aspect-ratio:1;display:grid;place-items:center}
+.orb{position:relative;width:min(48vw,178px);aspect-ratio:1;display:grid;place-items:center;margin-top:20px}
 .orb .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(159,216,214,.22)}
-.orb .ring.r2{inset:-16px;border-color:rgba(159,216,214,.10)}
-.orb .ring.r3{inset:-32px;border-color:rgba(159,216,214,.05)}
+.orb .ring.r2{inset:-11px;border-color:rgba(159,216,214,.10)}
+.orb .ring.r3{inset:-22px;border-color:rgba(159,216,214,.05)}
 .orb .core{position:absolute;inset:12%;border-radius:50%;
   background:radial-gradient(circle at 38% 32%, rgba(255,255,255,.30), rgba(159,216,214,.16) 42%, rgba(90,150,160,.10) 68%, rgba(90,150,160,0) 78%);
   box-shadow:0 0 60px rgba(120,190,195,.22), inset 0 0 40px rgba(255,255,255,.05);
@@ -105,6 +105,13 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
   animation:chrBreathe 8s ease-in-out infinite;
   transform-box:fill-box;transform-origin:50% 100%}
 .chr svg .glowlayer,.chrsheet .pic svg .glowlayer{animation:chrGlow 8s ease-in-out infinite}
+@media (max-height:700px){          /* 画面の小さい端末では詰める */
+  .orb{width:min(40vw,132px);margin-top:18px}
+  .stage{gap:9px;padding:2px 0}
+  .hint{display:none}
+  .lvcard{padding:11px 15px 12px}
+}
+
 @media (min-width:640px) and (min-height:720px){
   .orb{width:228px}
   .stage{gap:20px}
@@ -905,7 +912,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 28;
+const VER = 29;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);

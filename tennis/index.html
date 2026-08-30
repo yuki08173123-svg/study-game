@@ -162,7 +162,7 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
         <button class="small" id="btn-import">読み込む（貼り付け）</button>
       </div>
       <textarea id="io-area" rows="3" class="hidden" placeholder="ここに貼り付けてから「読み込む」をもう一度押してください"></textarea>
-      <div style="font-size:12px;color:var(--muted)">記録はこの端末のブラウザ内だけに保存されます。<br>マッチノート v2</div>
+      <div style="font-size:12px;color:var(--muted)">記録はこの端末のブラウザ内だけに保存されます。<br>マッチノート v3</div>
     </div>
   </div>
 
@@ -198,7 +198,10 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
     <div class="card stack" style="gap:10px">
       <div class="gamehead">
         <span class="gnum" id="g-num">第1ゲーム</span>
-        <button class="serve-pill" id="serve-toggle">サーブ：自分</button>
+        <span style="display:flex;gap:6px">
+          <button class="serve-pill" id="fmt-toggle">デュースあり</button>
+          <button class="serve-pill" id="serve-toggle">サーブ：自分</button>
+        </span>
       </div>
       <div class="ptscore num" id="pt-score">0<span class="sep">-</span>0</div>
       <div class="dots" id="pt-dots"></div>
@@ -424,6 +427,7 @@ function renderRec(){
   const st = $("serve-toggle");
   st.textContent = "サーブ：" + (g.myServe ? "自分" : "相手");
   st.classList.toggle("mine", g.myServe);
+  $("fmt-toggle").textContent = cur.noAd ? "ノーアド" : "デュースあり";
   const gs = gameScore(g.points, cur.noAd);
   $("pt-score").innerHTML = gs.t.includes("|")
     ? gs.t.split("|")[0] + '<span class="sep">-</span>' + gs.t.split("|")[1]
@@ -481,20 +485,30 @@ function openReasonSheet(){
 $("btn-skip-reason").addEventListener("click", ()=> addPoint(pending.win, pending.serve, null, $("in-memo").value.trim()));
 $("btn-cancel-pt").addEventListener("click", ()=>{ pending = null; renderRec(); });
 
+function finishGameIfDone(){
+  const g = curGame(cur);
+  const d = gameDone(g.points, cur.noAd);
+  if(!d.done) return false;
+  g.won = d.iWon;
+  const msg = g.myServe
+    ? (d.iWon ? "第"+g.n+"ゲーム キープ！" : "第"+g.n+"ゲーム ブレークされた…")
+    : (d.iWon ? "第"+g.n+"ゲーム ブレーク！！" : "第"+g.n+"ゲーム 相手キープ");
+  toast(msg);
+  cur.games.push({n:g.n+1, myServe:!g.myServe, points:[], won:null});
+  return true;
+}
 function addPoint(win, serve, reason, memo){
   const g = curGame(cur);
   g.points.push({win, serve, reason, memo});
-  const d = gameDone(g.points, cur.noAd);
-  if(d.done){
-    g.won = d.iWon;
-    const msg = g.myServe
-      ? (d.iWon ? "第"+g.n+"ゲーム キープ！" : "第"+g.n+"ゲーム ブレークされた…")
-      : (d.iWon ? "第"+g.n+"ゲーム ブレーク！！" : "第"+g.n+"ゲーム 相手キープ");
-    toast(msg);
-    cur.games.push({n:g.n+1, myServe:!g.myServe, points:[], won:null});
-  }
+  finishGameIfDone();
   save(); renderRec();
 }
+$("fmt-toggle").addEventListener("click", ()=>{
+  cur.noAd = !cur.noAd;
+  toast(cur.noAd ? "この試合をノーアドに変更しました" : "この試合をデュースありに変更しました");
+  finishGameIfDone(); // 例：Ad中にノーアドへ変えたら、そのゲームは決着済みになる
+  save(); renderRec();
+});
 $("btn-undo").addEventListener("click", ()=>{
   let g = curGame(cur);
   if(g.points.length === 0){

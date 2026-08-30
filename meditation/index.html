@@ -181,6 +181,13 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .start:active{transform:scale(.985);opacity:.9}
 .bgmlink{font-size:.76rem;color:var(--ink2);text-decoration:underline;text-underline-offset:4px;
   margin-top:-6px;opacity:.85;padding:4px}
+.welcome{display:flex;align-items:flex-start;gap:10px;margin:12px 0 0;padding:14px 15px;
+  border-radius:16px;background:rgba(159,216,214,.10);border:1px solid rgba(159,216,214,.3);
+  animation:fade .4s ease}
+.welcome .wc-t{flex:1;font-size:.86rem;color:#dff6f4;line-height:1.8}
+.welcome .wc-t b{color:#eafaf8}
+.welcome .wc-x{flex:none;color:var(--dim);font-size:.85rem;padding:2px 4px}
+
 .bgmbar{display:flex;align-items:center;gap:10px;margin:10px 0 0;
   padding:9px 12px;border-radius:14px;
   background:rgba(159,216,214,.09);border:1px solid rgba(159,216,214,.3);
@@ -493,7 +500,27 @@ body.bgm .stage{gap:14px}
 .done .msg .tag{display:inline-block;font-size:.66rem;letter-spacing:.24em;color:var(--warm);
   border:1px solid rgba(227,199,154,.38);border-radius:999px;padding:3px 13px;margin-bottom:11px}
 .done .msg p{margin:0;color:var(--ink2);font-size:.94rem;line-height:1.95}
+.moodpick{margin-top:20px;animation:fadeIn 1.4s ease both;animation-delay:.7s}
+.moodpick .mp-q{font-size:.82rem;color:var(--dim);letter-spacing:.1em;margin-bottom:11px}
+.mp-row{display:flex;align-items:center;justify-content:center;gap:12px}
+.mp-row button{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  background:none;border:none;padding:0}
+.mp-row button i{display:block;border-radius:50%;background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.16);transition:.25s}
+.mp-row button[data-m="1"] i{width:12px;height:12px}
+.mp-row button[data-m="2"] i{width:16px;height:16px}
+.mp-row button[data-m="3"] i{width:20px;height:20px}
+.mp-row button[data-m="4"] i{width:24px;height:24px}
+.mp-row button[data-m="5"] i{width:28px;height:28px}
+.mp-row button[aria-pressed="true"] i{background:radial-gradient(circle at 38% 34%,#eafaf8,#9fd8d6 70%);
+  border-color:rgba(159,216,214,.7);box-shadow:0 0 16px rgba(159,216,214,.45)}
+.mp-lb{display:flex;justify-content:space-between;max-width:236px;margin:9px auto 0;
+  font-size:.68rem;color:var(--dim)}
+
 .done .amt{margin-top:18px;font-size:.95rem;color:var(--dim)}
+.mtag{display:inline-flex;align-items:center;gap:3px;margin-left:8px;vertical-align:1px}
+.mtag i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.18)}
+.mtag i.on{background:var(--aqua);box-shadow:0 0 6px rgba(159,216,214,.6)}
 .done .gain{width:min(78vw,290px);margin:14px auto 0;animation:fadeIn 1.4s ease both;animation-delay:.9s}
 .done .gain .gx{font-size:1.15rem;color:var(--warm);letter-spacing:.06em;margin-bottom:9px}
 .done .gain .gs{display:flex;justify-content:space-between;font-size:.72rem;color:var(--dim);margin-top:7px}
@@ -555,6 +582,11 @@ body.bgm .stage{gap:14px}
   <div class="bgmbar hidden" id="bgmBar">
     <span class="bb-t"><b id="bgmName">雨</b> を流しています</span>
     <button class="bb-x" id="bgmStop">とめる</button>
+  </div>
+
+  <div class="welcome hidden" id="welcome">
+    <div class="wc-t" id="wcText"></div>
+    <button class="wc-x" id="wcClose" aria-label="とじる">✕</button>
   </div>
 
   <div class="upd hidden" id="updBar">
@@ -701,7 +733,7 @@ body.bgm .stage{gap:14px}
           <li>その横の<b>「音の設定」</b>で、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。</li>
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
-          <li>終わると自動で記録されます。「ひとこと」に感じたことを残せます（声でも入れられます）。</li>
+          <li>終わると自動で記録されます。<b>いまの気分</b>を5段階でひと押しでき、「ひとこと」に感じたことも残せます（声でも入れられます）。</li>
           <li>「記録」で、続いた日数やこれまでの時間を見られます。<b>カレンダー</b>は月ごとに見られ、‹ › で始めた月までさかのぼれます。<b>日を押すと、その日に何分すわったか、書いたひとことが見られます</b>。</li>
           <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。1日後・3日後・7日後…と<b>復習</b>が出てくるので、そのたびに読み直すと記憶に残ります。</li>
         </ol>
@@ -839,6 +871,18 @@ body.bgm .stage{gap:14px}
     <span class="tag hidden" id="doneTag">豆知識</span>
     <p id="doneMsg">そのまま、ゆっくり目を開けてください。</p>
   </div>
+  <div class="moodpick" id="moodPick">
+    <div class="mp-q">いまの気分は？</div>
+    <div class="mp-row" id="mpRow">
+      <button data-m="1" aria-label="もやもや"><i></i></button>
+      <button data-m="2"><i></i></button>
+      <button data-m="3"><i></i></button>
+      <button data-m="4"><i></i></button>
+      <button data-m="5" aria-label="すっきり"><i></i></button>
+    </div>
+    <div class="mp-lb"><span>もやもや</span><span>すっきり</span></div>
+  </div>
+
   <div class="amt mono" id="doneAmt"></div>
   <div class="gain">
     <div class="gx mono">+<span id="gainXp">0</span> XP</div>
@@ -857,7 +901,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 26;
+const VER = 27;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1351,6 +1395,7 @@ function finish(overMin, partial){
   stopKeepAlive();
   stopAmb(true);
   const before = stats(), beforeGot = gotIds(before);
+  try{ localStorage.setItem(KEY_WC, String(startOfDay(Date.now()))); }catch(e){}
   const rec = { at: Date.now(), min: min };
   if(partial) rec.p = 1;                 // 途中までの記録
   log.unshift(rec);
@@ -1359,6 +1404,7 @@ function finish(overMin, partial){
   try{ if(navigator.vibrate) navigator.vibrate([400,220,400,220,600]); }catch(e){}
   $('run').classList.add('hidden');
   showMsg();
+  renderMood();
   $('doneAmt').textContent = min + '分' + (partial ? '（途中まで）' : '') + ' ・ 通算 ' + log.length + '回目';
 
   // 経験値
@@ -1427,6 +1473,30 @@ function abort(){
 
 $('btnStart').addEventListener('click', start);
 $('btnStop').addEventListener('click', askStop);
+/* 終わったあとの気分（5段階）。押すとすぐ記録に入る */
+function renderMood(){
+  const m = (log[0] && log[0].m) || 0;
+  document.querySelectorAll('#mpRow button').forEach(function(b){
+    b.setAttribute('aria-pressed', parseInt(b.dataset.m, 10) === m ? 'true' : 'false');
+  });
+}
+$('mpRow').addEventListener('click', function(e){
+  const b = e.target.closest('button'); if(!b || !log.length) return;
+  const m = parseInt(b.dataset.m, 10);
+  log[0].m = (log[0].m === m) ? 0 : m;      // もう一度押すと取り消し
+  if(!log[0].m) delete log[0].m;
+  save(); renderMood(); renderLog();
+  if(log[0] && log[0].m) toast('気分を記録しました');
+});
+
+/* 気分を小さな点で見せる */
+function moodDots(m){
+  if(!m) return '';
+  let out = '<span class="mtag" title="いまの気分 ' + m + '/5">';
+  for(let i = 1; i <= 5; i++) out += '<i class="' + (i <= m ? 'on' : '') + '"></i>';
+  return out + '</span>';
+}
+
 $('btnDoneMemo').addEventListener('click', function(){ openMemo(0); });
 $('btnClose').addEventListener('click', function(){
   $('done').classList.add('hidden');
@@ -2560,7 +2630,7 @@ function openDay(ts){
         return '<div class="dayrow"><span class="dt mono">' + pad(new Date(r.at).getHours()) + ':' +
           pad(new Date(r.at).getMinutes()) + '</span>' +
           '<span class="dm"><b class="mono">' + r.min + '</b>分' +
-          (r.p ? '<span class="ptag">途中まで</span>' : '') +
+          (r.p ? '<span class="ptag">途中まで</span>' : '') + moodDots(r.m) +
           (r.memo ? '<span class="dmemo">' + esc(r.memo) + '</span>' : '') + '</span></div>';
       }).join('')
     : '<div class="empty">この日は記録がありません</div>';
@@ -2576,12 +2646,37 @@ function openDay(ts){
   sh.addEventListener('click', function(e){ if(e.target.classList.contains('ok')) close(); });
 }
 
+/* 何日かあいて戻ってきた人に、ひとこと。1日1回だけ出す */
+const KEY_WC = 'med.wc.v1';
+function renderWelcome(){
+  const el = $('welcome');
+  if(!log.length){ el.classList.add('hidden'); return; }
+  const today = startOfDay(Date.now());
+  const last = startOfDay(log[0].at);
+  const gap = Math.round((today - last) / DAY);
+  let seen = 0;
+  try{ seen = parseInt(localStorage.getItem(KEY_WC) || '0', 10); }catch(e){}
+  if(gap < 3 || seen === today){ el.classList.add('hidden'); return; }
+  const txt = gap >= 14
+    ? '<b>おかえりなさい。</b>' + gap + '日ぶりですね。空いた分はレベルに響きません。<b>まずは1分</b>から、また始めましょう。'
+    : gap >= 7
+      ? '<b>おかえりなさい。</b>1週間ぶりですね。今日は<b>1分だけ</b>座ってみませんか。それで十分です。'
+      : '<b>おかえりなさい。</b>' + gap + '日ぶりですね。<b>まずは1分から</b>で大丈夫です。';
+  $('wcText').innerHTML = txt;
+  el.classList.remove('hidden');
+}
+$('wcClose').addEventListener('click', function(){
+  try{ localStorage.setItem(KEY_WC, String(startOfDay(Date.now()))); }catch(e){}
+  $('welcome').classList.add('hidden');
+});
+
 function renderTop(){
   const s = stats();
   $('topSub').textContent = s.todayMin > 0
     ? '今日 ' + s.todayMin + '分' + (s.streak > 1 ? ' ・ ' + s.streak + '日つづけて' : '')
     : (s.streak > 0 ? s.streak + '日つづけて' : '');
   renderLevel(s);
+  renderWelcome();
 }
 
 function renderLevel(s){
@@ -2679,7 +2774,7 @@ function renderLog(){
     row.innerHTML = '<span class="dot"></span><div class="r-main" data-i="' + i + '">' +
       '<div class="r-d">' + dateLabel(r.at) + '</div>' +
       '<div class="r-t mono">' + pad(d.getHours()) + ':' + pad(d.getMinutes()) +
-        (r.p ? '<span class="ptag">途中まで</span>' : '') + '</div>' +
+        (r.p ? '<span class="ptag">途中まで</span>' : '') + moodDots(r.m) + '</div>' +
       (r.memo ? '<div class="r-memo">' + esc(r.memo) + '</div>' : '') +
       '</div>' +
       '<div class="r-m mono">' + r.min + '<small>分</small></div>' +

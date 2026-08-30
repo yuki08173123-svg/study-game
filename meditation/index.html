@@ -661,6 +661,9 @@ body.bgm .stage{gap:14px}
         <button class="amb" data-amb="wind">風</button>
         <button class="amb" data-amb="fire">たき火</button>
         <button class="amb" data-amb="creek">せせらぎ</button>
+        <button class="amb" data-amb="insects">虫の声</button>
+        <button class="amb" data-amb="chime">風鈴</button>
+        <button class="amb" data-amb="orin">おりん</button>
       </div>
     </div>
 
@@ -750,7 +753,7 @@ body.bgm .stage{gap:14px}
         <h3>このアプリの使い方</h3>
         <ol>
           <li>「瞑想」で時間を選んで、<b>はじめる</b>を押します（1分から60分まで）。</li>
-          <li>時間の下の<b>「瞑想中の音」</b>を押すと、雨・波・風・たき火・せせらぎ から選べます。押すと少しだけ試し聞きでき、選ぶとまたたたまれます。音が気になる人は「なし」のままで大丈夫です。</li>
+          <li>時間の下の<b>「瞑想中の音」</b>を押すと、雨・波・風・たき火・せせらぎ・虫の声・風鈴・おりん から選べます。押すと少しだけ試し聞きでき、選ぶとまたたたまれます。音が気になる人は「なし」のままで大丈夫です。</li>
           <li>瞑想せずに<b>音だけ流す</b>こともできます。「はじめる」の下の<b>「音だけ流す（勉強のおともに）」</b>を押すと、選んだ音がずっと流れます。<b>この時間は記録にもレベルにも入りません</b>。勉強や作業のおともにどうぞ。</li>
           <li>その横の<b>「音の設定」</b>で、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。</li>
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
@@ -924,7 +927,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 34;
+const VER = 35;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1121,12 +1124,31 @@ function startAmb(){
     const g2 = ac.createGain(); g2.gain.value = 0.34;
     o2.connect(g2); g2.connect(wg.gain); o2.start();
     extra.push(o2);
-  }else{ // fire（たき火）
+  }else if(ambKind === 'fire'){
     const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 300;
     node.connect(lp);
     const bed = ac.createGain(); bed.gain.value = 0.26;   // 地の音はごく控えめ。主役ははぜる音
     lp.connect(bed); node = bed;
     wob(lp.frequency, 0.08, 90);
+  }else if(ambKind === 'insects'){
+    // 夜の空気。ほとんど聞こえないくらい低く。主役は虫の音
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 240;
+    node.connect(lp);
+    const bed = ac.createGain(); bed.gain.value = 0.16;
+    lp.connect(bed); node = bed;
+  }else if(ambKind === 'chime'){
+    // そよ風。風鈴が鳴る気配として、ごく薄く
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 420; bp.Q.value = 0.8;
+    node.connect(bp);
+    const bed = ac.createGain(); bed.gain.value = 0.3;
+    bp.connect(bed); node = bed;
+    wob(bp.frequency, 0.05, 160);
+  }else{ // orin（おりん）
+    // 低いうなりだけ。おりんの余韻は ambTick で足す
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 160;
+    node.connect(lp);
+    const bed = ac.createGain(); bed.gain.value = 0.08;
+    lp.connect(bed); node = bed;
   }
 
   node.connect(swell);
@@ -1134,23 +1156,87 @@ function startAmb(){
   amb = { src: src, src2: src2, out: out, swell: swell, extra: extra, tick: 0, pop: null };
 
   const vol = ambKind === 'rain' ? 0.07 : ambKind === 'wave' ? 0.16
-            : ambKind === 'wind' ? 0.13 : ambKind === 'fire' ? 0.12 : 0.05;
+            : ambKind === 'wind' ? 0.13 : ambKind === 'fire' ? 0.12
+            : ambKind === 'creek' ? 0.05 : ambKind === 'insects' ? 0.1
+            : ambKind === 'chime' ? 0.12 : 0.18;
   out.gain.setTargetAtTime(vol * snd.amb, now, 3.2);   // 3秒ほどかけて、そっと入る
 
   if(ambKind === 'fire' || ambKind === 'creek' || ambKind === 'rain'){
     amb.pop = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.09), ac.sampleRate);
     const pd = amb.pop.getChannelData(0);
     for(let i = 0; i < pd.length; i++) pd[i] = Math.random() * 2 - 1;
-    ambTick();
   }
+  if(ambKind !== 'wave' && ambKind !== 'wind') ambTick();
+}
+
+/* 虫の音（リーン…）。トリルのかかった高い正弦波 */
+function chirp(base, dur, vol, at){
+  const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = base;
+  const trem = ac.createOscillator(); trem.frequency.value = 22 + Math.random() * 10;
+  const tg = ac.createGain(); tg.gain.value = .5;
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.linearRampToValueAtTime(vol, at + dur * 0.25);
+  g.gain.setValueAtTime(vol, at + dur * 0.7);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  const am = ac.createGain(); am.gain.value = .5;       // 振幅をふるわせる
+  trem.connect(tg); tg.connect(am.gain);
+  o.connect(am); am.connect(g); g.connect(amb.swell);
+  o.start(at); trem.start(at);
+  o.stop(at + dur + .05); trem.stop(at + dur + .05);
+}
+
+/* 風鈴・おりん（澄んだ減衰音） */
+function ting(base, dur, vol, at){
+  const parts = [[1, 1], [2.76, .35], [5.4, .14], [8.9, .05]];
+  const out2 = ac.createGain(); out2.gain.value = vol;
+  out2.connect(amb.swell);
+  parts.forEach(function(p){
+    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = base * p[0];
+    const g = ac.createGain();
+    const d = Math.max(0.25, dur * (1 - p[0] / 14));
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.linearRampToValueAtTime(p[1] * .3, at + .008);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + d);
+    o.connect(g); g.connect(out2);
+    o.start(at); o.stop(at + d + .05);
+  });
 }
 
 /* たき火のはぜる音／せせらぎの水はね／雨の粒。
    強さも間もばらばらにして、たまに静かな間をつくる */
 function ambTick(){
-  if(!amb || !amb.pop) return;
+  if(!amb) return;
   const k = ambKind;
   const t = ac.currentTime;
+
+  if(k === 'insects'){
+    // 鈴虫ふう。ときどき2匹が、すこし違う高さで
+    const n = Math.random() < 0.25 ? 2 : 1;
+    for(let i = 0; i < n; i++){
+      chirp(3800 + Math.random() * 900,
+            0.5 + Math.random() * 0.9,
+            0.11 + Math.random() * 0.09,
+            t + i * (0.25 + Math.random() * 0.4));
+    }
+    amb.tick = setTimeout(ambTick, 900 + Math.random() * 2600);
+    return;
+  }
+  if(k === 'chime'){
+    // 風が通ったときだけ、チリン。たまに2連
+    ting(2300 + Math.random() * 900, 1.6 + Math.random() * 1.2, 0.34 + Math.random() * 0.2, t);
+    if(Math.random() < 0.3) ting(2600 + Math.random() * 800, 1.2, 0.22, t + 0.12 + Math.random() * 0.2);
+    amb.tick = setTimeout(ambTick, 3200 + Math.random() * 9000);
+    return;
+  }
+  if(k === 'orin'){
+    // おりん。低く長い余韻が、忘れたころに
+    ting(320 + Math.random() * 40, 9 + Math.random() * 4, 0.9, t);
+    amb.tick = setTimeout(ambTick, 22000 + Math.random() * 23000);
+    return;
+  }
+
+  if(!amb.pop) return;
 
   if(k === 'rain'){
     // 粒：ごく短い高い音をいくつも。ザーッの上に「ぽつぽつ」が乗る
@@ -1219,7 +1305,7 @@ function stopAmb(slow){
     }, slow ? 4000 : 300);
   }catch(e){}
 }
-const AMB_NAME = { rain:'雨', wave:'波', wind:'風', fire:'たき火', creek:'せせらぎ' };
+const AMB_NAME = { rain:'雨', wave:'波', wind:'風', fire:'たき火', creek:'せせらぎ', insects:'虫の声', chime:'風鈴', orin:'おりん' };
 function renderAmb(){
   document.querySelectorAll('.amb').forEach(function(b){
     b.setAttribute('aria-pressed', b.dataset.amb === ambKind ? 'true' : 'false');

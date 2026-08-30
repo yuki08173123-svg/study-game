@@ -483,7 +483,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 23;
+const VER = 24;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat';
@@ -1312,6 +1312,14 @@ function vSet(){
       <button class="item" id="howto"><div class="nm">ホーム画面に置く方法</div></button>
       <button class="item" id="adm"><div class="nm">動画を管理する（配信者用）</div></button>
     </div>
+
+    <div class="sec"><h2>ログイン</h2></div>
+    <div class="group">
+      <button class="item" id="lout"><div class="nm">ログアウト</div></button>
+    </div>
+    <div class="lead" style="margin-top:8px">端末を変えるときや、別のDiscordで入り直したいときに使います。
+      見た回数やアウトプットは消えません。</div>
+
     <div class="ver">Theater v${VER}</div>`;
 
   $('#swLoop').onclick = () => { cfg.loop = !cfg.loop; saveCfg(); vSet();
@@ -1335,6 +1343,10 @@ function vSet(){
     '<b>Android</b><br>1. Chrome でこのページを開く<br>' +
     '2. 右上の … を押す<br>3.「ホーム画面に追加」を選ぶ');
   $('#adm').onclick = () => go('admin');
+  $('#lout').onclick = () => askYes(
+    { title:'ログアウトしますか？', msg:'もう一度 Discord でログインすれば、また見られます。見た回数やアウトプットは消えません。',
+      ok:'ログアウト', danger:true },
+    () => { wipeContent(); why = ''; showGate('login'); });
 }
 
 /* ===================== 使い方スライド ===================== */

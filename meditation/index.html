@@ -168,6 +168,22 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
   color:#07222a;font-weight:700;font-size:1.05rem;letter-spacing:.16em;
   box-shadow:0 10px 34px rgba(110,180,190,.22);transition:.2s}
 .start:active{transform:scale(.985);opacity:.9}
+.bgmlink{font-size:.76rem;color:var(--ink2);text-decoration:underline;text-underline-offset:4px;
+  margin-top:-6px;opacity:.85;padding:4px}
+.bgmbar{display:flex;align-items:center;gap:10px;margin:10px 0 0;
+  padding:9px 12px;border-radius:14px;
+  background:rgba(159,216,214,.09);border:1px solid rgba(159,216,214,.3);
+  animation:fade .3s ease}
+.bgmbar .bb-t{flex:1;min-width:0;font-size:.82rem;color:var(--ink2);line-height:1.5}
+.bgmbar .bb-t b{color:var(--aqua)}
+.bgmbar .bb-t small{font-size:.68rem;color:var(--dim);margin-left:6px}
+.bgmbar .bb-x{flex:none;padding:7px 13px;border-radius:10px;font-size:.78rem;
+  background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--ink)}
+
+
+body.bgm .hint{display:none}
+body.bgm .orb{width:min(36vw,136px)}
+body.bgm .stage{gap:14px}
 .hint{font-size:.74rem;color:var(--dim);text-align:center;margin-top:-14px;line-height:1.6}
 
 /* ── レベル（ゲーム部分） ── */
@@ -507,6 +523,11 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     <div class="t-sub" id="topSub"></div>
   </div>
 
+  <div class="bgmbar hidden" id="bgmBar">
+    <span class="bb-t"><b id="bgmName">雨</b> を流しています</span>
+    <button class="bb-x" id="bgmStop">とめる</button>
+  </div>
+
   <div class="upd hidden" id="updBar">
     <span class="ut" id="updTxt"></span>
     <button class="ub" id="updBtn">更新する</button>
@@ -556,6 +577,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <button class="start" id="btnStart">はじめる</button>
+    <button class="bgmlink" id="btnBgm">音だけ流す（勉強のおともに）</button>
     <div class="hint">はじめと終わりに鐘が鳴ります。音量をたしかめてください。</div>
   </div>
 
@@ -635,6 +657,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
         <ol>
           <li>「瞑想」で時間を選んで、<b>はじめる</b>を押します（1分から60分まで）。</li>
           <li>時間の下で<b>瞑想中の音</b>（雨・波・風・たき火・せせらぎ）を選べます。押すと少しだけ試し聞きできます。音が気になる人は「なし」のままで大丈夫です。</li>
+          <li>瞑想せずに<b>音だけ流す</b>こともできます。「はじめる」の下の<b>「音だけ流す（勉強のおともに）」</b>を押すと、選んだ音がずっと流れます。<b>この時間は記録にもレベルにも入りません</b>。勉強や作業のおともにどうぞ。</li>
           <li>その横の<b>「音の設定」</b>で、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。</li>
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
@@ -647,6 +670,8 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
       <section class="gcard">
         <h3>よくある質問</h3>
+        <p class="q">勉強しながら音だけ流したい。</p>
+        <p>「瞑想」タブの「はじめる」の下にある<b>「音だけ流す（勉強のおともに）」</b>を押してください。選んだ音がずっと流れ、画面の下に「とめる」が出ます。<b>この時間は瞑想の記録にもレベルにも入りません</b>ので、勉強や作業のあいだに気がねなく使えます。</p>
         <p class="q">スマホを消音にしていると、鐘が鳴りません。</p>
         <p>「瞑想中の音」の横にある<b>「音の設定」</b>を開いて、<b>「消音モードでも鳴らす」をオン</b>にしてください（はじめからオンになっています）。iPhone横のスイッチを消音にしたままでも、鐘と瞑想中の音が鳴るようになります。それでも鳴らない端末では、消音モードを解除してください。</p>
         <p class="q">クラスのようす（ランキング）って何ですか？</p>
@@ -792,7 +817,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 23;
+const VER = 24;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -905,21 +930,17 @@ function startAmb(){
   const out = ac.createGain();          // 全体の音量（ゆっくり出入りする）
   out.gain.value = 0.0001;
 
-  // 左右にごくゆっくり揺れると、包まれている感じになる
-  let tail = out;
-  if(ac.createStereoPanner){
+  if(ac.createStereoPanner){            // 左右にごくゆっくり揺れると、包まれた感じになる
     const pan = ac.createStereoPanner();
     out.connect(pan); pan.connect(ac.destination);
     const plfo = ac.createOscillator(); plfo.frequency.value = 1 / 27;
     const pg = ac.createGain(); pg.gain.value = 0.22;
     plfo.connect(pg); pg.connect(pan.pan); plfo.start();
-    tail = pan;
   }else{
     out.connect(ac.destination);
   }
 
-  // 息づかいのような、ゆっくりした強弱（13秒と19秒を重ねて、規則的にしない）
-  const swell = ac.createGain();
+  const swell = ac.createGain();        // ゆっくりした強弱（13秒と19秒を重ねて規則的にしない）
   swell.gain.value = 0.82;
   swell.connect(out);
   const extra = [];
@@ -930,11 +951,13 @@ function startAmb(){
     extra.push(o);
   });
 
+  const bright = (ambKind === 'rain' || ambKind === 'creek');
+  let src2 = null;
   const src = ac.createBufferSource();
-  src.buffer = noiseBuf(6, ambKind !== 'rain' && ambKind !== 'creek');
+  src.buffer = noiseBuf(6, !bright);
   src.loop = true;
   let node = src;
-  const wob = function(target, hz, depth){    // フィルタの開き具合をゆらす
+  const wob = function(target, hz, depth){
     const o = ac.createOscillator(); o.frequency.value = hz;
     const g = ac.createGain(); g.gain.value = depth;
     o.connect(g); g.connect(target); o.start();
@@ -942,48 +965,72 @@ function startAmb(){
   };
 
   if(ambKind === 'rain'){
-    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 260;
-    const lp = ac.createBiquadFilter(); lp.type = 'lowpass';  lp.frequency.value = 1400; lp.Q.value = 0.4;
+    // 雨：中〜高域のザーッ。粒（水滴）は下の ambTick で足す
+    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 420;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass';  lp.frequency.value = 2600; lp.Q.value = 0.4;
     node.connect(hp); hp.connect(lp); node = lp;
-    wob(lp.frequency, 0.045, 320);
+    wob(lp.frequency, 0.045, 500);
+  }else if(ambKind === 'creek'){
+    // せせらぎ：雨よりずっと高く、細い。水のはねる音つき
+    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1100;
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2400; bp.Q.value = 1.1;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass';  lp.frequency.value = 5200;
+    node.connect(hp); hp.connect(bp); bp.connect(lp); node = lp;
+    wob(bp.frequency, 0.13, 700);
   }else if(ambKind === 'wave'){
-    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 460; lp.Q.value = 0.5;
+    // 波：寄せると音が開き、引くと低くこもる。12秒でひと寄せ
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 560; lp.Q.value = 0.6;
     node.connect(lp);
-    const surf = ac.createGain(); surf.gain.value = 0.5;      // 寄せて、引く
+    const surf = ac.createGain(); surf.gain.value = 0.46;
     lp.connect(surf); node = surf;
-    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = 1 / 11;
-    const g = ac.createGain(); g.gain.value = 0.42;
+    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = 1 / 12;
+    const g = ac.createGain(); g.gain.value = 0.44;
     o.connect(g); g.connect(surf.gain); o.start();
     extra.push(o);
-    wob(lp.frequency, 1 / 11, 160);
+    wob(lp.frequency, 1 / 12, 420);          // 音の高さも一緒に開いたり閉じたり
   }else if(ambKind === 'wind'){
-    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 320; bp.Q.value = 0.7;
+    // 風：低くうなる地の音に、ヒューという高い成分を重ねる。ときどき強く吹く
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 240; bp.Q.value = 2.2;
     const lp = ac.createBiquadFilter(); lp.type = 'lowpass';  lp.frequency.value = 900;
-    node.connect(bp); bp.connect(lp); node = lp;
-    wob(bp.frequency, 0.035, 190);
-  }else if(ambKind === 'fire'){
-    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 340;
+    node.connect(bp); bp.connect(lp);
+    const gust = ac.createGain(); gust.gain.value = 0.6;
+    lp.connect(gust); node = gust;
+    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = 1 / 21;
+    const g = ac.createGain(); g.gain.value = 0.38;
+    o.connect(g); g.connect(gust.gain); o.start();
+    extra.push(o);
+    wob(bp.frequency, 1 / 21, 130);
+
+    // ヒュー（笛のような細い音）。地の音とは別のノイズから作る
+    src2 = ac.createBufferSource();
+    src2.buffer = noiseBuf(4, false);
+    src2.loop = true;
+    const whis = ac.createBiquadFilter(); whis.type = 'bandpass'; whis.frequency.value = 1050; whis.Q.value = 8;
+    const wg = ac.createGain(); wg.gain.value = 0.9;
+    src2.connect(whis); whis.connect(wg); wg.connect(swell);
+    src2.start();
+    wob(whis.frequency, 1 / 17, 420);
+    const o2 = ac.createOscillator(); o2.type = 'sine'; o2.frequency.value = 1 / 13;
+    const g2 = ac.createGain(); g2.gain.value = 0.34;
+    o2.connect(g2); g2.connect(wg.gain); o2.start();
+    extra.push(o2);
+  }else{ // fire（たき火）
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 300;
     node.connect(lp);
-    const bed = ac.createGain(); bed.gain.value = 0.34;       // ゴーッという地の音は控えめに
+    const bed = ac.createGain(); bed.gain.value = 0.26;   // 地の音はごく控えめ。主役ははぜる音
     lp.connect(bed); node = bed;
-    wob(lp.frequency, 0.08, 110);
-  }else{ // creek（せせらぎ）
-    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 520;
-    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1150; bp.Q.value = 0.5;
-    const lp = ac.createBiquadFilter(); lp.type = 'lowpass';  lp.frequency.value = 2200;
-    node.connect(hp); hp.connect(bp); bp.connect(lp); node = lp;
-    wob(bp.frequency, 0.1, 320);
+    wob(lp.frequency, 0.08, 90);
   }
 
   node.connect(swell);
   src.start();
-  amb = { src: src, out: out, swell: swell, extra: extra, tick: 0, pop: null };
+  amb = { src: src, src2: src2, out: out, swell: swell, extra: extra, tick: 0, pop: null };
 
-  const vol = ambKind === 'rain' ? 0.075 : ambKind === 'wave' ? 0.15
-            : ambKind === 'wind' ? 0.11 : ambKind === 'fire' ? 0.10 : 0.07;
+  const vol = ambKind === 'rain' ? 0.07 : ambKind === 'wave' ? 0.16
+            : ambKind === 'wind' ? 0.13 : ambKind === 'fire' ? 0.12 : 0.05;
   out.gain.setTargetAtTime(vol * snd.amb, now, 3.2);   // 3秒ほどかけて、そっと入る
 
-  if(ambKind === 'fire' || ambKind === 'creek'){
+  if(ambKind === 'fire' || ambKind === 'creek' || ambKind === 'rain'){
     amb.pop = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.09), ac.sampleRate);
     const pd = amb.pop.getChannelData(0);
     for(let i = 0; i < pd.length; i++) pd[i] = Math.random() * 2 - 1;
@@ -991,36 +1038,64 @@ function startAmb(){
   }
 }
 
-/* たき火のはぜる音／せせらぎの水音。強さも間も一定にせず、たまに静かな間をつくる */
+/* たき火のはぜる音／せせらぎの水はね／雨の粒。
+   強さも間もばらばらにして、たまに静かな間をつくる */
 function ambTick(){
   if(!amb || !amb.pop) return;
-  const fire = ambKind === 'fire';
-  const quiet = Math.random() < 0.18;            // ときどき、ふっと静かになる
-  const n = quiet ? 0 : (fire && Math.random() < 0.22 ? 2 : 1);
+  const k = ambKind;
   const t = ac.currentTime;
+
+  if(k === 'rain'){
+    // 粒：ごく短い高い音をいくつも。ザーッの上に「ぽつぽつ」が乗る
+    const n = 2 + Math.floor(Math.random() * 3);
+    for(let i = 0; i < n; i++){
+      const at = t + Math.random() * 0.09;
+      const dur = 0.004 + Math.random() * 0.012;
+      const src = ac.createBufferSource(); src.buffer = amb.pop;
+      const bp = ac.createBiquadFilter();
+      bp.type = 'bandpass'; bp.Q.value = 3 + Math.random() * 4;
+      bp.frequency.value = 2200 + Math.random() * 3600;
+      const g = ac.createGain();
+      const peak = 0.03 + Math.random() * 0.07;
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(peak, at + 0.002);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+      src.connect(bp); bp.connect(g); g.connect(amb.swell);
+      src.start(at); src.stop(at + dur + 0.02);
+    }
+    amb.tick = setTimeout(ambTick, 60 + Math.random() * 130);
+    return;
+  }
+
+  const fire = (k === 'fire');
+  const quiet = Math.random() < (fire ? 0.12 : 0.2);      // ときどき、ふっと静かになる
+  const big = fire && Math.random() < 0.1;                // たまに大きく「バチッ」
+  const n = quiet ? 0 : (fire ? (Math.random() < 0.3 ? 2 : 1) : 1);
   for(let i = 0; i < n; i++){
-    const at = t + i * (0.02 + Math.random() * 0.07);
-    const dur = fire ? 0.012 + Math.random() * 0.05 : 0.05 + Math.random() * 0.09;
-    const src = ac.createBufferSource();
-    src.buffer = amb.pop;
+    const at = t + i * (0.02 + Math.random() * 0.06);
+    const dur = fire ? (big ? 0.04 + Math.random() * 0.05 : 0.008 + Math.random() * 0.035)
+                     : 0.05 + Math.random() * 0.09;
+    const src = ac.createBufferSource(); src.buffer = amb.pop;
     const bp = ac.createBiquadFilter();
     bp.type = 'bandpass';
-    bp.Q.value = fire ? 1.1 + Math.random() * 1.6 : 2.4 + Math.random() * 2.4;
-    const f0 = fire ? 900 + Math.random() * 1700 : 700 + Math.random() * 1100;
+    bp.Q.value = fire ? (big ? 0.9 : 1.3 + Math.random() * 2.2) : 2.6 + Math.random() * 2.6;
+    const f0 = fire ? (big ? 600 + Math.random() * 500 : 1400 + Math.random() * 2600)
+                    : 1300 + Math.random() * 1500;
     bp.frequency.setValueAtTime(f0, at);
-    bp.frequency.exponentialRampToValueAtTime(f0 * (fire ? 0.7 : 1.5 + Math.random()), at + dur);
-    const soft = ac.createBiquadFilter();        // 角を取る
-    soft.type = 'lowpass'; soft.frequency.value = fire ? 3200 : 3000;
+    bp.frequency.exponentialRampToValueAtTime(f0 * (fire ? 0.6 : 1.6 + Math.random()), at + dur);
+    const soft = ac.createBiquadFilter();
+    soft.type = 'lowpass'; soft.frequency.value = fire ? 5200 : 4800;
     const g = ac.createGain();
-    const peak = fire ? 0.16 + Math.random() * 0.46 : 0.05 + Math.random() * 0.09;
+    const peak = fire ? (big ? 0.7 + Math.random() * 0.5 : 0.22 + Math.random() * 0.5)
+                      : 0.05 + Math.random() * 0.1;
     g.gain.setValueAtTime(0.0001, at);
-    g.gain.exponentialRampToValueAtTime(peak, at + 0.004);
+    g.gain.exponentialRampToValueAtTime(peak, at + 0.003);
     g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
     src.connect(bp); bp.connect(soft); soft.connect(g); g.connect(amb.swell);
     src.start(at); src.stop(at + dur + 0.04);
   }
-  const wait = quiet ? (900 + Math.random() * 1800)
-             : fire ? (70 + Math.random() * 620) : (240 + Math.random() * 1100);
+  const wait = quiet ? (700 + Math.random() * 1500)
+             : fire ? (35 + Math.random() * 330) : (260 + Math.random() * 1000);
   amb.tick = setTimeout(ambTick, wait);
 }
 
@@ -1032,6 +1107,7 @@ function stopAmb(slow){
     a.out.gain.setTargetAtTime(0.0001, ac.currentTime, slow ? 1.2 : 0.05);
     setTimeout(function(){
       try{ a.src.stop(); a.src.disconnect(); a.out.disconnect(); }catch(e){}
+      if(a.src2){ try{ a.src2.stop(); a.src2.disconnect(); }catch(e){} }
       a.extra.forEach(function(o){ try{ o.stop(); o.disconnect(); }catch(e){} });
     }, slow ? 4000 : 300);
   }catch(e){}
@@ -1041,6 +1117,29 @@ function renderAmb(){
     b.setAttribute('aria-pressed', b.dataset.amb === ambKind ? 'true' : 'false');
   });
 }
+/* ───────── 音だけ流す（勉強のおとも） ─────────
+   瞑想としては数えない。記録もレベルも動かさない。 */
+let bgmOn = false;
+const AMB_NAME = { rain:'雨', wave:'波', wind:'風', fire:'たき火', creek:'せせらぎ' };
+function renderBgm(){
+  $('bgmBar').classList.toggle('hidden', !bgmOn);
+  document.body.classList.toggle('bgm', bgmOn);
+  if(bgmOn) $('bgmName').textContent = AMB_NAME[ambKind] || '音';
+  $('btnBgm').textContent = bgmOn ? '音を流しています' : '音だけ流す（勉強のおともに）';
+}
+function bgmStart(){
+  ensureAudio();
+  if(ambKind === 'none'){ ambKind = 'rain'; try{ localStorage.setItem('med.amb.v1', ambKind); }catch(e){} renderAmb(); }
+  stopAmb(false); startAmb();
+  bgmOn = true; renderBgm();
+  toast('音を流します。記録には入りません');
+}
+function bgmEnd(){
+  bgmOn = false; stopAmb(true); renderBgm();
+}
+$('btnBgm').addEventListener('click', function(){ if(bgmOn) bgmEnd(); else bgmStart(); });
+$('bgmStop').addEventListener('click', bgmEnd);
+
 $('btnSnd').addEventListener('click', function(e){
   e.stopPropagation();
   ensureAudio();
@@ -1099,9 +1198,14 @@ $('ambs').addEventListener('click', function(e){
   renderAmb();
   ensureAudio();
   stopAmb(false);
-  if(ambKind !== 'none' && !sess){            // 選んだ音を少しだけ聞かせる
+  if(bgmOn){                                   // 流しっぱなしのときは、そのまま切りかえる
+    if(ambKind === 'none'){ bgmEnd(); }
+    else { startAmb(); renderBgm(); }
+    return;
+  }
+  if(ambKind !== 'none' && !sess){             // 選んだ音を少しだけ聞かせる
     startAmb();
-    setTimeout(function(){ if(!sess) stopAmb(true); }, 3800);
+    setTimeout(function(){ if(!sess && !bgmOn) stopAmb(true); }, 3800);
   }
 });
 
@@ -1168,6 +1272,8 @@ function start(){
       bell(total + 9, 196, 11, .65);
     }
   }
+  if(bgmOn){ bgmOn = false; renderBgm(); }
+  stopAmb(false);
   startAmb();
   sess = { min: min, total: total, endAt: Date.now() + total*1000, startAt: Date.now() };
   $('run').classList.remove('hidden');
@@ -2691,6 +2797,7 @@ $('btnCheck').addEventListener('click', function(){ checkUpdate(true); });
 $('verNum').textContent = VER;
 renderPick();
 renderAmb();
+renderBgm();
 renderTop();
 renderLearn();
 setTab('home');

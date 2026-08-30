@@ -263,7 +263,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
   border:1px dashed var(--line);border-radius:var(--r)}
 .more{width:100%;margin-top:10px;padding:12px;border-radius:14px;background:var(--surf);
   border:1px solid var(--line);color:var(--ink2);font-size:.86rem}
-.foot{margin-top:26px;text-align:center;color:var(--dim);font-size:.72rem;line-height:2}
+.foot{margin-top:22px;text-align:center;color:var(--dim);font-size:.72rem;line-height:2}
 .foot button{color:var(--dim);text-decoration:underline;text-underline-offset:3px;font-size:.72rem}
 
 .r-memo{font-size:.8rem;color:var(--ink2);margin-top:4px;white-space:pre-wrap;
@@ -299,6 +299,9 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .gcard li::marker{color:var(--aqua)}
 .gcard .g-dim{color:var(--dim);font-size:.82rem;line-height:1.8}
 .gcard .q{color:var(--aqua);font-weight:600;font-size:.92rem;margin:16px 0 4px}
+.gbtn{width:100%;margin:4px 0 12px;padding:13px;border-radius:14px;font-size:.9rem;
+  background:rgba(159,216,214,.13);border:1px solid rgba(159,216,214,.4);color:#eafaf8}
+.gbtn:active{background:rgba(159,216,214,.22)}
 .gcard .q:first-of-type{margin-top:0}
 
 /* ── 学ぶタブ ── */
@@ -549,8 +552,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
     </div>
 
     <div class="foot">
-      Mindrest v<span id="verNum">1</span> ・ 記録はこの端末の中だけに保存されます<br>
-      <button id="btnBackup">記録をコピーして控える</button>　·　<button id="btnCheck">更新をたしかめる</button>
+      <button id="btnBackup">記録をコピーして控える</button>
     </div>
   </div>
   <!-- 学ぶタブ -->
@@ -651,6 +653,14 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
         </ul>
       </section>
 
+      <section class="gcard" id="aboutCard">
+        <h3>このアプリについて</h3>
+        <p>いま使っているのは <b>Mindrest v<span id="verNum">1</span></b> です。</p>
+        <p>記録・ひとこと・学びの進み具合は、<b>この端末の中だけ</b>に保存されます。アプリを消すと記録も消えるので、ときどき「記録」タブの下にある<b>「記録をコピーして控える」</b>で控えをとっておくと安心です。</p>
+        <button class="gbtn" id="btnCheck">更新をたしかめる</button>
+        <p class="g-dim">新しいバージョンが出たときは、アプリを開いたときに画面の上でお知らせします。「更新する」を押しても記録は消えません。</p>
+      </section>
+
     </div>
   </div>
 </div>
@@ -723,7 +733,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 19;
+const VER = 20;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);

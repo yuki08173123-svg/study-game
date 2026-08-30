@@ -152,6 +152,7 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
 
   <!-- ===== ホーム ===== -->
   <div id="view-home" class="stack">
+    <button class="primary hidden" id="upd-note" style="background:var(--win);border-color:var(--win)">🆕 新しいバージョンがあります — タップして更新</button>
     <button class="primary pt-btn" id="btn-new">＋ 新しい試合をはじめる</button>
     <div class="label">試合の記録</div>
     <div id="match-list" class="stack"></div>
@@ -162,7 +163,8 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
         <button class="small" id="btn-import">読み込む（貼り付け）</button>
       </div>
       <textarea id="io-area" rows="3" class="hidden" placeholder="ここに貼り付けてから「読み込む」をもう一度押してください"></textarea>
-      <div style="font-size:12px;color:var(--muted)">記録はこの端末のブラウザ内だけに保存されます。<br>マッチノート v3</div>
+      <button class="small" id="btn-check-update">アプリが最新か たしかめる</button>
+      <div style="font-size:12px;color:var(--muted)">記録はこの端末のブラウザ内だけに保存されます。<br><span id="ver-label"></span></div>
     </div>
   </div>
 
@@ -679,8 +681,29 @@ $("btn-import").addEventListener("click", ()=>{
   }catch(e){ toast("読み込めませんでした。データを確認してください"); }
 });
 
+/* ---------- 更新の確認 ---------- */
+const VER = 4; // リリースのたびに version.json の v と一緒に上げる
+$("ver-label").textContent = "マッチノート v" + VER;
+function checkUpdate(manual){
+  fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{
+    if(d && d.v > VER){
+      const note = $("upd-note");
+      note.classList.remove("hidden");
+      note.dataset.v = d.v;
+      if(manual) toast("新しい v" + d.v + " があります。緑のボタンで更新できます");
+    } else if(manual){
+      toast("いま最新版です（v" + VER + "）");
+    }
+  }).catch(()=>{ if(manual) toast("確認できませんでした。電波のあるところでお試しください"); });
+}
+$("btn-check-update").addEventListener("click", ()=>checkUpdate(true));
+$("upd-note").addEventListener("click", ()=>{
+  location.href = "./?v=" + ($("upd-note").dataset.v || "new"); // ?v=付きで開き直すと最新が読み込まれる（記録は消えない）
+});
+
 /* ---------- 起動 ---------- */
 if(navigator.storage && navigator.storage.persist){ navigator.storage.persist(); } // 記録が消えにくくなるようブラウザに依頼
+checkUpdate(false);
 renderHome();
 const liveMatch = db.matches.find(m=>!m.finished);
 if(liveMatch){ cur = liveMatch; renderRec(); } else { show("view-home"); }

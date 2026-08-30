@@ -76,6 +76,13 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
 .badge.live{background:var(--lose-soft); color:var(--lose);}
 .badge.done{background:var(--chip); color:var(--muted);}
 .empty{color:var(--muted); text-align:center; padding:32px 8px; font-size:14px;}
+.tabs{display:flex; gap:8px;}
+.tabs button{flex:1; border-radius:999px; font-weight:700; padding:10px; font-size:15px; background:var(--chip); border-color:transparent; color:var(--muted);}
+.tabs button.on{background:var(--accent-soft); color:var(--accent);}
+.note-item{width:100%; text-align:left;}
+.note-item .t{font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.note-item .d{font-size:12px; color:var(--muted);}
+.note-item .p{font-size:13px; color:var(--muted); overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
 /* ---------- record ---------- */
 .scoreboard{display:flex; align-items:stretch; gap:10px;}
 .scoreboard .box{flex:1; text-align:center; padding:10px 6px; border-radius:12px; background:var(--card); border:1px solid var(--line);}
@@ -152,6 +159,7 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
 
   <!-- ===== ホーム ===== -->
   <div id="view-home" class="stack">
+    <div class="tabs"><button class="on">試合</button><button id="tab-to-notes">分析・課題</button></div>
     <button class="primary hidden" id="upd-note" style="background:var(--win);border-color:var(--win)">🆕 新しいバージョンがあります — タップして更新</button>
     <button class="primary pt-btn" id="btn-new">＋ 新しい試合をはじめる</button>
     <div class="label">試合の記録</div>
@@ -165,6 +173,27 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
       <textarea id="io-area" rows="3" class="hidden" placeholder="ここに貼り付けてから「読み込む」をもう一度押してください"></textarea>
       <button class="small" id="btn-check-update">アプリが最新か たしかめる</button>
       <div style="font-size:12px;color:var(--muted)">記録はこの端末のブラウザ内だけに保存されます。<br><span id="ver-label"></span></div>
+    </div>
+  </div>
+
+  <!-- ===== 分析・課題タブ ===== -->
+  <div id="view-notes" class="stack hidden">
+    <div class="tabs"><button id="tab-to-home">試合</button><button class="on">分析・課題</button></div>
+    <button class="primary pt-btn" id="btn-new-note">＋ 分析・課題を保存する</button>
+    <div class="label">保存した分析・課題</div>
+    <div id="note-list" class="stack"></div>
+  </div>
+
+  <!-- ===== 分析・課題の編集 ===== -->
+  <div id="view-note-edit" class="stack hidden">
+    <div class="card stack">
+      <div><div class="label">タイトル</div><input type="text" id="note-title" placeholder="例：園田大会の課題"></div>
+      <div><div class="label">内容</div><textarea id="note-body" rows="14" placeholder="Claudeの分析やアドバイスをここに貼り付けてください"></textarea></div>
+      <button class="primary" id="btn-save-note">保存する</button>
+      <div class="rowline">
+        <button class="ghost small" id="btn-cancel-note">もどる</button>
+        <button class="ghost small" id="btn-del-note" style="color:var(--lose)">削除する</button>
+      </div>
     </div>
   </div>
 
@@ -276,6 +305,7 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
 "use strict";
 const $ = id => document.getElementById(id);
 const KEY = "matchnote-v1";
+const today = () => { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }; // 日本時間の今日
 
 /* ---------- 理由の定義 ---------- */
 const R = {
@@ -319,13 +349,19 @@ let db = load();
 let cur = null;            // 記録中の試合オブジェクト
 let pending = null;        // 手順1で選んだ内容 {win, serve}
 function load(){
-  try{ const d = JSON.parse(localStorage.getItem(KEY)); if(d && Array.isArray(d.matches)) return d; }catch(e){}
-  return {matches:[]};
+  try{
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if(d && Array.isArray(d.matches)){
+      if(!Array.isArray(d.notes)) d.notes = [];
+      return d;
+    }
+  }catch(e){}
+  return {matches:[], notes:[]};
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){ toast("保存できませんでした（容量不足かも）"); } }
 
 /* ---------- 画面切り替え ---------- */
-const views = ["view-home","view-new","view-rec","view-sum"];
+const views = ["view-home","view-notes","view-note-edit","view-new","view-rec","view-sum"];
 function show(v){
   views.forEach(x => $(x).classList.toggle("hidden", x !== v));
   $("foot-rec").classList.toggle("hidden", v !== "view-rec");
@@ -384,6 +420,56 @@ function renderHome(){
   });
 }
 
+/* ---------- 分析・課題タブ ---------- */
+let editingNoteId = null;
+function renderNotes(){
+  const box = $("note-list"); box.innerHTML = "";
+  if(db.notes.length === 0){
+    box.innerHTML = '<div class="card empty">まだ保存がありません。<br>試合の集計画面で「振り返り用テキストをコピー」→ Claudeに貼って分析してもらい、その答えをここに保存しましょう。</div>';
+    return;
+  }
+  [...db.notes].reverse().forEach(n=>{
+    const b = document.createElement("button");
+    b.className = "card note-item stack";
+    b.style.gap = "4px";
+    b.innerHTML = '<span class="t"></span><span class="d">'+n.date+'</span><span class="p"></span>';
+    b.querySelector(".t").textContent = n.title || "（タイトルなし）";
+    b.querySelector(".p").textContent = n.body;
+    b.addEventListener("click", ()=>openNote(n.id));
+    box.appendChild(b);
+  });
+}
+function openNote(id){
+  editingNoteId = id;
+  const n = id ? db.notes.find(x=>x.id===id) : null;
+  $("note-title").value = n ? n.title : "";
+  $("note-body").value = n ? n.body : "";
+  $("btn-del-note").classList.toggle("hidden", !n);
+  show("view-note-edit");
+}
+$("tab-to-notes").addEventListener("click", ()=>{ renderNotes(); show("view-notes"); });
+$("tab-to-home").addEventListener("click", ()=>{ renderHome(); show("view-home"); });
+$("btn-new-note").addEventListener("click", ()=>openNote(null));
+$("btn-save-note").addEventListener("click", ()=>{
+  const title = $("note-title").value.trim();
+  const body = $("note-body").value.trim();
+  if(!title && !body){ toast("タイトルか内容を入れてください"); return; }
+  if(editingNoteId){
+    const n = db.notes.find(x=>x.id===editingNoteId);
+    if(n){ n.title = title; n.body = body; }
+  }else{
+    db.notes.push({id:"n"+Math.random().toString(36).slice(2,10), date:today(), title, body});
+  }
+  save(); renderNotes(); show("view-notes"); toast("保存しました");
+});
+$("btn-cancel-note").addEventListener("click", ()=>{ renderNotes(); show("view-notes"); });
+$("btn-del-note").addEventListener("click", ()=>{
+  if(!editingNoteId) return;
+  if(!confirm("このメモを削除しますか？")) return;
+  db.notes = db.notes.filter(x=>x.id!==editingNoteId);
+  save(); renderNotes(); show("view-notes"); toast("削除しました");
+});
+
 /* ---------- 新規試合 ---------- */
 let firstServeMine = true;
 let fmtNoAd = false;
@@ -398,7 +484,7 @@ function setFmt(noAd){
   $("fmt-noad").className = noAd ? "primary" : "";
 }
 $("btn-new").addEventListener("click", ()=>{
-  $("in-date").value = new Date().toISOString().slice(0,10);
+  $("in-date").value = today();
   $("in-title").value = "";
   setFirstServe(true);
   setFmt(false);
@@ -412,7 +498,7 @@ $("btn-cancel-new").addEventListener("click", ()=>show("view-home"));
 $("btn-start").addEventListener("click", ()=>{
   cur = {
     id: "m"+Math.random().toString(36).slice(2,10),
-    date: $("in-date").value || new Date().toISOString().slice(0,10),
+    date: $("in-date").value || today(),
     title: $("in-title").value.trim(),
     noAd: fmtNoAd,
     finished: false,
@@ -685,7 +771,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 5; // リリースのたびに version.json の v と一緒に上げる
+const VER = 6; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

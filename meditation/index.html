@@ -343,7 +343,9 @@ body.bgm .stage{gap:14px}
 
 .dayrow{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:13px;
   background:rgba(255,255,255,.04);border:1px solid var(--line);margin-bottom:8px}
-.dayrow .dt{flex:none;font-size:.8rem;color:var(--dim)}
+.dayrow .dt{flex:none;font-size:.76rem;color:var(--dim)}
+.stag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:.62rem;
+  color:var(--aqua);border:1px solid rgba(159,216,214,.32);vertical-align:1px}
 .dayrow .dm{flex:1;font-size:.95rem}
 .dayrow .dmemo{display:block;font-size:.8rem;color:var(--ink2);margin-top:4px;white-space:pre-wrap;line-height:1.7}
 .wk{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:8px}
@@ -754,7 +756,7 @@ body.bgm .stage{gap:14px}
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
           <li>終わると自動で記録されます。<b>いまの気分</b>を5段階でひと押しでき、「ひとこと」に感じたことも残せます（声でも入れられます）。</li>
-          <li>「記録」で、続いた日数やこれまでの時間を見られます。<b>カレンダー</b>は月ごとに見られ、‹ › で始めた月までさかのぼれます。<b>日を押すと、その日に何分すわったか、書いたひとことが見られます</b>。</li>
+          <li>「記録」で、続いた日数やこれまでの時間を見られます。<b>カレンダー</b>は月ごとに見られ、‹ › で始めた月までさかのぼれます。<b>日を押すと、何時から何分すわったか、流していた音、気分、書いたひとことが日記のように見られます</b>。</li>
           <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。1日後・3日後・7日後…と<b>復習</b>が出てくるので、そのたびに読み直すと記憶に残ります。</li>
         </ol>
         <p class="g-dim">途中でやめるときは、そこまで1分以上すわっていれば「◯分を記録してやめる」を選べます（1分未満は記録されません）。音はマナーモードだと鳴らないことがあるので、はじめる前に音量をたしかめてください。</p>
@@ -790,6 +792,7 @@ body.bgm .stage{gap:14px}
         </ul>
         <p>レベルが上がると<b>称号</b>が変わります。「見習い」から始まり、初級・中級・上級・達人・名人・師範・仙人と上がって、いちばん上は「悟りの境地」です。</p>
         <p>レベルが上がると、まん中の<b>キャラクターの姿も変わります</b>。キャラを押すと、これまでの姿と育ち方を見られます。次にどんな姿になるかは、なってからのお楽しみです。</p>
+        <p>レベルが上がるごとに、キャラのまわりに<b>庭がひとつずつ育っていきます</b>。石にはじまり、砂紋、苔、灯籠…と増えて、最後には月がのぼります。禅寺で修行を積み重ねるように、あなたの座った時間が庭になっていきます。そして<b>連続365日</b>つづけた人にだけ、見られるものがあります。</p>
         <p><b>数日 瞑想しないと、キャラは元気をなくします。</b>2日で静かになり、3〜4日で元気がなくなり、5日あくと しぼんで光や飾りが消えます。ただし<b>レベルは下がりません</b>。もう一度座れば、その場で元の姿に戻ります。</p>
         <p>ほかに、はじめての瞑想や、3日つづけた、合計60分こえた、などで<b>しるし（バッジ）</b>が集まります。瞑想タブの上のカードを押すと、今のレベルと集めたしるしを全部見られます。</p>
         <p class="g-dim">数字を増やすことが目的ではありません。続けた分がちゃんと見える、というだけのものです。気にしすぎないでください。</p>
@@ -921,7 +924,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 33;
+const VER = 34;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1419,6 +1422,7 @@ function finish(overMin, partial){
   try{ localStorage.setItem(KEY_WC, String(startOfDay(Date.now()))); }catch(e){}
   const rec = { at: Date.now(), min: min };
   if(partial) rec.p = 1;                 // 途中までの記録
+  if(ambKind !== 'none') rec.s = ambKind;   // 流していた音
   log.unshift(rec);
   save();
   const after = stats(), afterGot = gotIds(after);
@@ -1996,8 +2000,79 @@ const CHR_BODY = 'M100,29 C120.5,29 134,45.5 134,65.5 ' +          // 側頭部
   'C47,114 59,101 76,94.5 C74,91.5 72.5,88.5 70.5,84.5 ' +
   'C67.5,80 66,74 66,65.5 C66,45.5 79.5,29 100,29 Z';
 
+/* 禅庭。レベル（stage）が上がるごとに、ひとつずつ増えていく。
+   1 石 → 2 砂紋 → 3 苔 → 4 灯籠 → 5 竹 → 6 水鉢 → 7 飛び石 → 8 月。
+   連続365日で月が満ちる。描き方は本体と同じ（細い線・淡い陰影・強い色は使わない）。 */
+function zenGarden(stage, sk, calm, moonFull){
+  const g = { back: '', front: '' };
+  if(stage < 1) return g;
+  const ac = sk.a, mid = sk.b;
+
+  // 石（左手前）
+  g.front += '<path d="M24,196 C25,189 31,186 34,186 C39,185.5 43,188.5 44,193 C44.5,196 42,198 38,198.5 L28,198.5 C25.5,198.5 24,197.5 24,196 Z" fill="#252e39"/>' +
+             '<path d="M27,191.5 C29.5,188.5 35,187.5 39,189.5" fill="none" stroke="' + ac + '" stroke-opacity=".3" stroke-width="1" stroke-linecap="round"/>';
+  // 砂紋
+  if(stage >= 2){
+    g.front += '<path d="M30,203 C60,198.5 140,198.5 170,203" fill="none" stroke="' + ac + '" stroke-opacity=".13" stroke-width="1"/>' +
+               '<path d="M20,207 C58,202 142,202 180,207" fill="none" stroke="' + ac + '" stroke-opacity=".08" stroke-width="1"/>';
+  }
+  // 苔（石の根本）
+  if(stage >= 3){
+    g.front += '<ellipse cx="25" cy="198" rx="4.6" ry="1.9" fill="' + mid + '" opacity=".4"/>' +
+               '<ellipse cx="44" cy="198.6" rx="3.2" ry="1.5" fill="' + mid + '" opacity=".3"/>' +
+               '<ellipse cx="33" cy="199.6" rx="2.4" ry="1.1" fill="' + mid + '" opacity=".25"/>';
+  }
+  // 灯籠（右手前）
+  if(stage >= 4){
+    g.front += '<g>' +
+      '<path d="M157,198.5 h18 l-2.5,-3.5 h-13 Z" fill="#232c36"/>' +
+      '<rect x="163" y="188.5" width="6" height="6.5" fill="#232c36"/>' +
+      '<path d="M156.5,188.5 h19 l-2,-3 h-15 Z" fill="#2b3440"/>' +
+      '<path d="M160.5,185.5 h11 v-6 h-11 Z" fill="#232c36"/>' +
+      (calm ? '<rect x="163" y="181" width="6" height="3.6" rx="1" fill="#e3c79a" opacity=".8"/>' +
+              '<circle cx="166" cy="182.8" r="6.5" fill="#e3c79a" opacity=".1"/>' : '') +
+      '<path d="M157.5,179.5 h17 l-4,-4.5 h-9 Z" fill="#2b3440"/>' +
+      '<circle cx="166" cy="173" r="1.6" fill="#2b3440"/>' +
+      '<path d="M159,178 C162,176 170,176 173,178" fill="none" stroke="' + ac + '" stroke-opacity=".25" stroke-width=".8"/>' +
+      '</g>';
+  }
+  // 竹（左奥）
+  if(stage >= 5){
+    g.back += '<g stroke="' + mid + '" stroke-opacity=".4" fill="none" stroke-linecap="round">' +
+      '<path d="M17,198 C17,168 16.5,138 17.5,112" stroke-width="2.4"/>' +
+      '<path d="M26,198 C26.5,174 27,150 26,128" stroke-width="1.9"/>' +
+      '<path d="M15,166 h5 M15,138 h5 M24,176 h4.5 M24,150 h4.5" stroke-width="1"/>' +
+      '<path d="M17.5,112 C21,107 27,105 32,106 M17.5,112 C14,106 13,101 14,96 M26,128 C30,124 35,123 39,124" stroke-width="1.2"/>' +
+      '</g>' +
+      '<path d="M32,106 l6,-2 M14,96 l3,-5 M39,124 l6,-1.5" stroke="' + mid + '" stroke-opacity=".3" stroke-width="1" stroke-linecap="round"/>';
+  }
+  // 水鉢（右、灯籠のとなり）
+  if(stage >= 6){
+    g.front += '<path d="M141,192 a7.5,5 0 0 0 15,0 Z" fill="#252e39"/>' +
+               '<ellipse cx="148.5" cy="192" rx="7.5" ry="2.6" fill="#1a222c"/>' +
+               '<ellipse cx="148.5" cy="191.7" rx="5.6" ry="1.7" fill="' + ac + '" opacity=".3"/>' +
+               (calm ? '<ellipse cx="146.8" cy="191.4" rx="1.6" ry=".6" fill="#f4fcfc" opacity=".5"/>' : '');
+  }
+  // 飛び石
+  if(stage >= 7){
+    g.front += '<ellipse cx="63" cy="205" rx="5.5" ry="2" fill="#242d37"/>' +
+               '<ellipse cx="100" cy="207.5" rx="6.5" ry="2.2" fill="#242d37"/>' +
+               '<ellipse cx="137" cy="205" rx="5.5" ry="2" fill="#242d37"/>';
+  }
+  // 月（右上。ふだんは三日月、連続365日で満ちる）
+  if(stage >= 8 || moonFull){
+    if(moonFull){
+      g.back += '<circle cx="168" cy="26" r="8.5" fill="#f0e3c8" opacity=".9"/>' +
+                '<circle cx="168" cy="26" r="13" fill="#f0e3c8" opacity=".12"/>';
+    }else{
+      g.back += '<path d="M171,17.5 A 8.6,8.6 0 1 0 171,34.5 A 6.8,6.8 0 1 1 171,17.5 Z" fill="#e9dcbd" opacity=".75"/>';
+    }
+  }
+  return g;
+}
+
 let chrUid = 0;
-function charSVG(stage, mood, still){
+function charSVG(stage, mood, still, moonFull){
   stage = Math.max(0, Math.min(8, stage));
   const u = 'c' + (++chrUid);
   const calm = mood >= 2;                        // 光や飾りは元気なときだけ
@@ -2090,6 +2165,10 @@ function charSVG(stage, mood, still){
             '<circle cx="100" cy="' + ly + '" r="' + (stage >= 4 ? 3.4 : 2.6) + '" fill="#f4e9d2" opacity=".8"/>';
   }
 
+  const zen = zenGarden(stage, sk, calm, moonFull);
+  back += zen.back;
+  deco += zen.front;
+
   front = '<g' + bcls + '>' + body + '</g>';
 
   return '<svg viewBox="0 0 200 210" xmlns="http://www.w3.org/2000/svg">' +
@@ -2134,7 +2213,7 @@ function moodOf(){
 function renderChar(s, hop){
   s = s || stats();
   const st = stageOf(s.lv.lv), mo = moodOf();
-  $('chr').innerHTML = charSVG(st, mo);
+  $('chr').innerHTML = charSVG(st, mo, false, s.best >= 365);
   $('chrName').textContent = TITLES[st].n;
   const m = $('chrMood');
   m.textContent = MOODS[mo].n;
@@ -2648,11 +2727,14 @@ function openDay(ts){
   const total = list.reduce(function(t, r){ return t + r.min; }, 0);
   const rows = list.length
     ? list.map(function(r){
-        return '<div class="dayrow"><span class="dt mono">' + pad(new Date(r.at).getHours()) + ':' +
-          pad(new Date(r.at).getMinutes()) + '</span>' +
+        const en = new Date(r.at), st2 = new Date(r.at - r.min * 60000);
+        return '<div class="dayrow"><span class="dt mono">' +
+          pad(st2.getHours()) + ':' + pad(st2.getMinutes()) + '〜' +
+          pad(en.getHours()) + ':' + pad(en.getMinutes()) + '</span>' +
           '<span class="dm"><b class="mono">' + r.min + '</b>分' +
+          (r.s ? '<span class="stag">' + (AMB_NAME[r.s] || '') + '</span>' : '') +
           (r.p ? '<span class="ptag">途中まで</span>' : '') + moodDots(r.m) +
-          (r.memo ? '<span class="dmemo">' + esc(r.memo) + '</span>' : '') + '</span></div>';
+          (r.memo ? '<span class="dmemo">「' + esc(r.memo) + '」</span>' : '') + '</span></div>';
       }).join('')
     : '<div class="empty">この日は記録がありません</div>';
 

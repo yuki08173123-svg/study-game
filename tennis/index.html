@@ -162,7 +162,7 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
         <button class="small" id="btn-import">読み込む（貼り付け）</button>
       </div>
       <textarea id="io-area" rows="3" class="hidden" placeholder="ここに貼り付けてから「読み込む」をもう一度押してください"></textarea>
-      <div style="font-size:12px;color:var(--muted)">記録はこの端末のブラウザ内だけに保存されます。<br>マッチノート v1</div>
+      <div style="font-size:12px;color:var(--muted)">記録はこの端末のブラウザ内だけに保存されます。<br>マッチノート v2</div>
     </div>
   </div>
 
@@ -176,6 +176,13 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
           <button id="first-serve-me" class="primary">自分</button>
           <button id="first-serve-opp">相手</button>
         </div>
+      </div>
+      <div><div class="label">ゲーム形式</div>
+        <div class="rowline">
+          <button id="fmt-deuce" class="primary">デュースあり</button>
+          <button id="fmt-noad">ノーアド</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">ノーアド＝40-40になったら次の1本でゲームが決まる</div>
       </div>
       <button class="primary pt-btn" id="btn-start">記録をはじめる</button>
       <button class="ghost small" id="btn-cancel-new">やめる</button>
@@ -324,21 +331,21 @@ function toast(msg){
 }
 
 /* ---------- スコア計算 ---------- */
-function gameScore(pts){ // 現在ゲームのポイント数 → 表示
+function gameScore(pts, noAd){ // 現在ゲームのポイント数 → 表示
   let me=0, op=0;
   pts.forEach(p => p.win ? me++ : op++);
   const disp = n => ["0","15","30","40"][Math.min(n,3)];
   if(me>=3 && op>=3){
-    if(me===op) return {t:"デュース", me, op, done:false};
-    if(Math.abs(me-op)===1) return {t:(me>op?"Ad 自分":"Ad 相手"), me, op, done:false};
+    if(me===op) return {t: noAd ? "40-40 次で決着！" : "デュース", me, op, done:false};
+    if(!noAd && Math.abs(me-op)===1) return {t:(me>op?"Ad 自分":"Ad 相手"), me, op, done:false};
   }
-  const done = (me>=4 || op>=4) && Math.abs(me-op)>=2;
-  return {t:disp(me)+"|"+disp(op), me, op, done, iWon:me>op};
+  return {t:disp(me)+"|"+disp(op), me, op};
 }
-function gameDone(pts){
+function gameDone(pts, noAd){
   let me=0, op=0;
   pts.forEach(p => p.win ? me++ : op++);
-  if((me>=4 || op>=4) && Math.abs(me-op)>=2) return {done:true, iWon:me>op};
+  const need = noAd ? 1 : 2;
+  if((me>=4 || op>=4) && Math.abs(me-op)>=need) return {done:true, iWon:me>op};
   return {done:false};
 }
 function matchGames(m){ // 終了ゲームの取得数
@@ -371,25 +378,35 @@ function renderHome(){
 
 /* ---------- 新規試合 ---------- */
 let firstServeMine = true;
+let fmtNoAd = false;
 function setFirstServe(mine){
   firstServeMine = mine;
   $("first-serve-me").className = mine ? "primary" : "";
   $("first-serve-opp").className = mine ? "" : "primary";
 }
+function setFmt(noAd){
+  fmtNoAd = noAd;
+  $("fmt-deuce").className = noAd ? "" : "primary";
+  $("fmt-noad").className = noAd ? "primary" : "";
+}
 $("btn-new").addEventListener("click", ()=>{
   $("in-date").value = new Date().toISOString().slice(0,10);
   $("in-title").value = "";
   setFirstServe(true);
+  setFmt(false);
   show("view-new");
 });
 $("first-serve-me").addEventListener("click", ()=>setFirstServe(true));
 $("first-serve-opp").addEventListener("click", ()=>setFirstServe(false));
+$("fmt-deuce").addEventListener("click", ()=>setFmt(false));
+$("fmt-noad").addEventListener("click", ()=>setFmt(true));
 $("btn-cancel-new").addEventListener("click", ()=>show("view-home"));
 $("btn-start").addEventListener("click", ()=>{
   cur = {
     id: "m"+Math.random().toString(36).slice(2,10),
     date: $("in-date").value || new Date().toISOString().slice(0,10),
     title: $("in-title").value.trim(),
+    noAd: fmtNoAd,
     finished: false,
     games: [{n:1, myServe:firstServeMine, points:[], won:null}],
   };
@@ -407,7 +424,7 @@ function renderRec(){
   const st = $("serve-toggle");
   st.textContent = "サーブ：" + (g.myServe ? "自分" : "相手");
   st.classList.toggle("mine", g.myServe);
-  const gs = gameScore(g.points);
+  const gs = gameScore(g.points, cur.noAd);
   $("pt-score").innerHTML = gs.t.includes("|")
     ? gs.t.split("|")[0] + '<span class="sep">-</span>' + gs.t.split("|")[1]
     : gs.t;
@@ -467,7 +484,7 @@ $("btn-cancel-pt").addEventListener("click", ()=>{ pending = null; renderRec(); 
 function addPoint(win, serve, reason, memo){
   const g = curGame(cur);
   g.points.push({win, serve, reason, memo});
-  const d = gameDone(g.points);
+  const d = gameDone(g.points, cur.noAd);
   if(d.done){
     g.won = d.iWon;
     const msg = g.myServe
@@ -552,7 +569,7 @@ function bars(box, obj, bad){
 }
 function renderSummary(){
   const m = cur, s = collectStats(m);
-  $("sum-title").textContent = (m.title || "試合") + "（" + m.date + "）";
+  $("sum-title").textContent = (m.title || "試合") + "（" + m.date + (m.noAd ? "・ノーアド" : "") + "）";
   $("sum-score").textContent = s.gMe + " - " + s.gOp;
   $("sum-keep").textContent =
     "キープ " + s.keep + "/" + s.serveG + "ゲーム ・ ブレーク " + s.brk + "/" + s.retG + "ゲーム";

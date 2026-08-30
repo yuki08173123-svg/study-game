@@ -406,6 +406,12 @@ body.bgm .stage{gap:14px}
 .gbtn:active{background:rgba(159,216,214,.22)}
 .gbtn.ghost{background:var(--surf2);border-color:var(--line);color:var(--ink2)}
 .gbtns{display:flex;gap:9px}
+.remrow{display:flex;gap:9px;align-items:stretch;margin:4px 0 10px}
+.remtime{flex:none;width:110px;background:rgba(255,255,255,.05);border:1px solid var(--line);
+  border-radius:14px;color:var(--ink);padding:10px 12px;font-size:1.05rem;font-family:inherit;
+  text-align:center;outline:none;-webkit-appearance:none;appearance:none}
+.remtime:focus{border-color:rgba(159,216,214,.45)}
+.remrow .gbtn{flex:1}
 .gbtns .gbtn{flex:1}
 .gcard .q:first-of-type{margin-top:0}
 
@@ -812,7 +818,17 @@ body.bgm .stage{gap:14px}
 
       <section class="gcard">
         <h3>毎日わすれないようにする</h3>
-        <p>このアプリは、自分から開かないと何も知らせてくれません。そこで、<b>決まった時刻にアプリが自動で開く</b>ようにしておくと続けやすくなります。iPhoneなら3分でできます。</p>
+        <p>このアプリは、自分から開かないと何も知らせてくれません。そこで、<b>毎日決まった時刻に通知が来る</b>ようにしておくと続けやすくなります。</p>
+
+        <p><b>いちばんかんたんな方法：カレンダーに入れる</b><br>
+        時刻を選んで下のボタンを押すと、「瞑想の時間」という毎日くり返しの予定ができます。開いた画面で<b>「追加」</b>を押せば、毎日その時刻にスマホへ通知が来ます。</p>
+        <div class="remrow">
+          <input type="time" id="remTime" value="21:00" class="remtime">
+          <button class="gbtn" id="btnRemCal" style="margin:0">カレンダーに入れる</button>
+        </div>
+        <p class="g-dim">やめたくなったら、カレンダーアプリでその予定を消せば止まります（「これ以降のすべての予定」を選んでください）。</p>
+
+        <p style="margin-top:18px"><b>もうひとつの方法：時刻になったらアプリが自動で開く</b>（iPhoneのショートカット）</p>
         <ol>
           <li>iPhoneの<b>「ショートカット」</b>アプリを開く</li>
           <li>下の<b>「オートメーション」</b>を押す</li>
@@ -927,7 +943,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 35;
+const VER = 36;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -3142,6 +3158,49 @@ function askImport(){
     }else if(e.target.classList.contains('no')) close();
   });
 }
+
+/* カレンダーに「毎日の瞑想」の予定を入れる（.ics を渡す。サーバー不要） */
+function icsText(hhmm){
+  const m = /^(\d{2}):(\d{2})$/.exec(hhmm) || [0, '21', '00'];
+  const now = new Date();
+  let st = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +m[1], +m[2], 0);
+  if(st <= now) st = new Date(st.getTime() + 86400000);   // 過ぎていたら明日から
+  const p2 = n => String(n).padStart(2, '0');
+  const local = d => d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) +
+    'T' + p2(d.getHours()) + p2(d.getMinutes()) + '00';
+  const en = new Date(st.getTime() + 10 * 60000);
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mindrest//JP', 'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    'UID:mindrest-daily-' + hhmm.replace(':', '') + '@mindrest',
+    'DTSTART:' + local(st),
+    'DTEND:' + local(en),
+    'RRULE:FREQ=DAILY',
+    'SUMMARY:瞑想の時間（Mindrest）',
+    'DESCRIPTION:きょうも1分から。\\nhttps://yuki08173123-svg.github.io/study-game/meditation/',
+    'BEGIN:VALARM', 'TRIGGER:PT0S', 'ACTION:DISPLAY', 'DESCRIPTION:瞑想の時間です', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+}
+$('btnRemCal').addEventListener('click', async function(){
+  const t = $('remTime').value || '21:00';
+  const txt = icsText(t);
+  const file = new File([txt], 'mindrest-毎日の瞑想.ics', { type: 'text/calendar' });
+  // 共有シートで開けるなら、そのほうがカレンダーに届きやすい
+  if(navigator.canShare && navigator.canShare({ files: [file] })){
+    try{
+      await navigator.share({ files: [file], title: '瞑想の時間' });
+      toast('開いた画面で「追加」を押してください');
+      return;
+    }catch(e){ if(e && e.name === 'AbortError') return; }
+  }
+  try{
+    const url = URL.createObjectURL(new Blob([txt], { type: 'text/calendar' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = 'mindrest-毎日の瞑想.ics';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 4000);
+    toast('ファイルを開いて「追加」を押してください');
+  }catch(e){ toast('うまく作れませんでした'); }
+});
 
 $('btnExport').addEventListener('click', exportData);
 $('btnImport').addEventListener('click', askImport);

@@ -287,6 +287,8 @@ const R = {
     {id:"odf",  label:"相手ダブルフォルト", group:"oppErr", returnOnly:true},
     {id:"fw",   label:"フォアで決めた", group:"winner"},
     {id:"bw",   label:"バックで決めた", group:"winner"},
+    {id:"deepf", label:"深いフォアで崩した", group:"winner"},
+    {id:"deepb", label:"深いバックで崩した", group:"winner"},
     {id:"vw",   label:"ボレー・スマッシュ", group:"winner"},
     {id:"pass", label:"パッシング",   group:"winner"},
     {id:"wother", label:"その他", group:"other"},
@@ -298,7 +300,8 @@ const R = {
     {id:"bnet", label:"バック ネット", group:"myErr"},
     {id:"vmiss",label:"ボレーミス",  group:"myErr"},
     {id:"rmiss",label:"リターンミス", group:"myErr", returnOnly:true},
-    {id:"oace", label:"相手エース",  group:"oppGood", returnOnly:true},
+    {id:"oace", label:"相手のサービスエース",  group:"oppGood", returnOnly:true},
+    {id:"goodserve", label:"サーブが良くてミス", group:"oppGood", returnOnly:true},
     {id:"ow",   label:"相手に決められた", group:"oppGood"},
     {id:"lother", label:"その他", group:"other"},
   ],
@@ -682,7 +685,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 4; // リリースのたびに version.json の v と一緒に上げる
+const VER = 5; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

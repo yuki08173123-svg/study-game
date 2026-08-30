@@ -29,13 +29,15 @@
   --safeB:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;height:100%}
+html{height:100%}
+html,body{margin:0;padding:0}
+body{position:fixed;inset:0;height:100%;overflow:hidden}
 body{
   background:var(--bg); color:var(--ink);
   font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
   font-size:16px; line-height:1.7; -webkit-font-smoothing:antialiased;
   -webkit-tap-highlight-color:transparent;
-  overflow-x:hidden; overscroll-behavior-y:none;
+  overscroll-behavior-y:none;
   letter-spacing:.02em;
 }
 button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-webkit-user-select:none;user-select:none}
@@ -52,8 +54,10 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 @keyframes drift1{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(6vw,7vh,0) scale(1.15)}}
 @keyframes drift2{0%,100%{transform:translate3d(0,0,0) scale(1.1)}50%{transform:translate3d(-7vw,-5vh,0) scale(.95)}}
 
-.app{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column;
-  max-width:520px;margin:0 auto;padding:calc(var(--safeT) + 14px) 20px calc(var(--safeB) + 88px)}
+.app{position:relative;z-index:1;height:100%;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+  display:flex;flex-direction:column;
+  max-width:520px;margin:0 auto;padding:calc(var(--safeT) + 14px) 20px calc(var(--safeB) + 92px)}
 
 .top{display:flex;align-items:baseline;gap:10px;min-height:26px}
 .top h1{margin:0;font-size:.95rem;font-weight:600;letter-spacing:.32em;color:var(--ink2)}
@@ -140,9 +144,16 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .pick[aria-pressed="true"]{background:rgba(159,216,214,.14);border-color:rgba(159,216,214,.45);color:#eafaf8;
   box-shadow:0 0 22px rgba(120,190,195,.18)}
 
-.ambs{display:flex;align-items:center;gap:9px;justify-content:center;flex-wrap:wrap;max-width:246px}
-.ambs .alabel{width:100%;text-align:center;font-size:.72rem;color:var(--dim);letter-spacing:.08em;margin-bottom:1px}
-.acfg{margin-left:10px;font-size:.72rem;color:var(--aqua);text-decoration:underline;
+.ambs{width:100%;max-width:300px}
+.ambhead{display:flex;align-items:center;justify-content:center;gap:14px}
+.ambtoggle{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;
+  background:var(--surf);border:1px solid var(--line);color:var(--dim);font-size:.78rem;letter-spacing:.04em}
+.ambtoggle b{color:var(--ink);font-weight:500}
+.ambtoggle .cv{font-size:.7rem;color:var(--dim);transition:.25s}
+.ambtoggle[aria-expanded="true"] .cv{transform:rotate(180deg)}
+.ambwrap{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:10px;
+  animation:fade .25s ease}
+.acfg{font-size:.72rem;color:var(--aqua);text-decoration:underline;
   text-underline-offset:3px;padding:2px 0}
 .srow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;
   border-bottom:1px solid var(--line)}
@@ -567,13 +578,18 @@ body.bgm .stage{gap:14px}
     </div>
 
     <div class="ambs" id="ambs">
-      <span class="alabel">瞑想中の音<button class="acfg" id="btnSnd">音の設定</button></span>
-      <button class="amb" data-amb="none">なし</button>
-      <button class="amb" data-amb="rain">雨</button>
-      <button class="amb" data-amb="wave">波</button>
-      <button class="amb" data-amb="wind">風</button>
-      <button class="amb" data-amb="fire">たき火</button>
-      <button class="amb" data-amb="creek">せせらぎ</button>
+      <div class="ambhead">
+        <button class="ambtoggle" id="ambToggle">瞑想中の音　<b id="ambNow">なし</b><span class="cv">▾</span></button>
+        <button class="acfg" id="btnSnd">音の設定</button>
+      </div>
+      <div class="ambwrap hidden" id="ambWrap">
+        <button class="amb" data-amb="none">なし</button>
+        <button class="amb" data-amb="rain">雨</button>
+        <button class="amb" data-amb="wave">波</button>
+        <button class="amb" data-amb="wind">風</button>
+        <button class="amb" data-amb="fire">たき火</button>
+        <button class="amb" data-amb="creek">せせらぎ</button>
+      </div>
     </div>
 
     <button class="start" id="btnStart">はじめる</button>
@@ -656,7 +672,7 @@ body.bgm .stage{gap:14px}
         <h3>このアプリの使い方</h3>
         <ol>
           <li>「瞑想」で時間を選んで、<b>はじめる</b>を押します（1分から60分まで）。</li>
-          <li>時間の下で<b>瞑想中の音</b>（雨・波・風・たき火・せせらぎ）を選べます。押すと少しだけ試し聞きできます。音が気になる人は「なし」のままで大丈夫です。</li>
+          <li>時間の下の<b>「瞑想中の音」</b>を押すと、雨・波・風・たき火・せせらぎ から選べます。押すと少しだけ試し聞きでき、選ぶとまたたたまれます。音が気になる人は「なし」のままで大丈夫です。</li>
           <li>瞑想せずに<b>音だけ流す</b>こともできます。「はじめる」の下の<b>「音だけ流す（勉強のおともに）」</b>を押すと、選んだ音がずっと流れます。<b>この時間は記録にもレベルにも入りません</b>。勉強や作業のおともにどうぞ。</li>
           <li>その横の<b>「音の設定」</b>で、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。</li>
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
@@ -817,7 +833,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 24;
+const VER = 25;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1112,15 +1128,21 @@ function stopAmb(slow){
     }, slow ? 4000 : 300);
   }catch(e){}
 }
+const AMB_NAME = { rain:'雨', wave:'波', wind:'風', fire:'たき火', creek:'せせらぎ' };
 function renderAmb(){
   document.querySelectorAll('.amb').forEach(function(b){
     b.setAttribute('aria-pressed', b.dataset.amb === ambKind ? 'true' : 'false');
   });
+  $('ambNow').textContent = ambKind === 'none' ? 'なし' : (AMB_NAME[ambKind] || '音');
 }
+$('ambToggle').addEventListener('click', function(){
+  const w = $('ambWrap'), open = w.classList.contains('hidden');
+  w.classList.toggle('hidden', !open);
+  $('ambToggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+});
 /* ───────── 音だけ流す（勉強のおとも） ─────────
    瞑想としては数えない。記録もレベルも動かさない。 */
 let bgmOn = false;
-const AMB_NAME = { rain:'雨', wave:'波', wind:'風', fire:'たき火', creek:'せせらぎ' };
 function renderBgm(){
   $('bgmBar').classList.toggle('hidden', !bgmOn);
   document.body.classList.toggle('bgm', bgmOn);
@@ -1196,6 +1218,10 @@ $('ambs').addEventListener('click', function(e){
   ambKind = b.dataset.amb;
   try{ localStorage.setItem('med.amb.v1', ambKind); }catch(err){}
   renderAmb();
+  setTimeout(function(){                       // 選んだら、そっとたたむ
+    $('ambWrap').classList.add('hidden');
+    $('ambToggle').setAttribute('aria-expanded', 'false');
+  }, 260);
   ensureAudio();
   stopAmb(false);
   if(bgmOn){                                   // 流しっぱなしのときは、そのまま切りかえる
@@ -1224,7 +1250,7 @@ function setTab(t){
   $('paneLog').classList.toggle('hidden', t !== 'log');
   $('paneLearn').classList.toggle('hidden', t !== 'learn');
   $('paneGuide').classList.toggle('hidden', t !== 'guide');
-  if(t !== 'home') window.scrollTo(0, 0);
+  const ap = document.querySelector('.app'); if(ap && t !== 'home') ap.scrollTop = 0;
   document.querySelectorAll('.tab').forEach(function(b){
     b.setAttribute('aria-selected', b.dataset.tab === t ? 'true' : 'false');
   });

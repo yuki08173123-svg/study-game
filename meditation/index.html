@@ -302,6 +302,9 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 .gbtn{width:100%;margin:4px 0 12px;padding:13px;border-radius:14px;font-size:.9rem;
   background:rgba(159,216,214,.13);border:1px solid rgba(159,216,214,.4);color:#eafaf8}
 .gbtn:active{background:rgba(159,216,214,.22)}
+.gbtn.ghost{background:var(--surf2);border-color:var(--line);color:var(--ink2)}
+.gbtns{display:flex;gap:9px}
+.gbtns .gbtn{flex:1}
 .gcard .q:first-of-type{margin-top:0}
 
 /* ── 学ぶタブ ── */
@@ -653,10 +656,35 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
         </ul>
       </section>
 
+      <section class="gcard">
+        <h3>毎日わすれないようにする</h3>
+        <p>このアプリは、自分から開かないと何も知らせてくれません。そこで、<b>決まった時刻にアプリが自動で開く</b>ようにしておくと続けやすくなります。iPhoneなら3分でできます。</p>
+        <ol>
+          <li>iPhoneの<b>「ショートカット」</b>アプリを開く</li>
+          <li>下の<b>「オートメーション」</b>を押す</li>
+          <li>右上の<b>「＋」</b>（または「新規オートメーション」）を押す</li>
+          <li><b>「時刻」</b>を選び、瞑想したい時刻（たとえば22:00）と<b>「毎日」</b>を選んで「次へ」</li>
+          <li><b>「アプリを開く」</b>を選び、アプリのところで <b>Mindrest</b> を選ぶ</li>
+          <li><b>「実行前に尋ねる」をオフ</b>にして完了（オンのままだと確認が出ます）</li>
+        </ol>
+        <p class="g-dim">Androidの人は、時計アプリのアラームに「Mindrest」と名前をつけて鳴らすのがいちばん簡単です。アラームを止めたら、そのままアプリを開いてください。</p>
+      </section>
+
+      <section class="gcard">
+        <h3>スマホを換えるとき（記録の引き継ぎ）</h3>
+        <p>記録はこの端末の中だけにあるので、<b>何もしないで機種変更すると消えます</b>。換える前に、下のボタンで書き出しておいてください。</p>
+        <div class="gbtns">
+          <button class="gbtn" id="btnExport">記録を書き出す</button>
+          <button class="gbtn ghost" id="btnImport">記録を読みこむ</button>
+        </div>
+        <p class="g-dim">「書き出す」を押すと mindrest-記録.json というファイルが保存されます（iPhoneは「ファイルに保存」を選んでください）。新しい端末で Mindrest を開き、「読みこむ」からそのファイルを選べば、記録・ひとこと・学んだところが戻ります。</p>
+        <input type="file" id="fileIn" accept=".json,application/json,text/plain" class="hidden">
+      </section>
+
       <section class="gcard" id="aboutCard">
         <h3>このアプリについて</h3>
         <p>いま使っているのは <b>Mindrest v<span id="verNum">1</span></b> です。</p>
-        <p>記録・ひとこと・学びの進み具合は、<b>この端末の中だけ</b>に保存されます。アプリを消すと記録も消えるので、ときどき「記録」タブの下にある<b>「記録をコピーして控える」</b>で控えをとっておくと安心です。</p>
+        <p>記録・ひとこと・学びの進み具合は、<b>この端末の中だけ</b>に保存されます。アプリを消すと記録も消えるので、ひとつ上の<b>「記録を書き出す」</b>で、ときどき控えをとっておくと安心です。</p>
         <button class="gbtn" id="btnCheck">更新をたしかめる</button>
         <p class="g-dim">新しいバージョンが出たときは、アプリを開いたときに画面の上でお知らせします。「更新する」を押しても記録は消えません。</p>
       </section>
@@ -733,7 +761,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 <script>
 'use strict';
-const VER = 20;
+const VER = 21;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -2399,6 +2427,97 @@ function toast(msg){
   document.body.appendChild(t);
   setTimeout(function(){ t.remove(); }, 2200);
 }
+/* ───────── 記録の引き継ぎ ───────── */
+function exportData(){
+  const d = {
+    app: 'mindrest', v: 1, at: Date.now(),
+    log: log,
+    learn: learn,
+    rank: rankMe,
+    amb: ambKind,
+    pick: picked
+  };
+  const txt = JSON.stringify(d);
+  try{
+    const blob = new Blob([txt], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mindrest-記録.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 4000);
+    toast('記録を書き出しました');
+  }catch(e){
+    if(navigator.clipboard) navigator.clipboard.writeText(txt).then(function(){ toast('コピーしました。安全な場所に貼っておいてください'); });
+    else toast('書き出せませんでした');
+  }
+}
+
+function applyImport(txt){
+  let d = null;
+  try{ d = JSON.parse(txt); }catch(e){}
+  if(!d || (d.app !== 'mindrest' && !Array.isArray(d.log) && !Array.isArray(d))){
+    toast('この中身は読みこめませんでした'); return;
+  }
+  const inLog = Array.isArray(d) ? d : (Array.isArray(d.log) ? d.log : []);
+  const have = {};
+  log.forEach(function(r){ have[r.at] = 1; });
+  let add = 0;
+  inLog.forEach(function(r){
+    if(!r || typeof r.at !== 'number' || typeof r.min !== 'number') return;
+    if(have[r.at]) return;
+    log.push(r); have[r.at] = 1; add++;
+  });
+  log.sort(function(a, b){ return b.at - a.at; });
+  save();
+  let lrn = 0;
+  if(d.learn && typeof d.learn === 'object'){
+    Object.keys(d.learn).forEach(function(k){
+      if(!learn[k] || (d.learn[k].last || 0) > (learn[k].last || 0)){ learn[k] = d.learn[k]; lrn++; }
+    });
+    saveLearn();
+  }
+  if(d.amb){ ambKind = d.amb; try{ localStorage.setItem('med.amb.v1', ambKind); }catch(e){} renderAmb(); }
+  if(d.pick){ picked = d.pick; try{ localStorage.setItem(KEY_PICK, String(picked)); }catch(e){} renderPick(); }
+  renderTop(); renderLog(); renderLearn(); renderChar();
+  toast('記録を ' + add + '件 読みこみました');
+}
+
+function askImport(){
+  const sh = document.createElement('div');
+  sh.className = 'sheet';
+  sh.innerHTML = '<div class="box"><h3>記録を読みこむ</h3>' +
+    '<p>前の端末で書き出したファイルを選ぶか、控えておいた文字を貼りつけてください。<br>' +
+    '<b style="color:var(--ink2)">いまの記録は消えません。</b>足りないぶんだけ足されます。</p>' +
+    '<div class="btns" style="margin-bottom:12px"><button class="ok" id="pickFile">ファイルを選ぶ</button></div>' +
+    '<textarea class="memo-ta" id="impTa" rows="4" placeholder="ここに貼りつけることもできます"></textarea>' +
+    '<div class="btns" style="margin-top:14px"><button class="no">やめる</button>' +
+    '<button class="ok" id="impGo">貼りつけた文字から読みこむ</button></div></div>';
+  document.body.appendChild(sh);
+  const close = initSheet(sh);
+  sh.addEventListener('click', function(e){
+    if(e.target.id === 'pickFile'){ close(); $('fileIn').click(); }
+    else if(e.target.id === 'impGo'){
+      const v = ($('impTa').value || '').trim();
+      if(!v){ toast('中身が空です'); return; }
+      close(); applyImport(v);
+    }else if(e.target.classList.contains('no')) close();
+  });
+}
+
+$('btnExport').addEventListener('click', exportData);
+$('btnImport').addEventListener('click', askImport);
+$('fileIn').addEventListener('change', function(e){
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = function(){ applyImport(String(rd.result || '')); };
+  rd.onerror = function(){ toast('ファイルを読めませんでした'); };
+  rd.readAsText(f);
+  e.target.value = '';
+});
+
 $('btnBackup').addEventListener('click', function(){
   const txt = JSON.stringify(log);
   if(navigator.clipboard && navigator.clipboard.writeText){

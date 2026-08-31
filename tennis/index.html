@@ -356,6 +356,7 @@ const R = {
     {id:"rmiss",label:"リターンミス", group:"myErr", returnOnly:true},
     {id:"oace", label:"相手のサービスエース",  group:"oppGood", returnOnly:true},
     {id:"goodserve", label:"サーブが良くてミス", group:"oppGood", returnOnly:true},
+    {id:"deepmiss", label:"相手の球が深くてミス", group:"oppGood"},
     {id:"ow",   label:"相手に決められた", group:"oppGood"},
     {id:"lother", label:"その他", group:"other"},
   ],
@@ -880,7 +881,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 8; // リリースのたびに version.json の v と一緒に上げる
+const VER = 9; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

@@ -28,6 +28,10 @@
      WORKER_URL             この Worker の場所（https://xxx.workers.dev）
      APP_ORIGIN             アプリの場所（https://yuki08173123-svg.github.io）
      ROLE_ID                （任意）この役職の人だけ通したいときに入れる。空でよい
+     ADMIN_ID               平山さんの Discord ユーザーID（みんなのレベル一覧を見られる人）
+
+   Cloudflare に登録するデータベース（設定 → バインディング）
+     DB                     D1 データベース。生徒の記録（見た回数・レベル）を入れる
    ===================================================================== */
 
 const FILES = ['videos.json', 'chapters.json', 'manual.json'];
@@ -41,6 +45,8 @@ export default {
       if (path === '/login')    return login(url, env);
       if (path === '/callback') return callback(url, env);
       if (path === '/data')     return cors(env, await data(url, env));
+      if (path === '/sync')     return cors(env, await sync(req, url, env));
+      if (path === '/roster')   return cors(env, await roster(url, env));
       return cors(env, json({ error: 'not_found' }, 404));
     } catch (e) {
       return cors(env, json({ error: 'server_error', detail: String((e && e.message) || e) }, 500));
@@ -108,7 +114,8 @@ async function data(url, env) {
     return json({ ok: false, error: 'need_login', why: who.why }, 401);
   }
 
-  const out = { ok: true, name: who.name };
+  const out = { ok: true, name: who.name, me: who.id,
+                admin: !!(env.ADMIN_ID && who.id === env.ADMIN_ID) };
   if (fresh) out.t = fresh;
   for (const f of FILES) {
     const r = await fetch(
@@ -119,6 +126,87 @@ async function data(url, env) {
   }
   if (!out.videos) return json({ ok: false, error: 'busy', why: 'data_failed' }, 502);
   return json(out);
+}
+
+/* ---------- 生徒の記録をあずかる ----------
+   端末を変えても、スマホとiPadでも、同じレベルになるようにするため。
+   中身の合体（見た回数は多い方を採る）はアプリ側でやっているので、
+   ここは「その人の最新の記録を1つ持っておく」だけの役。 */
+let tableReady = false;
+async function ensureTable(env) {
+  if (tableReady) return;
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS rec (
+       id TEXT PRIMARY KEY, name TEXT, data TEXT,
+       lv INTEGER DEFAULT 1, exp INTEGER DEFAULT 0,
+       views INTEGER DEFAULT 0, seen INTEGER DEFAULT 0, outs INTEGER DEFAULT 0,
+       at INTEGER DEFAULT 0)`).run();
+  tableReady = true;
+}
+
+/* 通行証をたしかめて「いま塾生か」を返す。/data と同じ確認を通す */
+async function whoOf(url, env) {
+  const s = await unpack(env, url.searchParams.get('t'));
+  if (!s) return { bad: json({ ok: false, error: 'need_login', why: 'bad_token' }, 401) };
+  const who = await check(s.a, env);
+  if (who.ok) return { who };
+  if (who.why === 'not_member' || who.why === 'no_role')
+    return { bad: json({ ok: false, error: 'not_member' }, 403) };
+  if (who.why === 'busy' || String(who.why).indexOf('check_failed') === 0)
+    return { bad: json({ ok: false, error: 'busy', why: who.why }, 503) };
+  return { bad: json({ ok: false, error: 'need_login', why: who.why }, 401) };
+}
+
+async function sync(req, url, env) {
+  if (!env.DB) return json({ ok: false, error: 'no_db' }, 503);
+  const r = await whoOf(url, env);
+  if (r.bad) return r.bad;
+  await ensureTable(env);
+
+  if (req.method === 'GET') {
+    const row = await env.DB.prepare('SELECT data FROM rec WHERE id = ?').bind(r.who.id).first();
+    let rec = null;
+    if (row && row.data) { try { rec = JSON.parse(row.data); } catch (e) {} }
+    return json({ ok: true, rec });
+  }
+
+  if (req.method !== 'POST') return json({ ok: false, error: 'bad_method' }, 405);
+
+  const body = await req.text();
+  if (body.length > 1000000) return json({ ok: false, error: 'too_big' }, 413);
+  let b = null;
+  try { b = JSON.parse(body); } catch (e) {}
+  if (!b || !b.rec) return json({ ok: false, error: 'bad_body' }, 400);
+
+  const st = b.stat || {};
+  await env.DB.prepare(
+    `INSERT INTO rec (id, name, data, lv, exp, views, seen, outs, at)
+     VALUES (?,?,?,?,?,?,?,?,?)
+     ON CONFLICT(id) DO UPDATE SET
+       name=excluded.name, data=excluded.data, lv=excluded.lv, exp=excluded.exp,
+       views=excluded.views, seen=excluded.seen, outs=excluded.outs, at=excluded.at`
+  ).bind(
+    r.who.id,
+    String(b.rec.name || r.who.name || '').slice(0, 32),
+    JSON.stringify(b.rec),
+    +st.lv || 1, +st.exp || 0, +st.views || 0, +st.seen || 0, +st.outs || 0,
+    Date.now()
+  ).run();
+
+  return json({ ok: true });
+}
+
+/* 平山さんだけが見られる、みんなのレベル一覧 */
+async function roster(url, env) {
+  if (!env.DB) return json({ ok: false, error: 'no_db' }, 503);
+  const r = await whoOf(url, env);
+  if (r.bad) return r.bad;
+  if (!env.ADMIN_ID || r.who.id !== env.ADMIN_ID)
+    return json({ ok: false, error: 'not_admin' }, 403);
+  await ensureTable(env);
+  const q = await env.DB.prepare(
+    'SELECT name, lv, exp, views, seen, outs, at FROM rec ORDER BY exp DESC, at DESC LIMIT 500').all();
+  return json({ ok: true, list: (q && q.results) || [] });
 }
 
 /* ---------- サーバーにいるか ----------
@@ -197,7 +285,8 @@ function json(o, status = 200) {
 function cors(env, res) {
   const h = new Headers(res.headers);
   h.set('access-control-allow-origin', env.APP_ORIGIN || '*');
-  h.set('access-control-allow-methods', 'GET,OPTIONS');
+  h.set('access-control-allow-methods', 'GET,POST,OPTIONS');
+  h.set('access-control-allow-headers', 'content-type');
   h.set('cache-control', 'no-store');
   return new Response(res.body, { status: res.status, headers: h });
 }

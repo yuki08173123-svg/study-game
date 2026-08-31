@@ -454,6 +454,18 @@ textarea{min-height:96px;resize:vertical;line-height:1.7;font-size:.88rem}
 select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;padding:11px 12px;
   width:100%;outline:none;-webkit-appearance:none;appearance:none}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;line-height:1.6}
+/* みんなのレベル（先生用） */
+.rost{margin-top:12px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.rost .rh,.rost .rr{display:grid;grid-template-columns:26px 1fr 52px 54px 54px;
+  gap:8px;align-items:center;padding:11px 12px;font-size:.84rem}
+.rost .rh{background:var(--surf2);color:var(--ink3);font-size:.7rem;letter-spacing:.06em}
+.rost .rr{border-top:1px solid var(--line)}
+.rost .rr .no{color:var(--ink3);font-size:.76rem;font-variant-numeric:tabular-nums}
+.rost .rr .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rost .rr .nm small{display:block;color:var(--ink3);font-size:.68rem;letter-spacing:.02em}
+.rost .rr b{font-variant-numeric:tabular-nums;text-align:right;display:block}
+.rost .rr .lv{color:var(--acc);font-size:.98rem}
+.rost .num{font-variant-numeric:tabular-nums;text-align:right;color:var(--ink2);font-size:.8rem}
 </style>
 </head>
 <body>
@@ -487,10 +499,10 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 25;
+const VER = 26;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
-      K_TOK='th_tok', K_OKAT='th_okat';
+      K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
 
 /* 塾生かどうかをたしかめる入口。中身（動画リスト）は公開の場所には置いていない。
    ここに毎回聞きにいって、Discordのサーバーに「いま」いる人にだけ渡してもらう。 */
@@ -499,6 +511,8 @@ const API = 'https://theater-auth.yuki08173123.workers.dev';
 const GRACE = 3 * 24 * 60 * 60 * 1000;
 /* アプリに戻ってきたとき、前の確認からこれだけ経っていたら もう一度たしかめる */
 const RECHECK = 60 * 1000;
+/* 記録を送るまでの待ち時間。押すたびに送ると回線とサーバーの無駄なので少しためる */
+const PUSH_WAIT = 12 * 1000;
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const now = () => Date.now();
@@ -557,10 +571,11 @@ function load(){
   if(!outs || typeof outs !== 'object') outs = {};
   try{ Object.assign(cfg, JSON.parse(localStorage.getItem(K_CFG) || '{}')); }catch(e){}
 }
-const saveProg = () => localStorage.setItem(K_PROG, JSON.stringify(prog));
-const saveFav  = () => localStorage.setItem(K_FAV,  JSON.stringify(favs));
-const saveFold = () => localStorage.setItem(K_FOLD, JSON.stringify(folders));
-const saveOut  = () => localStorage.setItem(K_OUT,  JSON.stringify(outs));
+/* 記録を保存したら、少しあとに預け先にも送る（schedulePush は下の方で定義） */
+const saveProg = () => { localStorage.setItem(K_PROG, JSON.stringify(prog)); schedulePush(); };
+const saveFav  = () => { localStorage.setItem(K_FAV,  JSON.stringify(favs));   schedulePush(); };
+const saveFold = () => { localStorage.setItem(K_FOLD, JSON.stringify(folders)); schedulePush(); };
+const saveOut  = () => { localStorage.setItem(K_OUT,  JSON.stringify(outs));   schedulePush(); };
 const outOf    = id => outs[id] || [];
 function addOut(id, text){
   (outs[id] || (outs[id] = [])).unshift({ at:now(), t:String(text).trim().slice(0,2000) });
@@ -771,8 +786,144 @@ function chapText(id){
 
 /* 使用マニュアル。ヒラさんが #使用マニュアル に書いている見出しをそのまま使う */
 
+/* ===================== 記録の同期（端末をまたいで同じレベルにする） =====================
+   スマホとiPadなど、複数の端末で使っても記録がそろうようにする。
+   合体のしかたが肝：**見た回数は多い方を採る**ので、どちらの端末の分も消えない。 */
+let isAdmin = false;
+let myId = '';
+let pushT = null;
+
+const stamp = () => { try{ localStorage.setItem(K_AT, String(now())); }catch(e){} };
+const stampAt = () => +(localStorage.getItem(K_AT) || 0);
+
+/* この端末の記録をひとまとめにする。速さやループは端末ごとの好みなので送らない */
+const myRec = () => ({ prog, favs, folders, outs, name: cfg.name || '', at: stampAt() });
+
+function applyRec(r){
+  prog = r.prog || {}; favs = Array.isArray(r.favs) ? r.favs : [];
+  folders = Array.isArray(r.folders) ? r.folders : [];
+  outs = (r.outs && typeof r.outs === 'object') ? r.outs : {};
+  if(r.name && !cfg.name){ cfg.name = r.name; saveCfg(); }
+  saveProg(); saveFav(); saveFold(); saveOut();
+}
+
+/* 2つの記録を合体する。どちらかを捨てない、が原則 */
+function mergeRec(a, b){
+  if(!b) return a;
+  if(!a) return b;
+  const out = { prog:{}, favs:[], folders:[], outs:{},
+                at: Math.max(a.at || 0, b.at || 0) };
+
+  /* 動画ごとの記録：回数と視聴ぶんは多い方、位置や速さは新しい方 */
+  const nOf = p => (p && p.n != null) ? p.n : ((p && p.done) ? 1 : 0);
+  const ids = {};
+  Object.keys(a.prog || {}).forEach(k => ids[k] = 1);
+  Object.keys(b.prog || {}).forEach(k => ids[k] = 1);
+  Object.keys(ids).forEach(id => {
+    const x = (a.prog || {})[id], y = (b.prog || {})[id];
+    if(!x){ out.prog[id] = y; return; }
+    if(!y){ out.prog[id] = x; return; }
+    const newer = (x.last || 0) >= (y.last || 0) ? x : y;
+    const n = Math.max(nOf(x), nOf(y));
+    out.prog[id] = Object.assign({}, newer, {
+      n, done: n > 0 ? 1 : 0,
+      w: Math.max(x.w || 0, y.w || 0),
+      d: x.d || y.d || 0,
+      last: Math.max(x.last || 0, y.last || 0) });
+  });
+
+  /* アウトプットは書いたものなので、両方を残す（同じ時刻のものは1つに） */
+  const oids = {};
+  Object.keys(a.outs || {}).forEach(k => oids[k] = 1);
+  Object.keys(b.outs || {}).forEach(k => oids[k] = 1);
+  Object.keys(oids).forEach(id => {
+    const seen = {}, list = [];
+    ((a.outs || {})[id] || []).concat((b.outs || {})[id] || []).forEach(e => {
+      const k = String(e.at) + '|' + String(e.t || '').slice(0, 40);
+      if(seen[k]) return; seen[k] = 1; list.push(e);
+    });
+    list.sort((x, y) => (y.at || 0) - (x.at || 0));
+    if(list.length) out.outs[id] = list;
+  });
+
+  /* 保存とフォルダは「外した」も残したいので、新しい方の状態をそのまま使う */
+  const newer = (a.at || 0) >= (b.at || 0) ? a : b;
+  out.favs = Array.isArray(newer.favs) ? newer.favs : [];
+  out.folders = Array.isArray(newer.folders) ? newer.folders : [];
+  out.name = newer.name || a.name || b.name || '';
+  return out;
+}
+
+/* 起動したとき：預けてある記録を取ってきて、この端末のものと合体する */
+async function pullSync(){
+  const t = tokGet(); if(!t) return;
+  try{
+    const r = await fetch(API + '/sync?t=' + encodeURIComponent(t) + '&_=' + now(),
+      { cache:'no-store' });
+    const j = await r.json();
+    if(!j || !j.ok) return;
+    if(j.rec){
+      const merged = mergeRec(myRec(), j.rec);
+      applyRec(merged);
+    }
+    await pushSync();      /* 合体した結果を預けなおす */
+  }catch(e){}
+}
+
+/* 記録の「中身」の指紋。再生位置だけの変化では送らないようにするため。
+   （再生中は5秒ごとに位置を保存しているので、それで毎回送ると通信の無駄になる） */
+function sigOf(){
+  return JSON.stringify({
+    p: Object.keys(prog).sort().map(k => k + ':' + seenN(k)),
+    o: Object.keys(outs).sort().map(k => k + ':' + (outs[k] || []).length),
+    f: favs.slice().sort(),
+    d: folders.map(f => f.id + ':' + (f.ids || []).length),
+    n: cfg.name || '' });
+}
+let lastSig = null;
+
+/* 記録が変わったとき：少しためてから預ける */
+function schedulePush(){
+  const g = sigOf();
+  if(g === lastSig) return;      /* 位置が動いただけ。閉じるときにまとめて送る */
+  lastSig = g;
+  stamp();
+  if(pushT) clearTimeout(pushT);
+  pushT = setTimeout(() => { pushT = null; pushSync(); }, PUSH_WAIT);
+}
+
+async function pushSync(){
+  if(!tokGet()) return;
+  lastSig = sigOf();
+  if(pushT){ clearTimeout(pushT); pushT = null; }
+  const L = levelOf(totalExp());
+  const body = JSON.stringify({ rec: myRec(), stat: {
+    lv:L.lv, exp:totalExp(), views:totalViews(),
+    seen:DATA.videos.filter(v => seenN(v.id) > 0).length, outs:expOuts() } });
+  const u = API + '/sync?t=' + encodeURIComponent(tokGet());
+  try{
+    await fetch(u, { method:'POST', headers:{ 'content-type':'application/json' }, body });
+  }catch(e){}
+}
+
+/* 閉じるときは、届けきれるように sendBeacon を使う */
+function pushBeacon(){
+  if(!tokGet() || !navigator.sendBeacon) return;
+  lastSig = sigOf();
+  try{
+    const L = levelOf(totalExp());
+    const body = JSON.stringify({ rec: myRec(), stat: {
+      lv:L.lv, exp:totalExp(), views:totalViews(),
+      seen:DATA.videos.filter(v => seenN(v.id) > 0).length, outs:expOuts() } });
+    navigator.sendBeacon(API + '/sync?t=' + encodeURIComponent(tokGet()),
+      new Blob([body], { type:'application/json' }));
+  }catch(e){}
+}
+
 /* 入口から返ってきた中身を、画面で使う形にする */
 function applyData(j){
+  isAdmin = !!j.admin;
+  myId = j.me || '';
   DATA = normalize(j.videos || {});
   CHAP = j.chapters || {};
   MAN  = j.manual || null;
@@ -817,11 +968,11 @@ function go(name, p){ view = { name, p }; render(); window.scrollTo(0,0); }
 
 function render(){
   const tabId = ({ home:'home', cat:'home', man:'home', lv:'home', find:'find', saved:'saved',
-                   folder:'saved', set:'set', admin:'set' })[view.name] || 'home';
+                   folder:'saved', set:'set', admin:'set', roster:'set' })[view.name] || 'home';
   $$('#tabin .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tabId));
   $('#main').classList.toggle('man', view.name === 'man');
   ({ home:vHome, cat:vCat, man:vMan, lv:vLv, find:vFind, saved:vSaved, folder:vFolder,
-     set:vSet, admin:vAdmin }[view.name] || vHome)();
+     set:vSet, admin:vAdmin, roster:vRoster }[view.name] || vHome)();
 }
 
 /* ---------- カードの部品 ---------- */
@@ -1315,6 +1466,8 @@ function vSet(){
         <div class="chev">${ICO.chev({s:20})}</div></button>
       <button class="item" id="howto"><div class="nm">ホーム画面に置く方法</div></button>
       <button class="item" id="adm"><div class="nm">動画を管理する（配信者用）</div></button>
+      ${isAdmin ? `<button class="item" id="rost"><div class="nm">みんなのレベル（先生用）</div>
+        <div class="chev">${ICO.chev({s:20})}</div></button>` : ''}
     </div>
 
     <div class="sec"><h2>ログイン</h2></div>
@@ -1347,6 +1500,7 @@ function vSet(){
     '<b>Android</b><br>1. Chrome でこのページを開く<br>' +
     '2. 右上の … を押す<br>3.「ホーム画面に追加」を選ぶ');
   $('#adm').onclick = () => go('admin');
+  if($('#rost')) $('#rost').onclick = () => go('roster');
   $('#lout').onclick = () => askYes(
     { title:'ログアウトしますか？', msg:'もう一度 Discord でログインすれば、また見られます。見た回数やアウトプットは消えません。',
       ok:'ログアウト', danger:true },
@@ -1991,6 +2145,13 @@ function vAdmin(){
         </div>`).join('') : emptyBox('まだ1本もありません')}
     </div>
 
+    <div class="sec"><h2>先生用の設定</h2></div>
+    <div class="note">「みんなのレベル」を見られるようにするには、下のIDを
+      Cloudflare の <b>ADMIN_ID</b> に入れてください。</div>
+    <div class="fld"><label>あなたの Discord ID</label>
+      <input id="aMe" readonly value="${esc(myId || '（ログインし直すと出ます）')}"></div>
+    <button class="btn" id="aMeCp">このIDをコピー</button>
+
     <div class="sec"><h2>書き出す</h2></div>
     <button class="btn" id="aCopy">JSONをコピー</button>
     <button class="btn" id="aReload" style="margin-top:9px">公開中のリストを読み直す</button>
@@ -2009,6 +2170,10 @@ function vAdmin(){
   $$('#alist [data-del]').forEach(b => b.onclick = () => askYes(
     { title:'リストから外しますか？', ok:'外す', danger:true },
     () => { admin.videos.splice(+b.dataset.del, 1); saveAdmin(); vAdmin(); }));
+  $('#aMeCp').onclick = async () => {
+    try{ await navigator.clipboard.writeText(myId || ''); toast('コピーしました'); }
+    catch(e){ $('#aMe').focus(); $('#aMe').select(); toast('長押しして「コピー」を選んでください'); }
+  };
   $('#aCopy').onclick = async () => {
     const out = JSON.stringify({ updated:new Date().toISOString().slice(0,10),
       cats:admin.cats, videos:admin.videos }, null, 2);
@@ -2021,6 +2186,61 @@ function vAdmin(){
             saveAdmin(); vAdmin(); });
 }
 const catName2 = c => (admin.cats.find(x => x.id === c) || {}).name || 'そのほか';
+
+/* ===================== みんなのレベル（先生用） ===================== */
+function vRoster(){
+  $('#tbar').innerHTML = `<button class="tbtn" id="back">${ICO.back({s:20})}</button>
+    <div class="ttl" style="font-size:1.06rem;letter-spacing:.02em">みんなのレベル</div>`;
+  $('#back').onclick = () => go('set');
+  $('#main').innerHTML = `<div class="lead" id="rmsg">読みこんでいます…</div><div class="ver">&nbsp;</div>`;
+
+  fetch(API + '/roster?t=' + encodeURIComponent(tokGet()) + '&_=' + now(), { cache:'no-store' })
+    .then(r => r.json())
+    .then(j => {
+      if(!j || !j.ok) throw new Error((j && j.error) || 'failed');
+      const list = j.list || [];
+      if(!list.length){
+        $('#main').innerHTML = emptyBox('まだ誰の記録も届いていません') + '<div class="ver">&nbsp;</div>';
+        return;
+      }
+      const ymd2 = ms => { const d = new Date(ms || 0);
+        return (d.getMonth()+1) + '/' + d.getDate(); };
+      $('#main').innerHTML = `
+        <div class="note">生徒がアプリを開いたときに届いた記録です。
+          レベルの高い順。名前は生徒が自分でつけたものなので、空のこともあります。</div>
+        <div class="rost">
+          <div class="rh"><span></span><span>なまえ</span><span style="text-align:right">Lv</span>
+            <span style="text-align:right">のべ</span><span style="text-align:right">書いた</span></div>
+          ${list.map((p,i) => `
+            <div class="rr">
+              <span class="no">${i+1}</span>
+              <span class="nm">${esc(p.name || '（未設定）')}
+                <small>${p.seen || 0}本 ・ ${ymd2(p.at)}</small></span>
+              <b class="lv">${p.lv || 1}</b>
+              <b class="num">${p.views || 0}</b>
+              <b class="num">${p.outs || 0}</b>
+            </div>`).join('')}
+        </div>
+        <button class="btn" id="rcp" style="margin-top:14px">一覧をコピー</button>
+        <div class="lead" style="margin-top:10px">
+          <b>のべ</b>＝動画を最後まで見た回数の合計。<b>書いた</b>＝アウトプットを書いた動画の数。<br>
+          ${list.length}人ぶん。</div>
+        <div class="ver">&nbsp;</div>`;
+      $('#rcp').onclick = async () => {
+        const txt = 'Theater みんなのレベル（' + ymd(new Date().toISOString().slice(0,10)) + '）\n\n' +
+          list.map((p,i) => `${i+1}. ${p.name || '（未設定）'}  Lv${p.lv || 1}` +
+            `  のべ${p.views || 0}回  ${p.seen || 0}本  書いた${p.outs || 0}`).join('\n');
+        try{ await navigator.clipboard.writeText(txt); toast('コピーしました'); }
+        catch(e){ info('一覧', '<div class="mono" style="white-space:pre-wrap">' + esc(txt) + '</div>'); }
+      };
+    })
+    .catch(e => {
+      $('#rmsg').textContent = String(e.message) === 'not_admin'
+        ? 'この画面は先生用です。Cloudflare の ADMIN_ID に、ご自身のDiscord IDを入れてください。'
+        : 'いま読みこめませんでした。電波のよいところで、もう一度ひらいてください。';
+    });
+}
+
 
 /* ===================== もどる（端末の戻る操作） ===================== */
 function history_push(push){
@@ -2042,7 +2262,7 @@ const tokSet = t => { try{ localStorage.setItem(K_TOK, t); }catch(e){} };
 /* 退塾・BAN のとき。動画の中身と通行証をこの端末から消す。
    自分で書いたアウトプットや記録は本人のものなので残す。 */
 function wipeContent(){
-  [K_CACHE, K_CHAP, K_MAN, K_TOK, K_OKAT, K_ADM].forEach(k => {
+  [K_CACHE, K_CHAP, K_MAN, K_TOK, K_OKAT, K_ADM, K_AT].forEach(k => {
     try{ localStorage.removeItem(k); }catch(e){}
   });
   DATA = { cats:[], videos:[] }; CHAP = {}; MAN = null; admin = null;
@@ -2184,6 +2404,7 @@ async function startAuth(){
 
   if(r.st === 'ok'){
     applyData(r.j);
+    await pullSync();          /* 別の端末でつけた記録があれば合体する */
     /* iPhoneでホーム画面のアプリに移す人のために、ログイン直後に合言葉を見せる */
     if(justLoggedIn && !standalone()){ justLoggedIn = false; return showGate('code', tokGet()); }
     justLoggedIn = false;
@@ -2268,9 +2489,9 @@ async function boot(){
 
   render();
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
-  addEventListener('pagehide', saveNow);
+  addEventListener('pagehide', () => { saveNow(); pushBeacon(); });
   document.addEventListener('visibilitychange', () => {
-    if(document.hidden) saveNow();
+    if(document.hidden){ saveNow(); pushBeacon(); }
     else recheck();          /* 戻ってきたら 塾生かどうかをもう一度たしかめる */
   });
 

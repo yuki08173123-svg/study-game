@@ -261,16 +261,18 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
       <div class="dots" id="pt-dots"></div>
     </div>
 
-    <!-- 手順1：結果ボタン -->
+    <!-- 手順1：まずサーブ、つぎにポイントの結果 -->
     <div id="step1" class="stack">
-      <div class="btn-grid" id="btns-serve">
-        <button class="pt-btn w" data-act="w1">◯ 取った<small>1stサーブで</small></button>
-        <button class="pt-btn w" data-act="w2">◯ 取った<small>2ndサーブで</small></button>
-        <button class="pt-btn l" data-act="l1">✕ 落とした<small>1stサーブで</small></button>
-        <button class="pt-btn l" data-act="l2">✕ 落とした<small>2ndサーブで</small></button>
-        <button class="pt-btn l full" data-act="df">✕ ダブルフォルト</button>
+      <div class="label" id="step1-guide"></div>
+      <div class="btn-grid hidden" id="btns-serve1">
+        <button class="pt-btn w" data-sv="1in">◯ 1st 入った</button>
+        <button class="pt-btn l" data-sv="1out">✕ 1st フォルト</button>
       </div>
-      <div class="btn-grid hidden" id="btns-return">
+      <div class="btn-grid hidden" id="btns-serve2">
+        <button class="pt-btn w" data-sv="2in">◯ 2nd 入った</button>
+        <button class="pt-btn l" data-sv="2out">✕ ダブルフォルト</button>
+      </div>
+      <div class="btn-grid hidden" id="btns-result">
         <button class="pt-btn w" data-act="w">◯ 取った</button>
         <button class="pt-btn l" data-act="l">✕ 落とした</button>
       </div>
@@ -353,6 +355,7 @@ const R = {
     {id:"fout", label:"フォア アウト", group:"myErr"},
     {id:"fnet", label:"フォア ネット", group:"myErr"},
     {id:"bout", label:"バック アウト", group:"myErr"},
+    {id:"bsout", label:"バックスライス アウト", group:"myErr"},
     {id:"bnet", label:"バック ネット", group:"myErr"},
     {id:"vmiss",label:"ボレーミス",  group:"myErr"},
     {id:"rmiss",label:"リターンミス", group:"myErr", returnOnly:true},
@@ -643,8 +646,16 @@ function renderRec(){
     d.textContent = p.win ? "○" : "×";
     dots.appendChild(d);
   });
-  $("btns-serve").classList.toggle("hidden", !g.myServe);
-  $("btns-return").classList.toggle("hidden", g.myServe);
+  // 自分のサーブのときは「サーブが入ったか」を先に押す → そのあとポイントの結果
+  const sv = cur.sv || null;
+  const stage = !g.myServe ? "result" : (sv && sv.serve) ? "result" : (sv && sv.fault1) ? "serve2" : "serve1";
+  $("btns-serve1").classList.toggle("hidden", stage !== "serve1");
+  $("btns-serve2").classList.toggle("hidden", stage !== "serve2");
+  $("btns-result").classList.toggle("hidden", stage !== "result");
+  $("step1-guide").textContent =
+    stage === "serve1" ? "① サーブを打ったら押す" :
+    stage === "serve2" ? "セカンドサーブは？" :
+    (g.myServe ? "② "+sv.serve+"サーブが入りました。ポイントの結果は？" : "ポイントの結果は？");
   $("step2").classList.add("hidden");
   $("step1").classList.remove("hidden");
   pending = null;
@@ -666,16 +677,25 @@ $("sum-rename").addEventListener("click", ()=>renameMatch(true, renderSummary));
 $("serve-toggle").addEventListener("click", ()=>{
   const g = curGame(cur);
   if(g.points.length > 0){ toast("ポイント記録後はサーブを変えられません"); return; }
-  g.myServe = !g.myServe; save(); renderRec();
+  g.myServe = !g.myServe; cur.sv = null; save(); renderRec();
 });
 
-/* 手順1 → 手順2 */
-document.querySelectorAll("#btns-serve button, #btns-return button").forEach(b=>{
+/* サーブの結果（打った直後に押す） */
+document.querySelectorAll("#btns-serve1 button, #btns-serve2 button").forEach(b=>{
   b.addEventListener("click", ()=>{
-    const act = b.dataset.act;
-    if(act === "df"){ addPoint(false, "2nd-df", "df", ""); return; }
-    const win = act[0] === "w";
-    const serve = curGame(cur).myServe ? (act[1]==="1" ? "1st" : "2nd") : null;
+    const sv = b.dataset.sv;
+    if(sv === "1in") cur.sv = {serve:"1st"};
+    else if(sv === "1out"){ cur.sv = {fault1:true}; toast("1stフォルト"); }
+    else if(sv === "2in") cur.sv = {serve:"2nd"};
+    else { addPoint(false, "2nd-df", "df", ""); return; } // ダブルフォルト
+    save(); renderRec();
+  });
+});
+/* ポイントの結果 → 理由チップ */
+document.querySelectorAll("#btns-result button").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    const win = b.dataset.act === "w";
+    const serve = curGame(cur).myServe ? (cur.sv ? cur.sv.serve : "1st") : null;
     pending = {win, serve};
     openReasonSheet();
   });
@@ -717,6 +737,7 @@ function finishGameIfDone(){
 function addPoint(win, serve, reason, memo){
   const g = curGame(cur);
   g.points.push({win, serve, reason, memo});
+  cur.sv = null;               // 次のポイントはまたサーブから
   finishGameIfDone();
   save(); renderRec();
 }
@@ -728,6 +749,11 @@ $("fmt-toggle").addEventListener("click", ()=>{
 });
 $("btn-undo").addEventListener("click", ()=>{
   let g = curGame(cur);
+  if(cur.sv){                    // ポイントの途中（サーブだけ押した状態）を1つ戻す
+    cur.sv = (cur.sv.serve === "2nd") ? {fault1:true} : null;
+    save(); renderRec(); toast("ひとつ取り消しました");
+    return;
+  }
   if(g.points.length === 0){
     if(cur.games.length <= 1){ toast("取り消すポイントがありません"); return; }
     cur.games.pop();               // 空の新ゲームを消して前ゲームへ
@@ -741,6 +767,7 @@ $("btn-home1").addEventListener("click", ()=>{ renderHome(); show("view-home"); 
 $("btn-finish").addEventListener("click", ()=>{
   const g = curGame(cur);
   if(g.points.length === 0 && cur.games.length > 1) cur.games.pop(); // 空ゲームは消す
+  cur.sv = null;
   cur.finished = true; save();
   renderSummary();
 });
@@ -818,7 +845,8 @@ function renderSummary(){
     '<div class="svrow"><div class="svtop"><span>'+name+'</span><span class="v num">'+pct(o.w,o.n)+"（"+o.w+"/"+o.n+'）</span></div>'+
     '<span class="track"><span class="fill" style="width:'+(o.n? o.w/o.n*100:0)+'%"></span></span></div>';
   $("sum-serve-card").innerHTML =
-    '<div class="h2">サービスポイント</div>' +
+    '<div class="h2">サーブ</div>' +
+    svrow("1stサーブが入った率", {w:s.sv1.n, n:s.sv1.n + s.sv2.n}) +
     svrow("1stサーブで取った率", s.sv1) +
     svrow("2ndサーブで取った率", s.sv2);
   bars($("sum-winways"), s.winWays, false);
@@ -853,7 +881,7 @@ $("btn-copy-review").addEventListener("click", ()=>{
   t += "スコア " + s.gMe + "-" + s.gOp + "（キープ" + s.keep + "/" + s.serveG + "、ブレーク" + s.brk + "/" + s.retG + "）\n";
   t += "取ったポイント " + s.ptWin + "/" + (s.ptWin+s.ptLose) + "\n";
   t += "エース" + s.ace + " / ダブルフォルト" + s.df + " / 自分のミス失点" + s.myErr + " / ウィナー" + s.winner + " / 相手ミスでの得点" + s.oppErr + "\n";
-  t += "1stサーブポイント " + s.sv1.w + "/" + s.sv1.n + "、2nd " + s.sv2.w + "/" + s.sv2.n + "\n";
+  t += "1stサーブが入った " + s.sv1.n + "/" + (s.sv1.n + s.sv2.n) + "、1stで取った " + s.sv1.w + "/" + s.sv1.n + "、2ndで取った " + s.sv2.w + "/" + s.sv2.n + "\n";
   t += "◯取り方: " + Object.entries(s.winWays).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+"×"+v).join("、") + "\n";
   t += "✕落とし方: " + Object.entries(s.loseWays).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+"×"+v).join("、") + "\n";
   t += "\n■ ポイントログ\n";
@@ -897,7 +925,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 10; // リリースのたびに version.json の v と一緒に上げる
+const VER = 11; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

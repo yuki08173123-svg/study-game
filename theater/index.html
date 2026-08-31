@@ -499,7 +499,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 26;
+const VER = 27;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -687,25 +687,37 @@ function countView(id){
   if(!$('#pv').classList.contains('hidden')) drawBody();
   return n;
 }
+/* 終わりと見なす位置。ここまで来ていないと、まだ数えない。
+   （0.85 だけで数えると、18分の動画で 残り2分半のところで数えてしまい
+     「まだ見終わっていないのに増えた」と感じさせてしまう） */
+const endZone = d => Math.max(0, d - Math.min(60, d * 0.1));
 /* いま見ている動画が 1回ぶんに届いたか調べる */
 function checkFull(atEnd){
   if(!curId || isLoom(curId)) return;
   const p = prog[curId]; if(!p || !p.d) return;
   const need = p.d * (atEnd ? 0.6 : FULL);
-  if((p.w || 0) >= need) countView(curId);
+  if((p.w || 0) < need) return;
+  /* 実際に終わりのほうまで来ているかも見る。
+     とばして終わりに行っても w が増えないので、ごまかしにはならない */
+  if(!atEnd && (p.t || 0) < endZone(p.d)) return;
+  countView(curId);
 }
 /* いまの周回が どこまで進んでいるか（0〜1） */
 function fullPct(id){
   const p = prog[id];
   if(!p || !p.d) return 0;
-  return Math.min(1, (p.w || 0) / (p.d * FULL));
+  const byWatch = (p.w || 0) / (p.d * FULL);
+  const byPos   = (p.t || 0) / endZone(p.d);
+  return Math.min(1, Math.min(byWatch, byPos));
 }
 function fullMsg(id){
   const p = prog[id];
   if(!p || !p.d) return '最後まで見ると 1回 ふえます';
   const left = Math.max(0, p.d * FULL - (p.w || 0));
-  if(left <= 1) return 'もう少しで 1回 ふえます';
-  return `あと ${hhmm(left)} 見ると 1回 ふえます`;
+  const rest = Math.max(0, endZone(p.d) - (p.t || 0));
+  if(left > 1) return `あと ${hhmm(left)} 見ると 1回 ふえます`;
+  if(rest > 1) return '最後まで見ると 1回 ふえます';
+  return 'もう少しで 1回 ふえます';
 }
 function clearSeen(id){
   const p = prog[id]; if(!p) return;
@@ -791,6 +803,7 @@ function chapText(id){
    合体のしかたが肝：**見た回数は多い方を採る**ので、どちらの端末の分も消えない。 */
 let isAdmin = false;
 let myId = '';
+let devOn = false, devTap = 0;
 let pushT = null;
 
 const stamp = () => { try{ localStorage.setItem(K_AT, String(now())); }catch(e){} };
@@ -1465,7 +1478,8 @@ function vSet(){
       <button class="item" id="guide2"><div class="nm">使い方を見る</div>
         <div class="chev">${ICO.chev({s:20})}</div></button>
       <button class="item" id="howto"><div class="nm">ホーム画面に置く方法</div></button>
-      <button class="item" id="adm"><div class="nm">動画を管理する（配信者用）</div></button>
+      ${(isAdmin || devOn) ? `<button class="item" id="adm">
+        <div class="nm">動画を管理する（配信者用）</div></button>` : ''}
       ${isAdmin ? `<button class="item" id="rost"><div class="nm">みんなのレベル（先生用）</div>
         <div class="chev">${ICO.chev({s:20})}</div></button>` : ''}
     </div>
@@ -1477,7 +1491,7 @@ function vSet(){
     <div class="lead" style="margin-top:8px">端末を変えるときや、別のDiscordで入り直したいときに使います。
       見た回数やアウトプットは消えません。</div>
 
-    <div class="ver">Theater v${VER}</div>`;
+    <div class="ver" id="vtap">Theater v${VER}</div>`;
 
   $('#swLoop').onclick = () => { cfg.loop = !cfg.loop; saveCfg(); vSet();
     toast(cfg.loop ? 'くり返し再生にしました' : 'くり返しをやめました'); };
@@ -1499,8 +1513,13 @@ function vSet(){
     '2. 下（または右上）の共有ボタンを押す<br>3.「ホーム画面に追加」を選ぶ<br><br>' +
     '<b>Android</b><br>1. Chrome でこのページを開く<br>' +
     '2. 右上の … を押す<br>3.「ホーム画面に追加」を選ぶ');
-  $('#adm').onclick = () => go('admin');
+  if($('#adm')) $('#adm').onclick = () => go('admin');
   if($('#rost')) $('#rost').onclick = () => go('roster');
+  /* 生徒には出さない。先生がバージョン表示を5回つづけて押すと出る */
+  $('#vtap').onclick = () => {
+    if(++devTap < 5) return;
+    devTap = 0; devOn = true; vSet(); toast('配信者用の項目を出しました');
+  };
   $('#lout').onclick = () => askYes(
     { title:'ログアウトしますか？', msg:'もう一度 Discord でログインすれば、また見られます。見た回数やアウトプットは消えません。',
       ok:'ログアウト', danger:true },

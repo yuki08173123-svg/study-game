@@ -143,6 +143,7 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
 /* ---------- summary ---------- */
 .tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
 .tile{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center;}
+.tiles .tile:last-child:nth-child(odd){grid-column:1 / -1;} /* 奇数個のときは最後を横いっぱいに */
 .tile .v{font-size:26px; font-weight:800;}
 .tile .k{font-size:12px; color:var(--muted); font-weight:700;}
 .tile.good .v{color:var(--win);}
@@ -383,6 +384,10 @@ const R = {
     {id:"wother", label:"その他", group:"other"},
   ],
   lose: [
+    // リターン（相手サーブの1球目）は打ち方まで分けて、先頭に置く
+    {id:"rmf",  label:"リターンミス フォア", group:"myErr", returnOnly:true},
+    {id:"rmb",  label:"リターンミス バック", group:"myErr", returnOnly:true},
+    {id:"rmbs", label:"リターンミス バックスライス", group:"myErr", returnOnly:true},
     {id:"fout", label:"フォア アウト", group:"myErr"},
     {id:"fnet", label:"フォア ネット", group:"myErr"},
     {id:"bout", label:"バック アウト", group:"myErr"},
@@ -390,7 +395,7 @@ const R = {
     {id:"bnet", label:"バック ネット", group:"myErr"},
     {id:"bsnet", label:"バックスライス ネット", group:"myErr"},
     {id:"vmiss",label:"ボレーミス",  group:"myErr"},
-    {id:"rmiss",label:"リターンミス", group:"myErr", returnOnly:true},
+    {id:"rmiss",label:"リターンミス", group:"myErr", returnOnly:true, hidden:true}, // 旧データ用（新しくは選べない）
     {id:"oace", label:"相手のサービスエース",  group:"oppGood", returnOnly:true},
     {id:"goodserve", label:"サーブが良くてミス", group:"oppGood", returnOnly:true},
     {id:"deepmiss", label:"相手の球が深くてミス", group:"oppGood"},
@@ -799,6 +804,7 @@ document.querySelectorAll("#btns-result button").forEach(b=>{
 function openReasonSheet(){
   const g = curGame(cur);
   const list = (pending.win ? R.win : R.lose).filter(r=>{
+    if(r.hidden) return false;
     if(r.serveOnly && !g.myServe) return false;
     if(r.returnOnly && g.myServe) return false;
     return true;
@@ -879,7 +885,7 @@ $("btn-home2").addEventListener("click", ()=>{ renderHome(); show("view-home"); 
 function collectStats(m){
   const s = {
     gMe:0,gOp:0, keep:0, serveG:0, brk:0, retG:0,
-    ptWin:0, ptLose:0, ace:0, df:0,
+    ptWin:0, ptLose:0, ace:0, df:0, retMiss:0,
     myErr:0, myErrDetail:{}, oppErr:0, winner:0, oppGood:0,
     sv1:{w:0,n:0}, sv2:{w:0,n:0},
     winWays:{}, loseWays:{},
@@ -894,6 +900,7 @@ function collectStats(m){
       if(p.serve === "2nd" || p.serve === "2nd-df"){ s.sv2.n++; if(p.win) s.sv2.w++; }
       if(p.reason === "df") s.df++;
       if(p.reason === "ace") s.ace++;
+      if(["rmf","rmb","rmbs","rmiss"].indexOf(p.reason) >= 0) s.retMiss++;
       const all = R.win.concat(R.lose);
       const r = p.reason === "df" ? R.df : all.find(x=>x.id===p.reason);
       if(r){
@@ -932,6 +939,7 @@ function renderSummary(){
   tiles.innerHTML =
     tile(s.ptWin+" / "+(s.ptWin+s.ptLose), "取ったポイント", "good") +
     tile(s.myErr, "自分のミスでの失点", "bad") +
+    tile(s.retMiss, "うちリターンミス", "bad") +
     tile(s.ace, "サービスエース", "good") +
     tile(s.df, "ダブルフォルト", "bad") +
     tile(s.winner, "自分で決めた（ウィナー）", "good") +
@@ -976,7 +984,7 @@ $("btn-copy-review").addEventListener("click", ()=>{
   t += "■ " + (m.title||"試合") + "（" + m.date + "）\n";
   t += "スコア " + s.gMe + "-" + s.gOp + "（キープ" + s.keep + "/" + s.serveG + "、ブレーク" + s.brk + "/" + s.retG + "）\n";
   t += "取ったポイント " + s.ptWin + "/" + (s.ptWin+s.ptLose) + "\n";
-  t += "エース" + s.ace + " / ダブルフォルト" + s.df + " / 自分のミス失点" + s.myErr + " / ウィナー" + s.winner + " / 相手ミスでの得点" + s.oppErr + "\n";
+  t += "エース" + s.ace + " / ダブルフォルト" + s.df + " / 自分のミス失点" + s.myErr + "（うちリターンミス" + s.retMiss + "） / ウィナー" + s.winner + " / 相手ミスでの得点" + s.oppErr + "\n";
   t += "1stサーブが入った " + s.sv1.n + "/" + (s.sv1.n + s.sv2.n) + "、1stで取った " + s.sv1.w + "/" + s.sv1.n + "、2ndで取った " + s.sv2.w + "/" + s.sv2.n + "\n";
   t += "◯取り方: " + Object.entries(s.winWays).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+"×"+v).join("、") + "\n";
   t += "✕落とし方: " + Object.entries(s.loseWays).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+"×"+v).join("、") + "\n";
@@ -1021,7 +1029,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 13; // リリースのたびに version.json の v と一緒に上げる
+const VER = 14; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

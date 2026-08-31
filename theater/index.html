@@ -22,7 +22,11 @@
   --tabh:60px;
   --serif:"Hiragino Mincho ProN","Yu Mincho",YuMincho,serif;
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* 2回タップで拡大されないようにする（iPhoneの標準動作を止める）。
+   指2本のピンチでの拡大と、ふつうのスクロールはそのまま使える。 */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+/* シークバーだけは、つまんで動かしている間に画面が動かないようにする */
+.seek{touch-action:none}
 html,body{margin:0;padding:0;height:100%}
 body{
   background:var(--bg); color:var(--ink);
@@ -483,7 +487,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 24;
+const VER = 25;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat';

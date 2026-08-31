@@ -172,6 +172,7 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
       </div>
       <textarea id="io-area" rows="3" class="hidden" placeholder="ここに貼り付けてから「読み込む」をもう一度押してください"></textarea>
       <button class="small" id="btn-check-update">アプリが最新か たしかめる</button>
+      <div style="font-size:12px;color:var(--win);font-weight:700" id="save-status"></div>
       <div style="font-size:12px;color:var(--muted)">記録はこの端末のブラウザ内だけに保存されます。<br><span id="ver-label"></span></div>
     </div>
   </div>
@@ -326,12 +327,14 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
 "use strict";
 const $ = id => document.getElementById(id);
 const KEY = "matchnote-v1";
+const BKEY = "matchnote-v1-backup"; // 前回アプリを開いたときの控え（万一のとき戻せるように）
 const today = () => { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }; // 日本時間の今日
 
 /* ---------- 理由の定義 ---------- */
 const R = {
   win: [
     {id:"ace",  label:"サービスエース", group:"winner", serveOnly:true},
+    {id:"gs",   label:"良いサーブで相手がミス", group:"winner", serveOnly:true},
     {id:"rm",   label:"相手リターンミス", group:"oppErr", serveOnly:true},
     {id:"oout", label:"相手アウト",   group:"oppErr"},
     {id:"onet", label:"相手ネット",   group:"oppErr"},
@@ -369,16 +372,25 @@ const reasonLabel = id => {
 let db = load();
 let cur = null;            // 記録中の試合オブジェクト
 let pending = null;        // 手順1で選んだ内容 {win, serve}
+function parseDb(text){
+  const d = JSON.parse(text);
+  if(!d || !Array.isArray(d.matches)) return null;
+  if(!Array.isArray(d.notes)) d.notes = [];
+  if(!Array.isArray(d.serves)) d.serves = [];
+  if(!d.serveLive || !Array.isArray(d.serveLive.attempts)) d.serveLive = {attempts:[], pending:false};
+  return d;
+}
 function load(){
-  try{
-    const d = JSON.parse(localStorage.getItem(KEY));
-    if(d && Array.isArray(d.matches)){
-      if(!Array.isArray(d.notes)) d.notes = [];
-      if(!Array.isArray(d.serves)) d.serves = [];
-      if(!d.serveLive || !Array.isArray(d.serveLive.attempts)) d.serveLive = {attempts:[], pending:false};
-      return d;
-    }
-  }catch(e){}
+  let main = null, backup = null;
+  try{ main = parseDb(localStorage.getItem(KEY)); }catch(e){}
+  try{ backup = parseDb(localStorage.getItem(BKEY)); }catch(e){}
+  // 本体が読めない・空なのに控えに記録が残っているときは控えから復活させる
+  const count = d => d ? d.matches.length + d.notes.length + d.serves.length : -1;
+  const d = count(backup) > count(main) ? backup : main;
+  if(d){
+    try{ localStorage.setItem(BKEY, JSON.stringify(d)); }catch(e){} // 開いた時点の状態を控えに残す
+    return d;
+  }
   return {matches:[], notes:[], serves:[], serveLive:{attempts:[], pending:false}};
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){ toast("保存できませんでした（容量不足かも）"); } }
@@ -424,6 +436,8 @@ function curGame(m){ return m.games[m.games.length-1]; }
 
 /* ---------- ホーム ---------- */
 function renderHome(){
+  $("save-status").textContent =
+    "✓ 保存ずみ：試合 " + db.matches.length + "件・サーブ練習 " + db.serves.length + "件・分析 " + db.notes.length + "件";
   const box = $("match-list"); box.innerHTML = "";
   if(db.matches.length === 0){
     box.innerHTML = '<div class="card empty">まだ記録がありません。<br>「新しい試合をはじめる」から！</div>';
@@ -866,7 +880,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 7; // リリースのたびに version.json の v と一緒に上げる
+const VER = 8; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

@@ -411,6 +411,7 @@ body.bgm .stage{gap:14px}
   text-align:center;outline:none;-webkit-appearance:none;appearance:none}
 .remtime:focus{border-color:rgba(159,216,214,.45)}
 .remrow .gbtn{flex:1}
+.lnk{color:var(--aqua);text-decoration:underline;text-underline-offset:3px;font-size:.82rem;padding:2px 0}
 .gbtns .gbtn{flex:1}
 .gcard .q:first-of-type{margin-top:0}
 
@@ -820,12 +821,17 @@ body.bgm .stage{gap:14px}
         <p>このアプリは、自分から開かないと何も知らせてくれません。そこで、<b>毎日決まった時刻に通知が来る</b>ようにしておくと続けやすくなります。</p>
 
         <p><b>いちばんかんたんな方法：カレンダーに入れる</b><br>
-        時刻を選んで下のボタンを押すと、「瞑想の時間」という毎日くり返しの予定ができます。開いた画面で<b>「追加」</b>を押せば、毎日その時刻にスマホへ通知が来ます。</p>
+        時刻を選んで下のボタンを押すと、「瞑想の時間」という毎日くり返しの予定ができます。<b>保存すれば、毎日その時刻にスマホへ通知が来ます</b>。</p>
         <div class="remrow">
           <input type="time" id="remTime" value="21:00" class="remtime">
           <button class="gbtn" id="btnRemCal" style="margin:0">カレンダーに入れる</button>
         </div>
-        <p class="g-dim">やめたくなったら、カレンダーアプリでその予定を消せば止まります（「これ以降のすべての予定」を選んでください）。</p>
+        <p class="g-dim">iPhoneは「追加」、Android は Googleカレンダーが開くので「保存」を押してください。<br>
+        うまくいかないときは、こちらから：
+        <button class="lnk" id="btnRemGoogle">Googleカレンダーで開く</button> ・
+        <button class="lnk" id="btnRemFile">ファイルで受け取る</button></p>
+        <p class="g-dim">やめたくなったら、カレンダーアプリでその予定を消せば止まります（「これ以降のすべての予定」を選んでください）。<br>
+        <b>スマホの「カレンダー権限」は必要ありません。</b>このアプリがカレンダーを直接さわるのではなく、予定の内容をカレンダーアプリに渡しているだけだからです。</p>
 
         <p style="margin-top:18px"><b>もうひとつの方法：時刻になったらアプリが自動で開く</b>（iPhoneのショートカット）</p>
         <ol>
@@ -836,7 +842,7 @@ body.bgm .stage{gap:14px}
           <li><b>「アプリを開く」</b>を選び、アプリのところで <b>Mindrest</b> を選ぶ</li>
           <li><b>「実行前に尋ねる」をオフ</b>にして完了（オンのままだと確認が出ます）</li>
         </ol>
-        <p class="g-dim">Androidの人は、時計アプリのアラームに「Mindrest」と名前をつけて鳴らすのがいちばん簡単です。アラームを止めたら、そのままアプリを開いてください。</p>
+        <p class="g-dim">Androidの人は、上の「カレンダーに入れる」（Googleカレンダーが開きます）がおすすめです。それも難しいときは、時計アプリのアラームに「Mindrest」と名前をつけて鳴らすのがいちばん簡単です。アラームを止めたら、そのままアプリを開いてください。</p>
       </section>
 
       <section class="gcard">
@@ -942,7 +948,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 39;
+const VER = 40;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -3179,11 +3185,37 @@ function icsText(hhmm){
     'BEGIN:VALARM', 'TRIGGER:PT0S', 'ACTION:DISPLAY', 'DESCRIPTION:瞑想の時間です', 'END:VALARM',
     'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
 }
-$('btnRemCal').addEventListener('click', async function(){
+function remStart(hhmm){
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm) || [0, '21', '00'];
+  const now = new Date();
+  let st = new Date(now.getFullYear(), now.getMonth(), now.getDate(), +m[1], +m[2], 0);
+  if(st <= now) st = new Date(st.getTime() + 86400000);   // 過ぎていたら明日から
+  return st;
+}
+/* Googleカレンダーの「予定を作る」画面を開くリンク（Android・パソコン向け） */
+function gcalUrl(hhmm){
+  const p2 = n => String(n).padStart(2, '0');
+  const st = remStart(hhmm), en = new Date(st.getTime() + 10 * 60000);
+  const f = d => d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) +
+    'T' + p2(d.getHours()) + p2(d.getMinutes()) + '00';
+  let tz = 'Asia/Tokyo';
+  try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; }catch(e){}
+  const url = location.href.split('?')[0];
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+    '&text=' + encodeURIComponent('瞑想の時間（Mindrest）') +
+    '&dates=' + f(st) + '/' + f(en) +
+    '&recur=' + encodeURIComponent('RRULE:FREQ=DAILY') +
+    '&details=' + encodeURIComponent('きょうも1分から。\n' + url) +
+    '&ctz=' + encodeURIComponent(tz);
+}
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+/* ファイル（.ics）で受け取る方式。iPhone・iPad向け */
+async function remByFile(){
   const t = $('remTime').value || '21:00';
   const txt = icsText(t);
   const file = new File([txt], 'mindrest-毎日の瞑想.ics', { type: 'text/calendar' });
-  // 共有シートで開けるなら、そのほうがカレンダーに届きやすい
   if(navigator.canShare && navigator.canShare({ files: [file] })){
     try{
       await navigator.share({ files: [file], title: '瞑想の時間' });
@@ -3199,7 +3231,21 @@ $('btnRemCal').addEventListener('click', async function(){
     setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 4000);
     toast('ファイルを開いて「追加」を押してください');
   }catch(e){ toast('うまく作れませんでした'); }
+}
+/* Googleカレンダーで開く方式。Android・パソコン向け */
+function remByGoogle(){
+  const t = $('remTime').value || '21:00';
+  window.open(gcalUrl(t), '_blank', 'noopener');
+  toast('Googleカレンダーで「保存」を押してください');
+}
+
+$('btnRemFile').addEventListener('click', remByFile);
+$('btnRemGoogle').addEventListener('click', remByGoogle);
+$('btnRemCal').addEventListener('click', async function(){
+  if(!IS_IOS){ remByGoogle(); return; }   // Android・パソコンはこちらが確実
+  await remByFile();
 });
+
 
 $('btnExport').addEventListener('click', exportData);
 $('btnImport').addEventListener('click', askImport);

@@ -34,6 +34,9 @@ html,body{margin:0;padding:0}
 body{position:fixed;left:0;top:0;right:0;bottom:0;
   overflow:hidden;
   display:flex;flex-direction:column}
+@media (display-mode: standalone){
+  body{bottom:auto;height:100vh}
+}
 body{
   background:var(--bg); color:var(--ink);
   font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
@@ -940,7 +943,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 37;
+const VER = 38;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -3262,6 +3265,21 @@ async function doUpdate(){
 }
 $('updBtn').addEventListener('click', doUpdate);
 $('btnCheck').addEventListener('click', function(){ checkUpdate(true); });
+
+/* ホーム画面から起動したとき、描画領域が下に短くなる iOS の不具合への保険。
+   端末の画面の高さそのもの（screen.height）に合わせて body を固定する */
+(function(){
+  const standalone = navigator.standalone === true ||
+    (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!standalone || screen.width > 500) return;
+  const fix = function(){
+    document.body.style.height = Math.max(window.innerHeight, screen.height) + 'px';
+  };
+  fix();
+  window.addEventListener('resize', fix);
+  window.addEventListener('pageshow', fix);
+  window.addEventListener('visibilitychange', function(){ if(!document.hidden) fix(); });
+})();
 
 /* ───────── 起動 ───────── */
 $('verNum').textContent = VER;

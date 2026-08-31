@@ -148,6 +148,11 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .pill:active{opacity:.6}
 .pill.on{background:var(--pri);border-color:var(--pri);color:var(--on-pri);font-weight:700}
 .pills{display:flex;flex-wrap:wrap;gap:7px}
+.pill .n{color:var(--ink3);font-weight:600;font-variant-numeric:tabular-nums}
+.row-scope{display:flex;align-items:center;gap:12px}
+.row-scope .k{font-size:.75rem;font-weight:700;color:var(--ink3);letter-spacing:.06em}
+.row-scope .pill{flex:1;justify-content:space-between}
+.pill.on .n{color:inherit;opacity:.6}
 .seg{display:flex;background:var(--surf2);border-radius:12px;padding:3px;gap:3px}
 .seg button{flex:1;padding:9px 4px;border-radius:10px;font-size:.82rem;font-weight:600;
   color:var(--ink2);letter-spacing:.02em;transition:.15s}
@@ -303,7 +308,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 12;
+const VER = 13;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -343,7 +348,7 @@ const ICO = {
 
 /* ===================== データ ===================== */
 let notes = [], folders = [], cfg = {};
-let S = { screen:'home', fid:null, nid:null, editId:null, q:'', sort:'new' };
+let S = { screen:'home', fid:null, sub:'', nid:null, editId:null, q:'', sort:'new', view:'list' };
 
 const now = () => Date.now();
 const uid = p => (p||'n') + now().toString(36) + Math.random().toString(36).slice(2,7);
@@ -359,7 +364,10 @@ function load(){
   try{ folders = JSON.parse(localStorage.getItem(K_F) || '[]'); }catch(e){ folders = []; }
   if(!Array.isArray(folders)) folders = [];
   try{ cfg = JSON.parse(localStorage.getItem(K_C) || '{}'); }catch(e){ cfg = {}; }
-  cfg = Object.assign({ revN:5 }, cfg);
+  cfg = Object.assign({ revN:5, revScope:'*' }, cfg);
+  if(cfg.revScope && cfg.revScope !== '*' && cfg.revScope !== '' && !folders.some(f => f.id === cfg.revScope)){
+    cfg.revScope = '*'; saveCfg();
+  }
   let dirty = false;
   notes.forEach(n => {
     if(n.title !== undefined || n.src !== undefined){        // v1形式の取り込み
@@ -376,6 +384,17 @@ function load(){
 
 const folderOf = id => folders.find(f => f.id === id);
 const countIn = id => live().filter(n => n.fid === id).length;
+/* フォルダは2階層。単元（サブフォルダ）は pid に親フォルダのidを持つ */
+const topFolders = () => folders.filter(f => !f.pid);
+const subsOf = pid => (pid ? folders.filter(f => f.pid === pid) : []);
+const idsUnder = id => id ? [id].concat(subsOf(id).map(f => f.id)) : [''];
+const countUnder = id => { const ids = idsUnder(id); return live().filter(n => ids.includes(n.fid)).length; };
+const pathOf = n => {                                  // 書き出し用の「親 / 単元」
+  const f = n.fid ? folderOf(n.fid) : null;
+  if(!f) return '';
+  const p = f.pid ? folderOf(f.pid) : null;
+  return p ? p.name + ' / ' + f.name : f.name;
+};
 
 function fmtDate(ms){
   const d = new Date(ms), t = new Date(), p = x => String(x).padStart(2,'0');
@@ -552,10 +571,14 @@ function renderHome(){
   bar('', 'ReNote', '', true);
   const L = live();
   const un = countIn('');
-  const rows = folders.map(f => item({
-    ic: `<span style="color:${f.color}">${ICO.folderFill({s:21})}</span>`,
-    nm: esc(f.name), ct: countIn(f.id), attr: `data-open="${f.id}"`
-  })).join('');
+  const rows = topFolders().map(f => {
+    const sub = subsOf(f.id).length;
+    return item({
+      ic: `<span style="color:${f.color}">${ICO.folderFill({s:21})}</span>`,
+      nm: esc(f.name) + (sub ? `<span style="color:var(--ink3);font-weight:600;font-size:.8rem"> ・単元${sub}</span>` : ''),
+      ct: countUnder(f.id), attr: `data-open="${f.id}"`
+    });
+  }).join('');
   $('#main').innerHTML = `
     <div class="group">
       ${item({ ic: ICO.inbox({s:21}), nm:'すべてのノート', ct:L.length, attr:'data-open="*"' })}
@@ -577,7 +600,7 @@ function renderHome(){
     </div>`;
   $$('#main [data-open]').forEach(b => b.onclick = () => {
     const v = b.dataset.open;
-    go('list', { fid: v === '*' ? null : v, q:'', view:'list' });
+    go('list', { fid: v === '*' ? null : v, q:'', view:'list', sub:'' });
   });
   $('#main [data-newfolder]').onclick = () => folderSheet(null);
   const ro = $('#main [data-reorder]');
@@ -598,11 +621,16 @@ const rowItem = o => `<button class="item" ${o.attr||''}>
 function listTitle(){
   if(S.fid === null) return 'すべてのノート';
   if(S.fid === '') return '未分類';
-  const f = folderOf(S.fid); return f ? f.name : 'ノート';
+  const f = folderOf(S.fid);
+  const sub = S.sub ? folderOf(S.sub) : null;
+  return f ? (f.name + (sub ? '　' + sub.name : '')) : 'ノート';
 }
 function inScope(){
   const a = live();
-  return S.fid === null ? a : a.filter(n => n.fid === S.fid);
+  if(S.fid === null) return a;
+  if(S.sub) return a.filter(n => n.fid === S.sub);
+  const ids = idsUnder(S.fid);
+  return a.filter(n => ids.includes(n.fid));
 }
 function photosInScope(){
   const out = [];
@@ -611,12 +639,22 @@ function photosInScope(){
   return out;
 }
 function renderList(){
+  const asked = S.fid ? folderOf(S.fid) : null;
+  if(asked && asked.pid){ S.sub = asked.id; S.fid = asked.pid; }   // 単元を直接開かれたとき
   const f = S.fid ? folderOf(S.fid) : null;
+  const cur = S.sub ? folderOf(S.sub) : f;          // 編集の対象（単元を選んでいればその単元）
   bar(btnBack(), esc(listTitle()),
     f ? `<button class="tbtn" data-editfolder>編集</button>` : '');
   const pics = photosInScope();
   const photoView = S.view === 'photos' && pics.length;
-  $('#main').innerHTML = `
+  const subs = f ? subsOf(f.id) : [];
+  const subBar = f ? `<div class="pills" id="subs" style="margin-bottom:12px">
+      <button class="pill ${S.sub?'':'on'}" data-sub="">すべて <span class="n">${countUnder(f.id)}</span></button>
+      ${subs.map(x => `<button class="pill ${S.sub===x.id?'on':''}" data-sub="${x.id}">${esc(x.name)} <span class="n">${countIn(x.id)}</span></button>`).join('')}
+      <button class="pill" data-newsub>${ICO.plus({s:14,w:2.2})}単元</button>
+      ${subs.length > 1 ? `<button class="pill" data-sortsub>${ICO.grip({s:14,w:2})}</button>` : ''}
+    </div>` : '';
+  $('#main').innerHTML = subBar + `
     ${pics.length ? `<div class="seg" id="vsw" style="margin-bottom:12px">
       <button data-v="list" class="${photoView?'':'on'}">メモ ${inScope().length}</button>
       <button data-v="photos" class="${photoView?'on':''}">写真 ${pics.length}</button>
@@ -631,12 +669,17 @@ function renderList(){
     </div>
     <div id="notelist" style="margin-top:14px"></div>`}`;
 
+  $$('#subs [data-sub]').forEach(b => b.onclick = () => { S.sub = b.dataset.sub; render(); });
+  const ns = $('#subs [data-newsub]');
+  if(ns) ns.onclick = () => folderSheet(null, id => { S.sub = id; render(); }, S.fid);
+  const ss = $('#subs [data-sortsub]');
+  if(ss) ss.onclick = () => reorderSheet(S.fid);
   $$('#vsw button').forEach(b => b.onclick = () => { S.view = b.dataset.v; render(); });
   if(photoView){
     lazyImgs($('#pgrid'));
     $$('#pgrid [data-p]').forEach(b => b.onclick = () => openGallery(pics, +b.dataset.p));
     const ef0 = $('#tbar [data-editfolder]');
-    if(ef0) ef0.onclick = () => folderSheet(f);
+    if(ef0) ef0.onclick = () => folderSheet(cur);
     return;
   }
   $('#q').oninput = e => { S.q = e.target.value; paintNotes(); };
@@ -646,7 +689,7 @@ function renderList(){
     paintNotes();
   });
   const ef = $('#tbar [data-editfolder]');
-  if(ef) ef.onclick = () => folderSheet(f);
+  if(ef) ef.onclick = () => folderSheet(cur);
   paintNotes();
 }
 function filtered(){
@@ -735,7 +778,7 @@ let draft = [], draftFid = '';
 function startNew(){
   S.editId = null;
   draft = [];
-  draftFid = (S.screen === 'list' && S.fid) ? S.fid : '';
+  draftFid = (S.screen === 'list') ? (S.sub || S.fid || '') : '';
   go('write');
 }
 function startEdit(id){
@@ -761,17 +804,28 @@ function renderWrite(){
   $('#tbar [data-save]').onclick = doSave;
   $('#addphoto').onclick = () => $('#pfile').click();
   $('#pfile').onchange = e => { addPhotos(e.target.files); e.target.value = ''; };
-  if(!n) setTimeout(() => $('#body').focus(), 120);
+  if(!n) setTimeout(() => { const t = $('#body'); if(t) t.focus(); }, 120);
 }
 function paintFolderPick(){
-  const all = [{ id:'', name:'未分類', color:'var(--ink3)' }].concat(folders);
-  $('#fpick').innerHTML = all.map(f =>
-    `<button class="pill ${draftFid === f.id ? 'on' : ''}" data-f="${f.id}">
-       <span class="dot" style="width:8px;height:8px;border-radius:50%;background:${f.color}"></span>${esc(f.name)}
-     </button>`).join('') +
-    `<button class="pill" data-newf>${ICO.plus({s:14,w:2.2})}</button>`;
+  const cur = draftFid ? folderOf(draftFid) : null;
+  const pid = cur ? (cur.pid || cur.id) : '';
+  const dot = c => `<span class="dot" style="width:8px;height:8px;border-radius:50%;background:${c}"></span>`;
+  const tops = [{ id:'', name:'未分類', color:'var(--ink3)' }].concat(topFolders());
+  let html = tops.map(f =>
+    `<button class="pill ${pid === f.id ? 'on' : ''}" data-f="${f.id}">${dot(f.color)}${esc(f.name)}</button>`).join('')
+    + `<button class="pill" data-newf>${ICO.plus({s:14,w:2.2})}</button>`;
+  const subs = pid ? subsOf(pid) : [];
+  if(pid){
+    html += `<div style="flex-basis:100%;height:0"></div>
+      <button class="pill ${draftFid === pid ? 'on' : ''}" data-f="${pid}">単元なし</button>`
+      + subs.map(x => `<button class="pill ${draftFid === x.id ? 'on' : ''}" data-f="${x.id}">${esc(x.name)}</button>`).join('')
+      + `<button class="pill" data-newsub2>${ICO.plus({s:14,w:2.2})}単元</button>`;
+  }
+  $('#fpick').innerHTML = html;
   $$('#fpick [data-f]').forEach(b => b.onclick = () => { draftFid = b.dataset.f; paintFolderPick(); });
   $('#fpick [data-newf]').onclick = () => folderSheet(null, id => { draftFid = id; paintFolderPick(); });
+  const nb = $('#fpick [data-newsub2]');
+  if(nb) nb.onclick = () => folderSheet(null, id => { draftFid = id; paintFolderPick(); }, pid);
 }
 function paintDraft(){
   const box = $('#dthumbs');
@@ -812,7 +866,8 @@ function doSave(){
     const n = { id:uid(), body, imgs, fid:draftFid, cre:now(), upd:now(), rev:0, ng:0, revAt:0, star:false, del:false };
     notes.unshift(n);
     toast('保存しました');
-    go('list', { fid:draftFid, q:'' });
+    const fo = draftFid ? folderOf(draftFid) : null;
+    go('list', { fid: fo ? (fo.pid || fo.id) : '', sub: (fo && fo.pid) ? fo.id : '', q:'', view:'list' });
   }
   saveNotes();
   draft = [];
@@ -821,8 +876,46 @@ function doSave(){
 /* ===================== 振り返り ===================== */
 let revQ = [], revI = 0, revOk = 0, revNg = 0, revOpen = false, revMode = 'quiz';
 
+function scopeNotes(){                       // 振り返る範囲のメモ
+  const sc = cfg.revScope || '*';
+  if(sc === '*') return live();
+  if(sc === '') return live().filter(n => !n.fid);
+  const ids = idsUnder(sc);
+  return live().filter(n => ids.includes(n.fid));
+}
+function scopeName(){
+  const sc = cfg.revScope || '*';
+  if(sc === '*') return 'すべてのノート';
+  if(sc === '') return '未分類';
+  const f = folderOf(sc);
+  if(!f) return 'すべてのノート';
+  const p = f.pid ? folderOf(f.pid) : null;
+  return p ? p.name + '　' + f.name : f.name;
+}
+function scopeSheet(){
+  const list = [{ id:'*', name:'すべてのノート', color:'var(--ink2)', d:0 }];
+  topFolders().forEach(f => {
+    list.push({ id:f.id, name:f.name, color:f.color, d:0 });
+    subsOf(f.id).forEach(x => list.push({ id:x.id, name:x.name, color:x.color, d:1 }));
+  });
+  if(live().some(n => !n.fid)) list.push({ id:'', name:'未分類', color:'var(--ink3)', d:0 });
+  const cur = cfg.revScope || '*';
+  sheet(`<h3>振り返る範囲</h3>
+    <div class="note-txt" style="margin:-10px 2px 14px">えらんだ範囲のメモだけが出題されます。フォルダを選ぶと、その中の単元もまとめて入ります。</div>
+    <div class="group">${list.map(f => `<button class="item" data-sc="${f.id}" ${f.d?'style="padding-left:34px"':''}>
+      <span class="ic" style="color:${f.color}">${f.id === '*' ? ICO.inbox({s:19}) : f.d ? ICO.folder({s:18,w:1.9}) : ICO.folderFill({s:19})}</span>
+      <span class="nm" style="${f.d?'font-weight:500':''}">${esc(f.name)}</span>
+      <span class="ct">${f.id === '*' ? live().length : f.id === '' ? live().filter(n=>!n.fid).length : countUnder(f.id)}</span>
+      ${cur === f.id ? `<span style="color:var(--pri);margin-left:8px">${ICO.check({s:18,w:2.2})}</span>` : ''}
+    </button>`).join('')}</div>`, close => {
+    $$('#host [data-sc]').forEach(b => b.onclick = () => {
+      cfg.revScope = b.dataset.sc; saveCfg(); close(); render();
+    });
+  });
+}
+
 function pickReview(k){
-  const pool = live();
+  const pool = scopeNotes();
   if(!pool.length) return [];
   const sorted = pool.slice().sort((a,b) => (a.rev - b.rev) || (a.revAt - b.revAt));
   const head = sorted.slice(0, Math.max(k*3, k));
@@ -832,7 +925,7 @@ function pickReview(k){
 function renderReview(){
   bar('', '振り返り', '', true);
   if(!revQ.length || revI >= revQ.length){
-    const L = live(), never = L.filter(x => !x.rev).length;
+    const L = scopeNotes(), never = L.filter(x => !x.rev).length;
     const done = revQ.length && revI >= revQ.length;
     $('#main').innerHTML = done ? `
       <div class="doc" style="text-align:center;padding:30px 20px">
@@ -849,6 +942,11 @@ function renderReview(){
         <div style="font-weight:700;font-size:1.02rem;margin-bottom:6px">しばらく開いていないメモを見直す</div>
         <div class="note-txt">1行目だけを表示します。内容を思い出してから続きを表示してください。
           「あいまい」を選んだメモは、次から早めに出てきます。</div>
+        <div class="row-scope" style="margin-top:16px">
+          <span class="k">範囲</span>
+          <button class="pill" id="scope">${esc(scopeName())}
+            <span style="opacity:.5">${ICO.right({s:13,w:2.2})}</span></button>
+        </div>
         <div class="seg" id="revn" style="margin-top:16px">
           ${[3,5,10].map(k => `<button data-k="${k}" class="${cfg.revN===k?'on':''}">${k}件</button>`).join('')}
         </div>
@@ -861,12 +959,13 @@ function renderReview(){
       <button class="btn pri" id="start" style="margin-top:14px">はじめる</button>
       <button class="btn sec" id="shuffle" style="margin-top:10px">シャッフル</button>
       <div class="note-txt" style="margin:10px 4px 0">
-        シャッフルは、${L.length}件すべてをランダムな順に1件ずつ見ていくだけの機能です。
+        シャッフルは、この範囲の${L.length}件をランダムな順に1件ずつ見ていくだけの機能です。
         覚えているかどうかは記録されません。</div>`;
     if(done) $('#again').onclick = () => startRev(revMode);
     else{
       $('#start').onclick = () => startRev('quiz');
       $('#shuffle').onclick = () => startRev('shuffle');
+      $('#scope').onclick = scopeSheet;
       $$('#revn button').forEach(b => b.onclick = () => {
         cfg.revN = +b.dataset.k; saveCfg();
         $$('#revn button').forEach(x => x.classList.toggle('on', x === b));
@@ -925,7 +1024,7 @@ function renderReview(){
 function startRev(mode){
   revMode = mode || 'quiz';
   if(revMode === 'shuffle'){
-    const pool = live().slice();
+    const pool = scopeNotes().slice();
     for(let i = pool.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [pool[i],pool[j]] = [pool[j],pool[i]]; }
     revQ = pool;
   }else{
@@ -1008,28 +1107,33 @@ function sheet(html, after){
   if(after) after(close);
   return close;
 }
-function folderSheet(f, onCreate){
-  let color = f ? f.color : COLORS[folders.length % COLORS.length];
+function folderSheet(f, onCreate, pid){
+  const parentId = f ? f.pid : pid;                   // 単元なら親フォルダのid
+  const parent = parentId ? folderOf(parentId) : null;
+  const kind = parent ? '単元' : 'フォルダ';
+  let color = f ? f.color : (parent ? parent.color : COLORS[topFolders().length % COLORS.length]);
   sheet(`
-    <h3>${f ? 'フォルダを編集' : '新しいフォルダ'}</h3>
-    <input class="field" id="fname" placeholder="フォルダ名" value="${f ? esc(f.name) : ''}" autocomplete="off">
+    <h3>${f ? kind + 'を編集' : '新しい' + kind}</h3>
+    ${parent ? `<div class="note-txt" style="margin:-10px 2px 14px">「${esc(parent.name)}」の中に作ります。</div>` : ''}
+    <input class="field" id="fname" placeholder="${parent ? '単元の名前（例: 二次関数）' : 'フォルダ名'}" value="${f ? esc(f.name) : ''}" autocomplete="off">
     <div class="label" style="margin:18px 4px 8px">いろ</div>
     <div class="swatch" id="sw">${COLORS.map(c =>
       `<button data-c="${c}" class="${c===color?'on':''}" style="background:${c}"></button>`).join('')}</div>
     <button class="btn pri" id="fsave" style="margin-top:22px">${f ? '保存' : '作成'}</button>
-    ${f ? `<button class="btn danger" id="fdel" style="margin-top:8px">フォルダを削除</button>` : ''}
+    ${f ? `<button class="btn danger" id="fdel" style="margin-top:8px">${kind}を削除</button>` : ''}
   `, close => {
     $$('#sw button').forEach(b => b.onclick = () => {
       color = b.dataset.c;
       $$('#sw button').forEach(x => x.classList.toggle('on', x === b));
     });
-    setTimeout(() => { if(!f) $('#fname').focus(); }, 150);
+    setTimeout(() => { const t = $('#fname'); if(!f && t) t.focus(); }, 150);
     $('#fsave').onclick = () => {
       const name = $('#fname').value.trim();
       if(!name){ toast('名前を入れてください'); return; }
       if(f){ f.name = name; f.color = color; toast('保存しました'); }
       else{
         const nf = { id:uid('f'), name, color };
+        if(parentId) nf.pid = parentId;
         folders.push(nf);
         toast('作成しました');
         if(onCreate) onCreate(nf.id);
@@ -1038,17 +1142,26 @@ function folderSheet(f, onCreate){
       if(S.screen !== 'write') render();
     };
     if(f) $('#fdel').onclick = () => {
-      const c = countIn(f.id);
-      if(!confirm(`「${f.name}」を削除します。${c ? `中の${c}件は未分類に移ります（メモは消えません）。` : ''}`)) return;
-      live().forEach(n => { if(n.fid === f.id){ n.fid = ''; n.upd = now(); } });
-      folders = folders.filter(x => x.id !== f.id);
+      const subs = subsOf(f.id);
+      const c = countUnder(f.id);
+      const to = f.pid ? (folderOf(f.pid) || {}).name : '未分類';
+      const msg = f.pid
+        ? `単元「${f.name}」を削除します。${c ? `中の${c}件は「${to}」に移ります（メモは消えません）。` : ''}`
+        : `「${f.name}」を削除します。${subs.length ? `単元${subs.length}個もなくなり、` : ''}${c ? `中の${c}件は未分類に移ります（メモは消えません）。` : ''}`;
+      if(!confirm(msg)) return;
+      const gone = idsUnder(f.id);
+      const dest = f.pid || '';
+      live().forEach(n => { if(gone.includes(n.fid)){ n.fid = dest; n.upd = now(); } });
+      folders = folders.filter(x => !gone.includes(x.id));
+      if(cfg.revScope && gone.includes(cfg.revScope)){ cfg.revScope = '*'; saveCfg(); }
       saveFolders(); saveNotes(); close();
       toast('削除しました');
-      go('home');
+      if(f.pid) go('list', { fid:f.pid, sub:'' }); else go('home');
     };
   });
 }
-function reorderSheet(){
+function reorderSheet(pid){
+  const inList = () => pid ? subsOf(pid) : topFolders();
   const rowHtml = (f) => `<div class="rrow" data-id="${f.id}">
       <span class="ic" style="width:26px;display:flex;justify-content:center;color:${f.color}">${ICO.folderFill({s:20})}</span>
       <span class="nm">${esc(f.name)}</span>
@@ -1056,9 +1169,9 @@ function reorderSheet(){
       <span class="grip">${ICO.grip({s:20,w:2})}</span>
     </div>`;
 
-  sheet(`<h3>フォルダの並べ替え</h3>
+  sheet(`<h3>${pid ? '単元' : 'フォルダ'}の並べ替え</h3>
     <div class="note-txt" style="margin:-8px 2px 16px">右の ≡ をつまんだまま、動かしたい位置まで指を上下に滑らせてください。</div>
-    <div class="rlist" id="rlist">${folders.map(rowHtml).join('')}</div>
+    <div class="rlist" id="rlist">${inList().map(rowHtml).join('')}</div>
     <button class="btn pri" id="rdone" style="margin-top:18px">完了</button>`, close => {
 
     const list = $('#rlist');
@@ -1099,10 +1212,13 @@ function reorderSheet(){
       rows[from].classList.remove('lift');
       rows.forEach(r => setY(r, 0));
       if(moved && to !== from){
-        const f = folders.splice(from, 1)[0];
-        folders.splice(to, 0, f);
+        const grp = inList();
+        const moving = grp[from];
+        const others = folders.filter(x => grp.indexOf(x) < 0);
+        grp.splice(from, 1); grp.splice(to, 0, moving);
+        folders = pid ? others.concat(grp) : grp.concat(others);
         saveFolders();
-        list.innerHTML = folders.map(rowHtml).join('');
+        list.innerHTML = inList().map(rowHtml).join('');
         bind();
       }
       from = -1;
@@ -1123,13 +1239,17 @@ function reorderSheet(){
 }
 
 function moveSheet(n){
-  const all = [{ id:'', name:'未分類', color:'var(--ink3)' }].concat(folders);
+  const list = [{ id:'', name:'未分類', color:'var(--ink3)', d:0 }];
+  topFolders().forEach(f => {
+    list.push({ id:f.id, name:f.name, color:f.color, d:0 });
+    subsOf(f.id).forEach(x => list.push({ id:x.id, name:x.name, color:x.color, d:1 }));
+  });
   sheet(`<h3>フォルダを移動</h3>
-    <div class="group">${all.map(f => rowItem({
-      ic:`<span style="color:${f.color}">${ICO.folderFill({s:19})}</span>`,
-      nm:esc(f.name), attr:`data-mv="${f.id}"`,
-      right: n.fid === f.id ? `<span style="color:var(--pri)">${ICO.check({s:18,w:2.2})}</span>` : ''
-    })).join('')}</div>
+    <div class="group">${list.map(f => `<button class="item" data-mv="${f.id}" ${f.d?'style="padding-left:34px"':''}>
+      <span class="ic" style="color:${f.color}">${f.d ? ICO.folder({s:18,w:1.9}) : ICO.folderFill({s:19})}</span>
+      <span class="nm" style="${f.d?'font-weight:500':''}">${esc(f.name)}</span>
+      ${n.fid === f.id ? `<span style="color:var(--pri)">${ICO.check({s:18,w:2.2})}</span>` : ''}
+    </button>`).join('')}</div>
     <button class="btn sec" id="mnew" style="margin-top:12px">新しいフォルダを作る</button>`, close => {
     $$('#host [data-mv]').forEach(b => b.onclick = () => {
       n.fid = b.dataset.mv; n.upd = now(); saveNotes(); close(); render(); toast('移動しました');
@@ -1159,14 +1279,14 @@ function helpSheet(){
           ['写真は8枚まで','取り込むときに自動で縮小されます。'],
           ['写真だけでも保存できる','板書やスライドを撮るだけでも構いません。']] }),
     slide({ c:C.green, ic:ICO.folderFill({s:23}), sub:'FOLDER', t:'フォルダ',
-      p:['読書・講義・仕事など、分け方は自由です。'],
-      kv:[['あとから作れる','先に書きためて、あとで整理しても大丈夫。'],
-          ['いつでも移せる','メモを開いて「フォルダを移動」から。'],
+      p:['教科や本など、分け方は自由です。'],
+      kv:[['中を単元で分けられる','フォルダを開くと上に「＋単元」。英単語や公式を範囲ごとにまとめられます。'],
+          ['あとから作れる','先に書きためて、あとで整理しても大丈夫。'],
           ['消しても中身は残る','中のメモは未分類に移るだけです。']] }),
     slide({ c:C.gold, ic:ICO.loop({s:23,w:1.7}), sub:'REVIEW', t:'振り返り',
       p:['しばらく開いていないメモを数件えらびます。'],
-      kv:[['まず思い出す','1行目を読んで、続きを頭の中で言ってみる。'],
-          ['それから開く','「続きを表示」で本文と写真が出ます。'],
+      kv:[['範囲をえらべる','「範囲」から、単元だけ・フォルダだけ・全部を切り替えられます。'],
+          ['まず思い出す','1行目を読んで、続きを頭の中で言ってみる。'],
           ['あいまいは早く戻る','選んだメモは次から早めに出てきます。']] }),
     slide({ c:C.gray, ic:ICO.down({s:23,w:1.7}), sub:'KEEP', t:'保管',
       p:['メモと写真は、この端末の中だけにあります。どこにも送っていません。'],
@@ -1207,7 +1327,7 @@ function dl(name, text, type){
 function stamp(){ const d = new Date(), p = x => String(x).padStart(2,'0');
   return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`; }
 const sortedLive = () => live().slice().sort((x,y) => y.cre - x.cre);
-const fname = n => n.fid ? ((folderOf(n.fid)||{}).name || '') : '';
+const fname = n => pathOf(n);
 const blobToData = b => new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); });
 const dataToBlob = async d => (await fetch(d)).blob();
 

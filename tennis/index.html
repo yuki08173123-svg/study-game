@@ -244,6 +244,7 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
 
   <!-- ===== 記録 ===== -->
   <div id="view-rec" class="stack hidden">
+    <button class="ghost small" id="rec-title" style="text-align:left">✏️ 試合名</button>
     <div class="scoreboard num">
       <div class="box"><div class="who">自分</div><div class="big" id="sc-me">0</div></div>
       <div class="box"><div class="who">相手</div><div class="big" id="sc-opp">0</div></div>
@@ -292,6 +293,7 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
   <div id="view-sum" class="stack hidden">
     <div class="card" style="text-align:center">
       <div id="sum-title" style="font-weight:700"></div>
+      <button class="ghost small" id="sum-rename" style="margin-top:6px">✏️ 試合名・日付を変える</button>
       <div class="num" id="sum-score" style="font-size:46px;font-weight:800;letter-spacing:.03em"></div>
       <div id="sum-keep" style="font-size:13px;color:var(--muted)"></div>
     </div>
@@ -620,6 +622,7 @@ $("btn-start").addEventListener("click", ()=>{
 
 /* ---------- 記録画面 ---------- */
 function renderRec(){
+  $("rec-title").textContent = "✏️ " + (cur.title || "（名前なし）");
   const g = curGame(cur);
   const {me, op} = matchGames(cur);
   $("sc-me").textContent = me;
@@ -647,6 +650,19 @@ function renderRec(){
   pending = null;
   show("view-rec");
 }
+function renameMatch(alsoDate, after){
+  const name = prompt("試合名を入力してください", cur.title || "");
+  if(name === null) return;                       // キャンセル
+  cur.title = name.trim();
+  if(alsoDate){
+    const d = prompt("日付（2026-08-31 の形式）", cur.date);
+    if(d !== null && /^\d{4}-\d{2}-\d{2}$/.test(d.trim())) cur.date = d.trim();
+    else if(d !== null) toast("日付の形は変えずにおきました");
+  }
+  save(); after(); toast("変えました");
+}
+$("rec-title").addEventListener("click", ()=>renameMatch(false, renderRec));
+$("sum-rename").addEventListener("click", ()=>renameMatch(true, renderSummary));
 $("serve-toggle").addEventListener("click", ()=>{
   const g = curGame(cur);
   if(g.points.length > 0){ toast("ポイント記録後はサーブを変えられません"); return; }
@@ -881,7 +897,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 9; // リリースのたびに version.json の v と一緒に上げる
+const VER = 10; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

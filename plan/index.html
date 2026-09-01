@@ -112,16 +112,22 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
 .day-chip.on .bar i{background:#fff;}
 
 /* ---------- time row ---------- */
-.timegrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;}
-.timebox{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:10px 12px;}
-.timebox .lab{font-size:11px; font-weight:900; color:var(--muted); letter-spacing:.05em;}
-.timebox .row{display:flex; align-items:center; gap:6px; margin-top:2px;}
-.timebox .stepper{
-  width:34px; height:34px; border-radius:10px; background:var(--chip); display:grid; place-items:center;
-  font-size:19px; font-weight:900; color:var(--accent); flex:none;
+.timecard{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:2px 12px; margin-bottom:10px;}
+.timerow{display:flex; align-items:center; gap:7px; padding:9px 0;}
+.timerow + .timerow{border-top:1px solid var(--line);}
+.timerow .lab{flex:1; font-size:14px; font-weight:900; color:var(--muted);}
+.timerow .stepper{
+  width:36px; height:36px; border-radius:11px; background:var(--chip); display:grid; place-items:center;
+  font-size:20px; font-weight:900; color:var(--accent); flex:none;
 }
-.timebox .val{flex:1; text-align:center; font-size:22px; font-weight:900;}
-.timebox .val em{font-size:12px; font-style:normal; color:var(--muted); font-weight:700; margin-left:1px;}
+.timerow .val{min-width:106px; text-align:center; font-size:19px; font-weight:900; padding:5px 2px; border-radius:10px; border:1px dashed transparent;}
+.timerow .val:active{background:var(--chip);}
+.picker{display:flex; align-items:center; justify-content:center; gap:7px; padding:14px 0 6px;}
+.picker select{
+  font-size:23px; font-weight:900; padding:10px 10px; border-radius:12px;
+  border:1px solid var(--line); background:var(--card); color:var(--ink);
+}
+.picker span{font-size:15px; font-weight:900; color:var(--muted);}
 
 /* ---------- tasks ---------- */
 .tasks{display:flex; flex-direction:column; gap:8px;}
@@ -270,22 +276,18 @@ nav.tabs button.on span{color:var(--accent);}
 
     <div class="days" id="days"></div>
 
-    <div class="timegrid">
-      <div class="timebox">
-        <div class="lab">予定の時間</div>
-        <div class="row">
-          <button class="stepper" data-t="plan" data-d="-1">−</button>
-          <div class="val num"><span id="planV">0</span><em>h</em></div>
-          <button class="stepper" data-t="plan" data-d="1">＋</button>
-        </div>
+    <div class="timecard">
+      <div class="timerow">
+        <span class="lab">予定の時間</span>
+        <button class="stepper" data-t="plan" data-d="-1" aria-label="10分へらす">−</button>
+        <button class="val num" id="planV" data-pick="plan">0分</button>
+        <button class="stepper" data-t="plan" data-d="1" aria-label="10分ふやす">＋</button>
       </div>
-      <div class="timebox">
-        <div class="lab">実際の時間</div>
-        <div class="row">
-          <button class="stepper" data-t="act" data-d="-1">−</button>
-          <div class="val num"><span id="actV">0</span><em>h</em></div>
-          <button class="stepper" data-t="act" data-d="1">＋</button>
-        </div>
+      <div class="timerow">
+        <span class="lab">実際の時間</span>
+        <button class="stepper" data-t="act" data-d="-1" aria-label="10分へらす">−</button>
+        <button class="val num" id="actV" data-pick="act">0分</button>
+        <button class="stepper" data-t="act" data-d="1" aria-label="10分ふやす">＋</button>
       </div>
     </div>
 
@@ -358,7 +360,7 @@ nav.tabs button.on span{color:var(--accent);}
 
 <script>
 'use strict';
-const VER = 1;
+const VER = 2;
 const KEY = 'planmap_v1';
 const WD = ['月','火','水','木','金','土','日'];
 
@@ -369,6 +371,18 @@ function load(){
     if(r && typeof r==='object'){ S = Object.assign(S, r); }
   }catch(e){}
   if(!S.weeks) S.weeks = {};
+  // v1 は「時間（h）」で保存していた。v2 から「分」で持つ
+  if(!S.minv){
+    Object.keys(S.weeks).forEach(k=>{
+      const days = (S.weeks[k]||{}).days || {};
+      Object.keys(days).forEach(dk=>{
+        const d = days[dk];
+        d.plan = Math.round((Number(d.plan)||0)*60);
+        d.act  = Math.round((Number(d.act)||0)*60);
+      });
+    });
+    S.minv = 1;
+  }
 }
 let saveT = null;
 function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }, 200); }
@@ -392,15 +406,16 @@ function dayOf(k, i){
 
 /* ---------- TQC ---------- */
 function tqcOf(k){
-  const w = S.weeks[k]; let T=0, Q=0, done=0, all=0;
+  const w = S.weeks[k]; let min=0, Q=0, done=0, all=0;
   if(w) for(let i=0;i<7;i++){
     const key = iso(addDays(parseISO(k), i)); const d = w.days[key]; if(!d) continue;
-    T += Number(d.act)||0;
+    min += Number(d.act)||0;
     (d.tasks||[]).forEach(t=>{ all++; if(t.done) done++; if(t.star) Q++; });
   }
+  const T = Math.round(min/60*10)/10;      // TQCの計算は「時間」で行う
   const C = all ? Math.floor(done/all*100) : 0;
   const score = Math.floor(T*Q*C/1000);
-  return { T:Math.round(T*10)/10, Q, C, done, all, score };
+  return { Tmin:min, T, Q, C, done, all, score };
 }
 
 /* ---------- render ---------- */
@@ -436,8 +451,8 @@ function renderDays(){
 
 function renderDay(){
   const d = dayOf(S.cur, S.day);
-  $('#planV').textContent = fmtH(d.plan);
-  $('#actV').textContent = fmtH(d.act);
+  $('#planV').textContent = fmtHM(d.plan);
+  $('#actV').textContent = fmtHM(d.act);
   $('#dayMemo').value = d.memo || '';
   const box = $('#tasks');
   if(!d.tasks.length){
@@ -458,6 +473,13 @@ function renderDay(){
   }
 }
 function fmtH(v){ const n = Number(v)||0; return (Math.round(n*10)/10).toString(); }
+function fmtHM(min){
+  let m = Math.max(0, Math.round(Number(min)||0));
+  const h = Math.floor(m/60); m = m%60;
+  if(h && m) return h+'時間'+m+'分';
+  if(h) return h+'時間';
+  return m+'分';
+}
 
 function renderTQC(){
   const r = tqcOf(S.cur);
@@ -466,7 +488,7 @@ function renderTQC(){
     '<div class="head"><b>今週のTQCスコア</b><span>日曜日にチェック</span></div>'
   + '<div class="score"><span class="n num">'+r.score+'</span><span class="u">点</span></div>'
   + '<div class="parts">'
-  +   '<div class="part"><div class="k">T</div><div class="v num">'+fmtH(r.T)+'<em>h</em></div><div class="s">'+(goalH?('目標 '+goalH+'h'):'勉強した時間')+'</div></div>'
+  +   '<div class="part"><div class="k">T</div><div class="v num" style="font-size:17px">'+fmtHM(r.Tmin)+'</div><div class="s">'+(goalH?('目標 '+goalH+'h'):'勉強した時間')+'</div></div>'
   +   '<div class="part"><div class="k">Q</div><div class="v num">'+r.Q+'</div><div class="s">極まった数</div></div>'
   +   '<div class="part"><div class="k">C</div><div class="v num">'+r.C+'<em>%</em></div><div class="s">'+r.done+'/'+r.all+' 完了</div></div>'
   + '</div>'
@@ -520,14 +542,29 @@ $('#dayMemo').oninput = e => { dayOf(S.cur, S.day).memo = e.target.value; save()
 document.querySelectorAll('.stepper').forEach(b=>{
   b.onclick = ()=>{
     const d = dayOf(S.cur, S.day), f = b.dataset.t === 'plan' ? 'plan' : 'act';
-    let v = (Number(d[f])||0) + (+b.dataset.d)*0.5;
-    if(v < 0) v = 0; if(v > 24) v = 24;
-    d[f] = Math.round(v*10)/10;
-    $(f==='plan'?'#planV':'#actV').textContent = fmtH(d[f]);
+    let v = (Number(d[f])||0) + (+b.dataset.d)*10;
+    if(v < 0) v = 0; if(v > 1440) v = 1440;
+    d[f] = Math.round(v);
+    $(f==='plan'?'#planV':'#actV').textContent = fmtHM(d[f]);
     renderTQC(); save();
   };
 });
 
+document.querySelectorAll('[data-pick]').forEach(b=>{ b.onclick = ()=>openTimePicker(b.dataset.pick); });
+function openTimePicker(f){
+  const d = dayOf(S.cur, S.day), cur = Math.max(0, Math.round(Number(d[f])||0));
+  const h = Math.min(15, Math.floor(cur/60)), m = Math.round((cur%60)/10)*10 % 60;
+  let hO = '', mO = '';
+  for(let i=0;i<=15;i++) hO += '<option value="'+i+'"'+(i===h?' selected':'')+'>'+i+'</option>';
+  for(let i=0;i<60;i+=10) mO += '<option value="'+i+'"'+(i===m?' selected':'')+'>'+String(i).padStart(2,'0')+'</option>';
+  const sh = openSheet('<h2>'+(f==='plan'?'予定の時間':'実際の時間')+'</h2>'
+    + '<div class="picker"><select id="pkH">'+hO+'</select><span>時間</span><select id="pkM">'+mO+'</select><span>分</span></div>'
+    + '<button class="bigbtn" id="pkOK">きめる</button>');
+  sh.querySelector('#pkOK').onclick = ()=>{
+    d[f] = (+sh.querySelector('#pkH').value)*60 + (+sh.querySelector('#pkM').value);
+    sh.remove(); renderDay(); renderTQC(); save();
+  };
+}
 function addTask(){
   const txt = $('#newText').value.trim(); if(!txt) return;
   const tm = $('#newTime').value;
@@ -673,8 +710,8 @@ function drawMap(){
     g.fillStyle = i>=5 ? (i===6 ? '#D2483C' : '#2C6FE4') : INK;
     g.font = '900 25px '+F;
     g.fillText(md(d)+'（'+WD[i]+'）', x+14, y+32);
-    g.font = '700 19px '+F; g.fillStyle = MUT; g.textAlign = 'right';
-    g.fillText('予定 '+fmtH(dd.plan)+'h ／ 実際 '+fmtH(dd.act)+'h', x+w-14, y+31);
+    g.font = '700 16px '+F; g.fillStyle = MUT; g.textAlign = 'right';
+    g.fillText('予 '+fmtHM(dd.plan)+' ／ 実 '+fmtHM(dd.act), x+w-12, y+31);
     g.textAlign = 'left';
 
     let ty = y+72;
@@ -714,7 +751,7 @@ function drawMap(){
     g.fillStyle = MUT; g.font = '900 20px '+F; g.fillText('TQCスコア', x+w/2, y+158);
     g.textAlign = 'left';
     const rows2 = [
-      ['T  勉強した時間', fmtH(r.T)+' h'],
+      ['T  勉強した時間', fmtHM(r.Tmin)],
       ['Q  極まった数', r.Q+' 件'],
       ['C  達成率', r.C+' %  ('+r.done+'/'+r.all+')']
     ];

@@ -499,7 +499,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 27;
+const VER = 28;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -558,7 +558,7 @@ let prog = {};            /* {動画id: {t:秒, d:全体の秒, done:1, last:時
 let favs = [];
 let folders = [];       /* 生徒が自分で作るフォルダ [{id, name, ids:[]}] */
 let outs = {};          /* アウトプット {動画id: [{at:時刻, t:本文}]} */
-let cfg  = { speed:1, autonext:true, loop:false };
+let cfg  = { speed:1, autonext:true, loop:false, cc:false };
 let view = { name:'home' };
 let admin = null;         /* 管理画面のしたがき */
 
@@ -1449,6 +1449,9 @@ function vSet(){
       <div class="item"><div class="nm">はじめの再生の速さ</div>
         <div class="ct" id="spdLbl">${cfg.speed}倍</div>
         <button class="pb" id="spdBtn" style="color:var(--ink2)">${ICO.down({s:20})}</button></div>
+      <div class="item"><div class="nm">字幕<br>
+        <span style="font-size:.76rem;color:var(--ink3);font-weight:600">字幕のある動画で出す</span></div>
+        <div class="sw ${cfg.cc?'on':''}" id="swCC"><i></i></div></div>
     </div>
 
     <div class="sec"><h2>視聴の記録</h2></div>
@@ -1460,6 +1463,7 @@ function vSet(){
       ? 'ループ再生が入っているので、次の動画には進みません。同じ動画をくり返します（くり返すたびに「見た回数」が1つ増えます）。'
       : '見終わったら、下の動画へ自動で進みます。'}</div>
     <div class="lead" style="margin-top:8px">速さは動画ごとに覚えます。ここで決めるのは、まだ速さを変えていない動画の速さです。</div>
+    <div class="lead" style="margin-top:8px">字幕は、その動画に字幕が用意されているときだけ出ます。映像に焼きこまれている字幕は消せません。</div>
     <div class="lead" style="margin-top:8px">記録はこの端末の中だけに残ります。外には送られません。</div>
 
     <div class="sec"><h2>記録の持ち出し</h2></div>
@@ -1496,6 +1500,8 @@ function vSet(){
   $('#swLoop').onclick = () => { cfg.loop = !cfg.loop; saveCfg(); vSet();
     toast(cfg.loop ? 'くり返し再生にしました' : 'くり返しをやめました'); };
   $('#swNext').onclick = () => { cfg.autonext = !cfg.autonext; saveCfg(); vSet(); };
+  $('#swCC').onclick = () => { cfg.cc = !cfg.cc; saveCfg(); applyCC(); vSet();
+    toast(cfg.cc ? '字幕を出します' : '字幕を消しました'); };
   $('#spdBtn').onclick = $('#spdLbl').onclick = () => {
     cfg.speed = SPEEDS[(SPEEDS.indexOf(cfg.speed) + 1) % SPEEDS.length]; saveCfg();
     vSet();
@@ -1799,16 +1805,34 @@ async function makePlayer(){
       playerVars: {
         /* YouTube の画面を出さない。関連動画・ロゴ・キーボード操作もふさぐ */
         controls:0, rel:0, modestbranding:1, playsinline:1, disablekb:1,
-        iv_load_policy:3, fs:0, cc_load_policy:0, origin:location.origin
+        iv_load_policy:3, fs:0, origin:location.origin,
+        cc_load_policy: cfg.cc ? 1 : 0, cc_lang_pref:'ja'
       },
       events: {
-        onReady: () => { playerReady = true; res(); },
+        onReady: () => { playerReady = true; applyCC(); res(); },
         onStateChange: onState,
         onError: () => { $('#phint').classList.remove('hidden');
           $('#phint').textContent = 'この動画は再生できませんでした（限定公開の設定をご確認ください）'; }
       }
     });
   });
+}
+
+/* 字幕の出し入れ。YouTube側の呼び名が2通りあるので、両方に声をかける。
+   もともと字幕のない動画では何も起きない（それが正しい） */
+function applyCC(){
+  if(!player || !playerReady) return;
+  try{
+    if(cfg.cc){
+      player.loadModule('captions'); player.loadModule('cc');
+      player.setOption('captions', 'track', { languageCode:'ja' });
+      player.setOption('cc', 'track', { languageCode:'ja' });
+    }else{
+      player.setOption('captions', 'track', {});
+      player.setOption('cc', 'track', {});
+      player.unloadModule('captions'); player.unloadModule('cc');
+    }
+  }catch(e){}
 }
 
 function openPlay(id, push){

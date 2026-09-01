@@ -1,7 +1,7 @@
 /* 計画マップ の service worker
    ほうしん:「ネットワーク優先」。まずネットから最新をとり、とれたものをキャッシュに控える。
    ネットがないときだけキャッシュで動く。 */
-const VER = 'pl-v9';
+const VER = 'pl-v11';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {

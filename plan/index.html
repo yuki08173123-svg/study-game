@@ -97,11 +97,25 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
 .day-chip.on .bar{background:rgba(255,255,255,.35);}
 .day-chip.on .bar i{background:#fff;}
 
-.dayline{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;}
-.dayline div{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:9px 12px; display:flex; align-items:baseline; gap:7px;}
-.dayline span{font-size:12px; font-weight:900; color:var(--muted); flex:none;}
-.dayline b{font-size:18px; font-weight:900;}
-.dayline .ok b{color:var(--done);}
+/* 自動でけいさんされる、のしるし */
+.autonote{
+  display:flex; gap:8px; align-items:flex-start; margin-bottom:9px; padding:9px 12px;
+  background:var(--accent-soft); border-radius:14px; font-size:12.5px; line-height:1.7; color:var(--ink);
+}
+.autonote svg{width:16px; height:16px; stroke:var(--accent); fill:none; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; flex:none; margin-top:3px;}
+.autonote b{font-weight:900; color:var(--accent);}
+.chip-auto{
+  font-size:10.5px; font-weight:900; color:var(--accent); background:var(--accent-soft);
+  border-radius:999px; padding:2px 8px; letter-spacing:.04em; margin-left:6px; flex:none;
+}
+.tqc .chip-auto{color:var(--navy1); background:var(--gold);}
+.dayline{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:11px 13px 12px; margin-bottom:10px;}
+.dlh{display:flex; align-items:center; font-size:12px; font-weight:900; color:var(--muted); letter-spacing:.05em; margin-bottom:7px;}
+.dlrow{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.dlrow > div{background:var(--chip); border-radius:12px; padding:8px 10px; display:flex; align-items:baseline; gap:7px;}
+.dlrow span{font-size:12px; font-weight:900; color:var(--muted); flex:none;}
+.dlrow b{font-size:19px; font-weight:900;}
+.dlrow .ok b{color:var(--done);}
 
 .tasks{display:flex; flex-direction:column; gap:8px;}
 .task{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); display:flex; align-items:flex-start; gap:8px; padding:9px 10px;}
@@ -232,7 +246,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v9</span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v11</span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -255,9 +269,17 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
     <div class="days" id="days"></div>
 
+    <div class="autonote">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+      <span><b>「自動」のところは、書きこまなくて大丈夫です。</b>下の「やること」から、時間もTQCスコアも自動でけいさんされます。</span>
+    </div>
+
     <div class="dayline">
-      <div><span>予定</span><b class="num" id="planV">0分</b></div>
-      <div class="ok"><span>できた</span><b class="num" id="actV">0分</b></div>
+      <div class="dlh">この日の時間<span class="chip-auto">自動</span></div>
+      <div class="dlrow">
+        <div><span>予定</span><b class="num" id="planV">0分</b></div>
+        <div class="ok"><span>できた</span><b class="num" id="actV">0分</b></div>
+      </div>
     </div>
 
     <div class="tasks" id="tasks"></div>
@@ -287,7 +309,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
     </div>
 
     <div class="daybox">
-      <div class="h">この日<em id="dayDone">0/0 完了</em></div>
+      <div class="h">この日<span class="chip-auto">自動</span><em id="dayDone">0/0 完了</em></div>
       <div class="dayparts" id="dayTqc"></div>
       <textarea id="dayMemo" rows="1" placeholder="この日のふりかえり（なくてもOK）"></textarea>
     </div>
@@ -334,7 +356,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v9</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v11</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -356,7 +378,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 9;
+const VER = 11;
 const KEY = 'planmap_v1';
 const WD = ['月','火','水','木','金','土','日'];
 const DEF_MIN = 30;
@@ -488,7 +510,7 @@ function renderDay(){
 function renderTQC(){
   const r = tqcOf(S.cur), goalH = Number(S.weekGoal)||0;
   $('#tqcCard').innerHTML =
-    '<div class="head"><b>今週のTQCスコア</b><span>毎日つけると自動で出ます</span></div>'
+    '<div class="head"><b>今週のTQCスコア</b><span class="chip-auto">自動</span><span>毎日つけると出ます</span></div>'
   + '<div class="score"><span class="n num">'+r.score+'</span><span class="u">点</span></div>'
   + '<div class="parts">'
   +   '<div class="part"><div class="k">T</div><div class="v num" style="font-size:17px">'+fmtHM(r.Tmin)+'</div><div class="s">'+(goalH?('目標 '+goalH+'h'):'勉強した時間')+'</div></div>'

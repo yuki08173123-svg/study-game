@@ -441,6 +441,37 @@ body.bgm .stage{gap:14px}
 .lrn .st{flex:none;font-size:.66rem;color:var(--dim);text-align:right;line-height:1.5;min-width:44px}
 .lrn.due .st{color:var(--warm)}
 .rd-check.arm{border-color:rgba(227,199,154,.55);color:var(--warm);background:rgba(227,199,154,.1)}
+
+/* 問題の難しさ */
+.qlv{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap}
+.qlv-l{font-size:.8rem;color:var(--dim);margin-right:2px}
+.qlv button{flex:1;min-width:64px;padding:8px 0;border-radius:999px;background:var(--surf);
+  border:1px solid var(--line);color:var(--ink2);font-size:.82rem}
+.qlv button[aria-pressed="true"]{background:rgba(159,216,214,.15);border-color:rgba(159,216,214,.45);color:#eafaf8}
+.qtest{display:flex;flex-direction:column;align-items:center;gap:3px;
+  width:100%;margin-top:10px;padding:12px;border-radius:14px;background:rgba(227,199,154,.09);
+  border:1px solid rgba(227,199,154,.32);color:#f2e6cf;font-size:.9rem;letter-spacing:.06em}
+.qtest:disabled{opacity:.45}
+.qtest #qtestSub{color:var(--dim);font-size:.76rem;letter-spacing:0}
+
+/* クイズ */
+.qz-tag{display:inline-block;padding:4px 12px;border-radius:999px;font-size:.74rem;letter-spacing:.06em;
+  background:rgba(159,216,214,.12);border:1px solid rgba(159,216,214,.3);color:#dff6f4}
+.qz-q{margin:16px 0 20px;font-size:1.16rem;line-height:1.75;font-weight:600;color:var(--ink)}
+.qz-opts{display:flex;flex-direction:column;gap:10px}
+.qz-o{width:100%;text-align:left;padding:15px 16px;border-radius:14px;background:var(--surf);
+  border:1px solid var(--line);color:var(--ink);font-size:.95rem;line-height:1.65}
+.qz-o:disabled{opacity:.55}
+.qz-o.right{background:rgba(159,216,214,.2);border-color:rgba(159,216,214,.6);color:#eafaf8;opacity:1}
+.qz-o.wrong{background:rgba(231,136,136,.13);border-color:rgba(231,136,136,.5);color:#ffd9d9;opacity:1}
+.qz-res{margin-top:22px;padding:16px 17px;border-radius:16px;border:1px solid var(--line);background:var(--card)}
+.qz-res.ok .qz-rh{color:var(--aqua)}
+.qz-res.ng .qz-rh{color:#e78888}
+.qz-rh{font-size:1rem;font-weight:700;letter-spacing:.08em;margin-bottom:7px}
+.qz-e{margin:0;color:var(--ink2);font-size:.92rem;line-height:1.85}
+.qz-n2{margin:9px 0 0;color:var(--dim);font-size:.82rem}
+.qz-read{margin-top:26px;padding-top:20px;border-top:1px solid var(--line)}
+.qz-read h3{margin:0 0 10px;font-size:.86rem;letter-spacing:.08em;color:var(--dim);font-weight:500}
 .lrn.mst .no{background:rgba(227,199,154,.18);border-color:rgba(227,199,154,.5);color:#f6e9d2}
 .tabdot{display:inline-block;min-width:16px;height:16px;line-height:16px;margin-left:5px;
   border-radius:999px;background:rgba(227,199,154,.9);color:#20180a;font-size:.64rem;
@@ -722,6 +753,13 @@ body.bgm .stage{gap:14px}
         <button id="btnReview" class="go">今日の復習</button>
         <button id="btnNextNew">まだ読んでいないもの</button>
       </div>
+      <div class="qlv" id="qlv">
+        <span class="qlv-l">問題の難しさ</span>
+        <button data-q="1">やさしい</button>
+        <button data-q="2">ふつう</button>
+        <button data-q="3">激ムズ</button>
+      </div>
+      <button class="qtest" id="btnTest">力だめし<span id="qtestSub"></span></button>
     </div>
     <div class="lrn-list" id="lrnList"></div>
   </div>
@@ -767,7 +805,7 @@ body.bgm .stage{gap:14px}
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
           <li>終わると自動で記録されます。<b>いまの気分</b>を5段階でひと押しでき、「ひとこと」に感じたことも残せます（声でも入れられます）。</li>
           <li>「記録」で、続いた日数やこれまでの時間を見られます。<b>カレンダー</b>は月ごとに見られ、‹ › で始めた月までさかのぼれます。<b>日を押すと、何時から何分すわったか、流していた音、気分、書いたひとことが日記のように見られます</b>。</li>
-          <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。1日後・3日後・7日後…と<b>復習</b>が出てくるので、そのたびに読み直すと記憶に残ります。まちがえてチェックを外しても、つけ直せば復習の進みぐあいはそのまま戻ります。</li>
+          <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。1日後・3日後・7日後…と<b>復習</b>が出てきます。復習は<b>問題に答える形</b>です。正解なら次に出る日がのびて、まちがえたら翌日また出ます。覚えているかどうかを自分で決めなくてよいので、迷いません。問題の難しさは<b>やさしい／ふつう／激ムズ</b>から選べます。「力だめし」を押すと、学んだところからランダムに出題されます（こちらは復習の日には影響しません）。まちがえてチェックを外しても、つけ直せば復習の進みぐあいはそのまま戻ります。</li>
         </ol>
         <p class="g-dim">途中でやめるときは、そこまで1分以上すわっていれば「◯分を記録してやめる」を選べます（1分未満は記録されません）。音はマナーモードだと鳴らないことがあるので、はじめる前に音量をたしかめてください。</p>
       </section>
@@ -909,6 +947,9 @@ body.bgm .stage{gap:14px}
     <button class="rd-next" id="rdVague" style="max-width:none">あやふや</button>
     <button class="rd-check" id="rdGot">覚えていた</button>
   </div>
+  <div class="rd-foot hidden" id="rdFootQ">
+    <button class="rd-check" id="qNext" style="max-width:none">次の問題 ›</button>
+  </div>
 </div>
 
 <!-- 終わり -->
@@ -949,7 +990,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 42;
+const VER = 43;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1917,6 +1958,162 @@ const LESSONS = [
   <p class="src">Gollwitzer P. (1999) American Psychologist ／ Lally P. et al. (2010) European Journal of Social Psychology</p>` }
 ];
 
+
+/* ───────── クイズ ─────────
+   「覚えていた」の自己判定は基準があいまいで、生徒から
+   「どこまでを覚えているとしていいのか分からない」という声があった。
+   そこで復習は、思い出せたかどうかを**アプリが判定する問題**にした。
+   d:1 やさしい（本文に書いてあること） / 2 ふつう（言いかえ・数字）/ 3 激ムズ（応用・区別）
+   e: 解説。まちがえた人がここだけ読めば分かるように書く。 */
+const QLV_NAME = { 1:'やさしい', 2:'ふつう', 3:'激ムズ' };
+const QUIZ = {
+l1:[
+ {d:1,q:'瞑想とは、いま起きていることに、（　　）を決めずに気づいている状態のこと。',
+  a:['良い悪い','原因と結果','やる順番'],c:0,
+  e:'「良い悪いを決めずに」がポイント。浮かんだ考えを裁かずに、ただ気づいている状態です。'},
+ {d:2,q:'瞑想の練習の「1回」にあたるのは、どれ？',
+  a:['考えごとが1つも浮かばずに座れたこと','気が散る → 気づく → 戻る、の1往復','目を閉じていられた時間','呼吸を最後まで数えきったこと'],c:1,
+  e:'筋トレで1回持ち上げるのと同じで、「戻ってくる」ことが練習の1回です。'},
+ {d:3,q:'「今日は気が散ってばかりだった」という日は、この考え方ではどう受け止める？',
+  a:['練習にならなかった日','たくさん練習できた日','瞑想の時間が短すぎた日','集中力が落ちているサイン'],c:1,
+  e:'気が散った回数だけ「戻る」練習ができたことになります。散ることは失敗ではありません。'}],
+l2:[
+ {d:1,q:'人は起きている時間の約何%を、目の前のこととは別のことを考えて過ごしていた？',
+  a:['約27%','約47%','約67%'],c:1,
+  e:'2250人・25万回の回答から出た数字です。ほぼ半分の時間、心はよそへ行っています。'},
+ {d:2,q:'この研究で、気分の良し悪しと強く結びついていたのは？',
+  a:['何をしているか','そこに心があるかどうか','何時に起きたか','だれといるか'],c:1,
+  e:'「何をするか」より「そこに心があるか」のほうが、気分に効いていました。'},
+ {d:3,q:'この研究について、正しい説明はどれ？',
+  a:['さまよいが気分を下げる原因だと完全に証明された','そのときの様子を観察した研究で、原因だと完全に決まったわけではない','楽しいことを考えていれば幸福度は下がらなかった','2250人全員を実験室に集めて調べた'],c:1,
+  e:'時間をずらした分析では「さまよいが先」と示されましたが、原因と断定はされていません。'}],
+l3:[
+ {d:1,q:'ぼーっとしているときに活発になる、脳の場所の名前は？',
+  a:['デフォルト・モード・ネットワーク','扁桃体','海馬'],c:0,
+  e:'過去を思い出したり、これからを心配したりするときに働く場所です。'},
+ {d:2,q:'ぼーっとすると考えごとが浮かぶのは、なぜ？',
+  a:['集中力が弱いから','脳がそういう作りだから','睡眠が足りないから','姿勢が悪いから'],c:1,
+  e:'あなたの弱さではなく、脳の標準の働きです。だから責める必要はありません。'},
+ {d:3,q:'瞑想を長く続けている人が、うまくなっていたのはどれ？',
+  a:['まったく気が散らないこと','気づいて注意を戻すこと','長い時間すわり続けること','呼吸を深くすること'],c:1,
+  e:'経験者も気は散ります。ちがうのは、戻す回路がすばやく働くところです。'}],
+l4:[
+ {d:1,q:'8週間の講座のあと、灰白質が増えていた場所は？',
+  a:['海馬','扁桃体','肺'],c:0,
+  e:'海馬は記憶や学習に関わる場所です。'},
+ {d:2,q:'同じチームの研究で、灰白質が減っていた「警報係」の場所は？',
+  a:['海馬','扁桃体','小脳','後帯状皮質'],c:1,
+  e:'扁桃体の減り方が大きい人ほど、ストレスの感じ方も小さくなっていました。'},
+ {d:3,q:'この研究の読み方として、正しいのはどれ？',
+  a:['16人の小さな研究で、まだ議論の途中','大人数で確かめられ、結論はもう出ている','才能のある人にだけ起きた変化','1日3時間の練習が必要だった'],c:0,
+  e:'練習は1日平均27分ほど。ただし人数が少なく、「変化ははっきりしない」という報告もあります。'}],
+l5:[
+ {d:1,q:'いやなことが起きたとき「危ない！」と警報を鳴らすのは？',
+  a:['扁桃体','海馬','心臓'],c:0,
+  e:'扁桃体が警報を鳴らし、体は戦うか逃げるかの準備をします。'},
+ {d:2,q:'瞑想の練習をすると、どうなる？',
+  a:['いやな気持ちが消える','飲み込まれるまでの、少しのすき間ができる','警報が二度と鳴らなくなる','体の反応だけが強くなる'],c:1,
+  e:'気持ちは消えません。反応の大きさが変わり、気づいて選ぶ余地が生まれます。'},
+ {d:3,q:'Desbordes らの研究で、とくに注目されたのは？',
+  a:['瞑想している最中だけ反応が小さかった','瞑想していないふだんの状態でも反応が小さかった','いやな写真を見なくなった','ストレスホルモンがゼロになった'],c:1,
+  e:'練習中だけの効果ではなく、ふだんの状態にも残っていた点が注目されました。'}],
+l6:[
+ {d:1,q:'2週間の訓練のあと、テスト中に気が散った回数はどうなった？',
+  a:['増えた','減った','変わらなかった'],c:1,
+  e:'気が散る回数が減り、読解テストの点は上がりました。'},
+ {d:2,q:'点数が上がった理由として、分析で示されたのは？',
+  a:['読む速さが上がったから','気が散る回数が減ったから','問題が簡単だったから','暗記した量が増えたから'],c:1,
+  e:'点の伸びは、気が散る回数の減り方で説明できる、という分析結果でした。'},
+ {d:3,q:'この研究の受け取り方として、正しいのはどれ？',
+  a:['2週間やれば誰でも点が上がる','注意の力は練習で変えられることを示した','栄養の授業には意味がないと分かった','もともと集中できる人ほど伸びた'],c:1,
+  e:'48人・2週間の小さな研究です。なお、もともと気が散りやすかった人ほど伸びが大きい結果でした。'}],
+l7:[
+ {d:1,q:'マインドフルネス講座とくらべられたのは、どんな講座？',
+  a:['睡眠のコツを学ぶ講座','運動の講座','料理の講座'],c:0,
+  e:'「何かを学ぶ時間」をそろえて比べているところが、この研究の質の高さです。'},
+ {d:2,q:'6週間後の結果は、どうだった？',
+  a:['マインドフルネスのほうが睡眠の質がよくなった','差はつかなかった','睡眠のコツの講座のほうがよかった','どちらも悪くなった'],c:0,
+  e:'どちらもよくなりましたが、マインドフルネスのほうが差をつけました。'},
+ {d:3,q:'この研究の限界として、正しいのはどれ？',
+  a:['49人の高齢者が対象で、中学生に同じ結果があてはまるとは限らない','グループ分けがランダムではなかった','参加者は全員、眠る薬を飲んでいた','6週間では短すぎて差が出なかった'],c:0,
+  e:'ランダム化比較試験という質の高い方法ですが、参加者は49人の高齢者でした。'}],
+l8:[
+ {d:1,q:'4日間の訓練のあと、より大きく減ったのはどちら？',
+  a:['痛みの強さ（約40%）','痛みのいやな感じ（約57%）','どちらも同じだけ減った'],c:1,
+  e:'「痛い」より「つらい」のほうが大きく減りました。'},
+ {d:2,q:'この研究が示したのは、どういうこと？',
+  a:['痛みの信号そのものが消えた','信号は届いているのに、受け取る側の反応が変わった','熱さをまったく感じなくなった','痛みを我慢する力がついた'],c:1,
+  e:'我慢ではありません。同じ信号に対する受け取り方が変わっています。'},
+ {d:3,q:'「痛い」と「つらい」について、この章の考え方は？',
+  a:['同じもので、分けられない','別のもので、別々に変わりうる','つらさは気のせいである','痛みが減れば、つらさも同じだけ減る'],c:1,
+  e:'減り方がちがった（40%と57%）ことが、この2つが別物である証拠になっています。'}],
+l9:[
+ {d:1,q:'体のブレーキ（副交感神経）が少し強くなるのは、いつ？',
+  a:['吸うとき','吐くとき','息を止めたとき'],c:1,
+  e:'吸うとアクセル、吐くとブレーキ。だから吐く息を長くします。'},
+ {d:2,q:'あせったとき、意識するとよいのは？',
+  a:['できるだけ深く吸う','長く吐く','息を止める','速く浅く呼吸する'],c:1,
+  e:'深く吸うことより、長く吐くこと。吸いすぎるとかえって苦しくなります。'},
+ {d:3,q:'研究でよく使われる、ゆっくりした呼吸は1分間に何回ほど？',
+  a:['約2回','約6回','約12回','約20回'],c:1,
+  e:'1分間に6回ほど。1回あたり10秒くらいのゆっくりした呼吸です。'}],
+l10:[
+ {d:1,q:'この研究で、1日どのくらい瞑想をした？',
+  a:['13分','45分','90分'],c:0,
+  e:'ガイド音声を1日13分。長い時間ではありません。'},
+ {d:2,q:'はっきりした差が出たのは、いつの時点？',
+  a:['1週間後','4週間後','8週間後','初日から'],c:2,
+  e:'4週間ではまだ差が出ず、8週間で差がつきました。'},
+ {d:3,q:'数日やって「変わらないな」と思うのは、どういうこと？',
+  a:['才能がない証拠','当たり前のこと','やり方がまちがっている証拠','時間が短すぎる証拠'],c:1,
+  e:'4週間でも差が出なかった研究です。すぐ変わらないのが普通だと知っておくと、続けやすくなります。'}],
+l11:[
+ {d:1,q:'47の試験・3515人をまとめた分析で、効果が確かめられたのは？',
+  a:['不安・気分の落ち込み・痛み','体重・くせ','身長・視力'],c:0,
+  e:'この3つには中くらいの効果がありました。何にでも効くわけではありません。'},
+ {d:2,q:'その効果の大きさは、どのくらい？',
+  a:['劇的に変わる','中くらい（0.3前後）','まったく変わらない','薬よりはるかに大きい'],c:1,
+  e:'「変わらない」ではないが「劇的」でもない。薬と同じくらいか、少し小さいくらいです。'},
+ {d:3,q:'瞑想中に不安や落ち着かなさが強くなったときは、どうする？',
+  a:['がまんして続ける','時間を短くするか、いったんやめてよい','時間を倍にする','効いている証拠なので続ける'],c:1,
+  e:'まれにつらくなる人がいます。やめるのも正しい判断です。'}],
+l12:[
+ {d:1,q:'続けるために、前もって決めておくとよいのは？',
+  a:['いつ・どこで やるか','どのくらい効果が出るか','何分がまんできるか'],c:0,
+  e:'「いつ・どこで」を具体的に決めておくと、実際にやれる確率が上がります。'},
+ {d:2,q:'いちばん続かない決め方は、どれ？',
+  a:['やる気が出たらやる','歯をみがいたら、いすに座る','朝7時に座る','寝る前に、いすで座る'],c:0,
+  e:'「やる気が出たら」は、いちばん続かない決め方です。すでにある習慣にくっつけましょう。'},
+ {d:3,q:'新しい行動が「自然にやること」になるまで、平均どのくらいかかる？',
+  a:['約21日','約66日（2か月ほど）','約120日','約254日'],c:1,
+  e:'平均66日、人によって18日〜254日と幅があります。「21日で習慣になる」に根拠はありません。'}]
+};
+
+let qLv = parseInt(localStorage.getItem('med.qlv.v1') || '2', 10);
+if(!(qLv >= 1 && qLv <= 3)) qLv = 2;
+let quizRec = {};
+try{ quizRec = JSON.parse(localStorage.getItem('med.quiz.v1') || 'null') || {}; }catch(e){ quizRec = {}; }
+function saveQuiz(){ try{ localStorage.setItem('med.quiz.v1', JSON.stringify(quizRec)); }catch(e){} }
+
+function qOf(id, lv){                          // その難しさの問題。無ければ近いものを使う
+  const set = QUIZ[id]; if(!set || !set.length) return null;
+  return set.filter(function(x){ return x.d === lv; })[0] ||
+         set.filter(function(x){ return x.d === lv - 1; })[0] ||
+         set.filter(function(x){ return x.d === lv + 1; })[0] || set[0];
+}
+function shuffled(n){                          // 0..n-1 を混ぜる。並び順で答えを覚えないように
+  const a = []; for(let i = 0; i < n; i++) a.push(i);
+  for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+}
+function makeQ(li){                            // レッスン番号 → 出題1問ぶん
+  const L = LESSONS[li], q = qOf(L.id, qLv); if(!q) return null;
+  const ord = shuffled(q.a.length);
+  return { li: li, id: L.id, q: q, ord: ord,
+           opts: ord.map(function(k){ return q.a[k]; }),
+           ci: ord.indexOf(q.c) };
+}
+
 /* 学びの進み具合。
    間隔をあけて読み直すほうが記憶に残る（分散学習）ので、
    1日 → 3日 → 7日 → 16日 → 35日 とあけて復習を出す。ぜんぶ終えたら「身についた」。 */
@@ -1996,13 +2193,22 @@ function renderLearn(){
   $('lrnDone').textContent = mst;
   $('lrnBar').style.width = Math.max(1.5, 100 * (mst + (done - mst) * 0.4) / LESSONS.length) + '%';
   $('lrnMsg').textContent = due.length
-    ? '今日は ' + due.length + '本 の復習があります。読み直すと記憶に残りやすくなります。'
+    ? '今日は ' + due.length + '本 の復習があります。問題に答えると、次に出る日が決まります。'
     : (done < LESSONS.length
         ? '瞑想について、研究で分かっていることを1つずつ読めます。1つ2〜3分。'
         : (mst < LESSONS.length ? '新しく読むものはありません。復習の日を待ちましょう。'
                                 : 'ぜんぶ身につきました。いつでも読み返せます。'));
-  $('btnReview').textContent = due.length ? '今日の復習（' + due.length + '本）' : '復習はありません';
+  $('btnReview').textContent = due.length ? '今日の復習（' + due.length + '問）' : '復習はありません';
   $('btnReview').disabled = due.length === 0;
+  document.querySelectorAll('#qlv button[data-q]').forEach(function(b){
+    b.setAttribute('aria-pressed', parseInt(b.dataset.q, 10) === qLv ? 'true' : 'false');
+  });
+  const canTest = done >= 3;
+  $('btnTest').disabled = !canTest;
+  $('qtestSub').textContent = !canTest
+    ? '学ぶを3つ読むと使えます'
+    : (quizRec.best ? 'これまでの最高 ' + quizRec.best + '/' + quizRec.bestOf + '問'
+                    : '学んだところからランダムに出ます');
   const firstNew = LESSONS.filter(function(L){ return !isDone(L.id); })[0];
   $('btnNextNew').textContent = firstNew ? 'まだ読んでいないもの' : 'ぜんぶ読みました';
   $('btnNextNew').disabled = !firstNew;
@@ -2022,12 +2228,14 @@ function renderLearn(){
 $('lrnList').addEventListener('click', function(e){
   const b = e.target.closest('.lrn'); if(!b) return;
   const i = parseInt(b.dataset.i, 10);
-  openLesson(i, isDue(LESSONS[i].id) ? 'review' : 'read');
+  if(isDue(LESSONS[i].id)){                    // 復習が来ているものは、問題から
+    qMode = 'review'; qIdx = 0; qRight = 0;
+    const one = makeQ(i);
+    if(one){ qQueue = [one]; showQ(); return; }
+  }
+  openLesson(i, 'read');
 });
-$('btnReview').addEventListener('click', function(){
-  const d = dueList(); if(!d.length) return;
-  openLesson(LESSONS.indexOf(d[0]), 'review');
-});
+$('btnReview').addEventListener('click', startReview);
 $('btnNextNew').addEventListener('click', function(){
   const n = LESSONS.filter(function(L){ return !isDone(L.id); })[0]; if(!n) return;
   openLesson(LESSONS.indexOf(n), 'read');
@@ -2048,6 +2256,8 @@ function openLesson(i, mode){
   $('rdNext').textContent = (i < LESSONS.length - 1) ? '次へ ›' : 'おわり';
   $('rdFoot').classList.toggle('hidden', curMode === 'review');
   $('rdFootRev').classList.toggle('hidden', curMode !== 'review');
+  $('rdFootQ').classList.add('hidden');
+  qMode = null;                                // 本文を開いたら、クイズの進行は終わり
   unArm = -1; clearTimeout(unTmr);
   markCheck();
   $('reader').classList.remove('hidden');
@@ -2102,7 +2312,107 @@ $('rdNext').addEventListener('click', function(){
   if(curLesson < LESSONS.length - 1) openLesson(curLesson + 1, 'read');
   else { $('reader').classList.add('hidden'); renderLearn(); }
 });
-$('rdClose').addEventListener('click', function(){ $('reader').classList.add('hidden'); renderLearn(); });
+$('rdClose').addEventListener('click', function(){
+  $('reader').classList.add('hidden'); qMode = null; renderLearn(); renderTop();
+});
+
+
+/* クイズの進行。復習（review）と力だめし（test）で同じ画面を使う。
+   review … 正解なら間隔が伸び、まちがえたら翌日にもどる（自己申告をやめた）
+   test  … 学んだところからランダム。復習の間隔は動かさない */
+let qMode = null, qQueue = [], qIdx = 0, qRight = 0, qDone = false;
+
+function startReview(){
+  const d = dueList(); if(!d.length) return;
+  qMode = 'review';
+  qQueue = d.map(function(L){ return makeQ(LESSONS.indexOf(L)); }).filter(Boolean);
+  if(!qQueue.length){ openLesson(LESSONS.indexOf(d[0]), 'review'); return; }
+  qIdx = 0; qRight = 0; showQ();
+}
+function startTest(){
+  const learned = LESSONS.filter(function(L){ return isDone(L.id); });
+  if(learned.length < 3){ toast('まず「学ぶ」を3つ読んでください'); return; }
+  qMode = 'test';
+  const ord = shuffled(learned.length).slice(0, Math.min(8, learned.length));
+  qQueue = ord.map(function(k){ return makeQ(LESSONS.indexOf(learned[k])); }).filter(Boolean);
+  qIdx = 0; qRight = 0; showQ();
+}
+function showQ(){
+  const it = qQueue[qIdx]; qDone = false;
+  $('rdNo').textContent = (qMode === 'test' ? '力だめし　' : '復習　') + (qIdx + 1) + ' / ' + qQueue.length;
+  $('rdBody').innerHTML =
+    '<div class="qz">' +
+      '<div class="qz-tag">' + QLV_NAME[it.q.d] + '　' + LESSONS[it.li].n + '</div>' +
+      '<h2 class="qz-q">' + it.q.q + '</h2>' +
+      '<div class="qz-opts">' +
+        it.opts.map(function(t, i){ return '<button class="qz-o" data-i="' + i + '">' + t + '</button>'; }).join('') +
+      '</div>' +
+    '</div>';
+  $('rdBody').scrollTop = 0;
+  $('rdFoot').classList.add('hidden');
+  $('rdFootRev').classList.add('hidden');
+  $('rdFootQ').classList.add('hidden');
+  $('reader').classList.remove('hidden');
+}
+function answerQ(pick){
+  if(qDone) return; qDone = true;
+  const it = qQueue[qIdx], ok = pick === it.ci, L = LESSONS[it.li];
+  if(ok) qRight++;
+  if(qMode === 'review'){ ok ? markGot(it.id) : markVague(it.id); }
+
+  document.querySelectorAll('.qz-o').forEach(function(b, i){
+    b.disabled = true;
+    if(i === it.ci) b.classList.add('right');
+    else if(i === pick) b.classList.add('wrong');
+  });
+  const res = document.createElement('div');
+  res.className = 'qz-res ' + (ok ? 'ok' : 'ng');
+  res.innerHTML = '<div class="qz-rh">' + (ok ? '正解' : 'ざんねん') + '</div>' +
+    '<p class="qz-e">' + it.q.e + '</p>' +
+    (qMode === 'review'
+      ? '<p class="qz-n2">' + (ok ? '次は ' + whenText(it.id).replace('あと', '') + '後に出ます'
+                                  : 'あす、もう一度出ます') + '</p>'
+      : '');
+  document.querySelector('.qz').appendChild(res);
+  const more = document.createElement('div');
+  more.className = 'qz-read';
+  more.innerHTML = '<h3>' + L.n + '</h3>' + L.body;
+  document.querySelector('.qz').appendChild(more);
+  res.scrollIntoView({ block: 'nearest' });
+
+  $('qNext').textContent = (qIdx < qQueue.length - 1) ? '次の問題 ›' : 'おわり';
+  $('rdFootQ').classList.remove('hidden');
+}
+function nextQ(){
+  if(qIdx < qQueue.length - 1){ qIdx++; showQ(); return; }
+  const n = qQueue.length, r = qRight;
+  quizRec.times = (quizRec.times || 0) + 1;
+  if(qMode === 'test'){
+    quizRec.tests = (quizRec.tests || 0) + 1;   // しるしは力だめしの回数だけで数える
+    if(r > (quizRec.best || 0)){ quizRec.best = r; quizRec.bestOf = n; }
+    if(r === n && qLv === 3) quizRec.hard = true;
+  }
+  saveQuiz();
+  $('reader').classList.add('hidden');
+  renderLearn(); renderTop();
+  toast(qMode === 'test'
+    ? '力だめし ' + r + ' / ' + n + '問 正解'
+    : (dueList().length ? '復習おわり（' + r + '/' + n + '問 正解）。まだ残っています'
+                        : '今日の復習はおしまいです（' + r + '/' + n + '問 正解）'));
+  qMode = null;
+}
+$('rdBody').addEventListener('click', function(e){
+  const b = e.target.closest('.qz-o'); if(!b || b.disabled) return;
+  answerQ(parseInt(b.dataset.i, 10));
+});
+$('qNext').addEventListener('click', nextQ);
+document.getElementById('qlv').addEventListener('click', function(e){
+  const b = e.target.closest('button[data-q]'); if(!b) return;
+  qLv = parseInt(b.dataset.q, 10);
+  try{ localStorage.setItem('med.qlv.v1', String(qLv)); }catch(err){}
+  renderLearn();
+});
+$('btnTest').addEventListener('click', startTest);
 
 /* ───────── キャラクター ─────────
    称号と同じ9段階。毎日座ると元気、空くとしおれて飾りが消える（レベルは下がらない） */
@@ -2470,7 +2780,9 @@ const BADGES = [
   { id:'lrn1',  n:'学びはじめ',  d:'学ぶを1つ読んだ',      f:function(s){ return s.learned >= 1; }, p:function(s){ return [s.learned, 1, '本']; } },
   { id:'lrnAll',n:'物知り',      d:'学ぶをぜんぶ読んだ',   f:function(s){ return s.learned >= LESSONS.length; }, p:function(s){ return [s.learned, LESSONS.length, '本']; } },
   { id:'rev10', n:'おさらい上手', d:'復習を10回した',       f:function(s){ return s.reviews >= 10; }, p:function(s){ return [s.reviews, 10, '回']; } },
-  { id:'mstAll',n:'身についた',   d:'学ぶをぜんぶ身につけた', f:function(s){ return s.mastered >= LESSONS.length; }, p:function(s){ return [s.mastered, LESSONS.length, '本']; } }
+  { id:'mstAll',n:'身についた',   d:'学ぶをぜんぶ身につけた', f:function(s){ return s.mastered >= LESSONS.length; }, p:function(s){ return [s.mastered, LESSONS.length, '本']; } },
+  { id:'qz1',   n:'腕だめし',    d:'力だめしをやってみた',   f:function(s){ return s.quizTimes >= 1; } },
+  { id:'qzHard',n:'激ムズ制覇',  d:'激ムズで全問正解した',   f:function(s){ return s.quizHard; } }
 ];
 function gotIds(s){
   const out = [];
@@ -2814,7 +3126,8 @@ function stats(list){
 
   return { todayMin: todayMin, totalMin: totalMin, days: days, streak: streak,
            count: list.length, maxMin: maxMin, morning: morning, night: night,
-           best: best, xp: xp, lv: levelOf(xp), learned: doneCount(), mastered: masterCount(), reviews: reviewTimes() };
+           best: best, xp: xp, lv: levelOf(xp), learned: doneCount(), mastered: masterCount(), reviews: reviewTimes(),
+           quizTimes: quizRec.tests || 0, quizHard: !!quizRec.hard };
 }
 
 /* ───────── カレンダー（月ごと） ───────── */

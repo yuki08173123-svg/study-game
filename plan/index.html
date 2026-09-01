@@ -123,7 +123,18 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
 .task .del{width:28px; height:34px; display:grid; place-items:center; flex:none; margin-top:2px;}
 .task .del svg{width:16px; height:16px; stroke:var(--muted); fill:none; stroke-width:2.2; stroke-linecap:round;}
 
-.addrow{display:flex; align-items:center; gap:8px; background:var(--card); border:1.5px dashed var(--line); border-radius:14px 14px 0 0; border-bottom:none; padding:8px 10px; margin-top:8px;}
+/* はじめかた */
+.guide{margin-top:10px; background:var(--accent-soft); border-radius:18px; padding:14px 16px 13px;}
+.guide h4{font-size:14px; font-weight:900; color:var(--accent); margin-bottom:7px;}
+.guide ol{margin:0 0 0 19px; font-size:14px; line-height:1.95;}
+.guide ol b{font-weight:900;}
+.guide .ok{margin-top:11px; width:100%; background:var(--accent); color:var(--accent-ink); border-radius:12px; padding:11px; font-weight:900; font-size:14px;}
+
+.addhead{display:flex; gap:8px; align-items:baseline; background:var(--card); border:1.5px dashed var(--line); border-bottom:none; border-radius:14px 14px 0 0; padding:9px 10px 0; margin-top:8px;}
+.addhead span{font-size:11px; font-weight:900; color:var(--muted); letter-spacing:.05em;}
+.addhead .c1{width:74px; flex:none; text-align:center;}
+.addhead .c2{flex:1;}
+.addrow{display:flex; align-items:center; gap:8px; background:var(--card); border:1.5px dashed var(--line); border-top:none; border-bottom:none; border-radius:0; padding:6px 10px 8px;}
 .addrow input[type=time]{width:74px; flex:none; font-size:14px; font-weight:700; color:var(--accent); background:var(--chip); border-radius:9px; padding:6px 4px; text-align:center;}
 .addrow input[type=text]{flex:1; font-size:16px;}
 .addrow .add{width:38px; height:38px; border-radius:12px; background:var(--accent); display:grid; place-items:center; flex:none;}
@@ -138,7 +149,11 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
 .starnote{display:flex; gap:9px; align-items:flex-start; margin-top:10px; padding:11px 13px; background:var(--star-soft); border-radius:14px; font-size:12.5px; line-height:1.7;}
 .starnote svg{width:17px; height:17px; fill:var(--star); stroke:var(--star); stroke-width:2; stroke-linejoin:round; flex:none; margin-top:3px;}
 .starnote b{font-weight:900;}
-.empty{color:var(--muted); text-align:center; padding:22px 8px; font-size:14px; line-height:1.8;}
+.empty{color:var(--muted); text-align:center; padding:20px 8px 16px; font-size:13.5px; line-height:1.8;}
+.empty b{display:block; font-size:15px; color:var(--ink); font-weight:900; margin-bottom:3px;}
+.empty .down{display:block; font-size:20px; color:var(--accent); margin-top:5px; animation:bob 1.5s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)} 50%{transform:translateY(5px)}}
+@media (prefers-reduced-motion: reduce){ .empty .down{animation:none;} }
 
 /* この日 */
 .daybox{margin-top:12px; background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:13px 14px 14px;}
@@ -220,7 +235,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v7</span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v8</span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -241,6 +256,17 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <span class="go">更新する</span>
     </button>
 
+    <div class="guide hidden" id="guide">
+      <h4>はじめかた</h4>
+      <ol>
+        <li>曜日をえらぶ（下のならんだ日づけ）</li>
+        <li>下の欄に<b>やること</b>を書いて <b>＋</b> を押す</li>
+        <li>ついた<b>「30分」</b>を押して、かかる時間をえらぶ</li>
+        <li>おわったら左の<b>○</b>、自力で全部とけたら<b>★</b></li>
+      </ol>
+      <button class="ok" id="guideOk">わかった</button>
+    </div>
+
     <div class="days" id="days"></div>
 
     <div class="dayline">
@@ -250,9 +276,10 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
     <div class="tasks" id="tasks"></div>
 
+    <div class="addhead"><span class="c1">時こく</span><span class="c2">やること</span></div>
     <div class="addrow">
       <input type="time" id="newTime" aria-label="はじめる時刻">
-      <input type="text" id="newText" list="pastTasks" placeholder="やることを書く" enterkeyhint="done">
+      <input type="text" id="newText" list="pastTasks" placeholder="例）英単語 300〜500番" enterkeyhint="done">
       <datalist id="pastTasks"></datalist>
       <button class="add" id="btnAdd" aria-label="追加"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     </div>
@@ -315,7 +342,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v7</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v8</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -337,7 +364,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 7;
+const VER = 8;
 const KEY = 'planmap_v1';
 const WD = ['月','火','水','木','金','土','日'];
 const DEF_MIN = 30;
@@ -447,7 +474,7 @@ function renderDay(){
   $('#dayMemo').value = d.memo || '';
   const box = $('#tasks');
   box.innerHTML = !d.tasks.length
-    ? '<div class="empty">この日のやることは、まだありません。<br>下の欄に書いて ＋ を押してください。</div>'
+    ? '<div class="empty"><b>まだ何も入っていません</b>ここに、この日の「やること」がならびます。<span class="down">↓</span>下の欄に書いて ＋ を押してください</div>'
     : d.tasks.map((t,i)=>{
         const cls = ['task']; if(t.done) cls.push('is-done'); if(t.star) cls.push('is-star');
         return '<div class="'+cls.join(' ')+'" data-i="'+i+'">'
@@ -478,7 +505,10 @@ function renderTQC(){
   + '</div>'
   + '<div class="formula">'+fmtH(r.T)+' × '+r.Q+' × '+r.C+' ÷ 1000 ＝ '+r.score+'</div>';
 }
-function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderDay(); renderTQC(); renderPast(); save(); }
+function totalTasks(){ let n = 0; eachDay(d=>{ n += (d.tasks||[]).length; }); return n; }
+function renderGuide(){ $('#guide').classList.toggle('hidden', !!S.onboard || totalTasks() > 0); }
+$('#guideOk').onclick = ()=>{ S.onboard = 1; save(); renderGuide(); };
+function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderDay(); renderTQC(); renderPast(); renderGuide(); save(); }
 
 function renderHist(){
   const keys = Object.keys(S.weeks).filter(k=>{ const r = tqcOf(k); return r.all>0; }).sort();
@@ -660,7 +690,7 @@ function addTask(){
     d.tasks.sort((a,b)=> a.time&&b.time ? (a.time<b.time?-1:a.time>b.time?1:0) : a.time?-1:b.time?1:0);
   });
   $('#newText').value = ''; $('#newTime').value = '';
-  renderDays(); renderDay(); renderTQC(); renderPast(); save();
+  renderDays(); renderDay(); renderTQC(); renderPast(); renderGuide(); save();
   if(targets.length > 1) toast(targets.length+'日ぶんに入れました');
 }
 $('#btnAdd').onclick = addTask;

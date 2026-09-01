@@ -140,13 +140,16 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
 .starnote b{font-weight:900;}
 .empty{color:var(--muted); text-align:center; padding:22px 8px; font-size:14px; line-height:1.8;}
 
-/* この日（小さく） */
-.daybox{margin-top:12px; background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:9px 13px 11px;}
-.daybox .r{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; font-size:13px;}
-.daybox .r .h{font-size:11px; font-weight:900; color:var(--muted); letter-spacing:.05em;}
-.daybox .r i{font-style:normal; font-size:11px; font-weight:900; color:var(--accent); margin-right:3px;}
-.daybox .r b{font-size:13px; font-weight:900;}
-.daybox textarea{font-size:13px; line-height:1.7; margin-top:4px; border-top:1px solid var(--line); padding-top:6px;}
+/* この日 */
+.daybox{margin-top:12px; background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:13px 14px 14px;}
+.daybox .h{display:flex; align-items:center; font-size:13px; font-weight:900; color:var(--muted); letter-spacing:.05em; margin-bottom:8px;}
+.daybox .h em{font-style:normal; margin-left:auto; font-size:12px; font-weight:900; color:var(--muted);}
+.dayparts{display:grid; grid-template-columns:repeat(3,1fr); gap:7px;}
+.dayparts > div{background:var(--chip); border-radius:14px; padding:9px 4px 10px; text-align:center;}
+.dayparts .k{font-size:12px; font-weight:900; color:var(--accent); letter-spacing:.14em;}
+.dayparts .v{font-size:23px; font-weight:900; line-height:1.25;}
+.dayparts .v.sm{font-size:18px;}
+.daybox textarea{font-size:15px; line-height:1.75; margin-top:10px; border-top:1px solid var(--line); padding-top:9px;}
 
 /* 今週のTQC（大きく） */
 .tqc{
@@ -154,20 +157,20 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
   background:linear-gradient(155deg, var(--navy1) 0%, var(--navy2) 100%);
   box-shadow:0 8px 22px rgba(18,32,60,.28);
 }
-.tqc .head{display:flex; align-items:center; gap:8px; padding:16px 18px 0;}
-.tqc .head b{font-size:15px; font-weight:900; letter-spacing:.04em;}
-.tqc .head span{font-size:11px; color:rgba(255,255,255,.6); font-weight:700; margin-left:auto;}
-.tqc .score{display:flex; align-items:baseline; justify-content:center; gap:8px; padding:2px 0 14px;}
-.tqc .score .n{font-size:80px; font-weight:900; letter-spacing:-.03em; line-height:1.05; color:var(--gold);}
-.tqc .score .u{font-size:16px; color:rgba(255,255,255,.65); font-weight:900;}
+.tqc .head{display:flex; align-items:baseline; gap:8px; padding:13px 15px 0;}
+.tqc .head b{font-size:13px; font-weight:900; letter-spacing:.04em;}
+.tqc .head span{font-size:10px; color:rgba(255,255,255,.55); font-weight:700; margin-left:auto;}
+.tqc .score{display:flex; align-items:baseline; justify-content:center; gap:6px; padding:0 0 10px;}
+.tqc .score .n{font-size:46px; font-weight:900; letter-spacing:-.02em; line-height:1.15; color:var(--gold);}
+.tqc .score .u{font-size:13px; color:rgba(255,255,255,.6); font-weight:900;}
 .tqc .parts{display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid rgba(255,255,255,.14);}
-.tqc .part{padding:13px 4px 14px; text-align:center; border-right:1px solid rgba(255,255,255,.14);}
+.tqc .part{padding:9px 4px 10px; text-align:center; border-right:1px solid rgba(255,255,255,.14);}
 .tqc .part:last-child{border-right:none;}
-.tqc .part .k{font-size:12px; font-weight:900; color:var(--gold); letter-spacing:.14em;}
-.tqc .part .v{font-size:22px; font-weight:900; line-height:1.25;}
-.tqc .part .v em{font-size:12px; font-style:normal; color:rgba(255,255,255,.6); margin-left:1px;}
-.tqc .part .s{font-size:10px; color:rgba(255,255,255,.6); font-weight:700;}
-.tqc .formula{padding:11px 14px 14px; text-align:center; font-size:11.5px; color:rgba(255,255,255,.7); font-weight:700; border-top:1px solid rgba(255,255,255,.14);}
+.tqc .part .k{font-size:11px; font-weight:900; color:var(--gold); letter-spacing:.14em;}
+.tqc .part .v{font-size:17px; font-weight:900; line-height:1.25;}
+.tqc .part .v em{font-size:11px; font-style:normal; color:rgba(255,255,255,.6); margin-left:1px;}
+.tqc .part .s{font-size:10px; color:rgba(255,255,255,.55); font-weight:700;}
+.tqc .formula{padding:8px 14px 11px; text-align:center; font-size:11px; color:rgba(255,255,255,.65); font-weight:700; border-top:1px solid rgba(255,255,255,.14);}
 
 .bigbtn{width:100%; margin-top:12px; background:var(--accent); color:var(--accent-ink); border-radius:16px; padding:15px; font-size:16px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:var(--shadow);}
 .bigbtn svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;}
@@ -217,7 +220,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v4</span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v5</span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -265,7 +268,8 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
     </div>
 
     <div class="daybox">
-      <div class="r" id="dayTqc"></div>
+      <div class="h">この日<em id="dayDone">0/0 完了</em></div>
+      <div class="dayparts" id="dayTqc"></div>
       <textarea id="dayMemo" rows="1" placeholder="この日のふりかえり（なくてもOK）"></textarea>
     </div>
 
@@ -311,7 +315,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v4</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v5</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -333,7 +337,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 4;
+const VER = 5;
 const KEY = 'planmap_v1';
 const WD = ['月','火','水','木','金','土','日'];
 const DEF_MIN = 30;
@@ -455,11 +459,12 @@ function renderDay(){
           + '<button class="star" data-act="star" aria-label="極まった"><svg viewBox="0 0 24 24"><path d="m12 3.3 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.8l6.1-.9z"/></svg></button>'
           + '<button class="del" data-act="del" aria-label="削除"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>';
       }).join('');
-  $('#dayTqc').innerHTML = '<span class="h">この日</span>'
-    + '<span><i>T</i><b class="num">'+fmtHM(s.act)+'</b></span>'
-    + '<span><i>Q</i><b class="num">'+s.q+'</b></span>'
-    + '<span><i>C</i><b class="num">'+s.c+'%</b></span>'
-    + '<span style="font-size:11px; color:var(--muted); font-weight:700">'+s.done+'/'+s.all+'完了</span>';
+  const tTxt = fmtHM(s.act);
+  $('#dayDone').textContent = s.done+'/'+s.all+' 完了';
+  $('#dayTqc').innerHTML =
+      '<div><div class="k">T</div><div class="v num'+(tTxt.length>4?' sm':'')+'">'+tTxt+'</div></div>'
+    + '<div><div class="k">Q</div><div class="v num">'+s.q+'</div></div>'
+    + '<div><div class="k">C</div><div class="v num">'+s.c+'%</div></div>';
 }
 function renderTQC(){
   const r = tqcOf(S.cur), goalH = Number(S.weekGoal)||0;

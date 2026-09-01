@@ -146,7 +146,7 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
 .daybox .h em{font-style:normal; margin-left:auto; font-size:12px; font-weight:900; color:var(--muted);}
 .dayparts{display:grid; grid-template-columns:repeat(3,1fr); gap:7px;}
 .dayparts > div{background:var(--chip); border-radius:14px; padding:9px 4px 10px; text-align:center;}
-.dayparts .k{font-size:12px; font-weight:900; color:var(--accent); letter-spacing:.14em;}
+.dayparts .k{font-size:17px; font-weight:900; color:var(--accent); letter-spacing:.14em; line-height:1.35;}
 .dayparts .v{font-size:23px; font-weight:900; line-height:1.25;}
 .dayparts .v.sm{font-size:18px;}
 .daybox textarea{font-size:15px; line-height:1.75; margin-top:10px; border-top:1px solid var(--line); padding-top:9px;}
@@ -166,7 +166,7 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
 .tqc .parts{display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid rgba(255,255,255,.14);}
 .tqc .part{padding:9px 4px 10px; text-align:center; border-right:1px solid rgba(255,255,255,.14);}
 .tqc .part:last-child{border-right:none;}
-.tqc .part .k{font-size:11px; font-weight:900; color:var(--gold); letter-spacing:.14em;}
+.tqc .part .k{font-size:16px; font-weight:900; color:var(--gold); letter-spacing:.14em; line-height:1.35;}
 .tqc .part .v{font-size:17px; font-weight:900; line-height:1.25;}
 .tqc .part .v em{font-size:11px; font-style:normal; color:rgba(255,255,255,.6); margin-left:1px;}
 .tqc .part .s{font-size:10px; color:rgba(255,255,255,.55); font-weight:700;}
@@ -220,7 +220,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v5</span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v6</span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -315,7 +315,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v5</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v6</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -337,7 +337,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 5;
+const VER = 6;
 const KEY = 'planmap_v1';
 const WD = ['月','火','水','木','金','土','日'];
 const DEF_MIN = 30;

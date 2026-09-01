@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>計画マップ</title>
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="apple-touch-icon-v3.png">
-<link rel="icon" href="icon-192-v3.png">
+<link rel="apple-touch-icon" href="apple-touch-icon-v4.png">
+<link rel="icon" href="icon-192-v4.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#F4F7FB">
@@ -18,27 +18,28 @@
   --bg:#F4F7FB; --card:#FFFFFF; --ink:#1A2432; --muted:#6C7A8C; --line:#DCE4EE;
   --accent:#2C6FE4; --accent-soft:#E6EEFC; --accent-ink:#FFFFFF;
   --done:#12A06A; --done-soft:#E3F5EC;
-  --star:#E9A020; --star-soft:#FDF1DC;
+  --star:#C9982F; --star-soft:#FBF2DC;
   --chip:#EDF1F7; --shadow:0 1px 3px rgba(20,40,70,.08); --shadow-lg:0 8px 24px rgba(20,40,70,.14);
-  --sun:#E0574C; --new:#E9640F; --new-soft:#FFF0E4;
+  --sun:#E0574C; --new:#E9640F;
+  --navy1:#12203C; --navy2:#27456F; --gold:#E7CE93;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#121721; --card:#1B2230; --ink:#E9EEF6; --muted:#93A1B4; --line:#2C3648;
     --accent:#6FA4F5; --accent-soft:#23324B; --accent-ink:#0E1520;
     --done:#4FCB98; --done-soft:#1B3A2E;
-    --star:#F2BB5B; --star-soft:#3A2E18;
+    --star:#E4BC63; --star-soft:#3A2E18;
     --chip:#242D3D; --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 8px 24px rgba(0,0,0,.5);
-    --sun:#F08A80; --new:#FF9450; --new-soft:#3B2415;
+    --sun:#F08A80; --new:#FF9450;
   }
 }
 :root[data-theme="dark"]{
   --bg:#121721; --card:#1B2230; --ink:#E9EEF6; --muted:#93A1B4; --line:#2C3648;
   --accent:#6FA4F5; --accent-soft:#23324B; --accent-ink:#0E1520;
   --done:#4FCB98; --done-soft:#1B3A2E;
-  --star:#F2BB5B; --star-soft:#3A2E18;
+  --star:#E4BC63; --star-soft:#3A2E18;
   --chip:#242D3D; --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 8px 24px rgba(0,0,0,.5);
-  --sun:#F08A80; --new:#FF9450; --new-soft:#3B2415;
+  --sun:#F08A80; --new:#FF9450;
 }
 *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
 html{-webkit-text-size-adjust:100%;}
@@ -54,40 +55,22 @@ button{background:none; border:none; cursor:pointer; touch-action:manipulation;}
 button:active{transform:scale(.97);}
 .hidden{display:none !important;}
 
-/* ---------- header ---------- */
-header.app{
-  position:sticky; top:0; z-index:30; background:var(--bg);
-  padding:calc(10px + env(safe-area-inset-top)) 2px 8px;
-}
+header.app{position:sticky; top:0; z-index:30; background:var(--bg); padding:calc(10px + env(safe-area-inset-top)) 2px 8px;}
 .title-row{display:flex; align-items:center; gap:8px; padding:0 2px 8px;}
 .title-row h1{font-size:19px; font-weight:900; letter-spacing:.02em;}
 .title-row .ver{font-size:11px; color:var(--muted); font-weight:700;}
 .title-row .spacer{flex:1;}
-.icon-btn{
-  width:38px; height:38px; border-radius:12px; background:var(--card); border:1px solid var(--line);
-  display:grid; place-items:center; box-shadow:var(--shadow);
-}
+.icon-btn{width:38px; height:38px; border-radius:12px; background:var(--card); border:1px solid var(--line); display:grid; place-items:center; box-shadow:var(--shadow);}
 .icon-btn svg{width:20px; height:20px; stroke:var(--ink); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
-.weekbar{
-  display:flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--line);
-  border-radius:14px; padding:6px; box-shadow:var(--shadow);
-}
+.weekbar{display:flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:6px; box-shadow:var(--shadow);}
 .weekbar .arrow{width:40px; height:40px; border-radius:10px; display:grid; place-items:center;}
 .weekbar .arrow svg{width:20px; height:20px; stroke:var(--accent); fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;}
 .weekbar .range{flex:1; text-align:center; line-height:1.25;}
 .weekbar .range b{display:block; font-size:16px; font-weight:900;}
 .weekbar .range span{font-size:11px; color:var(--muted); font-weight:700;}
-.weekbar .today{
-  font-size:12px; font-weight:700; color:var(--accent); background:var(--accent-soft);
-  border-radius:999px; padding:6px 10px;
-}
+.weekbar .today{font-size:12px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:6px 10px;}
 
-/* ---------- update banner ---------- */
-.update{
-  width:100%; margin-top:10px; background:var(--new); color:#fff; border-radius:16px;
-  padding:13px 14px; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow);
-  text-align:left;
-}
+.update{width:100%; margin-top:10px; background:var(--new); color:#fff; border-radius:16px; padding:13px 14px; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow); text-align:left;}
 .update svg{width:22px; height:22px; stroke:#fff; fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; flex:none;}
 .update .t{flex:1; line-height:1.3;}
 .update .t b{display:block; font-size:15px; font-weight:900;}
@@ -97,17 +80,11 @@ header.app{
 .card{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:14px;}
 .sec-label{font-size:12px; font-weight:900; color:var(--muted); letter-spacing:.06em; margin-bottom:6px; display:flex; align-items:center; gap:6px;}
 .sec-label .hint{font-weight:500; letter-spacing:0;}
-textarea, input[type=text], input[type=time], input[type=number]{
-  width:100%; background:transparent; border:none; font-size:16px; line-height:1.6; resize:none; outline:none;
-}
+textarea, input[type=text], input[type=time], input[type=number]{width:100%; background:transparent; border:none; font-size:16px; line-height:1.6; resize:none; outline:none;}
 textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
 
-/* ---------- day chips ---------- */
 .days{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin:10px 0 10px;}
-.day-chip{
-  background:var(--card); border:1.5px solid var(--line); border-radius:13px; padding:7px 2px 6px;
-  display:flex; flex-direction:column; align-items:center; gap:1px; box-shadow:var(--shadow);
-}
+.day-chip{background:var(--card); border:1.5px solid var(--line); border-radius:13px; padding:7px 2px 6px; display:flex; flex-direction:column; align-items:center; gap:1px; box-shadow:var(--shadow);}
 .day-chip .w{font-size:11px; font-weight:900; color:var(--muted);}
 .day-chip .d{font-size:16px; font-weight:900; line-height:1.15;}
 .day-chip .bar{width:20px; height:4px; border-radius:2px; background:var(--chip); margin-top:3px; overflow:hidden;}
@@ -120,113 +97,83 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
 .day-chip.on .bar{background:rgba(255,255,255,.35);}
 .day-chip.on .bar i{background:#fff;}
 
-/* ---------- day readout ---------- */
-.dayline{
-  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;
-}
-.dayline div{
-  background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow);
-  padding:9px 12px; display:flex; align-items:baseline; gap:7px;
-}
+.dayline{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;}
+.dayline div{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:9px 12px; display:flex; align-items:baseline; gap:7px;}
 .dayline span{font-size:12px; font-weight:900; color:var(--muted); flex:none;}
 .dayline b{font-size:18px; font-weight:900;}
 .dayline .ok b{color:var(--done);}
 
-/* ---------- tasks ---------- */
 .tasks{display:flex; flex-direction:column; gap:8px;}
-.task{
-  background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow);
-  display:flex; align-items:flex-start; gap:8px; padding:9px 10px;
-}
+.task{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); display:flex; align-items:flex-start; gap:8px; padding:9px 10px;}
 .task.is-done{background:var(--done-soft); border-color:transparent;}
-.task .check{
-  width:32px; height:32px; border-radius:50%; border:2.5px solid var(--line); flex:none; margin-top:3px;
-  display:grid; place-items:center; background:var(--card);
-}
+.task .check{width:32px; height:32px; border-radius:50%; border:2.5px solid var(--line); flex:none; margin-top:3px; display:grid; place-items:center; background:var(--card);}
 .task .check svg{width:16px; height:16px; stroke:#fff; fill:none; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; opacity:0;}
 .task.is-done .check{background:var(--done); border-color:var(--done);}
 .task.is-done .check svg{opacity:1;}
 .task .body{flex:1; min-width:0;}
 .task .meta{display:flex; align-items:center; gap:6px; margin-bottom:1px;}
 .task .tm{font-size:12px; font-weight:900; color:var(--accent); letter-spacing:.03em;}
-.task .dur{
-  font-size:12px; font-weight:900; color:var(--muted); background:var(--chip);
-  border-radius:999px; padding:2px 9px; line-height:1.5;
-}
+.task .dur{font-size:12px; font-weight:900; color:var(--muted); background:var(--chip); border-radius:999px; padding:2px 9px; line-height:1.5;}
 .task .txt{font-size:16px; font-weight:500; word-break:break-word; white-space:pre-wrap;}
 .task.is-done .txt{color:var(--muted); text-decoration:line-through; text-decoration-thickness:2px;}
-.task .star{
-  width:34px; height:34px; border-radius:11px; flex:none; display:grid; place-items:center; background:var(--chip);
-  margin-top:2px;
-}
+.task .star{width:34px; height:34px; border-radius:11px; flex:none; display:grid; place-items:center; background:var(--chip); margin-top:2px;}
 .task .star svg{width:19px; height:19px; fill:none; stroke:var(--muted); stroke-width:2; stroke-linejoin:round;}
 .task.is-star .star{background:var(--star-soft);}
 .task.is-star .star svg{fill:var(--star); stroke:var(--star);}
 .task .del{width:28px; height:34px; display:grid; place-items:center; flex:none; margin-top:2px;}
 .task .del svg{width:16px; height:16px; stroke:var(--muted); fill:none; stroke-width:2.2; stroke-linecap:round;}
 
-.addrow{
-  display:flex; align-items:center; gap:8px; background:var(--card); border:1.5px dashed var(--line);
-  border-radius:14px; padding:8px 10px; margin-top:8px;
-}
+.addrow{display:flex; align-items:center; gap:8px; background:var(--card); border:1.5px dashed var(--line); border-radius:14px 14px 0 0; border-bottom:none; padding:8px 10px; margin-top:8px;}
 .addrow input[type=time]{width:74px; flex:none; font-size:14px; font-weight:700; color:var(--accent); background:var(--chip); border-radius:9px; padding:6px 4px; text-align:center;}
 .addrow input[type=text]{flex:1; font-size:16px;}
-.addrow .add{
-  width:38px; height:38px; border-radius:12px; background:var(--accent); display:grid; place-items:center; flex:none;
-}
+.addrow .add{width:38px; height:38px; border-radius:12px; background:var(--accent); display:grid; place-items:center; flex:none;}
 .addrow .add svg{width:20px; height:20px; stroke:var(--accent-ink); fill:none; stroke-width:3; stroke-linecap:round;}
+.repeat{display:flex; align-items:center; gap:6px; background:var(--card); border:1.5px dashed var(--line); border-top:none; border-radius:0 0 14px 14px; padding:0 10px 9px;}
+.repeat .rl{font-size:11px; font-weight:900; color:var(--muted); flex:none;}
+.rdays{display:flex; gap:3px; flex:1;}
+.rdays button{width:26px; height:26px; border-radius:8px; background:var(--chip); font-size:11px; font-weight:900; color:var(--muted);}
+.rdays button.on{background:var(--accent); color:var(--accent-ink);}
+.repeat .rp{font-size:11px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:5px 10px; flex:none;}
 
-.starnote{
-  display:flex; gap:9px; align-items:flex-start; margin-top:10px; padding:11px 13px;
-  background:var(--star-soft); border-radius:14px; font-size:12.5px; line-height:1.7; color:var(--ink);
-}
+.starnote{display:flex; gap:9px; align-items:flex-start; margin-top:10px; padding:11px 13px; background:var(--star-soft); border-radius:14px; font-size:12.5px; line-height:1.7;}
 .starnote svg{width:17px; height:17px; fill:var(--star); stroke:var(--star); stroke-width:2; stroke-linejoin:round; flex:none; margin-top:3px;}
 .starnote b{font-weight:900;}
-
 .empty{color:var(--muted); text-align:center; padding:22px 8px; font-size:14px; line-height:1.8;}
 
-/* ---------- day tqc ---------- */
-.daytqc{
-  margin-top:12px; background:var(--card); border:1px solid var(--line); border-radius:16px;
-  box-shadow:var(--shadow); padding:11px 14px;
-}
-.daytqc .h{font-size:12px; font-weight:900; color:var(--muted); letter-spacing:.05em; margin-bottom:4px;}
-.daytqc .r{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;}
-.daytqc .r i{font-style:normal; font-size:12px; font-weight:900; color:var(--accent); margin-right:4px;}
-.daytqc .r b{font-size:16px; font-weight:900;}
+/* この日（小さく） */
+.daybox{margin-top:12px; background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:9px 13px 11px;}
+.daybox .r{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; font-size:13px;}
+.daybox .r .h{font-size:11px; font-weight:900; color:var(--muted); letter-spacing:.05em;}
+.daybox .r i{font-style:normal; font-size:11px; font-weight:900; color:var(--accent); margin-right:3px;}
+.daybox .r b{font-size:13px; font-weight:900;}
+.daybox textarea{font-size:13px; line-height:1.7; margin-top:4px; border-top:1px solid var(--line); padding-top:6px;}
 
-/* ---------- week summary ---------- */
-.tqc{margin-top:12px; background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); overflow:hidden;}
-.tqc .head{display:flex; align-items:baseline; gap:8px; padding:13px 15px 10px;}
-.tqc .head b{font-size:15px; font-weight:900;}
-.tqc .head span{font-size:11px; color:var(--muted); font-weight:700;}
-.tqc .score{display:flex; align-items:baseline; justify-content:center; gap:5px; padding:2px 0 12px;}
-.tqc .score .n{font-size:52px; font-weight:900; letter-spacing:-.02em; line-height:1;}
-.tqc .score .u{font-size:13px; color:var(--muted); font-weight:700;}
-.tqc .parts{display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--line);}
-.tqc .part{padding:11px 4px 12px; text-align:center; border-right:1px solid var(--line);}
+/* 今週のTQC（大きく） */
+.tqc{
+  margin-top:14px; border-radius:22px; overflow:hidden; color:#fff;
+  background:linear-gradient(155deg, var(--navy1) 0%, var(--navy2) 100%);
+  box-shadow:0 8px 22px rgba(18,32,60,.28);
+}
+.tqc .head{display:flex; align-items:center; gap:8px; padding:16px 18px 0;}
+.tqc .head b{font-size:15px; font-weight:900; letter-spacing:.04em;}
+.tqc .head span{font-size:11px; color:rgba(255,255,255,.6); font-weight:700; margin-left:auto;}
+.tqc .score{display:flex; align-items:baseline; justify-content:center; gap:8px; padding:2px 0 14px;}
+.tqc .score .n{font-size:80px; font-weight:900; letter-spacing:-.03em; line-height:1.05; color:var(--gold);}
+.tqc .score .u{font-size:16px; color:rgba(255,255,255,.65); font-weight:900;}
+.tqc .parts{display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid rgba(255,255,255,.14);}
+.tqc .part{padding:13px 4px 14px; text-align:center; border-right:1px solid rgba(255,255,255,.14);}
 .tqc .part:last-child{border-right:none;}
-.tqc .part .k{font-size:11px; font-weight:900; color:var(--muted); letter-spacing:.1em;}
-.tqc .part .v{font-size:20px; font-weight:900; line-height:1.2;}
-.tqc .part .v em{font-size:11px; font-style:normal; color:var(--muted); margin-left:1px;}
-.tqc .part .s{font-size:10px; color:var(--muted); font-weight:700;}
-.tqc .formula{padding:9px 14px 12px; text-align:center; font-size:11px; color:var(--muted); font-weight:700; border-top:1px solid var(--line);}
+.tqc .part .k{font-size:12px; font-weight:900; color:var(--gold); letter-spacing:.14em;}
+.tqc .part .v{font-size:22px; font-weight:900; line-height:1.25;}
+.tqc .part .v em{font-size:12px; font-style:normal; color:rgba(255,255,255,.6); margin-left:1px;}
+.tqc .part .s{font-size:10px; color:rgba(255,255,255,.6); font-weight:700;}
+.tqc .formula{padding:11px 14px 14px; text-align:center; font-size:11.5px; color:rgba(255,255,255,.7); font-weight:700; border-top:1px solid rgba(255,255,255,.14);}
 
-.subbtn{
-  width:100%; margin-top:10px; background:var(--card); border:1px solid var(--line); color:var(--muted);
-  border-radius:14px; padding:12px; font-size:14px; font-weight:700;
-}
-.bigbtn{
-  width:100%; margin-top:12px; background:var(--accent); color:var(--accent-ink); border-radius:16px;
-  padding:15px; font-size:16px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:8px;
-  box-shadow:var(--shadow);
-}
+.bigbtn{width:100%; margin-top:12px; background:var(--accent); color:var(--accent-ink); border-radius:16px; padding:15px; font-size:16px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:var(--shadow);}
+.bigbtn svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;}
+.subbtn{width:100%; margin-top:10px; background:var(--card); border:1px solid var(--line); color:var(--muted); border-radius:14px; padding:12px; font-size:14px; font-weight:700;}
 
-/* ---------- tabs ---------- */
-nav.tabs{
-  position:fixed; left:0; right:0; bottom:0; z-index:40; background:var(--card);
-  border-top:1px solid var(--line); display:flex; padding:6px 8px calc(6px + env(safe-area-inset-bottom));
-}
+nav.tabs{position:fixed; left:0; right:0; bottom:0; z-index:40; background:var(--card); border-top:1px solid var(--line); display:flex; padding:6px 8px calc(6px + env(safe-area-inset-bottom));}
 nav.tabs button{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 0 4px; border-radius:12px; position:relative;}
 nav.tabs svg{width:23px; height:23px; stroke:var(--muted); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
 nav.tabs span{font-size:10px; font-weight:900; color:var(--muted);}
@@ -234,7 +181,6 @@ nav.tabs button.on svg{stroke:var(--accent);}
 nav.tabs button.on span{color:var(--accent);}
 nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; border-radius:50%; background:var(--new); border:2px solid var(--card);}
 
-/* ---------- history ---------- */
 .hist-item{display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:12px 14px;}
 .hist-item + .hist-item{border-top:1px solid var(--line);}
 .hist-item .sc{font-size:26px; font-weight:900; width:74px; text-align:right; line-height:1.1;}
@@ -248,32 +194,21 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 .chart-x{display:flex; gap:5px; padding:5px 12px 12px;}
 .chart-x span{flex:1; text-align:center; font-size:9px; color:var(--muted); font-weight:700;}
 
-/* ---------- sheet ---------- */
-.sheet-bg{position:fixed; inset:0; background:rgba(15,25,40,.45); z-index:50; display:grid; place-items:end center;}
-.sheet{
-  background:var(--bg); width:100%; max-width:560px; max-height:88vh; overflow:auto;
-  border-radius:20px 20px 0 0; padding:8px 16px calc(24px + env(safe-area-inset-bottom));
-  box-shadow:var(--shadow-lg);
-}
+.sheet-bg{position:fixed; inset:0; background:rgba(15,25,40,.5); z-index:50; display:grid; place-items:end center;}
+.sheet{background:var(--bg); width:100%; max-width:560px; max-height:92vh; overflow:auto; border-radius:20px 20px 0 0; padding:8px 16px calc(24px + env(safe-area-inset-bottom)); box-shadow:var(--shadow-lg);}
 .sheet .grab{width:38px; height:4px; border-radius:2px; background:var(--line); margin:6px auto 12px;}
 .sheet h2{font-size:18px; font-weight:900; margin-bottom:10px;}
 .sheet h3{font-size:14px; font-weight:900; margin:16px 0 6px; color:var(--accent);}
-.sheet p{font-size:14px; color:var(--ink); line-height:1.85;}
+.sheet p{font-size:14px; line-height:1.85;}
 .sheet ul{margin:4px 0 0 18px; font-size:14px; line-height:1.85;}
-.sheet .close{width:100%; margin-top:18px; background:var(--chip); border-radius:14px; padding:13px; font-weight:900;}
+.sheet .close{width:100%; margin-top:14px; background:var(--chip); border-radius:14px; padding:13px; font-weight:900;}
+.sheet img.shot{width:100%; border-radius:14px; border:1px solid var(--line); box-shadow:var(--shadow); display:block;}
 .picker{display:flex; align-items:center; justify-content:center; gap:7px; padding:14px 0 6px;}
-.picker select{
-  font-size:23px; font-weight:900; padding:10px 10px; border-radius:12px;
-  border:1px solid var(--line); background:var(--card); color:var(--ink);
-}
+.picker select{font-size:23px; font-weight:900; padding:10px 10px; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--ink);}
 .picker span{font-size:15px; font-weight:900; color:var(--muted);}
 .field{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:11px 13px; margin-bottom:10px;}
 .field .lab{font-size:11px; font-weight:900; color:var(--muted); letter-spacing:.05em;}
-.toast{
-  position:fixed; left:50%; bottom:calc(84px + env(safe-area-inset-bottom)); transform:translateX(-50%);
-  background:var(--ink); color:var(--bg); font-size:13px; font-weight:700; padding:10px 16px; border-radius:999px;
-  z-index:80; box-shadow:var(--shadow-lg); opacity:0; pointer-events:none; transition:opacity .2s;
-}
+.toast{position:fixed; left:50%; bottom:calc(84px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:var(--ink); color:var(--bg); font-size:13px; font-weight:700; padding:10px 16px; border-radius:999px; z-index:80; box-shadow:var(--shadow-lg); opacity:0; pointer-events:none; transition:opacity .2s;}
 .toast.on{opacity:1;}
 </style>
 </head>
@@ -282,7 +217,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v3</span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v4</span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -296,7 +231,6 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
     </div>
   </header>
 
-  <!-- ========== 今週 ========== -->
   <section id="tabPlan">
     <button class="update hidden" id="btnUpdate">
       <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
@@ -312,30 +246,38 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
     </div>
 
     <div class="tasks" id="tasks"></div>
+
     <div class="addrow">
       <input type="time" id="newTime" aria-label="はじめる時刻">
-      <input type="text" id="newText" placeholder="やることを書く" enterkeyhint="done">
+      <input type="text" id="newText" list="pastTasks" placeholder="やることを書く" enterkeyhint="done">
+      <datalist id="pastTasks"></datalist>
       <button class="add" id="btnAdd" aria-label="追加"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    </div>
+    <div class="repeat">
+      <span class="rl">入れる曜日</span>
+      <div class="rdays" id="rdays"></div>
+      <button class="rp" id="btnAllDays">毎日</button>
     </div>
 
     <div class="starnote">
       <svg viewBox="0 0 24 24"><path d="m12 3.3 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.8l6.1-.9z"/></svg>
-      <span><b>★＝極まった</b>のしるしです。答えを見ずに自力で全部とけるようになったものだけ、★を押してください。<br><b>★の数が、TQCスコアの「Q」</b>になります。</span>
+      <span><b>★＝極まった</b>のしるしです。答えを見ずに自力で全部とけるようになったものだけ、★を押してください。<b>★の数が、TQCスコアの「Q」</b>になります。</span>
     </div>
 
-    <div class="daytqc" id="dayTqc"></div>
-
-    <div class="card" style="margin-top:12px">
-      <div class="sec-label">この日のふりかえり <span class="hint">（なくてもOK）</span></div>
-      <textarea id="dayMemo" rows="2" placeholder="できたこと・つまずいたこと"></textarea>
+    <div class="daybox">
+      <div class="r" id="dayTqc"></div>
+      <textarea id="dayMemo" rows="1" placeholder="この日のふりかえり（なくてもOK）"></textarea>
     </div>
 
     <div class="tqc" id="tqcCard"></div>
 
+    <button class="bigbtn" id="btnWeekView">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M9 9v11M15 9v11"/></svg>
+      1週間をまとめて見る
+    </button>
     <button class="subbtn" id="btnCopyPrev">先週のやることをコピーする</button>
   </section>
 
-  <!-- ========== 記録 ========== -->
   <section id="tabHist" class="hidden">
     <div class="card" style="margin-top:10px; padding:0">
       <div class="sec-label" style="padding:13px 14px 0">TQCスコアの推移</div>
@@ -345,7 +287,6 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
     <div class="card" style="margin-top:12px; padding:0" id="histList"></div>
   </section>
 
-  <!-- ========== 設定 ========== -->
   <section id="tabSet" class="hidden">
     <div class="field" style="margin-top:12px">
       <div class="lab">名前</div>
@@ -356,7 +297,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="number" id="setWeekGoal" min="0" max="200" step="1" placeholder="例）40">
     </div>
     <div class="field">
-      <div class="lab">やること1つの、はじめの長さ</div>
+      <div class="lab">やること1つの、はじめの長さ（分）</div>
       <input type="number" id="setDefMin" min="10" max="180" step="10" placeholder="30">
     </div>
     <div class="card">
@@ -370,7 +311,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v3</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v4</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -392,43 +333,33 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 3;
+const VER = 4;
 const KEY = 'planmap_v1';
 const WD = ['月','火','水','木','金','土','日'];
 const DEF_MIN = 30;
 
-/* ---------- state ---------- */
 let S = { weeks:{}, name:'', weekGoal:'', defMin:DEF_MIN, cur:'', day:0 };
-function load(){
-  try{ const r = JSON.parse(localStorage.getItem(KEY)||'{}');
-    if(r && typeof r==='object'){ S = Object.assign(S, r); }
-  }catch(e){}
-  if(!S.weeks) S.weeks = {};
-  // v1 は「時間（h）」で保存していた
-  if(!S.minv){
-    eachDay(d=>{ d.plan = Math.round((Number(d.plan)||0)*60); d.act = Math.round((Number(d.act)||0)*60); });
-    S.minv = 1;
-  }
-  // v3 から、時間は「やることの長さ」の合計で自動計算する
-  if(!S.taskmin){
-    eachDay(d=>{ (d.tasks||[]).forEach(t=>{ if(typeof t.min !== 'number') t.min = DEF_MIN; }); });
-    S.taskmin = 1;
-  }
-  if(typeof S.defMin !== 'number' || S.defMin < 5) S.defMin = DEF_MIN;
-}
+let REP = [false,false,false,false,false,false,false];
+
 function eachDay(fn){
   Object.keys(S.weeks).forEach(k=>{
     const days = (S.weeks[k]||{}).days || {};
     Object.keys(days).forEach(dk=>fn(days[dk], dk, k));
   });
 }
+function load(){
+  try{ const r = JSON.parse(localStorage.getItem(KEY)||'{}'); if(r && typeof r==='object') S = Object.assign(S, r); }catch(e){}
+  if(!S.weeks) S.weeks = {};
+  if(!S.minv){ eachDay(d=>{ d.plan = Math.round((Number(d.plan)||0)*60); d.act = Math.round((Number(d.act)||0)*60); }); S.minv = 1; }
+  if(!S.taskmin){ eachDay(d=>{ (d.tasks||[]).forEach(t=>{ if(typeof t.min !== 'number') t.min = DEF_MIN; }); }); S.taskmin = 1; }
+  if(typeof S.defMin !== 'number' || S.defMin < 5) S.defMin = DEF_MIN;
+}
 let saveT = null;
 function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }, 200); }
 
-/* ---------- date ---------- */
 function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function parseISO(s){ const p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
-function mondayOf(d){ const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); const w = (x.getDay()+6)%7; x.setDate(x.getDate()-w); return x; }
+function mondayOf(d){ const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; }
 function addDays(d,n){ const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate()+n); return x; }
 function md(d){ return (d.getMonth()+1)+'/'+d.getDate(); }
 
@@ -441,33 +372,27 @@ function dayOf(k, i){
 }
 function dayRaw(k, i){ const w = S.weeks[k]; return (w && w.days[iso(addDays(parseISO(k), i))]) || null; }
 
-/* ---------- 集計 ---------- */
 function sumDay(d){
-  let plan = 0, act = 0, q = 0, done = 0, all = 0;
-  ((d && d.tasks) || []).forEach(t=>{
+  let plan=0, act=0, q=0, done=0, all=0;
+  ((d && d.tasks)||[]).forEach(t=>{
     const m = Number(t.min)||0;
     plan += m; all++;
     if(t.done){ act += m; done++; }
     if(t.star) q++;
   });
-  const c = all ? Math.floor(done/all*100) : 0;
-  return { plan, act, q, c, done, all };
+  return { plan, act, q, c: all ? Math.floor(done/all*100) : 0, done, all };
 }
 function tqcOf(k){
-  let min = 0, Q = 0, done = 0, all = 0;
-  for(let i=0;i<7;i++){
-    const s = sumDay(dayRaw(k, i));
-    min += s.act; Q += s.q; done += s.done; all += s.all;
-  }
+  let min=0, Q=0, done=0, all=0;
+  for(let i=0;i<7;i++){ const s = sumDay(dayRaw(k,i)); min+=s.act; Q+=s.q; done+=s.done; all+=s.all; }
   const T = Math.round(min/60*10)/10;
   const C = all ? Math.floor(done/all*100) : 0;
   return { Tmin:min, T, Q, C, done, all, score: Math.floor(T*Q*C/1000) };
 }
 
-/* ---------- 表示 ---------- */
 const $ = s => document.querySelector(s);
 function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function fmtH(v){ const n = Number(v)||0; return (Math.round(n*10)/10).toString(); }
+function fmtH(v){ return (Math.round((Number(v)||0)*10)/10).toString(); }
 function fmtHM(min){
   let m = Math.max(0, Math.round(Number(min)||0));
   const h = Math.floor(m/60); m = m%60;
@@ -477,84 +402,81 @@ function fmtHM(min){
 }
 
 function renderWeekBar(){
-  const m = parseISO(S.cur), e = addDays(m,6);
-  $('#wRange').textContent = md(m)+'（月）〜 '+md(e)+'（日）';
+  const m = parseISO(S.cur);
+  $('#wRange').textContent = md(m)+'（月）〜 '+md(addDays(m,6))+'（日）';
   $('#wSub').textContent = m.getFullYear()+'年';
   $('#btnToday').classList.toggle('hidden', S.cur === iso(mondayOf(new Date())));
 }
-
 function renderDays(){
   const m = parseISO(S.cur), today = iso(new Date());
   let h = '';
   for(let i=0;i<7;i++){
-    const d = addDays(m,i), key = iso(d), s = sumDay(dayRaw(S.cur, i));
+    const d = addDays(m,i), s = sumDay(dayRaw(S.cur,i));
     const pct = s.all ? Math.round(s.done/s.all*100) : 0;
     const cls = ['day-chip'];
     if(i===5) cls.push('sat'); if(i===6) cls.push('sun');
-    if(key===today) cls.push('today');
+    if(iso(d)===today) cls.push('today');
     if(i===S.day) cls.push('on');
-    h += '<button class="'+cls.join(' ')+'" data-i="'+i+'">'
-       + '<span class="w">'+WD[i]+'</span><span class="d num">'+d.getDate()+'</span>'
-       + '<span class="bar"><i style="width:'+pct+'%"></i></span></button>';
+    h += '<button class="'+cls.join(' ')+'" data-i="'+i+'"><span class="w">'+WD[i]+'</span>'
+       + '<span class="d num">'+d.getDate()+'</span><span class="bar"><i style="width:'+pct+'%"></i></span></button>';
   }
   $('#days').innerHTML = h;
 }
-
+function renderRep(){
+  $('#rdays').innerHTML = WD.map((w,i)=>'<button data-i="'+i+'" class="'+(REP[i]?'on':'')+'">'+w+'</button>').join('');
+  $('#btnAllDays').textContent = REP.every(Boolean) ? 'この日だけ' : '毎日';
+}
+function renderPast(){
+  const seen = new Set(), out = [];
+  Object.keys(S.weeks).sort().reverse().forEach(k=>{
+    const days = S.weeks[k].days || {};
+    Object.keys(days).sort().reverse().forEach(dk=>{
+      (days[dk].tasks||[]).forEach(t=>{ const x = (t.text||'').trim(); if(x && !seen.has(x)){ seen.add(x); out.push(x); } });
+    });
+  });
+  $('#pastTasks').innerHTML = out.slice(0,40).map(t=>'<option value="'+esc(t)+'">').join('');
+}
 function renderDay(){
   const d = dayOf(S.cur, S.day), s = sumDay(d);
   $('#planV').textContent = fmtHM(s.plan);
   $('#actV').textContent = fmtHM(s.act);
   $('#dayMemo').value = d.memo || '';
-
   const box = $('#tasks');
-  if(!d.tasks.length){
-    box.innerHTML = '<div class="empty">この日のやることは、まだありません。<br>下の欄に書いて ＋ を押してください。</div>';
-  }else{
-    box.innerHTML = d.tasks.map((t,i)=>{
-      const cls = ['task']; if(t.done) cls.push('is-done'); if(t.star) cls.push('is-star');
-      return '<div class="'+cls.join(' ')+'" data-i="'+i+'">'
-        + '<button class="check" data-act="done" aria-label="できた"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button>'
-        + '<div class="body">'
-        +   '<div class="meta">'
-        +     (t.time ? '<span class="tm num">'+esc(t.time)+'</span>' : '')
-        +     '<button class="dur num" data-act="dur">'+fmtHM(t.min)+'</button>'
-        +   '</div>'
-        +   '<div class="txt">'+esc(t.text)+'</div>'
-        + '</div>'
-        + '<button class="star" data-act="star" aria-label="極まった"><svg viewBox="0 0 24 24"><path d="m12 3.3 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.8l6.1-.9z"/></svg></button>'
-        + '<button class="del" data-act="del" aria-label="削除"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>'
-        + '</div>';
-    }).join('');
-  }
-
-  $('#dayTqc').innerHTML =
-    '<div class="h">この日のTQC</div>'
-  + '<div class="r">'
-  +   '<span><i>T</i><b class="num">'+fmtHM(s.act)+'</b></span>'
-  +   '<span><i>Q</i><b class="num">'+s.q+'</b></span>'
-  +   '<span><i>C</i><b class="num">'+s.c+'%</b></span>'
-  +   '<span style="font-size:11px; color:var(--muted); font-weight:700">'+s.done+'/'+s.all+' 完了</span>'
-  + '</div>';
+  box.innerHTML = !d.tasks.length
+    ? '<div class="empty">この日のやることは、まだありません。<br>下の欄に書いて ＋ を押してください。</div>'
+    : d.tasks.map((t,i)=>{
+        const cls = ['task']; if(t.done) cls.push('is-done'); if(t.star) cls.push('is-star');
+        return '<div class="'+cls.join(' ')+'" data-i="'+i+'">'
+          + '<button class="check" data-act="done" aria-label="できた"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button>'
+          + '<div class="body"><div class="meta">'
+          + (t.time ? '<span class="tm num">'+esc(t.time)+'</span>' : '')
+          + '<button class="dur num" data-act="dur">'+fmtHM(t.min)+'</button></div>'
+          + '<div class="txt">'+esc(t.text)+'</div></div>'
+          + '<button class="star" data-act="star" aria-label="極まった"><svg viewBox="0 0 24 24"><path d="m12 3.3 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.8l6.1-.9z"/></svg></button>'
+          + '<button class="del" data-act="del" aria-label="削除"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>';
+      }).join('');
+  $('#dayTqc').innerHTML = '<span class="h">この日</span>'
+    + '<span><i>T</i><b class="num">'+fmtHM(s.act)+'</b></span>'
+    + '<span><i>Q</i><b class="num">'+s.q+'</b></span>'
+    + '<span><i>C</i><b class="num">'+s.c+'%</b></span>'
+    + '<span style="font-size:11px; color:var(--muted); font-weight:700">'+s.done+'/'+s.all+'完了</span>';
 }
-
 function renderTQC(){
   const r = tqcOf(S.cur), goalH = Number(S.weekGoal)||0;
   $('#tqcCard').innerHTML =
     '<div class="head"><b>今週のTQCスコア</b><span>毎日つけると自動で出ます</span></div>'
   + '<div class="score"><span class="n num">'+r.score+'</span><span class="u">点</span></div>'
   + '<div class="parts">'
-  +   '<div class="part"><div class="k">T</div><div class="v num" style="font-size:16px">'+fmtHM(r.Tmin)+'</div><div class="s">'+(goalH?('目標 '+goalH+'h'):'勉強した時間')+'</div></div>'
-  +   '<div class="part"><div class="k">Q</div><div class="v num">'+r.Q+'</div><div class="s">★（極まった数）</div></div>'
+  +   '<div class="part"><div class="k">T</div><div class="v num" style="font-size:17px">'+fmtHM(r.Tmin)+'</div><div class="s">'+(goalH?('目標 '+goalH+'h'):'勉強した時間')+'</div></div>'
+  +   '<div class="part"><div class="k">Q</div><div class="v num">'+r.Q+'</div><div class="s">★ 極まった数</div></div>'
   +   '<div class="part"><div class="k">C</div><div class="v num">'+r.C+'<em>%</em></div><div class="s">'+r.done+'/'+r.all+' 完了</div></div>'
   + '</div>'
-  + '<div class="formula">T × Q × C ÷ 1000 ＝ '+fmtH(r.T)+' × '+r.Q+' × '+r.C+' ÷ 1000 ＝ '+r.score+'</div>';
+  + '<div class="formula">'+fmtH(r.T)+' × '+r.Q+' × '+r.C+' ÷ 1000 ＝ '+r.score+'</div>';
 }
+function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderDay(); renderTQC(); renderPast(); save(); }
 
-function renderAll(){ renderWeekBar(); renderDays(); renderDay(); renderTQC(); save(); }
-
-/* ---------- 記録 ---------- */
 function renderHist(){
-  const keys = Object.keys(S.weeks).filter(k=>{ const r = tqcOf(k); return r.all>0 || r.Tmin>0; }).sort();
+  const keys = Object.keys(S.weeks).filter(k=>{ const r = tqcOf(k); return r.all>0; }).sort();
   const rows = keys.slice(-8).map(k=>({k, r:tqcOf(k)}));
   const max = Math.max(1, ...rows.map(x=>x.r.score));
   $('#chart').innerHTML = rows.length
@@ -564,19 +486,14 @@ function renderHist(){
   const all = keys.slice().reverse();
   $('#histList').innerHTML = all.length ? all.map(k=>{
     const r = tqcOf(k), m = parseISO(k);
-    return '<button class="hist-item" data-k="'+k+'">'
-      + '<span class="sc num">'+r.score+'</span>'
+    return '<button class="hist-item" data-k="'+k+'"><span class="sc num">'+r.score+'</span>'
       + '<span class="mt"><b>'+md(m)+'（月）〜 '+md(addDays(m,6))+'（日）</b>'
       + '<span>T '+fmtH(r.T)+'h ・ Q '+r.Q+' ・ C '+r.C+'%</span></span></button>';
   }).join('') : '<div class="empty">まだ記録がありません</div>';
 }
 
-/* ---------- toast / sheet ---------- */
 let toastT = null;
-function toast(msg){
-  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('on'), 1900);
-}
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('on'), 1900); }
 function openSheet(html){
   const bg = document.createElement('div'); bg.className = 'sheet-bg';
   bg.innerHTML = '<div class="sheet"><div class="grab"></div>'+html+'<button class="close">とじる</button></div>';
@@ -585,58 +502,190 @@ function openSheet(html){
   return bg;
 }
 
+/* ---------- 1週間まとめの画像 ---------- */
+function drawWeek(){
+  const W = 1080, PAD = 34, F = "'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif";
+  const r = tqcOf(S.cur), m = parseISO(S.cur);
+  const days = [];
+  let bodyH = 0;
+  for(let i=0;i<7;i++){
+    const d = dayRaw(S.cur,i), s = sumDay(d), ts = (d && d.tasks) || [];
+    const show = ts.slice(0,7);
+    const h = Math.max(126, 86 + show.length*33 + (ts.length>show.length ? 28 : 0));
+    days.push({ i, date:addDays(m,i), s, show, more:ts.length-show.length, h });
+    bodyH += h + 12;
+  }
+  const HEAD = 132, BAND = 236, FOOT = 62;
+  const H = HEAD + BAND + 16 + bodyH + FOOT;
+
+  const dpr = 2, cv = document.createElement('canvas');
+  cv.width = W*dpr; cv.height = H*dpr;
+  const g = cv.getContext('2d'); g.scale(dpr,dpr);
+  const INK='#16202F', MUT='#7C8899', LINE='#E2E8F1', ACC='#2C6FE4', DONE='#12A06A', GOLD='#C9982F';
+  const rr = (x,y,w,h,rad)=>{ g.beginPath(); g.moveTo(x+rad,y); g.arcTo(x+w,y,x+w,y+h,rad); g.arcTo(x+w,y+h,x,y+h,rad); g.arcTo(x,y+h,x,y,rad); g.arcTo(x,y,x+w,y,rad); g.closePath(); };
+  const clip = (t,max)=>{ let s=t; while(g.measureText(s).width>max && s.length>1) s=s.slice(0,-1); return s===t?t:s+'…'; };
+
+  g.fillStyle = '#F4F7FB'; g.fillRect(0,0,W,H);
+
+  // header
+  g.fillStyle = INK; g.font = '900 40px '+F; g.textAlign='left'; g.textBaseline='alphabetic';
+  g.fillText('計画マップ', PAD, 60);
+  if(S.name){ g.fillStyle = MUT; g.font = '700 26px '+F; g.textAlign='right'; g.fillText(S.name, W-PAD, 58); }
+  g.fillStyle = ACC; g.font = '900 34px '+F; g.textAlign='left';
+  g.fillText(md(m)+'（月）〜 '+md(addDays(m,6))+'（日）', PAD, 108);
+
+  // score band
+  const bx = PAD, by = HEAD, bw = W-PAD*2, bh = BAND-16;
+  const grad = g.createLinearGradient(bx,by,bx+bw,by+bh);
+  grad.addColorStop(0,'#12203C'); grad.addColorStop(1,'#2A4A79');
+  g.fillStyle = grad; rr(bx,by,bw,bh,26); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.62)'; g.font = '900 22px '+F; g.textAlign='left';
+  g.fillText('今週のTQCスコア', bx+38, by+48);
+  g.fillStyle = '#E7CE93'; g.font = '900 108px '+F;
+  const scoreW = g.measureText(String(r.score)).width;
+  g.fillText(String(r.score), bx+34, by+152);
+  g.fillStyle = 'rgba(255,255,255,.6)'; g.font = '900 24px '+F;
+  g.fillText('点', bx+34+scoreW+10, by+152);
+  g.fillStyle = 'rgba(255,255,255,.5)'; g.font = '700 20px '+F;
+  g.fillText(fmtH(r.T)+' × '+r.Q+' × '+r.C+' ÷ 1000', bx+36, by+188);
+
+  const stats = [['T', fmtHM(r.Tmin), '勉強した時間'], ['Q', String(r.Q), '★ 極まった数'], ['C', r.C+'%', r.done+'/'+r.all+' 完了']];
+  stats.forEach((st,i)=>{
+    const cx = bx+bw-330+i*110;
+    g.textAlign='center';
+    g.fillStyle='#E7CE93'; g.font='900 20px '+F; g.fillText(st[0], cx, by+58);
+    g.fillStyle='#fff'; g.font='900 '+(st[1].length>5?22:30)+'px '+F; g.fillText(st[1], cx, by+100);
+    g.fillStyle='rgba(255,255,255,.55)'; g.font='700 15px '+F; g.fillText(st[2], cx, by+130);
+  });
+
+  // days
+  let y = HEAD + BAND;
+  days.forEach(dd=>{
+    const x = PAD, w = W-PAD*2, h = dd.h;
+    g.fillStyle='#fff'; rr(x,y,w,h,20); g.fill();
+    g.strokeStyle=LINE; g.lineWidth=1.5; rr(x,y,w,h,20); g.stroke();
+
+    const isSat = dd.i===5, isSun = dd.i===6;
+    g.textAlign='center'; g.textBaseline='alphabetic';
+    g.fillStyle = isSun?'#E0574C':isSat?'#3E80D8':MUT; g.font='900 20px '+F;
+    g.fillText(WD[dd.i], x+56, y+42);
+    g.fillStyle = isSun?'#E0574C':isSat?'#3E80D8':INK; g.font='900 38px '+F;
+    g.fillText(String(dd.date.getDate()), x+56, y+84);
+
+    const lx = x+116, lw = w-116-28;
+    g.textAlign='left';
+    g.fillStyle=MUT; g.font='700 20px '+F;
+    g.fillText('予定 '+fmtHM(dd.s.plan), lx, y+38);
+    g.fillStyle=DONE; g.fillText('できた '+fmtHM(dd.s.act), lx+200, y+38);
+    if(dd.s.q>0){ g.fillStyle=GOLD; g.font='900 20px '+F; g.fillText('★ '+dd.s.q, lx+400, y+38); }
+
+    g.fillStyle='#EDF1F7'; rr(lx, y+50, lw, 10, 5); g.fill();
+    if(dd.s.all){ g.fillStyle=DONE; rr(lx, y+50, Math.max(10, lw*dd.s.done/dd.s.all), 10, 5); g.fill(); }
+
+    let ty = y+90;
+    dd.show.forEach(t=>{
+      g.font='700 21px '+F;
+      g.fillStyle = t.done ? '#9AA6B5' : INK;
+      const tm = t.time ? t.time+'  ' : '';
+      const label = tm + t.text + (t.star ? '  ★' : '');
+      const txt = clip(label, lw-30);
+      g.fillStyle = t.done ? DONE : '#C3CCD9';
+      g.beginPath(); g.arc(lx+9, ty-7, 7, 0, Math.PI*2); g.fill();
+      g.fillStyle = t.done ? '#9AA6B5' : INK;
+      g.fillText(txt, lx+28, ty);
+      if(t.done){
+        const tw = g.measureText(txt).width;
+        g.strokeStyle='#9AA6B5'; g.lineWidth=2;
+        g.beginPath(); g.moveTo(lx+28, ty-7); g.lineTo(lx+28+tw, ty-7); g.stroke();
+      }
+      ty += 33;
+    });
+    if(dd.more>0){ g.fillStyle=MUT; g.font='700 19px '+F; g.fillText('ほか '+dd.more+'件', lx+28, ty); }
+    if(!dd.show.length){ g.fillStyle='#C3CCD9'; g.font='700 20px '+F; g.fillText('（やることなし）', lx+6, y+92); }
+    y += h + 12;
+  });
+
+  g.textAlign='center'; g.fillStyle=MUT; g.font='700 19px '+F;
+  g.fillText('TQCスコア ＝ T × Q × C ÷ 1000（小数点は切りすて）', W/2, y+34);
+  return cv;
+}
+
+$('#btnWeekView').onclick = ()=>{
+  const cv = drawWeek();
+  const url = cv.toDataURL('image/png');
+  const sh = openSheet('<h2>1週間のまとめ</h2>'
+    + '<p style="color:var(--muted); font-size:12.5px; margin-bottom:10px">スクリーンショットを撮るか、下のボタンで画像として保存できます。</p>'
+    + '<img class="shot" src="'+url+'" alt="1週間のまとめ">'
+    + '<button class="bigbtn" id="svImg">画像を保存する</button>');
+  sh.querySelector('#svImg').onclick = ()=>{
+    cv.toBlob(async b=>{
+      if(!b) return;
+      const name = '計画マップ_'+S.cur+'.png';
+      const file = new File([b], name, {type:'image/png'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        try{ await navigator.share({files:[file]}); return; }catch(e){ if(e && e.name === 'AbortError') return; }
+      }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b); a.download = name; a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+      toast('保存しました');
+    }, 'image/png');
+  };
+};
+
 /* ---------- 操作 ---------- */
-$('#prevW').onclick = ()=>{ S.cur = iso(addDays(parseISO(S.cur), -7)); renderAll(); };
-$('#nextW').onclick = ()=>{ S.cur = iso(addDays(parseISO(S.cur), 7)); renderAll(); };
-$('#btnToday').onclick = ()=>{ S.cur = iso(mondayOf(new Date())); S.day = (new Date().getDay()+6)%7; renderAll(); };
-$('#days').onclick = e => { const b = e.target.closest('.day-chip'); if(!b) return; S.day = +b.dataset.i; renderDays(); renderDay(); renderTQC(); save(); };
+$('#prevW').onclick = ()=>{ S.cur = iso(addDays(parseISO(S.cur), -7)); syncRep(); renderAll(); };
+$('#nextW').onclick = ()=>{ S.cur = iso(addDays(parseISO(S.cur), 7)); syncRep(); renderAll(); };
+$('#btnToday').onclick = ()=>{ S.cur = iso(mondayOf(new Date())); S.day = (new Date().getDay()+6)%7; syncRep(); renderAll(); };
+$('#days').onclick = e => { const b = e.target.closest('.day-chip'); if(!b) return; S.day = +b.dataset.i; syncRep(); renderDays(); renderRep(); renderDay(); renderTQC(); save(); };
 $('#dayMemo').oninput = e => { dayOf(S.cur, S.day).memo = e.target.value; save(); };
+
+function syncRep(){ REP = [false,false,false,false,false,false,false]; REP[S.day] = true; }
+$('#rdays').onclick = e => { const b = e.target.closest('button'); if(!b) return; REP[+b.dataset.i] = !REP[+b.dataset.i]; renderRep(); };
+$('#btnAllDays').onclick = ()=>{ const all = REP.every(Boolean); REP = REP.map(()=>!all); if(all) REP[S.day] = true; renderRep(); };
 
 function addTask(){
   const txt = $('#newText').value.trim(); if(!txt) return;
   const tm = $('#newTime').value;
-  const d = dayOf(S.cur, S.day);
-  d.tasks.push({ time:tm, text:txt, min:S.defMin, done:false, star:false });
-  d.tasks.sort((a,b)=>{
-    if(a.time && b.time) return a.time < b.time ? -1 : a.time > b.time ? 1 : 0;
-    if(a.time) return -1;
-    if(b.time) return 1;
-    return 0;
+  let targets = REP.map((v,i)=>v?i:-1).filter(i=>i>=0);
+  if(!targets.length) targets = [S.day];
+  targets.forEach(i=>{
+    const d = dayOf(S.cur, i);
+    d.tasks.push({ time:tm, text:txt, min:S.defMin, done:false, star:false });
+    d.tasks.sort((a,b)=> a.time&&b.time ? (a.time<b.time?-1:a.time>b.time?1:0) : a.time?-1:b.time?1:0);
   });
   $('#newText').value = ''; $('#newTime').value = '';
-  renderDay(); renderDays(); renderTQC(); save();
+  renderDays(); renderDay(); renderTQC(); renderPast(); save();
+  if(targets.length > 1) toast(targets.length+'日ぶんに入れました');
 }
 $('#btnAdd').onclick = addTask;
 $('#newText').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); addTask(); } });
 
 $('#tasks').onclick = e => {
   const btn = e.target.closest('[data-act]'); if(!btn) return;
-  const row = e.target.closest('.task'), i = +row.dataset.i;
+  const i = +e.target.closest('.task').dataset.i;
   const d = dayOf(S.cur, S.day), t = d.tasks[i]; if(!t) return;
   const act = btn.dataset.act;
   if(act === 'done'){ t.done = !t.done; if(!t.done) t.star = false; }
   else if(act === 'star'){ t.star = !t.star; if(t.star) t.done = true; }
   else if(act === 'del'){ if(!confirm('「'+t.text+'」を消しますか？')) return; d.tasks.splice(i,1); }
   else if(act === 'dur'){ openDurPicker(t); return; }
-  renderDay(); renderDays(); renderTQC(); save();
+  renderDays(); renderDay(); renderTQC(); save();
 };
-
 function openDurPicker(t){
   const cur = Math.max(0, Math.round(Number(t.min)||0));
-  const h = Math.min(8, Math.floor(cur/60)), m = Math.round((cur%60)/10)*10 % 60;
-  let hO = '', mO = '';
+  const h = Math.min(8, Math.floor(cur/60)), mm = Math.round((cur%60)/10)*10 % 60;
+  let hO='', mO='';
   for(let i=0;i<=8;i++) hO += '<option value="'+i+'"'+(i===h?' selected':'')+'>'+i+'</option>';
-  for(let i=0;i<60;i+=10) mO += '<option value="'+i+'"'+(i===m?' selected':'')+'>'+String(i).padStart(2,'0')+'</option>';
-  const sh = openSheet('<h2>かかる時間</h2>'
-    + '<p style="color:var(--muted); font-size:13px">'+esc(t.text)+'</p>'
+  for(let i=0;i<60;i+=10) mO += '<option value="'+i+'"'+(i===mm?' selected':'')+'>'+String(i).padStart(2,'0')+'</option>';
+  const sh = openSheet('<h2>かかる時間</h2><p style="color:var(--muted); font-size:13px">'+esc(t.text)+'</p>'
     + '<div class="picker"><select id="pkH">'+hO+'</select><span>時間</span><select id="pkM">'+mO+'</select><span>分</span></div>'
     + '<button class="bigbtn" id="pkOK">きめる</button>');
   sh.querySelector('#pkOK').onclick = ()=>{
     t.min = (+sh.querySelector('#pkH').value)*60 + (+sh.querySelector('#pkM').value);
-    sh.remove(); renderDay(); renderDays(); renderTQC(); save();
+    sh.remove(); renderDays(); renderDay(); renderTQC(); save();
   };
 }
-
 $('#btnCopyPrev').onclick = ()=>{
   const pk = iso(addDays(parseISO(S.cur), -7)), pw = S.weeks[pk];
   if(!pw){ toast('先週の記録がありません'); return; }
@@ -649,7 +698,6 @@ $('#btnCopyPrev').onclick = ()=>{
   renderAll(); toast(n ? (n+'件コピーしました') : 'コピーできるやることがありません');
 };
 
-/* ---------- タブ ---------- */
 document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.onclick = ()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('on', x===b));
@@ -660,12 +708,11 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
 });
 $('#histList').onclick = e => {
   const b = e.target.closest('.hist-item'); if(!b) return;
-  S.cur = b.dataset.k; S.day = 0;
+  S.cur = b.dataset.k; S.day = 0; syncRep();
   document.querySelector('nav.tabs button[data-tab="Plan"]').click();
   renderAll(); window.scrollTo(0,0);
 };
 
-/* ---------- 設定 ---------- */
 $('#setName').oninput = e => { S.name = e.target.value; save(); };
 $('#setWeekGoal').oninput = e => { S.weekGoal = e.target.value; renderTQC(); save(); };
 $('#setDefMin').oninput = e => { const v = Math.round(Number(e.target.value)||0); if(v>=5 && v<=600){ S.defMin = v; save(); } };
@@ -678,54 +725,40 @@ $('#btnBackup').onclick = ()=>{
 $('#btnRestore').onclick = ()=>$('#fileIn').click();
 $('#fileIn').onchange = e => {
   const f = e.target.files[0]; if(!f) return;
-  const r = new FileReader();
-  r.onload = ()=>{ try{
-    const o = JSON.parse(r.result);
-    if(!o.weeks) throw 0;
+  const rd = new FileReader();
+  rd.onload = ()=>{ try{
+    const o = JSON.parse(rd.result); if(!o.weeks) throw 0;
     if(!confirm('いまのデータを、読みこんだものに入れかえます。よろしいですか？')) return;
     S = Object.assign({ weeks:{}, name:'', weekGoal:'', defMin:DEF_MIN, cur:iso(mondayOf(new Date())), day:0 }, o);
     save(); boot(); toast('読みこみました');
   }catch(err){ alert('このファイルは読みこめません'); } };
-  r.readAsText(f); e.target.value = '';
+  rd.readAsText(f); e.target.value = '';
 };
 
-/* ---------- 使い方 ---------- */
 $('#btnHelp').onclick = ()=>{
-  openSheet('<h2>計画マップの使い方</h2>'
-  + '<p>1週間の計画をつくって、その週のTQCスコアを出します。</p>'
-  + '<h3>1. やることを書く</h3>'
-  + '<p>曜日をえらんで、下の欄に「やること」を書いて ＋ を押します。はじめる時刻は、書かなくてもかまいません。</p>'
-  + '<h3>2. かかる時間をえらぶ</h3>'
-  + '<p>やることの「'+fmtHM(30)+'」のところを押すと、かかる時間を10分きざみでえらべます。<br>全部の合計が、その日の<b>予定</b>の時間になります。</p>'
-  + '<h3>3. できたらチェック</h3>'
-  + '<p>左の丸を押すと「できた」になり、その分だけ<b>できた</b>の時間が自動でふえていきます。</p>'
-  + '<h3>4. 極まったら★</h3>'
-  + '<p>答えを見ずに<b>自力で全部とけるようになった</b>ものだけ、★を押します。<br>この★の数が、TQCスコアの<b>Q</b>になります。</p>'
-  + '<h3>5. TQCスコア</h3>'
-  + '<ul>'
-  + '<li><b>T</b>＝1週間の勉強時間（できたやることの合計）</li>'
-  + '<li><b>Q</b>＝1週間で極まった数（★の数）</li>'
-  + '<li><b>C</b>＝やることの達成率（％）</li>'
-  + '</ul>'
-  + '<p style="margin-top:6px">TQCスコア ＝ T × Q × C ÷ 1000（小数点は切りすて）<br>毎日つけていけば、今週のスコアは自動で出ます。</p>');
+  openSheet('<h2>計画マップの使い方</h2><p>1週間の計画をつくって、その週のTQCスコアを出します。</p>'
+  + '<h3>1. やることを書く</h3><p>曜日をえらんで、下の欄に「やること」を書いて ＋ を押します。はじめる時刻は書かなくてもかまいません。</p>'
+  + '<h3>2. 毎日おなじことは、まとめて入れる</h3><p>入力欄の下の<b>「入れる曜日」</b>で曜日を押すと、その曜日ぜんぶに同じやることが入ります。「毎日」を押せば7日ぶん一度に入ります。<br>一度書いたことは、次から入力欄の候補に出てきます。</p>'
+  + '<h3>3. かかる時間をえらぶ</h3><p>やることの「30分」を押すと、10分きざみでえらべます。全部の合計が、その日の<b>予定</b>になります。</p>'
+  + '<h3>4. できたらチェック</h3><p>左の丸を押すと「できた」になり、その分だけ<b>できた</b>の時間が自動でふえます。</p>'
+  + '<h3>5. 極まったら★</h3><p>答えを見ずに<b>自力で全部とけるようになった</b>ものだけ★を押します。★の数がTQCの<b>Q</b>です。</p>'
+  + '<h3>6. TQCスコア</h3><ul><li><b>T</b>＝1週間の勉強時間</li><li><b>Q</b>＝1週間で極まった数（★）</li><li><b>C</b>＝達成率（％）</li></ul>'
+  + '<p style="margin-top:6px">TQCスコア ＝ T × Q × C ÷ 1000（小数点は切りすて）</p>'
+  + '<h3>7. 1週間をまとめて見る</h3><p>ボタンを押すと、1週間ぶんが1枚にまとまります。そのまま画像として保存できます。</p>');
 };
 
-/* ---------- 更新 ---------- */
 let newVer = 0;
 async function checkUpdate(silent){
   try{
-    const r = await fetch('version.json?t='+Date.now(), { cache:'no-store' });
-    if(!r.ok) throw 0;
-    const j = await r.json();
-    const v = Number(j.v)||0;
+    const res = await fetch('version.json?t='+Date.now(), { cache:'no-store' });
+    if(!res.ok) throw 0;
+    const j = await res.json(), v = Number(j.v)||0;
     if(v > VER){
       newVer = v;
       $('#updVer').textContent = 'v'+VER+' → v'+v+(j.note ? '　'+j.note : '');
-      $('#btnUpdate').classList.remove('hidden');
-      $('#tabDot').classList.remove('hidden');
+      $('#btnUpdate').classList.remove('hidden'); $('#tabDot').classList.remove('hidden');
     }else{
-      $('#btnUpdate').classList.add('hidden');
-      $('#tabDot').classList.add('hidden');
+      $('#btnUpdate').classList.add('hidden'); $('#tabDot').classList.add('hidden');
       if(!silent) toast('いまが最新です（v'+VER+'）');
     }
   }catch(e){ if(!silent) toast('調べられませんでした'); }
@@ -733,14 +766,8 @@ async function checkUpdate(silent){
 async function doUpdate(){
   toast('更新しています…');
   try{
-    if('serviceWorker' in navigator){
-      const rs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(rs.map(r=>r.unregister()));
-    }
-    if(window.caches){
-      const ks = await caches.keys();
-      await Promise.all(ks.map(k=>caches.delete(k)));
-    }
+    if('serviceWorker' in navigator){ const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x=>x.unregister())); }
+    if(window.caches){ const ks = await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }
   }catch(e){}
   location.replace(location.pathname + '?u=' + Date.now());
 }
@@ -748,7 +775,6 @@ $('#btnUpdate').onclick = doUpdate;
 $('#btnCheckUpd').onclick = ()=>checkUpdate(false);
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkUpdate(true); });
 
-/* ---------- boot ---------- */
 function boot(){
   if(!S.cur) S.cur = iso(mondayOf(new Date()));
   if(typeof S.day !== 'number' || S.day < 0 || S.day > 6) S.day = (new Date().getDay()+6)%7;
@@ -756,16 +782,12 @@ function boot(){
   $('#setWeekGoal').value = S.weekGoal || '';
   $('#setDefMin').value = S.defMin;
   $('#verTag').textContent = 'v'+VER; $('#verTag2').textContent = 'v'+VER;
-  renderAll();
+  syncRep(); renderAll();
 }
 load();
-(function(){
-  const nowK = iso(mondayOf(new Date()));
-  if(!S.cur || S.cur < nowK){ S.cur = nowK; S.day = (new Date().getDay()+6)%7; }
-})();
+(function(){ const nowK = iso(mondayOf(new Date())); if(!S.cur || S.cur < nowK){ S.cur = nowK; S.day = (new Date().getDay()+6)%7; } })();
 boot();
 checkUpdate(true);
-
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
 </script>
 </body>

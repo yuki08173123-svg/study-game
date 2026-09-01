@@ -107,8 +107,18 @@ main{max-width:620px;margin:0 auto;padding:4px 18px calc(var(--tabh) + 48px + en
 /* ---------- メモカード ---------- */
 .ncard{display:block;width:100%;text-align:left;background:var(--surf);
   border:1px solid var(--line);border-radius:var(--r);padding:16px 17px;margin-bottom:11px;
-  box-shadow:var(--shadow);transition:transform .12s,box-shadow .12s}
+  box-shadow:var(--shadow);transition:transform .12s,box-shadow .12s;position:relative;cursor:pointer}
 .ncard:active{transform:scale(.995);box-shadow:none}
+.starbtn{position:absolute;top:6px;right:6px;width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:var(--line2);z-index:2}
+.starbtn.on{color:var(--gold)}
+.starbtn:active{transform:scale(.86)}
+.cthumbs{display:flex;gap:6px;margin-top:12px}
+.cth{width:33%;max-width:120px;aspect-ratio:1;border-radius:10px;overflow:hidden;
+  background:var(--surf2);border:1px solid var(--line);flex:1 1 0}
+.cth img{width:100%;height:100%;object-fit:cover;display:block}
+.cth.more{display:flex;align-items:center;justify-content:center;color:var(--ink3);
+  font-size:.82rem;font-weight:700;flex:0 0 44px}
 .nmeta{display:flex;align-items:center;gap:8px;font-size:.71rem;color:var(--ink3);
   font-weight:600;margin-bottom:7px;font-variant-numeric:tabular-nums;letter-spacing:.03em}
 .nmeta .dot{width:7px;height:7px;border-radius:50%;flex:none}
@@ -184,8 +194,16 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .thumb .x{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;
   background:rgba(15,16,20,.72);color:#fff;display:flex;align-items:center;justify-content:center}
-.doc .thumbs{margin-top:18px}
-.doc .thumb{width:98px;height:98px}
+.pics{margin-top:18px}
+.pics.one .bigpic{border-radius:13px;overflow:hidden;background:var(--surf2);border:1px solid var(--line)}
+.pics.one img{width:100%;max-height:58vh;object-fit:contain;display:block}
+.pics.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pics.grid2 .cell{aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--surf2);border:1px solid var(--line)}
+.pics.grid2 .cell img{width:100%;height:100%;object-fit:cover;display:block}
+.pics [data-t]{transition:opacity .12s}
+.pics [data-t]:active{opacity:.75}
+.rev .pics{margin-top:16px}
+.rev .pics.one img{max-height:38vh}
 .addbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
   border:1px dashed var(--line2);border-radius:13px;padding:13px;color:var(--ink2);
   font-weight:600;font-size:.87rem;background:var(--surf);letter-spacing:.03em}
@@ -230,6 +248,15 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .rev .rest{white-space:pre-wrap;word-break:break-word;font-size:.97rem;color:var(--ink2);
   line-height:2.1;margin-top:16px;flex:1}
 .veil{filter:blur(9px);opacity:.36;user-select:none;transition:filter .3s,opacity .3s}
+.pictap{margin-top:12px;align-self:flex-start;font-size:.8rem;font-weight:700;color:var(--ink2);
+  background:var(--surf2);border-radius:999px;padding:8px 15px;letter-spacing:.03em}
+.pictap:active{opacity:.6}
+.sw{width:48px;height:29px;border-radius:999px;background:var(--surf3);position:relative;
+  flex:none;transition:background .2s}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;
+  background:var(--surf);box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.sw.on{background:var(--pri)}
+.sw.on::after{transform:translateX(19px)}
 .rev .acts{margin-top:22px;display:flex;gap:9px}
 .rev .acts button{flex:1;border-radius:13px;padding:16px;font-weight:700;font-size:.93rem;
   letter-spacing:.04em;transition:.12s}
@@ -308,7 +335,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 13;
+const VER = 14;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -364,7 +391,7 @@ function load(){
   try{ folders = JSON.parse(localStorage.getItem(K_F) || '[]'); }catch(e){ folders = []; }
   if(!Array.isArray(folders)) folders = [];
   try{ cfg = JSON.parse(localStorage.getItem(K_C) || '{}'); }catch(e){ cfg = {}; }
-  cfg = Object.assign({ revN:5, revScope:'*' }, cfg);
+  cfg = Object.assign({ revN:5, revScope:'*', hidePhotos:true }, cfg);
   if(cfg.revScope && cfg.revScope !== '*' && cfg.revScope !== '' && !folders.some(f => f.id === cfg.revScope)){
     cfg.revScope = '*'; saveCfg();
   }
@@ -460,6 +487,11 @@ async function fillImgs(root){
     if(u) el.src = u;
   }
 }
+/* 読むときの写真：1枚なら大きく、複数なら2列 */
+const picsHtml = ids => !ids || !ids.length ? '' : (ids.length === 1
+  ? `<div class="pics one"><div class="bigpic" data-t="${ids[0]}"><img data-img="${ids[0]}" alt=""></div></div>`
+  : `<div class="pics grid2">${ids.map(id => `<div class="cell" data-t="${id}"><img data-img="${id}" alt=""></div>`).join('')}</div>`);
+
 const thumbsHtml = (ids, rm) => (ids||[]).map(id =>
   `<div class="thumb" data-t="${id}"><img data-img="${id}" alt="">${rm ? `<button class="x" data-rm="${id}">${ICO.x({s:13,w:2.4})}</button>` : ''}</div>`).join('');
 
@@ -707,25 +739,36 @@ function noteCard(n){
   const rest = lines.slice(1).join(' ');
   const f = (S.fid === null && n.fid) ? folderOf(n.fid) : null;   // 「すべて」のときだけ出す
   const pics = (n.imgs||[]).length;
-  return `<button class="ncard" data-note="${n.id}">
+  return `<div class="ncard" data-note="${n.id}">
+    <button class="starbtn ${n.star?'on':''}" data-star="${n.id}" aria-label="重要">${n.star ? ICO.starFill({s:17}) : ICO.star({s:17,w:1.9})}</button>
     <div class="nmeta">
       ${f ? `<span class="dot" style="background:${f.color}"></span><span>${esc(f.name)}</span><span>·</span>` : ''}
       <span>${fmtDate(n.cre)}</span>
-      ${n.star ? `<span style="color:var(--gold)">${ICO.starFill({s:12})}</span>` : ''}
     </div>
     <div class="nlead">${esc(lead)}</div>
     ${rest ? `<div class="nprev">${esc(rest)}</div>` : ''}
-    ${(pics || n.rev) ? `<div class="nfoot">
-      ${pics ? `${ICO.image({s:13,w:1.9})}<span>${pics}</span>` : ''}
-      ${n.rev ? `${ICO.loop({s:13,w:1.9})}<span>${n.rev}</span>` : ''}
-    </div>` : ''}
-  </button>`;
+    ${pics ? `<div class="cthumbs">${(n.imgs||[]).slice(0,3).map(id =>
+        `<div class="cth"><img data-img="${id}" alt=""></div>`).join('')}
+        ${pics > 3 ? `<div class="cth more">+${pics-3}</div>` : ''}</div>` : ''}
+    ${n.rev ? `<div class="nfoot">${ICO.loop({s:13,w:1.9})}<span>${n.rev}</span></div>` : ''}
+  </div>`;
 }
 function paintNotes(){
   const a = filtered();
   $('#notelist').innerHTML = a.length ? a.map(noteCard).join('')
     : `<div class="empty">${ICO.note({s:34,w:1.4})}${S.q ? '見つかりませんでした' : 'まだメモがありません<br>右下のボタンから書けます'}</div>`;
-  $$('#notelist [data-note]').forEach(b => b.onclick = () => go('note', { nid:b.dataset.note }));
+  $$('#notelist [data-note]').forEach(b => b.onclick = e => {
+    if(e.target.closest('[data-star]')) return;
+    go('note', { nid:b.dataset.note });
+  });
+  $$('#notelist [data-star]').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    const n = notes.find(x => x.id === b.dataset.star);
+    if(!n) return;
+    n.star = !n.star; n.upd = now(); saveNotes(); paintNotes();
+    toast(n.star ? '重要にしました' : '重要をはずしました');
+  });
+  lazyImgs($('#notelist'));
 }
 
 /* ===================== メモ詳細 ===================== */
@@ -745,7 +788,7 @@ function renderNote(){
         ${n.rev ? `<span>· 振り返り${n.rev}回</span>` : ''}
       </div>
       <div class="body"><span class="lead">${esc(lead)}</span>${rest ? '\n' + esc(rest) : ''}</div>
-      <div class="thumbs">${thumbsHtml(n.imgs)}</div>
+      ${picsHtml(n.imgs)}
     </div>
     <div class="label">このメモ</div>
     <div class="group">
@@ -758,7 +801,7 @@ function renderNote(){
     </div>`;
   $('#tbar [data-edit]').onclick = () => startEdit(n.id);
   $$('#main [data-a]').forEach(b => b.onclick = () => noteAct(b.dataset.a, n));
-  $$('#main .thumb').forEach((t, k) => t.onclick = () =>
+  $$('#main .pics [data-t]').forEach((t, k) => t.onclick = () =>
     openGallery((n.imgs||[]).map(id => ({ id })), k));
 }
 function noteAct(a, n){
@@ -795,7 +838,9 @@ function renderWrite(){
   $('#main').innerHTML = `
     <div class="pills" id="fpick" style="margin:4px 0 12px"></div>
     <textarea class="field" id="body" placeholder="学んだこと、気づいたことを書く">${esc(n ? n.body : '')}</textarea>
-    <div class="note-txt" style="margin:8px 2px 14px">1行目が一覧と振り返りで最初に表示されます。</div>
+    <div class="note-txt" style="margin:8px 2px 14px">
+      <b>1行目が「表」</b>、2行目からが「裏」になります。振り返りでは1行目だけが出て、
+      「続きを表示」で残りが出ます。単語カードのようにも使えます。</div>
     <div class="thumbs" id="dthumbs" style="margin-bottom:12px"></div>
     <button class="addbtn" id="addphoto">${ICO.image({s:18})}<span>写真を追加</span></button>
     <input type="file" id="pfile" accept="image/*" multiple class="hidden">`;
@@ -874,10 +919,11 @@ function doSave(){
 }
 
 /* ===================== 振り返り ===================== */
-let revQ = [], revI = 0, revOk = 0, revNg = 0, revOpen = false, revMode = 'quiz';
+let revQ = [], revI = 0, revOk = 0, revNg = 0, revOpen = false, revMode = 'quiz', revPic = false;
 
 function scopeNotes(){                       // 振り返る範囲のメモ
   const sc = cfg.revScope || '*';
+  if(sc === '★') return live().filter(n => n.star);
   if(sc === '*') return live();
   if(sc === '') return live().filter(n => !n.fid);
   const ids = idsUnder(sc);
@@ -885,6 +931,7 @@ function scopeNotes(){                       // 振り返る範囲のメモ
 }
 function scopeName(){
   const sc = cfg.revScope || '*';
+  if(sc === '★') return '重要マークだけ';
   if(sc === '*') return 'すべてのノート';
   if(sc === '') return '未分類';
   const f = folderOf(sc);
@@ -893,7 +940,8 @@ function scopeName(){
   return p ? p.name + '　' + f.name : f.name;
 }
 function scopeSheet(){
-  const list = [{ id:'*', name:'すべてのノート', color:'var(--ink2)', d:0 }];
+  const list = [{ id:'*', name:'すべてのノート', color:'var(--ink2)', d:0 },
+                { id:'★', name:'重要マークだけ', color:'var(--gold)', d:0 }];
   topFolders().forEach(f => {
     list.push({ id:f.id, name:f.name, color:f.color, d:0 });
     subsOf(f.id).forEach(x => list.push({ id:x.id, name:x.name, color:x.color, d:1 }));
@@ -901,11 +949,12 @@ function scopeSheet(){
   if(live().some(n => !n.fid)) list.push({ id:'', name:'未分類', color:'var(--ink3)', d:0 });
   const cur = cfg.revScope || '*';
   sheet(`<h3>振り返る範囲</h3>
-    <div class="note-txt" style="margin:-10px 2px 14px">えらんだ範囲のメモだけが出題されます。フォルダを選ぶと、その中の単元もまとめて入ります。</div>
+    <div class="note-txt" style="margin:-10px 2px 14px">えらんだ範囲のメモだけが出題されます。フォルダを選ぶと、その中の単元もまとめて入ります。
+      「重要マークだけ」は、一覧のカード右上の★を付けたメモだけを集めます。</div>
     <div class="group">${list.map(f => `<button class="item" data-sc="${f.id}" ${f.d?'style="padding-left:34px"':''}>
-      <span class="ic" style="color:${f.color}">${f.id === '*' ? ICO.inbox({s:19}) : f.d ? ICO.folder({s:18,w:1.9}) : ICO.folderFill({s:19})}</span>
+      <span class="ic" style="color:${f.color}">${f.id === '*' ? ICO.inbox({s:19}) : f.id === '★' ? ICO.starFill({s:18}) : f.d ? ICO.folder({s:18,w:1.9}) : ICO.folderFill({s:19})}</span>
       <span class="nm" style="${f.d?'font-weight:500':''}">${esc(f.name)}</span>
-      <span class="ct">${f.id === '*' ? live().length : f.id === '' ? live().filter(n=>!n.fid).length : countUnder(f.id)}</span>
+      <span class="ct">${f.id === '*' ? live().length : f.id === '★' ? live().filter(n=>n.star).length : f.id === '' ? live().filter(n=>!n.fid).length : countUnder(f.id)}</span>
       ${cur === f.id ? `<span style="color:var(--pri);margin-left:8px">${ICO.check({s:18,w:2.2})}</span>` : ''}
     </button>`).join('')}</div>`, close => {
     $$('#host [data-sc]').forEach(b => b.onclick = () => {
@@ -918,6 +967,7 @@ function pickReview(k){
   const pool = scopeNotes();
   if(!pool.length) return [];
   const sorted = pool.slice().sort((a,b) => (a.rev - b.rev) || (a.revAt - b.revAt));
+  if(!k) k = pool.length;                       // 「全部」
   const head = sorted.slice(0, Math.max(k*3, k));
   for(let i = head.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [head[i],head[j]] = [head[j],head[i]]; }
   return head.slice(0, k);
@@ -941,14 +991,15 @@ function renderReview(){
       <div class="doc">
         <div style="font-weight:700;font-size:1.02rem;margin-bottom:6px">しばらく開いていないメモを見直す</div>
         <div class="note-txt">1行目だけを表示します。内容を思い出してから続きを表示してください。
+          今日書いたメモも含めて、<b>確認した回数が少ないもの・久しく開いていないもの</b>から順にえらばれます。
           「あいまい」を選んだメモは、次から早めに出てきます。</div>
         <div class="row-scope" style="margin-top:16px">
           <span class="k">範囲</span>
           <button class="pill" id="scope">${esc(scopeName())}
             <span style="opacity:.5">${ICO.right({s:13,w:2.2})}</span></button>
         </div>
-        <div class="seg" id="revn" style="margin-top:16px">
-          ${[3,5,10].map(k => `<button data-k="${k}" class="${cfg.revN===k?'on':''}">${k}件</button>`).join('')}
+        <div class="seg" id="revn" style="margin-top:12px">
+          ${[3,5,10,0].map(k => `<button data-k="${k}" class="${cfg.revN===k?'on':''}">${k ? k + '件' : '全部'}</button>`).join('')}
         </div>
         <div class="stats" style="margin-top:14px">
           <div class="stat"><b>${L.length}</b><span>メモ</span></div>
@@ -988,7 +1039,7 @@ function renderReview(){
         <div class="when">${f ? esc(f.name) + '　' : ''}${fmtDate(n.cre)}</div>
         <div class="lead">${esc(lead)}</div>
         <div class="rest">${esc(rest)}</div>
-        <div class="thumbs" style="margin-top:14px">${thumbsHtml(imgs)}</div>
+        ${picsHtml(imgs)}
         <div class="acts">
           <button class="b-sub" id="sprev" ${revI === 0 ? 'disabled' : ''}>前へ</button>
           <button class="b-show" id="snext2">${last ? '終わる' : '次へ'}</button>
@@ -1001,15 +1052,18 @@ function renderReview(){
     $('#rquit').onclick = () => { revQ = []; revI = 0; render(); };
     return;
   }
-  const hasMore = !!(rest || imgs.length);
+  const hidePic = imgs.length && cfg.hidePhotos !== false;   // 写真を隠す設定のときだけ伏せる
+  const hasMore = !!(rest || hidePic);
   const veiled = hasMore && !revOpen;
+  const picVeiled = hidePic && !revOpen && !revPic;
   $('#main').innerHTML = `
     <div class="rev">
       <div class="step">${revI+1} / ${revQ.length}</div>
       <div class="when">${fmtDate(n.cre)}${n.revAt ? '　前回の確認は' + daysAgo(n.revAt) + '日前' : '　未確認'}</div>
       <div class="lead">${esc(lead)}</div>
       <div class="rest ${veiled?'veil':''}">${esc(rest)}</div>
-      <div class="thumbs ${veiled?'veil':''}" style="margin-top:14px">${thumbsHtml(imgs)}</div>
+      <div class="${picVeiled?'veil':''}" id="revpics">${picsHtml(imgs)}</div>
+      ${picVeiled ? `<button class="pictap" id="showpic">写真だけ先に見る</button>` : ''}
       <div class="acts">
         ${veiled ? `<button class="b-show" id="rshow">続きを表示</button>`
                  : `<button class="b-ng" id="rng">あいまい</button><button class="b-ok" id="rok">覚えている</button>`}
@@ -1017,6 +1071,8 @@ function renderReview(){
     </div>
     <button class="btn sec" id="rquit" style="margin-top:12px">中断する</button>`;
   fillImgs($('#main'));
+  const sp = $('#showpic');
+  if(sp) sp.onclick = () => { revPic = true; render(); };
   if(veiled) $('#rshow').onclick = () => { revOpen = true; render(); };
   else{ $('#rok').onclick = () => revAnswer(true); $('#rng').onclick = () => revAnswer(false); }
   $('#rquit').onclick = () => { revQ = []; revI = 0; saveNotes(); render(); };
@@ -1030,7 +1086,7 @@ function startRev(mode){
   }else{
     revQ = pickReview(cfg.revN);
   }
-  revI = 0; revOk = 0; revNg = 0; revOpen = false;
+  revI = 0; revOk = 0; revNg = 0; revOpen = false; revPic = false;
   if(!revQ.length){ toast('メモがありません'); return; }
   render();
 }
@@ -1040,7 +1096,7 @@ function revAnswer(ok){
     n.revAt = now(); n.upd = now();
     if(ok){ n.rev = (n.rev||0)+1; revOk++; } else { n.ng = (n.ng||0)+1; revNg++; }
   }
-  revI++; revOpen = false; saveNotes(); render();
+  revI++; revOpen = false; revPic = false; saveNotes(); render();
 }
 
 /* ===================== 設定 ===================== */
@@ -1058,6 +1114,17 @@ function renderSet(){
     </div>
     <div class="note-txt" style="margin:10px 4px 0">メモと写真は端末の中だけに保存されています。
       機種変更や故障にそなえて、ときどきJSONで書き出して保管してください。</div>
+
+    <div class="label">振り返り</div>
+    <div class="group">
+      <button class="item" data-x="pics">
+        <span class="ic">${ICO.image({s:19})}</span>
+        <span class="nm">写真も伏せる</span>
+        <span class="sw ${cfg.hidePhotos !== false ? 'on' : ''}"></span>
+      </button>
+    </div>
+    <div class="note-txt" style="margin:10px 4px 0">問題と、答えに必要な資料の写真をセットで書いているときは、
+      これをオフにすると写真が最初から見えます。板書の写真を答えにしているときはオンのままがおすすめです。</div>
 
     <div class="label">このアプリ</div>
     <div class="group">
@@ -1086,6 +1153,8 @@ function setAct(x){
   if(x === 'csv')  return expCsv();
   if(x === 'txt')  return expTxt();
   if(x === 'imp')  return $('#impfile').click();
+  if(x === 'pics'){ cfg.hidePhotos = cfg.hidePhotos === false; saveCfg(); render();
+                    toast(cfg.hidePhotos ? '写真も伏せます' : '写真は最初から見せます'); return; }
   if(x === 'help') return helpSheet();
   if(x === 'upd')  return checkUpd(false);
   if(x === 'wipe'){
@@ -1116,12 +1185,30 @@ function folderSheet(f, onCreate, pid){
     <h3>${f ? kind + 'を編集' : '新しい' + kind}</h3>
     ${parent ? `<div class="note-txt" style="margin:-10px 2px 14px">「${esc(parent.name)}」の中に作ります。</div>` : ''}
     <input class="field" id="fname" placeholder="${parent ? '単元の名前（例: 二次関数）' : 'フォルダ名'}" value="${f ? esc(f.name) : ''}" autocomplete="off">
+    ${f ? `<div class="label" style="margin:18px 4px 8px">場所</div>
+      <div class="pills" id="fparent"></div>
+      <div class="note-txt" style="margin-top:8px">別のフォルダを選ぶと、その中の単元になります。
+        単元を持つフォルダは、ほかのフォルダの中には入れられません。</div>` : ''}
     <div class="label" style="margin:18px 4px 8px">いろ</div>
     <div class="swatch" id="sw">${COLORS.map(c =>
       `<button data-c="${c}" class="${c===color?'on':''}" style="background:${c}"></button>`).join('')}</div>
     <button class="btn pri" id="fsave" style="margin-top:22px">${f ? '保存' : '作成'}</button>
     ${f ? `<button class="btn danger" id="fdel" style="margin-top:8px">${kind}を削除</button>` : ''}
   `, close => {
+    let newPid = f ? (f.pid || '') : '';
+    const paintParent = () => {
+      const box = $('#fparent');
+      if(!box) return;
+      const own = subsOf(f.id).length > 0;
+      const opts = [{ id:'', name:'いちばん上' }].concat(
+        own ? [] : topFolders().filter(x => x.id !== f.id).map(x => ({ id:x.id, name:x.name, color:x.color })));
+      box.innerHTML = opts.map(o =>
+        `<button class="pill ${newPid === o.id ? 'on' : ''}" data-p="${o.id}">
+          ${o.color ? `<span class="dot" style="width:8px;height:8px;border-radius:50%;background:${o.color}"></span>` : ''}${esc(o.name)}
+        </button>`).join('') + (own ? `<span class="note-txt" style="align-self:center">（単元があるため移動できません）</span>` : '');
+      $$('#fparent [data-p]').forEach(b => b.onclick = () => { newPid = b.dataset.p; paintParent(); });
+    };
+    paintParent();
     $$('#sw button').forEach(b => b.onclick = () => {
       color = b.dataset.c;
       $$('#sw button').forEach(x => x.classList.toggle('on', x === b));
@@ -1130,7 +1217,15 @@ function folderSheet(f, onCreate, pid){
     $('#fsave').onclick = () => {
       const name = $('#fname').value.trim();
       if(!name){ toast('名前を入れてください'); return; }
-      if(f){ f.name = name; f.color = color; toast('保存しました'); }
+      if(f){
+        f.name = name; f.color = color;
+        if(newPid !== (f.pid || '')){                 // 入れ子の付け替え
+          if(newPid) f.pid = newPid; else delete f.pid;
+          const me = folders.splice(folders.indexOf(f), 1)[0];
+          folders.push(me);
+        }
+        toast('保存しました');
+      }
       else{
         const nf = { id:uid('f'), name, color };
         if(parentId) nf.pid = parentId;
@@ -1139,7 +1234,8 @@ function folderSheet(f, onCreate, pid){
         if(onCreate) onCreate(nf.id);
       }
       saveFolders(); close();
-      if(S.screen !== 'write') render();
+      if(f && f.pid) go('list', { fid:f.pid, sub:f.id, q:'', view:'list' });
+      else if(S.screen !== 'write') render();
     };
     if(f) $('#fdel').onclick = () => {
       const subs = subsOf(f.id);
@@ -1444,10 +1540,10 @@ function boot(){
 
   addEventListener('scroll', () => $('#top').classList.toggle('scrolled', scrollY > 4), { passive:true });
   document.addEventListener('click', e => {
-    const t = e.target.closest('.rev .thumb');
+    const t = e.target.closest('.rev .pics [data-t]');
     if(!t) return;
-    const wrap = t.parentElement;
-    const ids = [...wrap.querySelectorAll('.thumb')].map(x => ({ id:x.dataset.t }));
+    if(t.closest('.veil')){ revPic = true; render(); return; }   // 伏せてある写真は、まず表示する
+    const ids = [...t.closest('.pics').querySelectorAll('[data-t]')].map(x => ({ id:x.dataset.t }));
     openGallery(ids, ids.findIndex(x => x.id === t.dataset.t));
   });
 

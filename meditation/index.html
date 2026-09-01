@@ -58,7 +58,7 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 @keyframes drift1{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(6vw,7vh,0) scale(1.15)}}
 @keyframes drift2{0%,100%{transform:translate3d(0,0,0) scale(1.1)}50%{transform:translate3d(-7vw,-5vh,0) scale(.95)}}
 
-body.tab-home:not(.bgm):not(.wc):not(.upd) .app{overflow-y:hidden}
+body.tab-home:not(.bgm):not(.wc):not(.upd):not(.ambopen) .app{overflow-y:hidden}
 .app{position:relative;z-index:1;flex:1;min-height:0;
   width:100%;overflow-y:auto;overflow-x:hidden;
   -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
@@ -949,7 +949,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 41;
+const VER = 42;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1334,10 +1334,20 @@ function renderAmb(){
   });
   $('ambNow').textContent = ambKind === 'none' ? 'なし' : (AMB_NAME[ambKind] || '音');
 }
-$('ambToggle').addEventListener('click', function(){
-  const w = $('ambWrap'), open = w.classList.contains('hidden');
-  w.classList.toggle('hidden', !open);
+/* 音の一覧の開け閉め。
+   瞑想タブはふだん動かないよう固定しているが、一覧を開くと画面からはみ出すので、
+   開いているあいだだけ固定を解いて、下まで見えるところへ送る。 */
+function setAmbOpen(open){
+  $('ambWrap').classList.toggle('hidden', !open);
   $('ambToggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+  document.body.classList.toggle('ambopen', open);
+  if(!open){ const a = document.querySelector('.app'); if(a) a.scrollTop = 0; return; }
+  requestAnimationFrame(function(){            // 一覧のぶん伸びてから、下まで送る
+    const a = document.querySelector('.app'); if(a) a.scrollTop = a.scrollHeight;
+  });
+}
+$('ambToggle').addEventListener('click', function(){
+  setAmbOpen($('ambWrap').classList.contains('hidden'));
 });
 /* ───────── 音だけ流す（勉強のおとも） ─────────
    瞑想としては数えない。記録もレベルも動かさない。 */
@@ -1417,10 +1427,7 @@ $('ambs').addEventListener('click', function(e){
   ambKind = b.dataset.amb;
   try{ localStorage.setItem('med.amb.v1', ambKind); }catch(err){}
   renderAmb();
-  setTimeout(function(){                       // 選んだら、そっとたたむ
-    $('ambWrap').classList.add('hidden');
-    $('ambToggle').setAttribute('aria-expanded', 'false');
-  }, 260);
+  setTimeout(function(){ setAmbOpen(false); }, 260);   // 選んだら、そっとたたむ
   ensureAudio();
   stopAmb(false);
   if(bgmOn){                                   // 流しっぱなしのときは、そのまま切りかえる
@@ -1449,6 +1456,7 @@ function setTab(t){
   $('paneLog').classList.toggle('hidden', t !== 'log');
   $('paneLearn').classList.toggle('hidden', t !== 'learn');
   $('paneGuide').classList.toggle('hidden', t !== 'guide');
+  if(t !== 'home') setAmbOpen(false);         // ほかのタブへ行くときは音の一覧をたたむ
   const ap = document.querySelector('.app'); if(ap && t !== 'home') ap.scrollTop = 0;
   document.body.classList.toggle('tab-home', t === 'home');
   document.querySelectorAll('.tab').forEach(function(b){

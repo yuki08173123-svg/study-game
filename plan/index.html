@@ -108,7 +108,7 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
   font-size:10.5px; font-weight:900; color:var(--accent); background:var(--accent-soft);
   border-radius:999px; padding:2px 8px; letter-spacing:.04em; margin-left:6px; flex:none;
 }
-.tqc .chip-auto{color:var(--navy1); background:var(--gold);}
+.tqc .head .chip-auto{color:#0E1A31; background:#F0DBA6; font-size:11px; padding:3px 10px;}
 .dayline{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:11px 13px 12px; margin-bottom:10px;}
 .dlh{display:flex; align-items:center; font-size:12px; font-weight:900; color:var(--muted); letter-spacing:.05em; margin-bottom:7px;}
 .dlrow{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
@@ -136,6 +136,34 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
 .task.is-star .star svg{fill:var(--star); stroke:var(--star);}
 .task .del{width:28px; height:34px; display:grid; place-items:center; flex:none; margin-top:2px;}
 .task .del svg{width:16px; height:16px; stroke:var(--muted); fill:none; stroke-width:2.2; stroke-linecap:round;}
+
+/* カウントダウン */
+.timerbar{margin-top:8px; background:var(--accent); color:#fff; border-radius:14px; padding:9px 12px 10px; box-shadow:var(--shadow);}
+.timerbar.over{background:var(--sun);}
+.tb-row{display:flex; align-items:center; gap:8px;}
+.tb-lab{font-size:11.5px; font-weight:900; opacity:.92; flex:1; line-height:1.35;}
+.tb-time{font-size:25px; font-weight:900; letter-spacing:.01em; flex:none;}
+.tb-row button{background:rgba(255,255,255,.22); color:#fff; border-radius:999px; padding:6px 11px; font-size:12px; font-weight:900; flex:none;}
+.tb-track{height:6px; border-radius:3px; background:rgba(255,255,255,.3); margin-top:7px; overflow:hidden;}
+.tb-track i{display:block; height:100%; width:100%; background:#fff; border-radius:3px;}
+
+.startcd{width:100%; margin-top:10px; display:flex; align-items:center; gap:10px; text-align:left;
+  background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:12px 14px; box-shadow:var(--shadow);}
+.startcd svg{width:22px; height:22px; stroke:var(--accent); fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+.startcd .t{flex:1; line-height:1.35; min-width:0;}
+.startcd .t b{display:block; font-size:14.5px; font-weight:900;}
+.startcd .t span{font-size:11px; color:var(--muted); font-weight:700;}
+.startcd .go{background:var(--accent); color:var(--accent-ink); border-radius:999px; padding:7px 14px; font-size:13px; font-weight:900; flex:none;}
+.startcd.due{border-color:var(--new); background:var(--new); color:#fff;}
+.startcd.due svg{stroke:#fff;}
+.startcd.due .t span{color:rgba(255,255,255,.88);}
+.startcd.due .go{background:rgba(255,255,255,.24); color:#fff;}
+
+.field .note{font-size:11.5px; color:var(--muted); line-height:1.7; font-weight:700; margin-top:6px;}
+.field .row2{display:flex; gap:8px; align-items:center;}
+.field .row2 input[type=time], .field .row2 input[type=number]{
+  flex:none; width:110px; background:var(--chip); border-radius:10px; padding:8px 10px; font-size:16px; font-weight:900; text-align:center;}
+.field .row2 .u{font-size:13px; font-weight:900; color:var(--muted);}
 
 /* 記入するところ */
 .addbox{margin-top:10px; background:var(--card); border:2.5px solid var(--accent); border-radius:18px; overflow:hidden; box-shadow:0 3px 12px rgba(44,111,228,.18);}
@@ -246,7 +274,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v11</span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v12</span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -258,6 +286,15 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <button class="today hidden" id="btnToday">今週</button>
       <button class="arrow" id="nextW" aria-label="次の週"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
     </div>
+    <div class="timerbar hidden" id="timerBar">
+      <div class="tb-row">
+        <span class="tb-lab" id="tbLab">計画マップを書く時間</span>
+        <b class="tb-time num" id="tbTime">30:00</b>
+        <button id="tbPause">とめる</button>
+        <button id="tbStop">やめる</button>
+      </div>
+      <div class="tb-track"><i id="tbFill"></i></div>
+    </div>
   </header>
 
   <section id="tabPlan">
@@ -265,6 +302,12 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
       <span class="t"><b>更新があります</b><span id="updVer">新しいバージョン</span></span>
       <span class="go">更新する</span>
+    </button>
+
+    <button class="startcd" id="btnCd">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8.2"/><path d="M12 9v4.2l2.6 1.6M9 2.6h6"/></svg>
+      <span class="t"><b id="cdTitle">カウントダウンをはじめる</b><span id="cdSub">30分で計画マップを書き切ります</span></span>
+      <span class="go">スタート</span>
     </button>
 
     <div class="days" id="days"></div>
@@ -345,6 +388,23 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <div class="lab">やること1つの、はじめの長さ（分）</div>
       <input type="number" id="setDefMin" min="10" max="180" step="10" placeholder="30">
     </div>
+    <div class="field">
+      <div class="lab">毎週日曜のお知らせ</div>
+      <div class="row2">
+        <input type="time" id="setNotifTime">
+        <span class="u">に お知らせ</span>
+      </div>
+      <button class="subbtn" id="btnIcs" style="margin-top:9px">カレンダーに毎週の予定を入れる</button>
+      <button class="subbtn" id="btnNotifPerm">アプリの通知をゆるす</button>
+      <p class="note">iPhone・Androidとも、決まった時間に必ず知らせるにはカレンダーが確実です。ボタンを押すと「計画マップを書く」の予定が毎週日曜のこの時間に入ります。<br>「アプリの通知をゆるす」は、カウントダウンが終わったときなど、アプリを開いているあいだのお知らせに使います。</p>
+    </div>
+    <div class="field">
+      <div class="lab">書き切る時間（カウントダウン）</div>
+      <div class="row2">
+        <input type="number" id="setLimit" min="5" max="180" step="5" placeholder="30">
+        <span class="u">分</span>
+      </div>
+    </div>
     <div class="card">
       <div class="sec-label">アプリ</div>
       <button class="subbtn" id="btnCheckUpd" style="margin-top:4px">更新があるか調べる</button>
@@ -356,7 +416,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v11</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v12</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -378,12 +438,13 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 11;
+const VER = 12;
 const KEY = 'planmap_v1';
 const WD = ['月','火','水','木','金','土','日'];
 const DEF_MIN = 30;
 
-let S = { weeks:{}, name:'', weekGoal:'', defMin:DEF_MIN, cur:'', day:0 };
+let S = { weeks:{}, name:'', weekGoal:'', defMin:DEF_MIN, cur:'', day:0,
+          notifTime:'20:00', limitMin:30, tEnd:0, tLeft:0, tDone:0 };
 let REP = [false,false,false,false,false,false,false];
 
 function eachDay(fn){
@@ -398,6 +459,8 @@ function load(){
   if(!S.minv){ eachDay(d=>{ d.plan = Math.round((Number(d.plan)||0)*60); d.act = Math.round((Number(d.act)||0)*60); }); S.minv = 1; }
   if(!S.taskmin){ eachDay(d=>{ (d.tasks||[]).forEach(t=>{ if(typeof t.min !== 'number') t.min = DEF_MIN; }); }); S.taskmin = 1; }
   if(typeof S.defMin !== 'number' || S.defMin < 5) S.defMin = DEF_MIN;
+  if(!/^\d\d:\d\d$/.test(S.notifTime||'')) S.notifTime = '20:00';
+  if(typeof S.limitMin !== 'number' || S.limitMin < 5) S.limitMin = 30;
 }
 let saveT = null;
 function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }, 200); }
@@ -547,6 +610,120 @@ function openSheet(html){
   document.body.appendChild(bg);
   return bg;
 }
+
+/* ---------- カウントダウン ---------- */
+let tickT = null;
+function mmss(ms){
+  const t = Math.max(0, Math.ceil(ms/1000));
+  return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+}
+function isDue(){
+  const now = new Date();
+  if(now.getDay() !== 0) return false;               // 日曜だけ
+  const [h, mi] = (S.notifTime||'20:00').split(':').map(Number);
+  return now.getHours()*60 + now.getMinutes() >= h*60 + mi;
+}
+function notify(title, body){
+  try{
+    if('Notification' in window && Notification.permission === 'granted'){
+      new Notification(title, { body:body, icon:'icon-192-v7.png', tag:'keikaku-map' });
+    }
+  }catch(e){}
+}
+function cdRunning(){ return !!S.tEnd && S.tEnd > Date.now(); }
+function cdPaused(){ return !S.tEnd && S.tLeft > 0; }
+
+function cdStart(){
+  S.tEnd = Date.now() + S.limitMin*60000; S.tLeft = 0; S.tDone = 0;
+  save(); renderCd(); toast(S.limitMin+'分のカウントダウンをはじめました');
+}
+function cdPause(){
+  if(cdRunning()){ S.tLeft = S.tEnd - Date.now(); S.tEnd = 0; }
+  else if(cdPaused()){ S.tEnd = Date.now() + S.tLeft; S.tLeft = 0; }
+  save(); renderCd();
+}
+function cdStop(){ S.tEnd = 0; S.tLeft = 0; S.tDone = 0; save(); renderCd(); }
+
+function renderCd(){
+  // 時間切れの処理（tEnd を消す前にここで1回だけ知らせる）
+  if(S.tEnd && S.tEnd <= Date.now()){
+    const late = Date.now() - S.tEnd;
+    S.tEnd = 0;
+    if(late < 30*60000){
+      S.tDone = 1;
+      try{ navigator.vibrate && navigator.vibrate([220,110,220]); }catch(e){}
+      notify('計画マップ', '時間です！ここまでにしましょう');
+      toast('時間です！');
+    }else{ S.tDone = 0; S.tLeft = 0; }
+    save();
+  }
+  const bar = $('#timerBar'), btn = $('#btnCd');
+  const total = S.limitMin*60000;
+  const over = !!S.tDone;
+  const show = cdRunning() || cdPaused() || over;
+  bar.classList.toggle('hidden', !show);
+  btn.classList.toggle('hidden', show);
+
+  if(show){
+    let left = cdRunning() ? S.tEnd - Date.now() : (cdPaused() ? S.tLeft : 0);
+    if(left < 0) left = 0;
+    bar.classList.toggle('over', over);
+    $('#tbTime').textContent = over ? '00:00' : mmss(left);
+    $('#tbLab').textContent = over ? '時間です！ここまでにしましょう'
+                : (cdPaused() ? 'とめています' : '計画マップを書く時間');
+    $('#tbFill').style.width = (over ? 0 : Math.max(0, Math.min(100, left/total*100)))+'%';
+    $('#tbPause').textContent = cdPaused() ? 'つづける' : 'とめる';
+    $('#tbPause').classList.toggle('hidden', over);
+    $('#tbStop').textContent = over ? 'とじる' : 'やめる';
+  }else{
+    const due = isDue();
+    btn.classList.toggle('due', due);
+    $('#cdTitle').textContent = due ? '今日は計画マップの日です' : 'カウントダウンをはじめる';
+    $('#cdSub').textContent = due
+      ? S.limitMin+'分で書き切りましょう'
+      : S.limitMin+'分で計画マップを書き切ります';
+  }
+
+  clearTimeout(tickT);
+  if(cdRunning()) tickT = setTimeout(renderCd, 250);
+}
+$('#btnCd').onclick = cdStart;
+$('#tbPause').onclick = cdPause;
+$('#tbStop').onclick = ()=>{ if(S.tDone || confirm('カウントダウンをやめますか？')) cdStop(); };
+
+/* ---------- 毎週日曜の予定（カレンダー） ---------- */
+function icsText(){
+  const [h, mi] = (S.notifTime||'20:00').split(':').map(Number);
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  d.setDate(d.getDate() + ((7 - d.getDay()) % 7));      // 次の日曜（今日が日曜なら今日）
+  const p = n => String(n).padStart(2,'0');
+  const dt = d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'T'+p(h)+p(mi)+'00';
+  const stamp = new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const url = 'https://yuki08173123-svg.github.io/study-game/plan/';
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//keikaku-map//JP','CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT','UID:keikaku-map-weekly-'+dt+'@hira','DTSTAMP:'+stamp,
+    'DTSTART:'+dt,'DURATION:PT'+S.limitMin+'M','RRULE:FREQ=WEEKLY;BYDAY=SU',
+    'SUMMARY:計画マップを書く',
+    'DESCRIPTION:来週の計画マップを書きましょう（'+S.limitMin+'分）\\n'+url,
+    'URL:'+url,
+    'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:計画マップを書く時間です','END:VALARM',
+    'END:VEVENT','END:VCALENDAR'].join('\r\n');
+}
+$('#btnIcs').onclick = ()=>{
+  const blob = new Blob([icsText()], { type:'text/calendar;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'keikaku-map.ics'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  toast('カレンダーに追加してください');
+};
+$('#btnNotifPerm').onclick = async ()=>{
+  if(!('Notification' in window)){ toast('この端末では使えません'); return; }
+  try{
+    const r = await Notification.requestPermission();
+    toast(r === 'granted' ? '通知をゆるしました' : '通知は使えません');
+  }catch(e){ toast('通知は使えません'); }
+};
 
 /* ---------- 1週間まとめの画像 ---------- */
 function drawWeek(){
@@ -762,6 +939,8 @@ $('#histList').onclick = e => {
 $('#setName').oninput = e => { S.name = e.target.value; save(); };
 $('#setWeekGoal').oninput = e => { S.weekGoal = e.target.value; renderTQC(); save(); };
 $('#setDefMin').oninput = e => { const v = Math.round(Number(e.target.value)||0); if(v>=5 && v<=600){ S.defMin = v; save(); } };
+$('#setNotifTime').oninput = e => { if(/^\d\d:\d\d$/.test(e.target.value)){ S.notifTime = e.target.value; save(); renderCd(); } };
+$('#setLimit').oninput = e => { const v = Math.round(Number(e.target.value)||0); if(v>=5 && v<=180){ S.limitMin = v; save(); renderCd(); } };
 $('#btnBackup').onclick = ()=>{
   const blob = new Blob([JSON.stringify(S,null,1)], {type:'application/json'});
   const a = document.createElement('a');
@@ -819,7 +998,7 @@ async function doUpdate(){
 }
 $('#btnUpdate').onclick = doUpdate;
 $('#btnCheckUpd').onclick = ()=>checkUpdate(false);
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkUpdate(true); });
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ checkUpdate(true); renderCd(); } });
 
 function boot(){
   if(!S.cur) S.cur = iso(mondayOf(new Date()));
@@ -827,8 +1006,10 @@ function boot(){
   $('#setName').value = S.name || '';
   $('#setWeekGoal').value = S.weekGoal || '';
   $('#setDefMin').value = S.defMin;
+  $('#setNotifTime').value = S.notifTime;
+  $('#setLimit').value = S.limitMin;
   $('#verTag').textContent = 'v'+VER; $('#verTag2').textContent = 'v'+VER;
-  syncRep(); renderAll();
+  syncRep(); renderAll(); renderCd();
 }
 load();
 (function(){ const nowK = iso(mondayOf(new Date())); if(!S.cur || S.cur < nowK){ S.cur = nowK; S.day = (new Date().getDay()+6)%7; } })();

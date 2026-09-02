@@ -152,6 +152,10 @@ main{max-width:620px;margin:0 auto;padding:4px 18px calc(var(--tabh) + 48px + en
 .field:focus{border-color:var(--ink3)}
 .field::placeholder{color:var(--ink3)}
 textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;padding:18px}
+.onlybar{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--pri-soft);border-radius:12px;padding:10px 13px;margin-bottom:12px;
+  font-size:.83rem;font-weight:700;color:var(--ink)}
+.onlybar button{display:flex;align-items:center;gap:4px;color:var(--ink2);font-size:.8rem;font-weight:700}
 .search{display:flex;align-items:center;gap:9px;background:var(--surf2);border-radius:12px;
   padding:10px 13px;color:var(--ink3);margin-bottom:12px}
 .search input{flex:1;background:none;border:none;outline:none;font-size:.93rem;color:var(--ink)}
@@ -170,6 +174,10 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .pill.on{background:var(--pri);border-color:var(--pri);color:var(--on-pri);font-weight:700}
 .pills{display:flex;flex-wrap:wrap;gap:7px}
 .pill .n{color:var(--ink3);font-weight:600;font-variant-numeric:tabular-nums}
+.trail{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.78rem;
+  color:var(--ink3);font-weight:600;margin:0 2px 12px}
+.trail button{color:var(--ink2);text-decoration:underline;text-underline-offset:3px}
+.trail b{color:var(--ink)}
 .row-scope{display:flex;align-items:center;gap:12px}
 .row-scope .k{font-size:.75rem;font-weight:700;color:var(--ink3);letter-spacing:.06em}
 .row-scope .pill{flex:1;justify-content:space-between}
@@ -292,7 +300,8 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 /* ---------- そのほか ---------- */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
   border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.stat{background:var(--surf);padding:16px 6px;text-align:center}
+.stat{background:var(--surf);padding:16px 6px;text-align:center;width:100%;transition:background .12s}
+button.stat:active{background:var(--surf2)}
 .stat b{display:block;font-family:var(--serif);font-size:1.5rem;font-weight:600;letter-spacing:.02em;
   line-height:1.4;font-variant-numeric:tabular-nums}
 .stat span{font-size:.67rem;color:var(--ink3);font-weight:600;letter-spacing:.06em}
@@ -365,7 +374,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 15;
+const VER = 16;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -405,7 +414,7 @@ const ICO = {
 
 /* ===================== データ ===================== */
 let notes = [], folders = [], cfg = {};
-let S = { screen:'home', fid:null, sub:'', nid:null, editId:null, q:'', sort:'new', view:'list', sel:null };
+let S = { screen:'home', fid:null, nid:null, editId:null, q:'', sort:'new', view:'list', sel:null, only:'' };
 
 const now = () => Date.now();
 const uid = p => (p||'n') + now().toString(36) + Math.random().toString(36).slice(2,7);
@@ -441,17 +450,30 @@ function load(){
 
 const folderOf = id => folders.find(f => f.id === id);
 const countIn = id => live().filter(n => n.fid === id).length;
-/* フォルダは2階層。単元（サブフォルダ）は pid に親フォルダのidを持つ */
-const topFolders = () => folders.filter(f => !f.pid);
+/* フォルダは何階層でも入れ子にできる。子は pid に親のidを持つ */
+const topFolders = () => folders.filter(f => !f.pid || !folderOf(f.pid));
 const subsOf = pid => (pid ? folders.filter(f => f.pid === pid) : []);
-const idsUnder = id => id ? [id].concat(subsOf(id).map(f => f.id)) : [''];
+function idsUnder(id){                                 // 自分＋すべての子孫
+  if(!id) return [''];
+  const out = [id];
+  for(let i = 0; i < out.length; i++) subsOf(out[i]).forEach(f => { if(!out.includes(f.id)) out.push(f.id); });
+  return out;
+}
 const countUnder = id => { const ids = idsUnder(id); return live().filter(n => ids.includes(n.fid)).length; };
-const pathOf = n => {                                  // 書き出し用の「親 / 単元」
-  const f = n.fid ? folderOf(n.fid) : null;
-  if(!f) return '';
-  const p = f.pid ? folderOf(f.pid) : null;
-  return p ? p.name + ' / ' + f.name : f.name;
-};
+function chainOf(id){                                  // 上から順にたどった配列
+  const out = [];
+  let f = id ? folderOf(id) : null, guard = 0;
+  while(f && guard++ < 20){ out.unshift(f); f = f.pid ? folderOf(f.pid) : null; }
+  return out;
+}
+const pathOf = n => chainOf(n.fid).map(f => f.name).join(' / ');
+/* 上から順に、深さつきで並べた一覧（選択シート用） */
+function folderTree(){
+  const out = [];
+  const walk = (list, d) => list.forEach(f => { out.push({ id:f.id, name:f.name, color:f.color, d }); walk(subsOf(f.id), d+1); });
+  walk(topFolders(), 0);
+  return out;
+}
 
 function fmtDate(ms){
   const d = new Date(ms), t = new Date(), p = x => String(x).padStart(2,'0');
@@ -634,7 +656,11 @@ function render(){
 }
 const tabOf = s => (s === 'review' ? 'review' : s === 'set' ? 'set' : 'notes');
 function back(){
-  if(S.screen === 'list') return go('home');
+  if(S.screen === 'list'){
+    const f = S.fid ? folderOf(S.fid) : null;
+    if(f && f.pid && folderOf(f.pid)) return go('list', { fid:f.pid, q:'', view:'list' });
+    return go('home');
+  }
   if(S.screen === 'note') return go('list');
   if(S.screen === 'write') return S.editId ? go('note', { nid:S.editId }) : go(S.fid === null ? 'home' : 'list');
   go('home');
@@ -649,7 +675,7 @@ function renderHome(){
     const sub = subsOf(f.id).length;
     return item({
       ic: `<span style="color:${f.color}">${ICO.folderFill({s:21})}</span>`,
-      nm: esc(f.name) + (sub ? `<span style="color:var(--ink3);font-weight:600;font-size:.8rem"> ・単元${sub}</span>` : ''),
+      nm: esc(f.name) + (sub ? `<span style="color:var(--ink3);font-weight:600;font-size:.8rem"> ・中に${sub}</span>` : ''),
       ct: countUnder(f.id), attr: `data-open="${f.id}"`
     });
   }).join('');
@@ -669,17 +695,19 @@ function renderHome(){
     ${warnBox()}
     <div class="label">記録</div>
     <div class="stats">
-      <div class="stat"><b>${L.length}</b><span>合計</span></div>
-      <div class="stat"><b>${L.filter(n => new Date(n.cre).toDateString() === new Date().toDateString()).length}</b><span>今日</span></div>
-      <div class="stat"><b>${L.filter(n => !n.rev).length}</b><span>未確認</span></div>
+      <button class="stat" data-jump=""><b>${L.length}</b><span>合計</span></button>
+      <button class="stat" data-jump="today"><b>${L.filter(n => new Date(n.cre).toDateString() === new Date().toDateString()).length}</b><span>今日</span></button>
+      <button class="stat" data-jump="unrev"><b>${L.filter(n => !n.rev).length}</b><span>未確認</span></button>
     </div>`;
   $$('#main [data-open]').forEach(b => b.onclick = () => {
     const v = b.dataset.open;
-    go('list', { fid: v === '*' ? null : v, q:'', view:'list', sub:'' });
+    go('list', { fid: v === '*' ? null : v, q:'', view:'list', only:'' });
   });
   $('#main [data-newfolder]').onclick = () => folderSheet(null);
+  $$('#main [data-jump]').forEach(b => b.onclick = () =>
+    go('list', { fid:null, q:'', view:'list', only:b.dataset.jump, sort:b.dataset.jump === 'unrev' ? 'rev' : 'new' }));
   $$('#main [data-warn]').forEach(b => b.onclick = () => {
-    if(b.dataset.warn === 'go') return go('review');
+    if(b.dataset.warn === 'go') return go('list', { fid:null, q:'', view:'list', only:'unrev', sort:'rev' });
     cfg.warnHide = new Date().toDateString(); saveCfg(); render();
   });
   const ro = $('#main [data-reorder]');
@@ -693,7 +721,7 @@ function warnBox(){
     <div class="wtxt"><b>まだ確認していないメモが${never}件あります</b>
       <div>増やす前に少し振り返っておくと、あとが楽になります。</div></div>
     <div class="wact">
-      <button class="pill on" data-warn="go">振り返る</button>
+      <button class="pill on" data-warn="go">未確認を見る</button>
       <button class="pill" data-warn="hide">今日は閉じる</button>
     </div>
   </div>`;
@@ -714,13 +742,12 @@ function listTitle(){
   if(S.fid === null) return 'すべてのノート';
   if(S.fid === '') return '未分類';
   const f = folderOf(S.fid);
-  const sub = S.sub ? folderOf(S.sub) : null;
-  return f ? (f.name + (sub ? '　' + sub.name : '')) : 'ノート';
+  return f ? f.name : 'ノート';
 }
+const ONLY = { unrev:'まだ確認していないメモ', today:'今日書いたメモ', star:'重要マーク' };
 function inScope(){
   const a = live();
   if(S.fid === null) return a;
-  if(S.sub) return a.filter(n => n.fid === S.sub);
   const ids = idsUnder(S.fid);
   return a.filter(n => ids.includes(n.fid));
 }
@@ -731,10 +758,8 @@ function photosInScope(){
   return out;
 }
 function renderList(){
-  const asked = S.fid ? folderOf(S.fid) : null;
-  if(asked && asked.pid){ S.sub = asked.id; S.fid = asked.pid; }   // 単元を直接開かれたとき
   const f = S.fid ? folderOf(S.fid) : null;
-  const cur = S.sub ? folderOf(S.sub) : f;          // 編集の対象（単元を選んでいればその単元）
+  const cur = f;
   if(S.sel){
     bar(`<button class="tbtn" data-selcancel>やめる</button>`,
         `${S.sel.size}件を選択`,
@@ -746,10 +771,15 @@ function renderList(){
   const pics = photosInScope();
   const photoView = S.view === 'photos' && pics.length;
   const subs = f ? subsOf(f.id) : [];
-  const subBar = f ? `<div class="pills" id="subs" style="margin-bottom:12px">
-      <button class="pill ${S.sub?'':'on'}" data-sub="">すべて <span class="n">${countUnder(f.id)}</span></button>
-      ${subs.map(x => `<button class="pill ${S.sub===x.id?'on':''}" data-sub="${x.id}">${esc(x.name)} <span class="n">${countIn(x.id)}</span></button>`).join('')}
-      <button class="pill" data-newsub>${ICO.plus({s:14,w:2.2})}単元</button>
+  const trail = f ? chainOf(f.id).slice(0, -1) : [];
+  const subBar = f ? `
+    ${trail.length ? `<div class="trail">${trail.map(p =>
+        `<button data-goto="${p.id}">${esc(p.name)}</button><span>›</span>`).join('')}<b>${esc(f.name)}</b></div>` : ''}
+    <div class="pills" id="subs" style="margin-bottom:12px">
+      ${subs.map(x => `<button class="pill" data-sub="${x.id}">
+        <span class="dot" style="width:8px;height:8px;border-radius:50%;background:${x.color}"></span>${esc(x.name)}
+        <span class="n">${countUnder(x.id)}</span></button>`).join('')}
+      <button class="pill" data-newsub>${ICO.plus({s:14,w:2.2})}フォルダ</button>
       ${subs.length ? `<button class="pill" data-sortsub>${ICO.grip({s:14,w:2})}整理</button>` : ''}
     </div>` : '';
   $('#main').innerHTML = subBar + `
@@ -757,6 +787,8 @@ function renderList(){
       <button data-v="list" class="${photoView?'':'on'}">メモ ${inScope().length}</button>
       <button data-v="photos" class="${photoView?'on':''}">写真 ${pics.length}</button>
     </div>` : ''}
+    ${S.only ? `<div class="onlybar"><span>${ONLY[S.only]}だけを表示中</span>
+      <button data-clearonly>${ICO.x({s:14,w:2.2})}解除</button></div>` : ''}
     ${photoView ? `<div class="pgrid" id="pgrid">${pics.map((x,i) =>
         `<button class="pcell" data-p="${i}"><img data-img="${x.id}" alt=""><span class="pdate">${fmtDate(x.cre)}</span></button>`).join('')}</div>`
       : `<div class="search">${ICO.search({s:17,w:2})}<input id="q" placeholder="${f ? 'このフォルダ内を検索' : 'キーワードで検索'}" value="${esc(S.q)}" autocomplete="off"></div>
@@ -773,9 +805,12 @@ function renderList(){
   if(sx) sx.onclick = () => { S.sel = null; render(); };
   const sa = $('#tbar [data-selall]');
   if(sa) sa.onclick = () => { filtered().forEach(n => S.sel.add(n.id)); render(); };
-  $$('#subs [data-sub]').forEach(b => b.onclick = () => { S.sub = b.dataset.sub; render(); });
+  const co = $('#main [data-clearonly]');
+  if(co) co.onclick = () => { S.only = ''; render(); };
+  $$('#subs [data-sub]').forEach(b => b.onclick = () => go('list', { fid:b.dataset.sub, q:'', view:'list' }));
+  $$('#main [data-goto]').forEach(b => b.onclick = () => go('list', { fid:b.dataset.goto, q:'', view:'list' }));
   const ns = $('#subs [data-newsub]');
-  if(ns) ns.onclick = () => folderSheet(null, id => { S.sub = id; render(); }, S.fid);
+  if(ns) ns.onclick = () => folderSheet(null, id => go('list', { fid:id, q:'', view:'list' }), S.fid);
   const ss = $('#subs [data-sortsub]');
   if(ss) ss.onclick = () => reorderSheet(S.fid);
   $$('#vsw button').forEach(b => b.onclick = () => { S.view = b.dataset.v; render(); });
@@ -798,6 +833,9 @@ function renderList(){
 }
 function filtered(){
   let a = inScope();
+  if(S.only === 'unrev') a = a.filter(n => !n.rev);
+  if(S.only === 'today') a = a.filter(n => new Date(n.cre).toDateString() === new Date().toDateString());
+  if(S.only === 'star')  a = a.filter(n => n.star);
   const q = S.q.trim().toLowerCase();
   if(q) a = a.filter(n => (n.body||'').toLowerCase().includes(q));
   if(S.sort === 'new') a.sort((x,y) => y.cre - x.cre);
@@ -920,7 +958,7 @@ let draft = [], draftFid = '';
 function startNew(){
   S.editId = null;
   draft = [];
-  draftFid = (S.screen === 'list') ? (S.sub || S.fid || '') : '';
+  draftFid = (S.screen === 'list') ? (S.fid || '') : '';
   go('write');
 }
 function startEdit(id){
@@ -953,25 +991,30 @@ function renderWrite(){
   if(!n) setTimeout(() => { const t = $('#body'); if(t) t.focus(); }, 120);
 }
 function paintFolderPick(){
-  const cur = draftFid ? folderOf(draftFid) : null;
-  const pid = cur ? (cur.pid || cur.id) : '';
-  const dot = c => `<span class="dot" style="width:8px;height:8px;border-radius:50%;background:${c}"></span>`;
-  const tops = [{ id:'', name:'未分類', color:'var(--ink3)' }].concat(topFolders());
-  let html = tops.map(f =>
-    `<button class="pill ${pid === f.id ? 'on' : ''}" data-f="${f.id}">${dot(f.color)}${esc(f.name)}</button>`).join('')
-    + `<button class="pill" data-newf>${ICO.plus({s:14,w:2.2})}</button>`;
-  const subs = pid ? subsOf(pid) : [];
-  if(pid){
-    html += `<div style="flex-basis:100%;height:0"></div>
-      <button class="pill ${draftFid === pid ? 'on' : ''}" data-f="${pid}">単元なし</button>`
-      + subs.map(x => `<button class="pill ${draftFid === x.id ? 'on' : ''}" data-f="${x.id}">${esc(x.name)}</button>`).join('')
-      + `<button class="pill" data-newsub2>${ICO.plus({s:14,w:2.2})}単元</button>`;
-  }
-  $('#fpick').innerHTML = html;
-  $$('#fpick [data-f]').forEach(b => b.onclick = () => { draftFid = b.dataset.f; paintFolderPick(); });
-  $('#fpick [data-newf]').onclick = () => folderSheet(null, id => { draftFid = id; paintFolderPick(); });
-  const nb = $('#fpick [data-newsub2]');
-  if(nb) nb.onclick = () => folderSheet(null, id => { draftFid = id; paintFolderPick(); }, pid);
+  const chain = chainOf(draftFid);
+  const label = chain.length ? chain.map(f => esc(f.name)).join(' › ') : '未分類';
+  const color = chain.length ? chain[chain.length-1].color : 'var(--ink3)';
+  $('#fpick').innerHTML = `<button class="pill" id="fpickbtn" style="max-width:100%">
+      <span class="dot" style="width:8px;height:8px;border-radius:50%;background:${color}"></span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${label}</span>
+      <span style="opacity:.5">${ICO.right({s:13,w:2.2})}</span></button>`;
+  $('#fpickbtn').onclick = () => folderPicker(draftFid, id => { draftFid = id; paintFolderPick(); });
+}
+
+/* フォルダを選ぶ共通のシート（書くとき・移動するとき） */
+function folderPicker(curId, onPick, title){
+  const list = [{ id:'', name:'未分類', color:'var(--ink3)', d:0 }].concat(folderTree());
+  sheet(`<h3>${title || 'フォルダを選ぶ'}</h3>
+    <div class="group">${list.map(f => `<button class="item" data-pick="${f.id}"
+        ${f.d ? `style="padding-left:${16 + f.d*18}px"` : ''}>
+        <span class="ic" style="color:${f.color}">${ICO.folderFill({s:f.d?18:19})}</span>
+        <span class="nm" style="font-weight:${f.d?500:600}">${esc(f.name)}</span>
+        ${curId === f.id ? `<span style="color:var(--pri)">${ICO.check({s:18,w:2.2})}</span>` : ''}
+      </button>`).join('')}</div>
+    <button class="btn sec" id="pnew" style="margin-top:12px">新しいフォルダを作る</button>`, close => {
+    $$('#host [data-pick]').forEach(b => b.onclick = () => { onPick(b.dataset.pick); close(); });
+    $('#pnew').onclick = () => { close(); folderSheet(null, id => onPick(id), curId || undefined); };
+  });
 }
 function paintDraft(){
   const box = $('#dthumbs');
@@ -1018,8 +1061,7 @@ function doSave(){
     const n = { id:uid(), body, imgs, back:backs, fid:draftFid, cre:now(), upd:now(), rev:0, ng:0, revAt:0, star:false, del:false };
     notes.unshift(n);
     toast('保存しました');
-    const fo = draftFid ? folderOf(draftFid) : null;
-    go('list', { fid: fo ? (fo.pid || fo.id) : '', sub: (fo && fo.pid) ? fo.id : '', q:'', view:'list' });
+    go('list', { fid: draftFid || '', q:'', view:'list' });
   }
   saveNotes();
   draft = [];
@@ -1048,18 +1090,14 @@ function scopeName(){
 }
 function scopeSheet(){
   const list = [{ id:'*', name:'すべてのノート', color:'var(--ink2)', d:0 },
-                { id:'★', name:'重要マークだけ', color:'var(--gold)', d:0 }];
-  topFolders().forEach(f => {
-    list.push({ id:f.id, name:f.name, color:f.color, d:0 });
-    subsOf(f.id).forEach(x => list.push({ id:x.id, name:x.name, color:x.color, d:1 }));
-  });
+                { id:'★', name:'重要マークだけ', color:'var(--gold)', d:0 }].concat(folderTree());
   if(live().some(n => !n.fid)) list.push({ id:'', name:'未分類', color:'var(--ink3)', d:0 });
   const cur = cfg.revScope || '*';
   sheet(`<h3>振り返る範囲</h3>
     <div class="note-txt" style="margin:-10px 2px 14px">えらんだ範囲のメモだけが出題されます。フォルダを選ぶと、その中の単元もまとめて入ります。
       「重要マークだけ」は、一覧のカード右上の★を付けたメモだけを集めます。</div>
-    <div class="group">${list.map(f => `<button class="item" data-sc="${f.id}" ${f.d?'style="padding-left:34px"':''}>
-      <span class="ic" style="color:${f.color}">${f.id === '*' ? ICO.inbox({s:19}) : f.id === '★' ? ICO.starFill({s:18}) : f.d ? ICO.folder({s:18,w:1.9}) : ICO.folderFill({s:19})}</span>
+    <div class="group">${list.map(f => `<button class="item" data-sc="${f.id}" ${f.d?`style="padding-left:${16+f.d*18}px"`:''}>
+      <span class="ic" style="color:${f.color}">${f.id === '*' ? ICO.inbox({s:19}) : f.id === '★' ? ICO.starFill({s:18}) : ICO.folderFill({s:f.d?18:19})}</span>
       <span class="nm" style="${f.d?'font-weight:500':''}">${esc(f.name)}</span>
       <span class="ct">${f.id === '*' ? live().length : f.id === '★' ? live().filter(n=>n.star).length : f.id === '' ? live().filter(n=>!n.fid).length : countUnder(f.id)}</span>
       ${cur === f.id ? `<span style="color:var(--pri);margin-left:8px">${ICO.check({s:18,w:2.2})}</span>` : ''}
@@ -1303,16 +1341,16 @@ function sheet(html, after){
 function folderSheet(f, onCreate, pid){
   const parentId = f ? f.pid : pid;                   // 単元なら親フォルダのid
   const parent = parentId ? folderOf(parentId) : null;
-  const kind = parent ? '単元' : 'フォルダ';
+  const kind = 'フォルダ';
   let color = f ? f.color : (parent ? parent.color : COLORS[topFolders().length % COLORS.length]);
   sheet(`
     <h3>${f ? kind + 'を編集' : '新しい' + kind}</h3>
     ${parent ? `<div class="note-txt" style="margin:-10px 2px 14px">「${esc(parent.name)}」の中に作ります。</div>` : ''}
-    <input class="field" id="fname" placeholder="${parent ? '単元の名前（例: 二次関数）' : 'フォルダ名'}" value="${f ? esc(f.name) : ''}" autocomplete="off">
+    <input class="field" id="fname" placeholder="${parent ? '中に作るフォルダの名前' : 'フォルダ名'}" value="${f ? esc(f.name) : ''}" autocomplete="off">
     ${f ? `<div class="label" style="margin:18px 4px 8px">場所</div>
-      <div class="pills" id="fparent"></div>
-      <div class="note-txt" style="margin-top:8px">別のフォルダを選ぶと、その中の単元になります。
-        単元を持つフォルダは、ほかのフォルダの中には入れられません。</div>` : ''}
+      <div id="fparent"></div>
+      <div class="note-txt" style="margin-top:8px">選んだフォルダの中に入ります。
+        中にフォルダを持っていても移動できます（自分の中には入れられません）。</div>` : ''}
     <div class="label" style="margin:18px 4px 8px">いろ</div>
     <div class="swatch" id="sw">${COLORS.map(c =>
       `<button data-c="${c}" class="${c===color?'on':''}" style="background:${c}"></button>`).join('')}</div>
@@ -1323,13 +1361,15 @@ function folderSheet(f, onCreate, pid){
     const paintParent = () => {
       const box = $('#fparent');
       if(!box) return;
-      const own = subsOf(f.id).length > 0;
-      const opts = [{ id:'', name:'いちばん上' }].concat(
-        own ? [] : topFolders().filter(x => x.id !== f.id).map(x => ({ id:x.id, name:x.name, color:x.color })));
-      box.innerHTML = opts.map(o =>
-        `<button class="pill ${newPid === o.id ? 'on' : ''}" data-p="${o.id}">
-          ${o.color ? `<span class="dot" style="width:8px;height:8px;border-radius:50%;background:${o.color}"></span>` : ''}${esc(o.name)}
-        </button>`).join('') + (own ? `<span class="note-txt" style="align-self:center">（単元があるため移動できません）</span>` : '');
+      const banned = idsUnder(f.id);                 // 自分と、その中のフォルダには入れられない
+      const opts = [{ id:'', name:'いちばん上', d:0 }]
+        .concat(folderTree().filter(x => !banned.includes(x.id)));
+      box.innerHTML = `<div class="group">${opts.map(o => `<button class="item" data-p="${o.id}"
+          ${o.d ? `style="padding-left:${16 + o.d*18}px"` : ''}>
+          <span class="ic" style="color:${o.color || 'var(--ink3)'}">${o.id === '' ? ICO.up({s:18}) : ICO.folderFill({s:18})}</span>
+          <span class="nm" style="font-weight:${o.d?500:600}">${esc(o.name)}</span>
+          ${newPid === o.id ? `<span style="color:var(--pri)">${ICO.check({s:18,w:2.2})}</span>` : ''}
+        </button>`).join('')}</div>`;
       $$('#fparent [data-p]').forEach(b => b.onclick = () => { newPid = b.dataset.p; paintParent(); });
     };
     paintParent();
@@ -1358,16 +1398,16 @@ function folderSheet(f, onCreate, pid){
         if(onCreate) onCreate(nf.id);
       }
       saveFolders(); close();
-      if(f && f.pid) go('list', { fid:f.pid, sub:f.id, q:'', view:'list' });
+      if(f) go('list', { fid:f.id, q:'', view:'list' });
       else if(S.screen !== 'write') render();
     };
     if(f) $('#fdel').onclick = () => {
       const subs = subsOf(f.id);
       const c = countUnder(f.id);
       const to = f.pid ? (folderOf(f.pid) || {}).name : '未分類';
-      const msg = f.pid
-        ? `単元「${f.name}」を削除します。${c ? `中の${c}件は「${to}」に移ります（メモは消えません）。` : ''}`
-        : `「${f.name}」を削除します。${subs.length ? `単元${subs.length}個もなくなり、` : ''}${c ? `中の${c}件は未分類に移ります（メモは消えません）。` : ''}`;
+      const msg = `「${f.name}」を削除します。`
+        + (subs.length ? `中のフォルダ${subs.length}個もなくなり、` : '')
+        + (c ? `${c}件のメモは「${to}」に移ります（メモは消えません）。` : '');
       if(!confirm(msg)) return;
       const gone = idsUnder(f.id);
       const dest = f.pid || '';
@@ -1376,7 +1416,7 @@ function folderSheet(f, onCreate, pid){
       if(cfg.revScope && gone.includes(cfg.revScope)){ cfg.revScope = '*'; saveCfg(); }
       saveFolders(); saveNotes(); close();
       toast('削除しました');
-      if(f.pid) go('list', { fid:f.pid, sub:'' }); else go('home');
+      if(f.pid && folderOf(f.pid)) go('list', { fid:f.pid }); else go('home');
     };
   });
 }
@@ -1463,23 +1503,9 @@ function reorderSheet(pid){
 }
 
 function moveSheet(n){
-  const list = [{ id:'', name:'未分類', color:'var(--ink3)', d:0 }];
-  topFolders().forEach(f => {
-    list.push({ id:f.id, name:f.name, color:f.color, d:0 });
-    subsOf(f.id).forEach(x => list.push({ id:x.id, name:x.name, color:x.color, d:1 }));
-  });
-  sheet(`<h3>フォルダを移動</h3>
-    <div class="group">${list.map(f => `<button class="item" data-mv="${f.id}" ${f.d?'style="padding-left:34px"':''}>
-      <span class="ic" style="color:${f.color}">${f.d ? ICO.folder({s:18,w:1.9}) : ICO.folderFill({s:19})}</span>
-      <span class="nm" style="${f.d?'font-weight:500':''}">${esc(f.name)}</span>
-      ${n.fid === f.id ? `<span style="color:var(--pri)">${ICO.check({s:18,w:2.2})}</span>` : ''}
-    </button>`).join('')}</div>
-    <button class="btn sec" id="mnew" style="margin-top:12px">新しいフォルダを作る</button>`, close => {
-    $$('#host [data-mv]').forEach(b => b.onclick = () => {
-      n.fid = b.dataset.mv; n.upd = now(); saveNotes(); close(); render(); toast('移動しました');
-    });
-    $('#mnew').onclick = () => { close(); folderSheet(null, id => { n.fid = id; n.upd = now(); saveNotes(); render(); }); };
-  });
+  folderPicker(n.fid, id => {
+    n.fid = id; n.upd = now(); saveNotes(); render(); toast('移動しました');
+  }, 'フォルダを移動');
 }
 function trashSheet(){
   const paint = () => {
@@ -1538,14 +1564,14 @@ function helpSheet(){
           ['写真だけでも保存できる','板書やスライドを撮るだけでも構いません。']] }),
     slide({ c:C.green, ic:ICO.folderFill({s:23}), sub:'FOLDER', t:'フォルダ',
       p:['教科や本など、分け方は自由です。'],
-      kv:[['中を単元で分けられる','フォルダを開くと上に「＋単元」。英単語や公式を範囲ごとにまとめられます。'],
-          ['あとから作れる','先に書きためて、あとで整理しても大丈夫。'],
-          ['消しても中身は残る','中のメモは未分類に移るだけです。']] }),
+      kv:[['中にフォルダを作れる','フォルダを開いて「＋フォルダ」。単元や範囲ごとに、何段でも分けられます。'],
+          ['あとから上にまとめられる','上位フォルダを作り、整理→行の名前をタップ→「場所」で中に入れられます。'],
+          ['消しても中身は残る','中のメモは親フォルダ（なければ未分類）に移ります。']] }),
     slide({ c:C.gold, ic:ICO.loop({s:23,w:1.7}), sub:'REVIEW', t:'振り返り',
       p:['しばらく開いていないメモを数件えらびます。'],
-      kv:[['範囲をえらべる','「範囲」から、単元だけ・フォルダだけ・全部を切り替えられます。'],
+      kv:[['範囲と件数をえらべる','「範囲」でフォルダや単元を、件数は − ＋ で1件ずつ調整できます。'],
           ['まず思い出す','1行目を読んで、続きを頭の中で言ってみる。'],
-          ['あいまいは早く戻る','選んだメモは次から早めに出てきます。']] }),
+          ['未確認からすぐ開ける','ホームの「未確認」の数字を押すと、まだ見ていないメモだけが並びます。']] }),
     slide({ c:C.gray, ic:ICO.down({s:23,w:1.7}), sub:'KEEP', t:'保管',
       p:['メモと写真は、この端末の中だけにあります。どこにも送っていません。'],
       kv:[['JSONで書き出す','写真ごと1つのファイルにまとまります。設定から。'],

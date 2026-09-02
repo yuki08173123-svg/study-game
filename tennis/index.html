@@ -115,6 +115,15 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
 .rv .headline{font-size:15px; font-weight:700; line-height:1.6;}
 .rv .cmp{font-size:13px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px;}
 .rv .cmp b{color:var(--ink);}
+.rv .kv{display:flex; flex-direction:column; gap:1px; font-size:14px; padding:7px 0; border-bottom:1px solid var(--line);}
+.rv .kv > span:first-child{font-size:12px; font-weight:700; color:var(--muted);}
+.rv .kv:last-child{border-bottom:none;}
+.rv .kv b{font-weight:700; font-variant-numeric:tabular-nums;}
+.rv .big2{font-size:15px; font-weight:700;}
+.rv .menu li{padding-left:0;}
+.rv .menu li::before{display:none;}
+.rv .menu li{background:var(--chip); border-radius:10px; padding:10px 12px; font-size:14px;}
+.rv .menu li b{color:var(--accent);}
 /* ---------- record ---------- */
 .scoreboard{display:flex; align-items:stretch; gap:10px;}
 .scoreboard .box{flex:1; text-align:center; padding:10px 6px; border-radius:12px; background:var(--card); border:1px solid var(--line);}
@@ -234,7 +243,11 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
   <!-- ===== 分析・課題タブ ===== -->
   <div id="view-notes" class="stack hidden">
     <div class="tabs"><button id="tab-to-home">試合</button><button id="tab-to-serve2">サーブ練習</button><button class="on">分析・課題</button></div>
-    <button class="primary pt-btn" id="btn-new-note">＋ 分析・課題を保存する</button>
+    <div class="card stack rv" id="career-card" style="gap:12px"></div>
+    <div class="rowline">
+      <button class="small" id="btn-copy-career">全記録をまとめてコピー（Claudeに相談用）</button>
+      <button class="small" id="btn-new-note">＋ メモを書く</button>
+    </div>
     <div class="label">保存した分析・課題</div>
     <div id="note-list" class="stack"></div>
   </div>
@@ -645,9 +658,142 @@ function mdToHtml(src){
   return out.join("");
 }
 
+/* ---------- ためた記録から「あなたの傾向」を出す ---------- */
+function careerStats(){
+  const per = db.matches
+    .filter(m => m.finished && m.games.some(g => g.points.length > 0))
+    .map(m => {
+      const s = collectStats(m);
+      const all1 = s.sv1.n + s.sv2.n;
+      return {
+        m, s,
+        win: s.gMe > s.gOp,
+        in1: all1 >= 4 ? s.sv1.n / all1 * 100 : null,
+        keepR: s.serveG ? s.keep / s.serveG * 100 : null,
+        myErr: s.myErr, winner: s.winner, df: s.df, retMiss: s.retMiss,
+        ptR: (s.ptWin + s.ptLose) ? s.ptWin / (s.ptWin + s.ptLose) * 100 : null
+      };
+    });
+  const wins = per.filter(x => x.win), losses = per.filter(x => !x.win);
+  const avg = (arr, k) => {
+    const v = arr.map(x => x[k]).filter(x => x !== null && x !== undefined);
+    return v.length ? v.reduce((a,b)=>a+b,0) / v.length : null;
+  };
+  const sumWays = key => {
+    const t = {};
+    per.forEach(x => Object.entries(x.s[key]).forEach(([k,v]) => t[k] = (t[k]||0) + v));
+    return Object.entries(t).sort((a,b)=>b[1]-a[1]);
+  };
+  // サーブ練習の通算
+  let pr1 = null, pr2 = null;
+  if(db.serves.length){
+    const a = db.serves.reduce((o,r)=>({s1n:o.s1n+r.s1n, s1in:o.s1in+r.s1in, s2n:o.s2n+r.s2n, s2in:o.s2in+r.s2in}), {s1n:0,s1in:0,s2n:0,s2in:0});
+    if(a.s1n) pr1 = a.s1in / a.s1n * 100;
+    if(a.s2n) pr2 = a.s2in / a.s2n * 100;
+  }
+  return {per, wins, losses, avg, sumWays, pr1, pr2};
+}
+function careerReview(){
+  const c = careerStats();
+  const n = c.per.length;
+  if(n === 0) return null;
+  const r = Math.round;
+  const out = {n, w: c.wins.length, l: c.losses.length, conds: [], weak: [], strong: [], menu: [], trend: []};
+
+  // 勝った試合と負けた試合の差 →「あなたが勝つときの条件」
+  if(c.wins.length >= 1 && c.losses.length >= 1){
+    const cmp = (label, key, unit, higherIsBetter) => {
+      const w = c.avg(c.wins, key), l = c.avg(c.losses, key);
+      if(w === null || l === null) return;
+      const gap = w - l;
+      if(Math.abs(gap) < (unit === "%" ? 5 : 1.5)) return;   // 差が小さいものは出さない
+      out.conds.push({label, w: r(w), l: r(l), unit, ok: higherIsBetter ? gap > 0 : gap < 0});
+    };
+    cmp("1stサーブが入った率", "in1", "%", true);
+    cmp("自分のミスでの失点", "myErr", "本", false);
+    cmp("自分で決めた数", "winner", "本", true);
+    cmp("ダブルフォルト", "df", "本", false);
+    cmp("リターンミス", "retMiss", "本", false);
+    cmp("キープ率", "keepR", "%", true);
+  }
+  // くり返し出る弱点・強み
+  out.weak = c.sumWays("loseWays").slice(0,3).map(([k,v]) => ({k, v, per: (v/n).toFixed(1)}));
+  out.strong = c.sumWays("winWays").slice(0,3).map(([k,v]) => ({k, v, per: (v/n).toFixed(1)}));
+
+  // 練習と試合の差（サーブ練習タブのデータを使う）
+  const matchIn1 = c.avg(c.per, "in1");
+  if(c.pr1 !== null && matchIn1 !== null){
+    out.gap = {practice: r(c.pr1), match: r(matchIn1), diff: r(c.pr1 - matchIn1)};
+  }
+  // 直近の推移（新しい順に最大5試合）
+  out.trend = c.per.slice(-5).reverse().map(x => ({
+    date: x.m.date, title: x.m.title || "試合",
+    mark: x.win ? "○" : "●",
+    in1: x.in1 === null ? "—" : r(x.in1) + "%",
+    err: x.myErr, win: x.winner
+  }));
+
+  // 練習メニュー（弱点から組み立てる）
+  const has = k => out.weak.some(w => w.k.indexOf(k) >= 0);
+  const avgDf = c.avg(c.per, "df"), avgRet = c.avg(c.per, "retMiss");
+  const avgErr = c.avg(c.per, "myErr"), avgWin = c.avg(c.per, "winner");
+  if(matchIn1 !== null && matchIn1 < 58)
+    out.menu.push("<b>サーブ 1st を 20本×3セット</b>：入った数をサーブ練習タブで数える。試合の平均が " + r(matchIn1) + "% なので、まず 60% を安定して超えるまでフォームは変えない。");
+  if(avgDf !== null && avgDf >= 2)
+    out.menu.push("<b>2nd サーブを10本連続で入れる</b>：入らなかったら最初から数え直す。1試合あたり平均 " + avgDf.toFixed(1) + "本のダブルフォルトを1本に。");
+  if(avgRet !== null && avgRet >= 2)
+    out.menu.push("<b>リターンだけ20本</b>：決めにいかず、深く返すことだけを目標にする。1試合あたり平均 " + avgRet.toFixed(1) + "本をリターンで落としている。");
+  if(has("フォア"))
+    out.menu.push("<b>フォアで10本つなぐラリー×5セット</b>：決めにいかず深さ優先。ミスしたら数え直す。");
+  if(has("バックスライス"))
+    out.menu.push("<b>スライスを10本、ネットの1m上を通す</b>：低く鋭くではなく、まず「切らずに深く」を体に入れる。");
+  if(avgErr !== null && avgWin !== null && avgErr > avgWin)
+    out.menu.push("<b>ラリー本数を数える練習</b>：1試合あたり ミス " + avgErr.toFixed(1) + "本 > 決めた " + avgWin.toFixed(1) + "本。先に決めにいかず、相手より1本多く返す形をつくる。");
+  if(out.menu.length === 0)
+    out.menu.push("<b>いまの形を維持する</b>：大きな穴がないので、試合数を増やして記録をためるのが次の一歩。");
+  out.menu = out.menu.slice(0,4);
+  return out;
+}
+function renderCareer(){
+  const box = $("career-card");
+  const c = careerReview();
+  if(!c){
+    box.innerHTML = '<div class="headline">まだ終わった試合がありません</div><div style="font-size:14px;color:var(--muted)">試合を記録して「試合を終える」を押すと、ここに自分の傾向がたまっていきます。</div>';
+    return;
+  }
+  let h = '<div class="headline">あなたの傾向（' + c.n + '試合 ・ ' + c.w + '勝' + c.l + '敗）</div>';
+  if(c.n < 3) h += '<div style="font-size:13px;color:var(--muted)">※ まだ試合が少ないので参考程度に。3〜5試合たまると精度が上がります。</div>';
+  if(c.conds.length){
+    h += '<div class="good"><h4>あなたが勝つときの条件<span class="n">' + c.conds.length + '</span></h4><div>' +
+      c.conds.map(x => '<div class="kv"><span>' + esc(x.label) + '</span><span><b>勝った試合 ' + x.w + x.unit + '</b> ／ 負けた試合 ' + x.l + x.unit + '</span></div>').join("") +
+      "</div></div>";
+  }
+  if(c.weak.length){
+    h += '<div class="bad"><h4>くり返し出る弱点<span class="n">' + c.weak.length + '</span></h4><ul>' +
+      c.weak.map(x => "<li>" + esc(x.k) + " … 通算 " + x.v + "本（1試合あたり " + x.per + "本）</li>").join("") + "</ul></div>";
+  }
+  if(c.strong.length){
+    h += '<div class="good"><h4>あなたの武器<span class="n">' + c.strong.length + '</span></h4><ul>' +
+      c.strong.map(x => "<li>" + esc(x.k) + " … 通算 " + x.v + "本（1試合あたり " + x.per + "本）</li>").join("") + "</ul></div>";
+  }
+  if(c.gap){
+    h += '<div class="cmp"><b>練習と試合の差</b><br>1stサーブが入った率：練習 <b>' + c.gap.practice + '%</b> ／ 試合 <b>' + c.gap.match + '%</b>' +
+      (c.gap.diff >= 8 ? "　→ 試合になると " + c.gap.diff + "ポイント落ちている。緊張か、力みが原因かもしれません。"
+       : c.gap.diff <= -8 ? "　→ 試合のほうが高い。練習の球数を増やすと数字が安定します。" : "　→ 差は小さい。練習どおり打てています。") + "</div>";
+  }
+  h += '<div class="next"><h4>いまのあなたにすすめる練習<span class="n">' + c.menu.length + '</span></h4><ul class="menu">' +
+    c.menu.map(x => "<li>" + x + "</li>").join("") + "</ul></div>";
+  if(c.trend.length >= 2){
+    h += '<div class="cmp"><b>直近の試合</b><br>' +
+      c.trend.map(t => t.mark + " " + esc(t.title) + "（" + t.date + "）1st " + t.in1 + " ・ ミス " + t.err + " ・ 決めた " + t.win).join("<br>") + "</div>";
+  }
+  box.innerHTML = h;
+}
+
 /* ---------- 分析・課題タブ ---------- */
 let editingNoteId = null;
 function renderNotes(){
+  renderCareer();
   const box = $("note-list"); box.innerHTML = "";
   if(db.notes.length === 0){
     box.innerHTML = '<div class="card empty">まだ保存がありません。<br>試合の集計画面で「振り返り用テキストをコピー」→ Claudeに貼って分析してもらい、その答えをここに保存しましょう。</div>';
@@ -1139,6 +1285,37 @@ $("btn-save-review").addEventListener("click", ()=>{
   else db.notes.push({id:"n"+Math.random().toString(36).slice(2,10), matchId: cur.id, date: cur.date, title, body});
   save(); toast(found ? "「分析・課題」の内容を更新しました" : "「分析・課題」に保存しました");
 });
+$("btn-copy-career").addEventListener("click", ()=>{
+  const c = careerStats(), cr = careerReview();
+  if(!cr){ toast("まだ終わった試合がありません"); return; }
+  const r = Math.round;
+  let t = "テニスの全記録です。私に合った課題と練習メニューを考えてください。\n\n";
+  t += "■ 通算：" + cr.n + "試合 " + cr.w + "勝" + cr.l + "敗\n\n";
+  t += "■ 試合ごと\n";
+  c.per.forEach(x=>{
+    const s = x.s;
+    t += (x.win ? "○" : "●") + " " + x.m.date + " " + (x.m.title || "試合") + " " + s.gMe + "-" + s.gOp +
+      "｜1st " + (x.in1 === null ? "—" : r(x.in1) + "%") +
+      "（1stで取った " + s.sv1.w + "/" + s.sv1.n + "、2ndで取った " + s.sv2.w + "/" + s.sv2.n + "）" +
+      "｜自分のミス " + s.myErr + "（うちリターンミス " + s.retMiss + "）" +
+      "｜決めた " + s.winner + "｜エース " + s.ace + "｜DF " + s.df +
+      "｜キープ " + s.keep + "/" + s.serveG + "｜ブレーク " + s.brk + "/" + s.retG + "\n";
+  });
+  t += "\n■ 通算のポイントの落とし方\n" + c.sumWays("loseWays").map(([k,v])=>k+" "+v+"本").join("、") + "\n";
+  t += "\n■ 通算のポイントの取り方\n" + c.sumWays("winWays").map(([k,v])=>k+" "+v+"本").join("、") + "\n";
+  if(db.serves.length){
+    t += "\n■ サーブ練習\n";
+    db.serves.forEach(x=>{
+      t += x.date + " 1st " + (x.s1n ? r(x.s1in/x.s1n*100)+"%" : "—") + "（" + x.s1in + "/" + x.s1n + "）、2nd " +
+        (x.s2n ? r(x.s2in/x.s2n*100)+"%" : "—") + "（" + x.s2in + "/" + x.s2n + "）、DF " + x.df + "\n";
+    });
+  }
+  if(db.notes.length){
+    t += "\n■ 保存したメモの見出し\n" + db.notes.map(n=>"・"+n.date+" "+(n.title||"（無題）")).join("\n") + "\n";
+  }
+  t += "\n※ 記録の見方：「自分のミス」は自分から崩れた失点、「相手が良かった」失点（相手のサービスエース・サーブが良くてミス・相手の球が深くてミス・相手に決められた）とは分けて数えています。\n";
+  navigator.clipboard.writeText(t).then(()=>toast("全記録をコピーしました。Claudeに貼ってください"), ()=>toast("コピーできませんでした"));
+});
 $("btn-copy-review").addEventListener("click", ()=>{
   const m = cur, s = collectStats(m);
   let t = "テニスの試合の振り返りです。アドバイスをください。\n";
@@ -1190,7 +1367,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 17; // リリースのたびに version.json の v と一緒に上げる
+const VER = 18; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

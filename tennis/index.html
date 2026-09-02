@@ -68,6 +68,8 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
 .hidden{display:none !important;}
 /* ---------- home ---------- */
 .match-item{display:flex; align-items:center; gap:12px; width:100%; text-align:left;}
+.match-item .mark{font-size:22px; font-weight:800; width:1.1em; text-align:center; flex:none;}
+.match-item .mark:empty{display:none;}
 .match-item .score{font-size:22px; font-weight:800;}
 .match-item .meta{flex:1; min-width:0;}
 .match-item .meta .t{font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -478,6 +480,11 @@ function matchGames(m){ // 終了ゲームの取得数
 function curGame(m){ return m.games[m.games.length-1]; }
 
 /* ---------- ホーム ---------- */
+function resultMark(m){          // 勝ち○ / 負け●（終了した試合だけ）
+  if(!m.finished) return "";
+  const {me, op} = matchGames(m);
+  return me > op ? "○" : me < op ? "●" : "";
+}
 function renderHome(){
   $("save-status").textContent =
     "✓ 保存ずみ：試合 " + db.matches.length + "件・サーブ練習 " + db.serves.length + "件・分析 " + db.notes.length + "件";
@@ -491,6 +498,7 @@ function renderHome(){
     const b = document.createElement("button");
     b.className = "card match-item";
     b.innerHTML =
+      '<span class="mark">'+resultMark(m)+'</span>'+
       '<span class="score num">'+me+"-"+op+'</span>'+
       '<span class="meta"><span class="t"></span><span class="d">'+m.date+"</span></span>"+
       '<span class="badge '+(m.finished?"done":"live")+'">'+(m.finished?"終了":"記録中")+"</span>";
@@ -931,7 +939,8 @@ function bars(box, obj, bad){
 function renderSummary(){
   const m = cur, s = collectStats(m);
   $("sum-title").textContent = (m.title || "試合") + "（" + m.date + (m.noAd ? "・ノーアド" : "") + "）";
-  $("sum-score").textContent = s.gMe + " - " + s.gOp;
+  const mk = resultMark(m);
+  $("sum-score").textContent = (mk ? mk + " " : "") + s.gMe + " - " + s.gOp;
   $("sum-keep").textContent =
     "キープ " + s.keep + "/" + s.serveG + "ゲーム ・ ブレーク " + s.brk + "/" + s.retG + "ゲーム";
   const tiles = $("sum-tiles");
@@ -1029,7 +1038,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 14; // リリースのたびに version.json の v と一緒に上げる
+const VER = 15; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

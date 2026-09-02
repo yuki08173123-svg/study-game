@@ -413,6 +413,7 @@ main{max-width:680px;margin:0 auto;
 #gate .gcode{margin-top:22px;width:100%;max-width:20em}
 #gate .gcode textarea{min-height:78px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   font-size:.72rem;line-height:1.55;text-align:left}
+#gate .ghint{color:var(--ink3);font-size:.72rem;line-height:1.8;margin-top:10px;max-width:20em}
 #gate .gwhy{color:var(--ink3);font-size:.66rem;margin-top:20px;opacity:.7;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;max-width:22em}
 #gate .gspin{width:22px;height:22px;border-radius:50%;border:2px solid var(--line2);
@@ -526,7 +527,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 32;
+const VER = 33;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -2701,7 +2702,9 @@ function showGate(kind, extra){
   const btn = (kind === 'offline' || kind === 'busy')
     ? '<button class="gbtn" id="gRetry">もう一度ためす</button>'
     : '<button class="gbtn" id="gLogin">Discordでログイン</button>' +
-      '<button class="gbtn sub" id="gPaste">合言葉を貼りつける</button>';
+      '<button class="gbtn sub" id="gPaste">合言葉を貼りつける（iPhoneの人）</button>' +
+      '<div class="ghint">合言葉は、いちどログインすると出てきます。' +
+      'こちらから配るものではありません。</div>';
 
   g.innerHTML = GMARK +
     '<div class="gttl">' + m.ttl + '</div>' +
@@ -2714,7 +2717,8 @@ function showGate(kind, extra){
   if($('#gPaste')) $('#gPaste').onclick = () => {
     g.innerHTML = GMARK +
       '<div class="gttl">合言葉を貼りつける</div>' +
-      '<div class="gtxt">ブラウザでログインしたときに出た合言葉を、下に貼りつけてください。</div>' +
+      '<div class="gtxt">ブラウザで「Discordでログイン」をしたときに出た合言葉を、下に貼りつけてください。' +
+      'まだログインしていない人は、先に「Discordでログイン」を押してください。</div>' +
       '<div class="gcode"><textarea id="gIn" placeholder="ここに貼りつける"></textarea></div>' +
       '<button class="gbtn" id="gIn2">これでログイン</button>' +
       '<button class="gbtn sub" id="gBack">もどる</button>';

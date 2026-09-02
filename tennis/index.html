@@ -1133,9 +1133,11 @@ let lastReview = null;
 $("btn-save-review").addEventListener("click", ()=>{
   if(!lastReview) return;
   const title = (cur.title || "試合") + " のふり返り";
-  const id = "n"+Math.random().toString(36).slice(2,10);
-  db.notes.push({id, date: cur.date, title, body: reviewToMarkdown(cur, lastReview)});
-  save(); toast("「分析・課題」に保存しました");
+  const body = reviewToMarkdown(cur, lastReview);
+  const found = db.notes.find(n => n.matchId === cur.id);   // 同じ試合は上書き（押すたびに増やさない）
+  if(found){ found.title = title; found.body = body; found.date = cur.date; }
+  else db.notes.push({id:"n"+Math.random().toString(36).slice(2,10), matchId: cur.id, date: cur.date, title, body});
+  save(); toast(found ? "「分析・課題」の内容を更新しました" : "「分析・課題」に保存しました");
 });
 $("btn-copy-review").addEventListener("click", ()=>{
   const m = cur, s = collectStats(m);
@@ -1188,7 +1190,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 16; // リリースのたびに version.json の v と一緒に上げる
+const VER = 17; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

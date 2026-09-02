@@ -527,7 +527,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 33;
+const VER = 34;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -2572,6 +2572,40 @@ function vRoster(){
     });
 }
 
+
+/* ===================== キーボードでの操作 =====================
+   iPad にキーボードをつけている人・パソコンの人のため。
+   文字を打っている最中は じゃまをしない。 */
+addEventListener('keydown', e => {
+  const t = e.target;
+  if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  if(e.metaKey || e.ctrlKey || e.altKey) return;
+
+  /* 下から出るシート・使い方が開いているときは、閉じるだけ */
+  if(!$('#sheet').classList.contains('hidden')){
+    if(e.key === 'Escape'){ e.preventDefault(); closeSheet(); }
+    return;
+  }
+  /* 再生画面が開いているとき */
+  if(!$('#pv').classList.contains('hidden')){
+    const k = e.key;
+    if(k === 'ArrowLeft'){ e.preventDefault(); jump(-10); showCtrl(); }
+    else if(k === 'ArrowRight'){ e.preventDefault(); jump(10); showCtrl(); }
+    else if(k === ' ' || k === 'Spacebar' || k === 'k'){ e.preventDefault(); togglePlay(); showCtrl(); }
+    else if(k === 'Escape'){ e.preventDefault(); closePlay(); try{ history.back(); }catch(err){} }
+    else if(k === 'f'){ e.preventDefault(); toggleExp(); }
+    return;
+  }
+  /* 一覧の画面では、左右で タブを行き来する */
+  if(e.key === 'ArrowLeft' || e.key === 'ArrowRight'){
+    const ids = TABS.map(x => x.id);
+    const nowTab = ({ home:'home', cat:'home', man:'home', lv:'home', find:'find', saved:'saved',
+                      folder:'saved', set:'set', admin:'set', roster:'set' })[view.name] || 'home';
+    let i = ids.indexOf(nowTab) + (e.key === 'ArrowRight' ? 1 : -1);
+    if(i < 0) i = 0; if(i >= ids.length) i = ids.length - 1;
+    e.preventDefault(); go(ids[i]);
+  }
+});
 
 /* ===================== もどる（端末の戻る操作） ===================== */
 function history_push(push){

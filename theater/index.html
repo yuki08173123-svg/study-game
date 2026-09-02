@@ -454,6 +454,22 @@ textarea{min-height:96px;resize:vertical;line-height:1.7;font-size:.88rem}
 select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;padding:11px 12px;
   width:100%;outline:none;-webkit-appearance:none;appearance:none}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;line-height:1.6}
+/* 速さの選択 */
+.spds{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.spd1{background:var(--surf2);border:1px solid var(--line2);border-radius:11px;
+  padding:14px 0;font-weight:700;font-size:.95rem;color:var(--ink2)}
+.spd1.on{background:var(--acc-soft);border-color:var(--acc);color:var(--acc)}
+/* 付箋 */
+.mks{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.mk{display:flex;align-items:center;gap:10px;background:var(--surf);border:1px solid var(--line);
+  border-radius:11px;padding:11px 12px;text-align:left;width:100%}
+.mk .t{color:var(--acc);font-weight:700;font-size:.82rem;font-variant-numeric:tabular-nums;flex:none}
+.mk .m{flex:1;font-size:.86rem;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk .x{flex:none;color:var(--ink3);font-size:.76rem;padding:4px 6px}
+/* 長い動画の飛び先 */
+.jmp{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.jmp button{background:var(--surf2);border:1px solid var(--line2);border-radius:999px;
+  padding:9px 14px;font-size:.82rem;color:var(--ink2);font-variant-numeric:tabular-nums}
 /* みんなのレベル（先生用） */
 .rost{margin-top:12px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .rost .rh,.rost .rr{display:grid;grid-template-columns:26px 1fr 52px 54px 54px;
@@ -499,7 +515,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 28;
+const VER = 29;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -719,6 +735,31 @@ function fullMsg(id){
   if(rest > 1) return '最後まで見ると 1回 ふえます';
   return 'もう少しで 1回 ふえます';
 }
+/* 付箋（動画の中の「ここ」を覚えておく）。prog の中に [[秒, ひとこと], ...] で持つ */
+const marksOf = id => ((prog[id] && prog[id].mk) || []);
+function addMark(id, sec, memo){
+  const p = prog[id] || (prog[id] = { t:0, d:0 });
+  const list = p.mk || (p.mk = []);
+  const t = Math.max(0, Math.round(sec));
+  if(list.some(m => Math.abs(m[0] - t) < 3)) return false;   /* 同じところは1つだけ */
+  list.push([t, String(memo || '').slice(0, 60)]);
+  list.sort((a, b) => a[0] - b[0]);
+  p.last = now(); saveProg();
+  return true;
+}
+function delMark(id, sec){
+  const p = prog[id]; if(!p || !p.mk) return;
+  p.mk = p.mk.filter(m => m[0] !== sec);
+  if(!p.mk.length) delete p.mk;
+  p.last = now(); saveProg();
+}
+function setMarkMemo(id, sec, memo){
+  const p = prog[id]; if(!p || !p.mk) return;
+  const m = p.mk.find(x => x[0] === sec); if(!m) return;
+  m[1] = String(memo || '').slice(0, 60);
+  p.last = now(); saveProg();
+}
+
 function clearSeen(id){
   const p = prog[id]; if(!p) return;
   p.n = 0; p.done = 0; p.last = now(); saveProg();
@@ -838,11 +879,17 @@ function mergeRec(a, b){
     if(!y){ out.prog[id] = x; return; }
     const newer = (x.last || 0) >= (y.last || 0) ? x : y;
     const n = Math.max(nOf(x), nOf(y));
+    /* 付箋は両方を残す（同じ秒のものは1つに） */
+    const mk = {};
+    (x.mk || []).concat(y.mk || []).forEach(m => {
+      if(!mk[m[0]] || !mk[m[0]][1]) mk[m[0]] = m; });
+    const mkList = Object.keys(mk).map(k => mk[k]).sort((a, b) => a[0] - b[0]);
     out.prog[id] = Object.assign({}, newer, {
       n, done: n > 0 ? 1 : 0,
       w: Math.max(x.w || 0, y.w || 0),
       d: x.d || y.d || 0,
       last: Math.max(x.last || 0, y.last || 0) });
+    if(mkList.length) out.prog[id].mk = mkList; else delete out.prog[id].mk;
   });
 
   /* アウトプットは書いたものなので、両方を残す（同じ時刻のものは1つに） */
@@ -887,7 +934,7 @@ async function pullSync(){
    （再生中は5秒ごとに位置を保存しているので、それで毎回送ると通信の無駄になる） */
 function sigOf(){
   return JSON.stringify({
-    p: Object.keys(prog).sort().map(k => k + ':' + seenN(k)),
+    p: Object.keys(prog).sort().map(k => k + ':' + seenN(k) + ':' + marksOf(k).length),
     o: Object.keys(outs).sort().map(k => k + ':' + (outs[k] || []).length),
     f: favs.slice().sort(),
     d: folders.map(f => f.id + ':' + (f.ids || []).length),
@@ -1502,10 +1549,8 @@ function vSet(){
   $('#swNext').onclick = () => { cfg.autonext = !cfg.autonext; saveCfg(); vSet(); };
   $('#swCC').onclick = () => { cfg.cc = !cfg.cc; saveCfg(); applyCC(); vSet();
     toast(cfg.cc ? '字幕を出します' : '字幕を消しました'); };
-  $('#spdBtn').onclick = $('#spdLbl').onclick = () => {
-    cfg.speed = SPEEDS[(SPEEDS.indexOf(cfg.speed) + 1) % SPEEDS.length]; saveCfg();
-    vSet();
-  };
+  $('#spdBtn').onclick = $('#spdLbl').onclick = () =>
+    pickSpeed(cfg.speed, v => { cfg.speed = v; saveCfg(); vSet(); });
   $('#clr').onclick = () => askYes(
     { title:'記録をぜんぶ消しますか？', msg:'見た回数・つづきの位置がすべて消えます。フォルダは残ります。',
       ok:'ぜんぶ消す', danger:true },
@@ -1602,7 +1647,7 @@ function closeSheet(){
 function askText(o, cb){
   openSheet(`
     <h3>${esc(o.title)}</h3>
-    <input id="askIn" type="text" maxlength="24" placeholder="${esc(o.ph || '')}">
+    <input id="askIn" type="text" maxlength="${o.max || 24}" placeholder="${esc(o.ph || '')}">
     <div class="acts" style="margin-top:14px">
       <button class="btn" id="askNo">やめる</button>
       <button class="btn pri" id="askOk">${esc(o.ok || '決定')}</button>
@@ -1982,6 +2027,42 @@ function saveNow(){
   }catch(e){}
 }
 
+/* 付箋のひとことを書く */
+function askMemo(id, sec){
+  const m = marksOf(id).find(x => x[0] === sec);
+  askText({ title:`${hhmm(sec)} の付箋`, value:(m && m[1]) || '', max:60,
+            ph:'例）ここの話をやってみる', ok:'決定' },
+    v => { setMarkMemo(id, sec, v); drawBody(); });
+}
+
+/* 長い動画の飛び先。目次があるときは目次にまかせる。
+   20分以上のときだけ、5分ごと（30分以上なら10分ごと）に区切る */
+function jumpPoints(id){
+  if(isLoom(id) || chapOf(id).length) return [];
+  const d = (prog[id] && prog[id].d) || 0;
+  if(d < 20 * 60) return [];
+  const step = d >= 30 * 60 ? 600 : 300;
+  const out = [];
+  for(let t = 0; t < d - 60; t += step) out.push(t);
+  return out;
+}
+
+/* 速さを一覧から選ぶ。1回ずつ送るより、2倍速にすぐ行けるように */
+function pickSpeed(cur, done){
+  openSheet(`
+    <h3>再生の速さ</h3>
+    <div class="lead" style="margin:-4px 2px 10px">速さは動画ごとに覚えます。</div>
+    <div class="spds">${SPEEDS.map(v =>
+      `<button class="spd1 ${v === cur ? 'on' : ''}" data-v="${v}">${v}倍</button>`).join('')}</div>
+    <button class="btn" id="spNo" style="margin-top:12px">とじる</button>`,
+  () => {
+    $$('#shin .spd1').forEach(b => b.onclick = () => {
+      closeSheet(); done(+b.dataset.v);
+    });
+    $('#spNo').onclick = closeSheet;
+  });
+}
+
 /* ---------- 再生の操作パネル ---------- */
 function drawCtrl(){
   $('#ctrl').innerHTML = `
@@ -2017,15 +2098,12 @@ function drawCtrl(){
   $('#pp').onclick  = togglePlay;
   $('#b10').onclick = () => jump(-10);
   $('#f10').onclick = () => jump(10);
-  $('#spd').onclick = () => {
-    const now = speedOf(curId);
-    const i = SPEEDS.indexOf(now);
-    const next = SPEEDS[(i < 0 ? SPEEDS.indexOf(1) : i) + 1 >= SPEEDS.length ? 0 : (i < 0 ? SPEEDS.indexOf(1) : i) + 1];
-    setSpeed(curId, next);
-    $('#spd').textContent = next + 'x';
-    toast(`この動画は ${next}倍速`);
+  $('#spd').onclick = () => pickSpeed(speedOf(curId), v => {
+    setSpeed(curId, v);
+    $('#spd').textContent = v + 'x';
+    toast(`この動画は ${v}倍速`);
     showCtrl();
-  };
+  });
   $('#loop').onclick = () => {
     cfg.loop = !cfg.loop; saveCfg();
     $('#loop').classList.toggle('on', cfg.loop);
@@ -2091,6 +2169,14 @@ function drawBody(){
       <button class="btn sm" id="fold">${ICO.folder({s:18})}
         <span>フォルダ${foldCount(v.id) ? `（${foldCount(v.id)}）` : ''}</span></button>
     </div>
+    ${isLoom(v.id) ? '' : `<button class="btn" id="mark" style="margin-top:9px">${ICO.plus({s:18})}
+      <span>いまの場面に付箋をつける</span></button>`}
+    ${marksOf(v.id).length ? `<div class="mks">${marksOf(v.id).map(m => `
+        <div class="mk">
+          <button class="t" data-jump="${m[0]}">${hhmm(m[0])}</button>
+          <button class="m" data-memo="${m[0]}">${m[1] ? esc(m[1]) : '（ひとことを書く）'}</button>
+          <button class="x" data-mkdel="${m[0]}">消す</button>
+        </div>`).join('')}</div>` : ''}
     ${isLoom(v.id) ? '' : `<div class="cnt3">
       <div class="c1">${ICO.check({s:19})}<span>見た回数</span><b>${seenN(v.id)}</b><span>回</span></div>
       <div class="bar"><i style="width:${Math.round(fullPct(v.id)*100)}%"></i></div>
@@ -2108,6 +2194,10 @@ function drawBody(){
       この動画は <b>Loom</b> です。Theater の倍速・つづきから・自動の回数カウントは使えません。
       速さは Loom の画面の中で変えられます。</div>` : ''}
     ${v.d ? `<div class="desc">${esc(v.d)}</div>` : ''}
+    ${jumpPoints(v.id).length ? `<div class="sec"><h2>どこから見る？</h2></div>
+      <div class="lead" style="margin-top:-2px">長い動画なので、区切りごとに飛べるようにしました。</div>
+      <div class="jmp">${jumpPoints(v.id).map(sec =>
+        `<button data-sec="${sec}">${hhmm(sec)}</button>`).join('')}</div>` : ''}
     ${chapOf(v.id).length ? `<div class="sec"><h2>目次（押すとそこへ飛びます）</h2></div>
       <div class="chaps">${chapOf(v.id).map(c =>
         `<button class="chap" data-sec="${c[0]}"><span class="ct">${hhmm(c[0])}</span><span class="cx">${esc(c[1])}</span></button>`).join('')}</div>` : ''}
@@ -2118,6 +2208,23 @@ function drawBody(){
     saveFav(); drawBody(); toast(isFav(v.id) ? '保存しました' : '保存をはずしました');
   };
   $('#fold').onclick = () => pickFolder(v.id, drawBody);
+  if($('#mark')) $('#mark').onclick = () => {
+    let t = 0;
+    try{ t = (player && playerReady) ? (player.getCurrentTime() || 0) : ((prog[v.id] || {}).t || 0); }
+    catch(e){ t = (prog[v.id] || {}).t || 0; }
+    if(!addMark(v.id, t)) return toast('そこにはもう付箋があります');
+    drawBody();
+    toast(`${hhmm(t)} に付箋をつけました`, { label:'ひとこと', fn: () => askMemo(v.id, Math.round(t)) });
+  };
+  $$('#pvbody [data-jump]').forEach(b => b.onclick = () => {
+    const sec = +b.dataset.jump;
+    try{ player.seekTo(sec, true); player.playVideo(); }catch(e){}
+    $('#pv').scrollTop = 0; showCtrl();
+  });
+  $$('#pvbody [data-memo]').forEach(b => b.onclick = () => askMemo(v.id, +b.dataset.memo));
+  $$('#pvbody [data-mkdel]').forEach(b => b.onclick = () => askYes(
+    { title:'この付箋を消しますか？', ok:'消す', danger:true },
+    () => { delMark(v.id, +b.dataset.mkdel); drawBody(); toast('消しました'); }));
   $('#wout').onclick = () => openSheet(`
     <h3>アウトプット</h3>
     <div class="lead" style="margin:-4px 2px 10px;line-height:1.9">

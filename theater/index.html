@@ -270,6 +270,8 @@ main{max-width:680px;margin:0 auto;
   flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px;text-align:center}
 .endcard .ttl{font-size:.94rem;font-weight:700}
 .endcard .row{display:flex;gap:9px;width:100%;max-width:340px}
+.endcard .nxt{color:var(--ink2);font-size:.8rem;max-width:300px;text-align:center;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pvbody{max-width:680px;margin:0 auto;padding:16px 16px calc(30px + env(safe-area-inset-bottom))}
 .pvbody h1{font-size:1.06rem;font-weight:700;line-height:1.55;margin:0 0 8px;letter-spacing:.01em}
 .pvbody .desc{color:var(--ink2);font-size:.88rem;line-height:1.9;white-space:pre-wrap;margin-top:12px}
@@ -455,6 +457,15 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
   width:100%;outline:none;-webkit-appearance:none;appearance:none}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;line-height:1.6}
 /* 速さの選択 */
+/* アウトプットの写真 */
+.opimg{margin-top:9px;border-radius:10px;overflow:hidden;background:var(--surf2)}
+.opimg img{display:block;width:100%;height:auto}
+.opimg .noimg{padding:16px 12px;text-align:center;color:var(--ink3);font-size:.76rem}
+.imgpick{margin-top:10px;display:flex;align-items:center;gap:10px}
+.imgpick .pk{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
+  padding:11px 14px;font-size:.85rem;color:var(--ink2);font-weight:600}
+.imgpick .rm{color:var(--ink3);font-size:.78rem;padding:6px}
+#opPrev img{display:block;width:100%;border-radius:10px;margin-top:10px}
 .spds{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 .spd1{background:var(--surf2);border:1px solid var(--line2);border-radius:11px;
   padding:14px 0;font-weight:700;font-size:.95rem;color:var(--ink2)}
@@ -515,7 +526,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 29;
+const VER = 30;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -592,13 +603,86 @@ const saveProg = () => { localStorage.setItem(K_PROG, JSON.stringify(prog)); sch
 const saveFav  = () => { localStorage.setItem(K_FAV,  JSON.stringify(favs));   schedulePush(); };
 const saveFold = () => { localStorage.setItem(K_FOLD, JSON.stringify(folders)); schedulePush(); };
 const saveOut  = () => { localStorage.setItem(K_OUT,  JSON.stringify(outs));   schedulePush(); };
+/* ---------- アウトプットに貼る写真 ----------
+   写真は大きいので、ほかの記録とは別のところ（IndexedDB）にしまう。
+   **この端末の中だけに残る。** ほかの端末には送っていない（通信量と保管量の都合）。
+   機種変更のときは 設定 →「記録を書き出す」に写真も入るので、それで持っていける。 */
+let _idb = null;
+function idb(){
+  if(_idb) return _idb;
+  _idb = new Promise((res, rej) => {
+    const q = indexedDB.open('theater', 1);
+    q.onupgradeneeded = () => { try{ q.result.createObjectStore('img'); }catch(e){} };
+    q.onsuccess = () => res(q.result);
+    q.onerror  = () => rej(q.error);
+  });
+  return _idb;
+}
+async function imgPut(k, blob){
+  const d = await idb();
+  return new Promise((res, rej) => { const t = d.transaction('img','readwrite');
+    t.objectStore('img').put(blob, k); t.oncomplete = res; t.onerror = () => rej(t.error); });
+}
+async function imgGet(k){
+  try{
+    const d = await idb();
+    return await new Promise(res => { const t = d.transaction('img','readonly');
+      const q = t.objectStore('img').get(k);
+      q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); });
+  }catch(e){ return null; }
+}
+async function imgDel(k){
+  try{
+    const d = await idb();
+    await new Promise(res => { const t = d.transaction('img','readwrite');
+      t.objectStore('img').delete(k); t.oncomplete = res; t.onerror = res; });
+  }catch(e){}
+}
+
+/* 写真は そのままだと大きすぎるので、長辺1400pxのJPEGに直してからしまう */
+function shrinkImg(file){
+  return new Promise((res, rej) => {
+    const u = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 1400 / Math.max(im.width, im.height));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(im.width * k));
+      c.height = Math.max(1, Math.round(im.height * k));
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(u);
+      c.toBlob(b => b ? res(b) : rej(new Error('bad')), 'image/jpeg', 0.82);
+    };
+    im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('bad')); };
+    im.src = u;
+  });
+}
+
+/* 画面に出ている <img data-img="..."> に、しまってある写真をあてる */
+function paintImgs(root){
+  $$((root || '') + ' [data-img]').forEach(async el => {
+    if(el.dataset.done) return;
+    el.dataset.done = '1';
+    const b = await imgGet(el.dataset.img);
+    if(b) el.src = URL.createObjectURL(b);
+    else{
+      const box = el.closest('.opimg');
+      if(box) box.innerHTML = '<div class="noimg">写真はこの端末にはありません</div>';
+    }
+  });
+}
+
 const outOf    = id => outs[id] || [];
-function addOut(id, text){
-  (outs[id] || (outs[id] = [])).unshift({ at:now(), t:String(text).trim().slice(0,2000) });
+function addOut(id, text, im){
+  const e = { at:now(), t:String(text).trim().slice(0,2000) };
+  if(im) e.im = im;
+  (outs[id] || (outs[id] = [])).unshift(e);
   saveOut();
 }
 function delOut(id, i){
   if(!outs[id]) return;
+  const e = outs[id][i];
+  if(e && e.im) imgDel(e.im);
   outs[id].splice(i,1);
   if(!outs[id].length) delete outs[id];
   saveOut();
@@ -1340,6 +1424,7 @@ function vLv(){
       return `<div class="opc">
         <div class="oph">${v ? esc(v.t) : '（見つかりません）'}</div>
         <div class="opt">${esc(x.o.t)}</div>
+        ${x.o.im ? `<div class="opimg"><img data-img="${esc(x.o.im)}" alt=""></div>` : ''}
         <div class="opf"><span>${new Date(x.o.at).toLocaleDateString('ja-JP')}</span>
           <button class="opdel" data-od="${esc(x.id)}" data-oi="${x.i}">消す</button></div>
       </div>`; }).join('')
@@ -1362,6 +1447,7 @@ function vLv(){
         <button class="btn" id="opTaC" style="margin-top:10px">とじる</button>`,
         () => { $('#opTa').value = txt; $('#opTa').select(); $('#opTaC').onclick = closeSheet; }));
   };
+  paintImgs('#main');
   $$('#main .opdel').forEach(b => b.onclick = () => askYes(
     { title:'このアウトプットを消しますか？', ok:'消す', danger:true },
     () => { delOut(b.dataset.od, +b.dataset.oi); vLv(); toast('消しました'); }));
@@ -1720,17 +1806,40 @@ function backupData(){
   return { app:'Theater', v:VER, at:new Date().toISOString(),
            prog, favs, folders, cfg, outs };
 }
+/* 機種変更で写真も持っていけるように、書き出しには写真も入れる */
+const blobToURL = b => new Promise(res => {
+  const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => res(''); r.readAsDataURL(b); });
+function urlToBlob(u){
+  const [h, b] = String(u).split(',');
+  const mime = (h.match(/:(.*?);/) || [])[1] || 'image/jpeg';
+  const bin = atob(b || ''); const a = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return new Blob([a], { type:mime });
+}
+async function backupFull(){
+  const j = backupData();
+  const keys = [];
+  Object.keys(outs).forEach(id => (outs[id] || []).forEach(o => { if(o.im) keys.push(o.im); }));
+  const imgs = {};
+  for(const k of keys){
+    const b = await imgGet(k);
+    if(b){ const u = await blobToURL(b); if(u) imgs[k] = u; }
+  }
+  if(Object.keys(imgs).length) j.imgs = imgs;
+  return j;
+}
 function backupName(){
   const d = new Date();
   const p = n => String(n).padStart(2,'0');
   return `theater-kiroku-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}.json`;
 }
-function doExport(){
-  const txt = JSON.stringify(backupData());
+async function doExport(){
+  toast('まとめています…');
+  const txt = JSON.stringify(await backupFull());
   openSheet(`
     <h3>記録を書き出す</h3>
     <div class="lead" style="margin:-4px 2px 10px;line-height:1.9">
-      見た回数・フォルダ・保存を1つのファイルにまとめます。<br>
+      見た回数・フォルダ・保存・アウトプット（写真もふくむ）を1つのファイルにまとめます。<br>
       スマホを買いかえる前に書き出して、新しい端末で読みこんでください。</div>
     <button class="btn pri" id="exDl">ファイルに保存する</button>
     <button class="btn" id="exCp" style="margin-top:9px">文字でコピーする</button>
@@ -1760,8 +1869,13 @@ function doExport(){
     $('#exNo').onclick = closeSheet;
   });
 }
-function applyBackup(j){
+async function applyBackup(j){
   if(!j || typeof j !== 'object' || !j.prog) throw new Error('形式が違います');
+  if(j.imgs && typeof j.imgs === 'object'){
+    for(const k of Object.keys(j.imgs)){
+      try{ await imgPut(k, urlToBlob(j.imgs[k])); }catch(e){}
+    }
+  }
   prog = j.prog || {};
   favs = Array.isArray(j.favs) ? j.favs : [];
   folders = Array.isArray(j.folders) ? j.folders : [];
@@ -1783,9 +1897,9 @@ function doImport(){
       <button class="btn pri" id="imOk">読みこむ</button>
     </div>`,
   () => {
-    const load = txt => {
+    const load = async txt => {
       try{
-        applyBackup(JSON.parse(txt));
+        await applyBackup(JSON.parse(txt));
         closeSheet(); render(); toast('読みこみました');
       }catch(e){ toast('読みこめませんでした（ファイルを確認してください）'); }
     };
@@ -1896,6 +2010,7 @@ function openPlay(id, push){
   $('#scrim').classList.add('hidden');
   $('#scrimimg').src = isLoom(id) ? '' : `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
   $('#phint').classList.add('hidden');
+  stopCount();
   $('#endcard').classList.add('hidden');
   $('#ctrl').classList.add('fade');
   drawCtrl(); drawBody();
@@ -1976,17 +2091,35 @@ function onEnded(){
     return;
   }
   const nx = nextVideo();
-  if(cfg.autonext && nx){ openPlay(nx.id); toast('次の動画へ'); return; }
+  /* すぐ次に飛ばさない。数えてから進むので、止める間ができる */
+  const auto = !!(cfg.autonext && nx);
   $('#endcard').innerHTML = `<div class="ttl">見終わりました</div>
+    ${nx ? `<div class="nxt">つぎ：${esc(nx.t)}</div>` : ''}
     <div class="row">
       <button class="btn sm" id="again">もう一度</button>
-      ${nx ? `<button class="btn sm pri" id="next">次の動画</button>` : ''}
-    </div>`;
+      ${nx ? `<button class="btn sm pri" id="next">次の動画${auto ? '（<span id="cd">5</span>）' : ''}</button>` : ''}
+    </div>
+    ${auto ? `<button class="btn sm" id="stopauto" style="margin-top:9px">自動で進むのをやめる</button>` : ''}`;
   $('#endcard').classList.remove('hidden');
-  $('#again').onclick = () => { $('#endcard').classList.add('hidden');
+  $('#again').onclick = () => { stopCount(); $('#endcard').classList.add('hidden');
     try{ player.seekTo(0,true); player.playVideo(); }catch(e){} };
-  if(nx) $('#next').onclick = () => openPlay(nx.id);
+  if(nx) $('#next').onclick = () => { stopCount(); openPlay(nx.id); };
+  if(auto){
+    let left = 5;
+    stopCount();
+    nextT = setInterval(() => {
+      left--;
+      const el = $('#cd'); if(el) el.textContent = left;
+      if(left <= 0){ stopCount(); openPlay(nx.id); }
+    }, 1000);
+    $('#stopauto').onclick = () => {
+      stopCount(); cfg.autonext = false; saveCfg(); onEnded();
+      toast('自動で進むのをやめました（設定で戻せます）');
+    };
+  }
 }
+let nextT = null;
+function stopCount(){ if(nextT){ clearInterval(nextT); nextT = null; } }
 /* 次の動画 = 同じカテゴリの、ひとつ下（古い方）。なければ全体のつぎ */
 function nextVideo(){
   const v = vid(curId); if(!v) return null;
@@ -2187,6 +2320,7 @@ function drawBody(){
     <button class="btn" id="wout">${ICO.pencil({s:18})}<span>アウトプットを書く（＋${EXP_OUT}）</span></button>
     ${outOf(v.id).map((o,i) => `<div class="opc" style="margin-top:10px">
         <div class="opt">${esc(o.t)}</div>
+        ${o.im ? `<div class="opimg"><img data-img="${esc(o.im)}" alt=""></div>` : ''}
         <div class="opf"><span>${new Date(o.at).toLocaleDateString('ja-JP')}</span>
           <button class="opdel" data-oi="${i}">消す</button></div>
       </div>`).join('')}
@@ -2231,26 +2365,51 @@ function drawBody(){
       この動画で気づいたこと、やってみることを書きましょう。<br>
       書くと レベルが ＋${EXP_OUT}（1本の動画につき1回ぶん）。</div>
     <textarea id="opIn" placeholder="例）今日から寝る前に10分だけ暗記をやる" style="min-height:150px"></textarea>
+    <div class="imgpick">
+      <label class="pk" for="opFile">写真をえらぶ</label>
+      <input type="file" id="opFile" accept="image/*" class="hidden">
+      <button class="rm hidden" id="opRm">はずす</button>
+    </div>
+    <div id="opPrev"></div>
+    <div class="lead" style="margin-top:8px">写真はこの端末の中だけに残ります。ほかの端末には出ません。</div>
     <div class="acts" style="margin-top:12px">
       <button class="btn" id="opNo">やめる</button>
       <button class="btn pri" id="opOk">書きこむ</button>
     </div>`, () => {
     setTimeout(() => { try{ $('#opIn').focus(); }catch(e){} }, 80);
-    $('#opOk').onclick = () => {
+    let pick = null;
+    $('#opFile').onchange = async e => {
+      const f = e.target.files && e.target.files[0]; if(!f) return;
+      try{
+        pick = await shrinkImg(f);
+        $('#opPrev').innerHTML = '<img alt="">';
+        $('#opPrev img').src = URL.createObjectURL(pick);
+        $('#opRm').classList.remove('hidden');
+      }catch(err){ pick = null; toast('この写真は読みこめませんでした'); }
+    };
+    $('#opRm').onclick = () => { pick = null; $('#opPrev').innerHTML = '';
+      $('#opFile').value = ''; $('#opRm').classList.add('hidden'); };
+    $('#opOk').onclick = async () => {
       const t = $('#opIn').value.trim();
       if(t.length < 5) return toast('もう少し くわしく書いてください');
-      addOut(v.id, t); closeSheet(); drawBody(); toast('書きました');
+      let key = '';
+      if(pick){
+        key = 'im' + now() + Math.floor(Math.random() * 1000);
+        try{ await imgPut(key, pick); }catch(e){ key = ''; toast('写真は保存できませんでした'); }
+      }
+      addOut(v.id, t, key); closeSheet(); drawBody(); toast('書きました');
     };
     $('#opNo').onclick = closeSheet;
   });
   $$('#pvbody .opdel').forEach(b => b.onclick = () => askYes(
     { title:'このアウトプットを消しますか？', ok:'消す', danger:true },
     () => { delOut(v.id, +b.dataset.oi); drawBody(); toast('消しました'); }));
-  $$('#pvbody .chap').forEach(b => b.onclick = () => {
+  $$('#pvbody .chap, #pvbody .jmp button').forEach(b => b.onclick = () => {
     const sec = +b.dataset.sec;
     try{ player.seekTo(sec, true); player.playVideo(); }catch(e){}
     $('#pv').scrollTop = 0; showCtrl();
   });
+  paintImgs('#pvbody');
 
 
 }

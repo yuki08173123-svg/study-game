@@ -163,6 +163,38 @@ header.app{position:sticky; top:0; z-index:30; background:var(--bg); padding:cal
 .varbtn{border:1px solid var(--line); background:var(--card); border-radius:11px; padding:9px 12px; font-size:13px; font-weight:800;}
 .varbtn.on{background:var(--accent); color:var(--accent-ink); border-color:transparent;}
 
+/* ==== 表（スプレッドシート風） ==== */
+.tscroll{overflow-x:auto; -webkit-overflow-scrolling:touch; background:var(--card); border:1px solid var(--line);
+  border-radius:14px; box-shadow:var(--shadow); margin-bottom:12px;}
+table.plan{border-collapse:separate; border-spacing:0; width:max-content; min-width:100%; font-size:13px;}
+table.plan th, table.plan td{border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:7px 9px; text-align:center; white-space:nowrap;}
+table.plan tr > *:last-child{border-right:none;}
+table.plan tbody tr:last-child > *{border-bottom:none;}
+table.plan th{background:var(--chip); font-weight:900; font-size:12px; color:var(--muted);}
+table.plan th.rnd{background:var(--accent-soft); color:var(--accent); font-size:13.5px; text-align:left; padding-left:12px;}
+table.plan th.rnd.solo{position:sticky; left:0;}
+table.plan tr.sub th{font-size:11px;}
+table.plan td.d{color:var(--muted); font-weight:800; font-size:12px; font-variant-numeric:tabular-nums; background:var(--bg);}
+table.plan td.t{font-weight:700;}
+table.plan td.now{background:var(--accent); color:var(--accent-ink); font-weight:900;}
+table.plan td.past{color:var(--muted); opacity:.72;}
+table.plan td.ft, table.plan th.ft{color:var(--muted); font-size:11px; font-weight:800; background:var(--bg);}
+.tcap{font-size:12px; font-weight:800; color:var(--muted); margin:2px 4px 6px;}
+
+/* 全体計画の表 */
+table.plan.ovw td, table.plan.ovw th{text-align:left;}
+table.plan.ovw .nm{position:sticky; left:0; z-index:1; background:var(--card); font-weight:900; font-size:13.5px;
+  box-shadow:1px 0 0 var(--line); white-space:normal; min-width:126px; max-width:150px; line-height:1.4;}
+table.plan.ovw th.nm{background:var(--chip); z-index:3;}
+table.plan.ovw .nm i{font-style:normal; color:var(--muted); margin-left:8px; font-weight:700;}
+table.plan.ovw td:nth-child(2){white-space:normal; min-width:98px; max-width:132px; line-height:1.45;}
+table.plan.ovw .memo{white-space:normal; min-width:190px; max-width:250px; font-size:12px; color:var(--muted); font-weight:600; line-height:1.55;}
+table.plan.ovw tr.grade td{background:var(--bg); font-size:12px; font-weight:900; color:var(--muted); position:static; box-shadow:none;}
+table.plan.ovw tr.tap{cursor:pointer;}
+table.plan.ovw tr.tap:active td{background:var(--accent-soft);}
+table.plan.ovw tr.plain td{color:var(--muted); font-weight:700;}
+table.plan.ovw tr.plain .nm{font-weight:700; color:var(--muted);}
+
 .roundhead{display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:11px 4px; border-bottom:1px solid var(--line); font-size:14px; font-weight:900;}
 .roundhead .cnt{font-size:11px; font-weight:700; color:var(--muted);}
 .roundhead .sp{flex:1;}
@@ -234,7 +266,7 @@ header.app{position:sticky; top:0; z-index:30; background:var(--bg); padding:cal
 
 <script src="data.js"></script>
 <script>
-const VER = 1;
+const VER = 2;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
 
@@ -252,21 +284,22 @@ function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} 
 const BOOKS = {}; ROUTE.books.forEach(b => BOOKS[b.id] = b);
 function bookOf(id){ return BOOKS[id]; }
 function variantOf(b, vi){ return (b.variants && b.variants.length) ? b.variants[Math.min(vi||0, b.variants.length-1)] : null; }
-function totalDays(v){ return v ? v.runs.reduce((m,r)=>Math.max(m, r.b), 0) : 0; }
-function entryAt(v, day){
-  if(!v) return null;
-  for(const r of v.runs) if(day >= r.a && day <= r.b) return r;
-  return null;
+/* 表（secs）から「N日目 → やる範囲・何周目」の早見表をつくる */
+function buildIndex(v){
+  if(v._i) return v._i;
+  const idx = {}; let max = 0;
+  v.secs.forEach(s => s.rows.forEach(row => row.forEach((c, ci) => {
+    if(!c) return;
+    let lab = '';
+    s.heads.forEach(hd => { if(ci >= hd.i && ci < hd.i + hd.n) lab = hd.l; });
+    idx[c[0]] = { t: c[1], r: lab };
+    if(c[0] > max) max = c[0];
+  })));
+  v._i = idx; v._max = max;
+  return idx;
 }
-function roundsOf(v){
-  const out = [];
-  for(const r of v.runs){
-    const label = (r.r || '') + (r.s ? ' / ' + r.s : '');
-    if(!out.length || out[out.length-1].label !== label) out.push({label, a:r.a, b:r.b, runs:[r]});
-    else { const g = out[out.length-1]; g.b = Math.max(g.b, r.b); g.runs.push(r); }
-  }
-  return out;
-}
+function totalDays(v){ if(!v) return 0; buildIndex(v); return v._max; }
+function entryAt(v, day){ return v ? (buildIndex(v)[day] || null) : null; }
 function bookMeta(id){
   for(const s of ROUTE.plan) for(const r of s.rows) if(r.id === id) return r;
   return null;
@@ -417,39 +450,39 @@ function viewRoute(){
   ROUTE.plan.forEach(sec => {
     const cls = SUBJ_CLASS[sec.subject] || '';
     h += '<div class="sec-title"><span class="chip '+cls+'">'+esc(sec.subject)+'</span></div>';
-    h += '<div class="card">';
+    h += '<div class="tscroll"><table class="plan ovw"><thead><tr>'
+      + '<th class="nm">使用問題集</th><th>月</th><th>期間</th><th>周回数</th><th class="memo">メモ</th>'
+      + '</tr></thead><tbody>';
     let grade = null;
-    sec.rows.forEach((r, i) => {
-      if(r.grade && r.grade !== grade){ grade = r.grade; h += '<div class="gradehead">▼ '+esc(grade)+'</div>'; }
-      h += planRow(r, i);
+    sec.rows.forEach(r => {
+      if(r.grade && r.grade !== grade){
+        grade = r.grade;
+        h += '<tr class="grade"><td class="nm" colspan="5">▼ '+esc(grade)+'</td></tr>';
+      }
+      h += planRow(r);
     });
-    h += '</div>';
+    h += '</tbody></table></div>';
   });
   h += '<div class="sec-title">そのほかの計画表</div>';
-  h += '<div class="lead">全体計画には出ていませんが、スプレッドシートに計画表があるものです。</div><div class="card">';
+  h += '<div class="lead">全体計画には出ていませんが、スプレッドシートに計画表があるものです。</div>';
+  h += '<div class="tscroll"><table class="plan ovw"><thead><tr>'
+    + '<th class="nm">使用問題集</th><th>期間</th></tr></thead><tbody>';
   ['nyumon_ia','nyumon_iib','kichart_ia','kichart_iib'].forEach(id => {
     const b = bookOf(id); if(!b) return;
-    h += '<button class="rowitem'+(S.active[id]?' running':'')+'" onclick="openBook(\''+id+'\')">'
-      + '<span class="no">'+(SUBJ_CLASS[b.subject]==='math'?'数':'')+'</span>'
-      + '<span class="tx"><b>'+(S.active[id]?'<span class="dot"></span>':'')+esc(shortTitle(b.title))+'</b>'
-      + '<span>'+esc(spanOf(b.title))+'</span></span><span class="go">›</span></button>';
+    h += '<tr class="tap" onclick="openBook(\''+id+'\')"><td class="nm">'
+      + (S.active[id] ? '<span class="dot"></span>' : '') + esc(shortTitle(b.title)) + '<i>›</i></td>'
+      + '<td>'+esc(spanOf(b.title))+'</td></tr>';
   });
-  h += '</div>';
+  h += '</tbody></table></div>';
   return h;
 }
-function planRow(r, i){
-  const b = r.id ? bookOf(r.id) : null;
+function planRow(r){
   const memo = (r.memo || []).filter(x => x && x !== r.name).join('　/　');
-  const sub = [r.month, r.span, r.rounds].filter(x => x && x !== 'ー').join('　・　');
-  if(!b){
-    return '<div class="rowitem plain"><span class="no">–</span><span class="tx"><b>'+esc(r.name)+'</b>'
-      + (sub ? '<span>'+esc(sub)+'</span>' : '') + (memo ? '<em>'+esc(memo)+'</em>' : '') + '</span></div>';
-  }
-  return '<button class="rowitem'+(S.active[r.id]?' running':'')+'" onclick="openBook(\''+r.id+'\')">'
-    + '<span class="no">'+(i+1)+'</span>'
-    + '<span class="tx"><b>'+(S.active[r.id]?'<span class="dot"></span>':'')+esc(r.name)+'</b>'
-    + (sub ? '<span>'+esc(sub)+'</span>' : '') + (memo ? '<em>'+esc(memo)+'</em>' : '') + '</span>'
-    + '<span class="go">›</span></button>';
+  const cel = x => '<td>'+esc(x && x !== 'ー' ? x : '')+'</td>';
+  const nm = (S.active[r.id] ? '<span class="dot"></span>' : '') + esc(r.name) + (r.id ? '<i>›</i>' : '');
+  return '<tr class="'+(r.id ? 'tap' : 'plain')+'"'+(r.id ? ' onclick="openBook(\''+r.id+'\')"' : '')+'>'
+    + '<td class="nm">'+nm+'</td>' + cel(r.month) + cel(r.span) + cel(r.rounds)
+    + '<td class="memo">'+esc(memo)+'</td></tr>';
 }
 
 /* ===== 鉄則 ===== */
@@ -546,7 +579,8 @@ function renderSheetBook(id){
       const pct = Math.round((st.day - 1) / tot * 100);
       h += '<div class="bar" style="margin-top:12px"><i style="width:'+pct+'%"></i></div>';
       h += '<div class="meta"><span class="num">いま '+st.day+'日目 / 全'+tot+'日</span><span class="num">'+pct+'%</span></div>';
-      h += '<div class="btnrow"><button class="btn ghost" onclick="stop(\''+id+'\');closeSheet()">今日タブからはずす</button></div>';
+      h += '<div class="btnrow"><button class="btn" onclick="jumpToNow()">いまの日へ</button>'
+        + '<button class="btn ghost" onclick="stop(\''+id+'\');closeSheet()">今日タブからはずす</button></div>';
     }else{
       h += '<div class="lead" style="padding:8px 0 0">全'+tot+'日の計画です。</div>';
       h += '<div class="btnrow"><button class="btn primary" onclick="start(\''+id+'\','+vi+')">これを始める</button></div>';
@@ -563,29 +597,58 @@ function renderSheetBook(id){
   if(v){
     h += '<div class="sec-title" style="margin-top:6px">日ごとの計画表</div>';
     h += '<div class="lead">日づけではなく「1日目、2日目…」で進みます。できない日があってもズレません。'
-      + (S.active[id] ? '<br>日をタップすると、その日にジャンプできます。' : '') + '</div>';
-    const groups = roundsOf(v);
-    const cur = S.active[id] ? S.active[id].day : 0;
-    h += '<div class="card">';
-    groups.forEach((g, gi) => {
-      const open = (cur >= g.a && cur <= g.b) || (!cur && gi === 0);
-      h += '<button class="roundhead" onclick="tg(this)"><span>'+esc(g.label || '計画')+'</span><span class="sp"></span>'
-        + '<span class="cnt num">'+g.a+'〜'+g.b+'日目</span><span class="go" style="margin-left:8px">'+(open?'▾':'▸')+'</span></button>';
-      h += '<div class="rgroup'+(open?'':' hidden')+'">';
-      g.runs.forEach(r => {
-        for(let d = r.a; d <= r.b; d++){
-          const c = d === cur ? ' now' : (cur && d < cur ? ' past' : '');
-          h += '<div class="dayline'+c+'"'+(S.active[id]?' onclick="setDay(\''+id+'\','+d+')"':'')+'>'
-            + '<span class="d num">'+d+'日目</span><span class="t">'+esc(r.t)+'</span></div>';
-        }
-      });
-      h += '</div>';
-    });
-    h += '</div>';
+      + '<br>表は横にスワイプすると続きが見られます。'
+      + (S.active[id] ? '<br>マスをタップすると、その日にジャンプできます。' : '') + '</div>';
+    h += planTables(id, v);
   }
   document.getElementById('sheetTitle').innerHTML = esc(shortTitle(b.title));
   document.getElementById('sheetBody').innerHTML = h;
   document.getElementById('sheetBody').scrollTop = 0;
+  jumpToNow();
+}
+
+/* いま何日目かのマスまでスクロールする */
+function jumpToNow(){
+  const now = document.getElementById('nowcell');
+  if(!now) return;
+  const box = document.getElementById('sheetBody');
+  setTimeout(() => {
+    const sc = now.closest('.tscroll');
+    if(sc) sc.scrollLeft = Math.max(0, now.offsetLeft - 70);
+    box.scrollTop = Math.max(0, now.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 170);
+  }, 80);
+}
+
+/* 元のスプレッドシートと同じ「表」で計画を描く */
+function planTables(id, v){
+  const cur = S.active[id] ? S.active[id].day : 0;
+  const tap = !!S.active[id];
+  let h = '';
+  v.secs.forEach(s => {
+    if(s.cap) h += '<div class="tcap">'+esc(s.cap)+'</div>';
+    h += '<div class="tscroll"><table class="plan"><thead><tr>';
+    const solo = s.heads.length === 1 ? ' solo' : '';
+    if(s.heads.length) s.heads.forEach(hd => { h += '<th colspan="'+(hd.n*2)+'" class="rnd'+solo+'">'+esc(hd.l)+'</th>'; });
+    else h += '<th colspan="'+(s.cols*2)+'" class="rnd solo">計画</th>';
+    if(s.foots) h += '<th class="ft"></th>';
+    h += '</tr><tr class="sub">';
+    for(let i = 0; i < s.cols; i++) h += '<th>日</th><th>やる範囲</th>';
+    if(s.foots) h += '<th></th>';
+    h += '</tr></thead><tbody>';
+    s.rows.forEach((row, ri) => {
+      h += '<tr>';
+      row.forEach(c => {
+        if(!c){ h += '<td class="d"></td><td class="t"></td>'; return; }
+        const k = c[0] === cur ? ' now' : (cur && c[0] < cur ? ' past' : '');
+        const at = (tap ? ' onclick="setDay(\''+id+'\','+c[0]+')"' : '') + (c[0] === cur ? ' id="nowcell"' : '');
+        h += '<td class="d'+k+'"'+at+'>'+c[0]+'</td><td class="t'+k+'"'+at+'>'+esc(c[1])+'</td>';
+      });
+      if(s.foots) h += '<td class="ft">'+esc(s.foots[ri] || '')+'</td>';
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>';
+  });
+  return h;
 }
 function pickVar(id, i){
   if(S.active[id]){ S.active[id].v = i; S.active[id].day = 1; save(); render(); }

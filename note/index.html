@@ -85,7 +85,9 @@ main{max-width:620px;margin:0 auto;padding:4px 18px calc(var(--tabh) + 48px + en
 .rrow{display:flex;align-items:center;gap:12px;padding:13px 14px;height:58px;position:relative;
   background:var(--surf);transition:transform .18s cubic-bezier(.2,.9,.3,1)}
 .rrow + .rrow::before{content:'';position:absolute;left:51px;right:0;top:0;height:1px;background:var(--line)}
-.rrow .nm{flex:1;font-size:.97rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow .nm{flex:1;font-size:.97rem;font-weight:600;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;padding:10px 0;margin:-10px 0;text-decoration:underline;
+  text-decoration-color:var(--line2);text-underline-offset:4px}
 .rrow .ct{font-size:.82rem;color:var(--ink3)}
 .grip{width:42px;height:42px;margin-right:-8px;color:var(--ink3);display:flex;
   align-items:center;justify-content:center;touch-action:none;cursor:grab}
@@ -103,12 +105,21 @@ main{max-width:620px;margin:0 auto;padding:4px 18px calc(var(--tabh) + 48px + en
 .item .ct{font-size:.84rem;color:var(--ink3);font-variant-numeric:tabular-nums;letter-spacing:.03em}
 .item .chev{color:var(--ink3);opacity:.55}
 .item .ic{width:26px;display:flex;justify-content:center;color:var(--ink2)}
+.item .pill{flex:none;padding:7px 14px}
 
 /* ---------- メモカード ---------- */
 .ncard{display:block;width:100%;text-align:left;background:var(--surf);
   border:1px solid var(--line);border-radius:var(--r);padding:16px 17px;margin-bottom:11px;
   box-shadow:var(--shadow);transition:transform .12s,box-shadow .12s;position:relative;cursor:pointer}
 .ncard:active{transform:scale(.995);box-shadow:none}
+.ncard.picked{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.chk{position:absolute;top:13px;right:13px;width:24px;height:24px;border-radius:50%;
+  border:1.5px solid var(--line2);display:flex;align-items:center;justify-content:center;color:var(--on-pri)}
+.chk.on{background:var(--pri);border-color:var(--pri)}
+.selbar{position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:620px;z-index:46;
+  bottom:calc(var(--tabh) + env(safe-area-inset-bottom));background:var(--bg);
+  border-top:1px solid var(--line);padding:12px 16px 14px}
+.selbar .btn[disabled]{opacity:.45}
 .starbtn{position:absolute;top:6px;right:6px;width:38px;height:38px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;color:var(--line2);z-index:2}
 .starbtn.on{color:var(--gold)}
@@ -167,6 +178,12 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .seg button{flex:1;padding:9px 4px;border-radius:10px;font-size:.82rem;font-weight:600;
   color:var(--ink2);letter-spacing:.02em;transition:.15s}
 .seg button.on{background:var(--surf);color:var(--ink);font-weight:700;box-shadow:var(--shadow)}
+.stepper{display:flex;align-items:center;gap:9px;background:var(--surf2);border-radius:13px;padding:6px}
+.stepper .rnd{width:42px;height:40px;border-radius:10px;background:var(--surf);box-shadow:var(--shadow);
+  font-size:1.15rem;font-weight:700;display:flex;align-items:center;justify-content:center;color:var(--ink2)}
+.stepper .rnd:active{opacity:.5}
+.stepper b{flex:1;text-align:center;font-family:var(--serif);font-size:1.18rem;letter-spacing:.04em}
+.stepper .pill{background:var(--surf)}
 
 /* ---------- FAB ---------- */
 #fab{position:fixed;right:20px;z-index:45;
@@ -194,6 +211,11 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .thumb .x{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;
   background:rgba(15,16,20,.72);color:#fff;display:flex;align-items:center;justify-content:center}
+.thumb .side{position:absolute;left:3px;bottom:3px;padding:2px 9px;border-radius:999px;
+  background:rgba(15,16,20,.72);color:#fff;font-size:.68rem;font-weight:800}
+.thumb.isback{outline:2px solid var(--pri);outline-offset:-2px}
+.thumb.isback .side{background:var(--pri);color:var(--on-pri)}
+.backlabel{font-size:.72rem;font-weight:700;color:var(--ink3);letter-spacing:.08em;margin:18px 2px -6px}
 .pics{margin-top:18px}
 .pics.one .bigpic{border-radius:13px;overflow:hidden;background:var(--surf2);border:1px solid var(--line)}
 .pics.one img{width:100%;max-height:58vh;object-fit:contain;display:block}
@@ -274,6 +296,12 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .stat b{display:block;font-family:var(--serif);font-size:1.5rem;font-weight:600;letter-spacing:.02em;
   line-height:1.4;font-variant-numeric:tabular-nums}
 .stat span{font-size:.67rem;color:var(--ink3);font-weight:600;letter-spacing:.06em}
+.warn{background:var(--gold-soft);border:1px solid var(--gold);border-radius:var(--r);
+  padding:16px 17px;margin-top:22px}
+.warn .wtxt b{font-size:.95rem;font-weight:700;color:var(--ink)}
+.warn .wtxt div{font-size:.85rem;color:var(--ink2);line-height:1.8;margin-top:3px}
+.warn .wact{display:flex;gap:8px;margin-top:13px}
+.warn .pill{background:var(--surf)}
 .empty{text-align:center;color:var(--ink3);padding:66px 24px;font-size:.89rem;line-height:2.1}
 .empty svg{margin:0 auto 14px;opacity:.35}
 .note-txt{font-size:.83rem;color:var(--ink2);line-height:2}
@@ -285,6 +313,8 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
   font-weight:700;font-size:.85rem;letter-spacing:.04em;box-shadow:var(--shadow-lift);
   opacity:0;transition:.22s;pointer-events:none}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(-8px)}
+.tact{margin-left:14px;color:var(--bg);font-weight:800;font-size:.85rem;
+  text-decoration:underline;text-underline-offset:3px}
 
 /* ---------- ボトムシート ---------- */
 .scrim{position:fixed;inset:0;z-index:150;background:rgba(14,15,18,.42);
@@ -335,7 +365,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 14;
+const VER = 15;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -375,7 +405,7 @@ const ICO = {
 
 /* ===================== データ ===================== */
 let notes = [], folders = [], cfg = {};
-let S = { screen:'home', fid:null, sub:'', nid:null, editId:null, q:'', sort:'new', view:'list' };
+let S = { screen:'home', fid:null, sub:'', nid:null, editId:null, q:'', sort:'new', view:'list', sel:null };
 
 const now = () => Date.now();
 const uid = p => (p||'n') + now().toString(36) + Math.random().toString(36).slice(2,7);
@@ -433,9 +463,14 @@ function fmtDate(ms){
 const daysAgo = ms => Math.floor((now() - ms) / 86400000);
 
 let toastT = null;
-function toast(msg){
-  const el = $('#toast'); el.textContent = msg; el.classList.add('on');
-  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2000);
+function toast(msg, action, fn){
+  const el = $('#toast');
+  el.innerHTML = esc(msg) + (action ? `<button class="tact">${esc(action)}</button>` : '');
+  el.classList.add('on');
+  el.style.pointerEvents = action ? 'auto' : 'none';
+  if(action) el.querySelector('.tact').onclick = () => { el.classList.remove('on'); el.style.pointerEvents = 'none'; fn(); };
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { el.classList.remove('on'); el.style.pointerEvents = 'none'; }, action ? 6000 : 2000);
 }
 
 /* ===================== 写真（IndexedDB） ===================== */
@@ -495,6 +530,12 @@ const picsHtml = ids => !ids || !ids.length ? '' : (ids.length === 1
 const thumbsHtml = (ids, rm) => (ids||[]).map(id =>
   `<div class="thumb" data-t="${id}"><img data-img="${id}" alt="">${rm ? `<button class="x" data-rm="${id}">${ICO.x({s:13,w:2.4})}</button>` : ''}</div>`).join('');
 
+const draftThumbs = () => draft.map(d =>
+  `<div class="thumb ${d.back?'isback':''}" data-t="${d.id}"><img data-img="${d.id}" alt="">
+    <button class="x" data-rm="${d.id}">${ICO.x({s:13,w:2.4})}</button>
+    <button class="side" data-flip="${d.id}">${d.back ? '裏' : '表'}</button>
+  </div>`).join('');
+
 async function shrink(file){
   const MAX = 1600;
   let src = null, w = 0, h = 0, bmp = null, tmp = '';
@@ -519,7 +560,7 @@ async function sweepImgs(){
   try{
     const keys = await tx_('readonly', st => st.getAllKeys()) || [];
     const used = new Set();
-    notes.forEach(n => (n.imgs||[]).forEach(i => used.add(i)));
+    notes.forEach(n => (n.imgs||[]).forEach(i => used.add(i)));  // ゴミ箱の中の写真も残す
     draft.forEach(d => used.add(d.id));
     for(const k of keys) if(!used.has(k)) await delImg(k);
   }catch(e){}
@@ -576,6 +617,7 @@ function bar(left, title, right, big){
 const btnBack = (lbl) => `<button class="tbtn" data-back>${ICO.left({s:20,w:2.1})}${lbl?`<span>${lbl}</span>`:''}</button>`;
 
 function go(screen, opt){
+  if(screen !== 'list') S.sel = null;
   Object.assign(S, { screen }, opt || {});
   window.scrollTo(0,0);
   render();
@@ -583,7 +625,7 @@ function go(screen, opt){
 function render(){
   const r = { home:renderHome, list:renderList, note:renderNote, write:renderWrite, review:renderReview, set:renderSet }[S.screen];
   r();
-  $('#fab').classList.toggle('hidden', !(S.screen === 'home' || S.screen === 'list'));
+  $('#fab').classList.toggle('hidden', !(S.screen === 'home' || S.screen === 'list') || !!S.sel);
   $('#tabs').classList.toggle('hidden', S.screen === 'write');
   document.documentElement.style.setProperty('--tabh', S.screen === 'write' ? '0px' : '58px');
   $$('#tabin .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tabOf(S.screen)));
@@ -617,13 +659,14 @@ function renderHome(){
     </div>
     <div class="labelrow">
       <div class="label">フォルダ</div>
-      ${folders.length > 1 ? `<button class="linkbtn" data-reorder>並べ替え</button>` : ''}
+      ${topFolders().length ? `<button class="linkbtn" data-reorder>整理</button>` : ''}
     </div>
     <div class="group">
       ${rows}
       ${un ? item({ ic: `<span style="color:var(--line2)">${ICO.folderFill({s:21})}</span>`, nm:'未分類', ct:un, attr:'data-open=""' }) : ''}
       <button class="item add" data-newfolder><span class="ic">${ICO.plus({s:20,w:2})}</span><span class="nm">新しいフォルダ</span></button>
     </div>
+    ${warnBox()}
     <div class="label">記録</div>
     <div class="stats">
       <div class="stat"><b>${L.length}</b><span>合計</span></div>
@@ -635,8 +678,25 @@ function renderHome(){
     go('list', { fid: v === '*' ? null : v, q:'', view:'list', sub:'' });
   });
   $('#main [data-newfolder]').onclick = () => folderSheet(null);
+  $$('#main [data-warn]').forEach(b => b.onclick = () => {
+    if(b.dataset.warn === 'go') return go('review');
+    cfg.warnHide = new Date().toDateString(); saveCfg(); render();
+  });
   const ro = $('#main [data-reorder]');
-  if(ro) ro.onclick = reorderSheet;
+  if(ro) ro.onclick = () => reorderSheet();   // ← 引数にイベントが渡ると空のシートになる
+}
+function warnBox(){
+  const L = live(), never = L.filter(n => !n.rev).length;
+  const today = new Date().toDateString();
+  if(never < 10 || cfg.warnHide === today) return '';
+  return `<div class="warn">
+    <div class="wtxt"><b>まだ確認していないメモが${never}件あります</b>
+      <div>増やす前に少し振り返っておくと、あとが楽になります。</div></div>
+    <div class="wact">
+      <button class="pill on" data-warn="go">振り返る</button>
+      <button class="pill" data-warn="hide">今日は閉じる</button>
+    </div>
+  </div>`;
 }
 function item(o){
   return `<button class="item" ${o.attr||''}>
@@ -675,8 +735,14 @@ function renderList(){
   if(asked && asked.pid){ S.sub = asked.id; S.fid = asked.pid; }   // 単元を直接開かれたとき
   const f = S.fid ? folderOf(S.fid) : null;
   const cur = S.sub ? folderOf(S.sub) : f;          // 編集の対象（単元を選んでいればその単元）
-  bar(btnBack(), esc(listTitle()),
-    f ? `<button class="tbtn" data-editfolder>編集</button>` : '');
+  if(S.sel){
+    bar(`<button class="tbtn" data-selcancel>やめる</button>`,
+        `${S.sel.size}件を選択`,
+        `<button class="tbtn accent" data-selall>すべて</button>`);
+  }else{
+    bar(btnBack(), esc(listTitle()),
+      `<button class="tbtn" data-select>選択</button>${f ? `<button class="tbtn" data-editfolder>編集</button>` : ''}`);
+  }
   const pics = photosInScope();
   const photoView = S.view === 'photos' && pics.length;
   const subs = f ? subsOf(f.id) : [];
@@ -684,7 +750,7 @@ function renderList(){
       <button class="pill ${S.sub?'':'on'}" data-sub="">すべて <span class="n">${countUnder(f.id)}</span></button>
       ${subs.map(x => `<button class="pill ${S.sub===x.id?'on':''}" data-sub="${x.id}">${esc(x.name)} <span class="n">${countIn(x.id)}</span></button>`).join('')}
       <button class="pill" data-newsub>${ICO.plus({s:14,w:2.2})}単元</button>
-      ${subs.length > 1 ? `<button class="pill" data-sortsub>${ICO.grip({s:14,w:2})}</button>` : ''}
+      ${subs.length ? `<button class="pill" data-sortsub>${ICO.grip({s:14,w:2})}整理</button>` : ''}
     </div>` : '';
   $('#main').innerHTML = subBar + `
     ${pics.length ? `<div class="seg" id="vsw" style="margin-bottom:12px">
@@ -701,6 +767,12 @@ function renderList(){
     </div>
     <div id="notelist" style="margin-top:14px"></div>`}`;
 
+  const sc = $('#tbar [data-select]');
+  if(sc) sc.onclick = () => { S.sel = new Set(); render(); };
+  const sx = $('#tbar [data-selcancel]');
+  if(sx) sx.onclick = () => { S.sel = null; render(); };
+  const sa = $('#tbar [data-selall]');
+  if(sa) sa.onclick = () => { filtered().forEach(n => S.sel.add(n.id)); render(); };
   $$('#subs [data-sub]').forEach(b => b.onclick = () => { S.sub = b.dataset.sub; render(); });
   const ns = $('#subs [data-newsub]');
   if(ns) ns.onclick = () => folderSheet(null, id => { S.sub = id; render(); }, S.fid);
@@ -739,8 +811,11 @@ function noteCard(n){
   const rest = lines.slice(1).join(' ');
   const f = (S.fid === null && n.fid) ? folderOf(n.fid) : null;   // 「すべて」のときだけ出す
   const pics = (n.imgs||[]).length;
-  return `<div class="ncard" data-note="${n.id}">
-    <button class="starbtn ${n.star?'on':''}" data-star="${n.id}" aria-label="重要">${n.star ? ICO.starFill({s:17}) : ICO.star({s:17,w:1.9})}</button>
+  const picked = S.sel && S.sel.has(n.id);
+  return `<div class="ncard ${picked?'picked':''}" data-note="${n.id}">
+    ${S.sel
+      ? `<span class="chk ${picked?'on':''}">${picked ? ICO.check({s:15,w:2.6}) : ''}</span>`
+      : `<button class="starbtn ${n.star?'on':''}" data-star="${n.id}" aria-label="重要">${n.star ? ICO.starFill({s:17}) : ICO.star({s:17,w:1.9})}</button>`}
     <div class="nmeta">
       ${f ? `<span class="dot" style="background:${f.color}"></span><span>${esc(f.name)}</span><span>·</span>` : ''}
       <span>${fmtDate(n.cre)}</span>
@@ -759,8 +834,30 @@ function paintNotes(){
     : `<div class="empty">${ICO.note({s:34,w:1.4})}${S.q ? '見つかりませんでした' : 'まだメモがありません<br>右下のボタンから書けます'}</div>`;
   $$('#notelist [data-note]').forEach(b => b.onclick = e => {
     if(e.target.closest('[data-star]')) return;
+    if(S.sel){
+      const id = b.dataset.note;
+      S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id);
+      render();
+      return;
+    }
     go('note', { nid:b.dataset.note });
   });
+  if(S.sel){
+    const host = document.createElement('div');
+    host.className = 'selbar';
+    host.innerHTML = `<button class="btn danger" id="seldel" ${S.sel.size?'':'disabled'}>
+      ${S.sel.size ? S.sel.size + '件を削除' : 'メモを選んでください'}</button>`;
+    $('#main').appendChild(host);
+    if(S.sel.size) $('#seldel').onclick = () => {
+      const ids = [...S.sel];
+      ids.forEach(id => { const n = notes.find(x => x.id === id); if(n){ n.del = true; n.upd = now(); } });
+      S.sel = null; saveNotes(); render();
+      toast(`${ids.length}件を削除しました`, '元に戻す', () => {
+        ids.forEach(id => { const n = notes.find(x => x.id === id); if(n){ n.del = false; n.upd = now(); } });
+        saveNotes(); render();
+      });
+    };
+  }
   $$('#notelist [data-star]').forEach(b => b.onclick = e => {
     e.stopPropagation();
     const n = notes.find(x => x.id === b.dataset.star);
@@ -788,7 +885,8 @@ function renderNote(){
         ${n.rev ? `<span>· 振り返り${n.rev}回</span>` : ''}
       </div>
       <div class="body"><span class="lead">${esc(lead)}</span>${rest ? '\n' + esc(rest) : ''}</div>
-      ${picsHtml(n.imgs)}
+      ${picsHtml((n.imgs||[]).filter(i => !(n.back||[]).includes(i)))}
+      ${(n.back||[]).length ? `<div class="backlabel">裏</div>${picsHtml((n.imgs||[]).filter(i => (n.back||[]).includes(i)))}` : ''}
     </div>
     <div class="label">このメモ</div>
     <div class="group">
@@ -801,18 +899,19 @@ function renderNote(){
     </div>`;
   $('#tbar [data-edit]').onclick = () => startEdit(n.id);
   $$('#main [data-a]').forEach(b => b.onclick = () => noteAct(b.dataset.a, n));
+  const ordered = (n.imgs||[]).filter(i => !(n.back||[]).includes(i))
+    .concat((n.imgs||[]).filter(i => (n.back||[]).includes(i)));
   $$('#main .pics [data-t]').forEach((t, k) => t.onclick = () =>
-    openGallery((n.imgs||[]).map(id => ({ id })), k));
+    openGallery(ordered.map(id => ({ id })), k));
 }
 function noteAct(a, n){
   if(a === 'star'){ n.star = !n.star; n.upd = now(); saveNotes(); render(); toast(n.star ? '重要にしました' : '重要をはずしました'); }
   if(a === 'copy'){ navigator.clipboard.writeText(n.body || '').then(() => toast('コピーしました'), () => toast('コピーできませんでした')); }
   if(a === 'move'){ moveSheet(n); }
   if(a === 'del'){
-    if(!confirm('このメモを削除します。元に戻せません。')) return;
-    (n.imgs||[]).forEach(i => { urlCache.delete(i); delImg(i).catch(()=>{}); });
-    n.del = true; n.imgs = []; n.upd = now(); saveNotes();
-    toast('削除しました'); go('list');
+    n.del = true; n.upd = now(); saveNotes();
+    go('list');
+    toast('削除しました', '元に戻す', () => { n.del = false; n.upd = now(); saveNotes(); render(); });
   }
 }
 
@@ -827,7 +926,7 @@ function startNew(){
 function startEdit(id){
   const n = notes.find(x => x.id === id); if(!n) return;
   S.editId = id;
-  draft = (n.imgs || []).map(i => ({ id:i }));
+  draft = (n.imgs || []).map(i => ({ id:i, back:(n.back || []).includes(i) }));
   draftFid = n.fid || '';
   go('write');
 }
@@ -842,6 +941,8 @@ function renderWrite(){
       <b>1行目が「表」</b>、2行目からが「裏」になります。振り返りでは1行目だけが出て、
       「続きを表示」で残りが出ます。単語カードのようにも使えます。</div>
     <div class="thumbs" id="dthumbs" style="margin-bottom:12px"></div>
+    <div class="note-txt" style="margin:-4px 2px 10px">写真の左下の「表／裏」を押すと、
+      その写真を裏（「続きを表示」で出る側）にできます。</div>
     <button class="addbtn" id="addphoto">${ICO.image({s:18})}<span>写真を追加</span></button>
     <input type="file" id="pfile" accept="image/*" multiple class="hidden">`;
   paintFolderPick(); paintDraft();
@@ -875,10 +976,15 @@ function paintFolderPick(){
 function paintDraft(){
   const box = $('#dthumbs');
   if(!box) return;
-  box.innerHTML = thumbsHtml(draft.map(d => d.id), true);
+  box.innerHTML = draftThumbs();
   box.querySelectorAll('[data-rm]').forEach(b => b.onclick = e => {
     e.stopPropagation();
     draft = draft.filter(d => d.id !== b.dataset.rm); paintDraft();
+  });
+  box.querySelectorAll('[data-flip]').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    const d = draft.find(x => x.id === b.dataset.flip);
+    if(d){ d.back = !d.back; paintDraft(); toast(d.back ? '裏（続きを表示で出ます）' : '表（最初から見えます）'); }
   });
   fillImgs(box);
 }
@@ -900,15 +1006,16 @@ async function addPhotos(files){
 function doSave(){
   const body = ($('#body') ? $('#body').value : '').trim();
   const imgs = draft.map(d => d.id);
+  const backs = draft.filter(d => d.back).map(d => d.id);
   if(!body && !imgs.length){ toast('本文が空です'); return; }
   if(S.editId){
     const n = notes.find(x => x.id === S.editId);
     (n.imgs||[]).forEach(i => { if(!imgs.includes(i)){ urlCache.delete(i); delImg(i).catch(()=>{}); } });
-    Object.assign(n, { body, imgs, fid:draftFid, upd:now() });
+    Object.assign(n, { body, imgs, back:backs, fid:draftFid, upd:now() });
     toast('保存しました');
     go('note', { nid:n.id });
   }else{
-    const n = { id:uid(), body, imgs, fid:draftFid, cre:now(), upd:now(), rev:0, ng:0, revAt:0, star:false, del:false };
+    const n = { id:uid(), body, imgs, back:backs, fid:draftFid, cre:now(), upd:now(), rev:0, ng:0, revAt:0, star:false, del:false };
     notes.unshift(n);
     toast('保存しました');
     const fo = draftFid ? folderOf(draftFid) : null;
@@ -998,8 +1105,11 @@ function renderReview(){
           <button class="pill" id="scope">${esc(scopeName())}
             <span style="opacity:.5">${ICO.right({s:13,w:2.2})}</span></button>
         </div>
-        <div class="seg" id="revn" style="margin-top:12px">
-          ${[3,5,10,0].map(k => `<button data-k="${k}" class="${cfg.revN===k?'on':''}">${k ? k + '件' : '全部'}</button>`).join('')}
+        <div class="stepper" id="revn" style="margin-top:12px">
+          <button class="rnd" data-d="-1" aria-label="減らす">−</button>
+          <b id="revnum">${cfg.revN ? cfg.revN + '件' : '全部'}</b>
+          <button class="rnd" data-d="1" aria-label="増やす">＋</button>
+          <button class="pill ${cfg.revN ? '' : 'on'}" data-all>全部</button>
         </div>
         <div class="stats" style="margin-top:14px">
           <div class="stat"><b>${L.length}</b><span>メモ</span></div>
@@ -1017,10 +1127,17 @@ function renderReview(){
       $('#start').onclick = () => startRev('quiz');
       $('#shuffle').onclick = () => startRev('shuffle');
       $('#scope').onclick = scopeSheet;
-      $$('#revn button').forEach(b => b.onclick = () => {
-        cfg.revN = +b.dataset.k; saveCfg();
-        $$('#revn button').forEach(x => x.classList.toggle('on', x === b));
+      const setN = v => {
+        cfg.revN = v; saveCfg();
+        $('#revnum').textContent = v ? v + '件' : '全部';
+        $('#revn [data-all]').classList.toggle('on', !v);
+      };
+      $$('#revn [data-d]').forEach(b => b.onclick = () => {
+        const d = +b.dataset.d;
+        if(!cfg.revN){ if(d < 0) setN(Math.max(1, L.length - 1)); return; }
+        setN(Math.max(1, Math.min(200, cfg.revN + d)));
       });
+      $('#revn [data-all]').onclick = () => setN(0);
     }
     return;
   }
@@ -1052,8 +1169,11 @@ function renderReview(){
     $('#rquit').onclick = () => { revQ = []; revI = 0; render(); };
     return;
   }
-  const hidePic = imgs.length && cfg.hidePhotos !== false;   // 写真を隠す設定のときだけ伏せる
-  const hasMore = !!(rest || hidePic);
+  const backIds = n.back || [];
+  const frontP = imgs.filter(id => !backIds.includes(id));
+  const backP  = imgs.filter(id => backIds.includes(id));
+  const hidePic = frontP.length && !backP.length && cfg.hidePhotos !== false;  // 裏を指定していないときだけ設定に従う
+  const hasMore = !!(rest || backP.length || hidePic);
   const veiled = hasMore && !revOpen;
   const picVeiled = hidePic && !revOpen && !revPic;
   $('#main').innerHTML = `
@@ -1061,9 +1181,10 @@ function renderReview(){
       <div class="step">${revI+1} / ${revQ.length}</div>
       <div class="when">${fmtDate(n.cre)}${n.revAt ? '　前回の確認は' + daysAgo(n.revAt) + '日前' : '　未確認'}</div>
       <div class="lead">${esc(lead)}</div>
-      <div class="rest ${veiled?'veil':''}">${esc(rest)}</div>
-      <div class="${picVeiled?'veil':''}" id="revpics">${picsHtml(imgs)}</div>
+      <div class="${picVeiled?'veil':''}" id="revpics">${picsHtml(frontP)}</div>
       ${picVeiled ? `<button class="pictap" id="showpic">写真だけ先に見る</button>` : ''}
+      <div class="rest ${veiled?'veil':''}">${esc(rest)}</div>
+      <div class="${veiled?'veil':''}">${picsHtml(backP)}</div>
       <div class="acts">
         ${veiled ? `<button class="b-show" id="rshow">続きを表示</button>`
                  : `<button class="b-ng" id="rng">あいまい</button><button class="b-ok" id="rok">覚えている</button>`}
@@ -1135,6 +1256,8 @@ function renderSet(){
 
     <div class="label">データ</div>
     <div class="group">
+      ${rowItem({ ic:ICO.trash({s:19}), nm:'ゴミ箱', attr:'data-x="trash"',
+                  right:`<span class="ct">${notes.filter(n=>n.del).length}</span><span class="chev">${ICO.right({s:18,w:2})}</span>` })}
       ${rowItem({ ic:ICO.trash({s:19}), nm:'すべてのメモを削除', attr:'data-x="wipe"', col:'var(--ng)' })}
     </div>
     <div class="note-txt" id="dataInfo" style="margin:10px 4px 0">メモ ${live().length}件・写真 ${pics}枚</div>
@@ -1155,6 +1278,7 @@ function setAct(x){
   if(x === 'imp')  return $('#impfile').click();
   if(x === 'pics'){ cfg.hidePhotos = cfg.hidePhotos === false; saveCfg(); render();
                     toast(cfg.hidePhotos ? '写真も伏せます' : '写真は最初から見せます'); return; }
+  if(x === 'trash') return trashSheet();
   if(x === 'help') return helpSheet();
   if(x === 'upd')  return checkUpd(false);
   if(x === 'wipe'){
@@ -1265,8 +1389,11 @@ function reorderSheet(pid){
       <span class="grip">${ICO.grip({s:20,w:2})}</span>
     </div>`;
 
-  sheet(`<h3>${pid ? '単元' : 'フォルダ'}の並べ替え</h3>
-    <div class="note-txt" style="margin:-8px 2px 16px">右の ≡ をつまんだまま、動かしたい位置まで指を上下に滑らせてください。</div>
+  sheet(`<h3>${pid ? '単元' : 'フォルダ'}の整理</h3>
+    <div class="note-txt" style="margin:-8px 2px 16px">
+      右の ≡ をつまんだまま上下に滑らせると、順番が変わります。<br>
+      <b>行の名前のところをタップ</b>すると、名前・色のほか、
+      ${pid ? 'どのフォルダの中に置くか' : '<b>ほかのフォルダの中に入れる（場所）</b>'}を変えられます。</div>
     <div class="rlist" id="rlist">${inList().map(rowHtml).join('')}</div>
     <button class="btn pri" id="rdone" style="margin-top:18px">完了</button>`, close => {
 
@@ -1322,6 +1449,7 @@ function reorderSheet(pid){
     function bind(){
       rows = [...list.children];
       rows.forEach((r, i) => {
+        r.querySelector('.nm').onclick = () => { close(); folderSheet(folderOf(r.dataset.id)); };
         const g = r.querySelector('.grip');
         g.onpointerdown = e => start(e, i);
         g.onpointermove = move;
@@ -1353,6 +1481,40 @@ function moveSheet(n){
     $('#mnew').onclick = () => { close(); folderSheet(null, id => { n.fid = id; n.upd = now(); saveNotes(); render(); }); };
   });
 }
+function trashSheet(){
+  const paint = () => {
+    const bin = notes.filter(n => n.del).sort((a,b) => b.upd - a.upd);
+    const box = $('#tlist');
+    if(!box) return;
+    box.innerHTML = bin.length ? `<div class="group">${bin.map(n => {
+      const lead = (n.body || '').split('\n').find(l => l.trim()) || '（写真のみ）';
+      return `<div class="item">
+        <span class="nm" style="font-weight:500">${esc(lead.slice(0, 40))}</span>
+        <button class="pill" data-back="${n.id}">戻す</button>
+      </div>`;
+    }).join('')}</div>
+    <button class="btn danger" id="tempty" style="margin-top:14px">ゴミ箱を空にする（${bin.length}件）</button>`
+    : `<div class="empty" style="padding:34px 10px">ゴミ箱は空です</div>`;
+    $$('#tlist [data-back]').forEach(b => b.onclick = () => {
+      const n = notes.find(x => x.id === b.dataset.back);
+      if(n){ n.del = false; n.upd = now(); saveNotes(); }
+      paint(); toast('戻しました');
+    });
+    const te = $('#tempty');
+    if(te) te.onclick = async () => {
+      if(!confirm('ゴミ箱の中を完全に消します。もう戻せません。よろしいですか？')) return;
+      const bin2 = notes.filter(n => n.del);
+      for(const n of bin2) for(const i of (n.imgs || [])){ urlCache.delete(i); try{ await delImg(i); }catch(e){} }
+      notes = notes.filter(n => !n.del);
+      saveNotes(); paint(); render(); toast('空にしました');
+    };
+  };
+  sheet(`<h3>ゴミ箱</h3>
+    <div class="note-txt" style="margin:-10px 2px 14px">削除したメモはここに残ります。「戻す」でいつでも元に戻せます。
+      端末の容量を空けたいときだけ、空にしてください。</div>
+    <div id="tlist"></div>`, () => paint());
+}
+
 function helpSheet(){
   const C = { gray:'#8b8d96', blue:'#5b7fd0', green:'#46a273', gold:'#c9a052' };
   const slide = o => `<div class="slide">

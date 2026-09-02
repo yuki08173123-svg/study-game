@@ -526,7 +526,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 30;
+const VER = 31;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -1916,7 +1916,19 @@ function doImport(){
 }
 
 /* ===================== 更新の確認 ===================== */
+/* 新しいバージョンの確認。アプリを開いたときと、しばらくぶりに戻ってきたときに走る。
+   再生中は声をかけない（見ているのを止めないため） */
+let updAt = 0;
+const UPD_EVERY = 30 * 60 * 1000;
+function maybeUpd(){
+  if(now() - updAt < UPD_EVERY) return;
+  if(!$('#pv').classList.contains('hidden')) return;   /* 動画を見ている最中は出さない */
+  if(!$('#gate').classList.contains('hidden')) return; /* 入口の画面でも出さない */
+  updAt = now();
+  checkUpd(true);
+}
 async function checkUpd(quiet){
+  updAt = now();
   const st = $('#updState');
   if(!quiet && st) st.textContent = '確認中…';
   try{
@@ -2801,7 +2813,10 @@ async function boot(){
   addEventListener('pagehide', () => { saveNow(); pushBeacon(); });
   document.addEventListener('visibilitychange', () => {
     if(document.hidden){ saveNow(); pushBeacon(); }
-    else recheck();          /* 戻ってきたら 塾生かどうかをもう一度たしかめる */
+    else{
+      recheck();             /* 戻ってきたら 塾生かどうかをもう一度たしかめる */
+      maybeUpd();            /* ついでに 新しいバージョンが出ていないかも見る */
+    }
   });
 
   /* ログインから戻ってきたか */

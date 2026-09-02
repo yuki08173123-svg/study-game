@@ -526,7 +526,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 31;
+const VER = 32;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -1633,7 +1633,7 @@ function vSet(){
   $('#swLoop').onclick = () => { cfg.loop = !cfg.loop; saveCfg(); vSet();
     toast(cfg.loop ? 'くり返し再生にしました' : 'くり返しをやめました'); };
   $('#swNext').onclick = () => { cfg.autonext = !cfg.autonext; saveCfg(); vSet(); };
-  $('#swCC').onclick = () => { cfg.cc = !cfg.cc; saveCfg(); applyCC(); vSet();
+  $('#swCC').onclick = () => { cfg.cc = !cfg.cc; saveCfg(); applyCCSoon(); vSet();
     toast(cfg.cc ? '字幕を出します' : '字幕を消しました'); };
   $('#spdBtn').onclick = $('#spdLbl').onclick = () =>
     pickSpeed(cfg.speed, v => { cfg.speed = v; saveCfg(); vSet(); });
@@ -1980,7 +1980,7 @@ async function makePlayer(){
         cc_load_policy: cfg.cc ? 1 : 0, cc_lang_pref:'ja'
       },
       events: {
-        onReady: () => { playerReady = true; applyCC(); res(); },
+        onReady: () => { playerReady = true; applyCCSoon(); res(); },
         onStateChange: onState,
         onError: () => { $('#phint').classList.remove('hidden');
           $('#phint').textContent = 'この動画は再生できませんでした（限定公開の設定をご確認ください）'; }
@@ -2004,6 +2004,13 @@ function applyCC(){
       player.unloadModule('captions'); player.unloadModule('cc');
     }
   }catch(e){}
+}
+/* 字幕を消す指示は「再生が始まったあと」でないと効かない。
+   しかも動画を切りかえるたびに、YouTube側の好みで また出てくることがある。
+   なので 動画が始まるたびに、少し間をおいて 何度か言い直す。 */
+function applyCCSoon(){
+  applyCC();
+  [300, 900, 2000].forEach(ms => setTimeout(applyCC, ms));
 }
 
 function openPlay(id, push){
@@ -2046,6 +2053,7 @@ function openPlay(id, push){
   if(player && playerReady){
     /* すでに用意ができていれば、タップと同じ流れで再生に入る（iPhone対策） */
     try{ player.loadVideoById({ videoId:id, startSeconds:start }); }catch(e){}
+    applyCCSoon();   /* 動画を切りかえたときも 字幕の設定を言い直す */
     setTimeout(() => { if(!started) $('#phint').classList.remove('hidden'); }, 1600);
     $('#phint').textContent = 'もう一度 再生ボタンを押してください';
   }else{
@@ -2082,6 +2090,7 @@ function onState(e){
     $('#scrim').classList.add('hidden');
     $('#endcard').classList.add('hidden');
     try{ player.setPlaybackRate(speedOf(curId)); }catch(err){}
+    applyCCSoon();          /* 字幕の設定を、動画が始まるたびに言い直す */
     startTick(); showCtrl(); drawCtrl();
   }else if(e.data === S.PAUSED){
     /* 止めた瞬間にYouTubeの画面が出るので、すぐ幕をかける */

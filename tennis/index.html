@@ -103,6 +103,18 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
 .md th, .md td{border:1px solid var(--line); padding:7px 10px; text-align:left; white-space:nowrap;}
 .md th{background:var(--chip); font-weight:700;}
 .md td{font-variant-numeric:tabular-nums;}
+/* ふり返り */
+.rv h4{font-size:14px; font-weight:700; display:flex; align-items:center; gap:6px;}
+.rv h4 .n{font-size:11px; font-weight:700; background:var(--chip); color:var(--muted); border-radius:999px; padding:1px 7px;}
+.rv ul{list-style:none; display:flex; flex-direction:column; gap:6px; margin-top:6px;}
+.rv li{font-size:14px; line-height:1.6; padding-left:18px; position:relative;}
+.rv li::before{content:""; position:absolute; left:4px; top:.62em; width:6px; height:6px; border-radius:999px; background:currentColor;}
+.rv .good h4{color:var(--win);} .rv .good li{color:var(--ink);} .rv .good li::before{background:var(--win);}
+.rv .bad h4{color:var(--lose);} .rv .bad li::before{background:var(--lose);}
+.rv .next h4{color:var(--accent);} .rv .next li::before{background:var(--accent);}
+.rv .headline{font-size:15px; font-weight:700; line-height:1.6;}
+.rv .cmp{font-size:13px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px;}
+.rv .cmp b{color:var(--ink);}
 /* ---------- record ---------- */
 .scoreboard{display:flex; align-items:stretch; gap:10px;}
 .scoreboard .box{flex:1; text-align:center; padding:10px 6px; border-radius:12px; background:var(--card); border:1px solid var(--line);}
@@ -334,6 +346,8 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
       <div id="sum-keep" style="font-size:13px;color:var(--muted)"></div>
     </div>
     <div class="tiles" id="sum-tiles"></div>
+    <div class="card stack" id="sum-review" style="gap:12px"></div>
+    <button id="btn-save-review">このふり返りを「分析・課題」に保存する</button>
     <div class="card stack" id="sum-serve-card" style="gap:8px"></div>
     <div class="card stack" style="gap:8px">
       <div class="h2">◯ ポイントの取り方</div>
@@ -936,6 +950,133 @@ function bars(box, obj, bad){
     box.appendChild(row);
   });
 }
+/* ---------- 試合が終わったら自動でふり返りを作る ---------- */
+function pct100(w,n){ return n>0 ? Math.round(w/n*100) : null; }
+function prevFinished(m){
+  const idx = db.matches.indexOf(m);
+  for(let i=idx-1; i>=0; i--) if(db.matches[i].finished) return db.matches[i];
+  return null;
+}
+function autoReview(m){
+  const s = collectStats(m);
+  const all1 = s.sv1.n + s.sv2.n;
+  const in1 = pct100(s.sv1.n, all1), w1 = pct100(s.sv1.w, s.sv1.n), w2 = pct100(s.sv2.w, s.sv2.n);
+  const cw = l => s.winWays[l] || 0, cl = l => s.loseWays[l] || 0;
+  const foreW = cw("フォアで決めた") + cw("深いフォアで崩した");
+  const foreL = cl("フォア アウト") + cl("フォア ネット");
+  const backW = cw("バックで決めた") + cw("深いバックで崩した");
+  const backL = cl("バック アウト") + cl("バック ネット") + cl("バックスライス アウト") + cl("バックスライス ネット");
+  const sorted = o => Object.entries(o).sort((a,b)=>b[1]-a[1]);
+  const topWin = sorted(s.winWays)[0], topLose = sorted(s.loseWays)[0];
+  const totalPt = s.ptWin + s.ptLose;
+  const good = [], bad = [], next = [];
+
+  // サーブ
+  if(in1 !== null && all1 >= 4){
+    if(in1 >= 60) good.push("1stサーブが " + in1 + "% 入った（" + s.sv1.n + "/" + all1 + "）。ここが安定していた。");
+    else if(in1 < 50){
+      bad.push("1stサーブが " + in1 + "% しか入っていない（" + s.sv1.n + "/" + all1 + "）。");
+      next.push("1stは力を8割に落として、まず 55% 入れることを目標にする。");
+    }
+  }
+  if(s.ace >= 2) good.push("サービスエースが " + s.ace + "本。");
+  if(s.df === 0 && s.serveG >= 2) good.push("ダブルフォルトがゼロ。");
+  if(s.df >= 3){ bad.push("ダブルフォルトが " + s.df + "本。"); next.push("2ndは回転量を上げて、まず確実に入れる。"); }
+  if(w1 !== null && s.sv1.n >= 4 && w1 >= 70) good.push("1stが入ったときは " + w1 + "% 取れている。入れれば取れる形ができていた。");
+  if(w2 !== null && s.sv2.n >= 4 && w2 < 40){ bad.push("2ndサーブのときの勝率が " + w2 + "%（" + s.sv2.w + "/" + s.sv2.n + "）。2ndを狙われている。"); }
+
+  // キープ・ブレーク
+  if(s.serveG >= 2 && s.keep === s.serveG) good.push("サービスゲームを全部キープ（" + s.keep + "/" + s.serveG + "）。");
+  else if(s.serveG >= 1 && s.keep < s.serveG) bad.push("ブレークされたのが " + (s.serveG - s.keep) + "ゲーム（キープ " + s.keep + "/" + s.serveG + "）。");
+  if(s.brk >= 2) good.push("相手のサーブを " + s.brk + "回ブレークできた。");
+  else if(s.retG >= 3 && s.brk === 0) bad.push("相手のサーブを1回もブレークできていない（0/" + s.retG + "ゲーム）。");
+
+  // 決めた vs ミス
+  if(s.winner > s.myErr && s.winner >= 3) good.push("自分で決めた " + s.winner + "本 が 自分のミス " + s.myErr + "本 を上回った。攻めが機能していた。");
+  else if(s.myErr > s.winner && s.myErr >= 3) bad.push("自分のミス " + s.myErr + "本 が 決めた " + s.winner + "本 を上回った。自滅の形になっている。");
+  if(totalPt >= 10 && s.myErr / totalPt >= 0.3) bad.push("全ポイントの " + Math.round(s.myErr/totalPt*100) + "% が自分のミスでの失点。");
+
+  // ショット別の収支
+  const bal = (name, w, l) => {
+    if(w + l < 4) return;
+    const d = w - l;
+    const line = name + "の収支 " + (d >= 0 ? "+" : "") + d + "（決めた " + w + " / ミス " + l + "）。";
+    (d >= 0 ? good : bad).push(line);
+    if(d <= -3) next.push(name + "のミスを減らす。厳しい球は無理に打たず、深く返して立て直す。");
+  };
+  bal("フォア", foreW, foreL);
+  bal("バック", backW, backL);
+
+  // リターン
+  if(s.retMiss >= 3){
+    bad.push("リターンミスが " + s.retMiss + "本。相手のサーブの1球目で落としている。");
+    next.push("リターンは「深く返す」だけに集中して、1球目から攻めない。");
+  }
+
+  // 最多の取り方・落とし方
+  if(topWin && topWin[1] >= 3) good.push("一番点になったのは「" + topWin[0] + "」で " + topWin[1] + "本。");
+  if(topLose && topLose[1] >= 3){
+    bad.push("一番落としたのは「" + topLose[0] + "」で " + topLose[1] + "本。");
+    if(topLose[0] !== "ダブルフォルト") next.push("次の試合は「" + topLose[0] + "」を半分に減らすことを目標にする。");
+  }
+
+  if(good.length === 0) good.push("記録を最後まで取り切れた。まずはここから。");
+  if(bad.length === 0) bad.push("大きな穴は見当たらない。この内容を続ける。");
+  if(next.length === 0) next.push("いまの形を続けて、次はポイント数をもう一段増やす。");
+
+  // 見出し（一言でいうと）
+  let headline;
+  if(s.gMe > s.gOp) headline = "○ " + s.gMe + "-" + s.gOp + " で勝ち。" + good[0].replace(/。$/, "") + "のが勝因。";
+  else if(s.gMe < s.gOp) headline = "● " + s.gMe + "-" + s.gOp + " で負け。" + bad[0].replace(/。$/, "") + "のが大きい。";
+  else headline = s.gMe + "-" + s.gOp + "。" + bad[0].replace(/。$/, "") + "が課題。";
+
+  // 前回との比較
+  const p = prevFinished(m);
+  let cmp = null;
+  if(p){
+    const ps = collectStats(p);
+    const pAll1 = ps.sv1.n + ps.sv2.n;
+    const pin1 = pct100(ps.sv1.n, pAll1);
+    const rows = [];
+    const diff = (name, now, before, goodIsUp) => {
+      if(now === null || before === null) return;
+      const d = now - before;
+      if(d === 0){ rows.push(name + " は前回と同じ " + now); return; }
+      const up = d > 0;
+      const mark = (up === goodIsUp) ? "↑" : "↓";
+      rows.push(name + " " + before + " → <b>" + now + "</b> " + mark);
+    };
+    diff("1stが入った率(%)", in1, pin1, true);
+    diff("自分のミス(本)", s.myErr, ps.myErr, false);
+    diff("決めた(本)", s.winner, ps.winner, true);
+    diff("ダブルフォルト(本)", s.df, ps.df, false);
+    if(rows.length) cmp = {title: "前回（" + (p.title || "試合") + "・" + p.date + "）とくらべて", rows};
+  }
+  const uniq = a => a.filter((x,i)=>a.indexOf(x)===i);
+  return {headline, good: uniq(good).slice(0,4), bad: uniq(bad).slice(0,5), next: uniq(next).slice(0,3), cmp};
+}
+function renderReview(m){
+  const r = autoReview(m);
+  const sec = (cls, title, items) =>
+    '<div class="' + cls + '"><h4>' + title + '<span class="n">' + items.length + '</span></h4><ul>' +
+    items.map(t => "<li>" + esc(t) + "</li>").join("") + "</ul></div>";
+  $("sum-review").className = "card stack rv";
+  $("sum-review").innerHTML =
+    '<div class="headline">' + esc(r.headline) + "</div>" +
+    sec("good", "よかった点", r.good) +
+    sec("bad", "課題", r.bad) +
+    sec("next", "つぎにやること", r.next) +
+    (r.cmp ? '<div class="cmp"><b>' + esc(r.cmp.title) + "</b><br>" + r.cmp.rows.join(" ／ ") + "</div>" : "");
+  return r;
+}
+function reviewToMarkdown(m, r){
+  let t = "## 一言でいうと\n\n" + r.headline + "\n\n";
+  t += "## よかった点\n\n" + r.good.map(x=>"- "+x).join("\n") + "\n\n";
+  t += "## 課題\n\n" + r.bad.map(x=>"- "+x).join("\n") + "\n\n";
+  t += "## つぎにやること\n\n" + r.next.map((x,i)=>(i+1)+". "+x).join("\n") + "\n";
+  if(r.cmp) t += "\n---\n\n**" + r.cmp.title + "**\n\n" + r.cmp.rows.map(x=>"- "+x.replace(/<\/?b>/g,"**")).join("\n") + "\n";
+  return t;
+}
 function renderSummary(){
   const m = cur, s = collectStats(m);
   $("sum-title").textContent = (m.title || "試合") + "（" + m.date + (m.noAd ? "・ノーアド" : "") + "）";
@@ -962,6 +1103,7 @@ function renderSummary(){
     svrow("1stサーブが入った率", {w:s.sv1.n, n:s.sv1.n + s.sv2.n}) +
     svrow("1stサーブで取った率", s.sv1) +
     svrow("2ndサーブで取った率", s.sv2);
+  lastReview = renderReview(m);
   bars($("sum-winways"), s.winWays, false);
   bars($("sum-loseways"), s.loseWays, true);
   // ポイントログ
@@ -987,6 +1129,14 @@ function renderSummary(){
 function esc(t){ const d=document.createElement("span"); d.textContent=t; return d.innerHTML; }
 
 /* 振り返りテキスト */
+let lastReview = null;
+$("btn-save-review").addEventListener("click", ()=>{
+  if(!lastReview) return;
+  const title = (cur.title || "試合") + " のふり返り";
+  const id = "n"+Math.random().toString(36).slice(2,10);
+  db.notes.push({id, date: cur.date, title, body: reviewToMarkdown(cur, lastReview)});
+  save(); toast("「分析・課題」に保存しました");
+});
 $("btn-copy-review").addEventListener("click", ()=>{
   const m = cur, s = collectStats(m);
   let t = "テニスの試合の振り返りです。アドバイスをください。\n";
@@ -1038,7 +1188,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 15; // リリースのたびに version.json の v と一緒に上げる
+const VER = 16; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

@@ -271,6 +271,27 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 .sheet ul{margin:4px 0 0 18px; font-size:14px; line-height:1.85;}
 .sheet .close{width:100%; margin-top:14px; background:var(--chip); border-radius:14px; padding:13px; font-weight:900;}
 .sheet img.shot{width:100%; border-radius:14px; border:1px solid var(--line); box-shadow:var(--shadow); display:block;}
+/* 使い方スライド */
+.slides{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+.slides::-webkit-scrollbar{display:none;}
+.slide{flex:0 0 100%; scroll-snap-align:center; padding:0 1px;}
+.slide .snum{display:inline-block; background:var(--accent); color:var(--accent-ink); font-size:12px; font-weight:900; border-radius:999px; padding:3px 12px; margin-bottom:9px;}
+.slide h3{font-size:17.5px; font-weight:900; margin:0 0 7px; color:var(--ink);}
+.slide p{font-size:14px; line-height:1.9;}
+.slide p b{font-weight:900; color:var(--accent);}
+.shot2{background:var(--bg); border:1px solid var(--line); border-radius:16px; padding:13px; margin-bottom:13px;}
+.shot2 .addbox, .shot2 .tqc, .shot2 .dayline, .shot2 .startcd{margin:0;}
+.shot2 .task + .task{margin-top:8px;}
+.shot2 .startcd{padding:11px 12px;}
+.shot2 .startcd .t b{font-size:13.5px;}
+.shot2 .startcd .go{padding:6px 11px; font-size:12px;}
+.shot2 .addtitle{font-size:12.5px; padding:8px 11px;}
+.fk-time{width:70px; text-align:center; background:var(--chip); border-radius:9px; padding:6px 4px; font-size:13px; font-weight:900; color:var(--accent); flex:none;}
+.fk-text{flex:1; font-size:15px; font-weight:500; min-width:0;}
+.fk-add{width:34px; height:34px; border-radius:11px; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; font-size:19px; font-weight:900; flex:none;}
+.sdots{display:flex; justify-content:center; align-items:center; gap:6px; padding:13px 0 0;}
+.sdots i{width:7px; height:7px; border-radius:50%; background:var(--line); display:block; transition:width .2s;}
+.sdots i.on{background:var(--accent); width:22px; border-radius:4px;}
 .mchips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px;}
 .mchips button{background:var(--chip); border-radius:999px; padding:10px 16px; font-size:15px; font-weight:900;}
 .mchips button.on{background:var(--accent); color:var(--accent-ink);}
@@ -288,7 +309,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v15</span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v16</span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -394,6 +415,10 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
   <section id="tabSet" class="hidden">
     <div class="field" style="margin-top:12px">
+      <div class="lab">使い方</div>
+      <button class="subbtn" id="btnSlides" style="margin-top:4px">使い方のスライドを見る</button>
+    </div>
+    <div class="field">
       <div class="lab">名前</div>
       <input type="text" id="setName" placeholder="例）ヒラ タロウ">
     </div>
@@ -439,7 +464,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v15</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v16</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -461,7 +486,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 15;
+const VER = 16;
 const KEY = 'planmap_v1';
 const WD = ['月','火','水','木','金','土','日'];
 const DEF_MIN = 30;
@@ -1051,17 +1076,163 @@ $('#fileIn').onchange = e => {
   rd.readAsText(f); e.target.value = '';
 };
 
-$('#btnHelp').onclick = ()=>{
-  openSheet('<h2>計画マップの使い方</h2><p>1週間の計画をつくって、その週のTQCスコアを出します。</p>'
-  + '<h3>1. やることを書く</h3><p>曜日をえらんで、下の欄に「やること」を書いて ＋ を押します。はじめる時刻は書かなくてもかまいません。</p>'
-  + '<h3>2. 毎日おなじことは、まとめて入れる</h3><p>入力欄の下の<b>「入れる曜日」</b>で曜日を押すと、その曜日ぜんぶに同じやることが入ります。「毎日」を押せば7日ぶん一度に入ります。<br>一度書いたことは、次から入力欄の候補に出てきます。</p>'
-  + '<h3>3. かかる時間をえらぶ</h3><p>やることの「30分」を押すと、10分きざみでえらべます。全部の合計が、その日の<b>予定</b>になります。</p>'
-  + '<h3>4. できたらチェック</h3><p>左の丸を押すと「できた」になり、その分だけ<b>できた</b>の時間が自動でふえます。</p>'
-  + '<h3>5. 極まったら★</h3><p>答えを見ずに<b>自力で全部とけるようになった</b>ものだけ★を押します。★の数がTQCの<b>Q</b>です。</p>'
-  + '<h3>6. TQCスコア</h3><ul><li><b>T</b>＝1週間の勉強時間</li><li><b>Q</b>＝1週間で極まった数（★）</li><li><b>C</b>＝達成率（％）</li></ul>'
-  + '<p style="margin-top:6px">TQCスコア ＝ T × Q × C ÷ 1000（小数点は切りすて）</p>'
-  + '<h3>7. 1週間をまとめて見る</h3><p>ボタンを押すと、1週間ぶんが1枚にまとまります。そのまま画像として保存できます。</p>');
-};
+const SLIDES = [
+
+`<span class="snum">計画マップとは</span>
+<h3>1週間の計画を立てて、やったら記録する</h3>
+<div class="shot2">
+  <div class="days" style="margin:0">
+    <button class="day-chip"><span class="w">月</span><span class="d num">1</span><span class="bar"><i style="width:100%"></i></span></button>
+    <button class="day-chip"><span class="w">火</span><span class="d num">2</span><span class="bar"><i style="width:100%"></i></span></button>
+    <button class="day-chip on"><span class="w">水</span><span class="d num">3</span><span class="bar"><i style="width:60%"></i></span></button>
+    <button class="day-chip"><span class="w">木</span><span class="d num">4</span><span class="bar"><i style="width:0%"></i></span></button>
+    <button class="day-chip"><span class="w">金</span><span class="d num">5</span><span class="bar"><i style="width:0%"></i></span></button>
+    <button class="day-chip sat"><span class="w">土</span><span class="d num">6</span><span class="bar"><i style="width:0%"></i></span></button>
+    <button class="day-chip sun"><span class="w">日</span><span class="d num">7</span><span class="bar"><i style="width:0%"></i></span></button>
+  </div>
+</div>
+<p>上の曜日をえらんで、その日の「やること」を書きます。<br>
+毎週<b>日曜日</b>に、来週ぶんの計画を書いて提出します。</p>`,
+
+`<span class="snum">①</span>
+<h3>「やること」を書く</h3>
+<div class="shot2">
+  <div class="addbox">
+    <div class="addtitle"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>ここに「やること」を書いてください</div>
+    <div class="addhead"><span class="c1">時こく</span><span class="c2">やること</span></div>
+    <div class="addrow">
+      <span class="fk-time num">19:00</span>
+      <span class="fk-text">英単語 300〜500番</span>
+      <span class="fk-add">＋</span>
+    </div>
+  </div>
+</div>
+<p><b>青い枠の中だけ</b>書けば大丈夫です。<br>
+やることを書いて <b>＋</b> を押すと、その日にならびます。<br>
+はじめる時こくは、書かなくてもかまいません。</p>`,
+
+`<span class="snum">②</span>
+<h3>おなじことは、まとめて入れる</h3>
+<div class="shot2">
+  <div class="repeat" style="border-radius:14px">
+    <span class="rl">入れる曜日</span>
+    <div class="rdays">
+      <button class="on">月</button><button class="on">火</button><button class="on">水</button>
+      <button class="on">木</button><button class="on">金</button><button>土</button><button>日</button>
+    </div>
+    <button class="rp">毎日</button>
+  </div>
+</div>
+<p>入力欄の下の<b>「入れる曜日」</b>で曜日をえらんでから ＋ を押すと、その曜日ぜんぶに同じやることが入ります。<br>
+<b>「毎日」</b>を押せば、7日ぶんが一度に入ります。</p>`,
+
+`<span class="snum">③</span>
+<h3>かかる時間をえらぶ</h3>
+<div class="shot2">
+  <div class="task">
+    <button class="check"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button>
+    <div class="body"><div class="meta"><span class="tm num">19:00</span><button class="dur num" style="background:var(--accent); color:var(--accent-ink)">30分</button></div>
+    <div class="txt">英単語 300〜500番</div></div>
+  </div>
+</div>
+<div class="shot2">
+  <div class="dayline">
+    <div class="dlh">この日の時間<span class="chip-auto">自動</span></div>
+    <div class="dlrow">
+      <div><span>予定</span><b class="num">1時間30分</b></div>
+      <div class="ok"><span>できた</span><b class="num">0分</b></div>
+    </div>
+  </div>
+</div>
+<p>やることに付いている<b>「30分」</b>を押すと、かかる時間を10分きざみでえらべます。<br>
+その合計が、その日の<b>予定</b>の時間になります（自動）。</p>`,
+
+`<span class="snum">④</span>
+<h3>できたら◯、きわまったら★</h3>
+<div class="shot2">
+  <div class="task is-done is-star">
+    <button class="check"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button>
+    <div class="body"><div class="meta"><span class="tm num">19:00</span><span class="dur num">30分</span></div>
+    <div class="txt">英単語 300〜500番</div></div>
+    <button class="star"><svg viewBox="0 0 24 24"><path d="m12 3.3 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.8l6.1-.9z"/></svg></button>
+  </div>
+  <div class="task">
+    <button class="check"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button>
+    <div class="body"><div class="meta"><span class="tm num">20:00</span><span class="dur num">1時間</span></div>
+    <div class="txt">数学ワーク p42〜p50</div></div>
+    <button class="star"><svg viewBox="0 0 24 24"><path d="m12 3.3 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.8l6.1-.9z"/></svg></button>
+  </div>
+</div>
+<p>おわったら左の<b>◯</b>を押します。押した分だけ「できた」の時間がふえます。<br>
+答えを見ずに<b>自力で全部とけるようになった</b>ものだけ、右の<b>★</b>を押します。</p>`,
+
+`<span class="snum">⑤</span>
+<h3>TQCスコア</h3>
+<div class="shot2">
+  <div class="tqc">
+    <div class="head"><b>今週のTQCスコア</b><span class="chip-auto">自動</span></div>
+    <div class="score"><span class="n num">119</span><span class="u">点</span></div>
+    <div class="parts">
+      <div class="part"><div class="k">T</div><div class="v num" style="font-size:17px">40時間</div><div class="s">勉強した時間</div></div>
+      <div class="part"><div class="k">Q</div><div class="v num">35</div><div class="s">★ 極まった数</div></div>
+      <div class="part"><div class="k">C</div><div class="v num">85<em>%</em></div><div class="s">17/20 完了</div></div>
+    </div>
+    <div class="formula">40 × 35 × 85 ÷ 1000 ＝ 119</div>
+  </div>
+</div>
+<p><b>T</b>＝1週間の勉強時間　<b>Q</b>＝きわまった数（★）　<b>C</b>＝達成率<br>
+<b>TQCスコア ＝ T × Q × C ÷ 1000</b>（小数点は切りすて）<br>
+毎日つけていけば、自動で出ます。</p>`,
+
+`<span class="snum">⑥</span>
+<h3>1週間をまとめて見る</h3>
+<div class="shot2">
+  <div class="bigbtn" style="margin:0">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M9 9v11M15 9v11"/></svg>
+    1週間をまとめて見る
+  </div>
+</div>
+<p>このボタンを押すと、7日ぶんの予定・できた時間・やること・TQCスコアが<b>1枚にまとまります</b>。<br>
+スクリーンショットを撮るか、「画像を保存する」で保存して、提出に使えます。</p>`,
+
+`<span class="snum">⑦</span>
+<h3>日曜のお知らせと、カウントダウン</h3>
+<div class="shot2">
+  <div class="startcd due">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8.2"/><path d="M12 9v4.2l2.6 1.6M9 2.6h6"/></svg>
+    <span class="t"><b>今日は計画マップの日です</b>
+    <span class="sub"><span class="mins">30分</span><span>で書き切りましょう</span></span></span>
+    <span class="go">スタート</span>
+  </div>
+</div>
+<p>日曜の決めた時間になると、上に<b>オレンジのお知らせ</b>が出ます。<br>
+「スタート」を押すと<b>のこり時間</b>が画面の上に出るので、それを見ながら書き切りましょう。時間になると音が鳴ります。<br>
+時間や、日曜のお知らせは<b>設定</b>で変えられます。</p>`
+
+];
+
+function openSlides(){
+  const sh = openSheet('<h2>計画マップの使い方</h2>'
+    + '<div class="slides" id="slides">' + SLIDES.map(x => '<div class="slide">'+x+'</div>').join('') + '</div>'
+    + '<div class="sdots" id="sdots">' + SLIDES.map((x,i) => '<i class="'+(i===0?'on':'')+'"></i>').join('') + '</div>'
+    + '<button class="bigbtn" id="sNext">つぎへ</button>');
+  const box = sh.querySelector('#slides'), dots = sh.querySelectorAll('#sdots i'), next = sh.querySelector('#sNext');
+  let cur = 0, t = null;
+  const upd = ()=>{
+    cur = Math.round(box.scrollLeft / Math.max(1, box.clientWidth));
+    dots.forEach((d, j) => d.classList.toggle('on', j === cur));
+    next.textContent = cur >= SLIDES.length-1 ? 'とじる' : 'つぎへ';
+  };
+  box.addEventListener('scroll', ()=>{ clearTimeout(t); t = setTimeout(upd, 90); });
+  next.onclick = ()=>{
+    if(cur >= SLIDES.length-1){ sh.remove(); return; }
+    const x = (cur+1)*box.clientWidth;
+    try{ box.scrollTo({ left:x, behavior:'smooth' }); }catch(e){ box.scrollLeft = x; }
+    setTimeout(()=>{ if(Math.abs(box.scrollLeft - x) > 4) box.scrollLeft = x; upd(); }, 320);
+  };
+}
+$('#btnHelp').onclick = openSlides;
+$('#btnSlides').onclick = openSlides;
 
 let newVer = 0;
 async function checkUpdate(silent){

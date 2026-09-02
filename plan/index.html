@@ -163,6 +163,8 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.75;}
 .startcd.due .mins{background:rgba(255,255,255,.26); color:#fff;}
 .startcd.due .go{background:rgba(255,255,255,.24); color:#fff;}
 
+.chk{display:flex; align-items:center; gap:9px; font-size:14.5px; font-weight:700; padding:3px 0 5px;}
+.chk input{width:21px; height:21px; accent-color:var(--accent); flex:none;}
 .field .note{font-size:11.5px; color:var(--muted); line-height:1.7; font-weight:700; margin-top:6px;}
 .field .row2{display:flex; gap:8px; align-items:center;}
 .field .row2 input[type=time], .field .row2 input[type=number]{
@@ -281,7 +283,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v13</span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v14</span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -409,6 +411,12 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <p class="note">iPhone・Androidとも、決まった時間に必ず知らせるにはカレンダーが確実です。ボタンを押すと「計画マップを書く」の予定が毎週日曜のこの時間に入ります。<br>「アプリの通知をゆるす」は、カウントダウンが終わったときなど、アプリを開いているあいだのお知らせに使います。</p>
     </div>
     <div class="field">
+      <div class="lab">音</div>
+      <label class="chk"><input type="checkbox" id="setSound" checked>時間になったら音を鳴らす</label>
+      <button class="subbtn" id="btnTestSound" style="margin-top:4px">音を聞いてみる</button>
+      <p class="note">iPhoneのマナーモード中でも鳴るようにしていますが、音量が0だと鳴りません。アプリを閉じているあいだは鳴らないので、そのときはカレンダーのお知らせが役に立ちます。</p>
+    </div>
+    <div class="field">
       <div class="lab">書き切る時間（カウントダウン）</div>
       <div class="row2">
         <input type="number" id="setLimit" min="1" max="360" step="5" placeholder="30">
@@ -426,7 +434,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v13</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v14</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -448,13 +456,13 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 13;
+const VER = 14;
 const KEY = 'planmap_v1';
 const WD = ['月','火','水','木','金','土','日'];
 const DEF_MIN = 30;
 
 let S = { weeks:{}, name:'', weekGoal:'', defMin:DEF_MIN, cur:'', day:0,
-          notifTime:'20:00', limitMin:30, tEnd:0, tLeft:0, tDone:0 };
+          notifTime:'20:00', limitMin:30, tEnd:0, tLeft:0, tDone:0, sound:true };
 let REP = [false,false,false,false,false,false,false];
 
 function eachDay(fn){
@@ -470,7 +478,8 @@ function load(){
   if(!S.taskmin){ eachDay(d=>{ (d.tasks||[]).forEach(t=>{ if(typeof t.min !== 'number') t.min = DEF_MIN; }); }); S.taskmin = 1; }
   if(typeof S.defMin !== 'number' || S.defMin < 5) S.defMin = DEF_MIN;
   if(!/^\d\d:\d\d$/.test(S.notifTime||'')) S.notifTime = '20:00';
-  if(typeof S.limitMin !== 'number' || S.limitMin < 5) S.limitMin = 30;
+  if(typeof S.limitMin !== 'number' || S.limitMin < 1) S.limitMin = 30;
+  if(typeof S.sound !== 'boolean') S.sound = true;
 }
 let saveT = null;
 function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }, 200); }
@@ -621,6 +630,46 @@ function openSheet(html){
   return bg;
 }
 
+/* ---------- 音 ----------
+   iOSはマナーモード中、ふつうのWeb音を消してしまう。
+   無音の音声をうらで流しつづけて「メディア再生」あつかいにしてもらう（暗記クエストと同じ手）。 */
+const SILENT_WAV = 'data:audio/wav;base64,UklGRmQGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUAGAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+let silentEl = null, AC = null, warned = false;
+function audioCtx(){
+  if(!AC){ const C = window.AudioContext || window.webkitAudioContext; if(!C) return null; AC = new C(); }
+  if(AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function audioUnlock(){
+  if(!S.sound) return;
+  try{ if(navigator.audioSession) navigator.audioSession.type = 'playback'; }catch(e){}
+  if(!silentEl){
+    silentEl = document.createElement('audio');
+    silentEl.loop = true; silentEl.setAttribute('playsinline',''); silentEl.src = SILENT_WAV;
+  }
+  silentEl.play().catch(()=>{});
+  audioCtx();
+}
+function audioOff(){ try{ silentEl && silentEl.pause(); }catch(e){} }
+function tone(freq, dur, vol, type){
+  if(!S.sound) return;
+  const c = audioCtx(); if(!c) return;
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type || 'triangle';
+  o.frequency.setValueAtTime(freq, c.currentTime);
+  g.gain.setValueAtTime(0.0001, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(vol, c.currentTime + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+  o.connect(g).connect(c.destination);
+  o.start(); o.stop(c.currentTime + dur + 0.05);
+}
+function seSoon(){ tone(988,.16,.10); setTimeout(()=>tone(988,.16,.10), 200); }
+function seEnd(){
+  const bar = [[784,0],[988,150],[1175,300],[1568,470]];
+  const play = () => bar.forEach(([f,t])=>setTimeout(()=>tone(f,.55,.16), t));
+  play(); setTimeout(play, 1100); setTimeout(play, 2200);
+}
+
 /* ---------- カウントダウン ---------- */
 let tickT = null;
 function mmss(ms){
@@ -645,14 +694,15 @@ function cdPaused(){ return !S.tEnd && S.tLeft > 0; }
 
 function cdStart(){
   S.tEnd = Date.now() + S.limitMin*60000; S.tLeft = 0; S.tDone = 0;
-  save(); renderCd(); toast(S.limitMin+'分のカウントダウンをはじめました');
+  warned = false; audioUnlock();
+  save(); renderCd(); toast(fmtHM(S.limitMin)+'のカウントダウンをはじめました');
 }
 function cdPause(){
-  if(cdRunning()){ S.tLeft = S.tEnd - Date.now(); S.tEnd = 0; }
-  else if(cdPaused()){ S.tEnd = Date.now() + S.tLeft; S.tLeft = 0; }
+  if(cdRunning()){ S.tLeft = S.tEnd - Date.now(); S.tEnd = 0; audioOff(); }
+  else if(cdPaused()){ S.tEnd = Date.now() + S.tLeft; S.tLeft = 0; audioUnlock(); }
   save(); renderCd();
 }
-function cdStop(){ S.tEnd = 0; S.tLeft = 0; S.tDone = 0; save(); renderCd(); }
+function cdStop(){ S.tEnd = 0; S.tLeft = 0; S.tDone = 0; audioOff(); save(); renderCd(); }
 
 function renderCd(){
   // 時間切れの処理（tEnd を消す前にここで1回だけ知らせる）
@@ -661,9 +711,11 @@ function renderCd(){
     S.tEnd = 0;
     if(late < 30*60000){
       S.tDone = 1;
-      try{ navigator.vibrate && navigator.vibrate([220,110,220]); }catch(e){}
+      try{ navigator.vibrate && navigator.vibrate([220,110,220,110,320]); }catch(e){}
+      seEnd();
       notify('計画マップ', '時間です！ここまでにしましょう');
       toast('時間です！');
+      setTimeout(audioOff, 4000);
     }else{ S.tDone = 0; S.tLeft = 0; }
     save();
   }
@@ -694,7 +746,10 @@ function renderCd(){
   }
 
   clearTimeout(tickT);
-  if(cdRunning()) tickT = setTimeout(renderCd, 250);
+  if(cdRunning()){
+    if(!warned && S.tEnd - Date.now() <= 60000){ warned = true; seSoon(); toast('のこり1分です'); }
+    tickT = setTimeout(renderCd, 250);
+  }
 }
 $('#cdGo').onclick = cdStart;
 $('#cdMins').onclick = openLimitPicker;
@@ -968,6 +1023,8 @@ $('#histList').onclick = e => {
 $('#setName').oninput = e => { S.name = e.target.value; save(); };
 $('#setWeekGoal').oninput = e => { S.weekGoal = e.target.value; renderTQC(); save(); };
 $('#setDefMin').oninput = e => { const v = Math.round(Number(e.target.value)||0); if(v>=5 && v<=600){ S.defMin = v; save(); } };
+$('#setSound').onchange = e => { S.sound = !!e.target.checked; save(); if(S.sound){ audioUnlock(); tone(988,.2,.12); } else audioOff(); };
+$('#btnTestSound').onclick = ()=>{ S.sound = true; $('#setSound').checked = true; save(); audioUnlock(); seEnd(); setTimeout(audioOff, 4000); };
 $('#setNotifTime').oninput = e => { if(/^\d\d:\d\d$/.test(e.target.value)){ S.notifTime = e.target.value; save(); renderCd(); } };
 $('#setLimit').oninput = e => { const v = Math.round(Number(e.target.value)||0); if(v>=1 && v<=360){ S.limitMin = v; save(); renderCd(); } };
 $('#btnBackup').onclick = ()=>{
@@ -1036,9 +1093,12 @@ function boot(){
   $('#setWeekGoal').value = S.weekGoal || '';
   $('#setDefMin').value = S.defMin;
   $('#setNotifTime').value = S.notifTime;
+  $('#setSound').checked = !!S.sound;
   $('#setLimit').value = S.limitMin;
   $('#verTag').textContent = 'v'+VER; $('#verTag2').textContent = 'v'+VER;
   syncRep(); renderAll(); renderCd();
+  // 再読みこみでカウントダウンが続いているときは、最初のタップで音を使えるようにする
+  if(cdRunning()) document.addEventListener('pointerdown', ()=>audioUnlock(), { once:true });
 }
 load();
 (function(){ const nowK = iso(mondayOf(new Date())); if(!S.cur || S.cur < nowK){ S.cur = nowK; S.day = (new Date().getDay()+6)%7; } })();

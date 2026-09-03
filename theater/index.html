@@ -547,7 +547,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 37;
+const VER = 38;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -903,9 +903,12 @@ function markNew(){
   let known = [];
   try{ known = JSON.parse(localStorage.getItem('th_known') || 'null'); }catch(e){}
   const ids = DATA.videos.map(v => v.id);
+  /* videos.json で nn:1 が付いているものは NEW にしない。
+     あとから取りこみ漏れを足したときなど、「新着ではないもの」を静かに入れるため */
+  const quiet = new Set(DATA.videos.filter(v => v.nn).map(v => v.id));
   if(!Array.isArray(known)){ localStorage.setItem('th_known', JSON.stringify(ids)); return; }
   const k = new Set(known);
-  NEWIDS = new Set(ids.filter(id => !k.has(id)));
+  NEWIDS = new Set(ids.filter(id => !k.has(id) && !quiet.has(id)));
   localStorage.setItem('th_known', JSON.stringify(ids));
 }
 const isNew = id => NEWIDS.has(id);
@@ -1112,7 +1115,7 @@ function normalize(j){
   const videos = (Array.isArray(j.videos) ? j.videos : [])
     .map(v => ({ id:ytId(v.id || v.url || ''), t:v.t || v.title || '(無題)',
                  cat:v.cat || '', g:v.g || '', d:v.d || v.desc || '', date:v.date || '',
-                 sec:+v.sec || 0, pin:v.pin ? 1 : 0 }))
+                 sec:+v.sec || 0, pin:v.pin ? 1 : 0, nn:v.nn ? 1 : 0 }))
     .filter(v => v.id);
   /* 元の並び順を覚えておく。同じ日に何本も投稿されたとき、
      古い順に並べ直しても 1・2・3・4 の順が崩れないようにするため */
@@ -1226,7 +1229,7 @@ function vHome(){
       const pct = list.length ? Math.round(done / list.length * 100) : 0;
       const nw = list.filter(v => isNew(v.id)).length;
       return `<button class="tile${nw ? ' has-new' : ''}" data-tile="${esc(c.id)}">
-        <div class="tn">${esc(c.name)}${nw ? `<span class="tnew">NEW ${nw}</span>` : ''}</div>
+        <div class="tn">${esc(c.name)}${nw ? `<span class="tnew">NEW ${nw}本</span>` : ''}</div>
         <div class="tc">${list.length}本${done ? ` ・ ${done}本見た` : ''}${tot > done ? `（のべ${tot}）` : ''}</div>
         <div class="bar"><i style="width:${pct}%"></i></div>
       </button>`;

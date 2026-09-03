@@ -182,6 +182,30 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
   opacity:0; pointer-events:none; transition:.2s; box-shadow:var(--shadow-lg); max-width:88vw; text-align:center;}
 .toast.on{opacity:1; transform:translateX(-50%) translateY(0);}
 
+/* ==== 使い方スライド ==== */
+.slides{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+  gap:12px; padding-bottom:4px; scrollbar-width:none;}
+.slides::-webkit-scrollbar{display:none;}
+.slide{flex:0 0 100%; scroll-snap-align:center; background:var(--card); border:1px solid var(--line);
+  border-radius:14px; box-shadow:var(--shadow); padding:16px; display:flex; flex-direction:column;}
+.slide .step{font-size:13px; font-weight:700; color:var(--accent); background:var(--accent-soft);
+  border-radius:999px; padding:3px 11px; align-self:flex-start; margin-bottom:9px;}
+.slide h3{font-size:19px; font-weight:700; line-height:1.45; margin-bottom:12px;}
+.slide .art{background:var(--bg); border-radius:12px; padding:10px; margin-bottom:13px;}
+.slide .art svg{display:block; width:100%; height:auto;}
+.slide p{font-size:15px; line-height:1.8; color:var(--ink);}
+.slide p + p{margin-top:9px;}
+.slide .sub{color:var(--muted); font-size:14px;}
+.slide b.hl{color:var(--accent);}
+.snav{display:flex; align-items:center; gap:10px; margin-top:14px;}
+.sdots{flex:1; display:flex; gap:6px; justify-content:center; flex-wrap:wrap;}
+.sdots i{width:8px; height:8px; border-radius:50%; background:var(--line); display:block;}
+.sdots i.on{background:var(--accent); width:20px; border-radius:999px;}
+.snav .nb{border:1px solid var(--line); background:var(--card); border-radius:10px; padding:10px 15px;
+  font-size:15px; font-weight:700; flex:none;}
+.snav .nb.primary{background:var(--accent); color:var(--accent-ink); border-color:transparent;}
+.snav .nb[disabled]{opacity:.35;}
+
 .setrow{display:flex; align-items:center; gap:10px; padding:14px 2px; border-bottom:1px solid var(--line); width:100%; text-align:left; text-decoration:none; color:inherit;}
 .setrow:last-child{border-bottom:none;}
 .setrow .tx{flex:1;}
@@ -227,7 +251,7 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 
 <script src="data.js"></script>
 <script>
-const VER = 4;
+const VER = 5;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
 const EXTRA_MATH = ['nyumon_ia','nyumon_iib','kichart_ia','kichart_iib'];
@@ -380,7 +404,10 @@ function viewTetsu(){
 /* ===== 設定 ===== */
 function viewSet(){
   const th = S.theme === 'dark' ? 'ダーク' : S.theme === 'light' ? 'ライト' : '端末に合わせる';
-  let h = '<div class="sec-title" style="margin-top:14px">設定</div><div class="card">';
+  let h = '<div class="sec-title" style="margin-top:14px">つかいかた</div>';
+  h += '<button class="notice" onclick="openHelp()">'
+    + '<span class="ic">📖</span><span class="tx">高校ルートの使い方<span>はじめての人はここから。スライドで説明します</span></span><span class="arrow">›</span></button>';
+  h += '<div class="sec-title">設定</div><div class="card">';
   h += '<button class="setrow" onclick="cycleTheme()"><span class="tx"><b>見た目</b><span>明るさの切りかえ</span></span><span class="val">'+th+'</span></button>';
   h += '<button class="setrow" onclick="checkUpdate(true)"><span class="tx"><b>更新があるか調べる</b><span>いまのバージョン v'+VER+'</span></span><span class="val">調べる</span></button>';
   h += '<a class="setrow" href="https://docs.google.com/spreadsheets/d/17o7_aitaIZ9ufh5w5Ox7gxaqnwveaHVix4uHpL7BjmI/edit" target="_blank" rel="noopener"><span class="tx"><b>元のスプレッドシート</b><span>写真や図はこちらで見られます</span></span><span class="val">開く</span></a>';
@@ -473,6 +500,226 @@ function planTables(v){
     h += '</tbody></table></div>';
   });
   return h;
+}
+
+/* ===== 使い方スライド ===== */
+const A = {
+  /* 3つのタブ */
+  tabs: '<svg viewBox="0 0 320 150">'
+    + '<rect x="86" y="4" width="148" height="142" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/>'
+    + '<rect x="96" y="16" width="76" height="9" rx="4.5" fill="var(--ink)" opacity=".8"/>'
+    + '<rect x="96" y="34" width="128" height="24" rx="6" fill="var(--accent-soft)"/>'
+    + '<rect x="96" y="64" width="128" height="24" rx="6" fill="var(--bg)" stroke="var(--line)"/>'
+    + '<rect x="96" y="94" width="128" height="14" rx="5" fill="var(--bg)" stroke="var(--line)"/>'
+    + '<rect x="88" y="116" width="144" height="28" rx="0" fill="var(--bg)"/>'
+    + '<line x1="88" y1="116" x2="232" y2="116" stroke="var(--line)" stroke-width="2"/>'
+    + '<circle cx="112" cy="126" r="5" fill="none" stroke="var(--accent)" stroke-width="2.4"/>'
+    + '<text x="112" y="141" font-size="9" font-weight="700" fill="var(--accent)" text-anchor="middle">ルート</text>'
+    + '<rect x="155" y="121" width="10" height="10" rx="2" fill="none" stroke="var(--muted)" stroke-width="2.2"/>'
+    + '<text x="160" y="141" font-size="9" font-weight="700" fill="var(--muted)" text-anchor="middle">鉄則</text>'
+    + '<circle cx="208" cy="126" r="5" fill="none" stroke="var(--muted)" stroke-width="2.2"/>'
+    + '<text x="208" y="141" font-size="9" font-weight="700" fill="var(--muted)" text-anchor="middle">設定</text>'
+    + '</svg>',
+  /* 問題集えらび */
+  pick: '<svg viewBox="0 0 320 150">'
+    + '<rect x="10" y="8" width="300" height="134" rx="12" fill="var(--card)" stroke="var(--line)" stroke-width="2"/>'
+    + '<rect x="24" y="22" width="40" height="18" rx="6" fill="var(--eng-soft)"/>'
+    + '<text x="44" y="35" font-size="11" font-weight="700" fill="var(--eng)" text-anchor="middle">英語</text>'
+    + '<rect x="24" y="48" width="106" height="32" rx="8" fill="var(--bg)" stroke="var(--accent)" stroke-width="2.5"/>'
+    + '<text x="36" y="63" font-size="12" font-weight="700" fill="var(--ink)">Stock3000</text>'
+    + '<text x="36" y="75" font-size="10" fill="var(--muted)">2ヶ月</text>'
+    + '<rect x="138" y="48" width="106" height="32" rx="8" fill="var(--bg)" stroke="var(--line)" stroke-width="2"/>'
+    + '<text x="150" y="63" font-size="12" font-weight="700" fill="var(--ink)">ポラリス0</text>'
+    + '<text x="150" y="75" font-size="10" fill="var(--muted)">3ヶ月</text>'
+    + '<rect x="24" y="88" width="120" height="32" rx="8" fill="var(--bg)" stroke="var(--line)" stroke-width="2"/>'
+    + '<rect x="152" y="88" width="92" height="32" rx="8" fill="var(--bg)" stroke="var(--line)" stroke-width="2"/>'
+    + '<circle cx="114" cy="64" r="12" fill="var(--accent)" opacity=".2"/>'
+    + '<circle cx="114" cy="64" r="5.5" fill="var(--accent)"/>'
+    + '</svg>',
+  /* 計画表 */
+  table: '<svg viewBox="0 0 320 150">'
+    + '<rect x="10" y="8" width="300" height="134" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="2"/>'
+    + '<rect x="10" y="8" width="300" height="24" fill="var(--accent-soft)"/>'
+    + '<text x="24" y="25" font-size="13" font-weight="700" fill="var(--accent)">1周目</text>'
+    + '<rect x="10" y="32" width="300" height="20" fill="var(--chip)"/>'
+    + '<text x="34" y="46" font-size="11" font-weight="700" fill="var(--muted)" text-anchor="middle">日</text>'
+    + '<text x="112" y="46" font-size="11" font-weight="700" fill="var(--muted)" text-anchor="middle">やる範囲</text>'
+    + '<text x="204" y="46" font-size="11" font-weight="700" fill="var(--muted)" text-anchor="middle">日</text>'
+    + '<text x="278" y="46" font-size="11" font-weight="700" fill="var(--muted)" text-anchor="middle">やる範囲</text>'
+    + '<g stroke="var(--line)" stroke-width="1.5">'
+    + '<line x1="10" y1="52" x2="310" y2="52"/><line x1="10" y1="74" x2="310" y2="74"/>'
+    + '<line x1="10" y1="96" x2="310" y2="96"/><line x1="10" y1="118" x2="310" y2="118"/>'
+    + '<line x1="58" y1="32" x2="58" y2="142"/><line x1="166" y1="32" x2="166" y2="142"/><line x1="242" y1="32" x2="242" y2="142"/>'
+    + '</g>'
+    + '<g font-size="12" font-weight="700" fill="var(--muted)" text-anchor="middle">'
+    + '<text x="34" y="67">1</text><text x="34" y="89">2</text><text x="34" y="111">3</text><text x="34" y="133">4</text>'
+    + '<text x="204" y="67">8</text><text x="204" y="89">9</text><text x="204" y="111">10</text><text x="204" y="133">11</text></g>'
+    + '<g font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">'
+    + '<text x="112" y="67">1〜31</text><text x="112" y="89">1〜31</text><text x="112" y="111">1〜31</text><text x="112" y="133">1〜31</text>'
+    + '<text x="278" y="67">32〜62</text><text x="278" y="89">32〜62</text><text x="278" y="111">32〜62</text><text x="278" y="133">32〜62</text></g>'
+    + '<rect x="11" y="97" width="154" height="21" fill="var(--accent)" opacity=".14"/>'
+    + '</svg>',
+  /* 横スワイプ */
+  swipe: '<svg viewBox="0 0 320 150">'
+    + '<rect x="10" y="14" width="230" height="94" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="2"/>'
+    + '<rect x="10" y="14" width="230" height="22" fill="var(--accent-soft)"/>'
+    + '<g stroke="var(--line)" stroke-width="1.5">'
+    + '<line x1="10" y1="58" x2="240" y2="58"/><line x1="10" y1="83" x2="240" y2="83"/>'
+    + '<line x1="58" y1="14" x2="58" y2="108"/><line x1="150" y1="14" x2="150" y2="108"/><line x1="196" y1="14" x2="196" y2="108"/></g>'
+    + '<rect x="248" y="14" width="62" height="94" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="2" opacity=".45"/>'
+    + '<path d="M120 130 h84" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>'
+    + '<path d="M192 120 l14 10 -14 10" stroke="var(--accent)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '<circle cx="112" cy="130" r="11" fill="var(--accent)" opacity=".22"/>'
+    + '<circle cx="112" cy="130" r="5" fill="var(--accent)"/>'
+    + '</svg>',
+  /* 日目 */
+  days: '<svg viewBox="0 0 320 150">'
+    + '<rect x="14" y="26" width="86" height="98" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="2"/>'
+    + '<text x="57" y="52" font-size="13" font-weight="700" fill="var(--muted)" text-anchor="middle">カレンダー</text>'
+    + '<g stroke="var(--line)" stroke-width="1.5"><line x1="14" y1="62" x2="100" y2="62"/></g>'
+    + '<g font-size="11" fill="var(--muted)" text-anchor="middle"><text x="35" y="82">4/1</text><text x="79" y="82">4/2</text>'
+    + '<text x="35" y="104">4/3</text><text x="79" y="104">4/4</text></g>'
+    + '<line x1="24" y1="34" x2="90" y2="116" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round"/>'
+    + '<line x1="90" y1="34" x2="24" y2="116" stroke="var(--red)" stroke-width="3.5" stroke-linecap="round"/>'
+    + '<path d="M112 75 h26" stroke="var(--muted)" stroke-width="3" stroke-linecap="round"/>'
+    + '<path d="M132 68 l8 7 -8 7" stroke="var(--muted)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '<rect x="150" y="26" width="156" height="98" rx="10" fill="var(--card)" stroke="var(--accent)" stroke-width="2.5"/>'
+    + '<g font-size="14" font-weight="700" text-anchor="middle">'
+    + '<text x="228" y="52" fill="var(--accent)">1日目 → 2日目 → 3日目</text></g>'
+    + '<g stroke="var(--line)" stroke-width="1.5"><line x1="150" y1="62" x2="306" y2="62"/></g>'
+    + '<text x="228" y="84" font-size="12" fill="var(--muted)" text-anchor="middle">休んでも つづきから</text>'
+    + '<text x="228" y="106" font-size="12" fill="var(--muted)" text-anchor="middle">ズレません</text>'
+    + '</svg>',
+  /* 全体計画 */
+  ovw: '<svg viewBox="0 0 320 150">'
+    + '<rect x="10" y="8" width="300" height="134" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="2"/>'
+    + '<rect x="10" y="8" width="300" height="22" fill="var(--chip)"/>'
+    + '<g font-size="11" font-weight="700" fill="var(--muted)"><text x="20" y="23">使用問題集</text><text x="128" y="23">月</text>'
+    + '<text x="204" y="23">期間</text><text x="262" y="23">周回数</text></g>'
+    + '<g stroke="var(--line)" stroke-width="1.5">'
+    + '<line x1="10" y1="30" x2="310" y2="30"/><line x1="10" y1="58" x2="310" y2="58"/>'
+    + '<line x1="10" y1="86" x2="310" y2="86"/><line x1="10" y1="114" x2="310" y2="114"/>'
+    + '<line x1="120" y1="8" x2="120" y2="142"/><line x1="196" y1="8" x2="196" y2="142"/><line x1="254" y1="8" x2="254" y2="142"/></g>'
+    + '<g font-size="12" font-weight="700" fill="var(--ink)"><text x="20" y="48">Stock3000</text>'
+    + '<text x="20" y="76">ポラリス0</text><text x="20" y="104">ポラリス1</text><text x="20" y="132">ポラリス2</text></g>'
+    + '<g font-size="11" fill="var(--muted)"><text x="128" y="48">4〜6月</text><text x="204" y="48">5ヶ月</text><text x="262" y="48">8周</text>'
+    + '<text x="128" y="76">4〜6月</text><text x="204" y="76">3ヶ月</text><text x="262" y="76">4周</text>'
+    + '<text x="128" y="104">7〜10月</text><text x="204" y="104">4ヶ月</text><text x="262" y="104">5周</text>'
+    + '<text x="128" y="132">11〜3月</text><text x="204" y="132">4ヶ月</text><text x="262" y="132">7周</text></g>'
+    + '<rect x="76" y="66" width="40" height="15" rx="5" fill="var(--accent-soft)"/>'
+    + '<text x="96" y="77" font-size="9" font-weight="700" fill="var(--accent)" text-anchor="middle">計画表 ›</text>'
+    + '</svg>',
+  /* 鉄則 */
+  tetsu: '<svg viewBox="0 0 320 150">'
+    + '<rect x="10" y="8" width="300" height="42" rx="10" fill="var(--gold-soft)"/>'
+    + '<path d="M34 18 l-9 14 h7 l-3 12 10 -15 h-7z" fill="var(--gold)"/>'
+    + '<text x="52" y="27" font-size="13" font-weight="700" fill="var(--ink)">全体鉄則【10則】</text>'
+    + '<text x="52" y="42" font-size="11" fill="var(--muted)">まずはこれを読んでください</text>'
+    + '<rect x="10" y="58" width="300" height="84" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="2"/>'
+    + '<g stroke="var(--line)" stroke-width="1.5"><line x1="22" y1="86" x2="298" y2="86"/><line x1="22" y1="114" x2="298" y2="114"/></g>'
+    + '<g><rect x="22" y="66" width="18" height="16" rx="4" fill="var(--chip)"/>'
+    + '<rect x="22" y="94" width="18" height="16" rx="4" fill="var(--chip)"/>'
+    + '<rect x="22" y="122" width="18" height="16" rx="4" fill="var(--chip)"/></g>'
+    + '<g font-size="12" font-weight="700" fill="var(--ink)"><text x="50" y="78">Stockの鉄則【16則】</text>'
+    + '<text x="50" y="106">基礎問題精講の鉄則【10則】</text><text x="50" y="134">読解問題集の鉄則【8則】</text></g>'
+    + '<g fill="var(--muted)" font-size="13" font-weight="700"><text x="292" y="78" text-anchor="end">›</text>'
+    + '<text x="292" y="106" text-anchor="end">›</text><text x="292" y="134" text-anchor="end">›</text></g>'
+    + '</svg>',
+  /* 道具 */
+  tools: '<svg viewBox="0 0 320 150">'
+    + '<rect x="10" y="12" width="300" height="94" rx="12" fill="var(--card)" stroke="var(--line)" stroke-width="2"/>'
+    + '<g stroke="var(--line)" stroke-width="4" stroke-linecap="round">'
+    + '<line x1="28" y1="34" x2="252" y2="34"/><line x1="28" y1="52" x2="292" y2="52"/>'
+    + '<line x1="28" y1="70" x2="218" y2="70"/><line x1="28" y1="88" x2="264" y2="88"/></g>'
+    + '<rect x="96" y="112" width="128" height="30" rx="9" fill="var(--accent)"/>'
+    + '<text x="160" y="132" font-size="14" font-weight="700" fill="var(--accent-ink)" text-anchor="middle">この文をコピー</text>'
+    + '</svg>',
+  /* ホーム画面・更新 */
+  home: '<svg viewBox="0 0 320 150">'
+    + '<rect x="16" y="10" width="130" height="130" rx="14" fill="var(--card)" stroke="var(--line)" stroke-width="2"/>'
+    + '<path d="M81 84 v-42 M67 56 l14 -14 14 14" stroke="var(--accent)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '<path d="M55 74 v26 h52 v-26" stroke="var(--accent)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '<text x="81" y="126" font-size="12" font-weight="700" fill="var(--muted)" text-anchor="middle">ホーム画面に追加</text>'
+    + '<rect x="166" y="10" width="138" height="60" rx="12" fill="var(--new)"/>'
+    + '<text x="182" y="34" font-size="11.5" font-weight="700" fill="#fff">新しい高校ルートが</text>'
+    + '<text x="182" y="50" font-size="11.5" font-weight="700" fill="#fff">あります</text>'
+    + '<rect x="166" y="82" width="138" height="58" rx="12" fill="var(--card)" stroke="var(--line)" stroke-width="2"/>'
+    + '<text x="180" y="106" font-size="11.5" font-weight="700" fill="var(--ink)">更新があるか調べる</text>'
+    + '<text x="180" y="124" font-size="11" fill="var(--muted)">設定タブ</text>'
+    + '</svg>'
+};
+
+const SLIDES = [
+  { step:'はじめに', t:'高校ルートを<br>いつでも見られます', art:A.tabs,
+    b:'<p>いつも配っている「高校ルート」を、そのまま見られるアプリです。</p>'
+      + '<p class="sub">下の3つのタブで切りかえます。<br>'
+      + '<b class="hl">ルート</b>…計画表と全体計画<br>'
+      + '<b class="hl">鉄則</b>…問題集の正しいやり方<br>'
+      + '<b class="hl">設定</b>…見た目・更新・この使い方</p>' },
+  { step:'STEP 1', t:'やる問題集をえらぶ', art:A.pick,
+    b:'<p>「ルート」タブの一番上に、教科ごとに問題集のボタンが並んでいます。</p>'
+      + '<p><b class="hl">いま使っている問題集を押す</b>と、その問題集の計画表がひらきます。</p>' },
+  { step:'STEP 2', t:'日ごとの計画表を見る', art:A.table,
+    b:'<p>「1周目」「2周目」…ごとに表が出ます。</p>'
+      + '<p>左が<b class="hl">日</b>、右が<b class="hl">やる範囲</b>です。</p>'
+      + '<p class="sub">例：3日目 → 「1〜31」をやる</p>' },
+  { step:'STEP 2', t:'表は横にスワイプ', art:A.swipe,
+    b:'<p>表は画面より横に長くなっています。</p>'
+      + '<p><b class="hl">指で横になぞる</b>と、続きの日が見られます。</p>' },
+  { step:'たいせつ', t:'日づけではなく<br>「◯日目」で進みます', art:A.days,
+    b:'<p>カレンダーの日づけではなく、<b class="hl">1日目・2日目…</b>で進みます。</p>'
+      + '<p>できない日があっても、次にやるときは<b class="hl">つづきから</b>でOK。計画はズレません。</p>' },
+  { step:'STEP 3', t:'全体計画で<br>流れをつかむ', art:A.ovw,
+    b:'<p>ルートタブを下にスクロールすると、<b class="hl">全体計画</b>の表があります。</p>'
+      + '<p>いつ・どの問題集を・何周するかが分かります。横にスワイプすると期間・周回数・メモも見られます。</p>'
+      + '<p class="sub">行の「計画表 ›」を押すと、その問題集の日ごとの計画表がひらきます。</p>' },
+  { step:'STEP 4', t:'鉄則を<br>かならず読む', art:A.tetsu,
+    b:'<p>「鉄則」タブに、問題集ごとの<b class="hl">正しいやり方</b>が入っています。</p>'
+      + '<p>まずは【全体鉄則10則】から。<b class="hl">鉄則からズレると、極まらない＝伸びなくなります。</b></p>'
+      + '<p class="sub">はじめのうちは、鉄則を見ながら問題集を進めてください。</p>' },
+  { step:'STEP 5', t:'つまずいたときは', art:A.tools,
+    b:'<p><b class="hl">数学</b>：解説を読んでも分からない問題は、鉄則タブの【最強プロンプト】をコピーして、問題と解説の写真をつけてAIに送ってください。</p>'
+      + '<p><b class="hl">国語</b>：「プロの思考」に、読解の鉄則がまとまっています。</p>' },
+  { step:'さいごに', t:'ホーム画面に置く／<br>新しくなったら', art:A.home,
+    b:'<p><b class="hl">ホーム画面に追加</b>：iPhoneは共有ボタン →「ホーム画面に追加」。アプリのように開けます。</p>'
+      + '<p><b class="hl">更新</b>：オレンジの帯が出たらタップすると最新になります。設定の「更新があるか調べる」でも確認できます。</p>' }
+];
+
+function openHelp(){
+  let h = '<div class="slides" id="slideBox">';
+  SLIDES.forEach(s => {
+    h += '<div class="slide"><span class="step">'+s.step+'</span><h3>'+s.t+'</h3>'
+      + '<div class="art">'+s.art+'</div>' + s.b + '</div>';
+  });
+  h += '</div>';
+  h += '<div class="snav"><button class="nb" id="sPrev" onclick="slideGo(-1)">‹ もどる</button>'
+    + '<span class="sdots" id="sDots"></span>'
+    + '<button class="nb primary" id="sNext" onclick="slideGo(1)">つぎへ ›</button></div>';
+  openSheet('高校ルートの使い方', h);
+  const box = document.getElementById('slideBox');
+  box.addEventListener('scroll', () => { clearTimeout(box._t); box._t = setTimeout(slideSync, 60); });
+  slideSync();
+}
+function slideIndex(){
+  const box = document.getElementById('slideBox');
+  return Math.round(box.scrollLeft / (box.clientWidth + 12));
+}
+function slideSync(){
+  const box = document.getElementById('slideBox'); if(!box) return;
+  const i = slideIndex();
+  let d = '';
+  SLIDES.forEach((_, k) => { d += '<i class="'+(k === i ? 'on' : '')+'"></i>'; });
+  document.getElementById('sDots').innerHTML = d;
+  document.getElementById('sPrev').disabled = i <= 0;
+  const nx = document.getElementById('sNext');
+  nx.textContent = i >= SLIDES.length - 1 ? 'とじる' : 'つぎへ ›';
+}
+function slideGo(dir){
+  const box = document.getElementById('slideBox');
+  const i = slideIndex();
+  if(dir > 0 && i >= SLIDES.length - 1){ closeSheet(); return; }
+  box.scrollTo({ left: Math.max(0, i + dir) * (box.clientWidth + 12), behavior:'smooth' });
+  setTimeout(slideSync, 320);
 }
 
 function openTetsu(key){

@@ -466,6 +466,16 @@ textarea{min-height:96px;resize:vertical;line-height:1.7;font-size:.88rem}
 select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;padding:11px 12px;
   width:100%;outline:none;-webkit-appearance:none;appearance:none}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;line-height:1.6}
+/* いつ見る（予定） */
+.pq{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pq button{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
+  padding:11px 0;font-size:.82rem;font-weight:700;color:var(--ink2)}
+.plrow{display:flex;align-items:center;gap:10px;background:var(--surf);border:1px solid var(--line);
+  border-radius:12px;padding:11px 12px;width:100%;text-align:left;margin-top:8px}
+.plrow .pw{flex:none;min-width:74px;color:var(--acc);font-weight:800;font-size:.78rem;
+  font-variant-numeric:tabular-nums}
+.plrow.due .pw{color:#e0483f}
+.plrow .pt{flex:1;font-size:.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* ふりかえり */
 .rvb{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}
 .rvb button{background:var(--surf2);border:1px solid var(--line2);border-radius:11px;
@@ -548,7 +558,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 39;
+const VER = 40;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -817,6 +827,7 @@ function watched(id){ const p = prog[id]; return (p && p.w) || 0; }
 function countView(id){
   const n = addSeen(id, 1);
   const p = prog[id]; if(p){ p.w = 0; saveProg(); }
+  if(planOf(id)) setPlan(id, '');   /* 見終わったら 予定から外す */
   toast(n === 1 ? '最後まで見ました（1回）' : `最後まで見ました（${n}回目）`);
   if(!$('#pv').classList.contains('hidden')) drawBody();
   return n;
@@ -877,6 +888,32 @@ function setMarkMemo(id, sec, memo){
   m[1] = String(memo || '').slice(0, 60);
   p.last = now(); saveProg();
 }
+
+/* いつ見るか（見る予定）。prog の中に pl として持つ。
+   'YYYY-MM-DD' か 'YYYY-MM-DDTHH:MM'。文字のまま並べても日付順になる形。 */
+const planOf = id => (prog[id] && prog[id].pl) || '';
+function setPlan(id, pl){
+  const p = prog[id] || (prog[id] = { t:0, d:0 });
+  if(pl) p.pl = pl; else delete p.pl;
+  p.last = now(); saveProg();
+}
+const todayStr = () => {
+  const d = new Date(), z = n => String(n).padStart(2,'0');
+  return d.getFullYear() + '-' + z(d.getMonth()+1) + '-' + z(d.getDate());
+};
+const planDate = pl => String(pl).slice(0,10);
+const planTime = pl => String(pl).length > 10 ? String(pl).slice(11,16) : '';
+/* 予定のある動画を、日付の早い順に */
+function plannedList(){
+  return DATA.videos.filter(v => planOf(v.id))
+    .sort((a,b) => planOf(a.id).localeCompare(planOf(b.id)));
+}
+const planLabel = pl => {
+  const d = planDate(pl), t = planTime(pl);
+  const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const w = m ? '（' + '日月火水木金土'[new Date(+m[1], +m[2]-1, +m[3]).getDay()] + '）' : '';
+  return (m ? `${+m[2]}/${+m[3]}${w}` : d) + (t ? ' ' + t : '');
+};
 
 function clearSeen(id){
   const p = prog[id]; if(!p) return;
@@ -1055,7 +1092,7 @@ async function pullSync(){
    （再生中は5秒ごとに位置を保存しているので、それで毎回送ると通信の無駄になる） */
 function sigOf(){
   return JSON.stringify({
-    p: Object.keys(prog).sort().map(k => k + ':' + seenN(k) + ':' + marksOf(k).length),
+    p: Object.keys(prog).sort().map(k => k + ':' + seenN(k) + ':' + marksOf(k).length + ':' + planOf(k)),
     o: Object.keys(outs).sort().map(k => k + ':' + (outs[k] || []).length),
     f: favs.slice().sort(),
     d: folders.map(f => f.id + ':' + (f.ids || []).length),
@@ -1230,6 +1267,16 @@ function vHome(){
       </div>
       <div class="dt">${new Date().toLocaleDateString('ja-JP')} 時点 ・ 押すと上がり方がわかります</div>
     </button>`;
+
+  /* 今日までに見ると決めた動画。あとで見る予定を忘れないように、いちばん上に出す */
+  const due = plannedList().filter(v => planDate(planOf(v.id)) <= todayStr());
+  if(due.length) h += `<div class="sec"><h2>今日 見る予定（${due.length}本）</h2></div>
+    ${due.slice(0,5).map(v => `<button class="plrow due" data-go="${esc(v.id)}">
+        <span class="pw">${planLabel(planOf(v.id))}</span>
+        <span class="pt">${esc(v.t)}</span>
+        <span style="color:var(--ink3)">${ICO.chev({s:18})}</span>
+      </button>`).join('')}
+    ${due.length > 5 ? `<div class="lead" style="margin-top:8px">ほか ${due.length - 5}本は「保存」タブに出ています。</div>` : ''}`;
 
   if(cont) h += `<div class="sec"><h2>つづきから</h2></div>${bigCard(cont)}`;
 
@@ -1555,7 +1602,18 @@ function vSaved(){
       <span style="color:var(--acc)">${id === '__fav' ? ICO.starF({s:20}) : ICO.folder({s:20})}</span>
       <span class="fn">${esc(name)}</span><span class="fc">${n}本</span>
       <span style="color:var(--ink3)">${ICO.chev({s:18})}</span></button>`;
+  const pl = plannedList();
+  const td = todayStr();
   $('#main').innerHTML = `
+    ${pl.length ? `<div class="sec"><h2>見る予定（${pl.length}本）</h2></div>
+      ${pl.map(v => `<button class="plrow ${planDate(planOf(v.id)) <= td ? 'due' : ''}" data-go="${esc(v.id)}">
+          <span class="pw">${planLabel(planOf(v.id))}</span>
+          <span class="pt">${esc(v.t)}</span>
+          <span style="color:var(--ink3)">${ICO.chev({s:18})}</span>
+        </button>`).join('')}
+      <div class="lead" style="margin-top:10px">動画の画面の「いつ見るか決める」から入れられます。
+        見終わると自動で消えます。</div>
+      <div class="sec"><h2>フォルダ</h2></div>` : ''}
     <div style="margin-top:12px">
       ${row('__fav', '保存', favs.length)}
       ${folders.map(f => row(f.id, f.name, f.ids.length)).join('')}
@@ -2274,6 +2332,47 @@ function openReview(id, n){
   });
 }
 
+/* いつ見るかを決める。「あとで見る」を日付つきでできるようにするため。
+   ※ 通知は出せない（ブラウザのアプリなので、iPhoneでは鳴らせない）。
+      アプリを開いたときに、ホームと保存タブで知らせる形にしている。 */
+function askPlan(id, after){
+  const cur = planOf(id);
+  const z = n => String(n).padStart(2,'0');
+  const shift = k => { const d = new Date(); d.setDate(d.getDate() + k);
+    return d.getFullYear() + '-' + z(d.getMonth()+1) + '-' + z(d.getDate()); };
+  openSheet(`
+    <h3>いつ見る？</h3>
+    <div class="lead" style="margin:-4px 2px 10px">
+      決めた日が来ると、ホームと「保存」に出ます。<br>
+      ※ 通知は鳴りません。アプリを開いたときのお知らせです。</div>
+    <div class="pq">
+      <button data-q="0">今日</button>
+      <button data-q="1">明日</button>
+      <button data-q="2">あさって</button>
+      <button data-q="7">来週</button>
+    </div>
+    <div class="fld" style="margin-top:12px"><label>日にち</label>
+      <input type="date" id="plD"></div>
+    <div class="fld"><label>時間（決めなくてもOK）</label>
+      <input type="time" id="plT"></div>
+    <div class="acts" style="margin-top:14px">
+      ${cur ? `<button class="btn" id="plX">予定をやめる</button>` : `<button class="btn" id="plNo">やめる</button>`}
+      <button class="btn pri" id="plOk">決める</button>
+    </div>`, () => {
+    $('#plD').value = planDate(cur) || todayStr();
+    $('#plT').value = planTime(cur);
+    $$('#shin .pq button').forEach(b => b.onclick = () => { $('#plD').value = shift(+b.dataset.q); });
+    $('#plOk').onclick = () => {
+      const d = $('#plD').value; if(!d) return toast('日にちを選んでください');
+      const t = $('#plT').value;
+      setPlan(id, t ? d + 'T' + t : d);
+      closeSheet(); after(); toast(`${planLabel(t ? d + 'T' + t : d)} に見る、で決めました`);
+    };
+    if($('#plX')) $('#plX').onclick = () => { setPlan(id, ''); closeSheet(); after(); toast('予定をやめました'); };
+    if($('#plNo')) $('#plNo').onclick = closeSheet;
+  });
+}
+
 /* アウトプットを書きなおす。消して書き直す手間をなくすため */
 function askEditOut(id, i, after){
   const o = (outs[id] || [])[i]; if(!o) return;
@@ -2440,6 +2539,8 @@ function drawBody(){
       <button class="btn sm" id="fold">${ICO.folder({s:18})}
         <span>フォルダ${foldCount(v.id) ? `（${foldCount(v.id)}）` : ''}</span></button>
     </div>
+    <button class="btn" id="plan" style="margin-top:9px">${ICO.book({s:18})}
+      <span>${planOf(v.id) ? `${planLabel(planOf(v.id))} に見る（変える）` : 'いつ見るか決める'}</span></button>
     ${isLoom(v.id) ? '' : `<button class="btn" id="mark" style="margin-top:9px">${ICO.plus({s:18})}
       <span>いまの場面に付箋をつける</span></button>`}
     ${marksOf(v.id).length ? `<div class="mks">${marksOf(v.id).map(m => `
@@ -2488,6 +2589,7 @@ function drawBody(){
     saveFav(); drawBody(); toast(isFav(v.id) ? '保存しました' : '保存をはずしました');
   };
   $('#fold').onclick = () => pickFolder(v.id, drawBody);
+  $('#plan').onclick = () => askPlan(v.id, drawBody);
   if($('#mark')) $('#mark').onclick = () => {
     let t = 0;
     try{ t = (player && playerReady) ? (player.getCurrentTime() || 0) : ((prog[v.id] || {}).t || 0); }

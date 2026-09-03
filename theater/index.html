@@ -465,12 +465,9 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 .rvl{display:flex;flex-direction:column;gap:9px;margin-top:12px;max-height:50vh;overflow-y:auto}
 .rv{display:block;width:100%;text-align:left;background:var(--surf2);border:1px solid var(--line2);
   border-radius:11px;padding:13px 14px}
-.rv .t{display:block;color:var(--acc);font-weight:700;font-size:.8rem;font-variant-numeric:tabular-nums}
-.rv .a{display:block;color:var(--ink3);font-size:.86rem;margin-top:5px}
-.rv.open{background:var(--acc-soft);border-color:var(--acc)}
-.rv.open .a{color:var(--ink);font-weight:600}
-.rv .go{display:none;color:var(--ink3);font-size:.72rem;margin-top:6px}
-.rv.open .go{display:block}
+.rv .t{display:block;color:var(--acc);font-weight:700;font-size:.72rem}
+.rv .a{display:block;color:var(--ink);font-size:.92rem;font-weight:600;margin-top:3px;line-height:1.6}
+.rv .go{display:block;color:var(--ink3);font-size:.72rem;margin-top:7px}
 
 /* 速さの選択 */
 /* アウトプットの写真 */
@@ -542,7 +539,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 35;
+const VER = 36;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -1630,6 +1627,7 @@ function vSet(){
         <div class="ct" id="updState">v${VER}</div></button>
       <button class="item" id="guide2"><div class="nm">使い方を見る</div>
         <div class="chev">${ICO.chev({s:20})}</div></button>
+      <button class="item" id="about"><div class="nm">このアプリに入っている動画について</div></button>
       <button class="item" id="howto"><div class="nm">ホーム画面に置く方法</div></button>
       ${(isAdmin || devOn) ? `<button class="item" id="adm">
         <div class="nm">動画を管理する（配信者用）</div></button>` : ''}
@@ -1661,6 +1659,13 @@ function vSet(){
   $('#impo').onclick = doImport;
   $('#upd').onclick = () => checkUpd();
   $('#guide2').onclick = () => showGuide(0);
+  $('#about').onclick = () => info('入っている動画について',
+    'ヒラ先生のDiscordにある部屋から、<b>8つの区分</b>を取りこんでいます。<br><br>' +
+    'マインド動画／シークレット会／プレミア動画／コンテンツ動画／勉強法／ヒラマップ／ヒラ会／塾生実績<br><br>' +
+    'それ以外（YouTubeの新企画・Limit・定期動画・ライブなど）は<b>入っていません</b>。<br><br>' +
+    '<b>日付について</b><br>出ているのは、その動画が<b>塾のDiscordに届いた日</b>です。' +
+    '撮影した日ではありません。<br><br>' +
+    '<b>動画がふえたら</b><br>区分に NEW が付きます。こちらの操作は要りません。');
   $('#howto').onclick = () => info('ホーム画面に置く方法',
     '<b>iPhone / iPad</b><br>1. Safari でこのページを開く<br>' +
     '2. 下（または右上）の共有ボタンを押す<br>3.「ホーム画面に追加」を選ぶ<br><br>' +
@@ -2221,24 +2226,19 @@ function openReview(id, n){
   openSheet(`
     <h3>ふりかえり（${items.length}つ）</h3>
     <div class="lead" style="margin:-4px 2px 0;line-height:1.9">
-      この時間のあたりで、どんな話だったか思い出してみてください。<br>
-      押すと答えが出ます。もう一度押すと その場面へ飛びます。</div>
+      この見出しで、どんな話だったか思い出せますか。<br>
+      あやしいものは押すと、その場面から見返せます。</div>
     <div class="rvl">
       ${items.map((c,i) => `
         <button class="rv" data-sec="${c[0]}">
-          <span class="t">${i+1}｜${hhmm(c[0])} ごろ</span>
-          <span class="a">タップして答えを見る</span>
-          <span class="go">もう一度押すと ここから再生します</span>
+          <span class="t">${i+1}</span>
+          <span class="a">${esc(c[1])}</span>
+          <span class="go">${hhmm(c[0])} から見返す</span>
         </button>`).join('')}
     </div>
     <button class="btn" id="rvNo" style="margin-top:12px">とじる</button>`,
   () => {
-    $$('#shin .rv').forEach((b,i) => b.onclick = () => {
-      if(!b.classList.contains('open')){
-        b.classList.add('open');
-        b.querySelector('.a').textContent = items[i][1];
-        return;
-      }
+    $$('#shin .rv').forEach(b => b.onclick = () => {
       closeSheet();
       const sec = +b.dataset.sec;
       try{ player.seekTo(sec, true); player.playVideo(); }catch(e){}
@@ -2383,7 +2383,7 @@ function drawBody(){
     <h1>${esc(v.t)}</h1>
     <div class="vs"><span class="tag">${esc(catName(v.cat))}</span>
       ${v.g ? `<span class="tag">${esc(v.g)}</span>` : ''}
-      ${v.date ? `<span>${ymd(v.date)}</span>` : ''}</div>
+      ${v.date ? `<span>塾に届いた日 ${ymd(v.date)}</span>` : ''}</div>
     <div class="acts">
       <button class="btn sm" id="fav">${isFav(v.id) ? ICO.starF({s:18}) : ICO.star({s:18})}
         <span>${isFav(v.id) ? '保存ずみ' : '保存'}</span></button>
@@ -2417,7 +2417,7 @@ function drawBody(){
       速さは Loom の画面の中で変えられます。</div>` : ''}
     ${v.d ? `<div class="desc">${esc(v.d)}</div>` : ''}
     ${canReview(v.id) ? `<div class="sec"><h2>ふりかえり</h2></div>
-      <div class="lead" style="margin-top:-2px">見たあとに、どんな話だったか思い出せるか試せます。</div>
+      <div class="lead" style="margin-top:-2px">見出しを見て、その話を思い出せるか試せます。</div>
       <div class="rvb">
         <button data-rv="3">かんたん<span>3つ</span></button>
         <button data-rv="5">ふつう<span>5つ</span></button>

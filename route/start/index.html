@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>高校ルート はじめかた</title>
+<meta name="description" content="高校ルートのアプリを、スマホに入れて使いはじめるまでの案内です。">
+<meta name="theme-color" content="#14315F">
+<link rel="apple-touch-icon" href="../apple-touch-icon-v1.png">
+<link rel="icon" href="../icon-192-v1.png">
+<meta property="og:title" content="高校ルート はじめかた">
+<meta property="og:description" content="アプリをスマホに入れて使いはじめるまでの案内スライドです。">
+<style>
+:root{
+  --paper:#F1F4F9; --card:#FFFFFF; --ink:#111A26; --muted:#4A5A70; --line:#D2DBE6;
+  --navy1:#12294F; --navy2:#1B5CC9;
+  --route:#1B5CC9; --route-soft:#E3ECFB;
+  --gold:#8E6712; --gold-soft:#F8EED6;
+  --alert:#B3450F; --alert-soft:#FCE9DC;
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  background:var(--paper); color:var(--ink); overflow:hidden;
+  font-family:-apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", "Yu Gothic Medium", Meiryo, "Segoe UI", sans-serif;
+  font-size:17px; line-height:1.75; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit; color:inherit; background:none; border:none; cursor:pointer; touch-action:manipulation;}
+a{color:inherit;}
+
+/* ===== 進み具合のバー ===== */
+.bar{position:fixed; top:0; left:0; right:0; height:4px; background:rgba(0,0,0,.12); z-index:40;}
+.bar i{display:block; height:100%; width:0; background:var(--route); transition:width .25s ease;}
+.bar.on-dark{background:rgba(255,255,255,.24);}
+.bar.on-dark i{background:#FFD98A;}
+
+/* ===== スライド ===== */
+.deck{
+  display:flex; height:100dvh; overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x mandatory; scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none;
+}
+.deck::-webkit-scrollbar{display:none;}
+.slide{
+  flex:0 0 100%; scroll-snap-align:center; scroll-snap-stop:always;
+  height:100dvh; overflow-y:auto; display:flex; flex-direction:column; justify-content:center;
+  gap:16px;
+  padding:calc(38px + env(safe-area-inset-top)) 22px calc(104px + env(safe-area-inset-bottom));
+}
+.inner{width:100%; max-width:520px; margin:0 auto; display:flex; flex-direction:column; gap:16px;}
+
+.eyebrow{
+  font-size:13px; font-weight:700; letter-spacing:.16em; color:var(--route);
+  background:var(--route-soft); border-radius:999px; padding:5px 13px; align-self:flex-start;
+}
+h1{font-size:clamp(26px,7.2vw,36px); font-weight:800; line-height:1.42; letter-spacing:.005em;}
+h2{font-size:clamp(23px,6.2vw,31px); font-weight:800; line-height:1.45;}
+p{font-size:clamp(15.5px,4.2vw,17px); line-height:1.85;}
+p.sub{color:var(--muted); font-size:clamp(14px,3.8vw,15.5px);}
+b.hl{color:var(--route);}
+
+/* 表紙・まとめ（濃紺） */
+.slide.dark{background:linear-gradient(155deg,var(--navy1) 0%,var(--navy2) 100%); color:#fff;}
+.slide.dark .eyebrow{background:rgba(255,255,255,.18); color:#fff;}
+.slide.dark p.sub{color:rgba(255,255,255,.82);}
+.slide.dark b.hl{color:#FFD98A;}
+.urlbox{
+  background:rgba(255,255,255,.15); border-radius:12px; padding:13px 15px;
+  font-size:14px; word-break:break-all; letter-spacing:.01em;
+}
+
+/* 番号つき手順 */
+ol.steps{list-style:none; display:flex; flex-direction:column; gap:13px;}
+ol.steps li{position:relative; padding-left:42px; font-size:clamp(15.5px,4.2vw,17px); line-height:1.75;}
+ol.steps li::before{
+  counter-increment:s; content:counter(s);
+  position:absolute; left:0; top:4px; width:29px; height:29px; line-height:29px; text-align:center;
+  background:var(--route); color:#fff; border-radius:9px; font-size:14.5px; font-weight:700;
+}
+ol.steps{counter-reset:s;}
+
+/* チェックリスト */
+ul.check{list-style:none; display:flex; flex-direction:column; gap:12px;}
+ul.check li{position:relative; padding-left:32px; font-size:clamp(15.5px,4.2vw,17px); line-height:1.75;}
+ul.check li::before{content:"✓"; position:absolute; left:0; top:0; color:#FFD98A; font-weight:800; font-size:19px;}
+
+/* 注意・大事 */
+.note{border-radius:13px; padding:14px 16px; font-size:clamp(14.5px,3.9vw,16px); line-height:1.8;}
+.note .k{display:block; font-weight:800; margin-bottom:3px;}
+.note.warn{background:var(--alert-soft);} .note.warn .k{color:var(--alert);}
+.note.key{background:var(--gold-soft);} .note.key .k{color:var(--gold);}
+.slide.dark .note.key{background:rgba(255,255,255,.14);} .slide.dark .note.key .k{color:#FFD98A;}
+
+/* 2つ並べる（iPhone / Android など） */
+.two{display:grid; grid-template-columns:1fr; gap:13px;}
+.pane{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 17px; display:flex; flex-direction:column; gap:11px;}
+.pane h3{font-size:16.5px; font-weight:800; display:flex; align-items:center; gap:9px;}
+.pane h3 em{font-style:normal; font-size:12px; font-weight:700; letter-spacing:.1em; color:var(--route); background:var(--route-soft); border-radius:999px; padding:3px 9px;}
+.pane p{font-size:15px;}
+
+/* 図 */
+figure{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px;}
+figure svg{display:block; width:100%; height:auto;}
+figcaption{margin-top:9px; font-size:13.5px; color:var(--muted); text-align:center;}
+
+/* 表の見本 */
+.tbl{background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+table{border-collapse:separate; border-spacing:0; width:100%; font-size:15px;}
+th,td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:8px 6px; text-align:center; white-space:nowrap;}
+tr:last-child td{border-bottom:none;} th:last-child,td:last-child{border-right:none;}
+thead.rnd th{background:var(--route-soft); color:var(--route); text-align:left; padding-left:12px; font-size:15.5px; font-weight:800;}
+thead.col th{background:var(--paper); color:var(--muted); font-size:13px; font-weight:700;}
+td.d{color:var(--muted); font-weight:700; font-variant-numeric:tabular-nums;}
+
+/* 大きいボタン */
+.cta{
+  display:block; text-align:center; background:#fff; color:var(--navy1);
+  border-radius:14px; padding:16px 18px; font-size:17.5px; font-weight:800; text-decoration:none;
+}
+.cta.ghost{background:rgba(255,255,255,.16); color:#fff;}
+
+/* ===== 下のナビ ===== */
+.nav{
+  position:fixed; left:0; right:0; bottom:0; z-index:30;
+  display:flex; align-items:center; gap:12px;
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top,var(--paper) 62%,transparent);
+}
+.nav.on-dark{background:linear-gradient(to top,rgba(18,41,79,.96) 62%,transparent);}
+.nav button.arrow{
+  width:52px; height:52px; border-radius:14px; background:var(--card); border:1px solid var(--line);
+  display:grid; place-items:center; font-size:22px; font-weight:700; color:var(--ink); flex:none;
+}
+.nav.on-dark button.arrow{background:rgba(255,255,255,.16); border-color:transparent; color:#fff;}
+.nav button.arrow[disabled]{opacity:.3;}
+.nav .next{
+  flex:1; height:52px; border-radius:14px; background:var(--route); color:#fff;
+  font-size:17px; font-weight:800; display:grid; place-items:center;
+}
+.nav.on-dark .next{background:#fff; color:var(--navy1);}
+.dots{position:fixed; left:0; right:0; bottom:calc(74px + env(safe-area-inset-bottom)); z-index:30;
+  display:flex; gap:5px; justify-content:center; pointer-events:none;}
+.dots i{width:6px; height:6px; border-radius:50%; background:rgba(0,0,0,.2);}
+.dots i.on{background:var(--route); width:18px; border-radius:999px;}
+.dots.on-dark i{background:rgba(255,255,255,.3);}
+.dots.on-dark i.on{background:#FFD98A;}
+
+/* 左右のタップ範囲（PC・スマホ共通） */
+.tap{position:fixed; top:0; bottom:96px; width:16%; z-index:20; background:transparent;}
+.tap.l{left:0;} .tap.r{right:0;}
+
+.counter{position:fixed; top:14px; right:16px; z-index:30; font-size:13px; font-weight:700;
+  color:var(--muted); background:rgba(255,255,255,.8); border-radius:999px; padding:3px 11px;}
+.counter.on-dark{color:#fff; background:rgba(255,255,255,.18);}
+
+/* 画面の縦が短い端末では、はみ出さないように詰める */
+@media (max-height:720px){
+  .slide{padding:calc(26px + env(safe-area-inset-top)) 18px calc(92px + env(safe-area-inset-bottom));}
+  .inner{gap:12px;}
+  h1{font-size:clamp(23px,6.4vw,31px); line-height:1.38;}
+  h2{font-size:clamp(21px,5.6vw,27px); line-height:1.4;}
+  p{font-size:15px; line-height:1.72;}
+  p.sub{font-size:13.8px;}
+  .eyebrow{font-size:12px; padding:4px 11px;}
+  ol.steps{gap:10px;} ol.steps li{font-size:15px; padding-left:38px;}
+  ol.steps li::before{width:26px; height:26px; line-height:26px; font-size:13.5px;}
+  ul.check{gap:9px;} ul.check li{font-size:15px;}
+  .pane{padding:13px 14px; gap:8px;} .pane h3{font-size:15.5px;} .pane p{font-size:14px;}
+  .note{padding:12px 14px; font-size:14.2px; line-height:1.72;}
+  figure{padding:11px;}
+  th,td{padding:6px 5px; font-size:14px;}
+}
+@media (min-width:600px){ .two{grid-template-columns:1fr 1fr;} }
+@media (prefers-reduced-motion:reduce){ .deck{scroll-behavior:auto;} .bar i{transition:none;} }
+</style>
+</head>
+<body>
+
+<div class="bar" id="bar"><i id="barFill"></i></div>
+<div class="counter" id="counter">1 / 14</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 表紙 -->
+  <section class="slide dark"><div class="inner">
+    <span class="eyebrow">オンラインコミュニティ塾【ヒラ】</span>
+    <h1>「高校ルート」が<br>アプリになりました</h1>
+    <p>全体計画・日ごとの計画表・鉄則を、スマホからいつでも見られます。印刷やスプレッドシートを開く必要はもうありません。</p>
+    <p class="sub">下の「つぎへ」か、画面を横にスワイプして進んでください。5分で使いはじめられます。</p>
+  </div></section>
+
+  <!-- 2 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">できること</span>
+    <h2>3つのことが<br>すぐ分かります</h2>
+    <div class="two" style="grid-template-columns:1fr">
+      <div class="pane"><h3>① 日ごとの計画表</h3><p class="sub">「何日目に、どこをやるか」が問題集ごとに表で見られます。</p></div>
+      <div class="pane"><h3>② 全体計画</h3><p class="sub">いつ・どの問題集を・何周するか。高1から高3までの流れ。</p></div>
+      <div class="pane"><h3>③ 鉄則</h3><p class="sub">問題集ごとの正しいやり方。ここが一番大事なところ。</p></div>
+    </div>
+  </div></section>
+
+  <!-- 3 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">じゅんび 1</span>
+    <h2>まず、リンクをひらく</h2>
+    <div class="urlbox" style="background:var(--card); border:1px solid var(--line); color:var(--route); font-weight:700">
+      https://yuki08173123-svg.github.io/study-game/route/
+    </div>
+    <div class="note warn"><span class="k">⚠️ ここだけ注意</span>
+      Discordから開くと「Discordの中のブラウザ」で開きます。そのままだとホーム画面に追加できません。
+      画面のすみに出る「<b>Safariで開く</b>」（Androidは「<b>Chromeで開く</b>」）を押してから次に進んでください。
+    </div>
+  </div></section>
+
+  <!-- 4 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">じゅんび 2</span>
+    <h2>ホーム画面に追加する</h2>
+    <div class="two">
+      <div class="pane">
+        <h3>iPhone <em>SAFARI</em></h3>
+        <ol class="steps">
+          <li>下の<b>共有ボタン</b>（□に↑）をタップ</li>
+          <li>下にスクロールして「<b>ホーム画面に追加</b>」</li>
+          <li>右上の「<b>追加</b>」をタップ</li>
+        </ol>
+      </div>
+      <div class="pane">
+        <h3>Android <em>CHROME</em></h3>
+        <ol class="steps">
+          <li>右上の <b>⋮</b>（点3つ）をタップ</li>
+          <li>「<b>ホーム画面に追加</b>」をタップ</li>
+          <li>「<b>インストール</b>」をタップ</li>
+        </ol>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- 5 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">じゅんび 3</span>
+    <h2>アイコンが出たら完了</h2>
+    <figure>
+      <svg viewBox="0 0 480 120" role="img" aria-label="共有ボタンからホーム画面にアイコンが追加されるまでの流れ">
+        <rect x="4" y="12" width="128" height="94" rx="13" fill="var(--paper)" stroke="var(--line)" stroke-width="2"/>
+        <path d="M68 72 V36 M54 50 l14 -14 14 14" fill="none" stroke="var(--route)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M44 62 v24 h48 v-24" fill="none" stroke="var(--route)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="68" y="102" font-size="12.5" font-weight="700" fill="var(--muted)" text-anchor="middle">共有ボタン</text>
+        <path d="M144 59 h26" stroke="var(--muted)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M164 51 l9 8 -9 8" fill="none" stroke="var(--muted)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="186" y="12" width="142" height="94" rx="13" fill="var(--paper)" stroke="var(--line)" stroke-width="2"/>
+        <rect x="198" y="26" width="118" height="18" rx="6" fill="#fff"/>
+        <rect x="198" y="50" width="118" height="22" rx="6" fill="var(--route-soft)"/>
+        <text x="257" y="65" font-size="12" font-weight="700" fill="var(--route)" text-anchor="middle">ホーム画面に追加</text>
+        <rect x="198" y="78" width="118" height="12" rx="5" fill="#fff"/>
+        <path d="M340 59 h26" stroke="var(--muted)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M360 51 l9 8 -9 8" fill="none" stroke="var(--muted)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="382" y="12" width="94" height="94" rx="13" fill="var(--paper)" stroke="var(--line)" stroke-width="2"/>
+        <rect x="406" y="26" width="46" height="46" rx="12" fill="var(--navy1)"/>
+        <path d="M418 63 c15 -4 6 -19 21 -23" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="418" cy="63" r="3.6" fill="#fff"/><circle cx="439" cy="40" r="3.6" fill="#fff"/>
+        <text x="429" y="94" font-size="12.5" font-weight="700" fill="var(--muted)" text-anchor="middle">完成</text>
+      </svg>
+      <figcaption>次からはこのアイコンをタップして開きます</figcaption>
+    </figure>
+    <p class="sub">アプリと同じように開きます。電波がなくても中身は見られます。</p>
+  </div></section>
+
+  <!-- 6 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">つかいかた 1</span>
+    <h2>画面は3つだけ</h2>
+    <div class="two" style="grid-template-columns:1fr">
+      <div class="pane"><h3>ルート</h3><p class="sub">日ごとの計画表と全体計画。ふだん一番よく開くところ。</p></div>
+      <div class="pane"><h3>鉄則</h3><p class="sub">問題集ごとの正しいやり方。ここが一番大事。</p></div>
+      <div class="pane"><h3>設定</h3><p class="sub">見た目・更新・アプリの中の使い方スライド。</p></div>
+    </div>
+  </div></section>
+
+  <!-- 7 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">つかいかた 2</span>
+    <h2>いま使っている<br>問題集を押す</h2>
+    <p>「ルート」タブの一番上に、教科ごとに問題集のボタンが並んでいます。<b class="hl">自分がいま進めている問題集を押す</b>と、その計画表がひらきます。</p>
+    <p class="sub">英語11冊・数学8冊・国語5冊。黄チャートのように2種類あるものは、ボタンの下の期間（4〜5ヶ月／7ヶ月）で見分けてください。</p>
+  </div></section>
+
+  <!-- 8 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">つかいかた 3</span>
+    <h2>計画表の見かた</h2>
+    <div class="tbl">
+      <table>
+        <thead class="rnd"><tr><th colspan="4">1周目</th></tr></thead>
+        <thead class="col"><tr><th>日</th><th>やる範囲</th><th>日</th><th>やる範囲</th></tr></thead>
+        <tbody>
+          <tr><td class="d">1</td><td>1〜31</td><td class="d">8</td><td>32〜62</td></tr>
+          <tr><td class="d">2</td><td>1〜31</td><td class="d">9</td><td>32〜62</td></tr>
+          <tr><td class="d">3</td><td>1〜31</td><td class="d">10</td><td>32〜62</td></tr>
+          <tr><td class="d">6</td><td>復習テスト</td><td class="d">13</td><td>復習テスト</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>「1周目」「2周目」…ごとに表が出ます。左が<b class="hl">日</b>、右が<b class="hl">やる範囲</b>。</p>
+    <p class="sub">例：3日目なら「1〜31」をやる。</p>
+  </div></section>
+
+  <!-- 9 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">つかいかた 4</span>
+    <h2>表は横にスワイプ</h2>
+    <figure>
+      <svg viewBox="0 0 400 128" role="img" aria-label="表を指で横になぞると続きが見えることを示す図">
+        <rect x="6" y="10" width="270" height="76" rx="10" fill="var(--paper)" stroke="var(--line)" stroke-width="2"/>
+        <rect x="6" y="10" width="270" height="20" fill="var(--route-soft)"/>
+        <g stroke="var(--line)" stroke-width="1.6">
+          <line x1="6" y1="48" x2="276" y2="48"/><line x1="6" y1="67" x2="276" y2="67"/>
+          <line x1="56" y1="10" x2="56" y2="86"/><line x1="166" y1="10" x2="166" y2="86"/><line x1="216" y1="10" x2="216" y2="86"/>
+        </g>
+        <rect x="286" y="10" width="66" height="76" rx="10" fill="var(--paper)" stroke="var(--line)" stroke-width="2" opacity=".5"/>
+        <path d="M150 110 h96" stroke="var(--route)" stroke-width="4.5" stroke-linecap="round"/>
+        <path d="M236 100 l14 10 -14 10" fill="none" stroke="var(--route)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="142" cy="110" r="12" fill="var(--route)" opacity=".22"/>
+        <circle cx="142" cy="110" r="5.5" fill="var(--route)"/>
+      </svg>
+    </figure>
+    <p>表は画面より横に長くなっています。<b class="hl">指で横になぞる</b>と、続きの日が見られます。</p>
+  </div></section>
+
+  <!-- 10 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">いちばん大事 1</span>
+    <h2>日づけではなく<br>「◯日目」で進む</h2>
+    <p>カレンダーの日づけではありません。<b class="hl">1日目・2日目・3日目…</b>と数えて進みます。</p>
+    <div class="note key"><span class="k">だから止まってもOK</span>
+      用事があった日、体調が悪かった日、定期テスト期間は止めてかまいません。またできる状態になったら<b>つづきから</b>進めてください。計画はズレません。
+    </div>
+  </div></section>
+
+  <!-- 11 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">つかいかた 5</span>
+    <h2>全体計画で<br>流れをつかむ</h2>
+    <p>ルートタブを下にスクロールすると<b class="hl">全体計画</b>の表があります。いつ・どの問題集を・何周するかがひと目で分かります。</p>
+    <p class="sub">横にスワイプすると、期間・周回数・関先生からのメモまで見られます。行の「計画表 ›」を押すと、その問題集の日ごとの計画表がひらきます。</p>
+  </div></section>
+
+  <!-- 12 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">いちばん大事 2</span>
+    <h2>鉄則を読んでから<br>問題集を進める</h2>
+    <p>「鉄則」タブに、問題集ごとの<b class="hl">正しいやり方</b>が入っています。まずは【全体鉄則10則】から。</p>
+    <p class="sub">Stock【16則】／ランク順【15則】／ポラリス【8則】／読解問題集【8則】／基礎問題精講【10則】／黄チャート【11則】／宇宙一【7則】</p>
+    <div class="note warn"><span class="k">⚠️ 注意</span>
+      鉄則からズレると、計画通りに進まない・問題集が極まらない＝<b>伸びなくなります</b>。はじめのうちは鉄則を見ながら進めてください。
+    </div>
+  </div></section>
+
+  <!-- 13 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">つかいかた 6</span>
+    <h2>つまずいたときは</h2>
+    <div class="two">
+      <div class="pane"><h3>数学 <em>プロンプト</em></h3><p class="sub">解説を読んでも分からない問題は、鉄則タブの【最強プロンプト】をコピーして、問題と解説の写真をつけてAIに送ってください。</p></div>
+      <div class="pane"><h3>国語 <em>プロの思考</em></h3><p class="sub">読解の鉄則がまとまっています。論説文・小説・選択肢問題の考え方はここを読んでください。</p></div>
+    </div>
+    <p class="sub">アプリが新しくなると、上にオレンジの帯が出ます。タップすれば最新になります。</p>
+  </div></section>
+
+  <!-- 14 まとめ -->
+  <section class="slide dark"><div class="inner">
+    <span class="eyebrow">まとめ</span>
+    <h2>今日やること</h2>
+    <ul class="check">
+      <li>下のボタンからアプリを開いて、ホーム画面に追加する</li>
+      <li>設定タブの「高校ルートの使い方」を最後まで見る</li>
+      <li>鉄則タブの【全体鉄則10則】を読む</li>
+      <li>いま使っている問題集の計画表で、今日の範囲を確認する</li>
+    </ul>
+    <a class="cta" href="../">高校ルートを開く</a>
+    <div class="note key"><span class="k">相談してください</span>
+      計画がうまくいかなくなったときは、すぐに修正するか、必ず相談してください。（全体鉄則③）
+    </div>
+  </div></section>
+
+</div>
+
+<div class="dots" id="dots"></div>
+<nav class="nav" id="nav">
+  <button class="arrow" id="prev" aria-label="前へ">‹</button>
+  <button class="next" id="next">つぎへ</button>
+</nav>
+<button class="tap l" id="tapL" aria-label="前へ"></button>
+<button class="tap r" id="tapR" aria-label="次へ"></button>
+
+<script>
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const N = slides.length;
+const dots = document.getElementById('dots');
+dots.innerHTML = slides.map(() => '<i></i>').join('');
+const dotEls = [...dots.querySelectorAll('i')];
+
+function index(){ return Math.round(deck.scrollLeft / deck.clientWidth); }
+function sync(){
+  const i = Math.min(N - 1, Math.max(0, index()));
+  const dark = slides[i].classList.contains('dark');
+  dotEls.forEach((d, k) => d.classList.toggle('on', k === i));
+  document.getElementById('barFill').style.width = ((i + 1) / N * 100) + '%';
+  document.getElementById('counter').textContent = (i + 1) + ' / ' + N;
+  document.getElementById('prev').disabled = i === 0;
+  document.getElementById('next').textContent = i === N - 1 ? 'さいしょから' : 'つぎへ';
+  ['bar','nav','dots','counter'].forEach(id => document.getElementById(id).classList.toggle('on-dark', dark));
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#14315F' : '#F1F4F9');
+}
+function goto(i){
+  const t = (i + N) % N;
+  deck.scrollTo({ left: t * deck.clientWidth, behavior:'smooth' });
+  setTimeout(sync, 340);
+}
+document.getElementById('next').onclick = () => goto(index() + 1);
+document.getElementById('prev').onclick = () => goto(index() - 1);
+document.getElementById('tapR').onclick = () => goto(index() + 1);
+document.getElementById('tapL').onclick = () => goto(index() - 1);
+deck.addEventListener('scroll', () => { clearTimeout(deck._t); deck._t = setTimeout(sync, 80); });
+addEventListener('keydown', e => {
+  if(e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goto(index() + 1); }
+  if(e.key === 'ArrowLeft') { e.preventDefault(); goto(index() - 1); }
+});
+addEventListener('resize', () => { deck.scrollLeft = index() * deck.clientWidth; sync(); });
+sync();
+</script>
+</body>
+</html>

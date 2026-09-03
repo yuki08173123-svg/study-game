@@ -237,14 +237,14 @@ main{max-width:680px;margin:0 auto;
 #loomfr{z-index:3}
 /* iframe への直接タップを止め、YouTubeへ飛ばさない */
 .catch{position:absolute;inset:0;z-index:2}
-/* 一時停止するとYouTubeがタイトルとロゴを出すので、自前の幕でかぶせる。
+/* 一時停止するとYouTubeがタイトルとロゴを上に出すので、そこだけ隠す。
+   **画面ぜんぶを覆わないこと。** 覆うと、止めて読みたいスライドが見えなくなる
+   （生徒からの指摘。板書やチェックリストをメモしたいときに使えなくなる）。
    タップは下の .catch に通すので pointer-events:none にしておく */
-.scrim{position:absolute;inset:0;z-index:2;background:#000;pointer-events:none;
-  display:flex;align-items:center;justify-content:center}
-.scrim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4}
-.scrim .pb2{position:relative;width:64px;height:64px;border-radius:50%;
-  background:rgba(217,178,106,.94);color:var(--acc-ink);
-  display:flex;align-items:center;justify-content:center}
+.scrim{position:absolute;left:0;right:0;top:0;height:26%;min-height:52px;z-index:2;
+  pointer-events:none;
+  background:linear-gradient(#000 0%,#000 62%,rgba(0,0,0,.72) 84%,rgba(0,0,0,0) 100%)}
+.scrim img,.scrim .pb2{display:none}
 .catch.off{pointer-events:none}
 .poster{position:absolute;inset:0;z-index:4;background:#000;display:flex;
   align-items:center;justify-content:center}
@@ -558,7 +558,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 40;
+const VER = 41;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';

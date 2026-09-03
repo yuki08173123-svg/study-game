@@ -379,7 +379,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 17;
+const VER = 18;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -425,6 +425,8 @@ const now = () => Date.now();
 const uid = p => (p||'n') + now().toString(36) + Math.random().toString(36).slice(2,7);
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const live = () => notes.filter(n => !n.del);
+/* 未確認＝一度も振り返っていない。「あいまい」でも確認ずみとして扱う */
+const unseen = n => !n.revAt;
 const saveNotes = () => localStorage.setItem(K_N, JSON.stringify(notes));
 const saveFolders = () => localStorage.setItem(K_F, JSON.stringify(folders));
 const saveCfg = () => localStorage.setItem(K_C, JSON.stringify(cfg));
@@ -702,7 +704,7 @@ function renderHome(){
     <div class="stats">
       <button class="stat" data-jump=""><b>${L.length}</b><span>合計</span></button>
       <button class="stat" data-jump="today"><b>${L.filter(n => new Date(n.cre).toDateString() === new Date().toDateString()).length}</b><span>今日</span></button>
-      <button class="stat" data-jump="unrev"><b>${L.filter(n => !n.rev).length}</b><span>未確認</span></button>
+      <button class="stat" data-jump="unrev"><b>${L.filter(unseen).length}</b><span>未確認</span></button>
     </div>`;
   $$('#main [data-open]').forEach(b => b.onclick = () => {
     const v = b.dataset.open;
@@ -712,7 +714,7 @@ function renderHome(){
   $$('#main [data-jump]').forEach(b => b.onclick = () =>
     go('list', { fid:null, q:'', view:'list', only:b.dataset.jump, sort:b.dataset.jump === 'unrev' ? 'rev' : 'new' }));
   $$('#main [data-warn]').forEach(b => b.onclick = () => {
-    if(b.dataset.warn === 'rev') return startRevWith(live().filter(n => !n.rev));
+    if(b.dataset.warn === 'rev') return startRevWith(live().filter(unseen));
     if(b.dataset.warn === 'go') return go('list', { fid:null, q:'', view:'list', only:'unrev', sort:'rev' });
     cfg.warnHide = new Date().toDateString(); saveCfg(); render();
   });
@@ -720,7 +722,7 @@ function renderHome(){
   if(ro) ro.onclick = () => reorderSheet();   // ← 引数にイベントが渡ると空のシートになる
 }
 function warnBox(){
-  const L = live(), never = L.filter(n => !n.rev).length;
+  const L = live(), never = L.filter(unseen).length;
   const today = new Date().toDateString();
   if(never < 10 || cfg.warnHide === today) return '';
   return `<div class="warn">
@@ -841,14 +843,14 @@ function renderList(){
 }
 function filtered(){
   let a = inScope();
-  if(S.only === 'unrev') a = a.filter(n => !n.rev);
+  if(S.only === 'unrev') a = a.filter(unseen);
   if(S.only === 'today') a = a.filter(n => new Date(n.cre).toDateString() === new Date().toDateString());
   if(S.only === 'star')  a = a.filter(n => n.star);
   const q = S.q.trim().toLowerCase();
   if(q) a = a.filter(n => (n.body||'').toLowerCase().includes(q));
   if(S.sort === 'new') a.sort((x,y) => y.cre - x.cre);
   if(S.sort === 'old') a.sort((x,y) => x.cre - y.cre);
-  if(S.sort === 'rev') a.sort((x,y) => (x.rev - y.rev) || (x.revAt - y.revAt));
+  if(S.sort === 'rev') a.sort((x,y) => (x.revAt - y.revAt) || (x.rev - y.rev));
   return a;
 }
 function noteCard(n){
@@ -1083,11 +1085,11 @@ function doSave(){
 }
 
 /* ===================== 振り返り ===================== */
-let revQ = [], revI = 0, revOk = 0, revNg = 0, revOpen = false, revMode = 'quiz', revPic = false;
+let revQ = [], revI = 0, revOk = 0, revNg = 0, revOpen = false, revMode = 'quiz', revPic = false, revList = null;
 
 function scopeNotes(){                       // 振り返る範囲のメモ
   const sc = cfg.revScope || '*';
-  if(sc === '未') return live().filter(n => !n.rev);
+  if(sc === '未') return live().filter(unseen);
   if(sc === '★') return live().filter(n => n.star);
   if(sc === '*') return live();
   if(sc === '') return live().filter(n => !n.fid);
@@ -1117,7 +1119,7 @@ function scopeSheet(){
     <div class="group">${list.map(f => `<button class="item" data-sc="${f.id}" ${f.d?`style="padding-left:${16+f.d*18}px"`:''}>
       <span class="ic" style="color:${f.color}">${f.id === '*' ? ICO.inbox({s:19}) : f.id === '★' ? ICO.starFill({s:18}) : f.id === '未' ? ICO.loop({s:18}) : ICO.folderFill({s:f.d?18:19})}</span>
       <span class="nm" style="${f.d?'font-weight:500':''}">${esc(f.name)}</span>
-      <span class="ct">${f.id === '*' ? live().length : f.id === '★' ? live().filter(n=>n.star).length : f.id === '未' ? live().filter(n=>!n.rev).length : f.id === '' ? live().filter(n=>!n.fid).length : countUnder(f.id)}</span>
+      <span class="ct">${f.id === '*' ? live().length : f.id === '★' ? live().filter(n=>n.star).length : f.id === '未' ? live().filter(unseen).length : f.id === '' ? live().filter(n=>!n.fid).length : countUnder(f.id)}</span>
       ${cur === f.id ? `<span style="color:var(--pri);margin-left:8px">${ICO.check({s:18,w:2.2})}</span>` : ''}
     </button>`).join('')}</div>`, close => {
     $$('#host [data-sc]').forEach(b => b.onclick = () => {
@@ -1138,7 +1140,7 @@ function pickReview(k){
 function renderReview(){
   bar('', '振り返り', '', true);
   if(!revQ.length || revI >= revQ.length){
-    const L = scopeNotes(), never = L.filter(x => !x.rev).length;
+    const L = scopeNotes(), never = L.filter(unseen).length;
     const done = revQ.length && revI >= revQ.length;
     $('#main').innerHTML = done ? `
       <div class="doc" style="text-align:center;padding:30px 20px">
@@ -1150,7 +1152,8 @@ function renderReview(){
           <div class="stat"><b style="color:var(--ng)">${revNg}</b><span>あいまい</span></div>
         </div>
       </div>
-      <button class="btn sec" id="again" style="margin-top:14px">もう一度えらぶ</button>` : `
+      <button class="btn pri" id="back2top" style="margin-top:14px">件数や範囲を選びなおす</button>
+      <button class="btn sec" id="again" style="margin-top:10px">同じ範囲でもう一度</button>` : `
       <div class="doc">
         <div style="font-weight:700;font-size:1.02rem;margin-bottom:6px">しばらく開いていないメモを見直す</div>
         <div class="note-txt">1行目だけを表示します。内容を思い出してから続きを表示してください。
@@ -1172,21 +1175,31 @@ function renderReview(){
             `<button class="pill ${cfg.revN===k?'on':''}" data-q="${k}">${k}</button>`).join('')}
         </div>
         <div class="stats" style="margin-top:14px">
-          <div class="stat"><b>${L.length}</b><span>メモ</span></div>
-          <div class="stat"><b>${never}</b><span>未確認</span></div>
-          <div class="stat"><b>${L.filter(x => x.revAt && daysAgo(x.revAt) >= 14).length}</b><span>2週間以上</span></div>
+          <button class="stat" data-rj="all"><b>${L.length}</b><span>メモ</span></button>
+          <button class="stat" data-rj="new"><b>${never}</b><span>未確認</span></button>
+          <button class="stat" data-rj="old"><b>${L.filter(x => x.revAt && daysAgo(x.revAt) >= 14).length}</b><span>2週間以上</span></button>
         </div>
+        <div class="note-txt" style="margin-top:10px">数字を押すと、そのメモだけをすぐ振り返れます。</div>
       </div>
       <button class="btn pri" id="start" style="margin-top:14px">はじめる</button>
       <button class="btn sec" id="shuffle" style="margin-top:10px">シャッフル</button>
       <div class="note-txt" style="margin:10px 4px 0">
         シャッフルは、この範囲の${L.length}件をランダムな順に1件ずつ見ていくだけの機能です。
         覚えているかどうかは記録されません。</div>`;
-    if(done) $('#again').onclick = () => startRev(revMode);
+    if(done){
+      $('#back2top').onclick = () => { revQ = []; revI = 0; revList = null; render(); };
+      $('#again').onclick = () => revList ? startRevWith(revList.filter(n => !n.del)) : startRev(revMode);
+    }
     else{
       $('#start').onclick = () => startRev('quiz');
       $('#shuffle').onclick = () => startRev('shuffle');
       $('#scope').onclick = scopeSheet;
+      $$('#main [data-rj]').forEach(b => b.onclick = () => {
+        const k = b.dataset.rj;
+        startRevWith(k === 'new' ? L.filter(unseen)
+                   : k === 'old' ? L.filter(x => x.revAt && daysAgo(x.revAt) >= 14)
+                   : L.slice());
+      });
       const setN = v => {
         cfg.revN = v; saveCfg();
         $('#revnum').textContent = v ? v + '件' : '全部';
@@ -1262,6 +1275,7 @@ function renderReview(){
 }
 function startRevWith(list){                 // いま出ている一覧を、そのまま振り返る
   if(!list.length){ toast('メモがありません'); return; }
+  revList = list.slice();
   const pool = list.slice();
   for(let i = pool.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [pool[i],pool[j]] = [pool[j],pool[i]]; }
   revMode = 'quiz'; revQ = pool; revI = 0; revOk = 0; revNg = 0; revOpen = false; revPic = false;
@@ -1276,6 +1290,7 @@ function startRev(mode){
   }else{
     revQ = pickReview(cfg.revN);
   }
+  revList = null;
   revI = 0; revOk = 0; revNg = 0; revOpen = false; revPic = false;
   if(!revQ.length){ toast('メモがありません'); return; }
   render();

@@ -457,6 +457,21 @@ textarea{min-height:96px;resize:vertical;line-height:1.7;font-size:.88rem}
 select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;padding:11px 12px;
   width:100%;outline:none;-webkit-appearance:none;appearance:none}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;line-height:1.6}
+/* ふりかえり */
+.rvb{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}
+.rvb button{background:var(--surf2);border:1px solid var(--line2);border-radius:11px;
+  padding:12px 0;font-size:.82rem;font-weight:700;color:var(--ink2);line-height:1.5}
+.rvb button span{display:block;font-size:.68rem;font-weight:600;color:var(--ink3);margin-top:2px}
+.rvl{display:flex;flex-direction:column;gap:9px;margin-top:12px;max-height:50vh;overflow-y:auto}
+.rv{display:block;width:100%;text-align:left;background:var(--surf2);border:1px solid var(--line2);
+  border-radius:11px;padding:13px 14px}
+.rv .t{display:block;color:var(--acc);font-weight:700;font-size:.8rem;font-variant-numeric:tabular-nums}
+.rv .a{display:block;color:var(--ink3);font-size:.86rem;margin-top:5px}
+.rv.open{background:var(--acc-soft);border-color:var(--acc)}
+.rv.open .a{color:var(--ink);font-weight:600}
+.rv .go{display:none;color:var(--ink3);font-size:.72rem;margin-top:6px}
+.rv.open .go{display:block}
+
 /* 速さの選択 */
 /* アウトプットの写真 */
 .opimg{margin-top:9px;border-radius:10px;overflow:hidden;background:var(--surf2)}
@@ -527,7 +542,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 34;
+const VER = 35;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -586,7 +601,7 @@ let prog = {};            /* {動画id: {t:秒, d:全体の秒, done:1, last:時
 let favs = [];
 let folders = [];       /* 生徒が自分で作るフォルダ [{id, name, ids:[]}] */
 let outs = {};          /* アウトプット {動画id: [{at:時刻, t:本文}]} */
-let cfg  = { speed:1, autonext:true, loop:false, cc:false };
+let cfg  = { speed:1, autonext:true, loop:false, cc:false, rv:5 };
 let view = { name:'home' };
 let admin = null;         /* 管理画面のしたがき */
 
@@ -2119,6 +2134,7 @@ function onEnded(){
     ${nx ? `<div class="nxt">つぎ：${esc(nx.t)}</div>` : ''}
     <div class="row">
       <button class="btn sm" id="again">もう一度</button>
+      ${canReview(curId) ? `<button class="btn sm" id="rvNow">ふりかえる</button>` : ''}
       ${nx ? `<button class="btn sm pri" id="next">次の動画${auto ? '（<span id="cd">5</span>）' : ''}</button>` : ''}
     </div>
     ${auto ? `<button class="btn sm" id="stopauto" style="margin-top:9px">自動で進むのをやめる</button>` : ''}`;
@@ -2126,6 +2142,10 @@ function onEnded(){
   $('#again').onclick = () => { stopCount(); $('#endcard').classList.add('hidden');
     try{ player.seekTo(0,true); player.playVideo(); }catch(e){} };
   if(nx) $('#next').onclick = () => { stopCount(); openPlay(nx.id); };
+  if($('#rvNow')) $('#rvNow').onclick = () => {
+    stopCount(); $('#endcard').classList.add('hidden');
+    openReview(curId, cfg.rv || 5);
+  };
   if(auto){
     let left = 5;
     stopCount();
@@ -2180,6 +2200,52 @@ function saveNow(){
     p.t = t; p.d = d; p.last = now();
     saveProg();
   }catch(e){}
+}
+
+/* ===================== ふりかえり =====================
+   見終わったあとに「どんな話だったか」を思い出す練習。
+   問題文はこちらでは作れないので、**ヒラさんが目次に書いた見出しをそのまま使う。**
+   時間だけ先に見せて、思い出してから答え合わせ。押すとその場面へ飛べる。 */
+function reviewItems(id, n){
+  const c = chapOf(id);
+  if(c.length <= n) return c.slice();
+  const out = [], step = c.length / n;
+  for(let i = 0; i < n; i++) out.push(c[Math.floor(i * step)]);
+  return out;
+}
+const canReview = id => chapOf(id).length >= 3;
+
+function openReview(id, n){
+  const items = reviewItems(id, n);
+  cfg.rv = n; saveCfg();
+  openSheet(`
+    <h3>ふりかえり（${items.length}つ）</h3>
+    <div class="lead" style="margin:-4px 2px 0;line-height:1.9">
+      この時間のあたりで、どんな話だったか思い出してみてください。<br>
+      押すと答えが出ます。もう一度押すと その場面へ飛びます。</div>
+    <div class="rvl">
+      ${items.map((c,i) => `
+        <button class="rv" data-sec="${c[0]}">
+          <span class="t">${i+1}｜${hhmm(c[0])} ごろ</span>
+          <span class="a">タップして答えを見る</span>
+          <span class="go">もう一度押すと ここから再生します</span>
+        </button>`).join('')}
+    </div>
+    <button class="btn" id="rvNo" style="margin-top:12px">とじる</button>`,
+  () => {
+    $$('#shin .rv').forEach((b,i) => b.onclick = () => {
+      if(!b.classList.contains('open')){
+        b.classList.add('open');
+        b.querySelector('.a').textContent = items[i][1];
+        return;
+      }
+      closeSheet();
+      const sec = +b.dataset.sec;
+      try{ player.seekTo(sec, true); player.playVideo(); }catch(e){}
+      $('#pv').scrollTop = 0; showCtrl();
+    });
+    $('#rvNo').onclick = closeSheet;
+  });
 }
 
 /* 付箋のひとことを書く */
@@ -2350,6 +2416,13 @@ function drawBody(){
       この動画は <b>Loom</b> です。Theater の倍速・つづきから・自動の回数カウントは使えません。
       速さは Loom の画面の中で変えられます。</div>` : ''}
     ${v.d ? `<div class="desc">${esc(v.d)}</div>` : ''}
+    ${canReview(v.id) ? `<div class="sec"><h2>ふりかえり</h2></div>
+      <div class="lead" style="margin-top:-2px">見たあとに、どんな話だったか思い出せるか試せます。</div>
+      <div class="rvb">
+        <button data-rv="3">かんたん<span>3つ</span></button>
+        <button data-rv="5">ふつう<span>5つ</span></button>
+        <button data-rv="10">しっかり<span>10こ</span></button>
+      </div>` : ''}
     ${jumpPoints(v.id).length ? `<div class="sec"><h2>どこから見る？</h2></div>
       <div class="lead" style="margin-top:-2px">長い動画なので、区切りごとに飛べるようにしました。</div>
       <div class="jmp">${jumpPoints(v.id).map(sec =>
@@ -2431,6 +2504,7 @@ function drawBody(){
     try{ player.seekTo(sec, true); player.playVideo(); }catch(e){}
     $('#pv').scrollTop = 0; showCtrl();
   });
+  $$('#pvbody [data-rv]').forEach(b => b.onclick = () => openReview(v.id, +b.dataset.rv));
   paintImgs('#pvbody');
 
 

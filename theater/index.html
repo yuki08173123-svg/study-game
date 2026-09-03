@@ -148,8 +148,16 @@ main{max-width:680px;margin:0 auto;
   min-height:100px;transition:transform .12s}
 .tile:active{transform:scale(.985);background:var(--surf2)}
 .tile .tn{font-size:1.02rem;font-weight:700;letter-spacing:.02em;line-height:1.35}
-.tile .tnew{display:inline-block;background:#e0483f;color:#fff;font-size:.62rem;font-weight:800;
-  border-radius:20px;padding:1px 7px;margin-left:7px;vertical-align:middle}
+.tile .tnew{display:inline-block;background:#e0483f;color:#fff;font-size:.6rem;font-weight:800;
+  letter-spacing:.06em;border-radius:20px;padding:2px 8px;margin-left:7px;vertical-align:middle;
+  box-shadow:0 0 0 0 rgba(224,72,63,.55);animation:newp 2.2s ease-out infinite}
+@keyframes newp{
+  0%{box-shadow:0 0 0 0 rgba(224,72,63,.5)}
+  70%{box-shadow:0 0 0 9px rgba(224,72,63,0)}
+  100%{box-shadow:0 0 0 0 rgba(224,72,63,0)}}
+/* 新しい動画が入った区分は、枠でも分かるようにする */
+.tile.has-new{border-color:rgba(224,72,63,.45)}
+@media (prefers-reduced-motion: reduce){ .tile .tnew{animation:none} }
 .tile .tc{font-size:.74rem;color:var(--ink3);font-weight:700;letter-spacing:.03em;
   font-variant-numeric:tabular-nums;margin-top:auto}
 .bar{height:5px;border-radius:3px;background:var(--surf3);overflow:hidden}
@@ -539,7 +547,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 36;
+const VER = 37;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -1217,8 +1225,8 @@ function vHome(){
       const tot = list.reduce((a,v) => a + seenN(v.id), 0);
       const pct = list.length ? Math.round(done / list.length * 100) : 0;
       const nw = list.filter(v => isNew(v.id)).length;
-      return `<button class="tile" data-tile="${esc(c.id)}">
-        <div class="tn">${esc(c.name)}${nw ? `<span class="tnew">${nw}</span>` : ''}</div>
+      return `<button class="tile${nw ? ' has-new' : ''}" data-tile="${esc(c.id)}">
+        <div class="tn">${esc(c.name)}${nw ? `<span class="tnew">NEW ${nw}</span>` : ''}</div>
         <div class="tc">${list.length}本${done ? ` ・ ${done}本見た` : ''}${tot > done ? `（のべ${tot}）` : ''}</div>
         <div class="bar"><i style="width:${pct}%"></i></div>
       </button>`;

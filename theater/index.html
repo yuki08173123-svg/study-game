@@ -364,6 +364,7 @@ main{max-width:680px;margin:0 auto;
 .opc .opf{margin-top:10px;display:flex;justify-content:space-between;align-items:center;
   font-size:.7rem;color:var(--ink3);font-weight:700}
 .opc .opdel{color:var(--ng);font-size:.72rem;font-weight:800;padding:4px 6px}
+.opc .oped{color:var(--ink2);font-size:.72rem;font-weight:800;padding:4px 8px}
 
 /* ---------- 見た回数の出しかた（再生画面） ---------- */
 .cnt3{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
@@ -547,7 +548,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 38;
+const VER = 39;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -700,6 +701,12 @@ function addOut(id, text, im){
   (outs[id] || (outs[id] = [])).unshift(e);
   saveOut();
 }
+function editOut(id, i, text){
+  const list = outs[id]; if(!list || !list[i]) return;
+  list[i].t = String(text).trim().slice(0,2000);
+  list[i].ed = now();          /* 直した時刻。並び順は書いた日のまま */
+  saveOut();
+}
 function delOut(id, i){
   if(!outs[id]) return;
   const e = outs[id][i];
@@ -748,6 +755,12 @@ function ymd(d){
   if(!d) return '';
   const m = String(d).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   return m ? `${+m[2]}/${+m[3]}` : String(d);
+}
+/* 再生画面では年も出す。「何年前の動画か」を知りたい人がいるため */
+function ymd4(d){
+  if(!d) return '';
+  const m = String(d).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  return m ? `${m[1]}/${+m[2]}/${+m[3]}` : String(d);
 }
 const vid = id => DATA.videos.find(v => v.id === id);
 /* videos は新しい順で持っている。asc のカテゴリだけ ひっくり返して古い順にする */
@@ -1449,8 +1462,9 @@ function vLv(){
         <div class="oph">${v ? esc(v.t) : '（見つかりません）'}</div>
         <div class="opt">${esc(x.o.t)}</div>
         ${x.o.im ? `<div class="opimg"><img data-img="${esc(x.o.im)}" alt=""></div>` : ''}
-        <div class="opf"><span>${new Date(x.o.at).toLocaleDateString('ja-JP')}</span>
-          <button class="opdel" data-od="${esc(x.id)}" data-oi="${x.i}">消す</button></div>
+        <div class="opf"><span>${new Date(x.o.at).toLocaleDateString('ja-JP')}${x.o.ed ? '（直しました）' : ''}</span>
+          <span><button class="oped" data-od="${esc(x.id)}" data-oi="${x.i}">書きなおす</button>
+          <button class="opdel" data-od="${esc(x.id)}" data-oi="${x.i}">消す</button></span></div>
       </div>`; }).join('')
       : emptyBox('まだありません。<br>動画を見たあと「アウトプットを書く」から書けます。')}
     <div class="ver">&nbsp;</div>`;
@@ -1472,6 +1486,7 @@ function vLv(){
         () => { $('#opTa').value = txt; $('#opTa').select(); $('#opTaC').onclick = closeSheet; }));
   };
   paintImgs('#main');
+  $$('#main .oped').forEach(b => b.onclick = () => askEditOut(b.dataset.od, +b.dataset.oi, vLv));
   $$('#main .opdel').forEach(b => b.onclick = () => askYes(
     { title:'このアウトプットを消しますか？', ok:'消す', danger:true },
     () => { delOut(b.dataset.od, +b.dataset.oi); vLv(); toast('消しました'); }));
@@ -2259,6 +2274,30 @@ function openReview(id, n){
   });
 }
 
+/* アウトプットを書きなおす。消して書き直す手間をなくすため */
+function askEditOut(id, i, after){
+  const o = (outs[id] || [])[i]; if(!o) return;
+  openSheet(`
+    <h3>アウトプットを書きなおす</h3>
+    <div class="lead" style="margin:-4px 2px 10px">書きたすときも、直すときもここから。</div>
+    <textarea id="edIn" style="min-height:170px"></textarea>
+    <div class="acts" style="margin-top:12px">
+      <button class="btn" id="edNo">やめる</button>
+      <button class="btn pri" id="edOk">なおす</button>
+    </div>`, () => {
+    const ta = $('#edIn');
+    ta.value = o.t || '';
+    setTimeout(() => { try{ ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length); }catch(e){} }, 80);
+    $('#edOk').onclick = () => {
+      const t = ta.value.trim();
+      if(t.length < 5) return toast('もう少し くわしく書いてください');
+      editOut(id, i, t); closeSheet(); after(); toast('なおしました');
+    };
+    $('#edNo').onclick = closeSheet;
+  });
+}
+
 /* 付箋のひとことを書く */
 function askMemo(id, sec){
   const m = marksOf(id).find(x => x[0] === sec);
@@ -2394,7 +2433,7 @@ function drawBody(){
     <h1>${esc(v.t)}</h1>
     <div class="vs"><span class="tag">${esc(catName(v.cat))}</span>
       ${v.g ? `<span class="tag">${esc(v.g)}</span>` : ''}
-      ${v.date ? `<span>塾に届いた日 ${ymd(v.date)}</span>` : ''}</div>
+      ${v.date ? `<span>塾に届いた日 ${ymd4(v.date)}</span>` : ''}</div>
     <div class="acts">
       <button class="btn sm" id="fav">${isFav(v.id) ? ICO.starF({s:18}) : ICO.star({s:18})}
         <span>${isFav(v.id) ? '保存ずみ' : '保存'}</span></button>
@@ -2420,8 +2459,9 @@ function drawBody(){
     ${outOf(v.id).map((o,i) => `<div class="opc" style="margin-top:10px">
         <div class="opt">${esc(o.t)}</div>
         ${o.im ? `<div class="opimg"><img data-img="${esc(o.im)}" alt=""></div>` : ''}
-        <div class="opf"><span>${new Date(o.at).toLocaleDateString('ja-JP')}</span>
-          <button class="opdel" data-oi="${i}">消す</button></div>
+        <div class="opf"><span>${new Date(o.at).toLocaleDateString('ja-JP')}${o.ed ? '（直しました）' : ''}</span>
+          <span><button class="oped" data-oi="${i}">書きなおす</button>
+          <button class="opdel" data-oi="${i}">消す</button></span></div>
       </div>`).join('')}
     ${isLoom(v.id) ? `<div class="note" style="margin-top:14px">
       この動画は <b>Loom</b> です。Theater の倍速・つづきから・自動の回数カウントは使えません。
@@ -2507,6 +2547,7 @@ function drawBody(){
     };
     $('#opNo').onclick = closeSheet;
   });
+  $$('#pvbody .oped').forEach(b => b.onclick = () => askEditOut(v.id, +b.dataset.oi, drawBody));
   $$('#pvbody .opdel').forEach(b => b.onclick = () => askYes(
     { title:'このアウトプットを消しますか？', ok:'消す', danger:true },
     () => { delOut(v.id, +b.dataset.oi); drawBody(); toast('消しました'); }));

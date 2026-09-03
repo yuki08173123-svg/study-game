@@ -329,9 +329,10 @@ main{max-width:680px;margin:0 auto;
   border-radius:9px}
 .mrow:active{background:var(--mn-soft)}
 .mrow .mi{width:22px;flex:none;color:var(--mn);opacity:.8}
-.mrow .mx{flex:1;font-size:.93rem;line-height:1.55;font-weight:600;color:var(--ink2)}
+.mrow .mx{flex:1;min-width:0;font-size:.93rem;line-height:1.55;font-weight:600;color:var(--ink2)}
 .mrow.seen .mx{color:var(--ink3)}
-.mrow .mk{flex:none;color:var(--acc);font-size:.72rem;font-weight:800}
+.mrow .mk{flex:none;width:auto;display:inline-flex;align-items:center;gap:3px;
+  color:var(--acc);font-size:.72rem;font-weight:800;background:none;border:0;padding:0}
 
 /* ---------- レベルのルール ---------- */
 .rule{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
@@ -504,11 +505,12 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 .spd1.on{background:var(--acc-soft);border-color:var(--acc);color:var(--acc)}
 /* 付箋 */
 .mks{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-.mk{display:flex;align-items:center;gap:10px;background:var(--surf);border:1px solid var(--line);
+/* 付箋の行。※ .mk は使用マニュアルのチェック印で先に使っているので、別の名前にすること */
+.mkrow{display:flex;align-items:center;gap:10px;background:var(--surf);border:1px solid var(--line);
   border-radius:11px;padding:11px 12px;text-align:left;width:100%}
-.mk .t{color:var(--acc);font-weight:700;font-size:.82rem;font-variant-numeric:tabular-nums;flex:none}
-.mk .m{flex:1;font-size:.86rem;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mk .x{flex:none;color:var(--ink3);font-size:.76rem;padding:4px 6px}
+.mkrow .t{color:var(--acc);font-weight:700;font-size:.82rem;font-variant-numeric:tabular-nums;flex:none}
+.mkrow .m{flex:1;font-size:.86rem;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mkrow .x{flex:none;color:var(--ink3);font-size:.76rem;padding:4px 6px}
 /* 長い動画の飛び先 */
 .jmp{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .jmp button{background:var(--surf2);border:1px solid var(--line2);border-radius:999px;
@@ -558,7 +560,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 41;
+const VER = 42;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -2544,7 +2546,7 @@ function drawBody(){
     ${isLoom(v.id) ? '' : `<button class="btn" id="mark" style="margin-top:9px">${ICO.plus({s:18})}
       <span>いまの場面に付箋をつける</span></button>`}
     ${marksOf(v.id).length ? `<div class="mks">${marksOf(v.id).map(m => `
-        <div class="mk">
+        <div class="mkrow">
           <button class="t" data-jump="${m[0]}">${hhmm(m[0])}</button>
           <button class="m" data-memo="${m[0]}">${m[1] ? esc(m[1]) : '（ひとことを書く）'}</button>
           <button class="x" data-mkdel="${m[0]}">消す</button>

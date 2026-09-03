@@ -251,7 +251,7 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 
 <script src="data.js"></script>
 <script>
-const VER = 5;
+const VER = 6;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
 const EXTRA_MATH = ['nyumon_ia','nyumon_iib','kichart_ia','kichart_iib'];
@@ -378,7 +378,7 @@ function planRow(r){
 }
 
 /* ===== 鉄則 ===== */
-const TETSU_ORDER = [['stock','英語'],['rank','英語'],['polaris','英語'],['dokkai','英語・国語'],
+const TETSU_ORDER = [['stock','英語'],['rank','英語'],['polaris','英語'],['dokkai','国語'],
                      ['kisomon','数学'],['kichart','数学'],['uchuichi','理科']];
 function viewTetsu(){
   let h = '<div class="lead" style="margin-top:14px">問題集ごとの「正しいやり方」です。ここからズレると、極まらない＝伸びなくなります。</div>';
@@ -459,8 +459,9 @@ function renderSheetBook(id){
     h += '</div>';
   }
   if(v) h += '<div class="lead" style="padding:10px 0 0">全'+tot+'日の計画です。</div>';
-  h += '<div class="btnrow"><button class="btn primary" onclick="openTetsu(\''+b.tetsoku+'\')">'
-    + esc(ROUTE.tetsoku[b.tetsoku] ? tetsuName(ROUTE.tetsoku[b.tetsoku].title) : '鉄則') + ' を見る</button></div>';
+  const tt = b.tetsoku && ROUTE.tetsoku[b.tetsoku];
+  if(tt) h += '<div class="btnrow"><button class="btn primary" onclick="openTetsu(\''+b.tetsoku+'\')">'
+    + esc(tetsuName(tt.title)) + ' を見る</button></div>';
   h += '</div>';
 
   if(v){

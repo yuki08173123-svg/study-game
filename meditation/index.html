@@ -472,6 +472,26 @@ body.bgm .stage{gap:14px}
 .qz-n2{margin:9px 0 0;color:var(--dim);font-size:.82rem;line-height:1.9}
 .qz-t{color:var(--ink2)}
 .qz-read{margin-top:26px;padding-top:20px;border-top:1px solid var(--line)}
+
+/* 終わりの結果 */
+.qzr{text-align:center;padding-top:12px}
+.qzr-score{display:flex;align-items:baseline;justify-content:center;gap:2px}
+.qzr-score b{font-size:3.2rem;font-weight:300;color:var(--aqua);line-height:1}
+.qzr-score span{font-size:1.5rem;color:var(--ink2)}
+.qzr-score .qzr-u{font-size:.86rem;color:var(--dim);margin-left:8px}
+.qzr-best{margin-top:10px;display:inline-block;padding:5px 14px;border-radius:999px;font-size:.78rem;
+  background:rgba(227,199,154,.13);border:1px solid rgba(227,199,154,.4);color:#f2e6cf}
+.qzr-time{margin-top:14px;color:var(--ink2);font-size:.95rem}
+.qzr-time span{color:var(--dim);font-size:.82rem}
+.qzr-list{margin-top:24px;text-align:left;border-top:1px solid var(--line)}
+.qzr-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line)}
+.qzr-i{width:18px;flex:none;color:var(--dim);font-size:.78rem}
+.qzr-n{flex:1;min-width:0;color:var(--ink2);font-size:.86rem;line-height:1.5}
+.qzr-s{flex:none;color:var(--dim);font-size:.8rem}
+.qzr-c{flex:none;width:18px;text-align:center;color:var(--aqua);font-size:.95rem}
+.qzr-row.ng .qzr-c{color:#e78888}
+.qzr-row.ng .qzr-n{color:var(--dim)}
+.qzr-note{margin:22px 0 0;color:var(--dim);font-size:.85rem;line-height:1.8}
 .qz-read h3{margin:0 0 10px;font-size:.86rem;letter-spacing:.08em;color:var(--dim);font-weight:500}
 .lrn.mst .no{background:rgba(227,199,154,.18);border-color:rgba(227,199,154,.5);color:#f6e9d2}
 .tabdot{display:inline-block;min-width:16px;height:16px;line-height:16px;margin-left:5px;
@@ -577,6 +597,11 @@ body.bgm .stage{gap:14px}
   border-color:rgba(159,216,214,.7);box-shadow:0 0 16px rgba(159,216,214,.45)}
 .mp-lb{display:flex;justify-content:space-between;max-width:236px;margin:9px auto 0;
   font-size:.68rem;color:var(--dim)}
+.mp-q2{font-size:.8rem;color:var(--dim);letter-spacing:.06em;margin-bottom:10px;text-align:left}
+.dayrow{cursor:pointer}
+.dedit{display:block;margin-top:7px;font-size:.75rem;color:var(--aqua);opacity:.8}
+.mp-clr{margin-left:6px;opacity:.7;font-size:.72rem}
+.mp-row.mp-in{justify-content:center;gap:10px;margin-bottom:0}
 
 .done .amt{margin-top:18px;font-size:.95rem;color:var(--dim)}
 .mtag{display:inline-flex;align-items:center;gap:3px;margin-left:8px;vertical-align:1px}
@@ -804,7 +829,7 @@ body.bgm .stage{gap:14px}
           <li>その横の<b>「音の設定」</b>で、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。</li>
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
-          <li>終わると自動で記録されます。<b>いまの気分</b>を5段階でひと押しでき、「ひとこと」に感じたことも残せます（声でも入れられます）。</li>
+          <li>終わると自動で記録されます。<b>いまの気分</b>を5段階でひと押しでき、「ひとこと」に感じたことも残せます（声でも入れられます）。<b>気分を押しそびれても、あとから入れられます</b>——「記録」で日や記録を押すと、気分とひとことをまとめて直せます。</li>
           <li>「記録」で、続いた日数やこれまでの時間を見られます。<b>カレンダー</b>は月ごとに見られ、‹ › で始めた月までさかのぼれます。<b>日を押すと、何時から何分すわったか、流していた音、気分、書いたひとことが日記のように見られます</b>。</li>
           <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。1日後・3日後・7日後…と<b>復習</b>が出てきます。復習は<b>問題に答える形</b>です。答えるまでにかかった時間も出るので、同じ問題を前より速く答えられたかが分かります。正解なら次に出る日がのびて、まちがえたら翌日また出ます。覚えているかどうかを自分で決めなくてよいので、迷いません。問題の難しさは<b>やさしい／ふつう／激ムズ</b>から選べます。「力だめし」を押すと、学んだところからランダムに出題されます（こちらは復習の日には影響しません）。まちがえてチェックを外しても、つけ直せば復習の進みぐあいはそのまま戻ります。</li>
         </ol>
@@ -991,7 +1016,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 44;
+const VER = 45;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -2332,7 +2357,7 @@ $('rdNext').addEventListener('click', function(){
   else { $('reader').classList.add('hidden'); renderLearn(); }
 });
 $('rdClose').addEventListener('click', function(){
-  $('reader').classList.add('hidden'); qMode = null; renderLearn(); renderTop();
+  $('reader').classList.add('hidden'); qMode = null; qResult = false; renderLearn(); renderTop();
 });
 
 
@@ -2340,7 +2365,7 @@ $('rdClose').addEventListener('click', function(){
    review … 正解なら間隔が伸び、まちがえたら翌日にもどる（自己申告をやめた）
    test  … 学んだところからランダム。復習の間隔は動かさない */
 let qMode = null, qQueue = [], qIdx = 0, qRight = 0, qDone = false;
-let qT0 = 0, qMsTotal = 0;
+let qT0 = 0, qMsTotal = 0, qLog = [];
 
 function startReview(){
   const d = dueList(); if(!d.length) return;
@@ -2359,7 +2384,7 @@ function startTest(){
 }
 function showQ(){
   const it = qQueue[qIdx]; qDone = false;
-  if(qIdx === 0) qMsTotal = 0;
+  if(qIdx === 0){ qMsTotal = 0; qLog = []; }
   $('rdNo').textContent = (qMode === 'test' ? '力だめし　' : '復習　') + (qIdx + 1) + ' / ' + qQueue.length;
   $('rdBody').innerHTML =
     '<div class="qz">' +
@@ -2382,6 +2407,7 @@ function answerQ(pick){
   qMsTotal += ms;
   const it = qQueue[qIdx], ok = pick === it.ci, L = LESSONS[it.li];
   if(ok) qRight++;
+  qLog.push({ name: QNAME[it.id] || L.n, ok: ok, ms: ms, li: it.li });
 
   // 同じ問題の、前回・最速とくらべる（正解したときだけ残す）
   const tk = it.id + '_' + it.q.d;
@@ -2429,28 +2455,62 @@ function answerQ(pick){
 }
 function nextQ(){
   if(qIdx < qQueue.length - 1){ qIdx++; showQ(); return; }
-  const n = qQueue.length, r = qRight;
+  const n = qQueue.length, r = qRight, wasTest = qMode === 'test';
   quizRec.times = (quizRec.times || 0) + 1;
-  if(qMode === 'test'){
+  let newBest = false;
+  if(wasTest){
     quizRec.tests = (quizRec.tests || 0) + 1;   // しるしは力だめしの回数だけで数える
-    if(r > (quizRec.best || 0)){ quizRec.best = r; quizRec.bestOf = n; }
+    if(r > (quizRec.best || 0)){ quizRec.best = r; quizRec.bestOf = n; newBest = true; }
     if(r === n && qLv === 3) quizRec.hard = true;
   }
   saveQuiz();
-  $('reader').classList.add('hidden');
   renderLearn(); renderTop();
-  const tt = '　' + secText(qMsTotal) + '（1問あたり ' + secText(qMsTotal / n) + '）';
-  toast(qMode === 'test'
-    ? '力だめし ' + r + ' / ' + n + '問 正解' + tt
-    : (dueList().length ? '復習おわり（' + r + '/' + n + '問 正解）。まだ残っています'
-                        : '今日の復習はおしまいです（' + r + '/' + n + '問 正解）' + tt));
+  showResult(n, r, wasTest, newBest);
   qMode = null;
 }
+/* 終わりの結果。トーストだと一瞬で消えて読めない（Yuuyさんの指摘）ので、
+   閉じるまで残る画面にして、問題ごとの時間も出す。 */
+function showResult(n, r, wasTest, newBest){
+  const rest = dueList().length;
+  $('rdNo').textContent = wasTest ? '力だめし　結果' : '復習　結果';
+  $('rdBody').innerHTML =
+    '<div class="qzr">' +
+      '<div class="qzr-score"><b class="mono">' + r + '</b><span class="mono"> / ' + n + '</span>' +
+        '<span class="qzr-u">問 正解</span></div>' +
+      (newBest ? '<div class="qzr-best">これまでの最高記録です</div>' : '') +
+      '<div class="qzr-time">' + secText(qMsTotal) + '　<span>1問あたり ' + secText(qMsTotal / n) + '</span></div>' +
+      '<div class="qzr-list">' +
+        qLog.map(function(x, i){
+          return '<div class="qzr-row' + (x.ok ? '' : ' ng') + '">' +
+            '<span class="qzr-i mono">' + (i + 1) + '</span>' +
+            '<span class="qzr-n">' + x.name + '</span>' +
+            '<span class="qzr-s mono">' + secText(x.ms) + '</span>' +
+            '<span class="qzr-c">' + (x.ok ? '○' : '×') + '</span></div>';
+        }).join('') +
+      '</div>' +
+      (wasTest
+        ? '<p class="qzr-note">力だめしは、復習の日には影響しません。</p>'
+        : (rest ? '<p class="qzr-note">まだ ' + rest + '問 の復習が残っています。</p>'
+                : '<p class="qzr-note">今日の復習はおしまいです。</p>')) +
+    '</div>';
+  $('rdBody').scrollTop = 0;
+  $('qNext').textContent = (!wasTest && rest) ? '残りをつづける' : '閉じる';
+  $('rdFootQ').classList.remove('hidden');
+  qResult = true;
+}
+let qResult = false;
 $('rdBody').addEventListener('click', function(e){
   const b = e.target.closest('.qz-o'); if(!b || b.disabled) return;
   answerQ(parseInt(b.dataset.i, 10));
 });
-$('qNext').addEventListener('click', nextQ);
+$('qNext').addEventListener('click', function(){
+  if(!qResult){ nextQ(); return; }
+  qResult = false;
+  const rest = dueList();
+  if(rest.length){ startReview(); return; }     // まだ残っていれば、そのまま続ける
+  $('reader').classList.add('hidden');
+  renderLearn(); renderTop();
+});
 document.getElementById('qlv').addEventListener('click', function(e){
   const b = e.target.closest('button[data-q]'); if(!b) return;
   qLv = parseInt(b.dataset.q, 10);
@@ -2956,8 +3016,14 @@ function openMemo(i){
   const s = document.createElement('div');
   s.className = 'sheet';
   s.innerHTML = '<div class="box">' +
-    '<h3>ひとこと</h3>' +
+    '<h3>この日の記録</h3>' +
     '<p>' + dateLabel(r.at) + ' ・ ' + r.min + '分 の記録</p>' +
+    '<div class="mp-q2">そのときの気分は？<span class="mp-clr">（もう一度押すと取り消し）</span></div>' +
+    '<div class="mp-row mp-in" data-mrow>' +
+      [1,2,3,4,5].map(function(k){ return '<button data-m="' + k + '"><i></i></button>'; }).join('') +
+    '</div>' +
+    '<div class="mp-lb"><span>もやもや</span><span>すっきり</span></div>' +
+    '<div class="mp-q2" style="margin-top:20px">ひとこと</div>' +
     '<textarea class="memo-ta" rows="4" placeholder="感じたこと、気づいたこと"></textarea>' +
     '<div class="mic-row"><button class="mic"><span class="ic">🎙</span><span class="lb">声で入れる</span></button>' +
     '<span class="mic-note"></span></div>' +
@@ -2968,6 +3034,21 @@ function openMemo(i){
   const btn = s.querySelector('.mic');
   const note = s.querySelector('.mic-note');
   ta.value = r.memo || '';
+
+  let mNow = r.m || 0;                          // その場では確定させず、保存で反映する
+  const mrow = s.querySelector('[data-mrow]');
+  function drawM(){
+    mrow.querySelectorAll('button').forEach(function(b){
+      b.setAttribute('aria-pressed', parseInt(b.dataset.m, 10) === mNow ? 'true' : 'false');
+    });
+  }
+  drawM();
+  mrow.addEventListener('click', function(ev){
+    const b = ev.target.closest('button'); if(!b) return;
+    const k = parseInt(b.dataset.m, 10);
+    mNow = (mNow === k) ? 0 : k;                // もう一度押すと取り消し
+    drawM();
+  });
   let base = ta.value;
   if(!SR) note.textContent = 'この端末では声の入力が使えません。キーボードのマイクをお使いください。';
 
@@ -2982,9 +3063,12 @@ function openMemo(i){
   s.addEventListener('click', function(e){
     if(e.target.classList.contains('ok')){
       const v = (recOn ? base : ta.value).trim();
+      const hadM = log[i].m || 0;
       if(v) log[i].memo = v; else delete log[i].memo;
-      save(); close(); renderLog(); renderTop();
-      toast(v ? 'ひとことを残しました' : 'ひとことを消しました');
+      if(mNow) log[i].m = mNow; else delete log[i].m;
+      save(); close(); renderLog(); renderTop(); renderMood();
+      toast(mNow !== hadM ? (mNow ? '気分とひとことを残しました' : '気分を消しました')
+                          : (v ? 'ひとことを残しました' : 'ひとことを消しました'));
     }else if(e.target.classList.contains('no')){ close(); }
   });
 }
@@ -3246,13 +3330,14 @@ function openDay(ts){
   const rows = list.length
     ? list.map(function(r){
         const en = new Date(r.at), st2 = new Date(r.at - r.min * 60000);
-        return '<div class="dayrow"><span class="dt mono">' +
+        return '<div class="dayrow" data-at="' + r.at + '"><span class="dt mono">' +
           pad(st2.getHours()) + ':' + pad(st2.getMinutes()) + '〜' +
           pad(en.getHours()) + ':' + pad(en.getMinutes()) + '</span>' +
           '<span class="dm"><b class="mono">' + r.min + '</b>分' +
           (r.s ? '<span class="stag">' + (AMB_NAME[r.s] || '') + '</span>' : '') +
           (r.p ? '<span class="ptag">途中まで</span>' : '') + moodDots(r.m) +
-          (r.memo ? '<span class="dmemo">「' + esc(r.memo) + '」</span>' : '') + '</span></div>';
+          (r.memo ? '<span class="dmemo">「' + esc(r.memo) + '」</span>' : '') +
+          '<span class="dedit">気分・ひとことを直す ›</span></span></div>';
       }).join('')
     : '<div class="empty">この日は記録がありません</div>';
 
@@ -3264,7 +3349,15 @@ function openDay(ts){
     '<div class="btns" style="margin-top:16px"><button class="ok">とじる</button></div></div>';
   document.body.appendChild(sh);
   const close = initSheet(sh);
-  sh.addEventListener('click', function(e){ if(e.target.classList.contains('ok')) close(); });
+  sh.addEventListener('click', function(e){
+    if(e.target.classList.contains('ok')){ close(); return; }
+    const row = e.target.closest('.dayrow'); if(!row) return;
+    const at = parseInt(row.dataset.at, 10);
+    const i = log.findIndex(function(x){ return x.at === at; });
+    if(i < 0) return;
+    close();                                   // いったん閉じて、直す画面へ
+    setTimeout(function(){ openMemo(i); }, 220);
+  });
 }
 
 /* 何日かあいて戻ってきた人に、ひとこと。1日1回だけ出す */

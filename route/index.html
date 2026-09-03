@@ -10,236 +10,185 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#F4F7FB">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap">
 <style>
 :root{
-  --bg:#F4F7FB; --card:#FFFFFF; --ink:#1A2432; --muted:#54637A; --line:#DCE4EE;
-  --accent:#2C6FE4; --accent-soft:#E6EEFC; --accent-ink:#FFFFFF;
-  --done:#12A06A; --done-soft:#E3F5EC;
-  --gold:#C9982F; --gold-soft:#FBF2DC;
-  --chip:#EDF1F7; --shadow:0 1px 3px rgba(20,40,70,.08); --shadow-lg:0 8px 24px rgba(20,40,70,.14);
-  --new:#E9640F; --red:#D64545;
-  --eng:#2C6FE4; --eng-soft:#E6EEFC;
-  --math:#0E8F8F; --math-soft:#DDF2F2;
-  --jpn:#B5563F; --jpn-soft:#FBE9E4;
-  --sci:#7A5AC4; --sci-soft:#EDE7FB;
-  --navy1:#12203C; --navy2:#27456F;
+  --bg:#F2F5F9; --card:#FFFFFF; --ink:#141C28; --muted:#455468; --line:#D3DCE7;
+  --accent:#1F5FD0; --accent-soft:#E4EDFC; --accent-ink:#FFFFFF;
+  --gold:#8A6512; --gold-soft:#FBF1D9;
+  --chip:#E7ECF3; --shadow:0 1px 3px rgba(20,40,70,.09); --shadow-lg:0 8px 24px rgba(20,40,70,.16);
+  --new:#C9500A; --red:#C13A3A;
+  --eng:#1F5FD0; --eng-soft:#E4EDFC;
+  --math:#0A6E6E; --math-soft:#D8EFEF;
+  --jpn:#A0402A; --jpn-soft:#FAE4DD;
+  --sci:#5F3FB0; --sci-soft:#EAE3FA;
+  --navy1:#101B2E;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#121721; --card:#1B2230; --ink:#E9EEF6; --muted:#93A1B4; --line:#2C3648;
-    --accent:#6FA4F5; --accent-soft:#23324B; --accent-ink:#0E1520;
-    --done:#4FCB98; --done-soft:#1B3A2E;
-    --gold:#E4BC63; --gold-soft:#3A2E18;
-    --chip:#242D3D; --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 8px 24px rgba(0,0,0,.5);
-    --new:#FF9450; --red:#F08A80;
-    --eng:#6FA4F5; --eng-soft:#23324B;
-    --math:#4FC3C3; --math-soft:#183434;
-    --jpn:#EE9F8B; --jpn-soft:#3A241E;
-    --sci:#B49CF0; --sci-soft:#2A2340;
+    --bg:#10151E; --card:#1A212D; --ink:#F0F4FA; --muted:#AEBCCD; --line:#303B4D;
+    --accent:#7FB0F8; --accent-soft:#22314A; --accent-ink:#0C1219;
+    --gold:#EDC673; --gold-soft:#3A2E17;
+    --chip:#242E3D; --shadow:0 1px 3px rgba(0,0,0,.45); --shadow-lg:0 8px 24px rgba(0,0,0,.55);
+    --new:#FF9C57; --red:#F49189;
+    --eng:#7FB0F8; --eng-soft:#22314A;
+    --math:#5FCFCF; --math-soft:#173434;
+    --jpn:#F2A992; --jpn-soft:#3B241D;
+    --sci:#BCA6F5; --sci-soft:#2A2340;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#121721; --card:#1B2230; --ink:#E9EEF6; --muted:#93A1B4; --line:#2C3648;
-  --accent:#6FA4F5; --accent-soft:#23324B; --accent-ink:#0E1520;
-  --done:#4FCB98; --done-soft:#1B3A2E;
-  --gold:#E4BC63; --gold-soft:#3A2E18;
-  --chip:#242D3D; --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 8px 24px rgba(0,0,0,.5);
-  --new:#FF9450; --red:#F08A80;
-  --eng:#6FA4F5; --eng-soft:#23324B;
-  --math:#4FC3C3; --math-soft:#183434;
-  --jpn:#EE9F8B; --jpn-soft:#3A241E;
-  --sci:#B49CF0; --sci-soft:#2A2340;
+  --bg:#10151E; --card:#1A212D; --ink:#F0F4FA; --muted:#AEBCCD; --line:#303B4D;
+  --accent:#7FB0F8; --accent-soft:#22314A; --accent-ink:#0C1219;
+  --gold:#EDC673; --gold-soft:#3A2E17;
+  --chip:#242E3D; --shadow:0 1px 3px rgba(0,0,0,.45); --shadow-lg:0 8px 24px rgba(0,0,0,.55);
+  --new:#FF9C57; --red:#F49189;
+  --eng:#7FB0F8; --eng-soft:#22314A;
+  --math:#5FCFCF; --math-soft:#173434;
+  --jpn:#F2A992; --jpn-soft:#3B241D;
+  --sci:#BCA6F5; --sci-soft:#2A2340;
 }
 *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
 html{-webkit-text-size-adjust:100%;}
 body{
   background:var(--bg); color:var(--ink);
-  font-family:'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif;
-  font-size:16px; line-height:1.65; min-height:100vh;
+  font-family:-apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", "Yu Gothic Medium", "Yu Gothic", Meiryo, "Segoe UI", sans-serif;
+  font-size:17px; line-height:1.7; min-height:100vh;
+  -webkit-font-smoothing:antialiased;
 }
 .num{font-variant-numeric:tabular-nums;}
-.wrap{max-width:560px; margin:0 auto; padding:0 14px calc(104px + env(safe-area-inset-bottom));}
+.wrap{max-width:600px; margin:0 auto; padding:0 14px calc(104px + env(safe-area-inset-bottom));}
 button, input, textarea, select{font-family:inherit; color:inherit;}
 button{background:none; border:none; cursor:pointer; touch-action:manipulation;}
-button:active{transform:scale(.98);}
+button:active{opacity:.7;}
 .hidden{display:none !important;}
 
 header.app{position:sticky; top:0; z-index:30; background:var(--bg); padding:calc(10px + env(safe-area-inset-top)) 2px 8px;}
-.title-row{display:flex; align-items:center; gap:8px; padding:0 2px;}
-.title-row h1{font-size:20px; font-weight:900; letter-spacing:.02em;}
-.title-row .ver{font-size:11px; color:var(--muted); font-weight:700;}
+.title-row{display:flex; align-items:center; gap:9px; padding:0 2px;}
+.title-row h1{font-size:21px; font-weight:700; letter-spacing:.01em;}
+.title-row .ver{font-size:12.5px; color:var(--muted); font-weight:600;}
 .title-row .spacer{flex:1;}
-.icon-btn{width:38px; height:38px; border-radius:12px; background:var(--card); border:1px solid var(--line); display:grid; place-items:center; box-shadow:var(--shadow);}
-.icon-btn svg{width:20px; height:20px; stroke:var(--ink); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+.icon-btn{width:40px; height:40px; border-radius:12px; background:var(--card); border:1px solid var(--line); display:grid; place-items:center; box-shadow:var(--shadow);}
+.icon-btn svg{width:21px; height:21px; stroke:var(--ink); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
 
-.update{width:100%; margin-top:10px; background:var(--new); color:#fff; border-radius:16px; padding:13px 14px; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow); text-align:left;}
-.update svg{width:22px; height:22px; stroke:#fff; fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; flex:none;}
-.update .t{flex:1; line-height:1.3;}
-.update .t b{display:block; font-size:15px; font-weight:900;}
-.update .t span{font-size:11px; opacity:.92; font-weight:700;}
-.update .go{background:rgba(255,255,255,.22); border-radius:999px; padding:7px 13px; font-size:13px; font-weight:900; flex:none;}
+.update{width:100%; margin-top:10px; background:var(--new); color:#fff; border-radius:14px; padding:13px 14px; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow); text-align:left;}
+.update svg{width:23px; height:23px; stroke:#fff; fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+.update .t{flex:1; line-height:1.4;}
+.update .t b{display:block; font-size:15.5px; font-weight:700;}
+.update .t span{font-size:12.5px; opacity:.95; font-weight:500;}
+.update .go{background:rgba(255,255,255,.24); border-radius:999px; padding:8px 14px; font-size:14px; font-weight:700; flex:none;}
 
-.card{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:14px;}
+.card{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:14px;}
 .card + .card{margin-top:12px;}
-.sec-title{font-size:13px; font-weight:900; color:var(--muted); margin:22px 2px 8px; letter-spacing:.04em;}
+.sec-title{font-size:15px; font-weight:700; color:var(--ink); margin:24px 2px 8px;}
 .sec-title:first-child{margin-top:14px;}
+.lead{font-size:14.5px; color:var(--muted); line-height:1.75; padding:0 4px 8px;}
 
-.chip{display:inline-block; font-size:11px; font-weight:900; border-radius:999px; padding:3px 10px; background:var(--chip); color:var(--muted);}
+.chip{display:inline-block; font-size:13px; font-weight:700; border-radius:8px; padding:4px 11px; background:var(--chip); color:var(--muted);}
 .chip.eng{background:var(--eng-soft); color:var(--eng);}
 .chip.math{background:var(--math-soft); color:var(--math);}
 .chip.jpn{background:var(--jpn-soft); color:var(--jpn);}
 .chip.sci{background:var(--sci-soft); color:var(--sci);}
 .chip.round{background:var(--gold-soft); color:var(--gold);}
 
-/* ==== 今日 ==== */
-.todaycard .top{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
-.todaycard .top b{font-size:16px; font-weight:900; flex:1; line-height:1.35;}
-.todaycard .variant{font-size:11px; font-weight:700; color:var(--muted); margin:-4px 0 8px;}
-.todaycard .task{background:var(--accent-soft); border-radius:14px; padding:14px; text-align:center; margin-bottom:10px;}
-.todaycard .task .dayno{font-size:12px; font-weight:900; color:var(--accent); letter-spacing:.04em;}
-.todaycard .task .body{font-size:26px; font-weight:900; line-height:1.35; margin-top:2px; word-break:break-word;}
-.todaycard .task .body.small{font-size:20px;}
-.bar{height:8px; border-radius:999px; background:var(--chip); overflow:hidden; margin:2px 0 6px;}
-.bar > i{display:block; height:100%; border-radius:999px; background:var(--accent);}
-.meta{display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:var(--muted);}
-.btnrow{display:flex; gap:8px; margin-top:12px;}
-.btn{flex:1; border-radius:13px; padding:12px 10px; font-size:15px; font-weight:900; text-align:center; border:1px solid var(--line); background:var(--card); color:var(--ink);}
-.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:transparent;}
-.btn.small{flex:none; padding:10px 14px; font-size:13px;}
-.btn.ghost{background:var(--chip); border-color:transparent; color:var(--muted); font-size:13px;}
-.btn.done{background:var(--done); color:#fff; border-color:transparent;}
-
-.empty{text-align:center; padding:26px 16px; color:var(--muted);}
-.empty .big{font-size:34px;}
-.empty b{display:block; font-size:16px; color:var(--ink); margin:6px 0 4px;}
-.empty p{font-size:13px; line-height:1.7;}
-
-.notice{background:var(--gold-soft); border:1px solid transparent; border-radius:16px; padding:12px 14px; display:flex; gap:10px; align-items:flex-start;}
-.notice .ic{font-size:18px; line-height:1.2;}
-.notice .tx{flex:1; font-size:13px; font-weight:700; color:var(--ink); line-height:1.6;}
-.notice .tx span{display:block; color:var(--muted); font-weight:500; font-size:12px; margin-top:2px;}
-.notice .arrow{font-size:16px; color:var(--muted);}
-
-/* ==== ルート ==== */
-.gradehead{font-size:12px; font-weight:900; color:var(--muted); margin:12px 4px 6px; letter-spacing:.06em;}
-.rowitem{display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:11px 4px; border-bottom:1px solid var(--line);}
-.rowitem:last-child{border-bottom:none;}
-.rowitem .no{width:24px; height:24px; border-radius:8px; background:var(--chip); color:var(--muted); font-size:11px; font-weight:900; display:grid; place-items:center; flex:none;}
-.rowitem .tx{flex:1; min-width:0;}
-.rowitem .tx b{display:block; font-size:15px; font-weight:800; line-height:1.35;}
-.rowitem .tx span{display:block; font-size:11.5px; color:var(--muted); font-weight:700; margin-top:1px;}
-.rowitem .tx em{display:block; font-style:normal; font-size:11.5px; color:var(--muted); margin-top:2px; line-height:1.5;}
-.rowitem .go{font-size:15px; color:var(--muted); flex:none;}
-.rowitem.plain{opacity:.72;}
-.rowitem.running .tx b{color:var(--accent);}
-.dot{display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent); margin-right:5px; vertical-align:middle;}
-
-/* ==== 鉄則 ==== */
-.tlist .rowitem .tx b{font-size:15px;}
-.doc{font-size:14px; line-height:1.85; white-space:pre-wrap; word-break:break-word;}
-.tetsu-item{display:flex; gap:10px; padding:11px 2px; border-bottom:1px solid var(--line);}
-.tetsu-item:last-child{border-bottom:none;}
-.tetsu-item .tx{flex:1; font-size:14px; line-height:1.8; white-space:pre-wrap; word-break:break-word;}
-.tetsu-item .tm{flex:none; font-size:11px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:3px 9px; align-self:flex-start; white-space:nowrap;}
-.tetsu-head{font-size:13px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:10px; padding:7px 11px; margin:12px 0 2px; white-space:pre-wrap;}
-.tetsu-head:first-child{margin-top:0;}
-
-/* ==== シート ==== */
-.mask{position:fixed; inset:0; background:rgba(10,18,32,.45); z-index:60; opacity:0; pointer-events:none; transition:opacity .18s;}
-.mask.on{opacity:1; pointer-events:auto;}
-.sheet{position:fixed; left:0; right:0; bottom:0; z-index:61; background:var(--bg); border-radius:22px 22px 0 0;
-  max-height:90vh; display:flex; flex-direction:column; transform:translateY(101%); transition:transform .22s cubic-bezier(.2,.7,.3,1);}
-.sheet.on{transform:translateY(0);}
-.sheet .grab{width:38px; height:4px; border-radius:2px; background:var(--line); margin:9px auto 4px; flex:none;}
-.sheet .shead{display:flex; align-items:center; gap:10px; padding:4px 16px 10px; flex:none;}
-.sheet .shead b{flex:1; font-size:17px; font-weight:900; line-height:1.35;}
-.sheet .sbody{overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 14px calc(24px + env(safe-area-inset-bottom));}
-.x{width:32px; height:32px; border-radius:10px; background:var(--chip); display:grid; place-items:center; font-size:15px; font-weight:900; color:var(--muted); flex:none;}
-
-.varrow{display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;}
-.varbtn{border:1px solid var(--line); background:var(--card); border-radius:11px; padding:9px 12px; font-size:13px; font-weight:800;}
-.varbtn.on{background:var(--accent); color:var(--accent-ink); border-color:transparent;}
+.notice{background:var(--gold-soft); border-radius:14px; padding:13px 14px; display:flex; gap:11px; align-items:flex-start; width:100%; text-align:left;}
+.notice .ic{font-size:19px; line-height:1.3;}
+.notice .tx{flex:1; font-size:15px; font-weight:700; color:var(--ink); line-height:1.6;}
+.notice .tx span{display:block; color:var(--muted); font-weight:500; font-size:13.5px; margin-top:2px;}
+.notice .arrow{font-size:18px; color:var(--muted); font-weight:700;}
 
 /* ==== 計画表えらび ==== */
-.pickrow{margin:2px 0 8px;}
-.pickrow:not(:first-child){margin-top:16px;}
-.picks{display:flex; flex-wrap:wrap; gap:7px;}
-.pick{border:1px solid var(--line); background:var(--bg); border-radius:11px; padding:8px 12px;
-  line-height:1.3; text-align:left; color:var(--ink);}
-.pick b{display:block; font-size:13px; font-weight:800;}
-.pick span{display:block; font-size:10.5px; font-weight:700; color:var(--muted); margin-top:1px;}
-.pick.on span{color:var(--accent); opacity:.85;}
-.pick.on{background:var(--accent-soft); border-color:var(--accent); color:var(--accent);}
-.pick .dot{margin-right:4px;}
+.pickrow{margin:2px 0 9px;}
+.pickrow:not(:first-child){margin-top:18px;}
+.picks{display:flex; flex-wrap:wrap; gap:8px;}
+.pick{border:1px solid var(--line); background:var(--bg); border-radius:10px; padding:9px 13px; line-height:1.35; text-align:left; color:var(--ink);}
+.pick b{display:block; font-size:15px; font-weight:700;}
+.pick span{display:block; font-size:12.5px; font-weight:500; color:var(--muted); margin-top:1px;}
 
 /* ==== 表（スプレッドシート風） ==== */
 .tscroll{overflow-x:auto; -webkit-overflow-scrolling:touch; background:var(--card); border:1px solid var(--line);
-  border-radius:14px; box-shadow:var(--shadow); margin-bottom:12px;}
-table.plan{border-collapse:separate; border-spacing:0; width:max-content; min-width:100%; font-size:13px;}
-table.plan th, table.plan td{border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:7px 9px; text-align:center; white-space:nowrap;}
+  border-radius:12px; box-shadow:var(--shadow); margin-bottom:12px;}
+table.plan{border-collapse:separate; border-spacing:0; width:max-content; min-width:100%; font-size:15px;}
+table.plan th, table.plan td{border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:9px 11px; text-align:center; white-space:nowrap;}
 table.plan tr > *:last-child{border-right:none;}
 table.plan tbody tr:last-child > *{border-bottom:none;}
-table.plan th{background:var(--chip); font-weight:900; font-size:12px; color:var(--muted);}
-table.plan th.rnd{background:var(--accent-soft); color:var(--accent); font-size:13.5px; text-align:left; padding-left:12px;}
+table.plan th{background:var(--chip); font-weight:700; font-size:13.5px; color:var(--muted);}
+table.plan th.rnd{background:var(--accent-soft); color:var(--accent); font-size:15px; text-align:left; padding-left:13px;}
 table.plan th.rnd.solo{position:sticky; left:0;}
-table.plan tr.sub th{font-size:11px;}
-table.plan td.d{color:var(--muted); font-weight:800; font-size:12px; font-variant-numeric:tabular-nums; background:var(--bg);}
-table.plan td.t{font-weight:700;}
-table.plan td.now{background:var(--accent); color:var(--accent-ink); font-weight:900;}
-table.plan td.past{color:var(--muted); opacity:.72;}
-table.plan td.ft, table.plan th.ft{color:var(--muted); font-size:11px; font-weight:800; background:var(--bg);}
-.tcap{font-size:12px; font-weight:800; color:var(--muted); margin:2px 4px 6px;}
+table.plan td.d{color:var(--muted); font-weight:700; font-size:14px; font-variant-numeric:tabular-nums; background:var(--bg);}
+table.plan td.t{font-weight:600;}
+table.plan td.ft, table.plan th.ft{color:var(--muted); font-size:13px; font-weight:700; background:var(--bg);}
+.tcap{font-size:13.5px; font-weight:700; color:var(--muted); margin:2px 4px 7px;}
 
 /* 全体計画の表 */
 table.plan.ovw td, table.plan.ovw th{text-align:left;}
-table.plan.ovw .nm{position:sticky; left:0; z-index:1; background:var(--card); font-weight:900; font-size:13.5px;
-  box-shadow:1px 0 0 var(--line); white-space:normal; min-width:126px; max-width:150px; line-height:1.4;}
-table.plan.ovw th.nm{background:var(--chip); z-index:3;}
-table.plan.ovw .nm i{font-style:normal; margin-left:6px; font-weight:900; font-size:10.5px; white-space:nowrap;
-  color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:2px 7px; display:inline-block; vertical-align:2px;}
-table.plan.ovw td:nth-child(2){white-space:normal; min-width:98px; max-width:132px; line-height:1.45;}
-table.plan.ovw .memo{white-space:normal; min-width:190px; max-width:250px; font-size:12px; color:var(--muted); font-weight:600; line-height:1.55;}
-table.plan.ovw tr.grade td{background:var(--bg); font-size:12px; font-weight:900; color:var(--muted); position:static; box-shadow:none;}
+table.plan.ovw .nm{position:sticky; left:0; z-index:1; background:var(--card); font-weight:700; font-size:15px;
+  box-shadow:1px 0 0 var(--line); white-space:normal; min-width:132px; max-width:158px; line-height:1.45;}
+table.plan.ovw th.nm{background:var(--chip); z-index:3; font-size:13.5px;}
+table.plan.ovw .nm i{font-style:normal; margin-left:6px; font-weight:700; font-size:12px; white-space:nowrap;
+  color:var(--accent); background:var(--accent-soft); border-radius:6px; padding:2px 7px; display:inline-block; vertical-align:2px;}
+table.plan.ovw td:nth-child(2){white-space:normal; min-width:104px; max-width:140px; line-height:1.5;}
+table.plan.ovw .memo{white-space:normal; min-width:190px; max-width:250px; font-size:13.5px; color:var(--muted); font-weight:500; line-height:1.6;}
+table.plan.ovw tr.grade td{background:var(--bg); font-size:13.5px; font-weight:700; color:var(--muted); position:static; box-shadow:none;}
 table.plan.ovw tr.tap{cursor:pointer;}
 table.plan.ovw tr.tap:active td{background:var(--accent-soft);}
-table.plan.ovw tr.plain td{color:var(--muted); font-weight:700;}
-table.plan.ovw tr.plain .nm{font-weight:700; color:var(--muted);}
+table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 
-.roundhead{display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:11px 4px; border-bottom:1px solid var(--line); font-size:14px; font-weight:900;}
-.roundhead .cnt{font-size:11px; font-weight:700; color:var(--muted);}
-.roundhead .sp{flex:1;}
-.dayline{display:flex; gap:10px; padding:7px 6px; font-size:13.5px; border-bottom:1px dashed var(--line); align-items:baseline;}
-.dayline:last-child{border-bottom:none;}
-.dayline .d{width:66px; flex:none; color:var(--muted); font-weight:800; font-size:12px;}
-.dayline .t{flex:1; font-weight:700;}
-.dayline.now{background:var(--accent-soft); border-radius:8px; border-bottom-color:transparent;}
-.dayline.now .d{color:var(--accent);}
-.dayline.past{opacity:.5;}
+/* ==== 鉄則 ==== */
+.rowitem{display:flex; align-items:center; gap:11px; width:100%; text-align:left; padding:13px 4px; border-bottom:1px solid var(--line);}
+.rowitem:last-child{border-bottom:none;}
+.rowitem .no{width:30px; height:30px; border-radius:8px; background:var(--chip); color:var(--muted); font-size:14px; font-weight:700; display:grid; place-items:center; flex:none;}
+.rowitem .tx{flex:1; min-width:0;}
+.rowitem .tx b{display:block; font-size:15.5px; font-weight:700; line-height:1.45;}
+.rowitem .tx span{display:block; font-size:13.5px; color:var(--muted); font-weight:500; margin-top:1px;}
+.rowitem .go{font-size:18px; color:var(--muted); font-weight:700; flex:none;}
+
+.doc{font-size:15.5px; line-height:1.9; white-space:pre-wrap; word-break:break-word;}
+.tetsu-item{display:flex; gap:11px; padding:13px 2px; border-bottom:1px solid var(--line);}
+.tetsu-item:last-child{border-bottom:none;}
+.tetsu-item .tx{flex:1; font-size:15.5px; line-height:1.85; white-space:pre-wrap; word-break:break-word;}
+.tetsu-item .tm{flex:none; font-size:13px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:8px; padding:4px 9px; align-self:flex-start; white-space:nowrap;}
+.tetsu-head{font-size:15px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:9px; padding:9px 12px; margin:14px 0 2px; white-space:pre-wrap; line-height:1.6;}
+.tetsu-head:first-child{margin-top:0;}
+
+/* ==== シート ==== */
+.mask{position:fixed; inset:0; background:rgba(10,18,32,.5); z-index:60; opacity:0; pointer-events:none; transition:opacity .18s;}
+.mask.on{opacity:1; pointer-events:auto;}
+.sheet{position:fixed; left:0; right:0; bottom:0; z-index:61; background:var(--bg); border-radius:20px 20px 0 0;
+  max-height:92vh; display:flex; flex-direction:column; transform:translateY(101%); transition:transform .22s cubic-bezier(.2,.7,.3,1);}
+.sheet.on{transform:translateY(0);}
+.sheet .grab{width:40px; height:4px; border-radius:2px; background:var(--line); margin:9px auto 4px; flex:none;}
+.sheet .shead{display:flex; align-items:center; gap:10px; padding:4px 16px 10px; flex:none;}
+.sheet .shead b{flex:1; font-size:18px; font-weight:700; line-height:1.4;}
+.sheet .sbody{overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 14px calc(24px + env(safe-area-inset-bottom));}
+.x{width:36px; height:36px; border-radius:10px; background:var(--chip); display:grid; place-items:center; font-size:17px; font-weight:700; color:var(--muted); flex:none;}
+
+.btnrow{display:flex; gap:8px; margin-top:12px;}
+.btn{flex:1; border-radius:11px; padding:13px 10px; font-size:15.5px; font-weight:700; text-align:center; border:1px solid var(--line); background:var(--card); color:var(--ink);}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:transparent;}
+.varrow{display:flex; gap:8px; margin:12px 0 4px; flex-wrap:wrap;}
+.varbtn{border:1px solid var(--line); background:var(--card); border-radius:10px; padding:10px 13px; font-size:14.5px; font-weight:700;}
+.varbtn.on{background:var(--accent); color:var(--accent-ink); border-color:transparent;}
 
 .tabbar{position:fixed; left:0; right:0; bottom:0; z-index:40; background:var(--card); border-top:1px solid var(--line);
   display:flex; padding:6px 6px calc(6px + env(safe-area-inset-bottom));}
-.tabbar button{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 0; border-radius:12px; color:var(--muted); position:relative;}
+.tabbar button{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 0; border-radius:12px; color:var(--muted);}
 .tabbar button.on{color:var(--accent);}
-.tabbar svg{width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
-.tabbar span{font-size:10.5px; font-weight:900;}
-.tabbar .badge{position:absolute; top:3px; right:calc(50% - 18px); width:8px; height:8px; border-radius:50%; background:var(--new);}
+.tabbar svg{width:23px; height:23px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+.tabbar span{font-size:12px; font-weight:700;}
 
 .toast{position:fixed; left:50%; bottom:calc(84px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(10px);
-  background:var(--navy1); color:#fff; font-size:13.5px; font-weight:800; padding:11px 18px; border-radius:999px; z-index:80;
+  background:var(--navy1); color:#fff; font-size:14.5px; font-weight:600; padding:12px 20px; border-radius:12px; z-index:80;
   opacity:0; pointer-events:none; transition:.2s; box-shadow:var(--shadow-lg); max-width:88vw; text-align:center;}
 .toast.on{opacity:1; transform:translateX(-50%) translateY(0);}
 
-.setrow{display:flex; align-items:center; gap:10px; padding:12px 2px; border-bottom:1px solid var(--line); width:100%; text-align:left;}
+.setrow{display:flex; align-items:center; gap:10px; padding:14px 2px; border-bottom:1px solid var(--line); width:100%; text-align:left; text-decoration:none; color:inherit;}
 .setrow:last-child{border-bottom:none;}
 .setrow .tx{flex:1;}
-.setrow .tx b{display:block; font-size:15px; font-weight:800;}
-.setrow .tx span{display:block; font-size:12px; color:var(--muted); font-weight:600;}
-.setrow .val{font-size:13px; font-weight:800; color:var(--accent);}
-.link{color:var(--accent); font-weight:800; text-decoration:none;}
-.lead{font-size:13px; color:var(--muted); line-height:1.75; padding:0 4px 4px;}
+.setrow .tx b{display:block; font-size:16px; font-weight:700;}
+.setrow .tx span{display:block; font-size:13.5px; color:var(--muted); font-weight:500;}
+.setrow .val{font-size:14.5px; font-weight:700; color:var(--accent);}
+.link{color:var(--accent); font-weight:700; text-decoration:underline;}
 </style>
 </head>
 <body>
@@ -263,8 +212,7 @@ table.plan.ovw tr.plain .nm{font-weight:700; color:var(--muted);}
 </div>
 
 <nav class="tabbar" id="tabbar">
-  <button data-tab="today" class="on"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg><span>今日</span></button>
-  <button data-tab="route"><svg viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19h5a4 4 0 0 0 0-8h-3a4 4 0 0 1 0-8h5"/></svg><span>ルート</span></button>
+  <button data-tab="route" class="on"><svg viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19h5a4 4 0 0 0 0-8h-3a4 4 0 0 1 0-8h5"/></svg><span>ルート</span></button>
   <button data-tab="tetsu"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M8 7.5h7M8 11h5"/></svg><span>鉄則</span></button>
   <button data-tab="set"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.5-2.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4.6a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 11a2 2 0 1 1 0 4z"/></svg><span>設定</span></button>
 </nav>
@@ -279,40 +227,30 @@ table.plan.ovw tr.plain .nm{font-weight:700; color:var(--muted);}
 
 <script src="data.js"></script>
 <script>
-const VER = 3;
+const VER = 4;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
+const EXTRA_MATH = ['nyumon_ia','nyumon_iib','kichart_ia','kichart_iib'];
 
-/* ---------- 保存データ ---------- */
 let S = load();
 function load(){
-  try{
-    const o = JSON.parse(localStorage.getItem(KEY) || '{}');
-    return { active: o.active || {}, order: o.order || [], theme: o.theme || '' };
-  }catch(e){ return { active:{}, order:[], theme:'' }; }
+  try{ const o = JSON.parse(localStorage.getItem(KEY) || '{}'); return { theme: o.theme || '' }; }
+  catch(e){ return { theme:'' }; }
 }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ theme: S.theme })); }catch(e){} }
 
-/* ---------- データ操作 ---------- */
+/* ---------- データ ---------- */
 const BOOKS = {}; ROUTE.books.forEach(b => BOOKS[b.id] = b);
 function bookOf(id){ return BOOKS[id]; }
 function variantOf(b, vi){ return (b.variants && b.variants.length) ? b.variants[Math.min(vi||0, b.variants.length-1)] : null; }
-/* 表（secs）から「N日目 → やる範囲・何周目」の早見表をつくる */
-function buildIndex(v){
-  if(v._i) return v._i;
-  const idx = {}; let max = 0;
-  v.secs.forEach(s => s.rows.forEach(row => row.forEach((c, ci) => {
-    if(!c) return;
-    let lab = '';
-    s.heads.forEach(hd => { if(ci >= hd.i && ci < hd.i + hd.n) lab = hd.l; });
-    idx[c[0]] = { t: c[1], r: lab };
-    if(c[0] > max) max = c[0];
-  })));
-  v._i = idx; v._max = max;
-  return idx;
+function totalDays(v){
+  if(!v) return 0;
+  if(v._max) return v._max;
+  let max = 0;
+  v.secs.forEach(s => s.rows.forEach(row => row.forEach(c => { if(c && c[0] > max) max = c[0]; })));
+  v._max = max;
+  return max;
 }
-function totalDays(v){ if(!v) return 0; buildIndex(v); return v._max; }
-function entryAt(v, day){ return v ? (buildIndex(v)[day] || null) : null; }
 function bookMeta(id){
   for(const s of ROUTE.plan) for(const r of s.rows) if(r.id === id) return r;
   return null;
@@ -335,127 +273,23 @@ function linkify(s){
   return esc(s).replace(/(https?:\/\/[^\s、]+)/g, u => '<a class="link" href="'+u+'" target="_blank" rel="noopener">'+u+'</a>');
 }
 function shortTitle(t){ return String(t).replace(/（[^）]*）\s*$/, '').trim(); }
-function tetsuName(t){ const m = String(t).match(/^.*?】/); return (m ? m[0] : String(t)).trim(); }
 function spanOf(t){ const m = String(t).match(/（([^）]*)）\s*$/); return m ? m[1] : ''; }
+function tetsuName(t){ const m = String(t).match(/^.*?】/); return (m ? m[0] : String(t)).trim(); }
 function toast(msg){
   const el = document.getElementById('toast');
   el.textContent = msg; el.classList.add('on');
-  clearTimeout(toast._t); toast._t = setTimeout(()=>el.classList.remove('on'), 1800);
+  clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('on'), 1800);
 }
 
 /* ---------- 画面 ---------- */
-let tab = 'today';
+let tab = 'route';
 function render(){
   const v = document.getElementById('view');
-  if(tab === 'today') v.innerHTML = viewToday();
-  else if(tab === 'route') v.innerHTML = viewRoute();
-  else if(tab === 'tetsu') v.innerHTML = viewTetsu();
-  else v.innerHTML = viewSet();
+  v.innerHTML = tab === 'route' ? viewRoute() : tab === 'tetsu' ? viewTetsu() : viewSet();
   document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   window.scrollTo(0, 0);
 }
-
-/* ===== 今日 ===== */
-function viewToday(){
-  const ids = S.order.filter(id => BOOKS[id]);
-  let h = '';
-  h += '<div class="sec-title">きょう やること</div>';
-  if(!ids.length){
-    h += '<div class="card"><div class="empty"><div class="big">🗺️</div><b>まだ問題集をえらんでいません</b>'
-      + '<p>下の「ルート」から、いま進めている問題集をえらんで<br>「これを始める」を押してください。<br>その日にやる範囲がここに出ます。</p>'
-      + '<div class="btnrow" style="margin-top:14px"><button class="btn primary" onclick="go(\'route\')">ルートを見る</button></div>'
-      + '</div></div>';
-  }else{
-    ids.forEach(id => { h += todayCard(id); });
-    h += '<div class="btnrow" style="margin-top:12px"><button class="btn ghost" onclick="copyReport()">今日の進み具合をコピー（勉強報告用）</button></div>';
-  }
-  h += '<div class="sec-title">わすれずに</div>';
-  h += '<button class="notice" style="width:100%;text-align:left" onclick="openTetsu(\'overall\')">'
-    + '<span class="ic">⚡️</span><span class="tx">全体鉄則【１０則】<span>すべての問題集に共通する、いちばん大事なルールです</span></span><span class="arrow">›</span></button>';
-  return h;
-}
-
-function todayCard(id){
-  const b = bookOf(id), st = S.active[id];
-  const v = variantOf(b, st.v), tot = totalDays(v);
-  const cls = SUBJ_CLASS[b.subject] || '';
-  let h = '<div class="card todaycard">';
-  h += '<div class="top"><span class="chip '+cls+'">'+esc(b.subject)+'</span><b>'+esc(shortTitle(b.title))+'</b></div>';
-  if(b.variants.length > 1) h += '<div class="variant">'+esc(v.name)+'</div>';
-
-  if(!v){
-    h += '<div class="lead">この教材に日ごとの計画表はありません。鉄則にそって進めてください。</div>';
-    h += '<div class="btnrow"><button class="btn" onclick="openTetsu(\''+b.tetsoku+'\')">鉄則を見る</button>'
-      + '<button class="btn ghost small" onclick="stop(\''+id+'\')">はずす</button></div></div>';
-    return h;
-  }
-  if(st.day > tot){
-    h += '<div class="task" style="background:var(--done-soft)"><div class="dayno" style="color:var(--done)">ぜんぶ終わりました</div>'
-      + '<div class="body">🎉 完走</div></div>';
-    h += '<div class="meta"><span>全'+tot+'日</span><span>100%</span></div>';
-    h += '<div class="btnrow"><button class="btn" onclick="back(\''+id+'\')">1日もどす</button>'
-      + '<button class="btn done" onclick="stop(\''+id+'\')">今日からはずす</button></div></div>';
-    return h;
-  }
-  const e = entryAt(v, st.day);
-  const body = e ? e.t : '—';
-  h += '<div class="task"><div class="dayno">'+st.day+'日目'+(e && e.r ? '　'+esc(e.r) : '')+(e && e.s ? '　'+esc(e.s) : '')+'</div>'
-    + '<div class="body'+(body.length > 12 ? ' small' : '')+'">'+esc(body)+'</div></div>';
-  const pct = Math.round((st.day - 1) / tot * 100);
-  h += '<div class="bar"><i style="width:'+pct+'%"></i></div>';
-  h += '<div class="meta"><span class="num">'+st.day+' / '+tot+'日</span><span class="num">'+pct+'%</span></div>';
-  h += '<div class="btnrow"><button class="btn primary" onclick="next(\''+id+'\')">できた ✓</button>'
-    + '<button class="btn small" onclick="back(\''+id+'\')">もどす</button>'
-    + '<button class="btn small" onclick="openBook(\''+id+'\')">計画表</button></div>';
-  h += '<div class="btnrow" style="margin-top:8px"><button class="btn ghost" onclick="openTetsu(\''+b.tetsoku+'\')">'+esc(ROUTE.tetsoku[b.tetsoku] ? tetsuName(ROUTE.tetsoku[b.tetsoku].title) : '鉄則')+' を見る</button></div>';
-  h += '</div>';
-  return h;
-}
-
-function next(id){
-  const b = bookOf(id), st = S.active[id], v = variantOf(b, st.v);
-  const tot = totalDays(v);
-  if(st.day <= tot){ st.day++; save(); render();
-    toast(st.day > tot ? '完走です！おつかれさま 🎉' : (st.day) + '日目にすすみました'); }
-}
-function back(id){
-  const st = S.active[id];
-  if(st.day > 1){ st.day--; save(); render(); toast(st.day + '日目にもどしました'); }
-  else toast('1日目です');
-}
-function stop(id){
-  delete S.active[id]; S.order = S.order.filter(x => x !== id); save(); render(); toast('今日タブからはずしました');
-}
-function start(id, vi){
-  if(!S.active[id]){ S.order.push(id); S.active[id] = { v: vi||0, day: 1 }; }
-  else S.active[id].v = vi || 0;
-  save(); closeSheet(); go('today'); toast('今日タブに追加しました');
-}
-function setDay(id, d){
-  const b = bookOf(id); if(!S.active[id]) return;
-  S.active[id].day = d; save(); renderSheetBook(id); render(); toast(d + '日目にしました');
-}
-
-function copyReport(){
-  const lines = ['【今の進み具合】'];
-  S.order.forEach(id => {
-    const b = bookOf(id), st = S.active[id], v = variantOf(b, st.v);
-    if(!v){ lines.push('・'+b.subject+'／'+shortTitle(b.title)); return; }
-    const tot = totalDays(v), e = entryAt(v, Math.min(st.day, tot));
-    const pct = Math.round((st.day - 1) / tot * 100);
-    lines.push('・'+b.subject+'／'+shortTitle(b.title)+(b.variants.length>1 ? '（'+v.name+'）' : ''));
-    lines.push('　'+st.day+'日目 / 全'+tot+'日（'+pct+'%）'+(e && e.r ? '　'+e.r : '') + (e ? '　'+e.t : ''));
-  });
-  lines.push('', '①今どこまで進んでいるか？', '②鉄則通りにできているか？', '③今の課題は何か？ではどうするか？');
-  const txt = lines.join('\n');
-  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>toast('コピーしました'), ()=>fallbackCopy(txt));
-  else fallbackCopy(txt);
-}
-function fallbackCopy(t){
-  const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta);
-  ta.select(); try{ document.execCommand('copy'); toast('コピーしました'); }catch(e){ toast('コピーできませんでした'); }
-  document.body.removeChild(ta);
-}
+function go(t){ tab = t; render(); }
 
 /* ===== ルート ===== */
 function viewRoute(){
@@ -466,14 +300,12 @@ function viewRoute(){
     const cls = SUBJ_CLASS[sec.subject] || '';
     const ids = [];
     sec.rows.forEach(r => { if(r.id && bookOf(r.id) && bookOf(r.id).variants.length) ids.push(r.id); });
-    if(sec.subject === '数学') ['nyumon_ia','nyumon_iib','kichart_ia','kichart_iib'].forEach(x => ids.push(x));
+    if(sec.subject === '数学') EXTRA_MATH.forEach(x => ids.push(x));
     if(!ids.length) return;
     h += '<div class="pickrow"><span class="chip '+cls+'">'+esc(sec.subject)+'</span></div><div class="picks">';
     ids.forEach(id => {
-      const b = bookOf(id);
-      const sp = spanOf(b.title);
-      h += '<button class="pick'+(S.active[id] ? ' on' : '')+'" onclick="openBook(\''+id+'\')">'
-        + '<b>' + (S.active[id] ? '<span class="dot"></span>' : '') + esc(shortTitle(b.title)) + '</b>'
+      const b = bookOf(id), sp = spanOf(b.title);
+      h += '<button class="pick" onclick="openBook(\''+id+'\')"><b>'+esc(shortTitle(b.title))+'</b>'
         + (sp ? '<span>'+esc(sp)+'</span>' : '') + '</button>';
     });
     h += '</div>';
@@ -484,7 +316,7 @@ function viewRoute(){
   h += '<div class="lead">いつ・どの問題集を・何周するかの全体像です。行を押すと、その問題集の計画表と鉄則が見られます。<br>表は横にスワイプすると続き（期間・周回数・メモ）が見られます。</div>';
   ROUTE.plan.forEach(sec => {
     const cls = SUBJ_CLASS[sec.subject] || '';
-    h += '<div class="sec-title"><span class="chip '+cls+'">'+esc(sec.subject)+'</span></div>';
+    h += '<div style="margin:16px 2px 8px"><span class="chip '+cls+'">'+esc(sec.subject)+'</span></div>';
     h += '<div class="tscroll"><table class="plan ovw"><thead><tr>'
       + '<th class="nm">使用問題集</th><th>月</th><th>期間</th><th>周回数</th><th class="memo">メモ</th>'
       + '</tr></thead><tbody>';
@@ -498,14 +330,15 @@ function viewRoute(){
     });
     h += '</tbody></table></div>';
   });
+
   h += '<div class="sec-title">そのほかの計画表</div>';
   h += '<div class="lead">全体計画には出ていませんが、スプレッドシートに計画表があるものです。</div>';
   h += '<div class="tscroll"><table class="plan ovw"><thead><tr>'
     + '<th class="nm">使用問題集</th><th>期間</th></tr></thead><tbody>';
-  ['nyumon_ia','nyumon_iib','kichart_ia','kichart_iib'].forEach(id => {
+  EXTRA_MATH.forEach(id => {
     const b = bookOf(id); if(!b) return;
     h += '<tr class="tap" onclick="openBook(\''+id+'\')"><td class="nm">'
-      + (S.active[id] ? '<span class="dot"></span>' : '') + esc(shortTitle(b.title)) + '<i>計画表 ›</i></td>'
+      + esc(shortTitle(b.title)) + '<i>計画表 ›</i></td>'
       + '<td>'+esc(spanOf(b.title))+'</td></tr>';
   });
   h += '</tbody></table></div>';
@@ -514,31 +347,28 @@ function viewRoute(){
 function planRow(r){
   const memo = (r.memo || []).filter(x => x && x !== r.name).join('　/　');
   const cel = x => '<td>'+esc(x && x !== 'ー' ? x : '')+'</td>';
-  const nm = (S.active[r.id] ? '<span class="dot"></span>' : '') + esc(r.name) + (r.id ? '<i>計画表 ›</i>' : '');
   return '<tr class="'+(r.id ? 'tap' : 'plain')+'"'+(r.id ? ' onclick="openBook(\''+r.id+'\')"' : '')+'>'
-    + '<td class="nm">'+nm+'</td>' + cel(r.month) + cel(r.span) + cel(r.rounds)
+    + '<td class="nm">'+esc(r.name)+(r.id ? '<i>計画表 ›</i>' : '')+'</td>'
+    + cel(r.month) + cel(r.span) + cel(r.rounds)
     + '<td class="memo">'+esc(memo)+'</td></tr>';
 }
 
 /* ===== 鉄則 ===== */
-const TETSU_ORDER = [
-  ['overall','すべての人が守るもの'],
-  ['stock','英語'],['rank','英語'],['polaris','英語'],['dokkai','英語・国語'],
-  ['kisomon','数学'],['kichart','数学'],['uchuichi','理科']
-];
+const TETSU_ORDER = [['stock','英語'],['rank','英語'],['polaris','英語'],['dokkai','英語・国語'],
+                     ['kisomon','数学'],['kichart','数学'],['uchuichi','理科']];
 function viewTetsu(){
   let h = '<div class="lead" style="margin-top:14px">問題集ごとの「正しいやり方」です。ここからズレると、極まらない＝伸びなくなります。</div>';
-  h += '<div class="sec-title">いちばん大事</div>';
-  h += '<button class="notice" style="width:100%;text-align:left" onclick="openTetsu(\'overall\')">'
+  h += '<div class="sec-title" style="margin-top:8px">いちばん大事</div>';
+  h += '<button class="notice" onclick="openTetsu(\'overall\')">'
     + '<span class="ic">⚡️</span><span class="tx">'+esc(ROUTE.tetsoku.overall.title)+'<span>まずはこれを読んでください</span></span><span class="arrow">›</span></button>';
-  h += '<div class="sec-title">問題集ごとの鉄則</div><div class="card tlist">';
-  TETSU_ORDER.slice(1).forEach(([k, subj]) => {
+  h += '<div class="sec-title">問題集ごとの鉄則</div><div class="card">';
+  TETSU_ORDER.forEach(([k, subj]) => {
     const t = ROUTE.tetsoku[k]; if(!t) return;
     h += '<button class="rowitem" onclick="openTetsu(\''+k+'\')"><span class="no">'+esc(subj[0])+'</span>'
       + '<span class="tx"><b>'+esc(tetsuName(t.title))+'</b><span>'+esc(subj)+'</span></span><span class="go">›</span></button>';
   });
   h += '</div>';
-  h += '<div class="sec-title">つまずいたときの道具</div><div class="card tlist">';
+  h += '<div class="sec-title">つまずいたときの道具</div><div class="card">';
   h += '<button class="rowitem" onclick="openDoc(\'prompt\')"><span class="no">数</span>'
     + '<span class="tx"><b>数学の【最強プロンプト】</b><span>解説を読んでもわからないときにAIへ投げる文</span></span><span class="go">›</span></button>';
   h += '<button class="rowitem" onclick="openDoc(\'pro\')"><span class="no">国</span>'
@@ -550,15 +380,13 @@ function viewTetsu(){
 /* ===== 設定 ===== */
 function viewSet(){
   const th = S.theme === 'dark' ? 'ダーク' : S.theme === 'light' ? 'ライト' : '端末に合わせる';
-  let h = '<div class="sec-title">設定</div><div class="card">';
+  let h = '<div class="sec-title" style="margin-top:14px">設定</div><div class="card">';
   h += '<button class="setrow" onclick="cycleTheme()"><span class="tx"><b>見た目</b><span>明るさの切りかえ</span></span><span class="val">'+th+'</span></button>';
   h += '<button class="setrow" onclick="checkUpdate(true)"><span class="tx"><b>更新があるか調べる</b><span>いまのバージョン v'+VER+'</span></span><span class="val">調べる</span></button>';
-  h += '<a class="setrow" href="https://docs.google.com/spreadsheets/d/17o7_aitaIZ9ufh5w5Ox7gxaqnwveaHVix4uHpL7BjmI/edit" target="_blank" rel="noopener" style="text-decoration:none"><span class="tx"><b>元のスプレッドシート</b><span>写真や図はこちらで見られます</span></span><span class="val">開く</span></a>';
-  h += '<button class="setrow" onclick="resetAll()"><span class="tx"><b>進み具合をぜんぶ消す</b><span>えらんだ問題集と日数をリセットします</span></span><span class="val" style="color:var(--red)">消す</span></button>';
+  h += '<a class="setrow" href="https://docs.google.com/spreadsheets/d/17o7_aitaIZ9ufh5w5Ox7gxaqnwveaHVix4uHpL7BjmI/edit" target="_blank" rel="noopener"><span class="tx"><b>元のスプレッドシート</b><span>写真や図はこちらで見られます</span></span><span class="val">開く</span></a>';
   h += '</div>';
-  h += '<div class="sec-title">この アプリについて</div><div class="card"><div class="lead" style="padding:0">'
-    + '高校ルート（全体計画・日ごとの計画表・鉄則）をそのままアプリにしたものです。<br>'
-    + '進み具合はこの端末の中だけに保存されます。<br><br>'
+  h += '<div class="sec-title">このアプリについて</div><div class="card"><div class="lead" style="padding:0">'
+    + '高校ルート（全体計画・日ごとの計画表・鉄則）を、そのまま見られるようにしたものです。<br><br>'
     + '計画がうまくいかなくなったときは、すぐに修正するか、必ず相談してください。（全体鉄則③）</div></div>';
   return h;
 }
@@ -569,10 +397,6 @@ function cycleTheme(){
 function applyTheme(){
   if(S.theme) document.documentElement.setAttribute('data-theme', S.theme);
   else document.documentElement.removeAttribute('data-theme');
-}
-function resetAll(){
-  if(!confirm('えらんだ問題集と進み具合をぜんぶ消します。よろしいですか？')) return;
-  S.active = {}; S.order = []; save(); render(); toast('消しました');
 }
 
 /* ===== シート ===== */
@@ -587,77 +411,44 @@ function closeSheet(){
   document.getElementById('sheet').classList.remove('on');
   document.getElementById('mask').classList.remove('on');
 }
-function openBook(id){ renderSheetBook(id); document.getElementById('sheet').classList.add('on'); document.getElementById('mask').classList.add('on'); }
 
 let sheetVar = {};
+function openBook(id){ renderSheetBook(id); document.getElementById('sheet').classList.add('on'); document.getElementById('mask').classList.add('on'); }
 function renderSheetBook(id){
   const b = bookOf(id), meta = bookMeta(id);
-  const vi = (S.active[id] ? S.active[id].v : (sheetVar[id] || 0));
+  const vi = sheetVar[id] || 0;
   const v = variantOf(b, vi), tot = totalDays(v);
   const cls = SUBJ_CLASS[b.subject] || '';
-  let h = '';
-  h += '<div class="card" style="margin-bottom:12px">';
-  h += '<div style="margin-bottom:8px"><span class="chip '+cls+'">'+esc(b.subject)+'</span>'
+  let h = '<div class="card" style="margin-bottom:12px">';
+  h += '<div style="margin-bottom:9px"><span class="chip '+cls+'">'+esc(b.subject)+'</span>'
      + (spanOf(b.title) ? ' <span class="chip">'+esc(spanOf(b.title))+'</span>' : '')
      + (meta && meta.rounds && meta.rounds !== 'ー' ? ' <span class="chip round">'+esc(meta.rounds)+'</span>' : '') + '</div>';
-  if(meta && meta.month && meta.month !== 'ー') h += '<div class="lead" style="padding:0 0 4px">やる時期：'+esc(meta.month)+(meta.grade?'（'+esc(meta.grade)+'）':'')+'</div>';
-  if(meta && (meta.memo||[]).length) h += '<div class="lead" style="padding:0 0 4px">'+esc((meta.memo||[]).join('　/　'))+'</div>';
-  (b.notes || []).forEach(n => { h += '<div class="notice" style="margin-top:8px"><span class="ic">📌</span><span class="tx">'+esc(fmtItem(n))+'</span></div>'; });
+  if(meta && meta.month && meta.month !== 'ー') h += '<div class="lead" style="padding:0 0 4px">やる時期：'+esc(meta.month)+(meta.grade ? '（'+esc(meta.grade)+'）' : '')+'</div>';
+  if(meta && (meta.memo || []).length) h += '<div class="lead" style="padding:0 0 4px">'+esc((meta.memo || []).join('　/　'))+'</div>';
+  (b.notes || []).forEach(n => { h += '<div class="notice" style="margin-top:9px"><span class="ic">📌</span><span class="tx" style="font-weight:500">'+esc(fmtItem(n))+'</span></div>'; });
   if(b.variants.length > 1){
-    h += '<div class="varrow" style="margin-top:12px">';
-    b.variants.forEach((vv, i) => { h += '<button class="varbtn'+(i===vi?' on':'')+'" onclick="pickVar(\''+id+'\','+i+')">'+esc(vv.name)+'</button>'; });
+    h += '<div class="lead" style="padding:12px 0 0">計画は2とおりあります。</div><div class="varrow">';
+    b.variants.forEach((vv, i) => { h += '<button class="varbtn'+(i === vi ? ' on' : '')+'" onclick="pickVar(\''+id+'\','+i+')">'+esc(vv.name)+'</button>'; });
     h += '</div>';
   }
-  if(v){
-    if(S.active[id]){
-      const st = S.active[id];
-      const pct = Math.round((st.day - 1) / tot * 100);
-      h += '<div class="bar" style="margin-top:12px"><i style="width:'+pct+'%"></i></div>';
-      h += '<div class="meta"><span class="num">いま '+st.day+'日目 / 全'+tot+'日</span><span class="num">'+pct+'%</span></div>';
-      h += '<div class="btnrow"><button class="btn" onclick="jumpToNow()">いまの日へ</button>'
-        + '<button class="btn ghost" onclick="stop(\''+id+'\');closeSheet()">今日タブからはずす</button></div>';
-    }else{
-      h += '<div class="lead" style="padding:8px 0 0">全'+tot+'日の計画です。</div>';
-      h += '<div class="btnrow"><button class="btn primary" onclick="start(\''+id+'\','+vi+')">これを始める</button></div>';
-    }
-  }else{
-    h += '<div class="btnrow">' + (S.active[id]
-      ? '<button class="btn ghost" onclick="stop(\''+id+'\');closeSheet()">今日タブからはずす</button>'
-      : '<button class="btn primary" onclick="start(\''+id+'\',0)">今日タブに入れておく</button>') + '</div>';
-  }
-  h += '<div class="btnrow" style="margin-top:8px"><button class="btn" onclick="openTetsu(\''+b.tetsoku+'\')">'
+  if(v) h += '<div class="lead" style="padding:10px 0 0">全'+tot+'日の計画です。</div>';
+  h += '<div class="btnrow"><button class="btn primary" onclick="openTetsu(\''+b.tetsoku+'\')">'
     + esc(ROUTE.tetsoku[b.tetsoku] ? tetsuName(ROUTE.tetsoku[b.tetsoku].title) : '鉄則') + ' を見る</button></div>';
   h += '</div>';
 
   if(v){
     h += '<div class="sec-title" style="margin-top:6px">日ごとの計画表</div>';
-    h += '<div class="lead">日づけではなく「1日目、2日目…」で進みます。できない日があってもズレません。'
-      + '<br>表は横にスワイプすると続きが見られます。'
-      + (S.active[id] ? '<br>マスをタップすると、その日にジャンプできます。' : '') + '</div>';
-    h += planTables(id, v);
+    h += '<div class="lead">日づけではなく「1日目、2日目…」で進みます。できない日があってもズレません。<br>表は横にスワイプすると続きが見られます。</div>';
+    h += planTables(v);
   }
   document.getElementById('sheetTitle').innerHTML = esc(shortTitle(b.title));
   document.getElementById('sheetBody').innerHTML = h;
   document.getElementById('sheetBody').scrollTop = 0;
-  jumpToNow();
 }
-
-/* いま何日目かのマスまでスクロールする */
-function jumpToNow(){
-  const now = document.getElementById('nowcell');
-  if(!now) return;
-  const box = document.getElementById('sheetBody');
-  setTimeout(() => {
-    const sc = now.closest('.tscroll');
-    if(sc) sc.scrollLeft = Math.max(0, now.offsetLeft - 70);
-    box.scrollTop = Math.max(0, now.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 170);
-  }, 80);
-}
+function pickVar(id, i){ sheetVar[id] = i; renderSheetBook(id); }
 
 /* 元のスプレッドシートと同じ「表」で計画を描く */
-function planTables(id, v){
-  const cur = S.active[id] ? S.active[id].day : 0;
-  const tap = !!S.active[id];
+function planTables(v){
   let h = '';
   v.secs.forEach(s => {
     if(s.cap) h += '<div class="tcap">'+esc(s.cap)+'</div>';
@@ -674,9 +465,7 @@ function planTables(id, v){
       h += '<tr>';
       row.forEach(c => {
         if(!c){ h += '<td class="d"></td><td class="t"></td>'; return; }
-        const k = c[0] === cur ? ' now' : (cur && c[0] < cur ? ' past' : '');
-        const at = (tap ? ' onclick="setDay(\''+id+'\','+c[0]+')"' : '') + (c[0] === cur ? ' id="nowcell"' : '');
-        h += '<td class="d'+k+'"'+at+'>'+c[0]+'</td><td class="t'+k+'"'+at+'>'+esc(c[1])+'</td>';
+        h += '<td class="d">'+c[0]+'</td><td class="t">'+esc(c[1])+'</td>';
       });
       if(s.foots) h += '<td class="ft">'+esc(s.foots[ri] || '')+'</td>';
       h += '</tr>';
@@ -684,15 +473,6 @@ function planTables(id, v){
     h += '</tbody></table></div>';
   });
   return h;
-}
-function pickVar(id, i){
-  if(S.active[id]){ S.active[id].v = i; S.active[id].day = 1; save(); render(); }
-  else sheetVar[id] = i;
-  renderSheetBook(id);
-}
-function tg(btn){
-  const g = btn.nextElementSibling; const open = g.classList.toggle('hidden');
-  btn.querySelector('.go').textContent = open ? '▸' : '▾';
 }
 
 function openTetsu(key){
@@ -710,22 +490,26 @@ function openTetsu(key){
 }
 function openDoc(which){
   if(which === 'prompt'){
-    const raw = ROUTE.extra.prompt;
     let h = '<div class="lead">解説を読んでもわからない問題は、問題と解説の写真をつけて、この文をAIに送ってください。</div>';
-    h += '<div class="card"><div class="doc">'+linkify(fmtDoc(raw))+'</div>'
+    h += '<div class="card"><div class="doc">'+linkify(fmtDoc(ROUTE.extra.prompt))+'</div>'
       + '<div class="btnrow"><button class="btn primary" onclick="copyText(ROUTE.extra.prompt)">この文をコピー</button></div></div>';
     openSheet('数学の【最強プロンプト】', h);
   }else{
     let h = '<div class="card"><div class="doc">'+linkify(fmtDoc(ROUTE.extra.pro_shikou))+'</div></div>';
     h += '<div class="sec-title">もとになったメモ</div>';
-    h += '<div class="card"><div class="doc" style="color:var(--muted);font-size:13px">'+linkify(fmtDoc(ROUTE.extra.pro_shikou_src))+'</div></div>';
+    h += '<div class="card"><div class="doc" style="font-size:14.5px; color:var(--muted)">'+linkify(fmtDoc(ROUTE.extra.pro_shikou_src))+'</div></div>';
     openSheet('プロの思考（国語読解の鉄則）', h);
   }
 }
 function copyText(t){
   const s = fmtDoc(t);
-  if(navigator.clipboard) navigator.clipboard.writeText(s).then(()=>toast('コピーしました'), ()=>fallbackCopy(s));
+  if(navigator.clipboard) navigator.clipboard.writeText(s).then(() => toast('コピーしました'), () => fallbackCopy(s));
   else fallbackCopy(s);
+}
+function fallbackCopy(t){
+  const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta);
+  ta.select(); try{ document.execCommand('copy'); toast('コピーしました'); }catch(e){ toast('コピーできませんでした'); }
+  document.body.removeChild(ta);
 }
 
 /* ---------- 更新チェック ---------- */
@@ -751,7 +535,6 @@ async function doUpdate(){
 }
 
 /* ---------- 起動 ---------- */
-function go(t){ tab = t; render(); }
 document.getElementById('tabbar').addEventListener('click', e => {
   const b = e.target.closest('button[data-tab]'); if(b) go(b.dataset.tab);
 });
@@ -764,7 +547,7 @@ applyTheme();
 render();
 checkUpdate(false);
 document.addEventListener('visibilitychange', () => { if(!document.hidden) checkUpdate(false); });
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
 </html>

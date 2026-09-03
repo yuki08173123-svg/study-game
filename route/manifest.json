@@ -1,7 +1,7 @@
 {
   "name": "高校ルート",
   "short_name": "高校ルート",
-  "description": "高校ルート（全体計画・日ごとの計画表・鉄則）を見て進めるアプリ",
+  "description": "高校ルート（全体計画・日ごとの計画表・鉄則）を見るアプリ",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",
@@ -10,8 +10,23 @@
   "background_color": "#F4F7FB",
   "theme_color": "#F4F7FB",
   "icons": [
-    { "src": "icon-192-v1.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512-v1.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-maskable-v1.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192-v1.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-v1.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-v1.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

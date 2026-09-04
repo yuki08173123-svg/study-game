@@ -1016,7 +1016,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 45;
+const VER = 46;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1122,6 +1122,30 @@ function noiseBuf(sec, brown){
   }
   return b;
 }
+/* 残響。乾いたままのノイズは「機械の音」に聞こえる（コツカワさんの指摘）。
+   部屋の響きを少し足すと、空間の中で鳴っている音になる。
+   録音ではなく、減衰するノイズから響きを作る。時間がたつほど高い音から消える。 */
+let revIR = null;
+function reverbIR(){
+  if(revIR) return revIR;
+  const sr = ac.sampleRate, len = Math.floor(sr * 2.4), pre = Math.floor(sr * 0.012);
+  const b = ac.createBuffer(2, len, sr);
+  for(let ch = 0; ch < 2; ch++){
+    const d = b.getChannelData(ch);
+    let lp = 0;
+    for(let i = 0; i < len; i++){
+      const t = i / len;
+      const env = Math.pow(1 - t, 2.4);            // だんだん小さく
+      const a = 0.85 - 0.75 * t;                   // だんだんこもる
+      lp += ((Math.random() * 2 - 1) - lp) * a;
+      d[i] = lp * env;
+    }
+    for(let i = 0; i < pre; i++) d[i] *= i / pre;  // 出だしは直接音にまかせる
+  }
+  revIR = b; return b;
+}
+const REV_WET = { rain:.34, creek:.3, wave:.42, wind:.36, fire:.2, insects:.3, chime:.5, orin:.55 };
+
 function startAmb(){
   if(!ac || ambKind === 'none' || amb) return;
   const now = ac.currentTime;
@@ -1141,7 +1165,17 @@ function startAmb(){
 
   const swell = ac.createGain();        // ゆっくりした強弱（13秒と19秒を重ねて規則的にしない）
   swell.gain.value = 0.82;
-  swell.connect(out);
+
+  // swell → 直接音＋残響 → 高い音を少しだけ落とす → out
+  const tone = ac.createBiquadFilter(); tone.type = 'highshelf'; tone.frequency.value = 3800; tone.gain.value = -4;
+  const dry = ac.createGain(); dry.gain.value = 1;
+  swell.connect(dry); dry.connect(tone);
+  try{
+    const rev = ac.createConvolver(); rev.buffer = reverbIR();
+    const wet = ac.createGain(); wet.gain.value = REV_WET[ambKind] || 0.3;
+    swell.connect(rev); rev.connect(wet); wet.connect(tone);
+  }catch(e){}                            // 残響が作れない端末でも、音は出す
+  tone.connect(out);
   const extra = [];
   [[1/13, 0.13], [1/19, 0.09]].forEach(function(p){
     const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = p[0];

@@ -1,7 +1,7 @@
 /* 瞑想アプリ の service worker
    方針は他アプリと同じ「ネットワーク優先」。まずネットから最新を取り、取れたものだけ控える。
    ネットがない時だけキャッシュで動く。キャッシュ優先にすると「直したのに古い画面が出る」ので、しない。 */
-const VER = 'md-v45';
+const VER = 'md-v46';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {

@@ -144,10 +144,12 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 .rowitem .go{font-size:18px; color:var(--muted); font-weight:700; flex:none;}
 
 .doc{font-size:15.5px; line-height:1.9; white-space:pre-wrap; word-break:break-word;}
-.tetsu-item{display:flex; gap:11px; padding:13px 2px; border-bottom:1px solid var(--line);}
+.tetsu-item{display:flex; flex-direction:column; gap:9px; padding:13px 2px; border-bottom:1px solid var(--line);}
 .tetsu-item:last-child{border-bottom:none;}
-.tetsu-item .tx{flex:1; font-size:15.5px; line-height:1.85; white-space:pre-wrap; word-break:break-word;}
-.tetsu-item .tm{flex:none; font-size:13px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:8px; padding:4px 9px; align-self:flex-start; white-space:nowrap;}
+.tetsu-item .tx{font-size:15.5px; line-height:1.85; white-space:pre-wrap; word-break:break-word;}
+.tetsu-item .tm{align-self:flex-start; max-width:100%; font-size:13.5px; font-weight:700; color:var(--accent);
+  background:var(--accent-soft); border-radius:8px; padding:5px 11px; line-height:1.55;}
+.tetsu-item .tm::before{content:"目安 "; opacity:.72;}
 .tetsu-head{font-size:15px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:9px; padding:9px 12px; margin:14px 0 2px; white-space:pre-wrap; line-height:1.6;}
 .tetsu-head:first-child{margin-top:0;}
 
@@ -251,7 +253,7 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 
 <script src="data.js"></script>
 <script>
-const VER = 6;
+const VER = 7;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
 const EXTRA_MATH = ['nyumon_ia','nyumon_iib','kichart_ia','kichart_iib'];

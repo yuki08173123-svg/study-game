@@ -546,7 +546,9 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
   <div class="stage" id="stage">
     <div class="vwrap" id="vwrap">
       <div id="yt"></div>
-      <iframe id="loomfr" class="hidden" allowfullscreen></iframe>
+      <iframe id="loomfr" class="hidden" allowfullscreen
+        allow="fullscreen; autoplay; encrypted-media; picture-in-picture"
+        referrerpolicy="strict-origin-when-cross-origin"></iframe>
       <div class="catch" id="catch"></div>
       <div class="scrim hidden" id="scrim"><img id="scrimimg" alt=""><span class="pb2">${''}</span></div>
       <div class="ctrl fade" id="ctrl"></div>
@@ -560,7 +562,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 42;
+const VER = 43;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -2566,9 +2568,15 @@ function drawBody(){
           <span><button class="oped" data-oi="${i}">書きなおす</button>
           <button class="opdel" data-oi="${i}">消す</button></span></div>
       </div>`).join('')}
+    ${isLoom(v.id) ? `<button class="btn" id="lreload" style="margin-top:9px">${ICO.loop({s:18})}
+      <span>読み込み直す</span></button>` : ''}
     ${isLoom(v.id) ? `<div class="note" style="margin-top:14px">
-      この動画は <b>Loom</b> です。Theater の倍速・つづきから・自動の回数カウントは使えません。
-      速さは Loom の画面の中で変えられます。</div>` : ''}
+      この動画は <b>Loom</b> という別のしくみで作られています。<br>
+      Theater の倍速・つづきから・自動の回数カウントは使えません。速さは Loom の画面の中で変えられます。<br><br>
+      <b>途中で止まってしまうとき</b><br>
+      上の「読み込み直す」を押してください。それでも同じところで止まる場合は、
+      電波のよいところでもう一度お試しください。Loom 側の読みこみが追いつかずに
+      止まることがあります（Theater 側では直せない部分です）。</div>` : ''}
     ${v.d ? `<div class="desc">${esc(v.d)}</div>` : ''}
     ${canReview(v.id) ? `<div class="sec"><h2>ふりかえり</h2></div>
       <div class="lead" style="margin-top:-2px">見出しを見て、その話を思い出せるか試せます。</div>
@@ -2592,6 +2600,11 @@ function drawBody(){
   };
   $('#fold').onclick = () => pickFolder(v.id, drawBody);
   $('#plan').onclick = () => askPlan(v.id, drawBody);
+  if($('#lreload')) $('#lreload').onclick = () => {
+    const f = $('#loomfr'), u = f.src;
+    f.removeAttribute('src');
+    setTimeout(() => { f.src = u; toast('読み込み直しました'); }, 120);
+  };
   if($('#mark')) $('#mark').onclick = () => {
     let t = 0;
     try{ t = (player && playerReady) ? (player.getCurrentTime() || 0) : ((prog[v.id] || {}).t || 0); }

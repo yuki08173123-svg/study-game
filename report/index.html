@@ -147,6 +147,7 @@ textarea{min-height:64px}
 .hist .d{font-weight:900}
 .hist pre{white-space:pre-wrap;font:inherit;font-size:13px;color:var(--muted);margin:4px 0 0;max-height:120px;overflow:hidden}
 .mini{font-size:12px;color:var(--muted)}
+.carry{background:var(--done-soft);color:var(--done);border-radius:12px;padding:9px 12px;font-size:13px;font-weight:700;margin:4px 0 6px;display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
 .empty{font-size:13px;color:var(--muted);border:2px dashed var(--line);border-radius:12px;padding:10px;text-align:center}
 </style>
 </head>
@@ -169,6 +170,12 @@ textarea{min-height:64px}
     <h2>🎤 音声入力しよう</h2>
     <p>報告は<b>音声入力</b>が基本です。文章の欄には <span class="k">🎤 音声</span> ボタンがあります。押して話し、終わったら <span class="k">■ 止める</span> を押します。</p>
     <p>あとから読み返して、おかしいところだけ直せばOK。ボタンが使えない端末では、キーボードのマイク 🎤 から入力してください。</p>
+  </section>
+
+  <section class="card" id="importCard" hidden>
+    <h2>📥 前に書いた報告文がある人へ</h2>
+    <p class="hint">Discordに書いた報告文をまるごと貼りつけると、目標・長期のタスク・仕組みなどをそのまま読みこめます。もう一度打ち直す必要はありません。</p>
+    <button class="btn block" id="importOpen">報告文を貼りつけて読みこむ</button>
   </section>
 
   <section class="card" id="cardGoal">
@@ -216,6 +223,8 @@ textarea{min-height:64px}
     <h2><span class="n">2</span>今日のタスク</h2>
     <p class="hint">5点セット：<b>教科・教材名・ページ数や個数・勉強時間・正答率</b></p>
     <div id="taskList"></div>
+    <div class="lbl" id="presetLbl" hidden>よく使う教材からすぐ追加</div>
+    <div class="chips" id="presetChips" hidden></div>
     <button class="btn block" id="addTask">＋ 今日のタスクを追加</button>
   </section>
 
@@ -262,6 +271,21 @@ textarea{min-height:64px}
   <div class="body" id="histBody"></div>
 </div>
 
+<div class="sheet" id="impSheet">
+  <div class="sh"><h3>報告文を読みこむ</h3><button class="btn ghost" data-close>閉じる</button></div>
+  <div class="body">
+    <p class="mini">前に書いた報告文を、まるごと貼りつけてください。読みこんだあと、中身は自由に直せます。</p>
+    <textarea id="impText" style="min-height:32vh" placeholder="9/3（連続10日目）
+①目標
+10/5の2学期中間テストで…
+②タスクとTQCスコア
+【長期のタスク】
+…"></textarea>
+    <div class="miss" id="impInfo" hidden></div>
+  </div>
+  <div class="acts"><button class="btn primary block" id="impRun">読みこむ</button></div>
+</div>
+
 <div class="sheet" id="setSheet">
   <div class="sh"><h3>設定</h3><button class="btn ghost" data-close>閉じる</button></div>
   <div class="body">
@@ -270,6 +294,10 @@ textarea{min-height:64px}
     <hr style="border:0;border-top:1px solid var(--line)">
     <p class="mini">教科の候補（読点「、」区切り）</p>
     <input type="text" id="optSubjects">
+    <hr style="border:0;border-top:1px solid var(--line)">
+    <div class="lbl">前の報告文を読みこむ</div>
+    <p class="mini">すでにDiscordに書いた報告文があれば、貼りつけるだけで中身を取りこめます。</p>
+    <p><button class="btn" id="importSet">📥 報告文を読みこむ</button></p>
     <hr style="border:0;border-top:1px solid var(--line)">
     <div class="lbl">バックアップ（消えないための控え）</div>
     <p class="mini">入力は書いたそばから自動で保存され、下の「💾 保存」でも保存できます。それでも消えると困るので、ときどきここから控えを取ってください。</p>
@@ -290,7 +318,7 @@ textarea{min-height:64px}
 <div class="toast" id="toast"></div>
 
 <script>
-const VER = 4;
+const VER = 5;
 const KEY = 'studyreport-v1';
 const BK = 'studyreport-backup';
 const DEF_SUBJECTS = ['英語','数学','国語','理科','社会','その他'];
@@ -299,16 +327,19 @@ const LAPS = ['1周','2周','3周','5周','10周'];
 function todayStr(d){ d=d||new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function fmtMD(s){ if(!s) return ''; const [y,m,d]=s.split('-').map(Number); return `${m}/${d}`; }
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
-function newTask(){ return {id:uid(), subj:'', book:'', range:'', h:0, m:0, rate:'', review:'', golden:''}; }
+function newTask(){ return {id:uid(), subj:'', book:'', range:'', prevRange:'', h:0, m:0, rate:'', review:'', golden:''}; }
 function newLong(){ return {id:uid(), subj:'', book:'', range:'', laps:'', due:'', done:false}; }
-function emptyToday(){ return { date: todayStr(), tqc:{t:'',q:'',c:''}, tqcReview:'', tasks:[newTask()], sysDone:{}, tManual:false }; }
+function emptyToday(tpl){
+  const tasks=(tpl&&tpl.length)? tpl.map(x=>{ const t=newTask(); t.subj=x.subj||''; t.book=x.book||''; t.prevRange=x.range||''; return t; }) : [newTask()];
+  return { date: todayStr(), tqc:{t:'',q:'',c:''}, tqcReview:'', tasks, sysDone:{}, tManual:false, carried: !!(tpl&&tpl.length) };
+}
 
 let S = load();
 function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) return fix(s); }catch(e){} return fix({}); }
 function fix(s){
   s.goal ??= ''; s.longTasks ??= []; s.max ??= {t:'',q:'',c:''}; s.systems ??= [];
   s.today ??= emptyToday(); s.history ??= []; s.books ??= []; s.streak ??= {count:0,last:''};
-  s.opt ??= {}; s.opt.streak ??= true; s.opt.subjects ??= DEF_SUBJECTS.slice();
+  s.opt ??= {}; s.opt.streak ??= true; s.opt.subjects ??= DEF_SUBJECTS.slice(); s.presets ??= [];
   s.longTasks = s.longTasks.map(t=>{
     if(t && typeof t.text === 'string' && t.book===undefined){ const n=newLong(); n.book=t.text; n.done=!!t.done; return n; }
     return Object.assign(newLong(), t);
@@ -462,6 +493,9 @@ function autoT(){ if(S.today.tManual) return; const h=totalHours(); if(h>0){ S.t
 function renderTasks(){
   const box=$('taskList'); box.innerHTML='';
   const dl = el('datalist',{id:'bookList'}); S.books.forEach(b=>dl.append(el('option',{value:b}))); box.append(dl);
+  if(S.today.carried) box.append(el('div',{class:'carry'},
+    el('div',{},'きのうと同じ教材を引きつぎました。ページと時間を入れるだけでOKです。'),
+    el('button',{class:'btn ghost',style:'padding:6px 10px',onclick:()=>{ S.today.tasks=[newTask()]; S.today.carried=false; flush(); renderTasks(); renderReview(); autoT(); }},'まっさらにする')));
   S.today.tasks.forEach((t,i)=>{
     const card=el('div',{class:'unit'});
     const del=el('button',{class:'del',onclick:()=>{ if((t.book||t.review) && !confirm('このタスクを消しますか？')) return; S.today.tasks.splice(i,1); if(!S.today.tasks.length) S.today.tasks.push(newTask()); flush(); renderTasks(); renderReview(); autoT(); }},'✕');
@@ -479,8 +513,8 @@ function renderTasks(){
     card.append(el('span',{class:'here'},'↓ ここに入力する'));
     const book=el('input',{type:'text',list:'bookList',placeholder:'教材名（例：英単語GRIT）','data-k':'task-'+t.id+'-book'}); book.value=t.book; markFilled(book);
     book.oninput=()=>{ t.book=book.value; markFilled(book); book.classList.remove('err'); save(); upd(); };
-    book.onblur=()=>{ const v=book.value.trim(); if(v && !S.books.includes(v)){ S.books.unshift(v); S.books=S.books.slice(0,40); flush(); } };
-    const range=el('input',{type:'text',placeholder:'ページ・個数（例：201〜400）','data-k':'task-'+t.id+'-range'}); range.value=t.range; markFilled(range);
+    book.onblur=()=>{ const v=book.value.trim(); if(v && !S.books.includes(v)){ S.books.unshift(v); S.books=S.books.slice(0,40); } if(v||t.subj){ addPreset(t.subj,v,t.range); renderPresets(); } flush(); };
+    const range=el('input',{type:'text',placeholder:(t.prevRange? 'ページ・個数（前回は '+t.prevRange+'）':'ページ・個数（例：201〜400）'),'data-k':'task-'+t.id+'-range'}); range.value=t.range; markFilled(range);
     range.oninput=()=>{ t.range=range.value; markFilled(range); range.classList.remove('err'); save(); upd(); };
     card.append(el('div',{class:'grid2'},book,range));
 
@@ -553,6 +587,172 @@ function renderSys(){
   });
 }
 $('addSys').onclick=()=>{ S.systems.push({id:uid(),text:''}); flush(); renderSys(); const all=$('sysList').querySelectorAll('textarea'); all[all.length-1]?.focus(); };
+
+/* ===== よく使う教材 ===== */
+function addPreset(subj, book, range){
+  if(!subj && !book) return;
+  S.presets = (S.presets||[]).filter(p=>!(p.subj===subj && p.book===book));
+  S.presets.unshift({subj, book, range:range||''});
+  S.presets = S.presets.slice(0,12);
+}
+function renderPresets(){
+  const box=$('presetChips'), lbl=$('presetLbl');
+  box.innerHTML='';
+  const ps=(S.presets||[]).filter(p=>p.subj||p.book);
+  lbl.hidden = box.hidden = !ps.length;
+  ps.forEach(p=>{
+    box.append(el('button',{class:'chip',onclick:()=>{
+      const t=newTask(); t.subj=p.subj; t.book=p.book; t.prevRange=p.range;
+      const cur=S.today.tasks;
+      if(cur.length===1 && !cur[0].subj && !cur[0].book && !cur[0].range) S.today.tasks=[t];
+      else S.today.tasks.push(t);
+      flush(); renderTasks(); renderReview(); autoT();
+      const all=$('taskList').querySelectorAll('.unit'); all[all.length-1]?.scrollIntoView({behavior:'smooth',block:'center'});
+    }}, '＋ '+[p.subj,p.book].filter(Boolean).join('　')));
+  });
+}
+
+/* ===== 前の報告文を読みこむ ===== */
+function pad2(v){ return String(v).padStart(2,'0'); }
+function dueFromMD(mm, dd){
+  const now=new Date();
+  let y=now.getFullYear();
+  const cand=new Date(y, mm-1, dd);
+  if((now - cand) > 1000*60*60*24*180) y+=1;
+  return y+'-'+pad2(mm)+'-'+pad2(dd);
+}
+function splitBookRange(body){
+  const i=body.search(/[0-9０-９]/);
+  if(i<=0) return {book:body, range:''};
+  return {book:body.slice(0,i).trim(), range:body.slice(i).trim()};
+}
+function parseLongLine(str, done){
+  const t=newLong(); t.done=done;
+  const parts=str.split(/[　\s]+/).filter(Boolean);
+  const rest=[];
+  parts.forEach(p=>{
+    const md=p.match(/^(\d{1,2})[\/月](\d{1,2})日?まで$/);
+    if(md){ t.due=dueFromMD(+md[1], +md[2]); return; }
+    if(/^[0-9０-９]+周$/.test(p)){ t.laps=p; return; }
+    rest.push(p);
+  });
+  if(rest.length>1 && rest[0].length<=6) t.subj=rest.shift();
+  const br=splitBookRange(rest.join(''));
+  t.book=br.book; t.range=br.range;
+  return t;
+}
+function parseTaskLine(line){
+  const t=newTask();
+  let s=line.replace(/^[・･]\s*/,'').trim();
+  const mr=s.match(/[（(]\s*([0-9]{1,3})\s*[%％]\s*[）)]\s*$/);
+  if(mr){ t.rate=+mr[1]; s=s.slice(0, mr.index).trim(); }
+  let parts=s.split(/　+/).filter(Boolean);
+  if(parts.length<2) parts=s.split(/\s{1,}/).filter(Boolean);
+  const rest=[];
+  parts.forEach(p=>{
+    const mt=p.match(/^(?:(\d+)\s*[h時間]+)?\s*(?:(\d+)\s*[m分]+)?$/);
+    if(mt && (mt[1]||mt[2]) && /[hm時分]/.test(p)){ t.h=+(mt[1]||0); t.m=+(mt[2]||0); return; }
+    rest.push(p);
+  });
+  // 「1h 30m」が分割されている場合の拾い直し
+  for(let i=0;i<rest.length-1;i++){
+    if(/^\d+\s*[h時]$/.test(rest[i]) && /^\d+\s*[m分]$/.test(rest[i+1])){
+      t.h=parseInt(rest[i]); t.m=parseInt(rest[i+1]); rest.splice(i,2); break;
+    }
+  }
+  if(rest.length>1 && rest[0].length<=6) t.subj=rest.shift();
+  const br=splitBookRange(rest.join(''));
+  t.book=br.book; t.range=br.range;
+  return t;
+}
+function parseReport(txt){
+  const lines=txt.replace(/\r/g,'').split('\n').map(l=>l.trim());
+  const out={goal:'', longTasks:[], max:null, tqc:null, tqcReview:'', tasks:[], systems:[]};
+  let sec='', idx=-1;
+  for(const l of lines){
+    if(!l) continue;
+    if(/^①/.test(l)){ sec='goal'; continue; }
+    if(/^②/.test(l)){ sec=''; continue; }
+    if(/^③/.test(l)){ sec='review'; idx=-1; continue; }
+    if(/^④/.test(l)){ sec='sys'; continue; }
+    if(/^【長期/.test(l)){ sec='long'; continue; }
+    if(/^【今日のTQC/.test(l)){ sec='tqc'; continue; }
+    if(/^【今日のタスク/.test(l)){ sec='tasks'; continue; }
+    if(sec==='goal'){ out.goal += (out.goal?'\n':'')+l; continue; }
+    if(sec==='long'){
+      const m=l.replace(/\uFE0F/g,'').match(/^([✅☑✓☐□■\s]*)(.*)$/);
+      const body=(m[2]||'').replace(/^[・･]\s*/,'');
+      if(body) out.longTasks.push(parseLongLine(body, /[✅☑✓■]/.test(m[1]||'')));
+      continue;
+    }
+    if(sec==='tqc' || sec==='tqcrev'){
+      let m=l.match(/MAX[：:]\s*T\s*([\d.]*)\D+Q\s*(\d*)\D+C\s*(\d*)/);
+      if(m){ out.max={t:m[1]||'',q:m[2]||'',c:m[3]||''}; sec='tqc'; continue; }
+      m=l.match(/今日[：:]\s*T\s*([\d.]*)\D+Q\s*(\d*)\D+C\s*(\d*)/);
+      if(m){ out.tqc={t:m[1]||'',q:m[2]||'',c:m[3]||''}; sec='tqc'; continue; }
+      if(/^[（(]\s*レビュー\s*[）)]/.test(l)){ sec='tqcrev'; continue; }
+      if(sec==='tqcrev'){ out.tqcReview += (out.tqcReview?'\n':'')+l; }
+      continue;
+    }
+    if(sec==='tasks'){ if(/^[・･]/.test(l)) out.tasks.push(parseTaskLine(l)); continue; }
+    if(sec==='review'){
+      if(/^[・･]/.test(l)){ idx++; continue; }
+      const g=l.match(/^黄金ルート[：:]\s*(.*)$/);
+      if(g){ if(out.tasks[idx]) out.tasks[idx].golden = /回した|できた|[○◯⭕]/.test(g[1]) ? 'yes' : 'no'; continue; }
+      if(out.tasks[idx]) out.tasks[idx].review += (out.tasks[idx].review?'\n':'')+l;
+      continue;
+    }
+    if(sec==='sys'){
+      const m=l.replace(/\uFE0F/g,'').match(/^([⭕◯○✅❌×✕☓]?)\s*(.*)$/);
+      const st=/[⭕◯○✅]/.test(m[1]||'') ? 'ok' : (/[❌×✕☓]/.test(m[1]||'') ? 'ng' : '');
+      const body=(m[2]||'').replace(/^[・･]\s*/,'');
+      if(body) out.systems.push({text:body, st});
+      continue;
+    }
+  }
+  return out;
+}
+function applyReport(r){
+  if(r.goal) S.goal=r.goal;
+  if(r.longTasks.length) S.longTasks=r.longTasks;
+  if(r.max) S.max=r.max;
+  if(r.tqc){ S.today.tqc=r.tqc; S.today.tManual=true; }
+  if(r.tqcReview) S.today.tqcReview=r.tqcReview;
+  if(r.tasks.length){
+    S.today.tasks=r.tasks;
+    S.today.carried=false;
+    r.tasks.forEach(t=>{ addPreset(t.subj,t.book,t.range); if(t.book && !S.books.includes(t.book)) S.books.unshift(t.book); });
+  }
+  if(r.systems.length){
+    S.systems=r.systems.map(s=>({id:uid(), text:s.text}));
+    S.today.sysDone={};
+    r.systems.forEach((s,i)=>{ if(s.st) S.today.sysDone[S.systems[i].id]=s.st; });
+  }
+  flush(); renderAll();
+}
+function openImport(){ $('impText').value=''; $('impInfo').hidden=true; openSheet('impSheet'); }
+$('importOpen').onclick=openImport;
+$('importSet').onclick=()=>{ closeSheets(); setTimeout(openImport,300); };
+$('impRun').onclick=()=>{
+  const txt=$('impText').value.trim();
+  if(!txt){ toast('報告文を貼りつけてください'); return; }
+  const r=parseReport(txt);
+  const found=[];
+  if(r.goal) found.push('目標');
+  if(r.longTasks.length) found.push('長期のタスク'+r.longTasks.length+'こ');
+  if(r.max) found.push('TQCのMAX');
+  if(r.tasks.length) found.push('今日のタスク'+r.tasks.length+'こ');
+  if(r.systems.length) found.push('仕組み'+r.systems.length+'こ');
+  if(!found.length){
+    const box=$('impInfo'); box.hidden=false;
+    box.innerHTML='読みこめるところが見つかりませんでした。①目標／【長期のタスク】／【今日のタスク】／④仕組みの達成度 が入った報告文を貼りつけてください。';
+    return;
+  }
+  if(!confirm(found.join('・')+' を読みこみます。今の内容は上書きされます。よろしいですか？')) return;
+  applyReport(r);
+  closeSheets();
+  toast('読みこみました。中身を確かめてください');
+};
 
 /* 全文を作る */
 function build(){
@@ -658,7 +858,8 @@ function markReported(){
   const txt=$('outText').value;
   const i=S.history.findIndex(h=>h.date===d);
   if(i>=0) S.history[i].text=txt; else S.history.unshift({date:d,text:txt});
-  S.history=S.history.slice(0,60); flush(); renderHeader();
+  S.today.tasks.forEach(t=>{ if(t.subj||t.book) addPreset(t.subj,t.book,t.range); });
+  S.history=S.history.slice(0,60); flush(); renderHeader(); renderPresets();
 }
 $('copyBtn').onclick=async()=>{ if(await copyText()){ markReported(); toast('コピーしました。Discordに貼りつけてください'); } };
 $('shareBtn').onclick=async()=>{
@@ -695,8 +896,9 @@ $('restoreBtn').onclick=()=>{
 $('wipeAll').onclick=()=>{ if(!confirm('本当にすべて消しますか？目標・長期タスク・仕組み・過去の報告もすべて消えます。')) return; localStorage.removeItem(KEY); localStorage.removeItem(BK); location.reload(); };
 
 /* 今日だけリセット */
-function resetToday(){ S.today=emptyToday(); flush(); $('banner').hidden=true; renderAll(); }
-$('resetToday').onclick=()=>{ if(confirm('今日のタスク・レビュー・TQCの「今日」・⭕️❌を消します。目標・長期タスク・仕組み・MAXは残ります。いいですか？')) resetToday(); };
+function taskTemplates(){ return S.today.tasks.filter(t=>t.subj||t.book).map(t=>({subj:t.subj,book:t.book,range:t.range})); }
+function resetToday(carry){ const tpl=(carry===false)? [] : taskTemplates(); S.today=emptyToday(tpl); flush(); $('banner').hidden=true; renderAll(); }
+$('resetToday').onclick=()=>{ if(confirm('今日のタスク・レビュー・TQCの「今日」・⭕️❌を消します。目標・長期タスク・仕組み・MAXは残ります。いいですか？')) resetToday(false); };
 
 /* 日付が変わったとき */
 function dayCheck(){
@@ -709,7 +911,7 @@ function dayCheck(){
   b.append(fmtMD(S.today.date)+'の入力がまだ残っています。どうしますか？',
     el('div',{class:'row',style:'margin-top:8px'},
       el('button',{class:'btn',onclick:()=>{ b.hidden=true; }},fmtMD(S.today.date)+'の分としてそのまま使う'),
-      el('button',{class:'btn ghost',onclick:resetToday},'消して今日の分をはじめる')));
+      el('button',{class:'btn ghost',onclick:()=>resetToday(true)},'消して今日の分をはじめる')));
 }
 
 function renderAll(){
@@ -719,6 +921,8 @@ function renderAll(){
   renderLong(); renderTasks(); renderReview(); renderSys();
   bindTqc();
   tqcTa.value=S.today.tqcReview; markFilled(tqcTa); autoGrow(tqcTa);
+  renderPresets();
+  $('importCard').hidden = !!S.goal.trim();
   autoT(); tqcCheck();
 }
 dayCheck(); renderAll();

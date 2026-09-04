@@ -123,7 +123,9 @@ textarea{min-height:64px}
 .voicecard .k{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.24);border-radius:999px;padding:2px 9px;font-weight:900;font-size:12px}
 
 .footer{position:fixed;left:0;right:0;bottom:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 72%,transparent);z-index:6}
-.footer .inner{max-width:640px;margin:0 auto}
+.footer .inner{max-width:640px;margin:0 auto;display:flex;gap:8px}
+.btn.save{flex:0 0 108px;background:var(--done-soft);color:var(--done);padding:14px 0}
+.btn.save.ok{background:var(--done);color:#fff}
 
 .sheet-bg{position:fixed;inset:0;background:rgba(10,20,40,.45);z-index:20;display:none}
 .sheet-bg.show{display:block}
@@ -237,6 +239,7 @@ textarea{min-height:64px}
 </div>
 
 <div class="footer"><div class="inner">
+  <button class="btn save" id="saveBtn">💾 保存</button>
   <button class="btn primary block" id="makeBtn">📄 全文を作る</button>
 </div></div>
 
@@ -269,7 +272,7 @@ textarea{min-height:64px}
     <input type="text" id="optSubjects">
     <hr style="border:0;border-top:1px solid var(--line)">
     <div class="lbl">バックアップ（消えないための控え）</div>
-    <p class="mini">入力は書いたそばから自動で保存されます。それでも消えると困るので、ときどきここから控えを取ってください。</p>
+    <p class="mini">入力は書いたそばから自動で保存され、下の「💾 保存」でも保存できます。それでも消えると困るので、ときどきここから控えを取ってください。</p>
     <p class="row">
       <button class="btn" id="backupCopy">📋 控えをコピー</button>
       <button class="btn" id="backupSave">💾 ファイルに保存</button>
@@ -287,7 +290,7 @@ textarea{min-height:64px}
 <div class="toast" id="toast"></div>
 
 <script>
-const VER = 2;
+const VER = 3;
 const KEY = 'studyreport-v1';
 const BK = 'studyreport-backup';
 const DEF_SUBJECTS = ['英語','数学','国語','理科','社会','その他'];
@@ -321,7 +324,8 @@ function flush(){
   clearTimeout(saveTimer);
   try{ const j=JSON.stringify(S); localStorage.setItem(KEY, j); localStorage.setItem(BK, JSON.stringify({at:Date.now(), data:S})); }
   catch(e){ toast('保存できませんでした。端末の空き容量を確かめてください'); return; }
-  const l=$('savedLabel'); l.classList.add('show'); clearTimeout(l._t); l._t=setTimeout(()=>l.classList.remove('show'),1200);
+  const d=new Date(); S._savedAt=`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const l=$('savedLabel'); l.textContent='保存済み '+S._savedAt; l.classList.add('show'); clearTimeout(l._t); l._t=setTimeout(()=>l.classList.remove('show'),2500);
 }
 window.addEventListener('pagehide', flush);
 window.addEventListener('beforeunload', flush);
@@ -622,6 +626,14 @@ function closeSheets(){
 }
 $('sheetBg').onclick=closeSheets;
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheets);
+
+$('saveBtn').onclick=()=>{
+  if(rec) rec.stop();
+  flush();
+  const b=$('saveBtn'); b.classList.add('ok'); b.textContent='✅ 保存した';
+  clearTimeout(b._t); b._t=setTimeout(()=>{ b.classList.remove('ok'); b.textContent='💾 保存'; },1600);
+  toast('保存しました。アプリを閉じても残ります');
+};
 
 $('makeBtn').onclick=()=>{
   if(rec) rec.stop();

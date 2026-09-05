@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f2ed" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101114" media="(prefers-color-scheme: dark)">
+<meta name="description" content="ReNote 9月のアップデート">
+<title>ReNote アップデート</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root{
+  --paper:#f4f2ed; --surface:#fffefc; --sunk:#eeebe4;
+  --ink:#17181c; --ink-2:#575a60; --ink-3:#8e9098;
+  --rule:#e4e0d7; --rule-2:#d5d0c4;
+  --accent:#4b45c6;
+  --shadow:0 1px 2px rgba(23,24,28,.04), 0 12px 30px rgba(23,24,28,.06);
+  --serif:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --sans:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#101114; --surface:#191a1f; --sunk:#212329;
+    --ink:#efeee9; --ink-2:#a5a7ad; --ink-3:#75777d;
+    --rule:#26282e; --rule-2:#343740; --accent:#8c85ff;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 34px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101114; --surface:#191a1f; --sunk:#212329;
+  --ink:#efeee9; --ink-2:#a5a7ad; --ink-3:#75777d;
+  --rule:#26282e; --rule-2:#343740; --accent:#8c85ff;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 34px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;
+  line-height:1.85;font-feature-settings:"palt" 1;-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column}
+svg{display:block;flex:none}
+a{color:var(--accent)}
+
+.top{max-width:660px;width:100%;margin:0 auto;padding:18px 20px 6px;
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.top .nm{font-family:var(--serif);font-size:1.16rem;font-weight:600;letter-spacing:.05em}
+.top .sub{font-size:.72rem;color:var(--ink-3);font-weight:700;letter-spacing:.08em}
+
+.deck{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none}
+.deck::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;scroll-snap-align:center;display:flex;justify-content:center;
+  padding:10px 20px 4px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.inner{max-width:620px;width:100%}
+
+.badge{width:48px;height:48px;border-radius:15px;display:flex;align-items:center;
+  justify-content:center;margin-bottom:13px}
+.eyebrow{font-size:.71rem;font-weight:700;letter-spacing:.14em;margin-bottom:8px}
+h1{font-family:var(--serif);font-size:1.55rem;font-weight:600;letter-spacing:.03em;
+  margin:0 0 9px;line-height:1.46;text-wrap:balance}
+h1.big{font-size:1.92rem}
+p{margin:0 0 10px;font-size:.97rem;line-height:1.9;color:var(--ink-2)}
+p b{color:var(--ink);font-weight:700}
+
+.kv{display:flex;gap:11px;align-items:flex-start;background:var(--surface);
+  border:1px solid var(--rule);border-radius:13px;padding:12px 14px;margin-top:9px;
+  box-shadow:var(--shadow)}
+.kv .n{font-family:var(--serif);font-size:1.02rem;width:22px;flex:none;text-align:center;opacity:.5}
+.kv b{font-size:.96rem;font-weight:700;display:block;margin-bottom:2px}
+.kv span{font-size:.9rem;color:var(--ink-2);line-height:1.78}
+
+.where{display:inline-flex;align-items:center;gap:7px;background:var(--sunk);
+  border-radius:999px;padding:7px 14px;font-size:.82rem;font-weight:700;
+  color:var(--ink-2);margin-top:14px}
+
+.foot{max-width:660px;width:100%;margin:0 auto;padding:8px 20px calc(20px + env(safe-area-inset-bottom))}
+.dots{display:flex;justify-content:center;gap:7px;margin:10px 0 14px}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--rule-2);transition:.25s}
+.dots i.on{background:var(--ink);width:20px;border-radius:3px}
+.btn{width:100%;border-radius:13px;padding:15px;font-size:.97rem;font-weight:700;
+  letter-spacing:.04em;border:1px solid transparent;background:var(--ink);color:var(--paper);
+  transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px;
+  text-decoration:none}
+.btn:active{opacity:.85}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.btn.sec{background:var(--surface);border-color:var(--rule);color:var(--ink);box-shadow:var(--shadow)}
+.row2{display:flex;gap:9px}
+.row2 .btn{flex:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <span class="nm">ReNote</span>
+  <span class="sub">9月のアップデート</span>
+</div>
+
+<div class="deck" id="deck">
+
+  <section class="slide"><div class="inner">
+    <div class="badge" style="background:#8e909826;color:#8e9098">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    </div>
+    <div class="eyebrow" style="color:#8e9098">UPDATE</div>
+    <h1 class="big">みんなの声で、<br>ここが変わりました</h1>
+    <p>配ったあとに届いた指摘や要望から、この2週間で <b>7回</b> 更新しました。
+      大きく変わったところを、6枚にまとめます。</p>
+    <p>左右にスワイプすると進みます。</p>
+  </div></section>
+
+  <section class="slide"><div class="inner">
+    <div class="badge" style="background:#46a27326;color:#46a273">
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <div class="eyebrow" style="color:#46a273">FOLDER</div>
+    <h1>フォルダを、何段でも重ねられます</h1>
+    <p>「語彙 → 語彙力アップ① → Unit 1」のように、いくらでも中に作れます。</p>
+    <div class="kv"><span class="n">1</span><span><b>中にフォルダを作る</b>
+      <span>フォルダを開いて「＋フォルダ」。開いたフォルダの中に並びます。</span></span></div>
+    <div class="kv"><span class="n">2</span><span><b>あとから上にまとめる</b>
+      <span>先に上位フォルダを作り、既存のフォルダの「場所」をそこに変えれば、中に入ります。</span></span></div>
+    <div class="kv"><span class="n">3</span><span><b>場所を変える手順</b>
+      <span>ホームの「整理」→ 行の名前をタップ →「場所」。並べ替えも同じ画面でできます。</span></span></div>
+  </div></section>
+
+  <section class="slide"><div class="inner">
+    <div class="badge" style="background:#c9a05226;color:#c9a052">
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+    </div>
+    <div class="eyebrow" style="color:#c9a052">REVIEW</div>
+    <h1>振り返る範囲と量を、細かく決められます</h1>
+    <p>「今日はここだけ」「全部通す」を、その日の時間に合わせて選べます。</p>
+    <div class="kv"><span class="n">1</span><span><b>範囲</b>
+      <span>フォルダ・単元のほか、「まだ確認していないメモ」「重要マークだけ」も選べます。</span></span></div>
+    <div class="kv"><span class="n">2</span><span><b>件数</b>
+      <span>− ＋ で1件ずつ。5〜100のボタンと「全部」もあります。</span></span></div>
+    <div class="kv"><span class="n">3</span><span><b>数字から始める</b>
+      <span>「メモ」「未確認」「2週間以上」の数字を押すと、そのメモだけがすぐ出題されます。</span></span></div>
+  </div></section>
+
+  <section class="slide"><div class="inner">
+    <div class="badge" style="background:#5b7fd026;color:#5b7fd0">
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+    </div>
+    <div class="eyebrow" style="color:#5b7fd0">FOCUS</div>
+    <h1>大事なものだけ、毎日まわせます</h1>
+    <p>直前期に「これだけは落とせない」を絞り込むための機能です。</p>
+    <div class="kv"><span class="n">1</span><span><b>★をつける</b>
+      <span>一覧のカード右上の★を押すだけ。もう一度押すと外れます。</span></span></div>
+    <div class="kv"><span class="n">2</span><span><b>★だけ振り返る</b>
+      <span>振り返りの「範囲」→「重要マークだけ」を選びます。</span></span></div>
+    <div class="kv"><span class="n">3</span><span><b>その場で始める</b>
+      <span>一覧やフォルダの「この◯件を振り返る」で、いま見ているものだけを出題できます。</span></span></div>
+  </div></section>
+
+  <section class="slide"><div class="inner">
+    <div class="badge" style="background:#a8823c26;color:#a8823c">
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+    </div>
+    <div class="eyebrow" style="color:#a8823c">PHOTO</div>
+    <h1>写真を、カードの表と裏に</h1>
+    <p>問題の写真を表、解いた面を裏にすると、そのまま問題集になります。</p>
+    <div class="kv"><span class="n">1</span><span><b>表と裏を決める</b>
+      <span>書く画面で、写真の左下の「表／裏」ボタンを押して切り替えます。</span></span></div>
+    <div class="kv"><span class="n">2</span><span><b>振り返りでの見え方</b>
+      <span>表だけ見えた状態で出題され、裏は「続きを表示」で出ます。</span></span></div>
+    <div class="kv"><span class="n">3</span><span><b>大きく表示</b>
+      <span>1枚だけのメモは、カードの幅いっぱいに出るようになりました。</span></span></div>
+  </div></section>
+
+  <section class="slide"><div class="inner">
+    <div class="badge" style="background:#8e909826;color:#8e9098">
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="m19 6-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+    </div>
+    <div class="eyebrow" style="color:#8e9098">ORGANIZE</div>
+    <h1>まとめて整理できて、消しても戻せます</h1>
+    <p>とりあえず未分類に書きためて、あとから仕分ける使い方ができます。</p>
+    <div class="kv"><span class="n">1</span><span><b>まとめて移動・削除</b>
+      <span>一覧の右上「選択」でチェックを付け、フォルダへ移動、またはまとめて削除。</span></span></div>
+    <div class="kv"><span class="n">2</span><span><b>すぐ取り消せる</b>
+      <span>操作の直後に「元に戻す」が出ます。押せば元どおりです。</span></span></div>
+    <div class="kv"><span class="n">3</span><span><b>ゴミ箱</b>
+      <span>削除したメモは残っています。設定 → ゴミ箱から、いつでも戻せます。</span></span></div>
+  </div></section>
+
+  <section class="slide"><div class="inner">
+    <div class="badge" style="background:#4b45c626;color:var(--accent)">
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+    </div>
+    <div class="eyebrow" style="color:var(--accent)">HOW TO UPDATE</div>
+    <h1>更新のしかた</h1>
+    <p>アプリを開き直すと、新しいバージョンの知らせが出ます。出ないときは
+      <b>設定 → 更新を確認</b> を押してください。<b>書いたメモは消えません。</b></p>
+    <div class="kv"><span class="n">1</span><span><b>使い方はアプリの中にも</b>
+      <span>設定 →「使い方」から、スライドでいつでも読み返せます。</span></span></div>
+    <div class="kv"><span class="n">2</span><span><b>ときどき書き出しを</b>
+      <span>設定 → 書き出し → JSON。機種変更のときは、そこから戻せます。</span></span></div>
+    <div class="where">気づいたことがあれば、遠慮なく教えてください</div>
+  </div></section>
+
+</div>
+
+<div class="foot">
+  <div class="dots" id="dots"></div>
+  <div class="row2">
+    <a class="btn sec" href="./guide.html">使い方</a>
+    <button class="btn" id="next">次へ</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var deck = document.getElementById('deck');
+  var slides = deck.querySelectorAll('.slide');
+  var dots = document.getElementById('dots');
+  var next = document.getElementById('next');
+  var i = 0, t;
+  for(var k = 0; k < slides.length; k++){
+    var d = document.createElement('i');
+    if(k === 0) d.className = 'on';
+    dots.appendChild(d);
+  }
+  function sync(){
+    i = Math.round(deck.scrollLeft / deck.clientWidth);
+    for(var k = 0; k < dots.children.length; k++)
+      dots.children[k].className = (k === i ? 'on' : '');
+    next.textContent = (i >= slides.length - 1) ? 'ReNote をひらく' : '次へ';
+  }
+  deck.addEventListener('scroll', function(){
+    clearTimeout(t); t = setTimeout(sync, 70);
+  }, { passive:true });
+  next.addEventListener('click', function(){
+    if(i >= slides.length - 1){ location.href = './'; return; }
+    deck.scrollTo({ left: deck.clientWidth * (i + 1), behavior:'smooth' });
+    i++; sync();
+  });
+})();
+</script>
+</body>
+</html>

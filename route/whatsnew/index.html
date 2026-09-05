@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>高校ルートの新機能</title>
+<meta name="description" content="高校ルートのアプリに増えた「すごろく」「スコアとランク」の使い方です。">
+<meta name="theme-color" content="#14315F">
+<link rel="apple-touch-icon" href="../apple-touch-icon-v1.png">
+<link rel="icon" href="../icon-192-v1.png">
+<meta property="og:title" content="高校ルートの新機能">
+<meta property="og:description" content="すごろくで「いまここ」、スコアとS〜Fランク。新しくなった高校ルートの使い方です。">
+<style>
+:root{
+  --paper:#F1F4F9; --card:#FFFFFF; --ink:#111A26; --muted:#4A5A70; --line:#D2DBE6;
+  --navy1:#12294F; --navy2:#1B5CC9;
+  --route:#1B5CC9; --route-soft:#E3ECFB;
+  --gold:#8E6712; --gold-soft:#F8EED6;
+  --rankB:#0A8F8F;
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  background:var(--paper); color:var(--ink); overflow:hidden;
+  font-family:-apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", "Yu Gothic Medium", Meiryo, "Segoe UI", sans-serif;
+  font-size:17px; line-height:1.75; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit; color:inherit; background:none; border:none; cursor:pointer; touch-action:manipulation;}
+a{color:inherit;}
+
+.bar{position:fixed; top:0; left:0; right:0; height:4px; background:rgba(0,0,0,.12); z-index:40;}
+.bar i{display:block; height:100%; width:0; background:var(--route); transition:width .25s ease;}
+.bar.on-dark{background:rgba(255,255,255,.24);}
+.bar.on-dark i{background:#FFD98A;}
+.counter{position:fixed; top:14px; right:16px; z-index:30; font-size:13px; font-weight:700;
+  color:var(--muted); background:rgba(255,255,255,.82); border-radius:999px; padding:3px 11px;}
+.counter.on-dark{color:#fff; background:rgba(255,255,255,.18);}
+
+.deck{
+  display:flex; height:100dvh; overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x mandatory; scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none;
+}
+.deck::-webkit-scrollbar{display:none;}
+.slide{
+  flex:0 0 100%; scroll-snap-align:center; scroll-snap-stop:always;
+  height:100dvh; overflow-y:auto; display:flex; flex-direction:column; justify-content:center;
+  padding:calc(38px + env(safe-area-inset-top)) 22px calc(104px + env(safe-area-inset-bottom));
+}
+.inner{width:100%; max-width:520px; margin:0 auto; display:flex; flex-direction:column; gap:16px;}
+
+.eyebrow{
+  font-size:13px; font-weight:700; letter-spacing:.16em; color:var(--route);
+  background:var(--route-soft); border-radius:999px; padding:5px 13px; align-self:flex-start;
+}
+h1{font-size:clamp(27px,7.4vw,38px); font-weight:800; line-height:1.4;}
+h2{font-size:clamp(23px,6.2vw,31px); font-weight:800; line-height:1.44;}
+p{font-size:clamp(15.5px,4.2vw,17px); line-height:1.85;}
+p.sub{color:var(--muted); font-size:clamp(14px,3.8vw,15.5px);}
+b.hl{color:var(--route);}
+
+.slide.dark{background:linear-gradient(155deg,var(--navy1) 0%,var(--navy2) 100%); color:#fff;}
+.slide.dark .eyebrow{background:rgba(255,255,255,.18); color:#fff;}
+.slide.dark p.sub{color:rgba(255,255,255,.82);}
+.slide.dark b.hl{color:#FFD98A;}
+
+/* 数字 */
+.stats{display:flex; flex-direction:column; gap:11px;}
+.stat{
+  display:flex; align-items:baseline; gap:13px;
+  background:rgba(255,255,255,.12); border-radius:14px; padding:15px 18px;
+}
+.stat .n{font-size:clamp(34px,10vw,46px); font-weight:800; line-height:1; letter-spacing:-.02em;
+  color:#FFD98A; font-variant-numeric:tabular-nums;}
+.stat .u{font-size:17px; font-weight:700;}
+.stat .t{margin-left:auto; text-align:right; font-size:13.5px; line-height:1.5; color:rgba(255,255,255,.85);}
+
+/* カード */
+.pane{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:15px 17px; display:flex; flex-direction:column; gap:7px;}
+.pane h3{font-size:16.5px; font-weight:800;}
+.pane p{font-size:14.5px; line-height:1.75; color:var(--muted);}
+.two{display:grid; grid-template-columns:1fr; gap:12px;}
+
+/* 表の見本 */
+.tbl{background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+table{border-collapse:separate; border-spacing:0; width:100%; font-size:15px;}
+th,td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:8px 6px; text-align:center; white-space:nowrap;}
+tr:last-child td{border-bottom:none;} th:last-child,td:last-child{border-right:none;}
+thead.rnd th{background:var(--route-soft); color:var(--route); text-align:left; padding-left:12px; font-size:15.5px; font-weight:800;}
+thead.col th{background:var(--paper); color:var(--muted); font-size:13px; font-weight:700;}
+td.d{color:var(--muted); font-weight:700; font-variant-numeric:tabular-nums;}
+td.nm{text-align:left; font-weight:700;}
+
+/* 鉄則リスト */
+ul.rules{list-style:none; display:flex; flex-direction:column; gap:8px;}
+ul.rules li{
+  display:flex; align-items:center; gap:11px; background:var(--card); border:1px solid var(--line);
+  border-radius:11px; padding:11px 14px; font-size:15.5px; font-weight:700;
+}
+ul.rules li span{margin-left:auto; font-size:14px; font-weight:800; color:var(--route);
+  background:var(--route-soft); border-radius:8px; padding:2px 10px; font-variant-numeric:tabular-nums;}
+
+.quote{
+  background:var(--gold-soft); border-radius:13px; padding:15px 17px;
+  font-size:clamp(15px,4vw,16.5px); line-height:1.85; font-weight:700;
+}
+.quote small{display:block; margin-top:6px; font-size:13px; font-weight:600; color:var(--gold);}
+
+.cta{
+  display:block; text-align:center; background:#fff; color:var(--navy1);
+  border-radius:14px; padding:17px 18px; font-size:18px; font-weight:800; text-decoration:none;
+}
+.urlbox{background:rgba(255,255,255,.15); border-radius:12px; padding:12px 14px;
+  font-size:13.5px; word-break:break-all; text-align:center;}
+
+/* ランク表 */
+.ranks{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+.ranks div{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px 0 6px; text-align:center;}
+.ranks b{display:block; font-size:20px; font-weight:800; color:var(--route);}
+.ranks b.s{color:var(--gold);}
+.ranks span{display:block; font-size:11.5px; color:var(--muted); font-weight:700; line-height:1.3;}
+
+/* 番号つき手順 */
+ol.steps{list-style:none; display:flex; flex-direction:column; gap:13px; counter-reset:s;}
+ol.steps li{position:relative; padding-left:42px; font-size:clamp(15.5px,4.2vw,17px); line-height:1.75;}
+ol.steps li::before{
+  counter-increment:s; content:counter(s);
+  position:absolute; left:0; top:4px; width:29px; height:29px; line-height:29px; text-align:center;
+  background:var(--route); color:#fff; border-radius:9px; font-size:14.5px; font-weight:700;
+}
+
+/* 注意・大事 */
+.note{border-radius:13px; padding:14px 16px; font-size:clamp(14.5px,3.9vw,16px); line-height:1.8;}
+.note .k{display:block; font-weight:800; margin-bottom:3px;}
+.note.warn{background:#FCE9DC;} .note.warn .k{color:#B3450F;}
+.note.key{background:var(--gold-soft);} .note.key .k{color:var(--gold);}
+.slide.dark .note.key{background:rgba(255,255,255,.14);} .slide.dark .note.key .k{color:#FFD98A;}
+@media (max-height:720px){
+  ol.steps{gap:10px;} ol.steps li{font-size:15px; padding-left:38px;}
+  ol.steps li::before{width:26px; height:26px; line-height:26px; font-size:13.5px;}
+  .note{padding:12px 14px; font-size:14.2px; line-height:1.72;}
+  .ranks b{font-size:18px;} .ranks div{padding:6px 0 4px;}
+}
+
+/* ナビ */
+.nav{
+  position:fixed; left:0; right:0; bottom:0; z-index:30;
+  display:flex; align-items:center; gap:12px;
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top,var(--paper) 62%,transparent);
+}
+.nav.on-dark{background:linear-gradient(to top,rgba(18,41,79,.96) 62%,transparent);}
+.nav button.arrow{
+  width:52px; height:52px; border-radius:14px; background:var(--card); border:1px solid var(--line);
+  display:grid; place-items:center; font-size:22px; font-weight:700; color:var(--ink); flex:none;
+}
+.nav.on-dark button.arrow{background:rgba(255,255,255,.16); border-color:transparent; color:#fff;}
+.nav button.arrow[disabled]{opacity:.3;}
+.nav .next{flex:1; height:52px; border-radius:14px; background:var(--route); color:#fff;
+  font-size:17px; font-weight:800; display:grid; place-items:center;}
+.nav.on-dark .next{background:#fff; color:var(--navy1);}
+.dots{position:fixed; left:0; right:0; bottom:calc(74px + env(safe-area-inset-bottom)); z-index:30;
+  display:flex; gap:5px; justify-content:center; pointer-events:none;}
+.dots i{width:6px; height:6px; border-radius:50%; background:rgba(0,0,0,.2);}
+.dots i.on{background:var(--route); width:18px; border-radius:999px;}
+.dots.on-dark i{background:rgba(255,255,255,.3);}
+.dots.on-dark i.on{background:#FFD98A;}
+.tap{position:fixed; top:0; bottom:96px; width:16%; z-index:20; background:transparent;}
+.tap.l{left:0;} .tap.r{right:0;}
+
+@media (max-height:720px){
+  .slide{padding:calc(26px + env(safe-area-inset-top)) 18px calc(92px + env(safe-area-inset-bottom));}
+  .inner{gap:12px;}
+  h1{font-size:clamp(24px,6.6vw,32px);} h2{font-size:clamp(21px,5.6vw,27px);}
+  p{font-size:15px; line-height:1.72;} p.sub{font-size:13.8px;}
+  .eyebrow{font-size:12px; padding:4px 11px;}
+  .stat{padding:12px 15px;} .stat .n{font-size:clamp(30px,9vw,40px);} .stat .t{font-size:12.5px;}
+  .pane{padding:12px 14px;} .pane h3{font-size:15.5px;} .pane p{font-size:14px;}
+  ul.rules li{padding:9px 12px; font-size:14.5px;}
+  .quote{padding:13px 15px; font-size:15px; line-height:1.75;}
+  th,td{padding:6px 5px; font-size:14px;}
+}
+@media (min-width:600px){ .two{grid-template-columns:1fr 1fr;} }
+@media (prefers-reduced-motion:reduce){ .deck{scroll-behavior:auto;} .bar i{transition:none;} }
+</style>
+</head>
+<body>
+
+<div class="bar" id="bar"><i id="barFill"></i></div>
+<div class="counter" id="counter"></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 表紙 -->
+  <section class="slide dark"><div class="inner">
+    <span class="eyebrow">アップデートのお知らせ</span>
+    <h1>高校ルートが<br>新しくなりました</h1>
+    <p>みんなの声で、3つの機能が増えました。<br>① すごろく　② スコアとランク　③ 表示の絞り込み</p>
+    <p class="sub">横にスワイプして進んでください（全8枚）。</p>
+  </div></section>
+
+  <!-- 2 すごろく -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">新機能 ①</span>
+    <h2>すごろくで<br>「いまここ」が分かる</h2>
+    <figure><svg viewBox="0 0 400 150" role="img" aria-label="すごろく盤のイメージ"><rect x="6" y="6" width="388" height="138" rx="12" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><rect x="18" y="18" width="62" height="20" rx="10" fill="var(--route-soft)"/><text x="49" y="32" font-size="11" font-weight="700" fill="var(--route)" text-anchor="middle">いまここ</text><text x="90" y="34" font-size="24" font-weight="800" fill="var(--route)">41<tspan font-size="11" font-weight="700">日目</tspan></text><text x="150" y="33" font-size="11.5" fill="var(--muted)">全88日の 47%</text><rect x="18" y="46" width="364" height="6" rx="3" fill="var(--paper)"/><rect x="18" y="46" width="171" height="6" rx="3" fill="var(--route)"/><text x="18" y="79" font-size="11" font-weight="700" fill="var(--muted)">6周目</text><rect x="62" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="82" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="102" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="122" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="142" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="162" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="182" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="202" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="222" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="242" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="262" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="282" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="302" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="322" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="342" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="362" y="66" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><text x="18" y="103" font-size="11" font-weight="700" fill="var(--muted)">7周目</text><rect x="62" y="90" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="82" y="90" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="102" y="90" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="122" y="90" width="16" height="16" rx="4" fill="var(--route)" stroke="var(--line)" opacity=".55"/><rect x="142" y="90" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="162" y="90" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="182" y="90" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="202" y="90" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="222" y="90" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="242" y="90" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="262" y="90" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="282" y="90" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="302" y="90" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="322" y="90" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="342" y="90" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="362" y="90" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><text x="18" y="127" font-size="11" font-weight="700" fill="var(--muted)">8周目</text><rect x="62" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="82" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="102" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="122" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="142" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="162" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="182" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="202" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="222" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="242" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="262" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="282" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="302" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="322" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="342" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="362" y="114" width="16" height="16" rx="4" fill="var(--paper)" stroke="var(--line)" opacity="1"/><rect x="141" y="88" width="20" height="20" rx="5" fill="var(--route)" stroke="var(--card)" stroke-width="2"/><circle cx="151" cy="98" r="4" fill="#fff"/></svg></figure>
+    <p>問題集を開くと、<b class="hl">1日1マス</b>のすごろく盤が出ます。<b class="hl">きょう終わった日のマス</b>をタップすると「いまここ」の印がつきます。</p>
+  </div></section>
+
+  <!-- 3 すごろくの使い方 -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">すごろくの使い方</span>
+    <h2>毎日やることは<br>これだけ</h2>
+    <ol class="steps">
+      <li><b>きょう終わった日のマス</b>をタップする</li>
+      <li>次の日からは「<b>1日すすむ</b>」を押すだけ</li>
+      <li>もう終わっている問題集は「<b>この問題集は終わった ✓</b>」を押す</li>
+    </ol>
+    <div class="note key"><span class="k">毎日おさなくても大丈夫</span>点数のためのボタンではなく、「今どこまで来たか」を自分で見るための しおり です。何日かまとめて進めたいときは、その日のマスを直接タップしてください。</div>
+  </div></section>
+
+  <!-- 4 スコア -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">新機能 ②</span>
+    <h2>進み具合が<br>スコアとランクになる</h2>
+    <figure><svg viewBox="0 0 400 150" role="img" aria-label="スコア画面のイメージ"><rect x="6" y="6" width="388" height="138" rx="12" fill="var(--card)" stroke="var(--line)" stroke-width="2"/><rect x="22" y="22" width="76" height="76" rx="18" fill="var(--rankB)"/><text x="60" y="77" font-size="48" font-weight="800" fill="#fff" text-anchor="middle">B</text><text x="116" y="42" font-size="12" font-weight="700" fill="var(--muted)">総合スコア</text><text x="116" y="82" font-size="40" font-weight="800" fill="var(--ink)">63<tspan font-size="14" font-weight="700"> 点</tspan></text><text x="116" y="102" font-size="12" fill="var(--muted)">次の <tspan font-weight="800" fill="var(--ink)">A</tspan> ランクまで あと 12点</text><rect x="22" y="116" width="356" height="10" rx="5" fill="var(--paper)"/><rect x="22" y="116" width="224" height="10" rx="5" fill="var(--rankB)"/></svg></figure>
+    <p>「<b class="hl">スコア</b>」タブに、すごろくの印をもとにした<b class="hl">100点満点のスコア</b>と<b class="hl">S〜Fのランク</b>が出ます。</p>
+    <p class="sub">国語・数学・英語の3教科で判定します（理科・社会は対象外）。</p>
+  </div></section>
+
+  <!-- 5 ランク -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">スコアの見かた</span>
+    <h2>次のランクまで<br>あと何点か分かる</h2>
+    <div class="ranks">
+      <div><b>F</b><span>0〜</span></div><div><b>E</b><span>15〜</span></div><div><b>D</b><span>30〜</span></div>
+      <div><b>C</b><span>45〜</span></div><div><b>B</b><span>60〜</span></div><div><b>A</b><span>75〜</span></div><div><b class="s">S</b><span>90〜</span></div>
+    </div>
+    <p>総合スコアのほかに、<b class="hl">教科ごとの点とランク</b>、<b class="hl">問題集ごとの進み具合</b>も見られます。</p>
+    <p class="sub">教科スコアは「終わった日数 ÷ 全日数 × 100」。総合はその3教科の平均です。長い問題集ほど点数への影響が大きくなります。</p>
+  </div></section>
+
+  <!-- 6 最初にやること -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">さいしょに1回だけ</span>
+    <h2>もう終わった問題集は<br>「終わった」を押す</h2>
+    <p>スコアタブの下にある問題集の一覧で、<b class="hl">すでに終わっている問題集の「終わった」</b>を押してください。その場で完了になり、スコアに反映されます。</p>
+    <p>いま途中の問題集は、すごろくで<b class="hl">今の日のマス</b>をタップしておけばOKです。</p>
+    <div class="note warn"><span class="k">これをやらないと</span>スコアが実際より低く出ます。最初に一度だけ、済ませておいてください。</div>
+  </div></section>
+
+  <!-- 7 絞り込み -->
+  <section class="slide"><div class="inner">
+    <span class="eyebrow">新機能 ③</span>
+    <h2>使う問題集だけ<br>表示できる</h2>
+    <p>ルートタブの「<b class="hl">表示する問題集をえらぶ</b>」で、自分が使う問題集だけに絞れます。チェックを外したものはボタンから消えます（いつでも戻せます）。</p>
+    <p class="sub">問題集の中には「1周目・2周目…」の<b>ジャンプボタン</b>もつきました。目的の周まで一気に飛べます。</p>
+  </div></section>
+
+  <!-- 8 更新 -->
+  <section class="slide dark"><div class="inner">
+    <span class="eyebrow">アプリを新しくする</span>
+    <h2>開き直すだけ</h2>
+    <p>アプリを<b class="hl">完全に終了して開き直す</b>か、上に出る<b class="hl">オレンジの帯</b>をタップすると新しくなります。</p>
+    <a class="cta" href="../">高校ルートを開く</a>
+    <div class="note key"><span class="k">分からなくなったら</span>設定タブの「高校ルートの使い方」に、図つきのスライドがあります。</div>
+  </div></section>
+
+</div>
+
+<div class="dots" id="dots"></div>
+<nav class="nav" id="nav">
+  <button class="arrow" id="prev" aria-label="前へ">‹</button>
+  <button class="next" id="next">つぎへ</button>
+</nav>
+<button class="tap l" id="tapL" aria-label="前へ"></button>
+<button class="tap r" id="tapR" aria-label="次へ"></button>
+
+<script>
+const deck = document.getElementById('deck');
+const slides = [...deck.querySelectorAll('.slide')];
+const N = slides.length;
+const dots = document.getElementById('dots');
+dots.innerHTML = slides.map(() => '<i></i>').join('');
+const dotEls = [...dots.querySelectorAll('i')];
+
+function index(){ return deck.clientWidth ? Math.round(deck.scrollLeft / deck.clientWidth) : 0; }
+function sync(){
+  const i = Math.min(N - 1, Math.max(0, index()));
+  if(!slides[i]) return;
+  const dark = slides[i].classList.contains('dark');
+  dotEls.forEach((d, k) => d.classList.toggle('on', k === i));
+  document.getElementById('barFill').style.width = ((i + 1) / N * 100) + '%';
+  document.getElementById('counter').textContent = (i + 1) + ' / ' + N;
+  document.getElementById('prev').disabled = i === 0;
+  document.getElementById('next').textContent = i === N - 1 ? 'さいしょから' : 'つぎへ';
+  ['bar','nav','dots','counter'].forEach(id => document.getElementById(id).classList.toggle('on-dark', dark));
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#14315F' : '#F1F4F9');
+}
+function goto(i){
+  const t = (i + N) % N;
+  deck.scrollTo({ left: t * deck.clientWidth, behavior:'smooth' });
+  setTimeout(sync, 340);
+}
+document.getElementById('next').onclick = () => goto(index() + 1);
+document.getElementById('prev').onclick = () => goto(index() - 1);
+document.getElementById('tapR').onclick = () => goto(index() + 1);
+document.getElementById('tapL').onclick = () => goto(index() - 1);
+deck.addEventListener('scroll', () => { clearTimeout(deck._t); deck._t = setTimeout(sync, 80); });
+addEventListener('keydown', e => {
+  if(e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goto(index() + 1); }
+  if(e.key === 'ArrowLeft') { e.preventDefault(); goto(index() - 1); }
+});
+addEventListener('resize', () => { deck.scrollLeft = index() * deck.clientWidth; sync(); });
+sync();
+</script>
+</body>
+</html>

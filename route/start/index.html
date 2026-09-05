@@ -285,9 +285,10 @@ const dots = document.getElementById('dots');
 dots.innerHTML = slides.map(() => '<i></i>').join('');
 const dotEls = [...dots.querySelectorAll('i')];
 
-function index(){ return Math.round(deck.scrollLeft / deck.clientWidth); }
+function index(){ return deck.clientWidth ? Math.round(deck.scrollLeft / deck.clientWidth) : 0; }
 function sync(){
   const i = Math.min(N - 1, Math.max(0, index()));
+  if(!slides[i]) return;
   const dark = slides[i].classList.contains('dark');
   dotEls.forEach((d, k) => d.classList.toggle('on', k === i));
   document.getElementById('barFill').style.width = ((i + 1) / N * 100) + '%';

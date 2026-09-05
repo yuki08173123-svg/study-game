@@ -105,6 +105,26 @@ header.app{position:sticky; top:0; z-index:30; background:var(--bg); padding:cal
 .pick b{display:block; font-size:15px; font-weight:700;}
 .pick span{display:block; font-size:12.5px; font-weight:500; color:var(--muted); margin-top:1px;}
 
+/* 表示する問題集をえらぶ */
+.pickhead{display:flex; align-items:center; gap:10px; padding-bottom:12px; margin-bottom:4px; border-bottom:1px solid var(--line);}
+.pickhead .cnt{flex:1; font-size:14px; font-weight:500; color:var(--muted); line-height:1.5;}
+.pickhead .cnt b{font-weight:700; color:var(--accent);}
+.mini{flex:none; font-size:13.5px; font-weight:700; color:var(--accent); background:var(--accent-soft);
+  border-radius:10px; padding:9px 13px; line-height:1.3; text-align:center;}
+.chk{display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:12px 2px; border-bottom:1px solid var(--line);}
+.chk:last-child{border-bottom:none;}
+.chk .box{flex:none; width:25px; height:25px; border-radius:7px; border:2px solid var(--line);
+  display:grid; place-items:center; font-size:14px; font-weight:700; color:transparent;}
+.chk.on .box{background:var(--accent); border-color:var(--accent); color:#fff;}
+.chk .tx{flex:1; font-size:15.5px; font-weight:700; line-height:1.45;}
+.chk .tx span{display:block; font-size:13px; font-weight:500; color:var(--muted);}
+.chk:not(.on) .tx{color:var(--muted); font-weight:500;}
+
+/* 周目へジャンプ */
+.jump{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:12px;}
+.jump button{border:1px solid var(--line); background:var(--card); border-radius:9px;
+  padding:8px 13px; font-size:14px; font-weight:700; color:var(--accent); box-shadow:var(--shadow);}
+
 /* ==== 表（スプレッドシート風） ==== */
 .tscroll{overflow-x:auto; -webkit-overflow-scrolling:touch; background:var(--card); border:1px solid var(--line);
   border-radius:12px; box-shadow:var(--shadow); margin-bottom:12px;}
@@ -253,17 +273,19 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 
 <script src="data.js"></script>
 <script>
-const VER = 7;
+const VER = 8;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
 const EXTRA_MATH = ['nyumon_ia','nyumon_iib','kichart_ia','kichart_iib'];
 
 let S = load();
 function load(){
-  try{ const o = JSON.parse(localStorage.getItem(KEY) || '{}'); return { theme: o.theme || '' }; }
-  catch(e){ return { theme:'' }; }
+  try{
+    const o = JSON.parse(localStorage.getItem(KEY) || '{}');
+    return { theme: o.theme || '', hidden: o.hidden || {} };
+  }catch(e){ return { theme:'', hidden:{} }; }
 }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ theme: S.theme })); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ theme: S.theme, hidden: S.hidden })); }catch(e){} }
 
 /* ---------- データ ---------- */
 const BOOKS = {}; ROUTE.books.forEach(b => BOOKS[b.id] = b);
@@ -318,17 +340,36 @@ function render(){
 function go(t){ tab = t; render(); }
 
 /* ===== ルート ===== */
-function viewRoute(){
-  let h = '<div class="sec-title" style="margin-top:14px">日ごとの計画表</div>';
-  h += '<div class="lead">見たい問題集を押すと、その問題集の「何日目に何をやるか」の表がひらきます。</div>';
-  h += '<div class="card">';
+/* 計画表がある問題集を、教科ごとにまとめて返す */
+function pickGroups(){
+  const out = [];
   ROUTE.plan.forEach(sec => {
-    const cls = SUBJ_CLASS[sec.subject] || '';
     const ids = [];
     sec.rows.forEach(r => { if(r.id && bookOf(r.id) && bookOf(r.id).variants.length) ids.push(r.id); });
     if(sec.subject === '数学') EXTRA_MATH.forEach(x => ids.push(x));
+    if(ids.length) out.push({ subject: sec.subject, cls: SUBJ_CLASS[sec.subject] || '', ids });
+  });
+  return out;
+}
+
+function viewRoute(){
+  const groups = pickGroups();
+  const total = groups.reduce((n, g) => n + g.ids.length, 0);
+  const shown = groups.reduce((n, g) => n + g.ids.filter(id => !S.hidden[id]).length, 0);
+
+  let h = '<div class="sec-title" style="margin-top:14px">日ごとの計画表</div>';
+  h += '<div class="lead">見たい問題集を押すと、その問題集の「何日目に何をやるか」の表がひらきます。</div>';
+  h += '<div class="card">';
+  h += '<div class="pickhead"><span class="cnt">'
+    + (shown === total ? '全'+total+'冊' : '<b>'+shown+'</b> / '+total+'冊を表示中')
+    + '</span><button class="mini" onclick="openChooser()">表示する問題集をえらぶ</button></div>';
+  if(!shown){
+    h += '<div class="lead" style="padding:4px 2px 0">表示する問題集が1つもえらばれていません。上のボタンからえらんでください。</div>';
+  }
+  groups.forEach(g => {
+    const ids = g.ids.filter(id => !S.hidden[id]);
     if(!ids.length) return;
-    h += '<div class="pickrow"><span class="chip '+cls+'">'+esc(sec.subject)+'</span></div><div class="picks">';
+    h += '<div class="pickrow"><span class="chip '+g.cls+'">'+esc(g.subject)+'</span></div><div class="picks">';
     ids.forEach(id => {
       const b = bookOf(id), sp = spanOf(b.title);
       h += '<button class="pick" onclick="openBook(\''+id+'\')"><b>'+esc(shortTitle(b.title))+'</b>'
@@ -441,6 +482,41 @@ function closeSheet(){
   document.getElementById('mask').classList.remove('on');
 }
 
+/* ===== 表示する問題集をえらぶ ===== */
+function openChooser(){
+  renderChooser();
+  document.getElementById('sheet').classList.add('on');
+  document.getElementById('mask').classList.add('on');
+  document.getElementById('sheetBody').scrollTop = 0;
+}
+function renderChooser(){
+  const groups = pickGroups();
+  let h = '<div class="lead">チェックを外した問題集は、「日ごとの計画表」のボタンに出なくなります。いつでも戻せます。<br>下の「全体計画」の表からは消えません。</div>';
+  h += '<div class="btnrow" style="margin:0 0 4px"><button class="btn" onclick="chooseAll(true)">すべて表示</button>'
+    + '<button class="btn" onclick="chooseAll(false)">すべて外す</button></div>';
+  groups.forEach(g => {
+    h += '<div style="margin:18px 2px 8px"><span class="chip '+g.cls+'">'+esc(g.subject)+'</span></div><div class="card">';
+    g.ids.forEach(id => {
+      const b = bookOf(id), on = !S.hidden[id], sp = spanOf(b.title);
+      h += '<button class="chk'+(on ? ' on' : '')+'" onclick="toggleBook(\''+id+'\')">'
+        + '<span class="box">✓</span><span class="tx">'+esc(shortTitle(b.title))
+        + (sp ? '<span>'+esc(sp)+'</span>' : '') + '</span></button>';
+    });
+    h += '</div>';
+  });
+  document.getElementById('sheetTitle').textContent = '表示する問題集';
+  document.getElementById('sheetBody').innerHTML = h;
+}
+function toggleBook(id){
+  if(S.hidden[id]) delete S.hidden[id]; else S.hidden[id] = 1;
+  save(); renderChooser(); render();
+}
+function chooseAll(on){
+  pickGroups().forEach(g => g.ids.forEach(id => { if(on) delete S.hidden[id]; else S.hidden[id] = 1; }));
+  save(); renderChooser(); render();
+  toast(on ? 'すべて表示にしました' : 'すべて外しました');
+}
+
 let sheetVar = {};
 function openBook(id){ renderSheetBook(id); document.getElementById('sheet').classList.add('on'); document.getElementById('mask').classList.add('on'); }
 function renderSheetBook(id){
@@ -469,6 +545,11 @@ function renderSheetBook(id){
   if(v){
     h += '<div class="sec-title" style="margin-top:6px">日ごとの計画表</div>';
     h += '<div class="lead">日づけではなく「1日目、2日目…」で進みます。できない日があってもズレません。<br>表は横にスワイプすると続きが見られます。</div>';
+    if(v.secs.length >= 3){
+      h += '<div class="jump">';
+      v.secs.forEach((sec, i) => { h += '<button onclick="jumpSec('+i+')">'+esc(secLabel(sec, i))+'</button>'; });
+      h += '</div>';
+    }
     h += planTables(v);
   }
   document.getElementById('sheetTitle').innerHTML = esc(shortTitle(b.title));
@@ -478,11 +559,20 @@ function renderSheetBook(id){
 function pickVar(id, i){ sheetVar[id] = i; renderSheetBook(id); }
 
 /* 元のスプレッドシートと同じ「表」で計画を描く */
+function secLabel(sec, i){
+  const l = (sec.heads[0] && sec.heads[0].l) || '';
+  return l.replace(/（[^）]*）/g, '').trim() || ('計画' + (i + 1));
+}
+function jumpSec(i){
+  const el = document.getElementById('sec' + i); if(!el) return;
+  const box = document.getElementById('sheetBody');
+  box.scrollTo({ top: el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 14, behavior:'smooth' });
+}
 function planTables(v){
   let h = '';
-  v.secs.forEach(s => {
+  v.secs.forEach((s, si) => {
     if(s.cap) h += '<div class="tcap">'+esc(s.cap)+'</div>';
-    h += '<div class="tscroll"><table class="plan"><thead><tr>';
+    h += '<div class="tscroll" id="sec'+si+'"><table class="plan"><thead><tr>';
     const solo = s.heads.length === 1 ? ' solo' : '';
     if(s.heads.length) s.heads.forEach(hd => { h += '<th colspan="'+(hd.n*2)+'" class="rnd'+solo+'">'+esc(hd.l)+'</th>'; });
     else h += '<th colspan="'+(s.cols*2)+'" class="rnd solo">計画</th>';

@@ -1016,7 +1016,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 46;
+const VER = 47;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1292,19 +1292,22 @@ function startAmb(){
   if(ambKind !== 'wave' && ambKind !== 'wind') ambTick();
 }
 
-/* 虫の音（リーン…）。トリルのかかった高い正弦波 */
+/* 虫の音（リーン…）。トリルのかかった正弦波。
+   本物の鈴虫は4kHz前後だが、近くで鳴る音をそのまま出すと甲高くて耳障り（つむぎさんの指摘）。
+   少し離れた草むらから聞こえる音として、低め・やわらかい立ち上がり・浅いふるえにする。 */
 function chirp(base, dur, vol, at){
   const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = base;
-  const trem = ac.createOscillator(); trem.frequency.value = 22 + Math.random() * 10;
-  const tg = ac.createGain(); tg.gain.value = .5;
+  const trem = ac.createOscillator(); trem.frequency.value = 18 + Math.random() * 8;
+  const tg = ac.createGain(); tg.gain.value = .32;
   const g = ac.createGain();
   g.gain.setValueAtTime(0.0001, at);
-  g.gain.linearRampToValueAtTime(vol, at + dur * 0.25);
-  g.gain.setValueAtTime(vol, at + dur * 0.7);
+  g.gain.linearRampToValueAtTime(vol, at + dur * 0.4);   // ゆっくり立ち上がる
+  g.gain.setValueAtTime(vol, at + dur * 0.65);
   g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
-  const am = ac.createGain(); am.gain.value = .5;       // 振幅をふるわせる
+  const am = ac.createGain(); am.gain.value = .68;       // 振幅を浅くふるわせる
   trem.connect(tg); tg.connect(am.gain);
-  o.connect(am); am.connect(g); g.connect(amb.swell);
+  const soft = ac.createBiquadFilter(); soft.type = 'lowpass'; soft.frequency.value = 3600;  // 遠さ
+  o.connect(am); am.connect(soft); soft.connect(g); g.connect(amb.swell);
   o.start(at); trem.start(at);
   o.stop(at + dur + .05); trem.stop(at + dur + .05);
 }
@@ -1337,9 +1340,9 @@ function ambTick(){
     // 鈴虫ふう。ときどき2匹が、すこし違う高さで
     const n = Math.random() < 0.25 ? 2 : 1;
     for(let i = 0; i < n; i++){
-      chirp(3800 + Math.random() * 900,
-            0.5 + Math.random() * 0.9,
-            0.11 + Math.random() * 0.09,
+      chirp(2500 + Math.random() * 600,
+            0.7 + Math.random() * 1.0,
+            0.09 + Math.random() * 0.07,
             t + i * (0.25 + Math.random() * 0.4));
     }
     amb.tick = setTimeout(ambTick, 900 + Math.random() * 2600);

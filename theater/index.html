@@ -467,6 +467,8 @@ textarea{min-height:96px;resize:vertical;line-height:1.7;font-size:.88rem}
 select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;padding:11px 12px;
   width:100%;outline:none;-webkit-appearance:none;appearance:none}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;line-height:1.6}
+/* 未アウトプットの印 */
+.tag.todo{background:none;border:1px solid var(--acc);color:var(--acc);opacity:.85}
 /* いつ見る（予定） */
 .pq{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .pq button{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
@@ -562,7 +564,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 43;
+const VER = 44;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -729,6 +731,12 @@ function delOut(id, i){
   if(!outs[id].length) delete outs[id];
   saveOut();
 }
+/* 見たけれど、まだアウトプットを書いていない動画。
+   ノートを取ってから時間をおいて書く人が「どれがまだか」を探せるように */
+const needOut = v => seenN(v.id) > 0 && !outOf(v.id).length && !isLoom(v.id);
+const needOutList = () => DATA.videos.filter(needOut)
+  .sort((a,b) => ((prog[b.id] || {}).last || 0) - ((prog[a.id] || {}).last || 0));
+
 const foldOf   = fid => folders.find(f => f.id === fid);
 const foldCount = id => folders.filter(f => f.ids.includes(id)).length;
 const inFold   = (fid, id) => { const f = foldOf(fid); return !!(f && f.ids.includes(id)); };
@@ -1212,6 +1220,7 @@ function card(v, opt){
         <div class="vt">${esc(v.t)}</div>
         <div class="vs">${((opt && opt.tag === false) || n) ? '' :
             `<span class="tag">${esc(v.g || catName(v.cat))}</span>`}
+          ${needOut(v) ? `<span class="tag todo">未アウトプット</span>` : ''}
           ${v.date ? `<span>${ymd(v.date)}</span>` : ''}</div>
       </div>
     </button>
@@ -1622,6 +1631,10 @@ function vSaved(){
       ${row('__fav', '保存', favs.length)}
       ${folders.map(f => row(f.id, f.name, f.ids.length)).join('')}
     </div>
+    <div class="sec"><h2>アウトプット待ち</h2></div>
+    ${row('__todo', '見たけど まだ書いていない', needOutList().length)}
+    <div class="lead" style="margin-top:8px">最後まで見た動画のうち、アウトプットをまだ書いていないもの。
+      書くと ここから消えます。</div>
     <div class="lead" style="margin-top:14px">
       動画の画面の「フォルダ」から、好きなフォルダに入れられます。<br>
       右上の ＋ で、自分のフォルダを作れます。</div>`;
@@ -1635,19 +1648,25 @@ function vSaved(){
 function vFolder(){
   const fid = view.p;
   const isFavF = fid === '__fav';
-  const f = isFavF ? { id:'__fav', name:'保存', ids:favs } : foldOf(fid);
+  const isTodo = fid === '__todo';
+  const f = isFavF ? { id:'__fav', name:'保存', ids:favs }
+          : isTodo ? { id:'__todo', name:'アウトプット待ち', ids:needOutList().map(v => v.id) }
+          : foldOf(fid);
   if(!f) return go('saved');
   $('#tbar').innerHTML = `<button class="tbtn" id="fback">${ICO.back({s:20})}</button>
     <div class="ttl"></div>
-    ${isFavF ? '' : `<button class="tbtn" id="fmenu">${ICO.gear({s:18})}</button>`}`;
+    ${(isFavF || isTodo) ? '' : `<button class="tbtn" id="fmenu">${ICO.gear({s:18})}</button>`}`;
   $('#fback').onclick = () => go('saved');
   const list = f.ids.map(id => vid(id)).filter(Boolean);
   $('#main').innerHTML = `
     <div class="chead"><h1>${esc(f.name)}</h1><div class="st">${list.length}本</div></div>
     <div class="vlist" style="margin-top:16px">
       ${list.length ? list.map(v => card(v)).join('')
-                    : emptyBox('まだ入っていません。<br>動画の画面の「フォルダ」から入れられます。')}
-    </div>`;
+                    : isTodo ? emptyBox('見た動画は、ぜんぶアウトプットを書いてあります。')
+                             : emptyBox('まだ入っていません。<br>動画の画面の「フォルダ」から入れられます。')}
+    </div>
+    ${isTodo ? `<div class="lead" style="margin-top:12px">最後まで見た動画のうち、まだアウトプットを書いていないもの。
+      最近見た順です。書くと ここから消えます。</div>` : ''}`;
   if($('#fmenu')) $('#fmenu').onclick = () => {
     openSheet(`
       <h3>${esc(f.name)}</h3>

@@ -125,6 +125,31 @@ header.app{position:sticky; top:0; z-index:30; background:var(--bg); padding:cal
 .jump button{border:1px solid var(--line); background:var(--card); border-radius:9px;
   padding:8px 13px; font-size:14px; font-weight:700; color:var(--accent); box-shadow:var(--shadow);}
 
+/* ==== すごろく ==== */
+.sg{padding:14px 14px 12px;}
+.sghead{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:8px;}
+.sgtag{font-size:12.5px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:3px 10px;}
+.sgtag.off{color:var(--muted); background:var(--chip);}
+.sghead b{font-size:30px; font-weight:700; line-height:1; color:var(--accent); font-variant-numeric:tabular-nums;}
+.sghead b small{font-size:14px; font-weight:700; margin-left:2px;}
+.sgsub{font-size:13.5px; color:var(--muted); line-height:1.5; flex:1; min-width:120px;}
+.sgbar{height:8px; border-radius:999px; background:var(--chip); overflow:hidden; margin:2px 0 12px;}
+.sgbar i{display:block; height:100%; background:var(--accent); border-radius:999px;}
+.sgrow{display:flex; gap:9px; align-items:flex-start; padding:7px 0; border-top:1px solid var(--line);}
+.sgrow:first-of-type{border-top:none;}
+.sglabel{flex:none; width:60px; font-size:12px; font-weight:700; color:var(--muted); line-height:1.35; padding-top:2px;}
+.sgcells{flex:1; display:flex; flex-wrap:wrap; gap:4px;}
+.sq{width:17px; height:17px; border-radius:4px; background:var(--chip); border:1px solid var(--line); padding:0;}
+.sq.done{background:var(--accent); border-color:var(--accent); opacity:.55;}
+.sq.now{background:var(--accent); border-color:var(--accent); opacity:1; position:relative; transform:scale(1.35); z-index:1;
+  box-shadow:0 0 0 2px var(--card), 0 0 0 4px var(--accent);}
+.sq.now::after{content:""; position:absolute; inset:4px; border-radius:50%; background:#fff;}
+.pick.marked{border-color:var(--accent); background:var(--accent-soft);}
+.pick .mk{color:var(--accent); font-weight:700;}
+table.plan td.now{background:var(--accent) !important; color:var(--accent-ink); font-weight:700;}
+table.plan td.past{color:var(--muted); opacity:.6;}
+table.plan td[data-d]{cursor:pointer;}
+
 /* ==== 表（スプレッドシート風） ==== */
 .tscroll{overflow-x:auto; -webkit-overflow-scrolling:touch; background:var(--card); border:1px solid var(--line);
   border-radius:12px; box-shadow:var(--shadow); margin-bottom:12px;}
@@ -273,7 +298,7 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 
 <script src="data.js"></script>
 <script>
-const VER = 8;
+const VER = 9;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
 const EXTRA_MATH = ['nyumon_ia','nyumon_iib','kichart_ia','kichart_iib'];
@@ -282,10 +307,10 @@ let S = load();
 function load(){
   try{
     const o = JSON.parse(localStorage.getItem(KEY) || '{}');
-    return { theme: o.theme || '', hidden: o.hidden || {} };
-  }catch(e){ return { theme:'', hidden:{} }; }
+    return { theme: o.theme || '', hidden: o.hidden || {}, mark: o.mark || {} };
+  }catch(e){ return { theme:'', hidden:{}, mark:{} }; }
 }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ theme: S.theme, hidden: S.hidden })); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ theme: S.theme, hidden: S.hidden, mark: S.mark })); }catch(e){} }
 
 /* ---------- データ ---------- */
 const BOOKS = {}; ROUTE.books.forEach(b => BOOKS[b.id] = b);
@@ -372,8 +397,9 @@ function viewRoute(){
     h += '<div class="pickrow"><span class="chip '+g.cls+'">'+esc(g.subject)+'</span></div><div class="picks">';
     ids.forEach(id => {
       const b = bookOf(id), sp = spanOf(b.title);
-      h += '<button class="pick" onclick="openBook(\''+id+'\')"><b>'+esc(shortTitle(b.title))+'</b>'
-        + (sp ? '<span>'+esc(sp)+'</span>' : '') + '</button>';
+      const mk = S.mark[id] || 0;
+      h += '<button class="pick'+(mk ? ' marked' : '')+'" onclick="openBook(\''+id+'\')"><b>'+esc(shortTitle(b.title))+'</b>'
+        + (mk ? '<span class="mk">いまここ '+mk+'日目</span>' : (sp ? '<span>'+esc(sp)+'</span>' : '')) + '</button>';
     });
     h += '</div>';
   });
@@ -454,6 +480,7 @@ function viewSet(){
   h += '<button class="setrow" onclick="cycleTheme()"><span class="tx"><b>見た目</b><span>明るさの切りかえ</span></span><span class="val">'+th+'</span></button>';
   h += '<button class="setrow" onclick="checkUpdate(true)"><span class="tx"><b>更新があるか調べる</b><span>いまのバージョン v'+VER+'</span></span><span class="val">調べる</span></button>';
   h += '<a class="setrow" href="https://docs.google.com/spreadsheets/d/17o7_aitaIZ9ufh5w5Ox7gxaqnwveaHVix4uHpL7BjmI/edit" target="_blank" rel="noopener"><span class="tx"><b>元のスプレッドシート</b><span>写真や図はこちらで見られます</span></span><span class="val">開く</span></a>';
+  h += '<button class="setrow" onclick="clearMarks()"><span class="tx"><b>「いまここ」の印をぜんぶ消す</b><span>すごろくの印をリセットします</span></span><span class="val" style="color:var(--red)">消す</span></button>';
   h += '</div>';
   h += '<div class="sec-title">このアプリについて</div><div class="card"><div class="lead" style="padding:0">'
     + '高校ルート（全体計画・日ごとの計画表・鉄則）を、そのまま見られるようにしたものです。<br><br>'
@@ -543,6 +570,9 @@ function renderSheetBook(id){
   h += '</div>';
 
   if(v){
+    h += '<div class="sec-title" style="margin-top:6px">すごろく（いまここ）</div>';
+    h += '<div class="lead">マスをタップすると「いまここ」の印がつきます。下の表の日をタップしても置けます。この端末にだけ保存されます。</div>';
+    h += '<div id="board">' + boardHTML(id, v) + '</div>';
     h += '<div class="sec-title" style="margin-top:6px">日ごとの計画表</div>';
     h += '<div class="lead">日づけではなく「1日目、2日目…」で進みます。できない日があってもズレません。<br>表は横にスワイプすると続きが見られます。</div>';
     if(v.secs.length >= 3){
@@ -550,13 +580,79 @@ function renderSheetBook(id){
       v.secs.forEach((sec, i) => { h += '<button onclick="jumpSec('+i+')">'+esc(secLabel(sec, i))+'</button>'; });
       h += '</div>';
     }
-    h += planTables(v);
+    h += planTables(v, id);
   }
   document.getElementById('sheetTitle').innerHTML = esc(shortTitle(b.title));
   document.getElementById('sheetBody').innerHTML = h;
   document.getElementById('sheetBody').scrollTop = 0;
 }
 function pickVar(id, i){ sheetVar[id] = i; renderSheetBook(id); }
+
+/* ===== すごろく（いまここ） ===== */
+function dayList(v){
+  if(v._days) return v._days;
+  const out = [];
+  v.secs.forEach((s, si) => s.rows.forEach(row => row.forEach(c => { if(c) out.push({ d:c[0], t:c[1], si }); })));
+  out.sort((a, b) => a.d - b.d);
+  v._days = out;
+  return out;
+}
+function boardHTML(id, v){
+  const days = dayList(v), tot = totalDays(v);
+  const mark = Math.min(S.mark[id] || 0, tot);
+  const bySec = {};
+  days.forEach(x => { (bySec[x.si] = bySec[x.si] || []).push(x); });
+  let h = '<div class="card sg">';
+  if(mark){
+    const pct = Math.round(mark / tot * 100);
+    const e = days.find(x => x.d === mark);
+    h += '<div class="sghead"><span class="sgtag">いまここ</span><b>'+mark+'<small>日目</small></b>'
+      + '<span class="sgsub">全'+tot+'日の '+pct+'%'+(e ? '<br>'+esc(secLabel(v.secs[e.si], e.si))+'　'+esc(e.t) : '')+'</span></div>';
+    h += '<div class="sgbar"><i style="width:'+pct+'%"></i></div>';
+  }else{
+    h += '<div class="sghead"><span class="sgtag off">まだ印がありません</span><span class="sgsub">きょうやった日のマスをタップしてください。</span></div>';
+  }
+  v.secs.forEach((sec, si) => {
+    const list = bySec[si] || []; if(!list.length) return;
+    h += '<div class="sgrow"><span class="sglabel">'+esc(secLabel(sec, si))+'</span><div class="sgcells">';
+    list.forEach(x => {
+      const k = x.d < mark ? ' done' : (x.d === mark ? ' now' : '');
+      h += '<button class="sq'+k+'" data-d="'+x.d+'" onclick="setMark(\''+id+'\','+x.d+')" aria-label="'+x.d+'日目"></button>';
+    });
+    h += '</div></div>';
+  });
+  h += '<div class="btnrow" style="margin-top:14px">';
+  if(mark){
+    h += '<button class="btn" onclick="setMark(\''+id+'\','+(mark-1)+')">1日もどる</button>'
+      + '<button class="btn primary" onclick="setMark(\''+id+'\','+(mark+1)+')">1日すすむ</button>'
+      + '<button class="btn small" onclick="setMark(\''+id+'\',0)">消す</button>';
+  }
+  h += '</div></div>';
+  return h;
+}
+function setMark(id, d){
+  const b = bookOf(id), v = variantOf(b, sheetVar[id] || 0); if(!v) return;
+  const tot = totalDays(v);
+  d = Math.max(0, Math.min(tot, d | 0));
+  if(d) S.mark[id] = d; else delete S.mark[id];
+  save();
+  /* スクロール位置を保ったまま、印だけ描き直す */
+  const board = document.getElementById('board');
+  if(board) board.innerHTML = boardHTML(id, v);
+  document.querySelectorAll('#sheetBody td[data-d]').forEach(td => {
+    const n = +td.dataset.d;
+    td.classList.toggle('now', n === d);
+    td.classList.toggle('past', !!d && n < d);
+  });
+  if(d === tot) toast('全'+tot+'日、完走です 🎉');
+  else if(d) toast(d + '日目に印を置きました');
+  else toast('印を消しました');
+  if(tab === 'route') render();
+}
+function clearMarks(){
+  if(!confirm('すべての問題集の「いまここ」の印を消します。よろしいですか？')) return;
+  S.mark = {}; save(); render(); toast('印をぜんぶ消しました');
+}
 
 /* 元のスプレッドシートと同じ「表」で計画を描く */
 function secLabel(sec, i){
@@ -568,7 +664,8 @@ function jumpSec(i){
   const box = document.getElementById('sheetBody');
   box.scrollTo({ top: el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 14, behavior:'smooth' });
 }
-function planTables(v){
+function planTables(v, id){
+  const mark = (id && S.mark[id]) || 0;
   let h = '';
   v.secs.forEach((s, si) => {
     if(s.cap) h += '<div class="tcap">'+esc(s.cap)+'</div>';
@@ -585,7 +682,9 @@ function planTables(v){
       h += '<tr>';
       row.forEach(c => {
         if(!c){ h += '<td class="d"></td><td class="t"></td>'; return; }
-        h += '<td class="d">'+c[0]+'</td><td class="t">'+esc(c[1])+'</td>';
+        const k = c[0] === mark ? ' now' : (mark && c[0] < mark ? ' past' : '');
+        const at = ' data-d="'+c[0]+'"' + (id ? ' onclick="setMark(\''+id+'\','+c[0]+')"' : '');
+        h += '<td class="d'+k+'"'+at+'>'+c[0]+'</td><td class="t'+k+'"'+at+'>'+esc(c[1])+'</td>';
       });
       if(s.foots) h += '<td class="ft">'+esc(s.foots[ri] || '')+'</td>';
       h += '</tr>';

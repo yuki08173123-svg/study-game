@@ -1,7 +1,7 @@
 /* 高校ルート の service worker
    ほうしん:「ネットワーク優先」。まずネットから最新をとり、とれたものをキャッシュに控える。
    ネットがないときだけキャッシュで動く。 */
-const VER = 'rt-v10';
+const VER = 'rt-v11';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {

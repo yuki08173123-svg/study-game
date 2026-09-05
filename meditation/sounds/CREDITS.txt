@@ -1,0 +1,14 @@
+Mindrest 瞑想中の音（録音）
+
+すべて BigSoundBank（https://bigsoundbank.com/）の CC0（パブリックドメイン）音源です。
+録音：Joseph SARDIN。商用利用可・クレジット不要ですが、感謝をこめてここに記します。
+
+各ファイルは、元の録音から約70〜80秒を切り出し、モノラル化・ループ用クロスフェード・
+音量そろえを行い、AAC 64kbps に変換したものです。
+
+rain.m4a     … Summer Rain on Terrace   (s1019)  https://bigsoundbank.com/summer-rain-on-terrace-s1019.html
+wave.m4a     … Sea of the Beach of Dellec #2 (s2565)  https://bigsoundbank.com/sea-of-the-beach-of-dellec-2-s2565.html
+wind.m4a     … Wind in Shrub            (s0907)  https://bigsoundbank.com/wind-in-shrub-s0907.html
+fire.m4a     … Fireplace #3             (s2855)  https://bigsoundbank.com/fireplace-3-s2855.html
+creek.m4a    … Mountain Stream #2       (s2755)  https://bigsoundbank.com/mountain-stream-2-s2755.html
+insects.m4a  … Nocturnal Insects #4     (s1470)  https://bigsoundbank.com/nocturnal-insects-4-s1470.html

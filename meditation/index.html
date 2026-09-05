@@ -826,7 +826,7 @@ body.bgm .stage{gap:14px}
           <li>「瞑想」で時間を選んで、<b>はじめる</b>を押します（1分から60分まで）。</li>
           <li>時間の下の<b>「瞑想中の音」</b>を押すと、雨・波・風・たき火・せせらぎ・虫の声・風鈴・おりん から選べます。押すと少しだけ試し聞きでき、選ぶとまたたたまれます。音が気になる人は「なし」のままで大丈夫です。</li>
           <li>瞑想せずに<b>音だけ流す</b>こともできます。「はじめる」の下の<b>「音だけ流す（勉強のおともに）」</b>を押すと、選んだ音がずっと流れます。<b>この時間は記録にもレベルにも入りません</b>。勉強や作業のおともにどうぞ。</li>
-          <li>その横の<b>「音の設定」</b>で、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。</li>
+          <li>その横の<b>「音の設定」</b>で、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。雨・波・風・たき火・せせらぎ・虫の声は<b>本物の録音</b>です（アプリが作る「合成」の音にも切りかえられます）。録音は選んだ音だけ、はじめて流すときに読み込みます。</li>
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
           <li>終わると自動で記録されます。<b>いまの気分</b>を5段階でひと押しでき、「ひとこと」に感じたことも残せます（声でも入れられます）。<b>気分を押しそびれても、あとから入れられます</b>——「記録」で日や記録を押すと、気分とひとことをまとめて直せます。</li>
@@ -1016,7 +1016,7 @@ body.bgm .stage{gap:14px}
 
 <script>
 'use strict';
-const VER = 47;
+const VER = 48;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1040,13 +1040,14 @@ let ac = null, keepAlive = null, scheduled = [];
    Audio Session API に対応した端末では type を 'playback' にすると、
    音楽アプリと同じ扱いになり、消音モードでも鳴る。 */
 const KEY_SND = 'med.snd.v1';
-let snd = { loud: true, bell: 1, amb: 1, ring: 3 };
+let snd = { loud: true, bell: 1, amb: 1, ring: 3, real: true };
 try{
   const j = JSON.parse(localStorage.getItem(KEY_SND) || 'null');
   if(j && typeof j === 'object'){
     if(typeof j.loud === 'boolean') snd.loud = j.loud;
     if(typeof j.bell === 'number') snd.bell = j.bell;
     if(typeof j.amb === 'number') snd.amb = j.amb;
+    if(typeof j.real === 'boolean') snd.real = j.real;
     if(j.ring === 1 || j.ring === 3) snd.ring = j.ring;
   }
 }catch(e){}
@@ -1146,8 +1147,75 @@ function reverbIR(){
 }
 const REV_WET = { rain:.34, creek:.3, wave:.42, wind:.36, fire:.2, insects:.3, chime:.5, orin:.55 };
 
+/* ───────── 録音の音 ─────────
+   コツカワさんの希望で、ノイズ系の6つは本物の録音にした（BigSoundBank・CC0、sounds/CREDITS.txt）。
+   風鈴・おりんは合成のほうが向いているのでそのまま。
+   合成音を好む人もいるので、「音の設定」で 録音／合成 を切りかえられる。
+   ファイルは1つ約0.6MB。選んだ音だけ、必要になったときに取りにいく。 */
+const REC = { rain:1, wave:1, wind:1, fire:1, creek:1, insects:1 };
+const REC_GAIN = { rain:1.4, wave:1, wind:.6, creek:.6, insects:1.5, fire:14 };   // 聞こえる大きさをそろえる。たき火と虫の声は元が小さい
+const recRaw = {}, recBuf = {}, recLoading = {}, recFail = {};
+function recUrl(k){ return 'sounds/' + k + '.m4a'; }
+function fetchRec(k){                          // ファイルだけ先に取っておく（AudioContext は要らない）
+  if(recRaw[k]) return Promise.resolve(recRaw[k]);
+  if(recLoading[k]) return recLoading[k];
+  recLoading[k] = fetch(recUrl(k))
+    .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+    .then(function(b){ recRaw[k] = b; delete recLoading[k]; return b; })
+    .catch(function(e){ delete recLoading[k]; throw e; });
+  return recLoading[k];
+}
+function loadRec(k){                           // デコードまで
+  if(recBuf[k]) return Promise.resolve(recBuf[k]);
+  return fetchRec(k).then(function(raw){
+    return new Promise(function(res, rej){   // decodeAudioData は Promise を返さない版があるので、コールバック形式
+      try{ ac.decodeAudioData(raw.slice(0), function(b){ recBuf[k] = b; res(b); }, rej); }catch(e){ rej(e); }
+    });
+  });
+}
+function useRec(){ return snd.real && REC[ambKind] && !recFail[ambKind]; }
+function prefetchRec(){ if(snd.real && REC[ambKind]) fetchRec(ambKind).catch(function(){}); }
+setTimeout(prefetchRec, 1500);                 // 起動時、選んである音を先に取っておく
+
+function startRecAmb(){
+  const k = ambKind;
+  const out = ac.createGain(); out.gain.value = 0.0001;
+  const extra = [];
+  if(ac.createStereoPanner){                   // 合成音と同じ、ごくゆっくりの左右の揺れ
+    const pan = ac.createStereoPanner();
+    out.connect(pan); pan.connect(ac.destination);
+    const plfo = ac.createOscillator(); plfo.frequency.value = 1 / 27;
+    const pg = ac.createGain(); pg.gain.value = 0.18;
+    plfo.connect(pg); pg.connect(pan.pan); plfo.start();
+    extra.push(plfo);
+  }else{
+    out.connect(ac.destination);
+  }
+  const comp = ac.createDynamicsCompressor();  // たき火のはぜる音などの飛び出しをおさえる
+  comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 3;
+  comp.attack.value = 0.005; comp.release.value = 0.25;
+  const g = ac.createGain(); g.gain.value = REC_GAIN[k] || 1;
+  g.connect(comp); comp.connect(out);
+  const me = { rec: true, kind: k, src: null, src2: null, out: out, swell: g, extra: extra, tick: 0, pop: null };
+  amb = me;
+  loadRec(k).then(function(buf){
+    if(amb !== me) return;                     // 待っているあいだに止められた／切りかえられた
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    src.connect(g); src.start();
+    me.src = src;
+    out.gain.setTargetAtTime(0.32 * snd.amb, ac.currentTime, 3.2);   // 3秒ほどかけて、そっと入る
+  }).catch(function(){
+    if(amb !== me) return;                     // 取れなければ、この音は合成音で
+    recFail[k] = true; amb = null;
+    try{ out.disconnect(); }catch(e){}
+    extra.forEach(function(o){ try{ o.stop(); }catch(e){} });
+    startAmb();
+  });
+}
+
 function startAmb(){
   if(!ac || ambKind === 'none' || amb) return;
+  if(useRec()){ startRecAmb(); return; }
   const now = ac.currentTime;
 
   const out = ac.createGain();          // 全体の音量（ゆっくり出入りする）
@@ -1425,7 +1493,8 @@ function stopAmb(slow){
   try{
     a.out.gain.setTargetAtTime(0.0001, ac.currentTime, slow ? 1.2 : 0.05);
     setTimeout(function(){
-      try{ a.src.stop(); a.src.disconnect(); a.out.disconnect(); }catch(e){}
+      if(a.src){ try{ a.src.stop(); a.src.disconnect(); }catch(e){} }
+      try{ a.out.disconnect(); }catch(e){}
       if(a.src2){ try{ a.src2.stop(); a.src2.disconnect(); }catch(e){} }
       a.extra.forEach(function(o){ try{ o.stop(); o.disconnect(); }catch(e){} });
     }, slow ? 4000 : 300);
@@ -1494,6 +1563,8 @@ $('btnSnd').addEventListener('click', function(e){
       (canLoud ? '' : ' disabled style="opacity:.4"') + '><i></i></button></div>' +
     '<div class="srow"><span class="sk">鐘の大きさ</span>' + seg('segBell', [['小',0.5],['中',1],['大',1.6]], snd.bell) + '</div>' +
     '<div class="srow"><span class="sk">瞑想中の音の大きさ</span>' + seg('segAmb', [['小',0.5],['中',1],['大',1.7]], snd.amb) + '</div>' +
+    '<div class="srow"><span class="sk">瞑想中の音の種類<small>録音＝本物の自然音（雨・波・風・たき火・せせらぎ・虫の声）。合成＝アプリが作る音。風鈴とおりんはどちらでも合成です。</small></span>' +
+      seg('segReal', [['録音',1],['合成',0]], snd.real ? 1 : 0) + '</div>' +
     '<div class="srow"><span class="sk">終わりの鐘<small>3回鳴らすか、1回だけにするか</small></span>' +
       seg('segRing', [['1回',1],['3回',3]], snd.ring) + '</div>' +
     '<div class="btns" style="margin-top:18px"><button class="no" id="sndTry">鐘を鳴らしてみる</button>' +
@@ -1513,6 +1584,10 @@ $('btnSnd').addEventListener('click', function(e){
       const id = b.parentNode.id;
       if(id === 'segBell') snd.bell = v;
       else if(id === 'segAmb') snd.amb = v;
+      else if(id === 'segReal'){
+        snd.real = v === 1; prefetchRec();
+        if(amb){ const on = bgmOn || !!sess; stopAmb(false); if(on) startAmb(); }   // 鳴っていれば切りかえる
+      }
       else snd.ring = v;
       saveSnd();
       b.parentNode.querySelectorAll('button').forEach(function(x){
@@ -1530,7 +1605,7 @@ $('ambs').addEventListener('click', function(e){
   const b = e.target.closest('.amb'); if(!b) return;
   ambKind = b.dataset.amb;
   try{ localStorage.setItem('med.amb.v1', ambKind); }catch(err){}
-  renderAmb();
+  renderAmb(); prefetchRec();
   setTimeout(function(){ setAmbOpen(false); }, 260);   // 選んだら、そっとたたむ
   ensureAudio();
   stopAmb(false);

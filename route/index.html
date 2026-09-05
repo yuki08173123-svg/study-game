@@ -298,7 +298,7 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 
 <script src="data.js"></script>
 <script>
-const VER = 9;
+const VER = 10;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
 const EXTRA_MATH = ['nyumon_ia','nyumon_iib','kichart_ia','kichart_iib'];
@@ -571,7 +571,8 @@ function renderSheetBook(id){
 
   if(v){
     h += '<div class="sec-title" style="margin-top:6px">すごろく（いまここ）</div>';
-    h += '<div class="lead">マスをタップすると「いまここ」の印がつきます。下の表の日をタップしても置けます。この端末にだけ保存されます。</div>';
+    h += '<div class="lead"><b>1マス＝1日</b>です。<b>きょう終わった日のマス</b>をタップすると「いまここ」の印がつきます。'
+      + '次の日からは「1日すすむ」を押すだけでOK。下の表の日をタップしても置けます。印はこの端末にだけ保存されます。</div>';
     h += '<div id="board">' + boardHTML(id, v) + '</div>';
     h += '<div class="sec-title" style="margin-top:6px">日ごとの計画表</div>';
     h += '<div class="lead">日づけではなく「1日目、2日目…」で進みます。できない日があってもズレません。<br>表は横にスワイプすると続きが見られます。</div>';
@@ -592,29 +593,44 @@ function pickVar(id, i){ sheetVar[id] = i; renderSheetBook(id); }
 function dayList(v){
   if(v._days) return v._days;
   const out = [];
-  v.secs.forEach((s, si) => s.rows.forEach(row => row.forEach(c => { if(c) out.push({ d:c[0], t:c[1], si }); })));
+  v.secs.forEach((s, si) => s.rows.forEach(row => row.forEach((c, ci) => {
+    if(!c) return;
+    let hi = 0;
+    s.heads.forEach((hd, k) => { if(ci >= hd.i && ci < hd.i + hd.n) hi = k; });
+    out.push({ d:c[0], t:c[1], si, hi });
+  })));
   out.sort((a, b) => a.d - b.d);
   v._days = out;
   return out;
 }
+/* 表の見出し1つぶん（「１周目」など）のラベル */
+function headLabel(sec, hi, si){
+  const l = (sec.heads[hi] && sec.heads[hi].l) || '';
+  return l.replace(/（[^）]*）/g, '').trim() || ('計画' + (si + 1));
+}
 function boardHTML(id, v){
   const days = dayList(v), tot = totalDays(v);
   const mark = Math.min(S.mark[id] || 0, tot);
-  const bySec = {};
-  days.forEach(x => { (bySec[x.si] = bySec[x.si] || []).push(x); });
+  /* 周目（表の見出し）ごとに1段。日の順にならべる */
+  const groups = [], gidx = {};
+  days.forEach(x => {
+    const k = x.si + ':' + x.hi;
+    if(!(k in gidx)){ gidx[k] = groups.length; groups.push({ si:x.si, hi:x.hi, list:[] }); }
+    groups[gidx[k]].list.push(x);
+  });
   let h = '<div class="card sg">';
   if(mark){
     const pct = Math.round(mark / tot * 100);
     const e = days.find(x => x.d === mark);
     h += '<div class="sghead"><span class="sgtag">いまここ</span><b>'+mark+'<small>日目</small></b>'
-      + '<span class="sgsub">全'+tot+'日の '+pct+'%'+(e ? '<br>'+esc(secLabel(v.secs[e.si], e.si))+'　'+esc(e.t) : '')+'</span></div>';
+      + '<span class="sgsub">全'+tot+'日の '+pct+'%'+(e ? '<br>'+esc(headLabel(v.secs[e.si], e.hi, e.si))+'　'+esc(e.t) : '')+'</span></div>';
     h += '<div class="sgbar"><i style="width:'+pct+'%"></i></div>';
   }else{
-    h += '<div class="sghead"><span class="sgtag off">まだ印がありません</span><span class="sgsub">きょうやった日のマスをタップしてください。</span></div>';
+    h += '<div class="sghead"><span class="sgtag off">まだ印がありません</span><span class="sgsub">きょう終わった日のマスをタップしてください。</span></div>';
   }
-  v.secs.forEach((sec, si) => {
-    const list = bySec[si] || []; if(!list.length) return;
-    h += '<div class="sgrow"><span class="sglabel">'+esc(secLabel(sec, si))+'</span><div class="sgcells">';
+  groups.forEach(g => {
+    const list = g.list;
+    h += '<div class="sgrow"><span class="sglabel">'+esc(headLabel(v.secs[g.si], g.hi, g.si))+'</span><div class="sgcells">';
     list.forEach(x => {
       const k = x.d < mark ? ' done' : (x.d === mark ? ' now' : '');
       h += '<button class="sq'+k+'" data-d="'+x.d+'" onclick="setMark(\''+id+'\','+x.d+')" aria-label="'+x.d+'日目"></button>';
@@ -656,8 +672,10 @@ function clearMarks(){
 
 /* 元のスプレッドシートと同じ「表」で計画を描く */
 function secLabel(sec, i){
-  const l = (sec.heads[0] && sec.heads[0].l) || '';
-  return l.replace(/（[^）]*）/g, '').trim() || ('計画' + (i + 1));
+  const hs = sec.heads.map(h => (h.l || '').replace(/（[^）]*）/g, '').trim()).filter(Boolean);
+  if(!hs.length) return '計画' + (i + 1);
+  if(hs.length === 1) return hs[0];
+  return hs[0].replace(/周目$/, '') + '〜' + hs[hs.length - 1];
 }
 function jumpSec(i){
   const el = document.getElementById('sec' + i); if(!el) return;

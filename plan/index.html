@@ -335,7 +335,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v19</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v20</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -427,6 +427,10 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M9 9v11M15 9v11"/></svg>
       1週間をまとめて見る
     </button>
+    <button class="bigbtn" id="btnTimeline" style="background:var(--card); color:var(--accent); border:1.5px solid var(--accent); box-shadow:none">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 8h18M3 13h18M3 18h18M8 3v18"/></svg>
+      時間わりで見る（10分きざみ）
+    </button>
     <button class="subbtn" id="btnCopyPrev">先週のやることをコピーする</button>
   </section>
 
@@ -502,7 +506,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v19</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v20</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -524,7 +528,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 19;
+const VER = 20;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1086,17 +1090,16 @@ function drawWeek(){
   return cv;
 }
 
-$('#btnWeekView').onclick = ()=>{
-  const cv = drawWeek();
+function openImageSheet(cv, title, prefix, hint){
   const url = cv.toDataURL('image/png');
-  const sh = openSheet('<h2>1週間のまとめ</h2>'
-    + '<p style="color:var(--muted); font-size:12.5px; margin-bottom:10px">スクリーンショットを撮るか、下のボタンで画像として保存できます。</p>'
-    + '<img class="shot" src="'+url+'" alt="1週間のまとめ">'
+  const sh = openSheet('<h2>'+title+'</h2>'
+    + '<p style="color:var(--muted); font-size:12.5px; margin-bottom:10px">'+(hint||'スクリーンショットを撮るか、下のボタンで画像として保存できます。')+'</p>'
+    + '<img class="shot" src="'+url+'" alt="'+title+'">'
     + '<button class="bigbtn" id="svImg">画像を保存する</button>');
   sh.querySelector('#svImg').onclick = ()=>{
     cv.toBlob(async b=>{
       if(!b) return;
-      const name = '計画マップ_'+S.cur+'.png';
+      const name = prefix+'_'+S.cur+'.png';
       const file = new File([b], name, {type:'image/png'});
       if(navigator.canShare && navigator.canShare({files:[file]})){
         try{ await navigator.share({files:[file]}); return; }catch(e){ if(e && e.name === 'AbortError') return; }
@@ -1107,7 +1110,106 @@ $('#btnWeekView').onclick = ()=>{
       toast('保存しました');
     }, 'image/png');
   };
-};
+}
+$('#btnWeekView').onclick = ()=>openImageSheet(drawWeek(), '1週間のまとめ', '計画マップ');
+$('#btnTimeline').onclick = ()=>openImageSheet(drawTimeline(), '時間わり（10分きざみ）', '計画マップ_時間わり',
+  '開始時こくを書いたやることが、時間の位置に出ます。緑＝できた、青＝これから。時こくが無いものは下に並びます。');
+
+/* ---------- 時間わり（10分きざみのタイムテーブル） ---------- */
+function drawTimeline(){
+  const W = 1080, PAD = 30, F = "'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif";
+  const m = parseISO(S.cur);
+  const toMin = t => { const a = (t||'').split(':').map(Number); return (a.length===2 && !isNaN(a[0])) ? a[0]*60+a[1] : null; };
+  // 表示する時間の範囲（やることに合わせて、6:00〜23:00を基本に広げる）
+  let lo = 6*60, hi = 23*60;
+  const days = [];
+  for(let i=0;i<7;i++){
+    const d = dayRaw(S.cur,i), ts = (d && d.tasks) || [];
+    const timed = [], free = [];
+    ts.forEach(t=>{ const st = toMin(t.time); const mn = Math.max(10, Number(t.min)||S.defMin);
+      if(st === null) free.push(t); else { timed.push({t, st, en:st+mn}); lo = Math.min(lo, Math.floor(st/60)*60); hi = Math.max(hi, Math.ceil((st+mn)/60)*60); } });
+    days.push({ date:addDays(m,i), s:sumDay(d), timed, free });
+  }
+  hi = Math.min(hi, 24*60+6*60); // 深夜までは30:00で打ち切り
+  const ROW = 9;                 // 10分 = 9px
+  const rows = (hi-lo)/10;
+  const GUT = 84, HEAD = 108, DH = 74;  // 左の時刻・見出し・曜日ヘッダ
+  const maxFree = Math.max(0, ...days.map(x=>x.free.length));
+  const FREE = maxFree ? 30 + maxFree*24 : 0;
+  const colW = (W-PAD*2-GUT)/7;
+  const H = HEAD + DH + rows*ROW + FREE + 56;
+
+  const dpr = 2, cv = document.createElement('canvas'); cv.width = W*dpr; cv.height = H*dpr;
+  const g = cv.getContext('2d'); g.scale(dpr,dpr);
+  const INK='#16202F', MUT='#7C8899', LINE='#E2E8F1', LINE2='#C9D3E0', ACC='#2C6FE4', DONE='#12A06A';
+  const rr = (x,y,w,h,r)=>{ r=Math.min(r,h/2,w/2); g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); };
+  const clip = (t,max)=>{ let z=t; while(g.measureText(z).width>max && z.length>1) z=z.slice(0,-1); return z===t?t:z+'…'; };
+  const p2 = n => String(n).padStart(2,'0');
+
+  g.fillStyle='#F4F7FB'; g.fillRect(0,0,W,H);
+  g.fillStyle=INK; g.font='900 34px '+F; g.textAlign='left'; g.textBaseline='alphabetic';
+  g.fillText('計画マップ　時間わり', PAD, 50);
+  if(S.name){ g.fillStyle=MUT; g.font='700 22px '+F; g.textAlign='right'; g.fillText(S.name, W-PAD, 48); }
+  g.fillStyle=ACC; g.font='900 26px '+F; g.textAlign='left';
+  g.fillText(md(m)+'（月）〜 '+md(addDays(m,6))+'（日）', PAD, 88);
+
+  // 曜日ヘッダ
+  const gx = PAD+GUT, gy = HEAD+DH;
+  days.forEach((dd,i)=>{
+    const x = gx + i*colW, isSat=i===5, isSun=i===6;
+    g.fillStyle='#fff'; rr(x+2, HEAD, colW-4, DH-6, 12); g.fill();
+    g.textAlign='center';
+    g.fillStyle = isSun?'#E0574C':isSat?'#3E80D8':INK; g.font='900 22px '+F;
+    g.fillText(md(dd.date)+'（'+WD[i]+'）', x+colW/2, HEAD+26);
+    g.font='700 13px '+F;
+    g.fillStyle=MUT;  g.fillText('予定 '+fmtHM(dd.s.plan), x+colW/2, HEAD+46);
+    g.fillStyle=DONE; g.fillText('できた '+fmtHM(dd.s.act), x+colW/2, HEAD+63);
+  });
+
+  // 方眼（10分ごと・1時間ごと）
+  g.fillStyle='#fff'; g.fillRect(gx, gy, colW*7, rows*ROW);
+  for(let r=0;r<=rows;r++){
+    const y = gy + r*ROW; const hour = (r%6===0);
+    g.strokeStyle = hour ? LINE2 : LINE; g.lineWidth = hour ? 1.5 : 1;
+    g.beginPath(); g.moveTo(gx, y+.5); g.lineTo(gx+colW*7, y+.5); g.stroke();
+    if(hour){ const hh = (lo + r*10)/60; g.fillStyle=MUT; g.font='900 15px '+F; g.textAlign='right';
+      g.fillText((hh>=24?hh-24:hh)+':00', gx-10, y+6); }
+  }
+  for(let i=0;i<=7;i++){ const x = gx + i*colW; g.strokeStyle=LINE2; g.lineWidth=1.5; g.beginPath(); g.moveTo(x+.5, gy); g.lineTo(x+.5, gy+rows*ROW); g.stroke(); }
+
+  // ブロック
+  days.forEach((dd,i)=>{
+    const x = gx + i*colW + 3;
+    dd.timed.forEach(o=>{
+      const y = gy + (o.st-lo)/10*ROW, h = Math.max(ROW, (o.en-o.st)/10*ROW);
+      if(o.t.done){ g.fillStyle='rgba(18,160,106,.88)'; rr(x, y+1, colW-6, h-2, 6); g.fill(); }
+      else { g.fillStyle='#DCE8FB'; rr(x, y+1, colW-6, h-2, 6); g.fill(); g.strokeStyle=ACC; g.lineWidth=1.5; rr(x, y+1, colW-6, h-2, 6); g.stroke(); }
+      if(h >= 20){
+        g.fillStyle = o.t.done ? '#fff' : INK; g.font='700 13px '+F; g.textAlign='left';
+        const label = (o.t.star?'★':'') + o.t.text + (o.t.note?' → '+o.t.note:'');
+        g.fillText(clip(label, colW-16), x+6, y+15);
+        if(h >= 38){ g.fillStyle = o.t.done ? 'rgba(255,255,255,.85)' : MUT; g.font='700 11px '+F;
+          g.fillText(o.t.time+'〜 '+fmtHM(o.en-o.st), x+6, y+31); }
+      }
+    });
+  });
+
+  // 時こくなし
+  if(FREE){
+    const y0 = gy + rows*ROW + 8;
+    g.fillStyle=MUT; g.font='900 13px '+F; g.textAlign='right'; g.fillText('時こくなし', gx-10, y0+16);
+    days.forEach((dd,i)=>{ const x = gx + i*colW + 3;
+      dd.free.forEach((t,j)=>{ const y = y0 + j*24;
+        if(t.done){ g.fillStyle='rgba(18,160,106,.88)'; rr(x, y, colW-6, 21, 6); g.fill(); }
+        else { g.fillStyle='#DCE8FB'; rr(x, y, colW-6, 21, 6); g.fill(); }
+        g.fillStyle = t.done ? '#fff' : INK; g.font='700 12px '+F; g.textAlign='left';
+        g.fillText(clip((t.star?'★':'')+t.text+'（'+fmtHM(t.min)+'）', colW-14), x+6, y+15); });
+    });
+  }
+  g.textAlign='center'; g.fillStyle=MUT; g.font='700 15px '+F;
+  g.fillText('1マス＝10分　緑＝できた　青＝これから', W/2, H-18);
+  return cv;
+}
 
 /* ---------- 操作 ---------- */
 $('#prevW').onclick = ()=>{ S.cur = iso(addDays(parseISO(S.cur), -7)); syncRep(); renderAll(); };

@@ -128,8 +128,10 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.95;}
 .task .meta{display:flex; align-items:center; gap:6px; margin-bottom:1px;}
 .task .tm{font-size:12px; font-weight:900; color:var(--accent); letter-spacing:.03em;}
 .task .dur{font-size:12px; font-weight:900; color:var(--muted); background:var(--chip); border-radius:999px; padding:2px 9px; line-height:1.5;}
-.task .txt{font-size:16px; font-weight:500; word-break:break-word; white-space:pre-wrap;}
+.task .txt{font-size:16px; font-weight:500; word-break:break-word; white-space:pre-wrap; text-decoration:underline dotted var(--line); text-decoration-thickness:1.5px; text-underline-offset:4px;}
+.task .body{cursor:pointer;}
 .task.is-done .txt{color:var(--muted); text-decoration:line-through; text-decoration-thickness:2px;}
+.field input[type=time].wide{background:var(--chip); border-radius:10px; padding:8px 10px; font-size:16px; font-weight:900; width:130px;}
 .task .star{width:34px; height:34px; border-radius:11px; flex:none; display:grid; place-items:center; background:var(--chip); margin-top:2px;}
 .task .star svg{width:19px; height:19px; fill:none; stroke:var(--muted); stroke-width:2; stroke-linejoin:round;}
 .task.is-star .star{background:var(--star-soft);}
@@ -309,7 +311,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v16</span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v17</span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -464,7 +466,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v16</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v17</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -486,7 +488,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 16;
+const VER = 17;
 const KEY = 'planmap_v1';
 const WD = ['月','火','水','木','金','土','日'];
 const DEF_MIN = 30;
@@ -605,7 +607,7 @@ function renderDay(){
         const cls = ['task']; if(t.done) cls.push('is-done'); if(t.star) cls.push('is-star');
         return '<div class="'+cls.join(' ')+'" data-i="'+i+'">'
           + '<button class="check" data-act="done" aria-label="できた"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button>'
-          + '<div class="body"><div class="meta">'
+          + '<div class="body" data-act="edit"><div class="meta">'
           + (t.time ? '<span class="tm num">'+esc(t.time)+'</span>' : '')
           + '<button class="dur num" data-act="dur">'+fmtHM(t.min)+'</button></div>'
           + '<div class="txt">'+esc(t.text)+'</div></div>'
@@ -1007,8 +1009,35 @@ $('#tasks').onclick = e => {
   else if(act === 'star'){ t.star = !t.star; if(t.star) t.done = true; }
   else if(act === 'del'){ if(!confirm('「'+t.text+'」を消しますか？')) return; d.tasks.splice(i,1); }
   else if(act === 'dur'){ openDurPicker(t); return; }
+  else if(act === 'edit'){ openTaskEditor(t); return; }
   renderDays(); renderDay(); renderTQC(); save();
 };
+function openTaskEditor(t){
+  const orig = t.text;
+  const sh = openSheet('<h2>やることを直す</h2>'
+    + '<div class="field"><div class="lab">やること</div><input type="text" id="edText" value="'+esc(t.text)+'" enterkeyhint="done"></div>'
+    + '<div class="field"><div class="lab">はじめる時こく（なくてもOK）</div><input type="time" class="wide" id="edTime" value="'+esc(t.time||'')+'"></div>'
+    + '<label class="chk" style="padding:4px 2px 10px"><input type="checkbox" id="edAll">今週の、同じ名前のやること全部を同じ文字に直す</label>'
+    + '<button class="bigbtn" id="edOK">きめる</button>');
+  const inp = sh.querySelector('#edText');
+  setTimeout(()=>{ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }, 50);
+  const done = ()=>{
+    const txt = inp.value.trim(); if(!txt){ toast('やることを書いてください'); return; }
+    const tm = sh.querySelector('#edTime').value || '';
+    if(sh.querySelector('#edAll').checked){
+      let n = 0;
+      for(let i=0;i<7;i++){ const dd = dayRaw(S.cur, i); if(!dd) continue;
+        (dd.tasks||[]).forEach(x=>{ if(x.text === orig){ x.text = txt; n++; } }); }
+      t.time = tm;
+      toast(n+'件を直しました');
+    }else{ t.text = txt; t.time = tm; }
+    const d = dayOf(S.cur, S.day);
+    d.tasks.sort((a,b)=> a.time&&b.time ? (a.time<b.time?-1:a.time>b.time?1:0) : a.time?-1:b.time?1:0);
+    sh.remove(); renderDays(); renderDay(); renderTQC(); renderPast(); save();
+  };
+  sh.querySelector('#edOK').onclick = done;
+  inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); done(); } });
+}
 function openDurPicker(t){
   const cur = Math.max(0, Math.round(Number(t.min)||0));
   const h = Math.min(8, Math.floor(cur/60)), mm = Math.round((cur%60)/10)*10 % 60;
@@ -1164,7 +1193,8 @@ const SLIDES = [
   </div>
 </div>
 <p>おわったら左の<b>◯</b>を押します。押した分だけ「できた」の時間がふえます。<br>
-答えを見ずに<b>自力で全部とけるようになった</b>ものだけ、右の<b>★</b>を押します。</p>`,
+答えを見ずに<b>自力で全部とけるようになった</b>ものだけ、右の<b>★</b>を押します。<br>
+<b>やることの文字を押す</b>と、その日だけページ数などを書きなおせます。</p>`,
 
 `<span class="snum">⑤</span>
 <h3>TQCスコア</h3>

@@ -191,6 +191,17 @@ table.plan td[data-d]{cursor:pointer;}
 .rC, .sgbar i.rC{background:var(--rC);} .rD, .sgbar i.rD{background:var(--rD);} .rE, .sgbar i.rE{background:var(--rE);}
 .rF, .sgbar i.rF{background:var(--rF);}
 
+/* ==== AIに相談 ==== */
+.fld{margin-bottom:12px;} .fld:last-child{margin-bottom:0;}
+.fld label{display:block; font-size:13.5px; font-weight:700; color:var(--muted); margin-bottom:5px;}
+.fld input, .fld select, .fld textarea{width:100%; font-size:16px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink); line-height:1.5;}
+.fld textarea{resize:vertical;}
+.fld.two{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.calc{margin:12px 0 4px; display:flex; flex-direction:column; gap:6px; font-size:15px; line-height:1.7;}
+.calc .k{font-size:13px; font-weight:700; color:var(--accent); margin-bottom:2px;}
+.calc .ok{color:var(--accent); font-weight:700;}
+.calc .warn{color:var(--red); font-weight:700;}
+
 /* ==== 表（スプレッドシート風） ==== */
 .tscroll{overflow-x:auto; -webkit-overflow-scrolling:touch; background:var(--card); border:1px solid var(--line);
   border-radius:12px; box-shadow:var(--shadow); margin-bottom:12px;}
@@ -340,7 +351,7 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 
 <script src="data.js"></script>
 <script>
-const VER = 11;
+const VER = 12;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
 const EXTRA_MATH = ['nyumon_ia','nyumon_iib','kichart_ia','kichart_iib'];
@@ -349,10 +360,11 @@ let S = load();
 function load(){
   try{
     const o = JSON.parse(localStorage.getItem(KEY) || '{}');
-    return { theme: o.theme || '', hidden: o.hidden || {}, mark: o.mark || {}, vari: o.vari || {} };
-  }catch(e){ return { theme:'', hidden:{}, mark:{}, vari:{} }; }
+    return { theme: o.theme || '', hidden: o.hidden || {}, mark: o.mark || {}, vari: o.vari || {},
+             consult: Object.assign({ pace:'1', notes:'', ask:'', goal:{}, target:{} }, o.consult || {}) };
+  }catch(e){ return { theme:'', hidden:{}, mark:{}, vari:{}, consult:{ pace:'1', notes:'', ask:'', goal:{}, target:{} } }; }
 }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ theme: S.theme, hidden: S.hidden, mark: S.mark, vari: S.vari })); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ theme: S.theme, hidden: S.hidden, mark: S.mark, vari: S.vari, consult: S.consult })); }catch(e){} }
 
 /* ---------- データ ---------- */
 const BOOKS = {}; ROUTE.books.forEach(b => BOOKS[b.id] = b);
@@ -592,8 +604,134 @@ function viewTetsu(){
     + '<span class="tx"><b>数学の【最強プロンプト】</b><span>解説を読んでもわからないときにAIへ投げる文</span></span><span class="go">›</span></button>';
   h += '<button class="rowitem" onclick="openDoc(\'pro\')"><span class="no">国</span>'
     + '<span class="tx"><b>プロの思考（国語読解の鉄則）</b><span>『システム中学国語 論理入門編』より</span></span><span class="go">›</span></button>';
+  h += '<button class="rowitem" onclick="openConsultPick()"><span class="no">AI</span>'
+    + '<span class="tx"><b>AIに相談する</b><span>いまの状況・計画表・鉄則を1つの文にして、ChatGPTなどに貼れます</span></span><span class="go">›</span></button>';
   h += '</div>';
   return h;
+}
+
+/* ===== AIに相談する（状況・計画・鉄則を1つの文にまとめる） ===== */
+const AI_URL = 'https://chatgpt.com/';   // 塾のGPTsを公開したら、ここをそのURLにする
+function fmtDate(d){ return (d.getMonth()+1) + '月' + d.getDate() + '日'; }
+function today0(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
+function consultCalc(id){
+  const b = bookOf(id), v = variantOf(b, S.vari[id] || 0); if(!v) return null;
+  const tot = totalDays(v), mark = Math.min(S.mark[id] || 0, tot), rem = tot - mark;
+  const pace = Math.max(0.1, parseFloat(S.consult.pace) || 1);
+  const t0 = today0();
+  const finish = new Date(t0); finish.setDate(finish.getDate() + Math.ceil(rem / pace));
+  const out = { tot, mark, rem, pace, finish, pct: tot ? Math.round(mark / tot * 100) : 0 };
+  const ts = S.consult.target[id];
+  if(ts){
+    const t = new Date(ts + 'T00:00:00');
+    const cal = Math.round((t - t0) / 86400000);
+    out.target = t; out.cal = cal;
+    if(cal > 0){ out.need = rem / cal; out.late = Math.ceil(rem / pace) - cal; }
+  }
+  return out;
+}
+function calcHTML(id){
+  const c = consultCalc(id); if(!c) return '';
+  let h = '<div class="card calc"><div class="k">アプリの計算</div>';
+  if(!c.rem) return h + '<div>この問題集は終わっています 🎉</div></div>';
+  h += '<div>残り <b>'+c.rem+'日分</b>（いま '+c.mark+'日目 / 全'+c.tot+'日・'+c.pct+'%）</div>';
+  h += '<div>ふだんのペース <b>1日 '+c.pace+'日分</b> → 終わる見込み <b>'+fmtDate(c.finish)+'</b></div>';
+  if(c.target){
+    if(c.cal <= 0) h += '<div class="warn">目標の日が今日より前です。日づけを見直してください。</div>';
+    else{
+      h += '<div>目標 <b>'+fmtDate(c.target)+'</b> まで <b>'+c.cal+'日</b> → 必要なペース <b>1日 '+(Math.ceil(c.need*100)/100)+'日分</b></div>';
+      if(c.late <= 0) h += '<div class="ok">いまのペースで間に合います（'+(-c.late)+'日の余裕）</div>';
+      else h += '<div class="warn">いまのペースだと <b>'+c.late+'日</b> 足りません。1日 '+(Math.ceil(c.need*100)/100)+'日分に上げるか、目標日か範囲を見直す相談をしましょう</div>';
+    }
+  }
+  return h + '</div>';
+}
+function planLines(v, mark, limit){
+  const days = dayList(v).filter(x => x.d > mark);
+  const lines = []; let cur = null;
+  days.forEach(x => {
+    const lab = headLabel(v.secs[x.si], x.hi, x.si);
+    if(cur && cur.t === x.t && cur.lab === lab && cur.b === x.d - 1) cur.b = x.d;
+    else { cur = { a:x.d, b:x.d, t:x.t, lab }; lines.push(cur); }
+  });
+  const txt = lines.map(l => (l.a === l.b ? l.a+'日目' : l.a+'〜'+l.b+'日目') + '：' + l.t + '（' + l.lab + '）');
+  if(txt.length > limit){ const cut = txt.slice(0, limit); cut.push('…（このあとも同じ形で続く。全'+txt.length+'区切り）'); return cut; }
+  return txt;
+}
+function buildConsult(id){
+  const b = bookOf(id), v = variantOf(b, S.vari[id] || 0), c = consultCalc(id);
+  const meta = bookMeta(id);
+  const cur = c.mark ? dayList(v).find(x => x.d === c.mark) : null;
+  const L = [];
+  L.push('あなたは大学受験の学習コーチです。私は塾で配られている「高校ルート」という計画に沿って勉強しています。以下の状況をふまえて、相談に答えてください。', '');
+  L.push('■ いま取り組んでいる問題集');
+  L.push('・教科：' + b.subject);
+  L.push('・問題集：' + shortTitle(b.title) + '（全' + c.tot + '日の計画' + (meta && meta.rounds && meta.rounds !== 'ー' ? '・' + meta.rounds : '') + (b.variants.length > 1 ? '・' + v.name : '') + '）');
+  L.push('・いまここ：' + (c.mark ? c.mark + '日目（' + c.pct + '%）' + (cur ? '／' + headLabel(v.secs[cur.si], cur.hi, cur.si) + ' ' + cur.t : '') : 'まだ始めていない'));
+  L.push('・残り：' + c.rem + '日分', '');
+  L.push('■ 目標とペース');
+  const goal = (S.consult.goal[id] || '').trim() || '最後まで';
+  if(c.target && c.cal > 0){
+    L.push('・' + c.target.getFullYear() + '年' + fmtDate(c.target) + 'までに「' + goal + '」を終わらせたい（目標まで ' + c.cal + '日）');
+    L.push('・必要なペース：1日 ' + (Math.ceil(c.need*100)/100) + '日分');
+  }else L.push('・期限は決めていない（目標：' + goal + '）');
+  L.push('・ふだんのペース：1日 ' + c.pace + '日分 → このままだと ' + c.finish.getFullYear() + '年' + fmtDate(c.finish) + ' に終わる見込み' + (c.target && c.cal > 0 ? (c.late <= 0 ? '（間に合う）' : '（目標より ' + c.late + '日おそい）') : ''), '');
+  L.push('■ 進める上での課題（本人の言葉）', (S.consult.notes || '').trim() || '（とくになし）', '');
+  L.push('■ 相談したいこと', (S.consult.ask || '').trim() || '（上の状況で、明日から何をどう進めればいいか）', '');
+  L.push('■ この問題集の計画（残りの部分。「日目：やる範囲（周目）」）');
+  planLines(v, c.mark, 40).forEach(x => L.push(x)); L.push('');
+  const tt = b.tetsoku && ROUTE.tetsoku[b.tetsoku];
+  if(tt){ L.push('■ この問題集の鉄則（必ず守るやり方）'); tt.items.forEach(it => L.push(fmtItem(it.t).replace(/\n/g, ' ') + (it.time ? '　目安 ' + it.time.replace(/\s+/g,' ') : ''))); L.push(''); }
+  L.push('■ 全体鉄則（すべての問題集に共通）'); ROUTE.tetsoku.overall.items.forEach(it => L.push(fmtItem(it.t).replace(/\n/g, ' '))); L.push('');
+  L.push('■ お願い');
+  L.push('1. 上の計画と鉄則からズレない範囲で、具体的に答えてください');
+  L.push('2. 課題に対しては「明日から何をどう変えるか」を1〜3個にしぼって提案してください');
+  L.push('3. 必要なら計画の直し方（1日の量、復習テストの入れ方、止まったときの立て直し方）も示してください');
+  L.push('4. 中高生に分かる言葉で、短く');
+  return L.join('\n');
+}
+let consultId = null;
+function openConsult(id){
+  consultId = id;
+  const b = bookOf(id), v = variantOf(b, S.vari[id] || 0); if(!v){ toast('この教材には計画表がありません'); return; }
+  const C = S.consult;
+  let h = '<div class="lead">アプリが「いまの状況・残りの計画・鉄則」を1つの文にまとめます。コピーして、ChatGPTなどのAIに貼りつけて送ってください。</div>';
+  h += '<div class="card"><div class="fld"><label>ふだんのペース（1日にどれくらい進める？）</label><select id="cPace" onchange="consultInput()">'
+    + ['0.5','1','1.5','2','3'].map(x => '<option value="'+x+'"'+(C.pace === x ? ' selected' : '')+'>1日 '+x+'日分'+(x === '1' ? '（計画どおり）' : '')+'</option>').join('') + '</select></div>';
+  h += '<div class="fld two"><div><label>いつまでに</label><input type="date" id="cDate" value="'+esc(C.target[id] || '')+'" onchange="consultInput()"></div>'
+    + '<div><label>どこまで</label><input type="text" id="cGoal" placeholder="最後まで" value="'+esc(C.goal[id] || '')+'" oninput="consultInput()"></div></div>';
+  h += '<div class="fld"><label>進める上での課題（自由に）</label><textarea id="cNotes" rows="3" placeholder="例：平日は学校が遅くて1日分できない。復習テストで半分わすれている" oninput="consultInput()">'+esc(C.notes)+'</textarea></div>';
+  h += '<div class="fld"><label>相談したいこと（自由に）</label><textarea id="cAsk" rows="2" placeholder="例：このペースで間に合う？ 遅れをどう取り戻す？" oninput="consultInput()">'+esc(C.ask)+'</textarea></div></div>';
+  h += '<div id="cCalc">' + calcHTML(id) + '</div>';
+  h += '<div class="btnrow"><button class="btn primary" onclick="copyConsult()">相談する文をコピー</button></div>';
+  h += '<div class="btnrow" style="margin-top:8px"><a class="btn" href="'+AI_URL+'" target="_blank" rel="noopener" style="text-decoration:none">ChatGPTを開く</a></div>';
+  h += '<div class="lead" style="padding-top:10px">コピーした文には、この問題集の残りの計画表と鉄則がそのまま入っています。AIはそれを読んだうえで答えるので、「計画を知っているAI」に相談できます。</div>';
+  h += '<div class="sec-title">送る文の中身（確認用）</div><div class="card"><div class="doc" id="cPreview" style="font-size:13.5px; color:var(--muted); max-height:260px; overflow:auto">'+esc(buildConsult(id))+'</div></div>';
+  openSheet('AIに相談する', h);
+}
+function consultInput(){
+  const id = consultId; if(!id) return;
+  const g = x => document.getElementById(x);
+  S.consult.pace = g('cPace').value; S.consult.notes = g('cNotes').value; S.consult.ask = g('cAsk').value;
+  S.consult.target[id] = g('cDate').value; S.consult.goal[id] = g('cGoal').value;
+  save();
+  g('cCalc').innerHTML = calcHTML(id);
+  g('cPreview').textContent = buildConsult(id);
+}
+function copyConsult(){
+  const t = buildConsult(consultId);
+  const done = () => toast('コピーしました。AIに貼りつけて送ってください');
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => fallbackCopy(t)); else fallbackCopy(t);
+}
+function openConsultPick(){
+  let h = '<div class="lead">相談したい問題集をえらんでください。</div>';
+  pickGroups().forEach(g => {
+    h += '<div style="margin:14px 2px 8px"><span class="chip '+g.cls+'">'+esc(g.subject)+'</span></div><div class="picks">';
+    g.ids.forEach(id => { const bk = bookOf(id), mk = S.mark[id] || 0;
+      h += '<button class="pick'+(mk ? ' marked' : '')+'" onclick="openConsult(\''+id+'\')"><b>'+esc(shortTitle(bk.title))+'</b>'+(mk ? '<span class="mk">いまここ '+mk+'日目</span>' : '')+'</button>'; });
+    h += '</div>';
+  });
+  openSheet('AIに相談する', h);
 }
 
 /* ===== 設定 ===== */
@@ -700,6 +838,7 @@ function renderSheetBook(id){
     h += '<div class="lead"><b>1マス＝1日</b>です。<b>きょう終わった日のマス</b>をタップすると「いまここ」の印がつきます。'
       + '次の日からは「1日すすむ」を押すだけでOK。下の表の日をタップしても置けます。印はこの端末にだけ保存されます。</div>';
     h += '<div id="board">' + boardHTML(id, v) + '</div>';
+    h += '<div class="btnrow" style="margin:2px 0 6px"><button class="btn" onclick="openConsult(\''+id+'\')">🤖 AIに相談する（いまの状況・計画・鉄則つき）</button></div>';
     h += '<div class="sec-title" style="margin-top:6px">日ごとの計画表</div>';
     h += '<div class="lead">日づけではなく「1日目、2日目…」で進みます。できない日があってもズレません。<br>表は横にスワイプすると続きが見られます。</div>';
     if(v.secs.length >= 3){
@@ -1032,6 +1171,9 @@ const SLIDES = [
   { step:'スコア', t:'進み具合が<br>スコアとランクになる', art:A.score,
     b:'<p>「スコア」タブで、いまここ の印をもとに <b class="hl">100点満点のスコア</b> と <b class="hl">S〜Fのランク</b> が出ます。</p>'
       + '<p class="sub">国語・数学・英語の3教科で判定します。すでに終わった問題集は「終わった」を押してください。</p>' },
+  { step:'AIに相談', t:'計画を知っているAIに<br>相談できる', art:A.tools,
+    b:'<p>問題集の中の「<b class="hl">AIに相談する</b>」を押すと、いまここ・残りの計画表・鉄則・目標日までの必要ペースを1つの文にまとめます。</p>'
+      + '<p class="sub">コピーしてChatGPTなどに貼るだけ。「このペースで間に合う？」「遅れをどう取り戻す？」を、計画を知った状態で答えてくれます。</p>' },
   { step:'さいごに', t:'ホーム画面に置く／<br>新しくなったら', art:A.home,
     b:'<p><b class="hl">ホーム画面に追加</b>：iPhoneは共有ボタン →「ホーム画面に追加」。アプリのように開けます。</p>'
       + '<p><b class="hl">更新</b>：オレンジの帯が出たらタップすると最新になります。設定の「更新があるか調べる」でも確認できます。</p>' }

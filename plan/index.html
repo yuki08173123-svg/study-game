@@ -297,6 +297,33 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 .sheet ul{margin:4px 0 0 18px; font-size:14px; line-height:1.85;}
 .sheet .close{width:100%; margin-top:14px; background:var(--chip); border-radius:14px; padding:13px; font-weight:900;}
 .sheet img.shot{width:100%; border-radius:14px; border:1px solid var(--line); box-shadow:var(--shadow); display:block;}
+/* 目標（長い計画） */
+.goal{background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:14px; margin-bottom:12px;}
+.goal .gh{display:flex; align-items:center; gap:8px;}
+.goal .gh b{font-size:17px; font-weight:900; flex:1; min-width:0; word-break:break-word;}
+.goal .gh .ge{font-size:11px; font-weight:900; color:var(--muted); background:var(--chip); border-radius:999px; padding:5px 11px; flex:none;}
+.goal .gd{display:flex; align-items:baseline; gap:10px; margin-top:3px;}
+.goal .gd .day{font-size:13px; font-weight:900; color:var(--muted);}
+.goal .gd .left{font-size:16px; font-weight:900; color:var(--accent); margin-left:auto;}
+.goal .gd .left.soon{color:var(--new);}
+.goal .gd .left.past{color:var(--muted);}
+.gbar{height:8px; border-radius:4px; background:var(--chip); margin:10px 0 4px; overflow:hidden;}
+.gbar i{display:block; height:100%; background:var(--done); border-radius:4px;}
+.gcount{font-size:11px; font-weight:900; color:var(--muted); text-align:right;}
+.gmonth{font-size:12px; font-weight:900; color:var(--accent); margin:12px 0 2px; letter-spacing:.04em;}
+.gitem{display:flex; align-items:flex-start; gap:9px; padding:9px 2px;}
+.gitem + .gitem{border-top:1px solid var(--line);}
+.gitem .ck{width:26px; height:26px; border-radius:50%; border:2.5px solid var(--line); flex:none; display:grid; place-items:center; background:var(--card); margin-top:1px;}
+.gitem .ck svg{width:14px; height:14px; stroke:#fff; fill:none; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; opacity:0;}
+.gitem.did .ck{background:var(--done); border-color:var(--done);}
+.gitem.did .ck svg{opacity:1;}
+.gitem .gt{flex:1; font-size:15px; font-weight:500; min-width:0; word-break:break-word; text-decoration:underline dotted var(--line); text-decoration-thickness:1.5px; text-underline-offset:4px;}
+.gitem.did .gt{color:var(--muted); text-decoration:line-through; text-decoration-thickness:2px;}
+.gitem .tow{font-size:11px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:5px 9px; flex:none;}
+.gitem .del2{width:24px; display:grid; place-items:center; flex:none;}
+.gitem .del2 svg{width:14px; height:14px; stroke:var(--muted); fill:none; stroke-width:2.2; stroke-linecap:round;}
+.gadd{width:100%; margin-top:8px; background:var(--chip); border-radius:12px; padding:10px; font-size:13.5px; font-weight:900; color:var(--accent);}
+
 /* 使い方スライド */
 .slides{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
 .slides::-webkit-scrollbar{display:none;}
@@ -335,7 +362,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v20</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v21</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -434,6 +461,15 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
     <button class="subbtn" id="btnCopyPrev">先週のやることをコピーする</button>
   </section>
 
+  <section id="tabGoal" class="hidden">
+    <div class="autonote" style="margin-top:12px">
+      <svg viewBox="0 0 24 24"><path d="M4 21V4.5M4 5h13l-2.2 3.6L17 12H4"/></svg>
+      <span><b>長い計画を書くところです。</b>次のテストまで、入試まで、といった目標を作って、やることを月ごとに並べます。「今週へ」を押すと、今週の計画に入れられます。</span>
+    </div>
+    <div id="goals"></div>
+    <button class="bigbtn" id="btnGoalAdd">＋ 目標をふやす</button>
+  </section>
+
   <section id="tabHist" class="hidden">
     <div class="card" style="margin-top:10px; padding:0">
       <div class="sec-label" style="padding:13px 14px 0">TQCスコアの推移</div>
@@ -506,7 +542,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v20</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v21</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -515,6 +551,9 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
   <button class="on" data-tab="Plan">
     <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="m8.5 14.5 2 2 4-4.5"/></svg><span>今週</span>
     <i class="dot hidden" id="tabDot"></i>
+  </button>
+  <button data-tab="Goal">
+    <svg viewBox="0 0 24 24"><path d="M4.5 21V4M4.5 4.5h13l-2.4 3.8 2.4 3.7h-13"/></svg><span>目標</span>
   </button>
   <button data-tab="Hist">
     <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>記録</span>
@@ -528,7 +567,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 20;
+const VER = 21;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -769,7 +808,7 @@ function renderTQC(){
   + '</div>'
   + '<div class="formula">'+fmtH(r.T)+' × '+r.Q+' × '+r.C+' ÷ 1000 ＝ '+r.score+'</div>';
 }
-function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderDay(); renderTQC(); renderPast(); save(); }
+function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderDay(); renderTQC(); renderPast(); renderGoals(); save(); }
 
 function renderHist(){
   const keys = Object.keys(S.weeks).filter(k=>{ const r = tqcOf(k); return r.all>0; }).sort();
@@ -1115,6 +1154,132 @@ $('#btnWeekView').onclick = ()=>openImageSheet(drawWeek(), '1週間のまとめ'
 $('#btnTimeline').onclick = ()=>openImageSheet(drawTimeline(), '時間わり（10分きざみ）', '計画マップ_時間わり',
   '開始時こくを書いたやることが、時間の位置に出ます。緑＝できた、青＝これから。時こくが無いものは下に並びます。');
 
+/* ---------- 目標（長い計画） ---------- */
+function goalsOf(){ if(!Array.isArray(S.goals)) S.goals = []; return S.goals; }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function daysLeftText(ds){
+  if(!ds) return { txt:'', cls:'' };
+  const t = new Date(); const today = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  const n = Math.round((parseISO(ds) - today) / 86400000);
+  if(n < 0) return { txt:(-n)+'日すぎました', cls:'past' };
+  if(n === 0) return { txt:'今日です', cls:'soon' };
+  return { txt:'あと'+n+'日', cls: n <= 14 ? 'soon' : '' };
+}
+function monthLabel(ym){
+  if(!ym) return 'いつでも';
+  const a = ym.split('-'); const y = +a[0], mo = +a[1];
+  return (y === new Date().getFullYear() ? '' : y+'年') + mo + '月';
+}
+function renderGoals(){
+  const gs = goalsOf();
+  if(!gs.length){
+    $('#goals').innerHTML = '<div class="empty" style="padding:26px 8px"><b>目標がまだありません</b>「次のテストまで」「入試まで」など、<br>長いはんいの計画を作れます<span class="down">↓</span></div>';
+    return;
+  }
+  $('#goals').innerHTML = gs.map(g=>{
+    const items = (g.items||[]).slice();
+    const done = items.filter(x=>x.done).length;
+    const pct = items.length ? Math.round(done/items.length*100) : 0;
+    const dl = daysLeftText(g.date);
+    const groups = {};
+    items.forEach(x=>{ const k = x.due || ''; (groups[k] = groups[k] || []).push(x); });
+    const keys = Object.keys(groups).sort((a,b)=> a===''?1 : b===''?-1 : (a<b?-1:1));
+    const body = keys.map(k=>'<div class="gmonth">'+esc(monthLabel(k))+'</div>'
+      + groups[k].map(x=>'<div class="gitem'+(x.done?' did':'')+'" data-g="'+g.id+'" data-i="'+x.id+'">'
+        + '<button class="ck" data-act="gdone" aria-label="できた"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button>'
+        + '<span class="gt" data-act="gedit">'+esc(x.text)+'</span>'
+        + '<button class="tow" data-act="gweek">今週へ</button>'
+        + '<button class="del2" data-act="gdel" aria-label="消す"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>'
+        + '</div>').join('')).join('');
+    return '<div class="goal" data-g="'+g.id+'">'
+      + '<div class="gh"><b>'+esc(g.name)+'</b><button class="ge" data-act="gset">直す</button></div>'
+      + '<div class="gd"><span class="day">'+(g.date ? esc(md(parseISO(g.date)))+'（'+WD[(parseISO(g.date).getDay()+6)%7]+'）まで' : '日づけなし')+'</span>'
+      + '<span class="left '+dl.cls+'">'+esc(dl.txt)+'</span></div>'
+      + '<div class="gbar"><i style="width:'+pct+'%"></i></div>'
+      + '<div class="gcount">'+done+'/'+items.length+' できた</div>'
+      + body
+      + '<button class="gadd" data-act="gitemadd">＋ やることをふやす</button></div>';
+  }).join('');
+}
+function monthOptions(sel){
+  const now = new Date(); let o = '<option value="">いつでも</option>';
+  for(let i=0;i<18;i++){
+    const d = new Date(now.getFullYear(), now.getMonth()+i, 1);
+    const v = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    o += '<option value="'+v+'"'+(v===sel?' selected':'')+'>'+monthLabel(v)+'</option>';
+  }
+  return o;
+}
+function openGoalEditor(g){
+  const isNew = !g;
+  const sh = openSheet('<h2>'+(isNew?'目標をふやす':'目標を直す')+'</h2>'
+    + '<div class="field"><div class="lab">目標（何にむけて？）</div><input type="text" id="goName" value="'+esc(g?g.name:'')+'" placeholder="例）2学期の中間テスト" enterkeyhint="done"></div>'
+    + '<div class="field"><div class="lab">いつまで？</div><input type="date" id="goDate" class="wide" style="width:170px" value="'+esc(g?(g.date||''):'')+'"></div>'
+    + '<button class="bigbtn" id="goOK">きめる</button>'
+    + (isNew ? '' : '<button class="subbtn" id="goDel">この目標を消す</button>'));
+  const inp = sh.querySelector('#goName');
+  setTimeout(()=>inp.focus(), 60);
+  sh.querySelector('#goOK').onclick = ()=>{
+    const nm = inp.value.trim(); if(!nm){ toast('目標を書いてください'); return; }
+    const dt = sh.querySelector('#goDate').value || '';
+    if(isNew) goalsOf().push({ id:uid(), name:nm, date:dt, items:[] });
+    else { g.name = nm; g.date = dt; }
+    sh.remove(); renderGoals(); save();
+  };
+  if(!isNew) sh.querySelector('#goDel').onclick = ()=>{
+    if(!confirm('「'+g.name+'」を消しますか？')) return;
+    S.goals = goalsOf().filter(x=>x.id !== g.id);
+    sh.remove(); renderGoals(); save();
+  };
+}
+function openItemEditor(g, it){
+  const isNew = !it;
+  const sh = openSheet('<h2>'+(isNew?'やることをふやす':'やることを直す')+'</h2>'
+    + '<p style="color:var(--muted); font-size:12.5px; margin-bottom:8px">'+esc(g.name)+'</p>'
+    + '<div class="field"><div class="lab">やること</div><input type="text" id="itText" value="'+esc(it?it.text:'')+'" placeholder="例）数学ワーク p1〜p60 を1周" enterkeyhint="done"></div>'
+    + '<div class="field"><div class="lab">いつまでに</div><div class="picker" style="padding:6px 0 2px; justify-content:flex-start"><select id="itDue">'+monthOptions(it?(it.due||''):'')+'</select></div></div>'
+    + '<button class="bigbtn" id="itOK">きめる</button>');
+  const inp = sh.querySelector('#itText');
+  setTimeout(()=>inp.focus(), 60);
+  const ok = ()=>{
+    const tx = inp.value.trim(); if(!tx){ toast('やることを書いてください'); return; }
+    const due = sh.querySelector('#itDue').value;
+    if(isNew){ g.items = g.items || []; g.items.push({ id:uid(), text:tx, due:due, done:false }); }
+    else { it.text = tx; it.due = due; }
+    sh.remove(); renderGoals(); save();
+  };
+  sh.querySelector('#itOK').onclick = ok;
+  inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); ok(); } });
+}
+function openToWeek(it){
+  const m = parseISO(S.cur);
+  const chips = WD.map((w,i)=>'<button data-i="'+i+'">'+w+'<br><span style="font-size:11px">'+md(addDays(m,i))+'</span></button>').join('');
+  const sh = openSheet('<h2>今週のどの日に入れますか？</h2>'
+    + '<p style="color:var(--muted); font-size:12.5px; margin-bottom:8px">'+esc(it.text)+'</p>'
+    + '<div class="mchips" id="toDays">'+chips+'</div>');
+  sh.querySelector('#toDays').onclick = e => {
+    const b = e.target.closest('button'); if(!b) return;
+    const i = +b.dataset.i, d = dayOf(S.cur, i);
+    d.tasks.push({ time:'', text:it.text, min:S.defMin, done:false, star:false, note:'' });
+    histAdd(it.text); sh.remove(); renderAll();
+    toast(md(addDays(m,i))+'（'+WD[i]+'）に入れました');
+  };
+}
+$('#goals').onclick = e => {
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  const act = b.dataset.act;
+  const gEl = e.target.closest('.goal'), g = goalsOf().find(x=>x.id === gEl.dataset.g); if(!g) return;
+  if(act === 'gset'){ openGoalEditor(g); return; }
+  if(act === 'gitemadd'){ openItemEditor(g, null); return; }
+  const iEl = e.target.closest('.gitem'); if(!iEl) return;
+  const it = (g.items||[]).find(x=>x.id === iEl.dataset.i); if(!it) return;
+  if(act === 'gdone'){ it.done = !it.done; renderGoals(); save(); }
+  else if(act === 'gedit'){ openItemEditor(g, it); }
+  else if(act === 'gweek'){ openToWeek(it); }
+  else if(act === 'gdel'){ if(!confirm('「'+it.text+'」を消しますか？')) return; g.items = g.items.filter(x=>x.id !== it.id); renderGoals(); save(); }
+};
+$('#btnGoalAdd').onclick = ()=>openGoalEditor(null);
+
 /* ---------- 時間わり（10分きざみのタイムテーブル） ---------- */
 function drawTimeline(){
   const W = 1080, PAD = 30, F = "'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif";
@@ -1310,9 +1475,10 @@ $('#btnCopyPrev').onclick = ()=>{
 document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.onclick = ()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('on', x===b));
-    ['Plan','Hist','Set'].forEach(t=>$('#tab'+t).classList.toggle('hidden', t !== b.dataset.tab));
+    ['Plan','Goal','Hist','Set'].forEach(t=>$('#tab'+t).classList.toggle('hidden', t !== b.dataset.tab));
     $('#weekbar').classList.toggle('hidden', b.dataset.tab !== 'Plan');
     if(b.dataset.tab === 'Hist') renderHist();
+    if(b.dataset.tab === 'Goal') renderGoals();
   };
 });
 $('#histList').onclick = e => {
@@ -1486,6 +1652,22 @@ const SLIDES = [
 スクリーンショットを撮るか、「画像を保存する」で保存して、提出に使えます。</p>`,
 
 `<span class="snum">⑦</span>
+<h3>長い計画（目標）</h3>
+<div class="shot2">
+  <div class="goal" style="margin:0">
+    <div class="gh"><b>2学期の中間テスト</b><span class="ge">直す</span></div>
+    <div class="gd"><span class="day">10/15（木）まで</span><span class="left">あと43日</span></div>
+    <div class="gbar"><i style="width:40%"></i></div>
+    <div class="gcount">2/5 できた</div>
+    <div class="gmonth">9月</div>
+    <div class="gitem did"><span class="ck"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span><span class="gt">数学ワーク p1〜60 を1周</span><span class="tow">今週へ</span></div>
+    <div class="gitem"><span class="ck"></span><span class="gt">英単語 1〜500 をおぼえる</span><span class="tow">今週へ</span></div>
+  </div>
+</div>
+<p>下の<b>「目標」</b>タブでは、次のテストや入試など<b>長いはんいの計画</b>を書けます。<br>
+やることは<b>月ごと</b >にならびます。<b>「今週へ」</b>を押すと、そのまま今週の計画に入ります。</p>`,
+
+`<span class="snum">⑧</span>
 <h3>日曜のお知らせと、カウントダウン</h3>
 <div class="shot2">
   <div class="startcd due">

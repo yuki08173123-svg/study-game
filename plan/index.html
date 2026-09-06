@@ -362,7 +362,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v21</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v22</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -542,7 +542,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v21</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v22</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -567,7 +567,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 21;
+const VER = 22;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1296,7 +1296,7 @@ function drawTimeline(){
     days.push({ date:addDays(m,i), s:sumDay(d), timed, free });
   }
   hi = Math.min(hi, 24*60+6*60); // 深夜までは30:00で打ち切り
-  const ROW = 9;                 // 10分 = 9px
+  const ROW = 10;                // 10分 = 10px
   const rows = (hi-lo)/10;
   const GUT = 84, HEAD = 108, DH = 74;  // 左の時刻・見出し・曜日ヘッダ
   const maxFree = Math.max(0, ...days.map(x=>x.free.length));
@@ -1342,19 +1342,34 @@ function drawTimeline(){
   }
   for(let i=0;i<=7;i++){ const x = gx + i*colW; g.strokeStyle=LINE2; g.lineWidth=1.5; g.beginPath(); g.moveTo(x+.5, gy); g.lineTo(x+.5, gy+rows*ROW); g.stroke(); }
 
-  // ブロック
+  // ブロック（同じ時間に重なるものは横に分ける）
   days.forEach((dd,i)=>{
-    const x = gx + i*colW + 3;
-    dd.timed.forEach(o=>{
+    const arr = dd.timed.slice().sort((a,b)=> a.st-b.st || a.en-b.en);
+    let grp = [], grpEnd = -1;
+    const flush = ()=>{ grp.forEach((o,k)=>{ o.col = k; o.cols = grp.length; }); grp = []; grpEnd = -1; };
+    arr.forEach(o=>{ if(grp.length && o.st >= grpEnd) flush(); grp.push(o); grpEnd = Math.max(grpEnd, o.en); });
+    flush();
+
+    arr.forEach(o=>{
+      const cols = o.cols || 1, cw = (colW-6)/cols;
+      const x = gx + i*colW + 3 + (o.col||0)*cw;
       const y = gy + (o.st-lo)/10*ROW, h = Math.max(ROW, (o.en-o.st)/10*ROW);
-      if(o.t.done){ g.fillStyle='rgba(18,160,106,.88)'; rr(x, y+1, colW-6, h-2, 6); g.fill(); }
-      else { g.fillStyle='#DCE8FB'; rr(x, y+1, colW-6, h-2, 6); g.fill(); g.strokeStyle=ACC; g.lineWidth=1.5; rr(x, y+1, colW-6, h-2, 6); g.stroke(); }
-      if(h >= 20){
-        g.fillStyle = o.t.done ? '#fff' : INK; g.font='700 13px '+F; g.textAlign='left';
-        const label = (o.t.star?'★':'') + o.t.text + (o.t.note?' → '+o.t.note:'');
-        g.fillText(clip(label, colW-16), x+6, y+15);
-        if(h >= 38){ g.fillStyle = o.t.done ? 'rgba(255,255,255,.85)' : MUT; g.font='700 11px '+F;
-          g.fillText(o.t.time+'〜 '+fmtHM(o.en-o.st), x+6, y+31); }
+      const w = cw - (cols > 1 ? 2 : 0);
+      if(o.t.done){ g.fillStyle='rgba(18,160,106,.88)'; rr(x, y+1, w, h-2, 6); g.fill(); }
+      else { g.fillStyle='#DCE8FB'; rr(x, y+1, w, h-2, 6); g.fill(); g.strokeStyle=ACC; g.lineWidth=1.5; rr(x, y+1, w, h-2, 6); g.stroke(); }
+      const label = (o.t.star?'★':'') + o.t.text + (o.t.note?' → '+o.t.note:'');
+      g.fillStyle = o.t.done ? '#fff' : INK; g.textAlign='left';
+      if(h >= 24){
+        g.font='700 13px '+F;
+        g.fillText(clip(label, w-11), x+6, y+16);
+        if(h >= 40){ g.fillStyle = o.t.done ? 'rgba(255,255,255,.85)' : MUT; g.font='700 11px '+F;
+          g.fillText(o.t.time+'〜 '+fmtHM(o.en-o.st), x+6, y+32); }
+      }else if(h >= 16){
+        g.font='700 11px '+F;
+        g.fillText(clip(label, w-10), x+5, y+h/2+4);
+      }else{
+        g.font='700 9.5px '+F;
+        g.fillText(clip(label, w-8), x+4, y+h/2+3.5);
       }
     });
   });

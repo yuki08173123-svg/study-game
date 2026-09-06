@@ -367,7 +367,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v23</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v24</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -547,7 +547,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v23</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v24</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -572,7 +572,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 23;
+const VER = 24;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1131,15 +1131,27 @@ function drawWeek(){
 
   g.textAlign='center'; g.fillStyle=MUT; g.font='700 19px '+F;
   g.fillText('TQCスコア ＝ T × Q × C ÷ 1000（小数点は切りすて）', W/2, y+34);
+  g.textAlign='right'; g.fillStyle='#AEB9C8'; g.font='700 16px '+F;
+  g.fillText(stampText(), W-PAD, y+34);
   return cv;
 }
 
-function openImageSheet(cv, title, prefix, hint){
-  const url = cv.toDataURL('image/png');
+function stampText(){
+  const n = new Date();
+  return (n.getMonth()+1)+'/'+n.getDate()+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' 時点';
+}
+function openImageSheet(maker, title, prefix, hint){
+  let cv = maker();
   const sh = openSheet('<h2>'+title+'</h2>'
     + '<p style="color:var(--muted); font-size:12.5px; margin-bottom:10px">'+(hint||'スクリーンショットを撮るか、下のボタンで画像として保存できます。')+'</p>'
-    + '<img class="shot" src="'+url+'" alt="'+title+'">'
-    + '<button class="bigbtn" id="svImg">画像を保存する</button>');
+    + '<img class="shot" id="shotImg" src="'+cv.toDataURL('image/png')+'" alt="'+title+'">'
+    + '<button class="bigbtn" id="svImg">画像を保存する</button>'
+    + '<button class="subbtn" id="reImg">いまの内容で作り直す</button>');
+  sh.querySelector('#reImg').onclick = ()=>{
+    cv = maker();
+    sh.querySelector('#shotImg').src = cv.toDataURL('image/png');
+    toast('いまの内容で作り直しました');
+  };
   sh.querySelector('#svImg').onclick = ()=>{
     cv.toBlob(async b=>{
       if(!b) return;
@@ -1155,8 +1167,8 @@ function openImageSheet(cv, title, prefix, hint){
     }, 'image/png');
   };
 }
-$('#btnWeekView').onclick = ()=>openImageSheet(drawWeek(), '1週間のまとめ', '計画マップ');
-$('#btnTimeline').onclick = ()=>openImageSheet(drawTimeline(), '時間わり（10分きざみ）', '計画マップ_時間わり',
+$('#btnWeekView').onclick = ()=>openImageSheet(drawWeek, '1週間のまとめ', '計画マップ');
+$('#btnTimeline').onclick = ()=>openImageSheet(drawTimeline, '時間わり（10分きざみ）', '計画マップ_時間わり',
   '開始時こくを書いたやることが、時間の位置に出ます。緑＝できた、青＝これから。時こくが無いものは下に並びます。');
 
 /* ---------- 目標（長い計画） ---------- */
@@ -1416,6 +1428,8 @@ function drawTimeline(){
   }
   g.textAlign='center'; g.fillStyle=MUT; g.font='700 15px '+F;
   g.fillText('1マス＝10分　緑＝できた　青＝これから', W/2, H-18);
+  g.textAlign='right'; g.fillStyle='#AEB9C8'; g.font='700 14px '+F;
+  g.fillText(stampText(), W-PAD, H-18);
   return cv;
 }
 

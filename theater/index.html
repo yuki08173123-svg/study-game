@@ -564,7 +564,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 44;
+const VER = 45;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -2170,7 +2170,7 @@ function openPlay(id, push){
     $('#catch').classList.add('hidden');
     $('#ctrl').classList.add('hidden');
     $('#loomfr').classList.remove('hidden');
-    $('#loomfr').src = `https://www.loom.com/embed/${id.slice(5)}?hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true`;
+    $('#loomfr').src = loomUrl(id);
     return;
   }
   $('#loomfr').classList.add('hidden');
@@ -2352,6 +2352,52 @@ function openReview(id, n){
       $('#pv').scrollTop = 0; showCtrl();
     });
     $('#rvNo').onclick = closeSheet;
+  });
+}
+
+/* Loom の動画の URL。覚えている位置（prog.t）があれば、そこから始める。
+   Loom は ?t=秒 で開始位置を受けつける（実機で確認ずみ）。
+   Loom からは再生位置を教えてもらえないので、位置は生徒が自分で決める形。 */
+function loomUrl(id){
+  const st = Math.floor((prog[id] && prog[id].t) || 0);
+  return `https://www.loom.com/embed/${id.slice(5)}?hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true` +
+         (st > 0 ? `&t=${st}` : '');
+}
+function loomReload(id){
+  const f = $('#loomfr');
+  f.removeAttribute('src');
+  setTimeout(() => { f.src = loomUrl(id); }, 120);
+}
+function setLoomStart(id, sec){
+  const p = prog[id] || (prog[id] = { t:0, d:0 });
+  p.t = Math.max(0, Math.floor(sec)); p.last = now(); saveProg();
+}
+/* 「◯分から見る」を選ぶ */
+function askLoomStart(id, after){
+  const cur = Math.floor(((prog[id] && prog[id].t) || 0) / 60);
+  openSheet(`
+    <h3>何分から見る？</h3>
+    <div class="lead" style="margin:-4px 2px 10px;line-height:1.9">
+      止まってしまった場所の少し手前を選んでください。<br>
+      次にこの動画を開くときも、ここから始まります。</div>
+    <div class="pq" style="grid-template-columns:repeat(4,1fr)">
+      ${[5,10,15,20,30,45,60,90].map(m => `<button data-m="${m}">${m}分</button>`).join('')}
+    </div>
+    <div class="fld" style="margin-top:12px"><label>分で入力</label>
+      <input type="number" id="lsMin" inputmode="numeric" min="0" max="600" placeholder="例）12"></div>
+    <div class="acts" style="margin-top:14px">
+      <button class="btn" id="lsNo">やめる</button>
+      <button class="btn pri" id="lsOk">ここから見る</button>
+    </div>`, () => {
+    if(cur) $('#lsMin').value = cur;
+    $$('#shin .pq button').forEach(b => b.onclick = () => { $('#lsMin').value = b.dataset.m; });
+    $('#lsOk').onclick = () => {
+      const m = +($('#lsMin').value || 0);
+      if(!(m >= 0)) return toast('分を入れてください');
+      setLoomStart(id, m * 60); closeSheet(); after();
+      loomReload(id); toast(m ? `${m}分から再生します` : 'はじめから再生します');
+    };
+    $('#lsNo').onclick = closeSheet;
   });
 }
 
@@ -2587,15 +2633,23 @@ function drawBody(){
           <span><button class="oped" data-oi="${i}">書きなおす</button>
           <button class="opdel" data-oi="${i}">消す</button></span></div>
       </div>`).join('')}
-    ${isLoom(v.id) ? `<button class="btn" id="lreload" style="margin-top:9px">${ICO.loop({s:18})}
-      <span>読み込み直す</span></button>` : ''}
+    ${isLoom(v.id) ? `<div class="sec"><h2>止まってしまったら</h2></div>
+      <div class="lead" style="margin-top:-2px">${(prog[v.id] && prog[v.id].t)
+        ? `いまは <b>${Math.floor(prog[v.id].t / 60)}分</b> から始まる設定です。`
+        : 'この動画は、止まった場所を自動では覚えられません。'}</div>
+      <div class="acts" style="margin-top:10px">
+        <button class="btn" id="lstart">${ICO.f10({s:18})}<span>◯分から見る</span></button>
+        <button class="btn" id="lreload">${ICO.loop({s:18})}<span>読み込み直す</span></button>
+      </div>
+      ${(prog[v.id] && prog[v.id].t) ? `<button class="btn" id="lhead" style="margin-top:9px">はじめから見る</button>` : ''}` : ''}
     ${isLoom(v.id) ? `<div class="note" style="margin-top:14px">
       この動画は <b>Loom</b> という別のしくみで作られています。<br>
       Theater の倍速・つづきから・自動の回数カウントは使えません。速さは Loom の画面の中で変えられます。<br><br>
       <b>途中で止まってしまうとき</b><br>
-      上の「読み込み直す」を押してください。それでも同じところで止まる場合は、
-      電波のよいところでもう一度お試しください。Loom 側の読みこみが追いつかずに
-      止まることがあります（Theater 側では直せない部分です）。</div>` : ''}
+      止まった時間を見ておいて、上の「◯分から見る」でその少し手前を選んでください。
+      その位置から再生し直します。次に開くときも、そこから始まります。<br>
+      Loom 側の読みこみが追いつかずに止まることがあり、Theater 側では止まらないように
+      することができません。</div>` : ''}
     ${v.d ? `<div class="desc">${esc(v.d)}</div>` : ''}
     ${canReview(v.id) ? `<div class="sec"><h2>ふりかえり</h2></div>
       <div class="lead" style="margin-top:-2px">見出しを見て、その話を思い出せるか試せます。</div>
@@ -2619,11 +2673,9 @@ function drawBody(){
   };
   $('#fold').onclick = () => pickFolder(v.id, drawBody);
   $('#plan').onclick = () => askPlan(v.id, drawBody);
-  if($('#lreload')) $('#lreload').onclick = () => {
-    const f = $('#loomfr'), u = f.src;
-    f.removeAttribute('src');
-    setTimeout(() => { f.src = u; toast('読み込み直しました'); }, 120);
-  };
+  if($('#lreload')) $('#lreload').onclick = () => { loomReload(v.id); toast('読み込み直しました'); };
+  if($('#lstart'))  $('#lstart').onclick  = () => askLoomStart(v.id, drawBody);
+  if($('#lhead'))   $('#lhead').onclick   = () => { setLoomStart(v.id, 0); drawBody(); loomReload(v.id); toast('はじめから再生します'); };
   if($('#mark')) $('#mark').onclick = () => {
     let t = 0;
     try{ t = (player && playerReady) ? (player.getCurrentTime() || 0) : ((prog[v.id] || {}).t || 0); }

@@ -570,7 +570,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 46;
+const VER = 47;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -745,7 +745,7 @@ function delOut(id, i){
 }
 /* 見たけれど、まだアウトプットを書いていない動画。
    ノートを取ってから時間をおいて書く人が「どれがまだか」を探せるように */
-const needOut = v => seenN(v.id) > 0 && !outOf(v.id).length && !isLoom(v.id);
+const needOut = v => seenN(v.id) > 0 && !outOf(v.id).length;
 const needOutList = () => DATA.videos.filter(needOut)
   .sort((a,b) => ((prog[b.id] || {}).last || 0) - ((prog[a.id] || {}).last || 0));
 
@@ -862,7 +862,7 @@ function countView(id){
 const endZone = d => Math.max(0, d - Math.min(60, d * 0.1));
 /* いま見ている動画が 1回ぶんに届いたか調べる */
 function checkFull(atEnd){
-  if(!curId || isLoom(curId)) return;
+  if(!curId) return;
   const p = prog[curId]; if(!p || !p.d) return;
   const need = p.d * (atEnd ? 0.6 : FULL);
   if((p.w || 0) < need) return;
@@ -2358,10 +2358,7 @@ function openReview(id, n){
     <button class="btn" id="rvNo" style="margin-top:12px">とじる</button>`,
   () => {
     $$('#shin .rv').forEach(b => b.onclick = () => {
-      closeSheet();
-      const sec = +b.dataset.sec;
-      try{ player.seekTo(sec, true); player.playVideo(); }catch(e){}
-      $('#pv').scrollTop = 0; showCtrl();
+      closeSheet(); seekTo(+b.dataset.sec);
     });
     $('#rvNo').onclick = closeSheet;
   });
@@ -2371,12 +2368,75 @@ function openReview(id, n){
    Loom は ?t=秒 で開始位置を受けつける（実機で確認ずみ）。
    Loom からは再生位置を教えてもらえないので、位置は生徒が自分で決める形。 */
 function loomUrl(id){
-  const st = Math.floor((prog[id] && prog[id].t) || 0);
+  const st = Math.floor(startSecOf(vid(id) || { id }));
   return `https://www.loom.com/embed/${id.slice(5)}?hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true` +
          (st > 0 ? `&t=${st}` : '');
 }
+
+/* 動画の途中へ飛ぶ。YouTube でも Loom でも同じ呼び方でいけるようにする */
+function seekTo(sec){
+  if(isLoom(curId)){ loomSend('setCurrentTime', sec); loomSend('play'); }
+  else try{ player.seekTo(sec, true); player.playVideo(); }catch(e){}
+  $('#pv').scrollTop = 0; showCtrl();
+}
+
+/* ---------- Loom とのやりとり（player.js） ----------
+   Loom の埋め込みは player.js という決まりでメッセージを送ってくる。
+   play / pause / timeupdate / ended が取れるので、YouTube と同じように
+   「実際に流れた分」を数えて 回数・つづきから を出せる（実機で確認ずみ）。 */
+let loomLast = -1;
+function loomSend(method, value){
+  const w = $('#loomfr').contentWindow; if(!w) return;
+  try{
+    w.postMessage(JSON.stringify(Object.assign(
+      { context:'player.js', version:'0.0.11', method },
+      value !== undefined ? { value } : {})), 'https://www.loom.com');
+  }catch(e){}
+}
+function loomHello(){
+  loomLast = -1;
+  ['play','pause','ended','timeupdate'].forEach(ev => loomSend('addEventListener', ev));
+}
+addEventListener('message', e => {
+  if(String(e.origin).indexOf('loom.com') < 0) return;
+  if(!curId || !isLoom(curId)) return;
+  let d = e.data;
+  if(typeof d === 'string'){ try{ d = JSON.parse(d); }catch(x){ return; } }
+  if(!d || d.context !== 'player.js') return;
+
+  if(d.event === 'ready'){ loomHello(); return; }
+  if(d.event === 'play'){ started = true; loomLast = -1; return; }
+  if(d.event === 'pause'){ loomLast = -1; saveProg(); return; }
+  if(d.event === 'ended'){
+    loomLast = -1;
+    checkFull(true);
+    const p = prog[curId]; if(p){ p.t = 0; saveProg(); }
+    onEnded();
+    return;
+  }
+  if(d.event === 'timeupdate' && d.value){
+    const t = +d.value.seconds || 0, dur = +d.value.duration || 0;
+    if(!dur) return;
+    const p = prog[curId] || (prog[curId] = { t:0, d:0 });
+    p.d = dur; p.t = t; p.last = now();
+    /* 実際に流れた分だけ足す。とばした分は足さないので、飛ばしても回数にならない */
+    if(loomLast >= 0 && t > loomLast && t - loomLast < 2){
+      p.w = (p.w || 0) + (t - loomLast);
+      checkFull(false);
+    }
+    loomLast = t;
+    if(++loomSave % 20 === 0) saveProg();
+    drawLoomBar(t, dur);
+  }
+});
+let loomSave = 0;
+function drawLoomBar(t, d){
+  const el = $('#lprog'); if(!el) return;
+  el.style.width = Math.min(100, Math.round(t / d * 100)) + '%';
+}
 function loomReload(id){
   const f = $('#loomfr');
+  loomLast = -1;
   f.removeAttribute('src');
   setTimeout(() => { f.src = loomUrl(id); }, 120);
 }
@@ -2540,7 +2600,7 @@ function askMemo(id, sec){
 /* 長い動画の飛び先。目次があるときは目次にまかせる。
    20分以上のときだけ、5分ごと（30分以上なら10分ごと）に区切る */
 function jumpPoints(id){
-  if(isLoom(id) || chapOf(id).length) return [];
+  if(chapOf(id).length) return [];
   const d = (prog[id] && prog[id].d) || 0;
   if(d < 20 * 60) return [];
   const step = d >= 30 * 60 ? 600 : 300;
@@ -2673,15 +2733,15 @@ function drawBody(){
     </div>
     <button class="btn" id="plan" style="margin-top:9px">${ICO.book({s:18})}
       <span>${planOf(v.id) ? `${planLabel(planOf(v.id))} に見る（変える）` : 'いつ見るか決める'}</span></button>
-    ${isLoom(v.id) ? '' : `<button class="btn" id="mark" style="margin-top:9px">${ICO.plus({s:18})}
-      <span>いまの場面に付箋をつける</span></button>`}
+    <button class="btn" id="mark" style="margin-top:9px">${ICO.plus({s:18})}
+      <span>いまの場面に付箋をつける</span></button>
     ${marksOf(v.id).length ? `<div class="mks">${marksOf(v.id).map(m => `
         <div class="mkrow">
           <button class="t" data-jump="${m[0]}">${hhmm(m[0])}</button>
           <button class="m" data-memo="${m[0]}">${m[1] ? esc(m[1]) : '（ひとことを書く）'}</button>
           <button class="x" data-mkdel="${m[0]}">消す</button>
         </div>`).join('')}</div>` : ''}
-    ${isLoom(v.id) ? '' : `<div class="cnt3">
+    ${false ? '' : `<div class="cnt3">
       <div class="c1">${ICO.check({s:19})}<span>見た回数</span><b>${seenN(v.id)}</b><span>回</span></div>
       <div class="bar"><i style="width:${Math.round(fullPct(v.id)*100)}%"></i></div>
       <div class="c2">${fullMsg(v.id)}</div>
@@ -2697,22 +2757,17 @@ function drawBody(){
           <button class="opdel" data-oi="${i}">消す</button></span></div>
       </div>`).join('')}
     ${isLoom(v.id) ? `<div class="sec"><h2>止まってしまったら</h2></div>
-      <div class="lead" style="margin-top:-2px">${(prog[v.id] && prog[v.id].t)
-        ? `いまは <b>${Math.floor(prog[v.id].t / 60)}分</b> から始まる設定です。`
-        : 'この動画は、止まった場所を自動では覚えられません。'}</div>
+      <div class="lead" style="margin-top:-2px">読みこみが途切れて止まったときは、
+        「読み込み直す」で続きから入り直せます。それでも同じところで止まるときは
+        「◯分から見る」でその少し先を選んでください。</div>
       <div class="acts" style="margin-top:10px">
         <button class="btn" id="lstart">${ICO.f10({s:18})}<span>◯分から見る</span></button>
         <button class="btn" id="lreload">${ICO.loop({s:18})}<span>読み込み直す</span></button>
-      </div>
-      ${(prog[v.id] && prog[v.id].t) ? `<button class="btn" id="lhead" style="margin-top:9px">はじめから見る</button>` : ''}` : ''}
+      </div>` : ''}
     ${isLoom(v.id) ? `<div class="note" style="margin-top:14px">
       この動画は <b>Loom</b> という別のしくみで作られています。<br>
-      Theater の倍速・つづきから・自動の回数カウントは使えません。速さは Loom の画面の中で変えられます。<br><br>
-      <b>途中で止まってしまうとき</b><br>
-      止まった時間を見ておいて、上の「◯分から見る」でその少し手前を選んでください。
-      その位置から再生し直します。次に開くときも、そこから始まります。<br>
-      Loom 側の読みこみが追いつかずに止まることがあり、Theater 側では止まらないように
-      することができません。</div>` : ''}
+      <b>回数のカウント・つづきから・付箋は使えます。</b>
+      速さの切りかえだけは Loom の画面の中（右下）で行ってください。</div>` : ''}
     ${v.d ? `<div class="desc">${esc(v.d)}</div>` : ''}
     ${canReview(v.id) ? `<div class="sec"><h2>ふりかえり</h2></div>
       <div class="lead" style="margin-top:-2px">見出しを見て、その話を思い出せるか試せます。</div>
@@ -2741,17 +2796,14 @@ function drawBody(){
   if($('#lhead'))   $('#lhead').onclick   = () => { setLoomStart(v.id, 0); drawBody(); loomReload(v.id); toast('はじめから再生します'); };
   if($('#mark')) $('#mark').onclick = () => {
     let t = 0;
-    try{ t = (player && playerReady) ? (player.getCurrentTime() || 0) : ((prog[v.id] || {}).t || 0); }
+    if(isLoom(v.id)) t = (prog[v.id] || {}).t || 0;
+    else try{ t = (player && playerReady) ? (player.getCurrentTime() || 0) : ((prog[v.id] || {}).t || 0); }
     catch(e){ t = (prog[v.id] || {}).t || 0; }
     if(!addMark(v.id, t)) return toast('そこにはもう付箋があります');
     drawBody();
     toast(`${hhmm(t)} に付箋をつけました`, { label:'ひとこと', fn: () => askMemo(v.id, Math.round(t)) });
   };
-  $$('#pvbody [data-jump]').forEach(b => b.onclick = () => {
-    const sec = +b.dataset.jump;
-    try{ player.seekTo(sec, true); player.playVideo(); }catch(e){}
-    $('#pv').scrollTop = 0; showCtrl();
-  });
+  $$('#pvbody [data-jump]').forEach(b => b.onclick = () => seekTo(+b.dataset.jump));
   $$('#pvbody [data-memo]').forEach(b => b.onclick = () => askMemo(v.id, +b.dataset.memo));
   $$('#pvbody [data-mkdel]').forEach(b => b.onclick = () => askYes(
     { title:'この付箋を消しますか？', ok:'消す', danger:true },
@@ -2782,11 +2834,7 @@ function drawBody(){
   $$('#pvbody .opdel').forEach(b => b.onclick = () => askYes(
     { title:'このアウトプットを消しますか？', ok:'消す', danger:true },
     () => { delOut(v.id, +b.dataset.oi); drawBody(); toast('消しました'); }));
-  $$('#pvbody .chap, #pvbody .jmp button').forEach(b => b.onclick = () => {
-    const sec = +b.dataset.sec;
-    try{ player.seekTo(sec, true); player.playVideo(); }catch(e){}
-    $('#pv').scrollTop = 0; showCtrl();
-  });
+  $$('#pvbody .chap, #pvbody .jmp button').forEach(b => b.onclick = () => seekTo(+b.dataset.sec));
   $$('#pvbody [data-rv]').forEach(b => b.onclick = () => openReview(v.id, +b.dataset.rv));
   paintImgs('#pvbody');
 

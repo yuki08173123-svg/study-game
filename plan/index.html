@@ -186,6 +186,28 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.95;}
 .addhead span{font-size:11px; font-weight:900; color:var(--muted); letter-spacing:.05em;}
 .addhead .c1{width:74px; flex:none; text-align:center;}
 .addhead .c2{flex:1;}
+.addhead .fromday{font-size:11.5px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:4px 10px; flex:none;}
+.sugg{display:flex; gap:6px; overflow-x:auto; padding:0 11px 9px; scrollbar-width:none;}
+.sugg::-webkit-scrollbar{display:none;}
+.sugg:empty{display:none;}
+.sugg button{flex:none; background:var(--chip); border-radius:999px; padding:6px 12px; font-size:13px; font-weight:700; white-space:nowrap; max-width:220px; overflow:hidden; text-overflow:ellipsis;}
+.sugg .lab{flex:none; font-size:11px; font-weight:900; color:var(--muted); align-self:center;}
+.profs{display:flex; flex-wrap:wrap; gap:7px; padding:4px 0 6px;}
+.profs button{background:var(--chip); border-radius:999px; padding:8px 14px; font-size:14px; font-weight:900;}
+.profs button.on{background:var(--accent); color:var(--accent-ink);}
+.title-row .who{font-size:12px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:3px 10px;}
+.histlist{display:flex; flex-direction:column; gap:6px; max-height:52vh; overflow:auto;}
+.histlist div{display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:9px 8px 9px 13px;}
+.histlist span{flex:1; font-size:14px; font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.histlist button{width:32px; height:32px; border-radius:9px; background:var(--chip); font-size:16px; font-weight:900; color:var(--muted); flex:none;}
+.daylist h4{font-size:13px; font-weight:900; color:var(--accent); margin:12px 0 6px; display:flex; align-items:center; gap:8px;}
+.daylist h4 button{margin-left:auto; font-size:11px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:4px 10px;}
+.daylist .row{display:flex; align-items:center; gap:8px; width:100%; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:9px 12px; margin-bottom:6px;}
+.daylist .row .tm{font-size:12px; font-weight:900; color:var(--accent); flex:none; width:44px;}
+.daylist .row .tx{flex:1; font-size:14px; min-width:0;}
+.daylist .row .mn{font-size:11px; font-weight:900; color:var(--muted); flex:none;}
+.daylist .row.did{background:var(--done-soft); border-color:transparent;}
+.daylist .row.did .tx::after{content:'　✓ 入れました'; color:var(--done); font-size:11px; font-weight:900;}
 .addrow{display:flex; align-items:center; gap:8px; padding:5px 11px 9px;}
 .addrow input[type=time]{width:74px; flex:none; font-size:14px; font-weight:700; color:var(--accent); background:var(--chip); border-radius:9px; padding:6px 4px; text-align:center;}
 .addrow input[type=text]{flex:1; font-size:16px;}
@@ -311,7 +333,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v17</span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v18</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -372,13 +394,13 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
       ここに「やること」を書いてください
     </div>
-    <div class="addhead"><span class="c1">時こく</span><span class="c2">やること</span></div>
+    <div class="addhead"><span class="c1">時こく</span><span class="c2">やること</span><button class="fromday" id="btnFromDay">ほかの曜日から</button></div>
     <div class="addrow">
       <input type="time" id="newTime" aria-label="はじめる時刻">
-      <input type="text" id="newText" list="pastTasks" placeholder="例）英単語 300〜500番" enterkeyhint="done">
-      <datalist id="pastTasks"></datalist>
+      <input type="text" id="newText" placeholder="例）英単語 300〜500番" enterkeyhint="done" autocomplete="off">
       <button class="add" id="btnAdd" aria-label="追加"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     </div>
+    <div class="sugg" id="sugg"></div>
     <div class="repeat">
       <span class="rl">入れる曜日</span>
       <div class="rdays" id="rdays"></div>
@@ -425,6 +447,18 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="text" id="setName" placeholder="例）ヒラ タロウ">
     </div>
     <div class="field">
+      <div class="lab">使う人（家族で1台を使うとき）</div>
+      <div class="profs" id="profs"></div>
+      <button class="subbtn" id="btnProfAdd" style="margin-top:4px">＋ 使う人をふやす</button>
+      <button class="subbtn" id="btnProfDel">この人のデータを消す</button>
+      <p class="note">人ごとに、やることも記録も別々に保存されます。名前を入れると、ここに出ます。</p>
+    </div>
+    <div class="field">
+      <div class="lab">入力候補</div>
+      <button class="subbtn" id="btnHist" style="margin-top:4px">入力候補を整理する</button>
+      <p class="note">やることを書くときに出てくる候補です。いらないものは消せます。</p>
+    </div>
+    <div class="field">
       <div class="lab">1週間の目標勉強時間（h）</div>
       <input type="number" id="setWeekGoal" min="0" max="200" step="1" placeholder="例）40">
     </div>
@@ -466,7 +500,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v17</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v18</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -488,8 +522,33 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 17;
-const KEY = 'planmap_v1';
+const VER = 18;
+const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
+const PID = localStorage.getItem(CUR_KEY) || '0';
+const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
+function profiles(){
+  try{ const a = JSON.parse(localStorage.getItem(PROF_KEY)||'[]'); if(Array.isArray(a) && a.length) return a; }catch(e){}
+  return [{ id:'0', name:'' }];
+}
+function saveProfiles(a){ try{ localStorage.setItem(PROF_KEY, JSON.stringify(a)); }catch(e){} }
+function syncProfileName(){
+  const a = profiles(); let pr = a.find(x=>x.id === PID);
+  if(!pr){ pr = { id:PID, name:'' }; a.push(pr); }
+  if(pr.name !== (S.name||'')){ pr.name = S.name||''; saveProfiles(a); }
+}
+function switchProfile(id){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+  localStorage.setItem(CUR_KEY, id);
+  location.replace(location.pathname + '?p=' + Date.now());
+}
+function profName(pr, i){ return pr.name || ('使う人'+(i+1)); }
+function renderProfs(){
+  const a = profiles();
+  $('#profs').innerHTML = a.map((pr,i)=>'<button data-id="'+esc(pr.id)+'" class="'+(pr.id===PID?'on':'')+'">'+esc(profName(pr,i))+'</button>').join('');
+  const cur = a.findIndex(x=>x.id===PID);
+  $('#whoTag').textContent = cur >= 0 ? profName(a[cur], cur) : '';
+  $('#whoTag').classList.toggle('hidden', a.length < 2);
+}
 const WD = ['月','火','水','木','金','土','日'];
 const DEF_MIN = 30;
 
@@ -512,9 +571,10 @@ function load(){
   if(!/^\d\d:\d\d$/.test(S.notifTime||'')) S.notifTime = '20:00';
   if(typeof S.limitMin !== 'number' || S.limitMin < 1) S.limitMin = 30;
   if(typeof S.sound !== 'boolean') S.sound = true;
+  histBuild();
 }
 let saveT = null;
-function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }, 200); }
+function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} syncProfileName(); }, 200); }
 
 function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function parseISO(s){ const p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
@@ -585,16 +645,84 @@ function renderRep(){
   $('#rdays').innerHTML = WD.map((w,i)=>'<button data-i="'+i+'" class="'+(REP[i]?'on':'')+'">'+w+'</button>').join('');
   $('#btnAllDays').textContent = REP.every(Boolean) ? 'この日だけ' : '毎日';
 }
-function renderPast(){
-  const seen = new Set(), out = [];
-  Object.keys(S.weeks).sort().reverse().forEach(k=>{
-    const days = S.weeks[k].days || {};
-    Object.keys(days).sort().reverse().forEach(dk=>{
-      (days[dk].tasks||[]).forEach(t=>{ const x = (t.text||'').trim(); if(x && !seen.has(x)){ seen.add(x); out.push(x); } });
-    });
-  });
-  $('#pastTasks').innerHTML = out.slice(0,40).map(t=>'<option value="'+esc(t)+'">').join('');
+function histAdd(text){
+  const x = (text||'').trim(); if(!x) return;
+  if(!Array.isArray(S.hist)) S.hist = [];
+  let h = S.hist.find(o=>o.t === x);
+  if(h){ h.n = (h.n||0)+1; h.at = Date.now(); }
+  else S.hist.push({ t:x, n:1, at:Date.now() });
+  if(S.hist.length > 200){ S.hist.sort((a,b)=>(b.at||0)-(a.at||0)); S.hist.length = 200; }
 }
+function histBuild(){   // 古いデータから候補をつくる（1回だけ）
+  if(Array.isArray(S.hist)) return;
+  S.hist = [];
+  Object.keys(S.weeks).sort().forEach(k=>{
+    const days = S.weeks[k].days || {};
+    Object.keys(days).sort().forEach(dk=>{ (days[dk].tasks||[]).forEach(t=>histAdd(t.text)); });
+  });
+}
+function renderSugg(){
+  const q = ($('#newText').value||'').trim().toLowerCase();
+  const all = (S.hist||[]).slice();
+  let items;
+  if(q){ items = all.filter(o=>o.t.toLowerCase().includes(q)).sort((a,b)=>(b.n||0)-(a.n||0) || (b.at||0)-(a.at||0)).slice(0,8); }
+  else { items = all.sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,6); }
+  $('#sugg').innerHTML = items.length
+    ? '<span class="lab">'+(q?'候補':'最近')+'</span>' + items.map(o=>'<button data-t="'+esc(o.t)+'">'+esc(o.t)+'</button>').join('')
+    : '';
+}
+function renderPast(){ renderSugg(); }
+$('#newText').addEventListener('input', renderSugg);
+$('#newText').addEventListener('focus', renderSugg);
+$('#sugg').onclick = e => {
+  const b = e.target.closest('button[data-t]'); if(!b) return;
+  $('#newText').value = b.dataset.t; renderSugg(); $('#newText').focus();
+};
+function openHistEditor(){
+  const list = ()=> (S.hist||[]).slice().sort((a,b)=>(b.at||0)-(a.at||0));
+  const html = ()=> list().length
+    ? '<div class="histlist">'+list().map(o=>'<div><span>'+esc(o.t)+'</span><button data-t="'+esc(o.t)+'" aria-label="消す">×</button></div>').join('')+'</div>'
+    : '<p style="color:var(--muted); text-align:center; padding:16px 0">候補はありません</p>';
+  const sh = openSheet('<h2>入力候補を整理する</h2><p style="font-size:13px; color:var(--muted); margin-bottom:8px">× を押すと候補から消えます（書いたやること自体は消えません）</p>'
+    + '<div id="histBox">'+html()+'</div>'
+    + '<button class="subbtn" id="histClear">ぜんぶ消す</button>');
+  const box = sh.querySelector('#histBox');
+  box.onclick = e => { const b = e.target.closest('button[data-t]'); if(!b) return;
+    S.hist = (S.hist||[]).filter(o=>o.t !== b.dataset.t); save(); box.innerHTML = html(); renderSugg(); };
+  sh.querySelector('#histClear').onclick = ()=>{ if(!confirm('入力候補をぜんぶ消しますか？')) return; S.hist = []; save(); box.innerHTML = html(); renderSugg(); };
+}
+$('#btnHist').onclick = openHistEditor;
+
+/* ---------- ほかの曜日からコピー ---------- */
+function copyTaskTo(t, i){
+  const d = dayOf(S.cur, i);
+  d.tasks.push({ time:t.time||'', text:t.text, min:Number(t.min)||S.defMin, done:false, star:false });
+  d.tasks.sort((a,b)=> a.time&&b.time ? (a.time<b.time?-1:a.time>b.time?1:0) : a.time?-1:b.time?1:0);
+}
+function openFromDay(){
+  const m = parseISO(S.cur); let html = '', any = false;
+  for(let i=0;i<7;i++){
+    if(i === S.day) continue;
+    const dd = dayRaw(S.cur, i); const ts = (dd && dd.tasks) || []; if(!ts.length) continue;
+    any = true;
+    html += '<h4>'+md(addDays(m,i))+'（'+WD[i]+'）<button data-all="'+i+'">この日のを全部</button></h4>'
+      + ts.map((t,j)=>'<button class="row" data-i="'+i+'" data-j="'+j+'">'
+        + '<span class="tm num">'+esc(t.time||'')+'</span><span class="tx">'+esc(t.text)+'</span><span class="mn">'+fmtHM(t.min)+'</span></button>').join('');
+  }
+  const sh = openSheet('<h2>ほかの曜日からコピー</h2>'
+    + '<p style="font-size:13px; color:var(--muted); margin-bottom:4px">押したものが「'+md(addDays(m,S.day))+'（'+WD[S.day]+'）」に入ります。文字を直したいときは、入れたあとに押して直せます。</p>'
+    + (any ? '<div class="daylist">'+html+'</div>' : '<p style="text-align:center; color:var(--muted); padding:18px 0">ほかの曜日には、まだやることがありません</p>'));
+  sh.onclick = e => {
+    if(e.target === sh || e.target.classList.contains('close')){ sh.remove(); renderDays(); renderDay(); renderTQC(); save(); return; }
+    const all = e.target.closest('button[data-all]');
+    if(all){ const i = +all.dataset.all; const ts = (dayRaw(S.cur,i)||{}).tasks||[]; ts.forEach(t=>copyTaskTo(t, S.day));
+      sh.querySelectorAll('.row[data-i="'+i+'"]').forEach(r=>r.classList.add('did')); toast(ts.length+'件入れました'); return; }
+    const r = e.target.closest('.row'); if(!r || r.classList.contains('did')) return;
+    const t = ((dayRaw(S.cur,+r.dataset.i)||{}).tasks||[])[+r.dataset.j]; if(!t) return;
+    copyTaskTo(t, S.day); r.classList.add('did'); toast('入れました');
+  };
+}
+$('#btnFromDay').onclick = openFromDay;
 function renderDay(){
   const d = dayOf(S.cur, S.day), s = sumDay(d);
   $('#planV').textContent = fmtHM(s.plan);
@@ -988,6 +1116,7 @@ function addTask(){
   const tm = $('#newTime').value;
   let targets = REP.map((v,i)=>v?i:-1).filter(i=>i>=0);
   if(!targets.length) targets = [S.day];
+  histAdd(txt);
   targets.forEach(i=>{
     const d = dayOf(S.cur, i);
     d.tasks.push({ time:tm, text:txt, min:S.defMin, done:false, star:false });
@@ -1079,7 +1208,23 @@ $('#histList').onclick = e => {
   renderAll(); window.scrollTo(0,0);
 };
 
-$('#setName').oninput = e => { S.name = e.target.value; save(); };
+$('#setName').oninput = e => { S.name = e.target.value; save(); syncProfileName(); renderProfs(); };
+$('#profs').onclick = e => { const b = e.target.closest('button[data-id]'); if(!b || b.dataset.id === PID) return; switchProfile(b.dataset.id); };
+$('#btnProfAdd').onclick = ()=>{
+  const a = profiles(); if(a.length >= 8){ toast('これ以上ふやせません'); return; }
+  const id = Date.now().toString(36); a.push({ id, name:'' }); saveProfiles(a);
+  toast('新しい人に切りかえます'); setTimeout(()=>switchProfile(id), 400);
+};
+$('#btnProfDel').onclick = ()=>{
+  const a = profiles();
+  if(a.length <= 1){ toast('1人だけのときは消せません'); return; }
+  const cur = a.find(x=>x.id===PID), nm = cur ? profName(cur, a.indexOf(cur)) : '';
+  if(!confirm('「'+nm+'」のやることと記録をぜんぶ消します。よろしいですか？')) return;
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  const rest = a.filter(x=>x.id !== PID); saveProfiles(rest);
+  localStorage.setItem(CUR_KEY, rest[0].id);
+  location.replace(location.pathname + '?p=' + Date.now());
+};
 $('#setWeekGoal').oninput = e => { S.weekGoal = e.target.value; renderTQC(); save(); };
 $('#setDefMin').oninput = e => { const v = Math.round(Number(e.target.value)||0); if(v>=5 && v<=600){ S.defMin = v; save(); } };
 $('#setSound').onchange = e => { S.sound = !!e.target.checked; save(); if(S.sound){ audioUnlock(); tone(988,.2,.12); } else audioOff(); };
@@ -1153,7 +1298,8 @@ const SLIDES = [
   </div>
 </div>
 <p>入力欄の下の<b>「入れる曜日」</b>で曜日をえらんでから ＋ を押すと、その曜日ぜんぶに同じやることが入ります。<br>
-<b>「毎日」</b>を押せば、7日ぶんが一度に入ります。</p>`,
+<b>「毎日」</b>を押せば、7日ぶんが一度に入ります。<br>
+<b>「ほかの曜日から」</b>を押すと、ほかの日のやることを見ながらコピーできます。</p>`,
 
 `<span class="snum">③</span>
 <h3>かかる時間をえらぶ</h3>
@@ -1300,6 +1446,7 @@ function boot(){
   $('#setDefMin').value = S.defMin;
   $('#setNotifTime').value = S.notifTime;
   $('#setSound').checked = !!S.sound;
+  renderProfs();
   $('#setLimit').value = S.limitMin;
   $('#verTag').textContent = 'v'+VER; $('#verTag2').textContent = 'v'+VER;
   syncRep(); renderAll(); renderCd();

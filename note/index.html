@@ -140,6 +140,7 @@ main{max-width:620px;margin:0 auto;padding:4px 18px calc(var(--tabh) + 48px + en
 .nprev{font-size:.85rem;color:var(--ink2);line-height:1.75;margin-top:5px;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .nfoot{display:flex;align-items:center;gap:6px;margin-top:10px;color:var(--ink3);font-size:.71rem;font-weight:600}
+.tag{background:var(--ok-soft);color:var(--ok);border-radius:999px;padding:1px 8px;font-size:.66rem;font-weight:800}
 
 /* ---------- 本文表示 ---------- */
 .doc{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
@@ -300,6 +301,16 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .rev .acts button:active{opacity:.8}
 .b-ok{background:var(--ok-soft);color:var(--ok)}
 .b-ng{background:var(--ng-soft);color:var(--ng)}
+.grades{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.grades button{border-radius:13px;padding:13px 8px;display:flex;flex-direction:column;
+  align-items:center;gap:2px;transition:.12s}
+.grades button:active{opacity:.75;transform:scale(.98)}
+.grades b{font-size:1.15rem;font-weight:700;line-height:1.3}
+.grades span{font-size:.78rem;font-weight:700;letter-spacing:.03em}
+.g-fast{background:var(--ok-soft);color:var(--ok)}
+.g-ok{background:var(--surf2);color:var(--ink2)}
+.g-hazy{background:var(--gold-soft);color:var(--gold)}
+.g-again{background:var(--ng-soft);color:var(--ng)}
 .b-show{background:var(--pri);color:var(--on-pri)}
 .b-sub{background:var(--surf2);color:var(--ink2)}
 .b-sub[disabled]{opacity:.35}
@@ -381,7 +392,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 19;
+const VER = 20;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -429,6 +440,32 @@ const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<'
 const live = () => notes.filter(n => !n.del);
 /* 未確認＝一度も振り返っていない。「あいまい」でも確認ずみとして扱う */
 const unseen = n => !n.revAt;
+const learning = n => !n.del && !n.done;              // 振り返りの対象
+const dueOf = n => n.due || 0;                        // 次に出る日（未確認は0＝最優先）
+const isDue = n => dueOf(n) <= now();
+
+/* 4段階。next は「前回の間隔（日）」から次の間隔を決める */
+const GRADES = {
+  4:{ key:'again', mark:'✕', lbl:'わからない', cls:'g-again', next:()=>0 },
+  3:{ key:'hazy',  mark:'△', lbl:'あいまい',   cls:'g-hazy',  next:()=>1 },
+  2:{ key:'ok',    mark:'○', lbl:'できた',     cls:'g-ok',    next:p=>p ? Math.min(Math.round(p*2), 90) : 3 },
+  1:{ key:'fast',  mark:'◎', lbl:'即答',       cls:'g-fast',  next:p=>p ? Math.min(Math.round(p*2.8), 240) : 7 },
+};
+const PACE = { slow:1.6, normal:1, tight:0.6 };
+const PACE_LBL = { slow:'ゆっくり', normal:'ふつう', tight:'しっかり' };
+function applyGrade(n, g){
+  const base = GRADES[g].next(n.ivl || 0);
+  const ivl = Math.max(0, Math.round(base * (PACE[cfg.pace] || 1)));
+  n.ivl = ivl;
+  n.due = now() + ivl * 86400000;
+  n.revAt = now();
+  n.grade = g;
+  n.streak = (g === 1) ? (n.streak || 0) + 1 : 0;
+  if(g <= 2) n.rev = (n.rev || 0) + 1; else n.ng = (n.ng || 0) + 1;
+  if(cfg.autoDone && n.streak >= 3) n.done = true;
+  n.upd = now();
+  return ivl;
+}
 const saveNotes = () => localStorage.setItem(K_N, JSON.stringify(notes));
 const saveFolders = () => localStorage.setItem(K_F, JSON.stringify(folders));
 const saveCfg = () => localStorage.setItem(K_C, JSON.stringify(cfg));
@@ -439,7 +476,7 @@ function load(){
   try{ folders = JSON.parse(localStorage.getItem(K_F) || '[]'); }catch(e){ folders = []; }
   if(!Array.isArray(folders)) folders = [];
   try{ cfg = JSON.parse(localStorage.getItem(K_C) || '{}'); }catch(e){ cfg = {}; }
-  cfg = Object.assign({ revN:5, revScope:'*', hidePhotos:true }, cfg);
+  cfg = Object.assign({ revN:5, revScope:'*', hidePhotos:true, pace:'normal', autoDone:false }, cfg);
   if(cfg.revScope && cfg.revScope !== '*' && cfg.revScope !== '' && !folders.some(f => f.id === cfg.revScope)){
     cfg.revScope = '*'; saveCfg();
   }
@@ -671,7 +708,10 @@ function back(){
     return go('home');
   }
   if(S.screen === 'note') return go('list');
-  if(S.screen === 'write') return S.editId ? go('note', { nid:S.editId }) : go(S.fid === null ? 'home' : 'list');
+  if(S.screen === 'write'){
+    if(S.editFrom === 'review'){ S.editFrom = ''; return go('review'); }
+    return S.editId ? go('note', { nid:S.editId }) : go(S.fid === null ? 'home' : 'list');
+  }
   go('home');
 }
 
@@ -755,7 +795,7 @@ function listTitle(){
   const f = folderOf(S.fid);
   return f ? f.name : 'ノート';
 }
-const ONLY = { unrev:'まだ確認していないメモ', today:'今日書いたメモ', star:'重要マーク' };
+const ONLY = { unrev:'まだ確認していないメモ', today:'今日書いたメモ', star:'重要マーク', done:'卒業したメモ' };
 function inScope(){
   const a = live();
   if(S.fid === null) return a;
@@ -848,6 +888,7 @@ function filtered(){
   if(S.only === 'unrev') a = a.filter(unseen);
   if(S.only === 'today') a = a.filter(n => new Date(n.cre).toDateString() === new Date().toDateString());
   if(S.only === 'star')  a = a.filter(n => n.star);
+  if(S.only === 'done')  a = a.filter(n => n.done);
   const q = S.q.trim().toLowerCase();
   if(q) a = a.filter(n => (n.body||'').toLowerCase().includes(q));
   if(S.sort === 'new') a.sort((x,y) => y.cre - x.cre);
@@ -869,6 +910,7 @@ function noteCard(n){
     <div class="nmeta">
       ${f ? `<span class="dot" style="background:${f.color}"></span><span>${esc(f.name)}</span><span>·</span>` : ''}
       <span>${fmtDate(n.cre)}</span>
+      ${n.done ? '<span class="tag">卒業</span>' : ''}
     </div>
     <div class="nlead">${esc(lead)}</div>
     ${rest ? `<div class="nprev">${esc(rest)}</div>` : ''}
@@ -967,6 +1009,8 @@ function renderNote(){
       ${rowItem({ ic: n.star ? ICO.starFill({s:19}) : ICO.star({s:19}),
                   nm: n.star ? '重要をはずす' : '重要にする', attr:'data-a="star"',
                   col: n.star ? 'var(--gold)' : '' })}
+      ${rowItem({ ic:ICO.check({s:19}), nm: n.done ? '学習にもどす' : '卒業にする（出題しない）',
+                  attr:'data-a="done"', col: n.done ? 'var(--ok)' : '' })}
       ${rowItem({ ic:ICO.move({s:19}), nm:'フォルダを移動', attr:'data-a="move"' })}
       ${rowItem({ ic:ICO.copy({s:19}), nm:'本文をコピー', attr:'data-a="copy"' })}
       ${rowItem({ ic:ICO.trash({s:19}), nm:'削除', attr:'data-a="del"', col:'var(--ng)' })}
@@ -981,6 +1025,11 @@ function renderNote(){
 function noteAct(a, n){
   if(a === 'star'){ n.star = !n.star; n.upd = now(); saveNotes(); render(); toast(n.star ? '重要にしました' : '重要をはずしました'); }
   if(a === 'copy'){ navigator.clipboard.writeText(n.body || '').then(() => toast('コピーしました'), () => toast('コピーできませんでした')); }
+  if(a === 'done'){
+    n.done = !n.done; if(!n.done) n.streak = 0;
+    n.upd = now(); saveNotes(); render();
+    toast(n.done ? '卒業にしました' : '学習にもどしました');
+  }
   if(a === 'move'){ moveSheet(n); }
   if(a === 'del'){
     n.del = true; n.upd = now(); saveNotes();
@@ -997,8 +1046,9 @@ function startNew(){
   draftFid = (S.screen === 'list') ? (S.fid || '') : '';
   go('write');
 }
-function startEdit(id){
+function startEdit(id, fromReview){
   const n = notes.find(x => x.id === id); if(!n) return;
+  S.editFrom = fromReview ? 'review' : '';
   S.editId = id;
   draft = (n.imgs || []).map(i => ({ id:i, back:(n.back || []).includes(i) }));
   draftFid = n.fid || '';
@@ -1092,7 +1142,8 @@ function doSave(){
     (n.imgs||[]).forEach(i => { if(!imgs.includes(i)){ urlCache.delete(i); delImg(i).catch(()=>{}); } });
     Object.assign(n, { body, imgs, back:backs, fid:draftFid, upd:now() });
     toast('保存しました');
-    go('note', { nid:n.id });
+    if(S.editFrom === 'review'){ S.editFrom = ''; go('review'); }
+    else go('note', { nid:n.id });
   }else{
     const n = { id:uid(), body, imgs, back:backs, fid:draftFid, cre:now(), upd:now(), rev:0, ng:0, revAt:0, star:false, del:false };
     notes.unshift(n);
@@ -1106,14 +1157,15 @@ function doSave(){
 /* ===================== 振り返り ===================== */
 let revQ = [], revI = 0, revOk = 0, revNg = 0, revOpen = false, revMode = 'quiz', revPic = false, revList = null;
 
-function scopeNotes(){                       // 振り返る範囲のメモ
+function scopeNotes(){                       // 振り返る範囲のメモ（卒業したものは出さない）
   const sc = cfg.revScope || '*';
-  if(sc === '未') return live().filter(unseen);
-  if(sc === '★') return live().filter(n => n.star);
-  if(sc === '*') return live();
-  if(sc === '') return live().filter(n => !n.fid);
+  const L = notes.filter(learning);
+  if(sc === '未') return L.filter(unseen);
+  if(sc === '★') return L.filter(n => n.star);
+  if(sc === '*') return L;
+  if(sc === '') return L.filter(n => !n.fid);
   const ids = idsUnder(sc);
-  return live().filter(n => ids.includes(n.fid));
+  return L.filter(n => ids.includes(n.fid));
 }
 function scopeName(){
   const sc = cfg.revScope || '*';
@@ -1150,14 +1202,20 @@ function scopeSheet(){
 function pickReview(k){
   const pool = scopeNotes();
   if(!pool.length) return [];
-  const sorted = pool.slice().sort((a,b) => (a.rev - b.rev) || (a.revAt - b.revAt));
-  if(!k) k = pool.length;                       // 「全部」
+  const due = pool.filter(isDue);
+  const base = due.length ? due : pool;         // 今日の分がなければ、近いものから
+  const sorted = base.slice().sort((a,b) => dueOf(a) - dueOf(b));
+  if(!k) k = sorted.length;                     // 「全部」
   const head = sorted.slice(0, Math.max(k*3, k));
   for(let i = head.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [head[i],head[j]] = [head[j],head[i]]; }
   return head.slice(0, k);
 }
 function renderReview(){
-  bar('', '振り返り', '', true);
+  const showing = revQ.length && revI < revQ.length;
+  bar('', '振り返り',
+    showing ? `<button class="tbtn accent" data-revedit>編集</button>` : '', true);
+  const re = $('#tbar [data-revedit]');
+  if(re) re.onclick = () => startEdit(revQ[revI].id, true);
   if(!revQ.length || revI >= revQ.length){
     const L = scopeNotes(), never = L.filter(unseen).length;
     const done = revQ.length && revI >= revQ.length;
@@ -1195,8 +1253,8 @@ function renderReview(){
         </div>
         <div class="stats" style="margin-top:14px">
           <button class="stat" data-rj="all"><b>${L.length}</b><span>メモ</span></button>
+          <button class="stat" data-rj="due"><b>${L.filter(isDue).length}</b><span>今日みる</span></button>
           <button class="stat" data-rj="new"><b>${never}</b><span>未確認</span></button>
-          <button class="stat" data-rj="old"><b>${L.filter(x => x.revAt && daysAgo(x.revAt) >= 14).length}</b><span>2週間以上</span></button>
         </div>
         <div class="note-txt" style="margin-top:10px">数字を押すと、そのメモだけをすぐ振り返れます。</div>
       </div>
@@ -1216,7 +1274,7 @@ function renderReview(){
       $$('#main [data-rj]').forEach(b => b.onclick = () => {
         const k = b.dataset.rj;
         startRevWith(k === 'new' ? L.filter(unseen)
-                   : k === 'old' ? L.filter(x => x.revAt && daysAgo(x.revAt) >= 14)
+                   : k === 'due' ? L.filter(isDue)
                    : L.slice());
       });
       const setN = v => {
@@ -1280,20 +1338,24 @@ function renderReview(){
       <div class="rest ${veiled?'veil':''}">${esc(rest)}</div>
       <div class="${veiled?'veil':''}">${picsHtml(backP)}</div>
       <div class="acts">
-        ${veiled ? `<button class="b-show" id="rshow">続きを表示</button>`
-                 : `<button class="b-ng" id="rng">あいまい</button><button class="b-ok" id="rok">覚えている</button>`}
+        ${veiled ? `<button class="b-show" id="rshow">続きを表示</button>` : ''}
       </div>
+      ${veiled ? '' : `<div class="grades">
+        ${[1,2,3,4].map(g => `<button class="${GRADES[g].cls}" data-g="${g}">
+          <b>${GRADES[g].mark}</b><span>${GRADES[g].lbl}</span></button>`).join('')}
+      </div>`}
     </div>
     <button class="btn sec" id="rquit" style="margin-top:12px">中断する</button>`;
   fillImgs($('#main'));
   const sp = $('#showpic');
   if(sp) sp.onclick = () => { revPic = true; render(); };
   if(veiled) $('#rshow').onclick = () => { revOpen = true; render(); };
-  else{ $('#rok').onclick = () => revAnswer(true); $('#rng').onclick = () => revAnswer(false); }
+  else $$('#main [data-g]').forEach(b => b.onclick = () => revAnswer(+b.dataset.g));
   $('#rquit').onclick = () => { revQ = []; revI = 0; saveNotes(); render(); };
 }
 function startRevWith(list){                 // いま出ている一覧を、そのまま振り返る
-  if(!list.length){ toast('メモがありません'); return; }
+  list = list.filter(learning);
+  if(!list.length){ toast('振り返るメモがありません'); return; }
   revList = list.slice();
   const pool = list.slice();
   for(let i = pool.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [pool[i],pool[j]] = [pool[j],pool[i]]; }
@@ -1314,11 +1376,12 @@ function startRev(mode){
   if(!revQ.length){ toast('メモがありません'); return; }
   render();
 }
-function revAnswer(ok){
+function revAnswer(g){
   const n = revQ[revI];
   if(n){
-    n.revAt = now(); n.upd = now();
-    if(ok){ n.rev = (n.rev||0)+1; revOk++; } else { n.ng = (n.ng||0)+1; revNg++; }
+    const ivl = applyGrade(n, g);
+    if(g <= 2) revOk++; else revNg++;
+    toast(n.done ? '卒業しました' : (ivl <= 0 ? 'つぎの回にまた出ます' : `つぎは${ivl}日後`));
   }
   revI++; revOpen = false; revPic = false; saveNotes(); render();
 }
@@ -1346,7 +1409,25 @@ function renderSet(){
         <span class="nm">写真も伏せる</span>
         <span class="sw ${cfg.hidePhotos !== false ? 'on' : ''}"></span>
       </button>
+      <button class="item" data-x="autodone">
+        <span class="ic">${ICO.check({s:19})}</span>
+        <span class="nm">◎が3回つづいたら卒業</span>
+        <span class="sw ${cfg.autoDone ? 'on' : ''}"></span>
+      </button>
+      ${rowItem({ ic:ICO.book({s:19}), nm:'卒業したメモ', attr:'data-x="done"',
+                  right:`<span class="ct">${live().filter(n=>n.done).length}</span><span class="chev">${ICO.right({s:18,w:2})}</span>` })}
     </div>
+    <div class="note-txt" style="margin:10px 4px 0">卒業したメモは出題されなくなります。
+      一覧には残るので、いつでも学習にもどせます。</div>
+
+    <div class="label">出題のペース</div>
+    <div class="seg" id="pace">
+      ${['slow','normal','tight'].map(k => `<button data-p="${k}" class="${(cfg.pace||'normal')===k?'on':''}">${PACE_LBL[k]}</button>`).join('')}
+    </div>
+    <div class="note-txt" style="margin:10px 4px 0">
+      ◎や○がつづくと、次に出るまでの間隔がのびます（◎はおよそ2.8倍、○は2倍）。
+      ここを「ゆっくり」にすると間隔が1.6倍に、「しっかり」にすると0.6倍になります。
+      答えたあとに「つぎは◯日後」と出るので、それを見ながら決めてください。</div>
     <div class="note-txt" style="margin:10px 4px 0">問題と、答えに必要な資料の写真をセットで書いているときは、
       これをオフにすると写真が最初から見えます。板書の写真を答えにしているときはオンのままがおすすめです。</div>
 
@@ -1366,6 +1447,9 @@ function renderSet(){
     <div class="note-txt" id="dataInfo" style="margin:10px 4px 0">メモ ${live().length}件・写真 ${pics}枚</div>
     <input type="file" id="impfile" accept="application/json,.json" class="hidden">`;
   $$('#main [data-x]').forEach(b => b.onclick = () => setAct(b.dataset.x));
+  $$('#pace button').forEach(b => b.onclick = () => {
+    cfg.pace = b.dataset.p; saveCfg(); render(); toast(`ペースを「${PACE_LBL[cfg.pace]}」にしました`);
+  });
   $('#impfile').onchange = e => { if(e.target.files[0]) doImport(e.target.files[0]); e.target.value = ''; };
   if(navigator.storage && navigator.storage.estimate){
     navigator.storage.estimate().then(e => {
@@ -1381,6 +1465,9 @@ function setAct(x){
   if(x === 'imp')  return $('#impfile').click();
   if(x === 'pics'){ cfg.hidePhotos = cfg.hidePhotos === false; saveCfg(); render();
                     toast(cfg.hidePhotos ? '写真も伏せます' : '写真は最初から見せます'); return; }
+  if(x === 'autodone'){ cfg.autoDone = !cfg.autoDone; saveCfg(); render();
+                    toast(cfg.autoDone ? '◎が3回つづいたら卒業します' : '自動の卒業をやめました'); return; }
+  if(x === 'done')  return go('list', { fid:null, q:'', view:'list', only:'done' });
   if(x === 'trash') return trashSheet();
   if(x === 'help') return helpSheet();
   if(x === 'upd')  return checkUpd(false);
@@ -1634,9 +1721,9 @@ function helpSheet(){
           ['消しても中身は残る','中のメモは親フォルダ（なければ未分類）に移ります。']] }),
     slide({ c:C.gold, ic:ICO.loop({s:23,w:1.7}), sub:'REVIEW', t:'振り返り',
       p:['しばらく開いていないメモを数件えらびます。'],
-      kv:[['範囲と件数をえらべる','「範囲」でフォルダや単元を、件数は − ＋ で1件ずつ調整できます。'],
-          ['まず思い出す','1行目を読んで、続きを頭の中で言ってみる。'],
-          ['未確認からすぐ開ける','ホームの「未確認」の数字を押すと、まだ見ていないメモだけが並びます。']] }),
+      kv:[['4段階で答える','◎即答 ・○できた ・△あいまい ・✕わからない。答えると「つぎは◯日後」と出ます。'],
+          ['できたものほど間隔がのびる','◎が続くと次に出るまでが長くなります。ペースは設定で変えられます。'],
+          ['範囲と件数','「範囲」でフォルダや単元を、件数は − ＋ と数字のボタンで選べます。']] }),
     slide({ c:C.gray, ic:ICO.down({s:23,w:1.7}), sub:'KEEP', t:'保管',
       p:['メモと写真は、この端末の中だけにあります。どこにも送っていません。'],
       kv:[['JSONで書き出す','写真ごと1つのファイルにまとまります。設定から。'],

@@ -392,7 +392,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 20;
+const VER = 21;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -1117,20 +1117,76 @@ function paintDraft(){
   });
   fillImgs(box);
 }
+const quotaLike = e => !!e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_STORAGE_FULL'
+  || /quota|storage|容量/i.test(String((e && e.message) || e)));
+
 async function addPhotos(files){
   const list = [...files].slice(0, 8);
   if(!list.length) return;
   toast('写真を読み込み中…');
+  let ok = 0; const errs = [];
   for(const f of list){
-    if(!/^image\//.test(f.type)) continue;
-    try{
-      const blob = await shrink(f);
-      const id = uid('i');
-      await putImg(id, blob);
-      draft.push({ id });
-    }catch(e){ toast('読み込めない写真がありました'); }
+    if(f.type && !/^image\//.test(f.type)){ errs.push('type'); continue; }
+    let blob = null;
+    try{ blob = await shrink(f); }
+    catch(e){ blob = (f.size && f.size <= 10*1024*1024) ? f : null; }   // 縮小できなくても、そのまま保存してみる
+    if(!blob){ errs.push('decode'); continue; }
+    const id = uid('i');
+    try{ await putImg(id, blob); draft.push({ id }); ok++; }
+    catch(e){ errs.push(quotaLike(e) ? 'quota' : ('save:' + ((e && e.name) || 'error'))); lastPhotoErr = e; }
   }
   paintDraft();
+  if(!errs.length){ if(ok) toast(`写真を${ok}枚 追加しました`); return; }
+  if(errs.includes('quota')) return storageSheet('写真を保存できませんでした');
+  if(errs.some(x => String(x).startsWith('save:'))) return storageSheet('写真を保存できませんでした');
+  toast('この写真は読み込めませんでした（対応していない形式かもしれません）');
+}
+let lastPhotoErr = null;
+
+/* 端末の保存領域を調べて、対処までたどりつけるようにする */
+async function storageSheet(title){
+  let usage = 0, quota = 0, est = false;
+  try{ const e = await navigator.storage.estimate(); usage = e.usage || 0; quota = e.quota || 0; est = true; }catch(e){}
+  let writeMsg = '確認中…';
+  try{
+    const id = 'probe_' + now();
+    await putImg(id, new Blob([new Uint8Array(256 * 1024)]));
+    await delImg(id);
+    writeMsg = '書き込みできました（容量には余裕があります）';
+  }catch(e){
+    writeMsg = quotaLike(e) ? '書き込めません。保存領域がいっぱいです'
+                            : '書き込めません（' + ((e && e.name) || 'エラー') + '）';
+  }
+  const mb = v => (v/1048576).toFixed(1) + 'MB';
+  const bin = notes.filter(n => n.del).length;
+  const pics = notes.reduce((a, n) => a + (n.imgs || []).length, 0);
+  sheet(`<h3>${esc(title || '写真がうまく入らないとき')}</h3>
+    <div class="note-txt" style="margin:-10px 2px 14px">この端末の保存領域を調べました。
+      画面をそのまま撮って送ってもらえれば、こちらで原因を追えます。</div>
+    <div class="group">
+      ${rowItem({ ic:ICO.info({s:19}), nm:'書き込みの確認', right:`<span class="ct" style="max-width:170px;white-space:normal;text-align:right;line-height:1.5">${esc(writeMsg)}</span>` })}
+      ${est ? rowItem({ ic:ICO.down({s:19}), nm:'使っている容量', right:`<span class="ct">${mb(usage)} / ${mb(quota)}</span>` }) : ''}
+      ${rowItem({ ic:ICO.image({s:19}), nm:'写真の枚数', right:`<span class="ct">${pics}枚</span>` })}
+      ${rowItem({ ic:ICO.trash({s:19}), nm:'ゴミ箱の中', right:`<span class="ct">${bin}件</span>` })}
+    </div>
+    <div class="note-txt" style="margin:14px 4px 0">
+      いっぱいのときは、この順で空けてください。<br>
+      1. 設定 → 書き出し → JSON で、いまのメモを保存しておく<br>
+      2. 設定 → ゴミ箱 → 空にする（消したメモの写真も消えます）<br>
+      3. それでも足りなければ、古い写真つきのメモを削除する<br><br>
+      形式が原因のこともあります。写真アプリからではなく「ファイル」から選んだ場合は、
+      いったん写真アプリに保存してから選び直すと通ることがあります。</div>
+    <button class="btn sec" id="stExport" style="margin-top:16px">いま JSON で書き出す</button>
+    <button class="btn danger" id="stTrash" style="margin-top:8px">ゴミ箱を空にする（${bin}件）</button>`, close => {
+    $('#stExport').onclick = () => { close(); expJson(); };
+    $('#stTrash').onclick = async () => {
+      if(!confirm('ゴミ箱の中を完全に消します。もう戻せません。よろしいですか？')) return;
+      const b = notes.filter(n => n.del);
+      for(const n of b) for(const i of (n.imgs || [])){ urlCache.delete(i); try{ await delImg(i); }catch(e){} }
+      notes = notes.filter(n => !n.del);
+      saveNotes(); close(); render(); toast('ゴミ箱を空にしました');
+    };
+  });
 }
 function doSave(){
   const body = ($('#body') ? $('#body').value : '').trim();
@@ -1434,6 +1490,7 @@ function renderSet(){
     <div class="label">このアプリ</div>
     <div class="group">
       ${rowItem({ ic:ICO.info({s:19}), nm:'使い方', attr:'data-x="help"' })}
+      ${rowItem({ ic:ICO.image({s:19}), nm:'写真がうまく入らないとき', attr:'data-x="storage"' })}
       ${rowItem({ ic:ICO.loop({s:19}), nm:'更新を確認', attr:'data-x="upd"', right:`<span class="ct">v${VER}</span>` })}
     </div>
     <div class="note-txt" id="updState" style="margin:10px 4px 0"></div>
@@ -1468,6 +1525,7 @@ function setAct(x){
   if(x === 'autodone'){ cfg.autoDone = !cfg.autoDone; saveCfg(); render();
                     toast(cfg.autoDone ? '◎が3回つづいたら卒業します' : '自動の卒業をやめました'); return; }
   if(x === 'done')  return go('list', { fid:null, q:'', view:'list', only:'done' });
+  if(x === 'storage') return storageSheet();
   if(x === 'trash') return trashSheet();
   if(x === 'help') return helpSheet();
   if(x === 'upd')  return checkUpd(false);

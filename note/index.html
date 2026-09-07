@@ -281,6 +281,7 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
   padding:28px 22px;min-height:56vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lift)}
 .rev .step{font-size:.7rem;color:var(--ink3);font-weight:700;letter-spacing:.16em;margin-bottom:6px}
 .rev .when{font-size:.71rem;color:var(--ink3);font-weight:600;margin-bottom:22px;letter-spacing:.03em}
+.rev .leadhint{font-size:.82rem;color:var(--ink3);font-weight:600;letter-spacing:.03em}
 .rev .lead{font-family:var(--serif);font-size:1.34rem;font-weight:600;line-height:1.78;
   white-space:pre-wrap;word-break:break-word;letter-spacing:.03em}
 .rev .rest{white-space:pre-wrap;word-break:break-word;font-size:.97rem;color:var(--ink2);
@@ -392,7 +393,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 21;
+const VER = 22;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -1039,10 +1040,10 @@ function noteAct(a, n){
 }
 
 /* ===================== 書く・編集 ===================== */
-let draft = [], draftFid = '';
+let draft = [], draftFid = '', draftTb = false;
 function startNew(){
   S.editId = null;
-  draft = [];
+  draft = []; draftTb = false;
   draftFid = (S.screen === 'list') ? (S.fid || '') : '';
   go('write');
 }
@@ -1051,6 +1052,7 @@ function startEdit(id, fromReview){
   S.editFrom = fromReview ? 'review' : '';
   S.editId = id;
   draft = (n.imgs || []).map(i => ({ id:i, back:(n.back || []).includes(i) }));
+  draftTb = !!n.tb;
   draftFid = n.fid || '';
   go('write');
 }
@@ -1061,9 +1063,11 @@ function renderWrite(){
   $('#main').innerHTML = `
     <div class="pills" id="fpick" style="margin:4px 0 12px"></div>
     <textarea class="field" id="body" placeholder="学んだこと、気づいたことを書く">${esc(n ? n.body : '')}</textarea>
-    <div class="note-txt" style="margin:8px 2px 14px">
-      <b>1行目が「表」</b>、2行目からが「裏」になります。振り返りでは1行目だけが出て、
-      「続きを表示」で残りが出ます。単語カードのようにも使えます。</div>
+    <div class="pills" style="margin:10px 0 8px">
+      <button class="pill ${draftTb?'':'on'}" data-tb="0">1行目を表に出す</button>
+      <button class="pill ${draftTb?'on':''}" data-tb="1">本文はぜんぶ裏</button>
+    </div>
+    <div class="note-txt" id="tbhint" style="margin:0 2px 14px"></div>
     <div class="thumbs" id="dthumbs" style="margin-bottom:12px"></div>
     <div class="note-txt" style="margin:-4px 2px 10px">写真の左下の「表／裏」を押すと、
       その写真を裏（「続きを表示」で出る側）にできます。</div>
@@ -1072,6 +1076,14 @@ function renderWrite(){
   paintFolderPick(); paintDraft();
   $('#tbar [data-cancel]').onclick = back;
   $('#tbar [data-save]').onclick = doSave;
+  const paintTb = () => {
+    $$('#main [data-tb]').forEach(b => b.classList.toggle('on', (b.dataset.tb === '1') === draftTb));
+    $('#tbhint').innerHTML = draftTb
+      ? '振り返りでは<b>表の写真だけ</b>が出ます。本文は「続きを表示」で出ます。間違えた問題の写真を表にして、直しを本文に書くときに使ってください。'
+      : '<b>1行目が「表」</b>、2行目からが「裏」になります。振り返りでは1行目だけが出て、「続きを表示」で残りが出ます。';
+  };
+  $$('#main [data-tb]').forEach(b => b.onclick = () => { draftTb = b.dataset.tb === '1'; paintTb(); });
+  paintTb();
   $('#addphoto').onclick = () => $('#pfile').click();
   $('#pfile').onchange = e => { addPhotos(e.target.files); e.target.value = ''; };
   if(!n) setTimeout(() => { const t = $('#body'); if(t) t.focus(); }, 120);
@@ -1196,12 +1208,12 @@ function doSave(){
   if(S.editId){
     const n = notes.find(x => x.id === S.editId);
     (n.imgs||[]).forEach(i => { if(!imgs.includes(i)){ urlCache.delete(i); delImg(i).catch(()=>{}); } });
-    Object.assign(n, { body, imgs, back:backs, fid:draftFid, upd:now() });
+    Object.assign(n, { body, imgs, back:backs, tb:draftTb, fid:draftFid, upd:now() });
     toast('保存しました');
     if(S.editFrom === 'review'){ S.editFrom = ''; go('review'); }
     else go('note', { nid:n.id });
   }else{
-    const n = { id:uid(), body, imgs, back:backs, fid:draftFid, cre:now(), upd:now(), rev:0, ng:0, revAt:0, star:false, del:false };
+    const n = { id:uid(), body, imgs, back:backs, tb:draftTb, fid:draftFid, cre:now(), upd:now(), rev:0, ng:0, revAt:0, star:false, del:false };
     notes.unshift(n);
     toast('保存しました');
     go('list', { fid: draftFid || '', q:'', view:'list' });
@@ -1351,8 +1363,8 @@ function renderReview(){
   }
   const n = revQ[revI];
   const lines = (n.body||'').split('\n');
-  const lead = lines[0] || '（写真のみ）';
-  const rest = lines.slice(1).join('\n').trim();
+  let lead = lines[0] || '（写真のみ）';
+  let rest = lines.slice(1).join('\n').trim();
   const imgs = n.imgs || [];
 
   if(revMode === 'shuffle'){
@@ -1380,7 +1392,9 @@ function renderReview(){
   const backIds = n.back || [];
   const frontP = imgs.filter(id => !backIds.includes(id));
   const backP  = imgs.filter(id => backIds.includes(id));
-  const hidePic = frontP.length && !backP.length && cfg.hidePhotos !== false;  // 裏を指定していないときだけ設定に従う
+  const tb = !!n.tb && frontP.length > 0;      // 本文ぜんぶ裏（表は写真だけ）
+  if(tb){ lead = ''; rest = (n.body || '').trim(); }
+  const hidePic = !tb && frontP.length && !backP.length && cfg.hidePhotos !== false;
   const hasMore = !!(rest || backP.length || hidePic);
   const veiled = hasMore && !revOpen;
   const picVeiled = hidePic && !revOpen && !revPic;
@@ -1388,7 +1402,8 @@ function renderReview(){
     <div class="rev">
       <div class="step">${revI+1} / ${revQ.length}</div>
       <div class="when">${fmtDate(n.cre)}${n.revAt ? '　前回の確認は' + daysAgo(n.revAt) + '日前' : '　未確認'}</div>
-      <div class="lead">${esc(lead)}</div>
+      ${lead ? `<div class="lead">${esc(lead)}</div>`
+             : `<div class="leadhint">写真を見て、思い出してください</div>`}
       <div class="${picVeiled?'veil':''}" id="revpics">${picsHtml(frontP)}</div>
       ${picVeiled ? `<button class="pictap" id="showpic">写真だけ先に見る</button>` : ''}
       <div class="rest ${veiled?'veil':''}">${esc(rest)}</div>
@@ -1770,8 +1785,8 @@ function helpSheet(){
     slide({ c:C.blue, ic:ICO.pencil({s:23,w:1.7}), sub:'WRITE', t:'書く',
       p:['右下の丸いボタンから書きます。'],
       kv:[['1行目が見出しになる','一覧と振り返りで最初に表示されます。要点を短く。'],
-          ['写真は8枚まで','取り込むときに自動で縮小されます。'],
-          ['写真だけでも保存できる','板書やスライドを撮るだけでも構いません。']] }),
+          ['本文をぜんぶ裏にもできる','「本文はぜんぶ裏」を選ぶと、表は写真だけになります。'],
+          ['写真は8枚まで','1枚ずつ表と裏を切り替えられます。']] }),
     slide({ c:C.green, ic:ICO.folderFill({s:23}), sub:'FOLDER', t:'フォルダ',
       p:['教科や本など、分け方は自由です。'],
       kv:[['中にフォルダを作れる','フォルダを開いて「＋フォルダ」。単元や範囲ごとに、何段でも分けられます。'],

@@ -68,6 +68,10 @@ header.app{position:sticky; top:0; z-index:30; background:var(--bg); padding:cal
 .weekbar .range{flex:1; text-align:center; line-height:1.25;}
 .weekbar .range b{display:block; font-size:16px; font-weight:900;}
 .weekbar .range span{font-size:11px; color:var(--muted); font-weight:700;}
+.weekbar .range span b{font-weight:900; color:var(--new);}
+.weekbar .today{animation:pulse 1.8s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1} 50%{opacity:.55}}
+@media (prefers-reduced-motion: reduce){ .weekbar .today{animation:none;} }
 .weekbar .today{font-size:12px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:6px 10px;}
 
 .update{width:100%; margin-top:10px; background:var(--new); color:#fff; border-radius:16px; padding:13px 14px; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow); text-align:left;}
@@ -367,7 +371,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v24</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v25</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -547,7 +551,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v24</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v25</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -572,7 +576,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 24;
+const VER = 25;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -670,11 +674,17 @@ function fmtHM(min){
   return m+'分';
 }
 
+function weekDiff(){
+  return Math.round((parseISO(S.cur) - parseISO(iso(mondayOf(new Date())))) / 604800000);
+}
 function renderWeekBar(){
-  const m = parseISO(S.cur);
+  const m = parseISO(S.cur), d = weekDiff();
   $('#wRange').textContent = md(m)+'（月）〜 '+md(addDays(m,6))+'（日）';
-  $('#wSub').textContent = m.getFullYear()+'年';
-  $('#btnToday').classList.toggle('hidden', S.cur === iso(mondayOf(new Date())));
+  let tag = '';
+  if(d === -1) tag = '先週'; else if(d === 1) tag = '来週';
+  else if(d < 0) tag = (-d)+'週間前'; else if(d > 0) tag = d+'週間後';
+  $('#wSub').innerHTML = m.getFullYear()+'年' + (tag ? '　<b>'+tag+'</b>' : '');
+  $('#btnToday').classList.toggle('hidden', d === 0);
 }
 function renderDays(){
   const m = parseISO(S.cur), today = iso(new Date());
@@ -1763,6 +1773,19 @@ function openSlides(){
 $('#btnHelp').onclick = openSlides;
 $('#btnSlides').onclick = openSlides;
 
+/* ---------- 日付が変わったら今週にもどす ---------- */
+let lastDay = iso(new Date());
+function checkDayChange(){
+  const today = iso(new Date());
+  if(today === lastDay) return;
+  lastDay = today;
+  const nowK = iso(mondayOf(new Date())), moved = S.cur !== nowK;
+  S.cur = nowK; S.day = (new Date().getDay()+6)%7;
+  syncRep(); renderAll(); renderCd();
+  if(moved) toast('週が変わったので、今週にしました');
+}
+setInterval(checkDayChange, 60000);
+
 let newVer = 0;
 async function checkUpdate(silent){
   try{
@@ -1789,7 +1812,8 @@ async function doUpdate(){
 }
 $('#btnUpdate').onclick = doUpdate;
 $('#btnCheckUpd').onclick = ()=>checkUpdate(false);
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ checkUpdate(true); renderCd(); } });
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ checkUpdate(true); renderCd(); checkDayChange(); } });
+window.addEventListener('focus', checkDayChange);
 
 function boot(){
   if(!S.cur) S.cur = iso(mondayOf(new Date()));

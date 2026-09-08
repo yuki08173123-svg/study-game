@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ヒラジオ</title>
+<meta name="theme-color" content="#141414">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ヒラジオ">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --black:#141414; --black-2:#1f1f1f; --cream:#f5f2ec; --paper:#ffffff; --ink:#222;
+  --muted:#6f6a63; --line:#e4dfd6; --red:#d63a2f; --red-bg:#fbeae8; --ok:#2f6b2f; --ok-bg:#e8f0e3;
+  --serif:'Hiragino Mincho ProN','Yu Mincho','Noto Serif JP',serif;
+  --sans:'Hiragino Sans','Noto Sans JP',-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--serif);-webkit-text-size-adjust:100%}
+body{min-height:100vh;padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+a{color:var(--red)}
+button{font-family:var(--sans);cursor:pointer}
+
+header.top{background:var(--black);color:#fff;padding:calc(18px + env(safe-area-inset-top)) 20px 18px;position:sticky;top:0;z-index:5;border-bottom:4px solid var(--red)}
+.top .label{font-family:var(--sans);font-size:11px;letter-spacing:.24em;opacity:.8}
+.top h1{margin:6px 0 0;font-size:24px;font-weight:700;letter-spacing:.06em}
+.top .sub{font-family:var(--sans);font-size:12px;opacity:.75;margin-top:4px}
+.top .back{position:absolute;left:12px;top:calc(16px + env(safe-area-inset-top));background:none;border:0;color:#fff;font-size:15px;padding:6px 8px;display:none}
+body.detail .top .back{display:block}
+body.detail .top h1{font-size:15px;opacity:.9;padding-left:64px;padding-right:12px}
+body.detail .top .label,body.detail .top .sub{display:none}
+
+main{max-width:680px;margin:0 auto;padding:18px 16px}
+
+/* 一覧 */
+.stats{font-family:var(--sans);font-size:12px;color:var(--muted);margin:0 4px 12px;display:flex;justify-content:space-between}
+.card{background:var(--paper);border-radius:12px;padding:16px 16px 14px;margin-bottom:12px;border:1px solid var(--line);position:relative;cursor:pointer;transition:transform .08s}
+.card:active{transform:scale(.99)}
+.card .meta{font-family:var(--sans);font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.card .day{font-weight:700;color:var(--red);letter-spacing:.06em}
+.card .title{font-size:22px;font-weight:700;line-height:1.4;margin:0 0 8px;color:var(--black)}
+.card .lead{font-size:14px;line-height:1.7;color:#444;margin:0}
+.card .foot{font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+.badge{font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:999px}
+.badge.new{background:var(--red);color:#fff}
+.badge.done{background:var(--ok-bg);color:var(--ok)}
+.badge.partial{background:#fbf5e4;color:#9a6b00}
+.card.done{opacity:.7}
+.card.done .title{color:#555}
+.bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:10px}
+.bar>i{display:block;height:100%;background:var(--red);width:0}
+
+/* 詳細 */
+.ep-head{margin:4px 0 16px}
+.ep-head .meta{font-family:var(--sans);font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center}
+.ep-head .meta .day{font-weight:700;color:var(--red)}
+.ep-head h2{font-size:28px;line-height:1.4;margin:8px 0 0;color:var(--black)}
+.player{background:var(--black);color:#fff;border-radius:14px;padding:18px 18px 16px;margin:0 0 20px}
+.player .row{display:flex;align-items:center;justify-content:center;gap:22px}
+.player button{background:none;border:0;color:#fff;font-size:13px;padding:8px 6px;border-radius:8px}
+.player button.big{width:64px;height:64px;border-radius:50%;background:var(--red);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;padding:0}
+.player button.big:active{transform:scale(.96)}
+.player .skip{font-family:var(--sans);font-weight:700;opacity:.9}
+.player .seek{margin-top:14px}
+.player input[type=range]{width:100%;accent-color:var(--red);height:22px}
+.player .times{display:flex;justify-content:space-between;font-family:var(--sans);font-size:12px;opacity:.85;margin-top:2px}
+.player .rate{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.player .rate button{font-size:12px;padding:5px 10px;border:1px solid rgba(255,255,255,.35)}
+.player .rate button.on{background:#fff;color:var(--black)}
+.sec{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.sec h3{font-family:var(--sans);font-size:13px;letter-spacing:.1em;color:var(--black);margin:0 0 10px;border-bottom:2px solid var(--line);padding-bottom:6px}
+.sec p{margin:0 0 8px;line-height:1.85;font-size:15px}
+.sec ol{margin:0;padding-left:0;list-style:none}
+.sec ol li{display:flex;gap:10px;margin-bottom:8px;line-height:1.8;font-size:15px}
+.sec ol li b{font-family:var(--sans);color:var(--red);flex:none}
+.sec.action{background:var(--black);color:#fff;border-color:var(--black)}
+.sec.action h3{color:#fff;border-color:rgba(255,255,255,.2)}
+.sec.action p{font-size:16px;font-weight:700}
+.sec.quote p{font-size:17px;font-weight:700;color:var(--black);text-align:center;padding:6px 0}
+.sec .cite a{font-family:var(--sans);font-size:14px;display:block;word-break:break-all}
+.script{white-space:pre-wrap;line-height:2;font-size:15px;display:none;margin-top:8px}
+.sec.open .script{display:block}
+.toggle{font-family:var(--sans);font-size:13px;background:none;border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--black);width:100%}
+.done-btn{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:15px;color:var(--black);margin:4px 0 24px}
+.done-btn.on{background:var(--ok-bg);color:var(--ok);border-color:#cfe0c8}
+
+/* スライド */
+.slides{margin:0 -16px 16px}
+.slides .track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 16px;gap:10px}
+.slides .track::-webkit-scrollbar{display:none}
+.slide{flex:0 0 calc(100% - 32px);scroll-snap-align:center;background:var(--black);color:#fff;border-radius:16px;padding:22px 22px 20px;min-height:230px;display:flex;flex-direction:column;justify-content:center;position:relative;cursor:pointer;user-select:none;border-bottom:4px solid var(--red)}
+.slide.alt{background:var(--red);border-bottom-color:#a52a21}
+.slide .k{font-family:var(--sans);font-size:11px;letter-spacing:.18em;opacity:.8;margin-bottom:10px}
+.slide .t{font-size:20px;font-weight:700;line-height:1.55;margin:0}
+.slide:first-child .t{font-size:34px}
+.slide .b{font-size:14px;line-height:1.8;margin:10px 0 0;opacity:.95}
+.slide .n{position:absolute;right:16px;bottom:12px;font-family:var(--sans);font-size:11px;opacity:.6}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:10px}
+.dots i{width:6px;height:6px;border-radius:50%;background:#cfc8bb;display:block;transition:all .15s}
+.dots i.on{background:var(--red);width:16px;border-radius:3px}
+.slides .hint{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:center;margin-top:6px}
+
+/* ミニプレーヤー */
+.mini{position:fixed;left:0;right:0;bottom:0;background:var(--black);color:#fff;padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:none;align-items:center;gap:12px;z-index:6;box-shadow:0 -4px 16px rgba(0,0,0,.2);border-top:3px solid var(--red)}
+.mini.show{display:flex}
+.mini .t{flex:1;min-width:0;font-size:13px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.mini .t small{display:block;font-family:var(--sans);font-size:11px;opacity:.8}
+.mini button{background:var(--red);color:#fff;border:0;width:42px;height:42px;border-radius:50%;font-size:18px;display:flex;align-items:center;justify-content:center;padding:0}
+
+footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:center;padding:12px 0 8px}
+.empty{font-family:var(--sans);color:var(--muted);text-align:center;padding:40px 0}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="back" id="back" aria-label="戻る">‹ 一覧</button>
+  <div class="label">HIRA RADIO</div>
+  <h1 id="h1">ヒラジオ</h1>
+  <div class="sub">毎朝1本、5分で聴くヒラの考え方と勉強法</div>
+</header>
+
+<main>
+  <section id="list"></section>
+  <section id="detail" class="hidden"></section>
+  <footer>ヒラジオ <span id="ver">v1</span></footer>
+</main>
+
+<div class="mini" id="mini">
+  <div class="t" id="miniT"></div>
+  <button id="miniBtn">▶</button>
+</div>
+<audio id="audio" preload="metadata"></audio>
+
+<script>
+const VERSION = 'v1';
+const LS_KEY = 'hirajio-state-v1';
+const $ = s => document.querySelector(s);
+document.getElementById('ver').textContent = VERSION;
+
+let episodes = [];
+let state = load();
+let current = null;
+const audio = $('#audio');
+
+function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)) || {done:{},pos:{}}; }catch(e){ return {done:{},pos:{}}; } }
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+
+function fmt(s){ s=Math.max(0,Math.floor(s||0)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function jpDate(d){ const [y,m,dd]=d.split('-'); const w='日月火水木金土'[new Date(y,m-1,dd).getDay()]; return `${+m}月${+dd}日（${w}）`; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function statusOf(ep, isLatest){
+  if(state.done[ep.id]) return 'done';
+  const p = state.pos[ep.id]||0;
+  if(p > 20) return 'partial';
+  return isLatest ? 'new' : '';
+}
+
+/* ---------- 一覧 ---------- */
+function renderList(){
+  document.body.classList.remove('detail');
+  $('#h1').textContent = 'ヒラジオ';
+  $('#detail').classList.add('hidden');
+  const el = $('#list'); el.classList.remove('hidden');
+  if(!episodes.length){ el.innerHTML='<div class="empty">まだ配信がありません</div>'; return; }
+  const doneN = episodes.filter(e=>state.done[e.id]).length;
+  let html = `<div class="stats"><span>全 ${episodes.length} 回</span><span>聴いた ${doneN} / まだ ${episodes.length-doneN}</span></div>`;
+  episodes.forEach((ep,i)=>{
+    const st = statusOf(ep, i===0);
+    const badge = st==='new' ? '<span class="badge new">NEW</span>'
+                : st==='done' ? '<span class="badge done">✓ 聴いた</span>'
+                : st==='partial' ? '<span class="badge partial">途中まで</span>' : '';
+    const pos = state.pos[ep.id]||0;
+    const pct = ep.duration ? Math.min(100, pos/ep.duration*100) : 0;
+    html += `<article class="card ${st==='done'?'done':''}" data-id="${ep.id}">
+      <div class="meta"><span class="day">Day ${ep.day}</span><span>${jpDate(ep.date)}</span>${badge}</div>
+      <h2 class="title">${esc(ep.title)}</h2>
+      <p class="lead">${esc(ep.lead||'')}</p>
+      <div class="foot"><span>約 ${fmt(ep.duration)}</span><span>${st==='partial'?fmt(pos)+' まで再生':''}</span></div>
+      ${st==='partial'?`<div class="bar"><i style="width:${pct}%"></i></div>`:''}
+    </article>`;
+  });
+  el.innerHTML = html;
+  el.querySelectorAll('.card').forEach(c=>c.onclick=()=>{ location.hash = '#/'+c.dataset.id; });
+}
+
+/* ---------- 詳細 ---------- */
+function renderDetail(id){
+  const ep = episodes.find(e=>e.id===id);
+  if(!ep){ location.hash=''; return; }
+  document.body.classList.add('detail');
+  $('#h1').textContent = `Day ${ep.day}　${ep.title}`;
+  $('#list').classList.add('hidden');
+  const el = $('#detail'); el.classList.remove('hidden');
+  const playing = current && current.id===ep.id && !audio.paused;
+  el.innerHTML = `
+    <div class="ep-head">
+      <div class="meta"><span class="day">Day ${ep.day}</span><span>${jpDate(ep.date)}</span><span>約 ${fmt(ep.duration)}</span></div>
+      <h2>${esc(ep.title)}</h2>
+    </div>
+    ${renderSlides(ep)}
+    <div class="player">
+      <div class="row">
+        <button class="skip" id="b15">−15</button>
+        <button class="big" id="play">${playing?'❚❚':'▶'}</button>
+        <button class="skip" id="f15">+15</button>
+      </div>
+      <div class="seek"><input type="range" id="seek" min="0" max="${Math.floor(ep.duration||0)}" value="0" step="1"></div>
+      <div class="times"><span id="cur">0:00</span><span id="dur">${fmt(ep.duration)}</span></div>
+      <div class="rate" id="rate">
+        <button data-r="0.8">ゆっくり</button><button data-r="1" class="on">ふつう</button><button data-r="1.2">はやく</button>
+      </div>
+    </div>
+    ${ep.definition?`<div class="sec"><h3>今日のテーマ</h3><p>${esc(ep.definition)}</p></div>`:''}
+    <div class="sec"><h3>3つのポイント</h3><ol>${(ep.summary||[]).map((s,i)=>`<li><b>${'一二三四五'[i]||''}</b><span>${esc(s)}</span></li>`).join('')}</ol></div>
+    ${ep.action?`<div class="sec action"><h3>今日の一手</h3><p>${esc(ep.action)}</p></div>`:''}
+    ${ep.quote?`<div class="sec quote"><h3>今日の一言</h3><p>${esc(ep.quote)}</p></div>`:''}
+    ${ep.source&&ep.source.url?`<div class="sec"><h3>もとになった動画</h3><div class="cite"><a href="${esc(ep.source.url)}" target="_blank" rel="noopener">${esc(ep.source.label||'動画を見る')} ›</a></div></div>`:''}
+    <div class="sec" id="scriptSec"><h3>文字で読む</h3><button class="toggle" id="scriptBtn">台本の全文を表示する</button><div class="script">${esc(ep.script||'')}</div></div>
+    <button class="done-btn ${state.done[ep.id]?'on':''}" id="doneBtn">${state.done[ep.id]?'✓ 聴きました（タップで戻す）':'聴いたことにする'}</button>
+  `;
+  bindSlides();
+  $('#play').onclick = ()=> togglePlay(ep);
+  $('#b15').onclick = ()=>{ if(current&&current.id===ep.id) audio.currentTime=Math.max(0,audio.currentTime-15); };
+  $('#f15').onclick = ()=>{ if(current&&current.id===ep.id) audio.currentTime=Math.min(audio.duration||ep.duration,audio.currentTime+15); };
+  const seek = $('#seek');
+  seek.oninput = ()=>{ $('#cur').textContent = fmt(seek.value); };
+  seek.onchange = ()=>{ if(current&&current.id===ep.id){ audio.currentTime=+seek.value; } else { state.pos[ep.id]=+seek.value; save(); } };
+  $('#rate').querySelectorAll('button').forEach(b=>{
+    if(+b.dataset.r===audio.playbackRate) { $('#rate').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); }
+    b.onclick = ()=>{ audio.playbackRate=+b.dataset.r; $('#rate').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+  });
+  $('#scriptBtn').onclick = ()=>{ const s=$('#scriptSec'); s.classList.toggle('open'); $('#scriptBtn').textContent = s.classList.contains('open')?'台本を閉じる':'台本の全文を表示する'; };
+  $('#doneBtn').onclick = ()=>{ if(state.done[ep.id]) delete state.done[ep.id]; else state.done[ep.id]=true; save(); renderDetail(id); };
+  const pos = (current&&current.id===ep.id) ? audio.currentTime : (state.pos[ep.id]||0);
+  seek.value = Math.floor(pos); $('#cur').textContent = fmt(pos);
+  window.scrollTo(0,0);
+}
+
+/* ---------- スライド ---------- */
+function renderSlides(ep){
+  const sl = ep.slides||[];
+  if(!sl.length) return '';
+  const cards = sl.map((s,i)=>`<div class="slide ${s.alt?'alt':''}" data-i="${i}">
+      ${s.k?`<div class="k">${esc(s.k)}</div>`:''}
+      ${s.t?`<p class="t">${esc(s.t)}</p>`:''}
+      ${s.b?`<p class="b">${esc(s.b)}</p>`:''}
+      <div class="n">${i+1} / ${sl.length}</div>
+    </div>`).join('');
+  return `<div class="slides"><div class="track" id="track">${cards}</div>
+    <div class="dots" id="dots">${sl.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>
+    <div class="hint">スライドをタップで次へ・左右にスワイプ</div></div>`;
+}
+function bindSlides(){
+  const track = $('#track'); if(!track) return;
+  const dots = $('#dots').querySelectorAll('i');
+  const cards = track.querySelectorAll('.slide');
+  const w = ()=> cards[0].getBoundingClientRect().width + 10;
+  const cur = ()=> Math.round(track.scrollLeft / w());
+  track.addEventListener('scroll', ()=>{ const i=cur(); dots.forEach((d,j)=>d.classList.toggle('on', j===i)); }, {passive:true});
+  cards.forEach(c=>c.addEventListener('click', e=>{
+    const r = c.getBoundingClientRect(); const left = (e.clientX - r.left) < r.width*0.3;
+    const i = cur(); const next = left ? Math.max(0,i-1) : Math.min(cards.length-1, i+1);
+    track.scrollTo({left: next*w(), behavior:'smooth'});
+  }));
+}
+
+/* ---------- 再生 ---------- */
+function togglePlay(ep){
+  if(current && current.id===ep.id){
+    if(audio.paused) audio.play(); else audio.pause();
+    return;
+  }
+  current = ep;
+  audio.src = ep.audio;
+  const pos = state.pos[ep.id]||0;
+  audio.addEventListener('loadedmetadata', function once(){ audio.removeEventListener('loadedmetadata', once); if(pos>0 && pos < (audio.duration||ep.duration)-5) audio.currentTime=pos; }, {once:true});
+  audio.play().catch(()=>{});
+  setMediaSession(ep);
+}
+function setMediaSession(ep){
+  if(!('mediaSession' in navigator)) return;
+  navigator.mediaSession.metadata = new MediaMetadata({ title: `Day ${ep.day} ${ep.title}`, artist:'ヒラジオ', album:'ヒラジオ', artwork:[{src:'icon-512.png',sizes:'512x512',type:'image/png'}] });
+  navigator.mediaSession.setActionHandler('play', ()=>audio.play());
+  navigator.mediaSession.setActionHandler('pause', ()=>audio.pause());
+  navigator.mediaSession.setActionHandler('seekbackward', ()=>{audio.currentTime=Math.max(0,audio.currentTime-15)});
+  navigator.mediaSession.setActionHandler('seekforward', ()=>{audio.currentTime=Math.min(audio.duration,audio.currentTime+15)});
+}
+let lastSave = 0;
+audio.addEventListener('timeupdate', ()=>{
+  if(!current) return;
+  const t = audio.currentTime, d = audio.duration || current.duration || 0;
+  if(document.body.classList.contains('detail') && $('#seek') && document.activeElement!==$('#seek')){ $('#seek').value=Math.floor(t); $('#cur').textContent=fmt(t); }
+  if(Date.now()-lastSave>3000){ state.pos[current.id]=t; if(d && t/d>=0.9 && !state.done[current.id]){ state.done[current.id]=true; refreshDoneUI(); } save(); lastSave=Date.now(); }
+});
+audio.addEventListener('ended', ()=>{ if(!current) return; state.done[current.id]=true; state.pos[current.id]=0; save(); refreshDoneUI(); updateMini(); });
+audio.addEventListener('play', ()=>{ updatePlayBtn(); updateMini(); });
+audio.addEventListener('pause', ()=>{ if(current){ state.pos[current.id]=audio.currentTime; save(); } updatePlayBtn(); updateMini(); });
+function updatePlayBtn(){ const b=$('#play'); if(b && current && location.hash==='#/'+current.id) b.textContent = audio.paused?'▶':'❚❚'; }
+function refreshDoneUI(){ if(location.hash.startsWith('#/')) { const b=$('#doneBtn'); if(b && current){ b.classList.add('on'); b.textContent='✓ 聴きました（タップで戻す）'; } } else renderList(); }
+function updateMini(){
+  const m=$('#mini');
+  if(!current){ m.classList.remove('show'); return; }
+  const onOwnPage = location.hash==='#/'+current.id;
+  if(onOwnPage && !audio.paused){ m.classList.remove('show'); return; }
+  if(audio.paused && audio.currentTime===0){ m.classList.remove('show'); return; }
+  m.classList.add('show');
+  $('#miniT').innerHTML = `<small>Day ${current.day} ${audio.paused?'一時停止中':'再生中'}</small>${esc(current.title)}`;
+  $('#miniBtn').textContent = audio.paused?'▶':'❚❚';
+}
+$('#miniBtn').onclick = ()=>{ if(audio.paused) audio.play(); else audio.pause(); };
+$('#miniT').onclick = ()=>{ if(current) location.hash='#/'+current.id; };
+
+/* ---------- ルーティング ---------- */
+function route(){
+  const h = location.hash;
+  if(h.startsWith('#/')) renderDetail(h.slice(2)); else renderList();
+  updateMini();
+}
+window.addEventListener('hashchange', route);
+$('#back').onclick = ()=>{ location.hash=''; };
+
+/* ---------- 読み込み ---------- */
+async function boot(){
+  try{
+    const r = await fetch('episodes.json?t='+Date.now(), {cache:'no-store'});
+    const j = await r.json();
+    episodes = (j.episodes||[]).sort((a,b)=>(b.day-a.day));
+    try{ localStorage.setItem(LS_KEY+'-cache', JSON.stringify(episodes)); }catch(e){}
+  }catch(e){
+    try{ episodes = JSON.parse(localStorage.getItem(LS_KEY+'-cache'))||[]; }catch(_){ episodes=[]; }
+  }
+  route();
+}
+boot();
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden' && current){ state.pos[current.id]=audio.currentTime; save(); } });
+</script>
+<style>
+header.top{padding-top:calc(18px + env(safe-area-inset-top))}
+</style>
+</body>
+</html>

@@ -371,7 +371,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v26</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v27</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -552,7 +552,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v26</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v27</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -577,7 +577,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 26;
+const VER = 27;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -686,6 +686,8 @@ function renderWeekBar(){
   else if(d < 0) tag = (-d)+'週間前'; else if(d > 0) tag = d+'週間後';
   $('#wSub').innerHTML = m.getFullYear()+'年' + (tag ? '　<b>'+tag+'</b>' : '');
   $('#btnToday').classList.toggle('hidden', d === 0);
+  const pm = addDays(m, -7);
+  $('#btnCopyPrev').textContent = md(pm)+'（月）の週から、やることをコピー';
 }
 function renderDays(){
   const m = parseISO(S.cur), today = iso(new Date());
@@ -1556,14 +1558,14 @@ function openDurPicker(t){
 }
 $('#btnCopyPrev').onclick = ()=>{
   const pk = iso(addDays(parseISO(S.cur), -7)), pw = S.weeks[pk];
-  if(!pw){ toast('先週の記録がありません'); return; }
+  if(!pw){ toast('その週には、やることがありません'); return; }
   let n = 0;
   for(let i=0;i<7;i++){
     const src = pw.days[iso(addDays(parseISO(pk), i))]; if(!src) continue;
     const dst = dayOf(S.cur, i);
     (src.tasks||[]).forEach(t=>{ dst.tasks.push({ time:t.time, text:t.text, min:t.min||S.defMin, done:false, star:false }); n++; });
   }
-  renderAll(); toast(n ? (n+'件コピーしました') : 'コピーできるやることがありません');
+  renderAll(); toast(n ? (n+'件コピーしました') : 'その週には、やることがありません');
 };
 
 document.querySelectorAll('nav.tabs button').forEach(b=>{

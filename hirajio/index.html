@@ -13,16 +13,19 @@
 <link rel="icon" href="icon-192.png">
 <style>
 :root{
-  --black:#141414; --black-2:#1f1f1f; --cream:#f5f2ec; --paper:#ffffff; --ink:#222;
-  --muted:#6f6a63; --line:#e4dfd6; --red:#d63a2f; --red-bg:#fbeae8; --ok:#2f6b2f; --ok-bg:#e8f0e3;
+  --black:#141414; --ink:#222; --cream:#f5f2ec; --paper:#fff;
+  --muted:#6f6a63; --line:#e4dfd6; --red:#d63a2f; --ok:#2f6b2f; --ok-bg:#e8f0e3;
+  --gold:#b8862f;
   --serif:'Hiragino Mincho ProN','Yu Mincho','Noto Serif JP',serif;
   --sans:'Hiragino Sans','Noto Sans JP',-apple-system,sans-serif;
+  --tabh:60px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--serif);-webkit-text-size-adjust:100%}
-body{min-height:100vh;padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+body{min-height:100vh;padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 16px)}
 a{color:var(--red)}
-button{font-family:var(--sans);cursor:pointer}
+button,input,textarea,select{font-family:var(--sans)}
+button{cursor:pointer}
 
 header.top{background:var(--black);color:#fff;padding:calc(18px + env(safe-area-inset-top)) 20px 18px;position:sticky;top:0;z-index:5;border-bottom:4px solid var(--red)}
 .top .label{font-family:var(--sans);font-size:11px;letter-spacing:.24em;opacity:.8}
@@ -30,47 +33,52 @@ header.top{background:var(--black);color:#fff;padding:calc(18px + env(safe-area-
 .top .sub{font-family:var(--sans);font-size:12px;opacity:.75;margin-top:4px}
 .top .upd-btn{position:absolute;right:12px;top:calc(18px + env(safe-area-inset-top));background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:12px;padding:6px 10px;border-radius:999px}
 .top .upd-btn.busy{opacity:.5}
+.top .back{position:absolute;left:12px;top:calc(16px + env(safe-area-inset-top));background:none;border:0;color:#fff;font-size:15px;padding:6px 8px;display:none}
+body.detail .top .back{display:block}
+body.detail .top h1{font-size:15px;opacity:.9;padding-left:64px;padding-right:70px}
+body.detail .top .label,body.detail .top .sub{display:none}
+
 .banner{background:var(--red);color:#fff;font-family:var(--sans);font-size:13px;line-height:1.5;padding:11px 14px;display:none;align-items:center;gap:10px}
 .banner.show{display:flex}
 .banner span{flex:1}
 .banner button{background:#fff;color:var(--red);border:0;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;white-space:nowrap}
-.notice{font-family:var(--sans);font-size:13px;color:var(--muted);text-align:center;padding:10px 0 4px;line-height:1.6}
-.gate{font-family:var(--sans);text-align:center;padding:48px 12px;color:var(--ink);line-height:1.9}
+
+main{max-width:680px;margin:0 auto;padding:18px 16px}
+.hidden{display:none!important}
+.empty{font-family:var(--sans);color:var(--muted);text-align:center;padding:44px 12px;line-height:1.9;font-size:14px}
+.stats{font-family:var(--sans);font-size:12px;color:var(--muted);margin:0 4px 12px;display:flex;justify-content:space-between}
+.notice{font-family:var(--sans);font-size:13px;color:var(--muted);text-align:center;padding:12px 0 4px;line-height:1.6}
+.gate{font-family:var(--sans);text-align:center;padding:44px 12px;line-height:1.9}
 .gate h2{font-family:var(--serif);font-size:20px;margin:0 0 10px}
 .gate p{margin:0 0 6px;font-size:14px;color:#444}
 .keyform{margin-top:26px;border-top:1px solid var(--line);padding-top:22px}
 .keyform label{display:block;font-size:13px;color:var(--muted);margin-bottom:10px}
-.keyform input{width:100%;max-width:330px;padding:13px 14px;border:1px solid var(--line);border-radius:10px;font-size:16px;font-family:var(--sans);background:#fff;color:var(--ink)}
+.keyform input{width:100%;max-width:330px;padding:13px 14px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:#fff;color:var(--ink)}
 .keyform button{display:block;margin:12px auto 0;background:var(--black);color:#fff;border:0;border-radius:999px;padding:13px 34px;font-size:15px}
 .keyform .err{color:var(--red);font-size:13px;margin-top:10px;min-height:18px}
-.top .back{position:absolute;left:12px;top:calc(16px + env(safe-area-inset-top));background:none;border:0;color:#fff;font-size:15px;padding:6px 8px;display:none}
-body.detail .top .back{display:block}
-body.detail .top h1{font-size:15px;opacity:.9;padding-left:64px;padding-right:12px}
-body.detail .top .label,body.detail .top .sub{display:none}
-
-main{max-width:680px;margin:0 auto;padding:18px 16px}
 
 /* 一覧 */
-.stats{font-family:var(--sans);font-size:12px;color:var(--muted);margin:0 4px 12px;display:flex;justify-content:space-between}
 .card{background:var(--paper);border-radius:12px;padding:16px 16px 14px;margin-bottom:12px;border:1px solid var(--line);position:relative;cursor:pointer;transition:transform .08s}
 .card:active{transform:scale(.99)}
-.card .meta{font-family:var(--sans);font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.card .meta{font-family:var(--sans);font-size:12px;color:var(--muted);display:flex;gap:9px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
 .card .day{font-weight:700;color:var(--red);letter-spacing:.06em}
 .card .title{font-size:19px;font-weight:700;line-height:1.4;margin:0 0 8px;color:var(--black)}
 .card .lead{font-size:14px;line-height:1.7;color:#444;margin:0}
-.card .foot{font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+.card .foot{font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
 .badge{font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:999px}
 .badge.new{background:var(--red);color:#fff}
-.badge.done{background:var(--ok-bg);color:var(--ok)}
 .badge.partial{background:#fbf5e4;color:#9a6b00}
-.card.done{opacity:.7}
+.checks{font-family:var(--sans);font-size:12px;font-weight:700;color:var(--ok);background:var(--ok-bg);border-radius:999px;padding:3px 9px;letter-spacing:.12em;white-space:nowrap}
+.card.done{opacity:.78}
 .card.done .title{color:#555}
 .bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:10px}
 .bar>i{display:block;height:100%;background:var(--red);width:0}
+.mine{font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
+.mine b{color:var(--ok);font-weight:700}
 
 /* 詳細 */
 .ep-head{margin:4px 0 16px}
-.ep-head .meta{font-family:var(--sans);font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center}
+.ep-head .meta{font-family:var(--sans);font-size:12px;color:var(--muted);display:flex;gap:9px;align-items:center;flex-wrap:wrap}
 .ep-head .meta .day{font-weight:700;color:var(--red)}
 .ep-head h2{font-size:23px;line-height:1.4;margin:8px 0 0;color:var(--black)}
 .player{background:var(--black);color:#fff;border-radius:14px;padding:18px 18px 16px;margin:0 0 20px}
@@ -86,7 +94,7 @@ main{max-width:680px;margin:0 auto;padding:18px 16px}
 .player .rate button{font-size:12px;padding:5px 10px;border:1px solid rgba(255,255,255,.35)}
 .player .rate button.on{background:#fff;color:var(--black)}
 .sec{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px}
-.sec h3{font-family:var(--sans);font-size:13px;letter-spacing:.1em;color:var(--black);margin:0 0 10px;border-bottom:2px solid var(--line);padding-bottom:6px}
+.sec h3{font-family:var(--sans);font-size:13px;letter-spacing:.1em;color:var(--black);margin:0 0 10px;border-bottom:2px solid var(--line);padding-bottom:6px;display:flex;justify-content:space-between;align-items:center}
 .sec p{margin:0 0 8px;line-height:1.85;font-size:15px}
 .sec ol{margin:0;padding-left:0;list-style:none}
 .sec ol li{display:flex;gap:10px;margin-bottom:8px;line-height:1.8;font-size:15px}
@@ -95,12 +103,17 @@ main{max-width:680px;margin:0 auto;padding:18px 16px}
 .sec.action h3{color:#fff;border-color:rgba(255,255,255,.2)}
 .sec.action p{font-size:16px;font-weight:700}
 .sec.quote p{font-size:17px;font-weight:700;color:var(--black);text-align:center;padding:6px 0}
-.sec .cite a{font-family:var(--sans);font-size:14px;display:block;word-break:break-all}
+.sec .cite a{font-family:var(--sans);font-size:14px;display:block;margin-bottom:6px;word-break:break-all}
 .script{white-space:pre-wrap;line-height:2;font-size:15px;display:none;margin-top:8px}
 .sec.open .script{display:block}
 .toggle{font-family:var(--sans);font-size:13px;background:none;border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--black);width:100%}
-.done-btn{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:15px;color:var(--black);margin:4px 0 24px}
-.done-btn.on{background:var(--ok-bg);color:var(--ok);border-color:#cfe0c8}
+.btn{font-family:var(--sans);font-size:14px;border:0;border-radius:999px;padding:11px 18px;background:var(--black);color:#fff}
+.btn.ghost{background:none;border:1px solid rgba(255,255,255,.5);color:#fff}
+.btn.light{background:var(--paper);color:var(--black);border:1px solid var(--line)}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.45}
+.playcount{font-family:var(--sans);font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px;justify-content:center;margin:-6px 0 18px}
+.playcount .marks{color:var(--ok);letter-spacing:.18em;font-weight:700;font-size:15px}
 
 /* スライド */
 .slides{margin:0 -16px 16px}
@@ -110,7 +123,7 @@ main{max-width:680px;margin:0 auto;padding:18px 16px}
 .slide.alt{background:var(--red);border-bottom-color:#a52a21}
 .slide .k{font-family:var(--sans);font-size:11px;letter-spacing:.18em;opacity:.8;margin-bottom:10px}
 .slide .t{font-size:20px;font-weight:700;line-height:1.55;margin:0}
-.slide:first-child .t{font-size:34px}
+.slide:first-child .t{font-size:30px}
 .slide .b{font-size:14px;line-height:1.8;margin:10px 0 0;opacity:.95}
 .slide .n{position:absolute;right:16px;bottom:12px;font-family:var(--sans);font-size:11px;opacity:.6}
 .dots{display:flex;justify-content:center;gap:6px;margin-top:10px}
@@ -118,16 +131,74 @@ main{max-width:680px;margin:0 auto;padding:18px 16px}
 .dots i.on{background:var(--red);width:16px;border-radius:3px}
 .slides .hint{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:center;margin-top:6px}
 
-/* ミニプレーヤー */
-.mini{position:fixed;left:0;right:0;bottom:0;background:var(--black);color:#fff;padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:none;align-items:center;gap:12px;z-index:6;box-shadow:0 -4px 16px rgba(0,0,0,.2);border-top:3px solid var(--red)}
+/* 入力まわり */
+.field{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:#fff;color:var(--ink);line-height:1.7}
+textarea.field{min-height:96px;resize:vertical}
+.row2{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
+.row2 .grow{flex:1;min-width:140px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{font-family:var(--sans);font-size:12px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;color:var(--ink)}
+.chip.on{background:var(--black);color:#fff;border-color:var(--black)}
+
+/* ノート */
+.note{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.note .h{font-family:var(--sans);font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;margin-bottom:8px}
+.note .h b{color:var(--red);font-weight:700}
+.note .t{white-space:pre-wrap;line-height:1.9;font-size:15px;margin:0}
+.note .acts{display:flex;gap:8px;margin-top:10px}
+.note .acts button{font-family:var(--sans);font-size:12px;background:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;color:var(--muted)}
+
+/* タスク */
+.dash{background:var(--black);color:#fff;border-radius:14px;padding:18px;margin-bottom:16px;display:flex;align-items:center;gap:18px}
+.ring{width:96px;height:96px;flex:none}
+.ring circle{fill:none;stroke-width:11}
+.ring .bg{stroke:rgba(255,255,255,.16)}
+.ring .fg{stroke:var(--red);stroke-linecap:round;transition:stroke-dasharray .5s}
+.ring text{fill:#fff;font-family:var(--sans);font-size:26px;font-weight:700;text-anchor:middle}
+.dash .nums{font-family:var(--sans);font-size:13px;line-height:1.9}
+.dash .nums b{font-size:20px;font-weight:700}
+.dash .nums .over{color:#ffb3ad}
+.task{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:9px;display:flex;gap:12px;align-items:flex-start}
+.task .box{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);background:#fff;flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;padding:0}
+.task.on .box{background:var(--ok);border-color:var(--ok)}
+.task .body{flex:1;min-width:0}
+.task .t{font-size:15px;line-height:1.65;margin:0;word-break:break-word}
+.task.on .t{color:var(--muted);text-decoration:line-through}
+.task .sub{font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:6px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.task .due{padding:2px 8px;border-radius:999px;background:#f1ece2}
+.task .due.soon{background:#fbf5e4;color:#9a6b00}
+.task .due.over{background:#fbe7e5;color:var(--red);font-weight:700}
+.task .edit{background:none;border:0;color:var(--muted);font-family:var(--sans);font-size:12px;padding:4px 6px}
+.editor{background:var(--paper);border:1px solid var(--black);border-radius:12px;padding:14px;margin-bottom:9px}
+.editor .acts{display:flex;gap:8px;margin-top:10px}
+.editor .acts .del{margin-left:auto;background:none;border:1px solid var(--line);color:var(--red);border-radius:999px;padding:11px 16px;font-size:13px}
+.secttl{font-family:var(--sans);font-size:12px;letter-spacing:.1em;color:var(--muted);margin:20px 4px 10px}
+
+/* きく */
+.ans{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-top:14px}
+.ans .q{font-family:var(--sans);font-size:13px;color:var(--muted);background:#f1ece2;border-radius:10px;padding:10px 12px;line-height:1.7;margin-bottom:14px;white-space:pre-wrap}
+.ans h4{font-family:var(--sans);font-size:12px;letter-spacing:.1em;color:var(--red);margin:16px 0 8px}
+.ans h4:first-of-type{margin-top:0}
+.ans p{margin:0 0 8px;line-height:1.9;font-size:15px}
+.ans ul{margin:0;padding-left:20px}
+.ans li{line-height:1.9;font-size:15px;margin-bottom:5px}
+.ans .act{background:var(--black);color:#fff;border-radius:10px;padding:13px 15px;font-size:15px;font-weight:700;line-height:1.7}
+.ans .foot{font-family:var(--sans);font-size:12px;color:var(--muted);line-height:1.7;margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.ans .links a{font-family:var(--sans);font-size:14px;display:block;margin-bottom:6px}
+.ans .mats{font-family:var(--sans);font-size:14px;line-height:1.9}
+
+/* ミニプレーヤー・タブ */
+.mini{position:fixed;left:0;right:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom));background:var(--black);color:#fff;padding:10px 16px;display:none;align-items:center;gap:12px;z-index:6;box-shadow:0 -4px 16px rgba(0,0,0,.2);border-top:3px solid var(--red)}
 .mini.show{display:flex}
 .mini .t{flex:1;min-width:0;font-size:13px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 .mini .t small{display:block;font-family:var(--sans);font-size:11px;opacity:.8}
 .mini button{background:var(--red);color:#fff;border:0;width:42px;height:42px;border-radius:50%;font-size:18px;display:flex;align-items:center;justify-content:center;padding:0}
-
-footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:center;padding:12px 0 8px}
-.empty{font-family:var(--sans);color:var(--muted);text-align:center;padding:40px 0}
-.hidden{display:none!important}
+.tabbar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--tabh) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;z-index:7}
+.tabbar button{flex:1;background:none;border:0;color:var(--muted);font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0}
+.tabbar button .ic{font-size:19px;line-height:1}
+.tabbar button.on{color:var(--red);font-weight:700}
+.tabbar button .dot{position:absolute;transform:translate(16px,-12px);width:7px;height:7px;border-radius:50%;background:var(--red)}
+footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:center;padding:16px 0 8px}
 </style>
 </head>
 <body>
@@ -135,136 +206,176 @@ footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:cent
   <button class="back" id="back" aria-label="戻る">‹ 一覧</button>
   <div class="label">HIRADIO</div>
   <h1 id="h1">ヒラジオ</h1>
-  <div class="sub">毎朝5分、ヒラの考え方と勉強法</div>
+  <div class="sub" id="sub">毎朝5分、ヒラの考え方と勉強法</div>
   <button class="upd-btn" id="updBtn" aria-label="最新の状態に更新">更新</button>
 </header>
 <div class="banner" id="banner"><span>新しい版があります。更新すると最新の内容になります。</span><button id="bannerBtn">更新</button></div>
 
-<main>
-  <section id="list"></section>
-  <section id="detail" class="hidden"></section>
-  <footer>ヒラジオ <span id="ver">v1</span></footer>
-</main>
+<main><section id="view"></section><footer>ヒラジオ <span id="ver">v8</span></footer></main>
 
 <div class="mini" id="mini">
   <div class="t" id="miniT"></div>
   <button id="miniBtn">▶</button>
 </div>
+<nav class="tabbar" id="tabbar">
+  <button data-tab="radio"><span class="ic">🎙</span>ラジオ</button>
+  <button data-tab="notes"><span class="ic">✍️</span>ノート</button>
+  <button data-tab="tasks"><span class="ic">✅</span>タスク</button>
+  <button data-tab="ask"><span class="ic">💬</span>きく</button>
+</nav>
 <audio id="audio" preload="metadata"></audio>
 
 <script>
-const VERSION = 'v7';
+const VERSION = 'v8';
 const LS_KEY = 'hirajio-state-v1';
+const KEY_LS = 'hirajio-key';
 const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
 document.getElementById('ver').textContent = VERSION;
 
-let episodes = [];      // 生徒に見えている回だけ
-let pool = [];          // 公開されている全回
-let member = null;      // {start:'YYYY-MM-DD', all:bool}
-let dayNow = 0;         // 生徒の今日が Day 何か
-let state = load();
-let current = null;
+let pool = [], episodes = [], member = null, dayNow = 0, kb = null;
+let current = null, counted = false, tab = 'radio', editingTask = null, lastAnswer = null;
 const audio = $('#audio');
-const KEY_LS = 'hirajio-key';
+
+/* ---------- 保存 ---------- */
+function load(){
+  let s = {};
+  try{ s = JSON.parse(localStorage.getItem(LS_KEY)) || {}; }catch(e){ s = {}; }
+  s.done = s.done || {}; s.pos = s.pos || {}; s.plays = s.plays || {};
+  s.notes = s.notes || []; s.tasks = s.tasks || []; s.asks = s.asks || [];
+  return s;
+}
+let state = load();
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+/* ---------- 共通 ---------- */
+function fmt(s){ s = Math.max(0, Math.floor(s||0)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function addDays(iso, n){ const [y,m,d]=iso.split('-').map(Number); const t=new Date(y,m-1,d+n); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; }
+function jpDate(d){ if(!d) return ''; const [y,m,dd]=d.split('-'); const w='日月火水木金土'[new Date(y,m-1,dd).getDay()]; return `${+m}月${+dd}日（${w}）`; }
+function jpDateTime(ms){ const d=new Date(ms); return `${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function dateOf(ep){ return member && member.start ? addDays(member.start, ep.no-1) : ''; }
+function epOf(id){ return pool.find(e=>e.id===id); }
+function epByNo(no){ return pool.find(e=>e.no===no); }
+function marks(n){ if(!n) return ''; return n<=5 ? '✓'.repeat(n) : '✓×'+n; }
 
 async function sha256(t){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
 function getKey(){
-  const q = new URLSearchParams(location.search).get('k') || (location.hash.match(/[#&]k=([a-z0-9]+)/i)||[])[1];
+  const q = new URLSearchParams(location.search).get('k') || (location.hash.match(/[#&]k=([A-Za-z0-9]+)/i)||[])[1];
   if(q){ try{ localStorage.setItem(KEY_LS, q); }catch(e){}
     if(location.hash.indexOf('k=') >= 0) history.replaceState(null, '', location.pathname + '?k=' + q);
     return q; }
   try{ return localStorage.getItem(KEY_LS); }catch(e){ return null; }
 }
 function midnight(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-function addDays(iso, n){ const [y,m,dd]=iso.split('-').map(Number); const d=new Date(y,m-1,dd+n); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-function dateOf(ep){ return member && member.start ? addDays(member.start, ep.no-1) : ''; }
 function applyMember(){
-  if(!member){ episodes=[]; return; }
+  if(!member){ episodes = []; return; }
   if(member.all){ dayNow = pool.length ? pool[0].no : 0; episodes = pool.slice(); return; }
-  const [y,m,dd]=member.start.split('-').map(Number);
-  dayNow = Math.floor((midnight(new Date()) - new Date(y,m-1,dd)) / 86400000) + 1;
-  episodes = pool.filter(e=>e.no <= dayNow);
+  const [y,m,d] = member.start.split('-').map(Number);
+  dayNow = Math.floor((midnight(new Date()) - new Date(y,m-1,d)) / 86400000) + 1;
+  episodes = pool.filter(e => e.no <= dayNow);
 }
 
-function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)) || {done:{},pos:{}}; }catch(e){ return {done:{},pos:{}}; } }
-function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
-
-function fmt(s){ s=Math.max(0,Math.floor(s||0)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
-function jpDate(d){ if(!d) return ''; const [y,m,dd]=d.split('-'); const w='日月火水木金土'[new Date(y,m-1,dd).getDay()]; return `${+m}月${+dd}日（${w}）`; }
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function statusOf(ep, isLatest){
-  if(state.done[ep.id]) return 'done';
-  const p = state.pos[ep.id]||0;
-  if(p > 20) return 'partial';
-  return isLatest ? 'new' : '';
-}
-
-/* ---------- 一覧 ---------- */
-function renderList(){
+/* ---------- 画面の出し分け ---------- */
+function setHead(title, sub){ $('#h1').textContent = title; $('#sub').textContent = sub || ''; }
+function paintTabs(){ $$('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab && !document.body.classList.contains('detail'))); }
+function route(){
+  const h = location.hash;
   document.body.classList.remove('detail');
-  $('#h1').textContent = 'ヒラジオ';
-  $('#detail').classList.add('hidden');
-  const el = $('#list'); el.classList.remove('hidden');
-  if(!member){
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    const head = standalone
-      ? `<h2>リンクを貼り付けてください</h2>
-         <p>ホーム画面のアイコンから開くと、リンクの情報が引き継がれないことがあります。</p>
-         <p>下の欄に、お渡ししたリンクをそのまま貼り付けてください。一度貼れば、次からはこのアイコンでそのまま開けます。</p>`
-      : `<h2>このリンクでは開けません</h2>
-         <p>ヒラジオは、お渡ししたリンク（アドレスの最後に ?k= が付いたもの）から開いてください。</p>`;
-    el.innerHTML = `<div class="gate">${head}
-      <div class="keyform">
-        <label>お渡ししたリンク</label>
-        <input id="keyIn" type="text" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://...?k=...">
-        <button id="keyGo">開く</button>
-        <div class="err" id="keyErr"></div>
-      </div></div>`;
-    const go = ()=>{
-      const v = ($('#keyIn').value||'').trim();
-      const m2 = v.match(/[?&#]k=([A-Za-z0-9]+)/) || v.match(/^([A-Za-z0-9]{6,40})$/);
-      if(!m2){ $('#keyErr').textContent = 'リンクが読み取れませんでした。全部そのまま貼り付けてください。'; return; }
-      try{ localStorage.setItem(KEY_LS, m2[1]); }catch(e){}
-      location.replace(location.pathname + '?k=' + m2[1]);
-    };
-    $('#keyGo').onclick = go;
-    $('#keyIn').addEventListener('keydown', e=>{ if(e.key === 'Enter') go(); });
-    return; }
+  if(h.startsWith('#/')){ document.body.classList.add('detail'); tab='radio'; renderDetail(h.slice(2)); }
+  else if(h === '#notes'){ tab='notes'; renderNotes(); }
+  else if(h === '#tasks'){ tab='tasks'; renderTasks(); }
+  else if(h === '#ask'){ tab='ask'; renderAsk(); }
+  else { tab='radio'; renderList(); }
+  paintTabs(); updateMini();
+}
+$$('#tabbar button').forEach(b => b.onclick = ()=>{
+  const t = b.dataset.tab;
+  location.hash = t === 'radio' ? '' : '#' + t;
+  if(t === 'radio' && !location.hash) route();
+  window.scrollTo(0,0);
+});
+$('#back').onclick = ()=>{ location.hash = ''; };
+
+/* ---------- 鍵がないとき ---------- */
+function gate(el){
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const head = standalone
+    ? `<h2>リンクを貼り付けてください</h2>
+       <p>ホーム画面のアイコンから開くと、リンクの情報が引き継がれないことがあります。</p>
+       <p>下の欄に、お渡ししたリンクをそのまま貼り付けてください。一度貼れば、次からはこのアイコンでそのまま開けます。</p>`
+    : `<h2>このリンクでは開けません</h2>
+       <p>ヒラジオは、お渡ししたリンク（アドレスの最後に ?k= が付いたもの）から開いてください。</p>`;
+  el.innerHTML = `<div class="gate">${head}
+    <div class="keyform">
+      <label>お渡ししたリンク</label>
+      <input id="keyIn" type="text" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://...?k=...">
+      <button id="keyGo">開く</button>
+      <div class="err" id="keyErr"></div>
+    </div></div>`;
+  const go = ()=>{
+    const v = ($('#keyIn').value||'').trim();
+    const m = v.match(/[?&#]k=([A-Za-z0-9]+)/) || v.match(/^([A-Za-z0-9]{6,40})$/);
+    if(!m){ $('#keyErr').textContent = 'リンクが読み取れませんでした。全部そのまま貼り付けてください。'; return; }
+    try{ localStorage.setItem(KEY_LS, m[1]); }catch(e){}
+    location.replace(location.pathname + '?k=' + m[1]);
+  };
+  $('#keyGo').onclick = go;
+  $('#keyIn').addEventListener('keydown', e=>{ if(e.key==='Enter') go(); });
+}
+
+/* ---------- ラジオ一覧 ---------- */
+function renderList(){
+  setHead('ヒラジオ', '毎朝5分、ヒラの考え方と勉強法');
+  const el = $('#view');
+  if(!member){ gate(el); return; }
   if(dayNow < 1){ el.innerHTML = `<div class="gate"><h2>まだ始まっていません</h2><p>${jpDate(member.start)} の朝から、Day 1 が届きます。</p></div>`; return; }
-  if(!episodes.length){ el.innerHTML='<div class="empty">まだ配信がありません</div>'; return; }
-  const doneN = episodes.filter(e=>state.done[e.id]).length;
-  const todayEp = episodes.find(e=>e.no===dayNow);
-  let html = `<div class="stats"><span>${member.all?'全回表示':'今日は Day '+dayNow}</span><span>聴いた ${doneN} / まだ ${episodes.length-doneN}</span></div>`;
-  if(!member.all && !todayEp && dayNow > pool.length) html += `<div class="notice">Day ${dayNow} は準備中です。届き次第、ここに出ます。</div>`;
-  episodes.forEach((ep,i)=>{
-    const st = statusOf(ep, member.all ? i===0 : ep.no===dayNow);
-    const badge = st==='new' ? '<span class="badge new">NEW</span>'
-                : st==='done' ? '<span class="badge done">✓ 聴いた</span>'
-                : st==='partial' ? '<span class="badge partial">途中まで</span>' : '';
+  if(!episodes.length){ el.innerHTML = '<div class="empty">まだ配信がありません</div>'; return; }
+
+  const totalPlays = episodes.reduce((a,e)=> a + (state.plays[e.id]||0), 0);
+  const heard = episodes.filter(e => (state.plays[e.id]||0) > 0).length;
+  let html = `<div class="stats"><span>${member.all ? '全回表示' : '今日は Day ' + dayNow}</span>
+      <span>聴いた ${heard} / ${episodes.length}　のべ ${totalPlays} 回</span></div>`;
+
+  episodes.forEach((ep, i) => {
+    const plays = state.plays[ep.id]||0;
     const pos = state.pos[ep.id]||0;
+    const isNew = member.all ? i===0 : ep.no===dayNow;
+    const partial = !plays && pos > 20;
     const pct = ep.duration ? Math.min(100, pos/ep.duration*100) : 0;
-    html += `<article class="card ${st==='done'?'done':''}" data-id="${ep.id}">
+    const nNote = state.notes.filter(n => n.epId === ep.id).length;
+    const nTask = state.tasks.filter(t => t.from === ep.id).length;
+    const nTaskDone = state.tasks.filter(t => t.from === ep.id && t.done).length;
+    const badge = plays ? `<span class="checks">${marks(plays)}</span>`
+                : isNew ? '<span class="badge new">NEW</span>'
+                : partial ? '<span class="badge partial">途中まで</span>' : '';
+    html += `<article class="card ${plays?'done':''}" data-id="${ep.id}">
       <div class="meta"><span class="day">Day ${ep.no}</span><span>${jpDate(dateOf(ep))}</span><span>${esc(ep.tag||'')}</span>${badge}</div>
       <h2 class="title">${esc(ep.title)}</h2>
       <p class="lead">${esc(ep.lead||'')}</p>
-      <div class="foot"><span>約 ${fmt(ep.duration)}</span><span>${st==='partial'?fmt(pos)+' まで再生':''}</span></div>
-      ${st==='partial'?`<div class="bar"><i style="width:${pct}%"></i></div>`:''}
+      <div class="foot"><span>約 ${fmt(ep.duration)}</span><span>${partial ? fmt(pos)+' まで再生' : ''}</span></div>
+      ${partial ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}
+      ${(nNote||nTask) ? `<div class="mine">${nNote?`<span>✍️ ノート <b>${nNote}</b></span>`:''}${nTask?`<span>✅ タスク <b>${nTaskDone}/${nTask}</b></span>`:''}</div>` : ''}
     </article>`;
   });
   if(!member.all && pool.length > dayNow) html += `<div class="notice">明日の朝、Day ${dayNow+1} が届きます。</div>`;
   el.innerHTML = html;
-  el.querySelectorAll('.card').forEach(c=>c.onclick=()=>{ location.hash = '#/'+c.dataset.id; });
+  $$('#view .card').forEach(c => c.onclick = ()=>{ location.hash = '#/' + c.dataset.id; });
 }
 
-/* ---------- 詳細 ---------- */
+/* ---------- ラジオ詳細 ---------- */
 function renderDetail(id){
-  const ep = episodes.find(e=>e.id===id);
-  if(!ep){ location.hash=''; return; }
-  document.body.classList.add('detail');
-  $('#h1').textContent = `Day ${ep.no}　${ep.tag||''}`;
-  $('#list').classList.add('hidden');
-  const el = $('#detail'); el.classList.remove('hidden');
+  const ep = epOf(id);
+  if(!ep || !member){ location.hash=''; return; }
+  setHead(`Day ${ep.no}　${ep.tag||''}`);
+  const el = $('#view');
   const playing = current && current.id===ep.id && !audio.paused;
+  const plays = state.plays[ep.id]||0;
+  const myNotes = state.notes.filter(n => n.epId === ep.id).sort((a,b)=>b.created-a.created);
+  const myTasks = state.tasks.filter(t => t.from === ep.id).sort((a,b)=>a.done-b.done || b.created-a.created);
+
   el.innerHTML = `
     <div class="ep-head">
       <div class="meta"><span class="day">Day ${ep.no}</span><span>${jpDate(dateOf(ep))}</span><span>${esc(ep.tag||'')}</span><span>約 ${fmt(ep.duration)}</span></div>
@@ -283,27 +394,52 @@ function renderDetail(id){
         <button data-r="0.8">ゆっくり</button><button data-r="1" class="on">ふつう</button><button data-r="1.2">はやく</button>
       </div>
     </div>
+    <div class="playcount" id="pc">${plays ? `<span class="marks">${marks(plays)}</span><span>${plays}回 聴きました</span>` : '<span>まだ聴いていません</span>'}</div>
     ${ep.definition?`<div class="sec"><h3>ひとことで言うと</h3><p>${esc(ep.definition)}</p></div>`:''}
     <div class="sec"><h3>今日やること</h3><ol>${(ep.summary||[]).map((s,i)=>`<li><b>${'一二三四五'[i]||''}</b><span>${esc(s)}</span></li>`).join('')}</ol></div>
-    ${ep.action?`<div class="sec action"><h3>今日の一手</h3><p>${esc(ep.action)}</p></div>`:''}
+    ${ep.action?`<div class="sec action"><h3>今日の一手</h3><p>${esc(ep.action)}</p>
+      <div class="chips" id="dueChips">
+        <button class="chip on" data-d="0">今日まで</button><button class="chip" data-d="1">明日まで</button><button class="chip" data-d="3">3日以内</button><button class="chip" data-d="7">1週間以内</button>
+      </div>
+      <button class="btn ghost wide" id="addTask" style="margin-top:12px">これをタスクにする</button></div>`:''}
     ${ep.quote?`<div class="sec quote"><h3>今日の一言</h3><p>${esc(ep.quote)}</p></div>`:''}
+    <div class="sec"><h3>気づきを書く</h3>
+      <textarea class="field" id="noteIn" placeholder="聴いて思ったこと、やってみた結果、うまくいかなかったこと。ひとことで大丈夫です。"></textarea>
+      <button class="btn wide" id="saveNote" style="margin-top:10px">書いたことを残す</button>
+      ${myNotes.length?`<div class="secttl" style="margin-left:0">この回に書いたこと（${myNotes.length}）</div>${myNotes.map(n=>noteHTML(n,false)).join('')}`:''}
+    </div>
+    ${myTasks.length?`<div class="sec"><h3>この回から作ったタスク</h3>${myTasks.map(t=>taskHTML(t)).join('')}</div>`:''}
     ${(ep.sources||[]).filter(x=>x&&x.url).length?`<div class="sec"><h3>もっと深く知りたい人へ</h3><div class="cite">${(ep.sources||[]).filter(x=>x&&x.url).map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label||'動画を見る')} ›</a>`).join('')}</div></div>`:''}
     <div class="sec" id="scriptSec"><h3>文字で読む</h3><button class="toggle" id="scriptBtn">台本の全文を表示する</button><div class="script">${esc(ep.script||'')}</div></div>
-    <button class="done-btn ${state.done[ep.id]?'on':''}" id="doneBtn">${state.done[ep.id]?'✓ 聴きました（タップで戻す）':'聴いたことにする'}</button>
   `;
   bindSlides();
   $('#play').onclick = ()=> togglePlay(ep);
-  $('#b15').onclick = ()=>{ if(current&&current.id===ep.id) audio.currentTime=Math.max(0,audio.currentTime-15); };
-  $('#f15').onclick = ()=>{ if(current&&current.id===ep.id) audio.currentTime=Math.min(audio.duration||ep.duration,audio.currentTime+15); };
+  $('#b15').onclick = ()=>{ if(current&&current.id===ep.id) audio.currentTime = Math.max(0, audio.currentTime-15); };
+  $('#f15').onclick = ()=>{ if(current&&current.id===ep.id) audio.currentTime = Math.min(audio.duration||ep.duration, audio.currentTime+15); };
   const seek = $('#seek');
   seek.oninput = ()=>{ $('#cur').textContent = fmt(seek.value); };
-  seek.onchange = ()=>{ if(current&&current.id===ep.id){ audio.currentTime=+seek.value; } else { state.pos[ep.id]=+seek.value; save(); } };
-  $('#rate').querySelectorAll('button').forEach(b=>{
-    if(+b.dataset.r===audio.playbackRate) { $('#rate').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); }
-    b.onclick = ()=>{ audio.playbackRate=+b.dataset.r; $('#rate').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+  seek.onchange = ()=>{ if(current&&current.id===ep.id){ audio.currentTime = +seek.value; } else { state.pos[ep.id] = +seek.value; save(); } };
+  $$('#rate button').forEach(b=>{
+    if(+b.dataset.r === audio.playbackRate){ $$('#rate button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); }
+    b.onclick = ()=>{ audio.playbackRate = +b.dataset.r; $$('#rate button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
   });
   $('#scriptBtn').onclick = ()=>{ const s=$('#scriptSec'); s.classList.toggle('open'); $('#scriptBtn').textContent = s.classList.contains('open')?'台本を閉じる':'台本の全文を表示する'; };
-  $('#doneBtn').onclick = ()=>{ if(state.done[ep.id]) delete state.done[ep.id]; else state.done[ep.id]=true; save(); renderDetail(id); };
+
+  if($('#dueChips')) $$('#dueChips .chip').forEach(c => c.onclick = ()=>{ $$('#dueChips .chip').forEach(x=>x.classList.remove('on')); c.classList.add('on'); });
+  if($('#addTask')) $('#addTask').onclick = ()=>{
+    const d = +($('#dueChips .chip.on')||{dataset:{d:0}}).dataset.d;
+    addTask(ep.action, addDays(todayISO(), d), ep.id);
+    $('#addTask').textContent = '✓ タスクに入れました'; $('#addTask').disabled = true;
+  };
+  $('#saveNote').onclick = ()=>{
+    const t = $('#noteIn').value.trim();
+    if(!t){ $('#noteIn').focus(); return; }
+    state.notes.push({ id: uid(), epId: ep.id, text: t, created: Date.now() });
+    save(); renderDetail(id); window.scrollTo(0, document.body.scrollHeight * .6);
+  };
+  bindNoteActs(()=>renderDetail(id));
+  bindTaskActs(()=>renderDetail(id));
+
   const pos = (current&&current.id===ep.id) ? audio.currentTime : (state.pos[ep.id]||0);
   seek.value = Math.floor(pos); $('#cur').textContent = fmt(pos);
   window.scrollTo(0,0);
@@ -311,104 +447,318 @@ function renderDetail(id){
 
 /* ---------- スライド ---------- */
 function renderSlides(ep){
-  const sl = ep.slides||[];
+  const sl = ep.slides || [];
   if(!sl.length) return '';
   const cards = sl.map((s,i)=>`<div class="slide ${s.alt?'alt':''}" data-i="${i}">
       ${s.k?`<div class="k">${esc(s.k)}</div>`:''}
       ${s.t?`<p class="t">${esc(s.t)}</p>`:''}
       ${s.b?`<p class="b">${esc(s.b)}</p>`:''}
-      <div class="n">${i+1} / ${sl.length}</div>
-    </div>`).join('');
+      <div class="n">${i+1} / ${sl.length}</div></div>`).join('');
   return `<div class="slides"><div class="track" id="track">${cards}</div>
     <div class="dots" id="dots">${sl.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>
     <div class="hint">スライドをタップで次へ・左右にスワイプ</div></div>`;
 }
 function bindSlides(){
   const track = $('#track'); if(!track) return;
-  const dots = $('#dots').querySelectorAll('i');
-  const cards = track.querySelectorAll('.slide');
+  const dots = $$('#dots i'), cards = $$('#track .slide');
   const w = ()=> cards[0].getBoundingClientRect().width + 10;
   const cur = ()=> Math.round(track.scrollLeft / w());
   track.addEventListener('scroll', ()=>{ const i=cur(); dots.forEach((d,j)=>d.classList.toggle('on', j===i)); }, {passive:true});
-  cards.forEach(c=>c.addEventListener('click', e=>{
+  cards.forEach(c => c.addEventListener('click', e=>{
     const r = c.getBoundingClientRect(); const left = (e.clientX - r.left) < r.width*0.3;
     const i = cur(); const next = left ? Math.max(0,i-1) : Math.min(cards.length-1, i+1);
     track.scrollTo({left: next*w(), behavior:'smooth'});
   }));
 }
 
+/* ---------- ノート ---------- */
+function noteHTML(n, showEp){
+  const ep = n.epId ? epOf(n.epId) : null;
+  const head = showEp ? (ep ? `<b>Day ${ep.no}</b> ${esc(ep.title)}` : '自由メモ') : '';
+  return `<div class="note" data-note="${n.id}">
+    <div class="h"><span>${head}</span><span>${jpDateTime(n.created)}</span></div>
+    <p class="t">${esc(n.text)}</p>
+    <div class="acts"><button data-act="edit">直す</button><button data-act="del">消す</button></div>
+  </div>`;
+}
+function bindNoteActs(after){
+  $$('.note').forEach(el=>{
+    const id = el.dataset.note;
+    el.querySelectorAll('[data-act]').forEach(b => b.onclick = (e)=>{
+      e.stopPropagation();
+      const n = state.notes.find(x=>x.id===id); if(!n) return;
+      if(b.dataset.act === 'del'){
+        if(confirm('このノートを消しますか？')){ state.notes = state.notes.filter(x=>x.id!==id); save(); after(); }
+      } else {
+        const v = prompt('書き直す', n.text);
+        if(v !== null && v.trim()){ n.text = v.trim(); n.updated = Date.now(); save(); after(); }
+      }
+    });
+  });
+}
+function renderNotes(){
+  setHead('ノート', '書いたものが、ここに溜まります');
+  const el = $('#view');
+  if(!member){ gate(el); return; }
+  const all = state.notes.slice().sort((a,b)=>b.created-a.created);
+  el.innerHTML = `
+    <div class="sec"><h3>思いついたことを書く</h3>
+      <textarea class="field" id="freeNote" placeholder="ラジオ以外のことでも大丈夫です。"></textarea>
+      <button class="btn wide" id="addFree" style="margin-top:10px">残す</button></div>
+    <div class="stats"><span>ぜんぶで ${all.length} 件</span><span>${all.length?jpDateTime(all[0].created)+' に更新':''}</span></div>
+    <div id="noteList">${all.length ? all.map(n=>noteHTML(n,true)).join('') : '<div class="empty">まだ何も書かれていません。<br>ラジオを聴いたあと、詳細画面の「気づきを書く」から残せます。</div>'}</div>`;
+  $('#addFree').onclick = ()=>{
+    const t = $('#freeNote').value.trim(); if(!t) return;
+    state.notes.push({ id: uid(), epId: '', text: t, created: Date.now() });
+    save(); renderNotes();
+  };
+  bindNoteActs(renderNotes);
+  window.scrollTo(0,0);
+}
+
+/* ---------- タスク ---------- */
+function addTask(text, due, from){
+  state.tasks.push({ id: uid(), text: String(text||'').trim(), due: due||'', done:false, doneAt:0, from: from||'', created: Date.now() });
+  save();
+}
+function dueClass(t){
+  if(!t.due || t.done) return '';
+  const today = todayISO();
+  if(t.due < today) return 'over';
+  if(t.due === today) return 'soon';
+  return '';
+}
+function dueLabel(t){
+  if(!t.due) return '期限なし';
+  const today = todayISO();
+  if(t.due === today) return '今日まで';
+  if(t.due === addDays(today,1)) return '明日まで';
+  if(t.due < today && !t.done) return jpDate(t.due) + ' 期限切れ';
+  return jpDate(t.due) + ' まで';
+}
+function taskHTML(t){
+  const ep = t.from ? epOf(t.from) : null;
+  return `<div class="task ${t.done?'on':''}" data-task="${t.id}">
+    <button class="box" data-act="toggle">${t.done?'✓':''}</button>
+    <div class="body">
+      <p class="t">${esc(t.text)}</p>
+      <div class="sub"><span class="due ${dueClass(t)}">${dueLabel(t)}</span>${ep?`<span>Day ${ep.no}</span>`:''}<button class="edit" data-act="edit">直す</button></div>
+    </div></div>`;
+}
+function editorHTML(t){
+  return `<div class="editor" data-task="${t.id}">
+    <textarea class="field" data-f="text">${esc(t.text)}</textarea>
+    <div class="row2"><input type="date" class="field grow" data-f="due" value="${esc(t.due||'')}"><button class="chip" data-act="clear">期限なし</button></div>
+    <div class="acts"><button class="btn" data-act="save">保存</button><button class="btn light" data-act="cancel">やめる</button><button class="del" data-act="del">削除</button></div>
+  </div>`;
+}
+function bindTaskActs(after){
+  $$('.task').forEach(el=>{
+    const id = el.dataset.task;
+    el.querySelectorAll('[data-act]').forEach(b => b.onclick = (e)=>{
+      e.stopPropagation();
+      const t = state.tasks.find(x=>x.id===id); if(!t) return;
+      if(b.dataset.act === 'toggle'){ t.done = !t.done; t.doneAt = t.done ? Date.now() : 0; save(); after(); }
+      else { editingTask = id; after(); }
+    });
+  });
+  $$('.editor').forEach(el=>{
+    const id = el.dataset.task;
+    const t = state.tasks.find(x=>x.id===id); if(!t) return;
+    el.querySelector('[data-act="clear"]').onclick = ()=>{ el.querySelector('[data-f="due"]').value = ''; };
+    el.querySelector('[data-act="cancel"]').onclick = ()=>{ editingTask = null; after(); };
+    el.querySelector('[data-act="save"]').onclick = ()=>{
+      const v = el.querySelector('[data-f="text"]').value.trim();
+      if(v) t.text = v;
+      t.due = el.querySelector('[data-f="due"]').value || '';
+      editingTask = null; save(); after();
+    };
+    el.querySelector('[data-act="del"]').onclick = ()=>{
+      if(confirm('このタスクを削除しますか？')){ state.tasks = state.tasks.filter(x=>x.id!==id); editingTask=null; save(); after(); }
+    };
+  });
+}
+function renderTasks(){
+  setHead('タスク', '決めたことを、終わらせる');
+  const el = $('#view');
+  if(!member){ gate(el); return; }
+  const ts = state.tasks;
+  const total = ts.length, done = ts.filter(t=>t.done).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const today = todayISO();
+  const over = ts.filter(t=>!t.done && t.due && t.due < today).length;
+  const weekAgo = addDays(today, -6);
+  const weekDone = ts.filter(t=>t.done && t.doneAt && new Date(t.doneAt).toISOString().slice(0,10) >= weekAgo).length;
+  const C = 2 * Math.PI * 52;
+  const undone = ts.filter(t=>!t.done).sort((a,b)=> (a.due?0:1)-(b.due?0:1) || (a.due||'').localeCompare(b.due||'') || b.created-a.created);
+  const fin = ts.filter(t=>t.done).sort((a,b)=> (b.doneAt||0)-(a.doneAt||0));
+  const row = t => (editingTask === t.id) ? editorHTML(t) : taskHTML(t);
+
+  el.innerHTML = `
+    <div class="dash">
+      <svg class="ring" viewBox="0 0 120 120">
+        <circle class="bg" cx="60" cy="60" r="52"></circle>
+        <circle class="fg" cx="60" cy="60" r="52" stroke-dasharray="${(C*pct/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 60 60)"></circle>
+        <text x="60" y="70">${pct}%</text>
+      </svg>
+      <div class="nums">
+        <div><b>${done}</b> / ${total} 件 終わりました</div>
+        <div>この1週間で <b>${weekDone}</b> 件</div>
+        <div class="${over?'over':''}">${over ? '期限切れ ' + over + ' 件' : '期限切れはありません'}</div>
+      </div>
+    </div>
+    <div class="sec"><h3>タスクを足す</h3>
+      <textarea class="field" id="taskIn" placeholder="今日やること。できるだけ具体的に（例：数学ワーク32〜35ページ）"></textarea>
+      <div class="row2"><input type="date" class="field grow" id="taskDue" value="${today}"><button class="btn" id="taskAdd">追加</button></div></div>
+    <div class="secttl">これから（${undone.length}）</div>
+    <div id="undone">${undone.length ? undone.map(row).join('') : '<div class="empty">いまタスクはありません。<br>ラジオの「今日の一手」から入れられます。</div>'}</div>
+    ${fin.length ? `<div class="secttl">終わったもの（${fin.length}）</div><div id="fin">${fin.map(row).join('')}</div>` : ''}`;
+
+  $('#taskAdd').onclick = ()=>{
+    const v = $('#taskIn').value.trim(); if(!v){ $('#taskIn').focus(); return; }
+    addTask(v, $('#taskDue').value || '', ''); renderTasks();
+  };
+  bindTaskActs(renderTasks);
+  window.scrollTo(0,0);
+}
+
+/* ---------- きく ---------- */
+function findTopic(q){
+  if(!kb) return null;
+  const s = String(q||'');
+  let best = null, bestScore = 0;
+  kb.topics.forEach(t=>{
+    let sc = 0;
+    t.kw.forEach(k => { if(s.indexOf(k) >= 0) sc += k.length >= 3 ? 3 : 2; });
+    if(sc > bestScore){ bestScore = sc; best = t; }
+  });
+  return bestScore >= 2 ? best : null;
+}
+function answerHTML(a){
+  const t = a.topic;
+  const eps = (t.eps||[]).map(no => epByNo(no)).filter(e => e && (member.all || e.no <= dayNow));
+  return `<div class="ans">
+    <div class="q">${esc(a.q)}</div>
+    <p>${esc(t.open)}</p>
+    ${(t.check||[]).length ? `<h4>まず、ここを確認してください</h4><ul>${t.check.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>` : ''}
+    <h4>ヒラさんの考え方</h4><ul>${(t.axis||[]).map(c=>`<li>${esc(c)}</li>`).join('')}</ul>
+    <h4>次の一手</h4><div class="act">${esc(t.act)}</div>
+    <button class="btn light wide" data-ask-task="${esc(t.act)}" style="margin-top:10px">これをタスクにする</button>
+    ${eps.length ? `<h4>関連するヒラジオ</h4><div class="links">${eps.map(e=>`<a href="#/${e.id}">Day ${e.no}　${esc(e.title)} ›</a>`).join('')}</div>` : ''}
+    ${(t.mats||[]).length ? `<h4>使う教材</h4><div class="mats">${t.mats.map(esc).join('・')}</div>` : ''}
+    ${t.direct ? `<div class="foot">このテーマは、ヒラさんに直接相談するのがいちばん早いです。</div>` : ''}
+    <div class="foot">${esc(kb.disclaimer)}</div>
+  </div>`;
+}
+function renderAsk(){
+  setHead('きく', '聴いていて出てきた疑問に、その場で答えます');
+  const el = $('#view');
+  if(!member){ gate(el); return; }
+  const hist = state.asks.slice().sort((a,b)=>b.created-a.created);
+  el.innerHTML = `
+    <div class="sec"><h3>質問する</h3>
+      <textarea class="field" id="askIn" placeholder="例：ワークを3周したのに点数が上がりません／部活で時間がなくて計画が崩れました"></textarea>
+      <button class="btn wide" id="askGo" style="margin-top:10px">きく</button></div>
+    <div id="askOut"></div>
+    ${hist.length ? `<div class="secttl">これまでの質問（${hist.length}）</div><div id="askHist">${hist.map(h=>`
+      <div class="note" data-ask="${h.id}">
+        <div class="h"><span>${esc(h.topicName)}</span><span>${jpDateTime(h.created)}</span></div>
+        <p class="t">${esc(h.q)}</p>
+        <div class="acts"><button data-act="again">もう一度見る</button><button data-act="del">消す</button></div>
+      </div>`).join('')}</div>` : ''}`;
+
+  const go = ()=>{
+    const q = $('#askIn').value.trim(); if(!q){ $('#askIn').focus(); return; }
+    const t = findTopic(q) || (kb ? kb.fallback : null);
+    if(!t){ $('#askOut').innerHTML = '<div class="empty">いま質問に答えられません。通信の状態を確かめて、もう一度お試しください。</div>'; return; }
+    lastAnswer = { q, topic: t };
+    state.asks.push({ id: uid(), q, topicId: t.id, topicName: t.name, created: Date.now() });
+    save();
+    $('#askOut').innerHTML = answerHTML(lastAnswer);
+    bindAskTask();
+    $('#askIn').value = '';
+    $('#askOut').scrollIntoView({behavior:'smooth', block:'start'});
+  };
+  $('#askGo').onclick = go;
+  $$('[data-ask]').forEach(el2=>{
+    const id = el2.dataset.ask;
+    el2.querySelectorAll('[data-act]').forEach(b => b.onclick = ()=>{
+      const h = state.asks.find(x=>x.id===id); if(!h) return;
+      if(b.dataset.act === 'del'){ state.asks = state.asks.filter(x=>x.id!==id); save(); renderAsk(); }
+      else {
+        const t = (kb.topics.find(x=>x.id===h.topicId)) || kb.fallback;
+        lastAnswer = { q: h.q, topic: t };
+        $('#askOut').innerHTML = answerHTML(lastAnswer); bindAskTask();
+        $('#askOut').scrollIntoView({behavior:'smooth', block:'start'});
+      }
+    });
+  });
+  window.scrollTo(0,0);
+}
+function bindAskTask(){
+  const b = $('[data-ask-task]'); if(!b) return;
+  b.onclick = ()=>{ addTask(b.dataset.askTask, todayISO(), ''); b.textContent = '✓ タスクに入れました'; b.disabled = true; };
+}
+
 /* ---------- 再生 ---------- */
 function togglePlay(ep){
-  if(current && current.id===ep.id){
-    if(audio.paused) audio.play(); else audio.pause();
-    return;
-  }
-  current = ep;
+  if(current && current.id===ep.id){ audio.paused ? audio.play() : audio.pause(); return; }
+  current = ep; counted = false;
   audio.src = ep.audio;
   const pos = state.pos[ep.id]||0;
-  audio.addEventListener('loadedmetadata', function once(){ audio.removeEventListener('loadedmetadata', once); if(pos>0 && pos < (audio.duration||ep.duration)-5) audio.currentTime=pos; }, {once:true});
+  audio.addEventListener('loadedmetadata', function once(){
+    audio.removeEventListener('loadedmetadata', once);
+    if(pos>0 && pos < (audio.duration||ep.duration)-5) audio.currentTime = pos;
+  }, {once:true});
   audio.play().catch(()=>{});
   setMediaSession(ep);
 }
 function setMediaSession(ep){
   if(!('mediaSession' in navigator)) return;
-  navigator.mediaSession.metadata = new MediaMetadata({ title: `Day ${ep.no} ${ep.title}`, artist:'ヒラジオ', album:'ヒラジオ', artwork:[{src:'icon-512.png',sizes:'512x512',type:'image/png'}] });
+  navigator.mediaSession.metadata = new MediaMetadata({ title:`Day ${ep.no} ${ep.title}`, artist:'ヒラジオ', album:'ヒラジオ', artwork:[{src:'icon-512.png',sizes:'512x512',type:'image/png'}] });
   navigator.mediaSession.setActionHandler('play', ()=>audio.play());
   navigator.mediaSession.setActionHandler('pause', ()=>audio.pause());
-  navigator.mediaSession.setActionHandler('seekbackward', ()=>{audio.currentTime=Math.max(0,audio.currentTime-15)});
-  navigator.mediaSession.setActionHandler('seekforward', ()=>{audio.currentTime=Math.min(audio.duration,audio.currentTime+15)});
+  navigator.mediaSession.setActionHandler('seekbackward', ()=>{ audio.currentTime = Math.max(0, audio.currentTime-15); });
+  navigator.mediaSession.setActionHandler('seekforward', ()=>{ audio.currentTime = Math.min(audio.duration, audio.currentTime+15); });
+}
+function countPlay(){
+  if(!current || counted) return;
+  counted = true;
+  state.plays[current.id] = (state.plays[current.id]||0) + 1;
+  state.done[current.id] = true;
+  save();
+  const pc = $('#pc');
+  if(pc && location.hash === '#/'+current.id){
+    const n = state.plays[current.id];
+    pc.innerHTML = `<span class="marks">${marks(n)}</span><span>${n}回 聴きました</span>`;
+  }
 }
 let lastSave = 0;
 audio.addEventListener('timeupdate', ()=>{
   if(!current) return;
   const t = audio.currentTime, d = audio.duration || current.duration || 0;
-  if(document.body.classList.contains('detail') && $('#seek') && document.activeElement!==$('#seek')){ $('#seek').value=Math.floor(t); $('#cur').textContent=fmt(t); }
-  if(Date.now()-lastSave>3000){ state.pos[current.id]=t; if(d && t/d>=0.9 && !state.done[current.id]){ state.done[current.id]=true; refreshDoneUI(); } save(); lastSave=Date.now(); }
+  if(document.body.classList.contains('detail') && $('#seek') && document.activeElement !== $('#seek')){
+    $('#seek').value = Math.floor(t); $('#cur').textContent = fmt(t);
+  }
+  if(d && t < d*0.1) counted = false;
+  if(d && t/d >= 0.9) countPlay();
+  if(Date.now()-lastSave > 3000){ state.pos[current.id] = t; save(); lastSave = Date.now(); }
 });
-audio.addEventListener('ended', ()=>{ if(!current) return; state.done[current.id]=true; state.pos[current.id]=0; save(); refreshDoneUI(); updateMini(); });
+audio.addEventListener('ended', ()=>{ countPlay(); if(current){ state.pos[current.id]=0; save(); } updateMini(); });
 audio.addEventListener('play', ()=>{ updatePlayBtn(); updateMini(); });
 audio.addEventListener('pause', ()=>{ if(current){ state.pos[current.id]=audio.currentTime; save(); } updatePlayBtn(); updateMini(); });
-function updatePlayBtn(){ const b=$('#play'); if(b && current && location.hash==='#/'+current.id) b.textContent = audio.paused?'▶':'❚❚'; }
-function refreshDoneUI(){ if(location.hash.startsWith('#/')) { const b=$('#doneBtn'); if(b && current){ b.classList.add('on'); b.textContent='✓ 聴きました（タップで戻す）'; } } else renderList(); }
+function updatePlayBtn(){ const b = $('#play'); if(b && current && location.hash === '#/'+current.id) b.textContent = audio.paused?'▶':'❚❚'; }
 function updateMini(){
-  const m=$('#mini');
+  const m = $('#mini');
   if(!current){ m.classList.remove('show'); return; }
-  const onOwnPage = location.hash==='#/'+current.id;
-  if(onOwnPage && !audio.paused){ m.classList.remove('show'); return; }
-  if(audio.paused && audio.currentTime===0){ m.classList.remove('show'); return; }
+  if(location.hash === '#/'+current.id && !audio.paused){ m.classList.remove('show'); return; }
+  if(audio.paused && audio.currentTime === 0){ m.classList.remove('show'); return; }
   m.classList.add('show');
   $('#miniT').innerHTML = `<small>Day ${current.no} ${audio.paused?'一時停止中':'再生中'}</small>${esc(current.title)}`;
   $('#miniBtn').textContent = audio.paused?'▶':'❚❚';
 }
-$('#miniBtn').onclick = ()=>{ if(audio.paused) audio.play(); else audio.pause(); };
-$('#miniT').onclick = ()=>{ if(current) location.hash='#/'+current.id; };
-
-/* ---------- ルーティング ---------- */
-function route(){
-  const h = location.hash;
-  if(h.startsWith('#/')) renderDetail(h.slice(2)); else renderList();
-  updateMini();
-}
-window.addEventListener('hashchange', route);
-$('#back').onclick = ()=>{ location.hash=''; };
-
-/* ---------- 読み込み ---------- */
-async function boot(){
-  const key = getKey();
-  try{
-    const [r, mr] = await Promise.all([fetch('episodes.json?t='+Date.now(), {cache:'no-store'}), fetch('members.json?t='+Date.now(), {cache:'no-store'})]);
-    const j = await r.json(); const members = await mr.json();
-    pool = (j.episodes||[]).sort((a,b)=>(b.no-a.no));
-    member = key ? (members[await sha256(key)] || null) : null;
-    try{ localStorage.setItem(LS_KEY+'-cache', JSON.stringify({pool, member})); }catch(e){}
-  }catch(e){
-    try{ const c = JSON.parse(localStorage.getItem(LS_KEY+'-cache')); pool = c.pool||[]; member = c.member||null; }catch(_){ pool=[]; member=null; }
-  }
-  applyMember();
-  route();
-  checkVersion();
-}
-boot();
+$('#miniBtn').onclick = ()=>{ audio.paused ? audio.play() : audio.pause(); };
+$('#miniT').onclick = ()=>{ if(current) location.hash = '#/'+current.id; };
 
 /* ---------- 更新 ---------- */
 let swReg = null;
@@ -426,17 +776,44 @@ async function checkVersion(){
     if(v.version && v.version !== VERSION) $('#banner').classList.add('show');
   }catch(e){}
 }
+
+/* ---------- 起動 ---------- */
+window.addEventListener('hashchange', route);
+async function boot(){
+  const key = getKey();
+  try{
+    const [r, mr, kr] = await Promise.all([
+      fetch('episodes.json?t='+Date.now(), {cache:'no-store'}),
+      fetch('members.json?t='+Date.now(), {cache:'no-store'}),
+      fetch('kb.json?t='+Date.now(), {cache:'no-store'}).catch(()=>null)
+    ]);
+    const j = await r.json(); const members = await mr.json();
+    kb = kr ? await kr.json() : null;
+    pool = (j.episodes||[]).sort((a,b)=> b.no-a.no);
+    member = key ? (members[await sha256(key)] || null) : null;
+    try{ localStorage.setItem(LS_KEY+'-cache', JSON.stringify({pool, member, kb})); }catch(e){}
+  }catch(e){
+    try{ const c = JSON.parse(localStorage.getItem(LS_KEY+'-cache')); pool=c.pool||[]; member=c.member||null; kb=c.kb||null; }catch(_){ pool=[]; member=null; }
+  }
+  applyMember();
+  route();
+  checkVersion();
+}
+boot();
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').then(reg=>{
     swReg = reg;
-    reg.addEventListener('updatefound', ()=>{ const w = reg.installing; if(!w) return; w.addEventListener('statechange', ()=>{ if(w.state==='installed' && navigator.serviceWorker.controller) $('#banner').classList.add('show'); }); });
+    reg.addEventListener('updatefound', ()=>{ const w = reg.installing; if(!w) return;
+      w.addEventListener('statechange', ()=>{ if(w.state==='installed' && navigator.serviceWorker.controller) $('#banner').classList.add('show'); }); });
   }).catch(()=>{});
 }
-document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ checkVersion(); if(member && !member.all){ const before = dayNow; applyMember(); if(dayNow!==before && !location.hash.startsWith('#/')) renderList(); } } });
-document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden' && current){ state.pos[current.id]=audio.currentTime; save(); } });
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    checkVersion();
+    if(member && !member.all){ const before = dayNow; applyMember(); if(dayNow !== before && tab==='radio' && !location.hash.startsWith('#/')) renderList(); }
+  } else if(current){ state.pos[current.id] = audio.currentTime; save(); }
+});
 </script>
-<style>
-header.top{padding-top:calc(18px + env(safe-area-inset-top))}
-</style>
+<style>header.top{padding-top:calc(18px + env(safe-area-inset-top))}</style>
 </body>
 </html>

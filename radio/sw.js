@@ -1,6 +1,6 @@
 // 今日の教育論文：アプリの骨組みだけをキャッシュする。
 // episodes.json は常にネット優先（新しい回をすぐ出すため）。音声は素通し（iOSの範囲リクエストと相性が悪いため）。
-const CACHE = 'ronbun-radio-v2';
+const CACHE = 'ronbun-radio-ff7fe250';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -21,4 +21,8 @@ self.addEventListener('fetch', e => {
   e.respondWith(caches.match(e.request, {ignoreSearch: true}).then(r => r || fetch(e.request).then(res => {
     const cp = res.clone(); caches.open(CACHE).then(c => c.put(e.request, cp)); return res;
   })));
+});
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });

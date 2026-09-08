@@ -102,6 +102,12 @@ main{max-width:680px;margin:0 auto;padding:18px 16px}
 .slides .hint{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:center;margin-top:6px}
 
 /* ミニプレーヤー */
+.upd{position:sticky;top:0;z-index:7;background:var(--accent);color:#fff;display:none;align-items:center;gap:10px;padding:11px 14px;font-family:var(--sans);font-size:13px;line-height:1.4}
+.upd.show{display:flex}
+.upd span{flex:1}
+.upd button{background:#fff;color:var(--accent);border:0;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;white-space:nowrap}
+.refresh{font-family:var(--sans);font-size:12px;background:none;border:1px solid var(--line);border-radius:8px;padding:7px 14px;color:var(--muted);margin-top:6px}
+
 .mini{position:fixed;left:0;right:0;bottom:0;background:var(--navy);color:#fff;padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:none;align-items:center;gap:12px;z-index:6;box-shadow:0 -4px 16px rgba(0,0,0,.15)}
 .mini.show{display:flex}
 .mini .t{flex:1;min-width:0;font-size:13px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
@@ -121,10 +127,12 @@ footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:cent
   <div class="sub">毎朝1本、5分で聴く教育研究</div>
 </header>
 
+<div class="upd" id="upd"><span id="updT">新しいバージョンがあります</span><button id="updBtn">アップデートする</button></div>
+
 <main>
   <section id="list"></section>
   <section id="detail" class="hidden"></section>
-  <footer>今日の教育論文 <span id="ver">v1</span></footer>
+  <footer>今日の教育論文 <span id="ver">v1</span><br><button class="refresh" id="refreshBtn">最新の状態に更新</button></footer>
 </main>
 
 <div class="mini" id="mini">
@@ -134,9 +142,11 @@ footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:cent
 <audio id="audio" preload="metadata"></audio>
 
 <script>
-const VERSION = 'v2';
+const VERSION = 'v3';
+const sortEps = a => a.slice().sort((x,y)=> (y.date||'').localeCompare(x.date||'') || ((y.vol||0)-(x.vol||0)));
 const LS_KEY = 'ronbun-radio-state-v1';
 const $ = s => document.querySelector(s);
+const K = ep => ep.id || ep.date;   // 回を見分けるキー（同日2本に対応）
 document.getElementById('ver').textContent = VERSION;
 
 let episodes = [];
@@ -151,8 +161,8 @@ function fmt(s){ s=Math.max(0,Math.floor(s||0)); return Math.floor(s/60)+':'+Str
 function jpDate(d){ const [y,m,dd]=d.split('-'); const w='日月火水木金土'[new Date(y,m-1,dd).getDay()]; return `${y}年${+m}月${+dd}日（${w}）`; }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function statusOf(ep, isLatest){
-  if(state.done[ep.date]) return 'done';
-  const p = state.pos[ep.date]||0;
+  if(state.done[K(ep)]) return 'done';
+  const p = state.pos[K(ep)]||0;
   if(p > 20) return 'partial';
   return isLatest ? 'new' : '';
 }
@@ -164,16 +174,16 @@ function renderList(){
   $('#detail').classList.add('hidden');
   const el = $('#list'); el.classList.remove('hidden');
   if(!episodes.length){ el.innerHTML='<div class="empty">まだ配信がありません</div>'; return; }
-  const doneN = episodes.filter(e=>state.done[e.date]).length;
+  const doneN = episodes.filter(e=>state.done[K(e)]).length;
   let html = `<div class="stats"><span>全 ${episodes.length} 回</span><span>既読 ${doneN} / 未読 ${episodes.length-doneN}</span></div>`;
   episodes.forEach((ep,i)=>{
     const st = statusOf(ep, i===0);
     const badge = st==='new' ? '<span class="badge new">NEW</span>'
                 : st==='done' ? '<span class="badge done">✓ 既読</span>'
                 : st==='partial' ? '<span class="badge partial">途中まで</span>' : '';
-    const pos = state.pos[ep.date]||0;
+    const pos = state.pos[K(ep)]||0;
     const pct = ep.duration ? Math.min(100, pos/ep.duration*100) : 0;
-    html += `<article class="card ${st==='done'?'done':''}" data-d="${ep.date}">
+    html += `<article class="card ${st==='done'?'done':''}" data-d="${K(ep)}">
       <div class="meta"><span>Vol.${ep.vol}</span><span>${jpDate(ep.date)}</span>${badge}</div>
       <h2 class="title">${esc(ep.title)}</h2>
       <p class="lead">${esc(ep.summary[0]||'')}</p>
@@ -187,13 +197,13 @@ function renderList(){
 
 /* ---------- 詳細 ---------- */
 function renderDetail(date){
-  const ep = episodes.find(e=>e.date===date);
+  const ep = episodes.find(e=>K(e)===date);
   if(!ep){ location.hash=''; return; }
   document.body.classList.add('detail');
   $('#h1').textContent = `Vol.${ep.vol}`;
   $('#list').classList.add('hidden');
   const el = $('#detail'); el.classList.remove('hidden');
-  const playing = current && current.date===ep.date && !audio.paused;
+  const playing = current && K(current)===K(ep) && !audio.paused;
   el.innerHTML = `
     <div class="ep-head">
       <div class="meta"><span>Vol.${ep.vol}</span><span>${jpDate(ep.date)}</span><span>約 ${fmt(ep.duration)}</span></div>
@@ -216,23 +226,23 @@ function renderDetail(date){
       ${ep.note?`<div class="note">※ ${esc(ep.note)}</div>`:''}</div>
     <div class="sec"><h3>今日の論文</h3><div class="cite">${esc(ep.citation||'')}</div><div class="links">${(ep.links||[]).map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} ›</a>`).join('')}</div></div>
     <div class="sec" id="scriptSec"><h3>文字で読む</h3><button class="toggle" id="scriptBtn">台本の全文を表示する</button><div class="script">${esc(ep.script||'')}</div></div>
-    <button class="done-btn ${state.done[ep.date]?'on':''}" id="doneBtn">${state.done[ep.date]?'✓ 既読にしました（タップで未読に戻す）':'既読にする'}</button>
+    <button class="done-btn ${state.done[K(ep)]?'on':''}" id="doneBtn">${state.done[K(ep)]?'✓ 既読にしました（タップで未読に戻す）':'既読にする'}</button>
   `;
   bindSlides();
   $('#play').onclick = ()=> togglePlay(ep);
-  $('#b15').onclick = ()=>{ if(current&&current.date===ep.date) audio.currentTime=Math.max(0,audio.currentTime-15); };
-  $('#f15').onclick = ()=>{ if(current&&current.date===ep.date) audio.currentTime=Math.min(audio.duration||ep.duration,audio.currentTime+15); };
+  $('#b15').onclick = ()=>{ if(current&&K(current)===K(ep)) audio.currentTime=Math.max(0,audio.currentTime-15); };
+  $('#f15').onclick = ()=>{ if(current&&K(current)===K(ep)) audio.currentTime=Math.min(audio.duration||ep.duration,audio.currentTime+15); };
   const seek = $('#seek');
   seek.oninput = ()=>{ $('#cur').textContent = fmt(seek.value); };
-  seek.onchange = ()=>{ if(current&&current.date===ep.date){ audio.currentTime=+seek.value; } else { state.pos[ep.date]=+seek.value; save(); } };
+  seek.onchange = ()=>{ if(current&&K(current)===K(ep)){ audio.currentTime=+seek.value; } else { state.pos[K(ep)]=+seek.value; save(); } };
   $('#rate').querySelectorAll('button').forEach(b=>{
     if(+b.dataset.r===audio.playbackRate) { $('#rate').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); }
     b.onclick = ()=>{ audio.playbackRate=+b.dataset.r; $('#rate').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
   });
   $('#scriptBtn').onclick = ()=>{ const s=$('#scriptSec'); s.classList.toggle('open'); $('#scriptBtn').textContent = s.classList.contains('open')?'台本を閉じる':'台本の全文を表示する'; };
-  $('#doneBtn').onclick = ()=>{ if(state.done[ep.date]) delete state.done[ep.date]; else state.done[ep.date]=true; save(); renderDetail(date); };
+  $('#doneBtn').onclick = ()=>{ if(state.done[K(ep)]) delete state.done[K(ep)]; else state.done[K(ep)]=true; save(); renderDetail(date); };
   // 再生位置の反映
-  const pos = (current&&current.date===ep.date) ? audio.currentTime : (state.pos[ep.date]||0);
+  const pos = (current&&K(current)===K(ep)) ? audio.currentTime : (state.pos[K(ep)]||0);
   seek.value = Math.floor(pos); $('#cur').textContent = fmt(pos);
   window.scrollTo(0,0);
 }
@@ -268,13 +278,13 @@ function bindSlides(){
 
 /* ---------- 再生 ---------- */
 function togglePlay(ep){
-  if(current && current.date===ep.date){
+  if(current && K(current)===K(ep)){
     if(audio.paused) audio.play(); else audio.pause();
     return;
   }
   current = ep;
   audio.src = ep.audio;
-  const pos = state.pos[ep.date]||0;
+  const pos = state.pos[K(ep)]||0;
   audio.addEventListener('loadedmetadata', function once(){ audio.removeEventListener('loadedmetadata', once); if(pos>0 && pos < (audio.duration||ep.duration)-5) audio.currentTime=pos; }, {once:true});
   audio.play().catch(()=>{});
   setMediaSession(ep);
@@ -292,17 +302,17 @@ audio.addEventListener('timeupdate', ()=>{
   if(!current) return;
   const t = audio.currentTime, d = audio.duration || current.duration || 0;
   if(document.body.classList.contains('detail') && $('#seek') && document.activeElement!==$('#seek')){ $('#seek').value=Math.floor(t); $('#cur').textContent=fmt(t); }
-  if(Date.now()-lastSave>3000){ state.pos[current.date]=t; if(d && t/d>=0.9 && !state.done[current.date]){ state.done[current.date]=true; refreshDoneUI(); } save(); lastSave=Date.now(); }
+  if(Date.now()-lastSave>3000){ state.pos[K(current)]=t; if(d && t/d>=0.9 && !state.done[K(current)]){ state.done[K(current)]=true; refreshDoneUI(); } save(); lastSave=Date.now(); }
 });
-audio.addEventListener('ended', ()=>{ if(!current) return; state.done[current.date]=true; state.pos[current.date]=0; save(); refreshDoneUI(); updateMini(); });
+audio.addEventListener('ended', ()=>{ if(!current) return; state.done[K(current)]=true; state.pos[K(current)]=0; save(); refreshDoneUI(); updateMini(); });
 audio.addEventListener('play', ()=>{ updatePlayBtn(); updateMini(); });
-audio.addEventListener('pause', ()=>{ if(current){ state.pos[current.date]=audio.currentTime; save(); } updatePlayBtn(); updateMini(); });
-function updatePlayBtn(){ const b=$('#play'); if(b && current && location.hash==='#/'+current.date) b.textContent = audio.paused?'▶':'❚❚'; }
+audio.addEventListener('pause', ()=>{ if(current){ state.pos[K(current)]=audio.currentTime; save(); } updatePlayBtn(); updateMini(); });
+function updatePlayBtn(){ const b=$('#play'); if(b && current && location.hash==='#/'+K(current)) b.textContent = audio.paused?'▶':'❚❚'; }
 function refreshDoneUI(){ if(location.hash.startsWith('#/')) { const b=$('#doneBtn'); if(b && current){ b.classList.add('on'); b.textContent='✓ 既読にしました（タップで未読に戻す）'; } } else renderList(); }
 function updateMini(){
   const m=$('#mini');
   if(!current){ m.classList.remove('show'); return; }
-  const onOwnPage = location.hash==='#/'+current.date;
+  const onOwnPage = location.hash==='#/'+K(current);
   if(onOwnPage && !audio.paused){ m.classList.remove('show'); return; }
   if(audio.paused && audio.currentTime===0){ m.classList.remove('show'); return; }
   m.classList.add('show');
@@ -310,7 +320,7 @@ function updateMini(){
   $('#miniBtn').textContent = audio.paused?'▶':'❚❚';
 }
 $('#miniBtn').onclick = ()=>{ if(audio.paused) audio.play(); else audio.pause(); };
-$('#miniT').onclick = ()=>{ if(current) location.hash='#/'+current.date; };
+$('#miniT').onclick = ()=>{ if(current) location.hash='#/'+K(current); };
 
 /* ---------- ルーティング ---------- */
 function route(){
@@ -322,20 +332,83 @@ window.addEventListener('hashchange', route);
 $('#back').onclick = ()=>{ location.hash=''; };
 
 /* ---------- 読み込み ---------- */
+let lastUpdated = null;
+
+function applyEpisodes(j){
+  episodes = sortEps(j.episodes||[]);
+  lastUpdated = j.updated || null;
+  try{ localStorage.setItem(LS_KEY+'-cache', JSON.stringify({updated:lastUpdated, episodes})); }catch(e){}
+}
+async function fetchEpisodes(){
+  const r = await fetch('episodes.json?t='+Date.now(), {cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.json();
+}
 async function boot(){
   try{
-    const r = await fetch('episodes.json?t='+Date.now(), {cache:'no-store'});
-    const j = await r.json();
-    episodes = (j.episodes||[]).map(e=>{ if(e.id) e.date=e.id; return e; }).sort((a,b)=>b.date.localeCompare(a.date) || (b.vol-a.vol));
-    try{ localStorage.setItem(LS_KEY+'-cache', JSON.stringify(episodes)); }catch(e){}
+    applyEpisodes(await fetchEpisodes());
   }catch(e){
-    try{ episodes = JSON.parse(localStorage.getItem(LS_KEY+'-cache'))||[]; }catch(_){ episodes=[]; }
+    try{
+      const c = JSON.parse(localStorage.getItem(LS_KEY+'-cache'));
+      episodes = Array.isArray(c) ? sortEps(c) : sortEps(c.episodes||[]);   // 旧形式にも対応
+    }catch(_){ episodes=[]; }
   }
   route();
+  initSW();
 }
+
+/* ---------- アップデート ---------- */
+let waitingSW = null;
+function showUpdate(text){
+  if(text) $('#updT').textContent = text;
+  $('#upd').classList.add('show');
+}
+async function doUpdate(){
+  const btn = $('#updBtn'); btn.textContent = '更新中…'; btn.disabled = true;
+  try{ if(waitingSW) waitingSW.postMessage({type:'SKIP_WAITING'}); }catch(e){}
+  try{ const ks = await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }catch(e){}
+  setTimeout(()=>location.reload(), 400);
+}
+$('#updBtn').onclick = doUpdate;
+$('#refreshBtn').onclick = doUpdate;
+
+async function initSW(){
+  if(!('serviceWorker' in navigator)) return;
+  try{
+    const reg = await navigator.serviceWorker.register('sw.js');
+    if(reg.waiting && navigator.serviceWorker.controller){ waitingSW = reg.waiting; showUpdate('新しいバージョンがあります'); }
+    reg.addEventListener('updatefound', ()=>{
+      const nw = reg.installing; if(!nw) return;
+      nw.addEventListener('statechange', ()=>{
+        if(nw.state==='installed' && navigator.serviceWorker.controller){ waitingSW = nw; showUpdate('新しいバージョンがあります'); }
+      });
+    });
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', ()=>{ if(!reloaded){ reloaded = true; location.reload(); } });
+    reg.update().catch(()=>{});
+    window.__swReg = reg;
+  }catch(e){}
+}
+
+/* 画面に戻ってきたら、新しい回とアプリの更新を確認する */
+async function checkForUpdates(){
+  try{ if(window.__swReg) window.__swReg.update().catch(()=>{}); }catch(e){}
+  try{
+    const j = await fetchEpisodes();
+    if(lastUpdated && j.updated && j.updated !== lastUpdated){
+      const before = episodes.length;
+      applyEpisodes(j);
+      if(episodes.length > before) showUpdate('新しい回が届いています');
+      route();
+    }
+  }catch(e){}
+}
+
 boot();
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
-document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden' && current){ state.pos[current.date]=audio.currentTime; save(); } });
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='hidden'){ if(current){ state.pos[K(current)]=audio.currentTime; save(); } }
+  else { checkForUpdates(); }
+});
 </script>
 <style>
 /* iOS safe-area は末尾に置かないと効かない */

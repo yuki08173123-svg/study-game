@@ -28,6 +28,16 @@ header.top{background:var(--black);color:#fff;padding:calc(18px + env(safe-area-
 .top .label{font-family:var(--sans);font-size:11px;letter-spacing:.24em;opacity:.8}
 .top h1{margin:6px 0 0;font-size:24px;font-weight:700;letter-spacing:.06em}
 .top .sub{font-family:var(--sans);font-size:12px;opacity:.75;margin-top:4px}
+.top .upd-btn{position:absolute;right:12px;top:calc(18px + env(safe-area-inset-top));background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:12px;padding:6px 10px;border-radius:999px}
+.top .upd-btn.busy{opacity:.5}
+.banner{background:var(--red);color:#fff;font-family:var(--sans);font-size:13px;line-height:1.5;padding:11px 14px;display:none;align-items:center;gap:10px}
+.banner.show{display:flex}
+.banner span{flex:1}
+.banner button{background:#fff;color:var(--red);border:0;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;white-space:nowrap}
+.notice{font-family:var(--sans);font-size:13px;color:var(--muted);text-align:center;padding:10px 0 4px;line-height:1.6}
+.gate{font-family:var(--sans);text-align:center;padding:48px 12px;color:var(--ink);line-height:1.9}
+.gate h2{font-family:var(--serif);font-size:20px;margin:0 0 10px}
+.gate p{margin:0 0 6px;font-size:14px;color:#444}
 .top .back{position:absolute;left:12px;top:calc(16px + env(safe-area-inset-top));background:none;border:0;color:#fff;font-size:15px;padding:6px 8px;display:none}
 body.detail .top .back{display:block}
 body.detail .top h1{font-size:15px;opacity:.9;padding-left:64px;padding-right:12px}
@@ -41,7 +51,7 @@ main{max-width:680px;margin:0 auto;padding:18px 16px}
 .card:active{transform:scale(.99)}
 .card .meta{font-family:var(--sans);font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center;margin-bottom:6px}
 .card .day{font-weight:700;color:var(--red);letter-spacing:.06em}
-.card .title{font-size:22px;font-weight:700;line-height:1.4;margin:0 0 8px;color:var(--black)}
+.card .title{font-size:19px;font-weight:700;line-height:1.4;margin:0 0 8px;color:var(--black)}
 .card .lead{font-size:14px;line-height:1.7;color:#444;margin:0}
 .card .foot{font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:10px;display:flex;justify-content:space-between;align-items:center}
 .badge{font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:999px}
@@ -57,7 +67,7 @@ main{max-width:680px;margin:0 auto;padding:18px 16px}
 .ep-head{margin:4px 0 16px}
 .ep-head .meta{font-family:var(--sans);font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center}
 .ep-head .meta .day{font-weight:700;color:var(--red)}
-.ep-head h2{font-size:28px;line-height:1.4;margin:8px 0 0;color:var(--black)}
+.ep-head h2{font-size:23px;line-height:1.4;margin:8px 0 0;color:var(--black)}
 .player{background:var(--black);color:#fff;border-radius:14px;padding:18px 18px 16px;margin:0 0 20px}
 .player .row{display:flex;align-items:center;justify-content:center;gap:22px}
 .player button{background:none;border:0;color:#fff;font-size:13px;padding:8px 6px;border-radius:8px}
@@ -120,8 +130,10 @@ footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:cent
   <button class="back" id="back" aria-label="戻る">‹ 一覧</button>
   <div class="label">HIRA RADIO</div>
   <h1 id="h1">ヒラジオ</h1>
-  <div class="sub">毎朝1本、5分で聴くヒラの考え方と勉強法</div>
+  <div class="sub">毎朝5分、ヒラの考え方と勉強法</div>
+  <button class="upd-btn" id="updBtn" aria-label="最新の状態に更新">更新</button>
 </header>
+<div class="banner" id="banner"><span>新しい版があります。更新すると最新の内容になります。</span><button id="bannerBtn">更新</button></div>
 
 <main>
   <section id="list"></section>
@@ -136,21 +148,42 @@ footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:cent
 <audio id="audio" preload="metadata"></audio>
 
 <script>
-const VERSION = 'v1';
+const VERSION = 'v2';
 const LS_KEY = 'hirajio-state-v1';
 const $ = s => document.querySelector(s);
 document.getElementById('ver').textContent = VERSION;
 
-let episodes = [];
+let episodes = [];      // 生徒に見えている回だけ
+let pool = [];          // 公開されている全回
+let member = null;      // {start:'YYYY-MM-DD', all:bool}
+let dayNow = 0;         // 生徒の今日が Day 何か
 let state = load();
 let current = null;
 const audio = $('#audio');
+const KEY_LS = 'hirajio-key';
+
+async function sha256(t){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+function getKey(){
+  const q = new URLSearchParams(location.search).get('k') || (location.hash.match(/[#&]k=([a-z0-9]+)/i)||[])[1];
+  if(q){ try{ localStorage.setItem(KEY_LS, q); }catch(e){} history.replaceState(null,'',location.pathname); return q; }
+  try{ return localStorage.getItem(KEY_LS); }catch(e){ return null; }
+}
+function midnight(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function addDays(iso, n){ const [y,m,dd]=iso.split('-').map(Number); const d=new Date(y,m-1,dd+n); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function dateOf(ep){ return member && member.start ? addDays(member.start, ep.no-1) : ''; }
+function applyMember(){
+  if(!member){ episodes=[]; return; }
+  if(member.all){ dayNow = pool.length ? pool[0].no : 0; episodes = pool.slice(); return; }
+  const [y,m,dd]=member.start.split('-').map(Number);
+  dayNow = Math.floor((midnight(new Date()) - new Date(y,m-1,dd)) / 86400000) + 1;
+  episodes = pool.filter(e=>e.no <= dayNow);
+}
 
 function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)) || {done:{},pos:{}}; }catch(e){ return {done:{},pos:{}}; } }
 function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
 
 function fmt(s){ s=Math.max(0,Math.floor(s||0)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
-function jpDate(d){ const [y,m,dd]=d.split('-'); const w='日月火水木金土'[new Date(y,m-1,dd).getDay()]; return `${+m}月${+dd}日（${w}）`; }
+function jpDate(d){ if(!d) return ''; const [y,m,dd]=d.split('-'); const w='日月火水木金土'[new Date(y,m-1,dd).getDay()]; return `${+m}月${+dd}日（${w}）`; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function statusOf(ep, isLatest){
   if(state.done[ep.id]) return 'done';
@@ -165,24 +198,29 @@ function renderList(){
   $('#h1').textContent = 'ヒラジオ';
   $('#detail').classList.add('hidden');
   const el = $('#list'); el.classList.remove('hidden');
+  if(!member){ el.innerHTML = `<div class="gate"><h2>このリンクでは開けません</h2><p>ヒラジオは、お渡ししたリンクから開いてください。</p><p>一度そのリンクで開くと、ホーム画面に追加したアイコンからも開けるようになります。</p></div>`; return; }
+  if(dayNow < 1){ el.innerHTML = `<div class="gate"><h2>まだ始まっていません</h2><p>${jpDate(member.start)} の朝から、Day 1 が届きます。</p></div>`; return; }
   if(!episodes.length){ el.innerHTML='<div class="empty">まだ配信がありません</div>'; return; }
   const doneN = episodes.filter(e=>state.done[e.id]).length;
-  let html = `<div class="stats"><span>全 ${episodes.length} 回</span><span>聴いた ${doneN} / まだ ${episodes.length-doneN}</span></div>`;
+  const todayEp = episodes.find(e=>e.no===dayNow);
+  let html = `<div class="stats"><span>${member.all?'全回表示':'今日は Day '+dayNow}</span><span>聴いた ${doneN} / まだ ${episodes.length-doneN}</span></div>`;
+  if(!member.all && !todayEp && dayNow > pool.length) html += `<div class="notice">Day ${dayNow} は準備中です。届き次第、ここに出ます。</div>`;
   episodes.forEach((ep,i)=>{
-    const st = statusOf(ep, i===0);
+    const st = statusOf(ep, member.all ? i===0 : ep.no===dayNow);
     const badge = st==='new' ? '<span class="badge new">NEW</span>'
                 : st==='done' ? '<span class="badge done">✓ 聴いた</span>'
                 : st==='partial' ? '<span class="badge partial">途中まで</span>' : '';
     const pos = state.pos[ep.id]||0;
     const pct = ep.duration ? Math.min(100, pos/ep.duration*100) : 0;
     html += `<article class="card ${st==='done'?'done':''}" data-id="${ep.id}">
-      <div class="meta"><span class="day">Day ${ep.day}</span><span>${jpDate(ep.date)}</span>${badge}</div>
+      <div class="meta"><span class="day">Day ${ep.no}</span><span>${jpDate(dateOf(ep))}</span><span>${esc(ep.kind||'')}</span>${badge}</div>
       <h2 class="title">${esc(ep.title)}</h2>
       <p class="lead">${esc(ep.lead||'')}</p>
       <div class="foot"><span>約 ${fmt(ep.duration)}</span><span>${st==='partial'?fmt(pos)+' まで再生':''}</span></div>
       ${st==='partial'?`<div class="bar"><i style="width:${pct}%"></i></div>`:''}
     </article>`;
   });
+  if(!member.all && pool.length > dayNow) html += `<div class="notice">明日の朝、Day ${dayNow+1} が届きます。</div>`;
   el.innerHTML = html;
   el.querySelectorAll('.card').forEach(c=>c.onclick=()=>{ location.hash = '#/'+c.dataset.id; });
 }
@@ -192,13 +230,13 @@ function renderDetail(id){
   const ep = episodes.find(e=>e.id===id);
   if(!ep){ location.hash=''; return; }
   document.body.classList.add('detail');
-  $('#h1').textContent = `Day ${ep.day}　${ep.title}`;
+  $('#h1').textContent = `Day ${ep.no}　${ep.theme||ep.title}`;
   $('#list').classList.add('hidden');
   const el = $('#detail'); el.classList.remove('hidden');
   const playing = current && current.id===ep.id && !audio.paused;
   el.innerHTML = `
     <div class="ep-head">
-      <div class="meta"><span class="day">Day ${ep.day}</span><span>${jpDate(ep.date)}</span><span>約 ${fmt(ep.duration)}</span></div>
+      <div class="meta"><span class="day">Day ${ep.no}</span><span>${jpDate(dateOf(ep))}</span><span>${esc(ep.kind||'')}</span><span>約 ${fmt(ep.duration)}</span></div>
       <h2>${esc(ep.title)}</h2>
     </div>
     ${renderSlides(ep)}
@@ -283,7 +321,7 @@ function togglePlay(ep){
 }
 function setMediaSession(ep){
   if(!('mediaSession' in navigator)) return;
-  navigator.mediaSession.metadata = new MediaMetadata({ title: `Day ${ep.day} ${ep.title}`, artist:'ヒラジオ', album:'ヒラジオ', artwork:[{src:'icon-512.png',sizes:'512x512',type:'image/png'}] });
+  navigator.mediaSession.metadata = new MediaMetadata({ title: `Day ${ep.no} ${ep.title}`, artist:'ヒラジオ', album:'ヒラジオ', artwork:[{src:'icon-512.png',sizes:'512x512',type:'image/png'}] });
   navigator.mediaSession.setActionHandler('play', ()=>audio.play());
   navigator.mediaSession.setActionHandler('pause', ()=>audio.pause());
   navigator.mediaSession.setActionHandler('seekbackward', ()=>{audio.currentTime=Math.max(0,audio.currentTime-15)});
@@ -308,7 +346,7 @@ function updateMini(){
   if(onOwnPage && !audio.paused){ m.classList.remove('show'); return; }
   if(audio.paused && audio.currentTime===0){ m.classList.remove('show'); return; }
   m.classList.add('show');
-  $('#miniT').innerHTML = `<small>Day ${current.day} ${audio.paused?'一時停止中':'再生中'}</small>${esc(current.title)}`;
+  $('#miniT').innerHTML = `<small>Day ${current.no} ${audio.paused?'一時停止中':'再生中'}</small>${esc(current.title)}`;
   $('#miniBtn').textContent = audio.paused?'▶':'❚❚';
 }
 $('#miniBtn').onclick = ()=>{ if(audio.paused) audio.play(); else audio.pause(); };
@@ -325,18 +363,45 @@ $('#back').onclick = ()=>{ location.hash=''; };
 
 /* ---------- 読み込み ---------- */
 async function boot(){
+  const key = getKey();
   try{
-    const r = await fetch('episodes.json?t='+Date.now(), {cache:'no-store'});
-    const j = await r.json();
-    episodes = (j.episodes||[]).sort((a,b)=>(b.day-a.day));
-    try{ localStorage.setItem(LS_KEY+'-cache', JSON.stringify(episodes)); }catch(e){}
+    const [r, mr] = await Promise.all([fetch('episodes.json?t='+Date.now(), {cache:'no-store'}), fetch('members.json?t='+Date.now(), {cache:'no-store'})]);
+    const j = await r.json(); const members = await mr.json();
+    pool = (j.episodes||[]).sort((a,b)=>(b.no-a.no));
+    member = key ? (members[await sha256(key)] || null) : null;
+    try{ localStorage.setItem(LS_KEY+'-cache', JSON.stringify({pool, member})); }catch(e){}
   }catch(e){
-    try{ episodes = JSON.parse(localStorage.getItem(LS_KEY+'-cache'))||[]; }catch(_){ episodes=[]; }
+    try{ const c = JSON.parse(localStorage.getItem(LS_KEY+'-cache')); pool = c.pool||[]; member = c.member||null; }catch(_){ pool=[]; member=null; }
   }
+  applyMember();
   route();
+  checkVersion();
 }
 boot();
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+
+/* ---------- 更新 ---------- */
+let swReg = null;
+async function forceUpdate(){
+  const b = $('#updBtn'); b.classList.add('busy'); b.textContent = '更新中';
+  try{ const ks = await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }catch(e){}
+  try{ if(swReg){ await swReg.update(); if(swReg.waiting) swReg.waiting.postMessage('skip'); } }catch(e){}
+  setTimeout(()=>location.reload(), 300);
+}
+$('#updBtn').onclick = forceUpdate;
+$('#bannerBtn').onclick = forceUpdate;
+async function checkVersion(){
+  try{
+    const r = await fetch('version.json?t='+Date.now(), {cache:'no-store'}); const v = await r.json();
+    if(v.version && v.version !== VERSION) $('#banner').classList.add('show');
+  }catch(e){}
+}
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    swReg = reg;
+    reg.addEventListener('updatefound', ()=>{ const w = reg.installing; if(!w) return; w.addEventListener('statechange', ()=>{ if(w.state==='installed' && navigator.serviceWorker.controller) $('#banner').classList.add('show'); }); });
+  }).catch(()=>{});
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ checkVersion(); if(member && !member.all){ const before = dayNow; applyMember(); if(dayNow!==before && !location.hash.startsWith('#/')) renderList(); } } });
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden' && current){ state.pos[current.id]=audio.currentTime; save(); } });
 </script>
 <style>

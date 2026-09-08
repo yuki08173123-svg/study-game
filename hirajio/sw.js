@@ -1,6 +1,6 @@
 // ヒラジオ：アプリの骨組みだけをキャッシュする。
 // episodes.json は常にネット優先（新しい回をすぐ出すため）。音声は素通し（iOSの範囲リクエストと相性が悪いため）。
-const CACHE = 'hirajio-v4';
+const CACHE = 'hirajio-v5';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

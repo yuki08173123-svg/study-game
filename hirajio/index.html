@@ -148,7 +148,7 @@ footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:cent
 <audio id="audio" preload="metadata"></audio>
 
 <script>
-const VERSION = 'v4';
+const VERSION = 'v5';
 const LS_KEY = 'hirajio-state-v1';
 const $ = s => document.querySelector(s);
 document.getElementById('ver').textContent = VERSION;
@@ -165,7 +165,9 @@ const KEY_LS = 'hirajio-key';
 async function sha256(t){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
 function getKey(){
   const q = new URLSearchParams(location.search).get('k') || (location.hash.match(/[#&]k=([a-z0-9]+)/i)||[])[1];
-  if(q){ try{ localStorage.setItem(KEY_LS, q); }catch(e){} history.replaceState(null,'',location.pathname); return q; }
+  if(q){ try{ localStorage.setItem(KEY_LS, q); }catch(e){}
+    if(location.hash.indexOf('k=') >= 0) history.replaceState(null, '', location.pathname + '?k=' + q);
+    return q; }
   try{ return localStorage.getItem(KEY_LS); }catch(e){ return null; }
 }
 function midnight(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
@@ -198,7 +200,19 @@ function renderList(){
   $('#h1').textContent = 'ヒラジオ';
   $('#detail').classList.add('hidden');
   const el = $('#list'); el.classList.remove('hidden');
-  if(!member){ el.innerHTML = `<div class="gate"><h2>このリンクでは開けません</h2><p>ヒラジオは、お渡ししたリンクから開いてください。</p><p>一度そのリンクで開くと、ホーム画面に追加したアイコンからも開けるようになります。</p></div>`; return; }
+  if(!member){
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    el.innerHTML = standalone
+      ? `<div class="gate"><h2>もう一度、追加し直してください</h2>
+         <p>このアイコンには、リンクの情報が入っていません。</p>
+         <p>お手数ですが、次の手順でお願いします。</p>
+         <p style="text-align:left;max-width:320px;margin:14px auto 0">
+           1. このアイコンを長押しして削除<br>
+           2. お渡ししたリンクを <b>Safari</b> で開く<br>
+           3. 下の共有ボタン → ホーム画面に追加</p></div>`
+      : `<div class="gate"><h2>このリンクでは開けません</h2>
+         <p>ヒラジオは、お渡ししたリンク（アドレスの最後に ?k= が付いたもの）から開いてください。</p></div>`;
+    return; }
   if(dayNow < 1){ el.innerHTML = `<div class="gate"><h2>まだ始まっていません</h2><p>${jpDate(member.start)} の朝から、Day 1 が届きます。</p></div>`; return; }
   if(!episodes.length){ el.innerHTML='<div class="empty">まだ配信がありません</div>'; return; }
   const doneN = episodes.filter(e=>state.done[e.id]).length;

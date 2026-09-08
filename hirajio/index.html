@@ -148,7 +148,7 @@ footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:cent
 <audio id="audio" preload="metadata"></audio>
 
 <script>
-const VERSION = 'v3';
+const VERSION = 'v4';
 const LS_KEY = 'hirajio-state-v1';
 const $ = s => document.querySelector(s);
 document.getElementById('ver').textContent = VERSION;
@@ -213,7 +213,7 @@ function renderList(){
     const pos = state.pos[ep.id]||0;
     const pct = ep.duration ? Math.min(100, pos/ep.duration*100) : 0;
     html += `<article class="card ${st==='done'?'done':''}" data-id="${ep.id}">
-      <div class="meta"><span class="day">Day ${ep.no}</span><span>${jpDate(dateOf(ep))}</span><span>${esc(ep.kind||'')}</span>${badge}</div>
+      <div class="meta"><span class="day">Day ${ep.no}</span><span>${jpDate(dateOf(ep))}</span><span>${esc(ep.tag||'')}</span>${badge}</div>
       <h2 class="title">${esc(ep.title)}</h2>
       <p class="lead">${esc(ep.lead||'')}</p>
       <div class="foot"><span>約 ${fmt(ep.duration)}</span><span>${st==='partial'?fmt(pos)+' まで再生':''}</span></div>
@@ -230,13 +230,13 @@ function renderDetail(id){
   const ep = episodes.find(e=>e.id===id);
   if(!ep){ location.hash=''; return; }
   document.body.classList.add('detail');
-  $('#h1').textContent = `Day ${ep.no}　${ep.theme||ep.title}`;
+  $('#h1').textContent = `Day ${ep.no}　${ep.tag||''}`;
   $('#list').classList.add('hidden');
   const el = $('#detail'); el.classList.remove('hidden');
   const playing = current && current.id===ep.id && !audio.paused;
   el.innerHTML = `
     <div class="ep-head">
-      <div class="meta"><span class="day">Day ${ep.no}</span><span>${jpDate(dateOf(ep))}</span><span>${esc(ep.kind||'')}</span><span>約 ${fmt(ep.duration)}</span></div>
+      <div class="meta"><span class="day">Day ${ep.no}</span><span>${jpDate(dateOf(ep))}</span><span>${esc(ep.tag||'')}</span><span>約 ${fmt(ep.duration)}</span></div>
       <h2>${esc(ep.title)}</h2>
     </div>
     ${renderSlides(ep)}
@@ -252,11 +252,11 @@ function renderDetail(id){
         <button data-r="0.8">ゆっくり</button><button data-r="1" class="on">ふつう</button><button data-r="1.2">はやく</button>
       </div>
     </div>
-    ${ep.definition?`<div class="sec"><h3>今日のテーマ</h3><p>${esc(ep.definition)}</p></div>`:''}
-    <div class="sec"><h3>3つのポイント</h3><ol>${(ep.summary||[]).map((s,i)=>`<li><b>${'一二三四五'[i]||''}</b><span>${esc(s)}</span></li>`).join('')}</ol></div>
+    ${ep.definition?`<div class="sec"><h3>ひとことで言うと</h3><p>${esc(ep.definition)}</p></div>`:''}
+    <div class="sec"><h3>今日やること</h3><ol>${(ep.summary||[]).map((s,i)=>`<li><b>${'一二三四五'[i]||''}</b><span>${esc(s)}</span></li>`).join('')}</ol></div>
     ${ep.action?`<div class="sec action"><h3>今日の一手</h3><p>${esc(ep.action)}</p></div>`:''}
     ${ep.quote?`<div class="sec quote"><h3>今日の一言</h3><p>${esc(ep.quote)}</p></div>`:''}
-    ${ep.source&&ep.source.url?`<div class="sec"><h3>もとになった動画</h3><div class="cite"><a href="${esc(ep.source.url)}" target="_blank" rel="noopener">${esc(ep.source.label||'動画を見る')} ›</a></div></div>`:''}
+    ${(ep.sources||[]).filter(x=>x&&x.url).length?`<div class="sec"><h3>もっと深く知りたい人へ</h3><div class="cite">${(ep.sources||[]).filter(x=>x&&x.url).map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label||'動画を見る')} ›</a>`).join('')}</div></div>`:''}
     <div class="sec" id="scriptSec"><h3>文字で読む</h3><button class="toggle" id="scriptBtn">台本の全文を表示する</button><div class="script">${esc(ep.script||'')}</div></div>
     <button class="done-btn ${state.done[ep.id]?'on':''}" id="doneBtn">${state.done[ep.id]?'✓ 聴きました（タップで戻す）':'聴いたことにする'}</button>
   `;

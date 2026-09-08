@@ -351,7 +351,7 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 
 <script src="data.js"></script>
 <script>
-const VER = 16;
+const VER = 17;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
 const EXTRA_MATH = ['nyumon_ia','nyumon_iib','kichart_ia','kichart_iib'];
@@ -585,7 +585,7 @@ function markDone(id){
 }
 
 /* ===== 鉄則 ===== */
-const TETSU_ORDER = [['stock','英語'],['rank','英語'],['sparta','英語'],['polaris','英語'],['kaishaku','英語'],['dokkai','国語'],
+const TETSU_ORDER = [['stock','英語'],['rank','英語'],['sparta','英語'],['polaris','英語'],['kaishaku','英語'],['rules','英語'],['dokkai','国語'],
                      ['nyumon','数学'],['kisomon','数学'],['kichart','数学'],['uchuichi','理科']];
 function viewTetsu(){
   let h = '<div class="lead" style="margin-top:14px">問題集ごとの「正しいやり方」です。ここからズレると、極まらない＝伸びなくなります。</div>';

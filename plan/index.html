@@ -357,6 +357,9 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 .sdots{display:flex; justify-content:center; align-items:center; gap:6px; padding:13px 0 0;}
 .sdots i{width:7px; height:7px; border-radius:50%; background:var(--line); display:block; transition:width .2s;}
 .sdots i.on{background:var(--accent); width:22px; border-radius:4px;}
+.durnow{display:flex; align-items:center; gap:10px; margin:12px 0 12px;}
+.durnow b{font-size:32px; font-weight:900; flex:1; letter-spacing:-.01em;}
+.durnow button{font-size:12px; font-weight:900; color:var(--muted); background:var(--chip); border-radius:999px; padding:8px 14px; flex:none;}
 .mchips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px;}
 .mchips button{background:var(--chip); border-radius:999px; padding:10px 16px; font-size:15px; font-weight:900;}
 .mchips button.on{background:var(--accent); color:var(--accent-ink);}
@@ -374,7 +377,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v29</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v30</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -555,7 +558,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v29</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v30</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -580,7 +583,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 29;
+const VER = 30;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1555,22 +1558,31 @@ function openTaskEditor(t){
   sh.querySelector('#edNote').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); done(); } });
 }
 function openDurPicker(t){
-  const cur = Math.max(0, Math.round(Number(t.min)||0));
-  const opts = [5,10,15,20,30,45,60,90];
-  const chips = opts.map(v=>'<button class="'+(v===cur?'on':'')+'" data-v="'+v+'" style="padding:9px 14px; font-size:14px">'+v+'分</button>').join('');
-  const h = Math.min(8, Math.floor(cur/60)), mm = cur%60;
+  let cur = Math.max(0, Math.round(Number(t.min)||0));
+  const adds = [5,10,15,20,30,60,90];
+  const chips = adds.map(v=>'<button data-v="'+v+'" style="padding:9px 14px; font-size:14px">＋'+v+'分</button>').join('');
   let hO='', mO='';
-  for(let i=0;i<=8;i++) hO += '<option value="'+i+'"'+(i===h?' selected':'')+'>'+i+'</option>';
-  for(let i=0;i<60;i++) mO += '<option value="'+i+'"'+(i===mm?' selected':'')+'>'+String(i).padStart(2,'0')+'</option>';
+  for(let i=0;i<=8;i++) hO += '<option value="'+i+'">'+i+'</option>';
+  for(let i=0;i<60;i++) mO += '<option value="'+i+'">'+String(i).padStart(2,'0')+'</option>';
   const sh = openSheet('<h2>かかる時間</h2><p style="color:var(--muted); font-size:13px">'+esc(t.text)+'</p>'
-    + '<div class="mchips" id="pkChips" style="margin:10px 0 2px">'+chips+'</div>'
+    + '<div class="durnow"><b class="num" id="dNow">0分</b><button id="dZero">0にもどす</button></div>'
+    + '<div class="mchips" id="pkChips">'+chips+'</div>'
+    + '<p class="note" style="margin:8px 2px 0">ボタンは<b>たし算</b>です。＋5分と＋20分を押せば25分になります。</p>'
     + '<h3>こまかく決める（1分きざみ）</h3>'
     + '<div class="picker"><select id="pkH">'+hO+'</select><span>時間</span><select id="pkM">'+mO+'</select><span>分</span></div>'
     + '<button class="bigbtn" id="pkOK">きめる</button>');
-  const set = v => { t.min = v; sh.remove(); renderDays(); renderDay(); renderTQC(); save(); };
-  sh.querySelector('#pkChips').onclick = e => { const b = e.target.closest('button'); if(b) set(+b.dataset.v); };
+  const now = sh.querySelector('#dNow'), selH = sh.querySelector('#pkH'), selM = sh.querySelector('#pkM');
+  const sync = ()=>{ now.textContent = fmtHM(cur); selH.value = Math.min(8, Math.floor(cur/60)); selM.value = cur%60; };
+  sync();
+  sh.querySelector('#pkChips').onclick = e => {
+    const b = e.target.closest('button'); if(!b) return;
+    cur = Math.min(539, cur + (+b.dataset.v)); sync();
+  };
+  sh.querySelector('#dZero').onclick = ()=>{ cur = 0; sync(); };
+  const fromSel = ()=>{ cur = (+selH.value)*60 + (+selM.value); sync(); };
+  selH.onchange = fromSel; selM.onchange = fromSel;
   sh.querySelector('#pkOK').onclick = ()=>{
-    set((+sh.querySelector('#pkH').value)*60 + (+sh.querySelector('#pkM').value));
+    t.min = cur; sh.remove(); renderDays(); renderDay(); renderTQC(); save();
   };
 }
 $('#btnCopyPrev').onclick = ()=>{
@@ -1712,7 +1724,7 @@ const SLIDES = [
     </div>
   </div>
 </div>
-<p>やることに付いている<b>「30分」</b>を押すと、よく使う時間はボタン1つで、こまかく決めたいときは<b>1分きざみ</b>でえらべます。<br>
+<p>やることに付いている<b>「30分」</b>を押すと、時間を決められます。ボタンは<b>たし算</b>（＋5分と＋20分で25分）。1分きざみでも決められます。<br>
 その合計が、その日の<b>予定</b>の時間になります（自動）。</p>`,
 
 `<span class="snum">④</span>

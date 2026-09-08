@@ -1,6 +1,6 @@
 // 今日の教育論文：アプリの骨組みだけをキャッシュする。
 // episodes.json は常にネット優先（新しい回をすぐ出すため）。音声は素通し（iOSの範囲リクエストと相性が悪いため）。
-const CACHE = 'ronbun-radio-v1';
+const CACHE = 'ronbun-radio-v2';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

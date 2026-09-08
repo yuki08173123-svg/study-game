@@ -83,6 +83,24 @@ main{max-width:680px;margin:0 auto;padding:18px 16px}
 .done-btn{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:15px;color:var(--navy);margin:4px 0 24px}
 .done-btn.on{background:var(--ok-bg);color:var(--ok);border-color:#cfe0c8}
 
+/* スライド */
+.slides{margin:0 -16px 16px}
+.slides .track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 16px;gap:10px}
+.slides .track::-webkit-scrollbar{display:none}
+.slide{flex:0 0 calc(100% - 32px);scroll-snap-align:center;background:var(--navy);color:#fff;border-radius:16px;padding:22px 22px 20px;min-height:230px;display:flex;flex-direction:column;justify-content:center;position:relative;cursor:pointer;user-select:none}
+.slide.alt{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.slide .k{font-family:var(--sans);font-size:11px;letter-spacing:.18em;opacity:.8;margin-bottom:10px}
+.slide.alt .k{color:var(--navy);opacity:1}
+.slide .t{font-size:20px;font-weight:700;line-height:1.55;margin:0}
+.slide .big{font-family:var(--sans);font-size:44px;font-weight:700;line-height:1.1;margin:2px 0 8px;letter-spacing:-.01em}
+.slide.alt .big{color:var(--navy)}
+.slide .b{font-size:14px;line-height:1.8;margin:10px 0 0;opacity:.95}
+.slide .n{position:absolute;right:16px;bottom:12px;font-family:var(--sans);font-size:11px;opacity:.6}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:10px}
+.dots i{width:6px;height:6px;border-radius:50%;background:#cfc8bb;display:block;transition:all .15s}
+.dots i.on{background:var(--navy);width:16px;border-radius:3px}
+.slides .hint{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:center;margin-top:6px}
+
 /* ミニプレーヤー */
 .mini{position:fixed;left:0;right:0;bottom:0;background:var(--navy);color:#fff;padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:none;align-items:center;gap:12px;z-index:6;box-shadow:0 -4px 16px rgba(0,0,0,.15)}
 .mini.show{display:flex}
@@ -116,7 +134,7 @@ footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:cent
 <audio id="audio" preload="metadata"></audio>
 
 <script>
-const VERSION = 'v1';
+const VERSION = 'v2';
 const LS_KEY = 'ronbun-radio-state-v1';
 const $ = s => document.querySelector(s);
 document.getElementById('ver').textContent = VERSION;
@@ -181,6 +199,7 @@ function renderDetail(date){
       <div class="meta"><span>Vol.${ep.vol}</span><span>${jpDate(ep.date)}</span><span>約 ${fmt(ep.duration)}</span></div>
       <h2>${esc(ep.title)}</h2>
     </div>
+    ${renderSlides(ep)}
     <div class="player">
       <div class="row">
         <button class="skip" id="b15">−15</button>
@@ -199,6 +218,7 @@ function renderDetail(date){
     <div class="sec" id="scriptSec"><h3>文字で読む</h3><button class="toggle" id="scriptBtn">台本の全文を表示する</button><div class="script">${esc(ep.script||'')}</div></div>
     <button class="done-btn ${state.done[ep.date]?'on':''}" id="doneBtn">${state.done[ep.date]?'✓ 既読にしました（タップで未読に戻す）':'既読にする'}</button>
   `;
+  bindSlides();
   $('#play').onclick = ()=> togglePlay(ep);
   $('#b15').onclick = ()=>{ if(current&&current.date===ep.date) audio.currentTime=Math.max(0,audio.currentTime-15); };
   $('#f15').onclick = ()=>{ if(current&&current.date===ep.date) audio.currentTime=Math.min(audio.duration||ep.duration,audio.currentTime+15); };
@@ -215,6 +235,35 @@ function renderDetail(date){
   const pos = (current&&current.date===ep.date) ? audio.currentTime : (state.pos[ep.date]||0);
   seek.value = Math.floor(pos); $('#cur').textContent = fmt(pos);
   window.scrollTo(0,0);
+}
+
+/* ---------- スライド ---------- */
+function renderSlides(ep){
+  const sl = ep.slides||[];
+  if(!sl.length) return '';
+  const cards = sl.map((s,i)=>`<div class="slide ${s.alt?'alt':''}" data-i="${i}">
+      ${s.k?`<div class="k">${esc(s.k)}</div>`:''}
+      ${s.big?`<div class="big">${esc(s.big)}</div>`:''}
+      ${s.t?`<p class="t">${esc(s.t)}</p>`:''}
+      ${s.b?`<p class="b">${esc(s.b)}</p>`:''}
+      <div class="n">${i+1} / ${sl.length}</div>
+    </div>`).join('');
+  return `<div class="slides"><div class="track" id="track">${cards}</div>
+    <div class="dots" id="dots">${sl.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>
+    <div class="hint">スライドをタップで次へ・左右にスワイプ</div></div>`;
+}
+function bindSlides(){
+  const track = $('#track'); if(!track) return;
+  const dots = $('#dots').querySelectorAll('i');
+  const cards = track.querySelectorAll('.slide');
+  const w = ()=> cards[0].getBoundingClientRect().width + 10;
+  const cur = ()=> Math.round(track.scrollLeft / w());
+  track.addEventListener('scroll', ()=>{ const i=cur(); dots.forEach((d,j)=>d.classList.toggle('on', j===i)); }, {passive:true});
+  cards.forEach(c=>c.addEventListener('click', e=>{
+    const r = c.getBoundingClientRect(); const left = (e.clientX - r.left) < r.width*0.3;
+    const i = cur(); const next = left ? Math.max(0,i-1) : Math.min(cards.length-1, i+1);
+    track.scrollTo({left: next*w(), behavior:'smooth'});
+  }));
 }
 
 /* ---------- 再生 ---------- */
@@ -277,7 +326,7 @@ async function boot(){
   try{
     const r = await fetch('episodes.json?t='+Date.now(), {cache:'no-store'});
     const j = await r.json();
-    episodes = (j.episodes||[]).sort((a,b)=>b.date.localeCompare(a.date));
+    episodes = (j.episodes||[]).map(e=>{ if(e.id) e.date=e.id; return e; }).sort((a,b)=>b.date.localeCompare(a.date) || (b.vol-a.vol));
     try{ localStorage.setItem(LS_KEY+'-cache', JSON.stringify(episodes)); }catch(e){}
   }catch(e){
     try{ episodes = JSON.parse(localStorage.getItem(LS_KEY+'-cache'))||[]; }catch(_){ episodes=[]; }

@@ -393,7 +393,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 22;
+const VER = 23;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -1007,6 +1007,7 @@ function renderNote(){
     </div>
     <div class="label">このメモ</div>
     <div class="group">
+      ${rowItem({ ic:ICO.loop({s:19}), nm:'このカードを確認する', attr:'data-a="check"' })}
       ${rowItem({ ic: n.star ? ICO.starFill({s:19}) : ICO.star({s:19}),
                   nm: n.star ? '重要をはずす' : '重要にする', attr:'data-a="star"',
                   col: n.star ? 'var(--gold)' : '' })}
@@ -1023,6 +1024,19 @@ function renderNote(){
   $$('#main .pics [data-t]').forEach((t, k) => t.onclick = () =>
     openGallery(ordered.map(id => ({ id })), k));
 }
+function checkSheet(n){
+  sheet(`<h3>このカードを確認する</h3>
+    <div class="note-txt" style="margin:-10px 2px 16px">直したあとに、実際の見え方をたしかめられます。
+      振り返りの間隔（次に出る日）に反映するかどうかを選べます。</div>
+    <button class="btn pri" id="ckRec">記録して振り返る</button>
+    <div class="note-txt" style="margin:8px 2px 14px">◎○△✕で答えます。次に出る日が更新されます。</div>
+    <button class="btn sec" id="ckPeek">確認するだけ</button>
+    <div class="note-txt" style="margin:8px 2px 0">見るだけで、次に出る日は変わりません。</div>`, close => {
+    $('#ckRec').onclick  = () => { close(); startRevWith([n], true); };
+    $('#ckPeek').onclick = () => { close(); startRevWith([n], false); };
+  });
+}
+
 function noteAct(a, n){
   if(a === 'star'){ n.star = !n.star; n.upd = now(); saveNotes(); render(); toast(n.star ? '重要にしました' : '重要をはずしました'); }
   if(a === 'copy'){ navigator.clipboard.writeText(n.body || '').then(() => toast('コピーしました'), () => toast('コピーできませんでした')); }
@@ -1031,6 +1045,7 @@ function noteAct(a, n){
     n.upd = now(); saveNotes(); render();
     toast(n.done ? '卒業にしました' : '学習にもどしました');
   }
+  if(a === 'check'){ checkSheet(n); }
   if(a === 'move'){ moveSheet(n); }
   if(a === 'del'){
     n.del = true; n.upd = now(); saveNotes();
@@ -1223,7 +1238,7 @@ function doSave(){
 }
 
 /* ===================== 振り返り ===================== */
-let revQ = [], revI = 0, revOk = 0, revNg = 0, revOpen = false, revMode = 'quiz', revPic = false, revList = null;
+let revQ = [], revI = 0, revOk = 0, revNg = 0, revOpen = false, revMode = 'quiz', revPic = false, revList = null, revRec = true;
 
 function scopeNotes(){                       // 振り返る範囲のメモ（卒業したものは出さない）
   const sc = cfg.revScope || '*';
@@ -1246,6 +1261,17 @@ function scopeName(){
   const p = f.pid ? folderOf(f.pid) : null;
   return p ? p.name + '　' + f.name : f.name;
 }
+function scopePills(){                      // よく使う範囲を、ひと押しで
+  const cur = cfg.revScope || '*';
+  const sel = cur && cur !== '*' && cur !== '未' && cur !== '★' && cur !== '' ? folderOf(cur) : null;
+  const list = [{ id:'*', name:'すべて' }, { id:'未', name:'未確認' }, { id:'★', name:'重要' }]
+    .concat(topFolders().map(f => ({ id:f.id, name:f.name, color:f.color })));
+  if(sel && !list.some(x => x.id === sel.id)) list.push({ id:sel.id, name:sel.name, color:sel.color });
+  return list.map(f => `<button class="pill ${cur === f.id ? 'on' : ''}" data-sp="${f.id}">
+    ${f.color ? `<span class="dot" style="width:7px;height:7px;border-radius:50%;background:${f.color}"></span>` : ''}${esc(f.name)}
+  </button>`).join('');
+}
+
 function scopeSheet(){
   const list = [{ id:'*', name:'すべてのノート', color:'var(--ink2)', d:0 },
                 { id:'未', name:'まだ確認していないメモ', color:'var(--pri)', d:0 },
@@ -1309,6 +1335,7 @@ function renderReview(){
           <button class="pill" id="scope">${esc(scopeName())}
             <span style="opacity:.5">${ICO.right({s:13,w:2.2})}</span></button>
         </div>
+        <div class="quick" id="scopepills">${scopePills()}</div>
         <div class="stepper" id="revn" style="margin-top:12px">
           <button class="rnd" data-d="-1" aria-label="減らす">−</button>
           <b id="revnum">${cfg.revN ? cfg.revN + '件' : '全部'}</b>
@@ -1339,6 +1366,9 @@ function renderReview(){
       $('#start').onclick = () => startRev('quiz');
       $('#shuffle').onclick = () => startRev('shuffle');
       $('#scope').onclick = scopeSheet;
+      $$('#scopepills [data-sp]').forEach(b => b.onclick = () => {
+        cfg.revScope = b.dataset.sp; saveCfg(); render();
+      });
       $$('#main [data-rj]').forEach(b => b.onclick = () => {
         const k = b.dataset.rj;
         startRevWith(k === 'new' ? L.filter(unseen)
@@ -1400,7 +1430,7 @@ function renderReview(){
   const picVeiled = hidePic && !revOpen && !revPic;
   $('#main').innerHTML = `
     <div class="rev">
-      <div class="step">${revI+1} / ${revQ.length}</div>
+      <div class="step">${revI+1} / ${revQ.length}${revRec ? '' : '　・　確認するだけ'}</div>
       <div class="when">${fmtDate(n.cre)}${n.revAt ? '　前回の確認は' + daysAgo(n.revAt) + '日前' : '　未確認'}</div>
       ${lead ? `<div class="lead">${esc(lead)}</div>`
              : `<div class="leadhint">写真を見て、思い出してください</div>`}
@@ -1411,23 +1441,30 @@ function renderReview(){
       <div class="acts">
         ${veiled ? `<button class="b-show" id="rshow">続きを表示</button>` : ''}
       </div>
-      ${veiled ? '' : `<div class="grades">
+      ${veiled ? '' : (revRec ? `<div class="grades">
         ${[1,2,3,4].map(g => `<button class="${GRADES[g].cls}" data-g="${g}">
           <b>${GRADES[g].mark}</b><span>${GRADES[g].lbl}</span></button>`).join('')}
-      </div>`}
+      </div>` : `<div class="acts"><button class="b-show" id="rnext">
+        ${revI >= revQ.length - 1 ? '確認おわり' : '次へ'}</button></div>`)}
     </div>
     <button class="btn sec" id="rquit" style="margin-top:12px">中断する</button>`;
   fillImgs($('#main'));
   const sp = $('#showpic');
   if(sp) sp.onclick = () => { revPic = true; render(); };
   if(veiled) $('#rshow').onclick = () => { revOpen = true; render(); };
-  else $$('#main [data-g]').forEach(b => b.onclick = () => revAnswer(+b.dataset.g));
+  else if(revRec) $$('#main [data-g]').forEach(b => b.onclick = () => revAnswer(+b.dataset.g));
+  else $('#rnext').onclick = () => {
+    revI++; revOpen = false; revPic = false;
+    if(revI >= revQ.length){ revQ = []; revI = 0; revRec = true; toast('確認しました（記録していません）'); }
+    render();
+  };
   $('#rquit').onclick = () => { revQ = []; revI = 0; saveNotes(); render(); };
 }
-function startRevWith(list){                 // いま出ている一覧を、そのまま振り返る
-  list = list.filter(learning);
+function startRevWith(list, rec){            // いま出ている一覧を、そのまま振り返る
+  list = list.filter(n => !n.del);
   if(!list.length){ toast('振り返るメモがありません'); return; }
-  revList = list.slice();
+  revRec = rec !== false;
+  revList = revRec ? list.slice() : null;
   const pool = list.slice();
   for(let i = pool.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [pool[i],pool[j]] = [pool[j],pool[i]]; }
   revMode = 'quiz'; revQ = pool; revI = 0; revOk = 0; revNg = 0; revOpen = false; revPic = false;
@@ -1442,7 +1479,7 @@ function startRev(mode){
   }else{
     revQ = pickReview(cfg.revN);
   }
-  revList = null;
+  revList = null; revRec = true;
   revI = 0; revOk = 0; revNg = 0; revOpen = false; revPic = false;
   if(!revQ.length){ toast('メモがありません'); return; }
   render();

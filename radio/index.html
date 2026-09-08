@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>今日の教育論文</title>
+<meta name="theme-color" content="#1f3a5f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="教育論文">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --navy:#1f3a5f; --navy-2:#17304f; --cream:#f4f1ec; --paper:#ffffff; --ink:#2b2b2b;
+  --muted:#6f6a63; --line:#e3ded4; --accent:#c8552e; --ok:#2f6b2f; --ok-bg:#e8f0e3;
+  --serif:'Hiragino Mincho ProN','Yu Mincho','Noto Serif JP',serif;
+  --sans:'Hiragino Sans','Noto Sans JP',-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--serif);-webkit-text-size-adjust:100%}
+body{min-height:100vh;padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+a{color:var(--navy)}
+button{font-family:var(--sans);cursor:pointer}
+
+header.top{background:var(--navy);color:#fff;padding:calc(18px + env(safe-area-inset-top)) 20px 18px;position:sticky;top:0;z-index:5}
+.top .label{font-family:var(--sans);font-size:11px;letter-spacing:.2em;opacity:.85}
+.top h1{margin:6px 0 0;font-size:22px;font-weight:700;letter-spacing:.02em}
+.top .sub{font-family:var(--sans);font-size:12px;opacity:.8;margin-top:4px}
+.top .back{position:absolute;left:12px;top:calc(16px + env(safe-area-inset-top));background:none;border:0;color:#fff;font-size:15px;padding:6px 8px;display:none}
+body.detail .top .back{display:block}
+body.detail .top h1{font-size:15px;opacity:.9;padding-left:64px;padding-right:12px}
+body.detail .top .label,body.detail .top .sub{display:none}
+
+main{max-width:680px;margin:0 auto;padding:18px 16px}
+
+/* 一覧 */
+.stats{font-family:var(--sans);font-size:12px;color:var(--muted);margin:0 4px 12px;display:flex;justify-content:space-between}
+.card{background:var(--paper);border-radius:12px;padding:16px 16px 14px;margin-bottom:12px;border:1px solid var(--line);position:relative;cursor:pointer;transition:transform .08s}
+.card:active{transform:scale(.99)}
+.card .meta{font-family:var(--sans);font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.card .title{font-size:17px;font-weight:700;line-height:1.5;margin:0 0 8px;color:var(--navy)}
+.card .lead{font-size:14px;line-height:1.7;color:#444;margin:0}
+.card .foot{font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+.badge{font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:999px}
+.badge.new{background:var(--accent);color:#fff}
+.badge.done{background:var(--ok-bg);color:var(--ok)}
+.badge.partial{background:#fbf5e4;color:#9a6b00}
+.card.done{opacity:.72}
+.card.done .title{color:#4a5a70}
+.bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:10px}
+.bar>i{display:block;height:100%;background:var(--navy);width:0}
+
+/* 詳細 */
+.ep-head{margin:4px 0 16px}
+.ep-head .meta{font-family:var(--sans);font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center}
+.ep-head h2{font-size:22px;line-height:1.5;margin:8px 0 0;color:var(--navy)}
+.player{background:var(--navy);color:#fff;border-radius:14px;padding:18px 18px 16px;margin:0 0 20px}
+.player .row{display:flex;align-items:center;justify-content:center;gap:22px}
+.player button{background:none;border:0;color:#fff;font-size:13px;padding:8px 6px;border-radius:8px}
+.player button.big{width:64px;height:64px;border-radius:50%;background:#fff;color:var(--navy);font-size:26px;display:flex;align-items:center;justify-content:center;padding:0}
+.player button.big:active{transform:scale(.96)}
+.player .skip{font-family:var(--sans);font-weight:700;opacity:.9}
+.player .seek{margin-top:14px}
+.player input[type=range]{width:100%;accent-color:#fff;height:22px}
+.player .times{display:flex;justify-content:space-between;font-family:var(--sans);font-size:12px;opacity:.85;margin-top:2px}
+.player .rate{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.player .rate button{font-size:12px;padding:5px 10px;border:1px solid rgba(255,255,255,.35)}
+.player .rate button.on{background:#fff;color:var(--navy)}
+.sec{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.sec h3{font-family:var(--sans);font-size:13px;letter-spacing:.1em;color:var(--navy);margin:0 0 10px;border-bottom:2px solid var(--line);padding-bottom:6px}
+.sec p{margin:0 0 8px;line-height:1.85;font-size:15px}
+.sec ol{margin:0;padding-left:0;list-style:none}
+.sec ol li{display:flex;gap:10px;margin-bottom:8px;line-height:1.8;font-size:15px}
+.sec ol li b{font-family:var(--sans);color:var(--navy);flex:none}
+.sec .note{background:#fbf5e4;border-left:4px solid #d9a441;padding:10px 12px;border-radius:6px;font-size:14px;line-height:1.7;margin-top:6px}
+.sec .cite{font-family:var(--sans);font-size:13px;line-height:1.7;color:#444}
+.sec .links a{display:block;font-family:var(--sans);font-size:14px;margin-top:8px;word-break:break-all}
+.script{white-space:pre-wrap;line-height:2;font-size:15px;display:none;margin-top:8px}
+.sec.open .script{display:block}
+.toggle{font-family:var(--sans);font-size:13px;background:none;border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--navy);width:100%}
+.done-btn{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:15px;color:var(--navy);margin:4px 0 24px}
+.done-btn.on{background:var(--ok-bg);color:var(--ok);border-color:#cfe0c8}
+
+/* ミニプレーヤー */
+.mini{position:fixed;left:0;right:0;bottom:0;background:var(--navy);color:#fff;padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:none;align-items:center;gap:12px;z-index:6;box-shadow:0 -4px 16px rgba(0,0,0,.15)}
+.mini.show{display:flex}
+.mini .t{flex:1;min-width:0;font-size:13px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.mini .t small{display:block;font-family:var(--sans);font-size:11px;opacity:.8}
+.mini button{background:#fff;color:var(--navy);border:0;width:42px;height:42px;border-radius:50%;font-size:18px;display:flex;align-items:center;justify-content:center;padding:0}
+
+footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:center;padding:12px 0 8px}
+.empty{font-family:var(--sans);color:var(--muted);text-align:center;padding:40px 0}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="back" id="back" aria-label="戻る">‹ 一覧</button>
+  <div class="label">EDUCATION RESEARCH RADIO</div>
+  <h1 id="h1">今日の教育論文</h1>
+  <div class="sub">毎朝1本、5分で聴く教育研究</div>
+</header>
+
+<main>
+  <section id="list"></section>
+  <section id="detail" class="hidden"></section>
+  <footer>今日の教育論文 <span id="ver">v1</span></footer>
+</main>
+
+<div class="mini" id="mini">
+  <div class="t" id="miniT"></div>
+  <button id="miniBtn">▶</button>
+</div>
+<audio id="audio" preload="metadata"></audio>
+
+<script>
+const VERSION = 'v1';
+const LS_KEY = 'ronbun-radio-state-v1';
+const $ = s => document.querySelector(s);
+document.getElementById('ver').textContent = VERSION;
+
+let episodes = [];
+let state = load();
+let current = null;          // 再生中のエピソード
+const audio = $('#audio');
+
+function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)) || {done:{},pos:{}}; }catch(e){ return {done:{},pos:{}}; } }
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+
+function fmt(s){ s=Math.max(0,Math.floor(s||0)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function jpDate(d){ const [y,m,dd]=d.split('-'); const w='日月火水木金土'[new Date(y,m-1,dd).getDay()]; return `${y}年${+m}月${+dd}日（${w}）`; }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function statusOf(ep, isLatest){
+  if(state.done[ep.date]) return 'done';
+  const p = state.pos[ep.date]||0;
+  if(p > 20) return 'partial';
+  return isLatest ? 'new' : '';
+}
+
+/* ---------- 一覧 ---------- */
+function renderList(){
+  document.body.classList.remove('detail');
+  $('#h1').textContent = '今日の教育論文';
+  $('#detail').classList.add('hidden');
+  const el = $('#list'); el.classList.remove('hidden');
+  if(!episodes.length){ el.innerHTML='<div class="empty">まだ配信がありません</div>'; return; }
+  const doneN = episodes.filter(e=>state.done[e.date]).length;
+  let html = `<div class="stats"><span>全 ${episodes.length} 回</span><span>既読 ${doneN} / 未読 ${episodes.length-doneN}</span></div>`;
+  episodes.forEach((ep,i)=>{
+    const st = statusOf(ep, i===0);
+    const badge = st==='new' ? '<span class="badge new">NEW</span>'
+                : st==='done' ? '<span class="badge done">✓ 既読</span>'
+                : st==='partial' ? '<span class="badge partial">途中まで</span>' : '';
+    const pos = state.pos[ep.date]||0;
+    const pct = ep.duration ? Math.min(100, pos/ep.duration*100) : 0;
+    html += `<article class="card ${st==='done'?'done':''}" data-d="${ep.date}">
+      <div class="meta"><span>Vol.${ep.vol}</span><span>${jpDate(ep.date)}</span>${badge}</div>
+      <h2 class="title">${esc(ep.title)}</h2>
+      <p class="lead">${esc(ep.summary[0]||'')}</p>
+      <div class="foot"><span>約 ${fmt(ep.duration)}</span><span>${st==='partial'?fmt(pos)+' まで再生':''}</span></div>
+      ${st==='partial'?`<div class="bar"><i style="width:${pct}%"></i></div>`:''}
+    </article>`;
+  });
+  el.innerHTML = html;
+  el.querySelectorAll('.card').forEach(c=>c.onclick=()=>{ location.hash = '#/'+c.dataset.d; });
+}
+
+/* ---------- 詳細 ---------- */
+function renderDetail(date){
+  const ep = episodes.find(e=>e.date===date);
+  if(!ep){ location.hash=''; return; }
+  document.body.classList.add('detail');
+  $('#h1').textContent = `Vol.${ep.vol}`;
+  $('#list').classList.add('hidden');
+  const el = $('#detail'); el.classList.remove('hidden');
+  const playing = current && current.date===ep.date && !audio.paused;
+  el.innerHTML = `
+    <div class="ep-head">
+      <div class="meta"><span>Vol.${ep.vol}</span><span>${jpDate(ep.date)}</span><span>約 ${fmt(ep.duration)}</span></div>
+      <h2>${esc(ep.title)}</h2>
+    </div>
+    <div class="player">
+      <div class="row">
+        <button class="skip" id="b15">−15</button>
+        <button class="big" id="play">${playing?'❚❚':'▶'}</button>
+        <button class="skip" id="f15">+15</button>
+      </div>
+      <div class="seek"><input type="range" id="seek" min="0" max="${Math.floor(ep.duration||0)}" value="0" step="1"></div>
+      <div class="times"><span id="cur">0:00</span><span id="dur">${fmt(ep.duration)}</span></div>
+      <div class="rate" id="rate">
+        <button data-r="0.8">ゆっくり</button><button data-r="1" class="on">ふつう</button><button data-r="1.2">はやく</button>
+      </div>
+    </div>
+    <div class="sec"><h3>3行でわかる今日の論文</h3><ol>${ep.summary.map((s,i)=>`<li><b>${'一二三四五'[i]||''}</b><span>${esc(s)}</span></li>`).join('')}</ol>
+      ${ep.note?`<div class="note">※ ${esc(ep.note)}</div>`:''}</div>
+    <div class="sec"><h3>今日の論文</h3><div class="cite">${esc(ep.citation||'')}</div><div class="links">${(ep.links||[]).map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} ›</a>`).join('')}</div></div>
+    <div class="sec" id="scriptSec"><h3>文字で読む</h3><button class="toggle" id="scriptBtn">台本の全文を表示する</button><div class="script">${esc(ep.script||'')}</div></div>
+    <button class="done-btn ${state.done[ep.date]?'on':''}" id="doneBtn">${state.done[ep.date]?'✓ 既読にしました（タップで未読に戻す）':'既読にする'}</button>
+  `;
+  $('#play').onclick = ()=> togglePlay(ep);
+  $('#b15').onclick = ()=>{ if(current&&current.date===ep.date) audio.currentTime=Math.max(0,audio.currentTime-15); };
+  $('#f15').onclick = ()=>{ if(current&&current.date===ep.date) audio.currentTime=Math.min(audio.duration||ep.duration,audio.currentTime+15); };
+  const seek = $('#seek');
+  seek.oninput = ()=>{ $('#cur').textContent = fmt(seek.value); };
+  seek.onchange = ()=>{ if(current&&current.date===ep.date){ audio.currentTime=+seek.value; } else { state.pos[ep.date]=+seek.value; save(); } };
+  $('#rate').querySelectorAll('button').forEach(b=>{
+    if(+b.dataset.r===audio.playbackRate) { $('#rate').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); }
+    b.onclick = ()=>{ audio.playbackRate=+b.dataset.r; $('#rate').querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+  });
+  $('#scriptBtn').onclick = ()=>{ const s=$('#scriptSec'); s.classList.toggle('open'); $('#scriptBtn').textContent = s.classList.contains('open')?'台本を閉じる':'台本の全文を表示する'; };
+  $('#doneBtn').onclick = ()=>{ if(state.done[ep.date]) delete state.done[ep.date]; else state.done[ep.date]=true; save(); renderDetail(date); };
+  // 再生位置の反映
+  const pos = (current&&current.date===ep.date) ? audio.currentTime : (state.pos[ep.date]||0);
+  seek.value = Math.floor(pos); $('#cur').textContent = fmt(pos);
+  window.scrollTo(0,0);
+}
+
+/* ---------- 再生 ---------- */
+function togglePlay(ep){
+  if(current && current.date===ep.date){
+    if(audio.paused) audio.play(); else audio.pause();
+    return;
+  }
+  current = ep;
+  audio.src = ep.audio;
+  const pos = state.pos[ep.date]||0;
+  audio.addEventListener('loadedmetadata', function once(){ audio.removeEventListener('loadedmetadata', once); if(pos>0 && pos < (audio.duration||ep.duration)-5) audio.currentTime=pos; }, {once:true});
+  audio.play().catch(()=>{});
+  setMediaSession(ep);
+}
+function setMediaSession(ep){
+  if(!('mediaSession' in navigator)) return;
+  navigator.mediaSession.metadata = new MediaMetadata({ title: `Vol.${ep.vol} ${ep.title}`, artist:'今日の教育論文', album:'教育論文ラジオ', artwork:[{src:'icon-512.png',sizes:'512x512',type:'image/png'}] });
+  navigator.mediaSession.setActionHandler('play', ()=>audio.play());
+  navigator.mediaSession.setActionHandler('pause', ()=>audio.pause());
+  navigator.mediaSession.setActionHandler('seekbackward', ()=>{audio.currentTime=Math.max(0,audio.currentTime-15)});
+  navigator.mediaSession.setActionHandler('seekforward', ()=>{audio.currentTime=Math.min(audio.duration,audio.currentTime+15)});
+}
+let lastSave = 0;
+audio.addEventListener('timeupdate', ()=>{
+  if(!current) return;
+  const t = audio.currentTime, d = audio.duration || current.duration || 0;
+  if(document.body.classList.contains('detail') && $('#seek') && document.activeElement!==$('#seek')){ $('#seek').value=Math.floor(t); $('#cur').textContent=fmt(t); }
+  if(Date.now()-lastSave>3000){ state.pos[current.date]=t; if(d && t/d>=0.9 && !state.done[current.date]){ state.done[current.date]=true; refreshDoneUI(); } save(); lastSave=Date.now(); }
+});
+audio.addEventListener('ended', ()=>{ if(!current) return; state.done[current.date]=true; state.pos[current.date]=0; save(); refreshDoneUI(); updateMini(); });
+audio.addEventListener('play', ()=>{ updatePlayBtn(); updateMini(); });
+audio.addEventListener('pause', ()=>{ if(current){ state.pos[current.date]=audio.currentTime; save(); } updatePlayBtn(); updateMini(); });
+function updatePlayBtn(){ const b=$('#play'); if(b && current && location.hash==='#/'+current.date) b.textContent = audio.paused?'▶':'❚❚'; }
+function refreshDoneUI(){ if(location.hash.startsWith('#/')) { const b=$('#doneBtn'); if(b && current){ b.classList.add('on'); b.textContent='✓ 既読にしました（タップで未読に戻す）'; } } else renderList(); }
+function updateMini(){
+  const m=$('#mini');
+  if(!current){ m.classList.remove('show'); return; }
+  const onOwnPage = location.hash==='#/'+current.date;
+  if(onOwnPage && !audio.paused){ m.classList.remove('show'); return; }
+  if(audio.paused && audio.currentTime===0){ m.classList.remove('show'); return; }
+  m.classList.add('show');
+  $('#miniT').innerHTML = `<small>Vol.${current.vol} ${audio.paused?'一時停止中':'再生中'}</small>${esc(current.title)}`;
+  $('#miniBtn').textContent = audio.paused?'▶':'❚❚';
+}
+$('#miniBtn').onclick = ()=>{ if(audio.paused) audio.play(); else audio.pause(); };
+$('#miniT').onclick = ()=>{ if(current) location.hash='#/'+current.date; };
+
+/* ---------- ルーティング ---------- */
+function route(){
+  const h = location.hash;
+  if(h.startsWith('#/')) renderDetail(h.slice(2)); else renderList();
+  updateMini();
+}
+window.addEventListener('hashchange', route);
+$('#back').onclick = ()=>{ location.hash=''; };
+
+/* ---------- 読み込み ---------- */
+async function boot(){
+  try{
+    const r = await fetch('episodes.json?t='+Date.now(), {cache:'no-store'});
+    const j = await r.json();
+    episodes = (j.episodes||[]).sort((a,b)=>b.date.localeCompare(a.date));
+    try{ localStorage.setItem(LS_KEY+'-cache', JSON.stringify(episodes)); }catch(e){}
+  }catch(e){
+    try{ episodes = JSON.parse(localStorage.getItem(LS_KEY+'-cache'))||[]; }catch(_){ episodes=[]; }
+  }
+  route();
+}
+boot();
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden' && current){ state.pos[current.date]=audio.currentTime; save(); } });
+</script>
+<style>
+/* iOS safe-area は末尾に置かないと効かない */
+header.top{padding-top:calc(18px + env(safe-area-inset-top))}
+</style>
+</body>
+</html>

@@ -38,6 +38,11 @@ header.top{background:var(--black);color:#fff;padding:calc(18px + env(safe-area-
 .gate{font-family:var(--sans);text-align:center;padding:48px 12px;color:var(--ink);line-height:1.9}
 .gate h2{font-family:var(--serif);font-size:20px;margin:0 0 10px}
 .gate p{margin:0 0 6px;font-size:14px;color:#444}
+.keyform{margin-top:26px;border-top:1px solid var(--line);padding-top:22px}
+.keyform label{display:block;font-size:13px;color:var(--muted);margin-bottom:10px}
+.keyform input{width:100%;max-width:330px;padding:13px 14px;border:1px solid var(--line);border-radius:10px;font-size:16px;font-family:var(--sans);background:#fff;color:var(--ink)}
+.keyform button{display:block;margin:12px auto 0;background:var(--black);color:#fff;border:0;border-radius:999px;padding:13px 34px;font-size:15px}
+.keyform .err{color:var(--red);font-size:13px;margin-top:10px;min-height:18px}
 .top .back{position:absolute;left:12px;top:calc(16px + env(safe-area-inset-top));background:none;border:0;color:#fff;font-size:15px;padding:6px 8px;display:none}
 body.detail .top .back{display:block}
 body.detail .top h1{font-size:15px;opacity:.9;padding-left:64px;padding-right:12px}
@@ -148,7 +153,7 @@ footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:cent
 <audio id="audio" preload="metadata"></audio>
 
 <script>
-const VERSION = 'v5';
+const VERSION = 'v6';
 const LS_KEY = 'hirajio-state-v1';
 const $ = s => document.querySelector(s);
 document.getElementById('ver').textContent = VERSION;
@@ -202,16 +207,28 @@ function renderList(){
   const el = $('#list'); el.classList.remove('hidden');
   if(!member){
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    el.innerHTML = standalone
-      ? `<div class="gate"><h2>もう一度、追加し直してください</h2>
-         <p>このアイコンには、リンクの情報が入っていません。</p>
-         <p>お手数ですが、次の手順でお願いします。</p>
-         <p style="text-align:left;max-width:320px;margin:14px auto 0">
-           1. このアイコンを長押しして削除<br>
-           2. お渡ししたリンクを <b>Safari</b> で開く<br>
-           3. 下の共有ボタン → ホーム画面に追加</p></div>`
-      : `<div class="gate"><h2>このリンクでは開けません</h2>
-         <p>ヒラジオは、お渡ししたリンク（アドレスの最後に ?k= が付いたもの）から開いてください。</p></div>`;
+    const head = standalone
+      ? `<h2>リンクを貼り付けてください</h2>
+         <p>ホーム画面のアイコンから開くと、リンクの情報が引き継がれないことがあります。</p>
+         <p>下の欄に、お渡ししたリンクをそのまま貼り付けてください。一度貼れば、次からはこのアイコンでそのまま開けます。</p>`
+      : `<h2>このリンクでは開けません</h2>
+         <p>ヒラジオは、お渡ししたリンク（アドレスの最後に ?k= が付いたもの）から開いてください。</p>`;
+    el.innerHTML = `<div class="gate">${head}
+      <div class="keyform">
+        <label>お渡ししたリンク</label>
+        <input id="keyIn" type="text" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://...?k=...">
+        <button id="keyGo">開く</button>
+        <div class="err" id="keyErr"></div>
+      </div></div>`;
+    const go = ()=>{
+      const v = ($('#keyIn').value||'').trim();
+      const m2 = v.match(/[?&#]k=([A-Za-z0-9]+)/) || v.match(/^([A-Za-z0-9]{6,40})$/);
+      if(!m2){ $('#keyErr').textContent = 'リンクが読み取れませんでした。全部そのまま貼り付けてください。'; return; }
+      try{ localStorage.setItem(KEY_LS, m2[1]); }catch(e){}
+      location.replace(location.pathname + '?k=' + m2[1]);
+    };
+    $('#keyGo').onclick = go;
+    $('#keyIn').addEventListener('keydown', e=>{ if(e.key === 'Enter') go(); });
     return; }
   if(dayNow < 1){ el.innerHTML = `<div class="gate"><h2>まだ始まっていません</h2><p>${jpDate(member.start)} の朝から、Day 1 が届きます。</p></div>`; return; }
   if(!episodes.length){ el.innerHTML='<div class="empty">まだ配信がありません</div>'; return; }

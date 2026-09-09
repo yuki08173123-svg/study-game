@@ -535,6 +535,16 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 .rost .rr b{font-variant-numeric:tabular-nums;text-align:right;display:block}
 .rost .rr .lv{color:var(--acc);font-size:.98rem}
 .rost .num{font-variant-numeric:tabular-nums;text-align:right;color:var(--ink2);font-size:.8rem}
+
+/* ---------- iPhone で文字入力のたびに画面が拡大される件（琴心さんの指摘） ----------
+   Safari は「文字の大きさが16px未満の入力欄」を触ると、勝手に拡大する。
+   しかも書き終わっても元に戻らない。**触って使う端末では 16px 以上にしておくこと。**
+   ここを小さくすると、また同じ不具合が出る。 */
+@media (pointer: coarse){
+  input, textarea, select,
+  textarea.mono, input.mono,
+  #gate .gcode textarea{ font-size:16px }
+}
 </style>
 </head>
 <body>
@@ -570,7 +580,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 47;
+const VER = 48;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';

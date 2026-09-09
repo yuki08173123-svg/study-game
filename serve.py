@@ -16,8 +16,13 @@
 127.0.0.1 にだけ bind しているので、同じLANの他の端末からは見えない。
 """
 import http.server
+import os
 import socketserver
 import sys
+
+# どこから起動しても、この serve.py がある場所（study-game）だけを配信する。
+# これをしないと、起動したフォルダ（ホームなど）がまるごと見えてしまう。
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 HOST = "127.0.0.1"

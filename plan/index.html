@@ -402,7 +402,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v34</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v35</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -597,7 +597,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v34</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v35</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -622,7 +622,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 34;
+const VER = 35;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1124,7 +1124,7 @@ $('#btnNotifPerm').onclick = async ()=>{
 };
 
 /* ---------- 1週間まとめの画像 ---------- */
-function drawWeek(){
+function drawWeek(light){
   const W = 1080, PAD = 34, F = "'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif";
   const r = tqcOf(S.cur), m = parseISO(S.cur);
   const days = [];
@@ -1157,26 +1157,35 @@ function drawWeek(){
 
   // score band
   const bx = PAD, by = HEAD, bw = W-PAD*2, bh = BAND-16;
-  const grad = g.createLinearGradient(bx,by,bx+bw,by+bh);
-  grad.addColorStop(0,'#12203C'); grad.addColorStop(1,'#2A4A79');
-  g.fillStyle = grad; rr(bx,by,bw,bh,26); g.fill();
-  g.fillStyle = 'rgba(255,255,255,.62)'; g.font = '900 22px '+F; g.textAlign='left';
+  if(light){
+    g.fillStyle='#fff'; rr(bx,by,bw,bh,26); g.fill();
+    g.strokeStyle='#16202F'; g.lineWidth=2.5; rr(bx,by,bw,bh,26); g.stroke();
+  }else{
+    const grad = g.createLinearGradient(bx,by,bx+bw,by+bh);
+    grad.addColorStop(0,'#12203C'); grad.addColorStop(1,'#2A4A79');
+    g.fillStyle = grad; rr(bx,by,bw,bh,26); g.fill();
+  }
+  const bInk = light ? '#16202F' : '#fff';
+  const bSub = light ? '#66707E' : 'rgba(255,255,255,.6)';
+  const bNum = light ? '#16202F' : '#E7CE93';
+  const bLbl = light ? '#2C6FE4' : '#E7CE93';
+  g.fillStyle = bSub; g.font = '900 22px '+F; g.textAlign='left';
   g.fillText('今週のTQCスコア', bx+38, by+48);
-  g.fillStyle = '#E7CE93'; g.font = '900 108px '+F;
+  g.fillStyle = bNum; g.font = '900 108px '+F;
   const scoreW = g.measureText(String(r.score)).width;
   g.fillText(String(r.score), bx+34, by+152);
-  g.fillStyle = 'rgba(255,255,255,.6)'; g.font = '900 24px '+F;
+  g.fillStyle = bSub; g.font = '900 24px '+F;
   g.fillText('点', bx+34+scoreW+10, by+152);
-  g.fillStyle = 'rgba(255,255,255,.5)'; g.font = '700 20px '+F;
+  g.fillStyle = bSub; g.font = '700 20px '+F;
   g.fillText(fmtH(r.T)+' × '+r.Q+' × '+r.C+' ÷ 1000', bx+36, by+188);
 
   const stats = [['T', fmtHM(r.Tmin), '勉強した時間'], ['Q', String(r.Q), '★ 極まった数'], ['C', r.C+'%', r.done+'/'+r.all+' 完了']];
   stats.forEach((st,i)=>{
     const cx = bx+bw-330+i*110;
     g.textAlign='center';
-    g.fillStyle='#E7CE93'; g.font='900 20px '+F; g.fillText(st[0], cx, by+58);
-    g.fillStyle='#fff'; g.font='900 '+(st[1].length>5?22:30)+'px '+F; g.fillText(st[1], cx, by+100);
-    g.fillStyle='rgba(255,255,255,.55)'; g.font='700 15px '+F; g.fillText(st[2], cx, by+130);
+    g.fillStyle=bLbl; g.font='900 20px '+F; g.fillText(st[0], cx, by+58);
+    g.fillStyle=bInk; g.font='900 '+(st[1].length>5?22:30)+'px '+F; g.fillText(st[1], cx, by+100);
+    g.fillStyle=bSub; g.font='700 15px '+F; g.fillText(st[2], cx, by+130);
   });
 
   // days
@@ -1200,10 +1209,12 @@ function drawWeek(){
     g.fillStyle=DONE; g.fillText('できた '+fmtHM(dd.s.act), lx+200, y+38);
     if(dd.s.q>0){ g.fillStyle=GOLD; g.font='900 20px '+F; g.fillText('★ '+dd.s.q, lx+400, y+38); }
 
-    g.fillStyle='#EDF1F7'; rr(lx, y+50, lw, 10, 5); g.fill();
+    g.fillStyle = light ? '#F4F6FA' : '#EDF1F7'; rr(lx, y+50, lw, 10, 5); g.fill();
     if(dd.s.all){
-      g.fillStyle=HALF; rr(lx, y+50, Math.max(10, lw*dd.s.done/dd.s.all), 10, 5); g.fill();
-      if(dd.s.ok) { g.fillStyle=DONE; rr(lx, y+50, Math.max(10, lw*dd.s.ok/dd.s.all), 10, 5); g.fill(); }
+      g.fillStyle = light ? 'rgba(223,161,37,.38)' : HALF;
+      rr(lx, y+50, Math.max(10, lw*dd.s.done/dd.s.all), 10, 5); g.fill();
+      if(dd.s.ok) { g.fillStyle = light ? 'rgba(18,160,106,.45)' : DONE;
+        rr(lx, y+50, Math.max(10, lw*dd.s.ok/dd.s.all), 10, 5); g.fill(); }
     }
 
     let ty = y+90;
@@ -1214,9 +1225,15 @@ function drawWeek(){
       const label = tm + t.text + (t.star ? '  ★' : '');
       const noteW = t.note ? Math.min(g.measureText('  → '+t.note).width, (lw-30)*0.5) : 0;
       const txt = clip(label, lw-30-noteW);
-      if(t.evt){ g.fillStyle='#AEB9C8'; rr(lx+2, ty-12, 14, 9, 3); g.fill(); }
-      else { g.fillStyle = t.done ? ((t.star || t.nostar) ? DONE : HALF) : '#E0574C';
-        g.beginPath(); g.arc(lx+9, ty-7, 7, 0, Math.PI*2); g.fill(); }
+      if(t.evt){
+        if(light){ g.strokeStyle='#8A94A3'; g.lineWidth=2; rr(lx+2, ty-12, 14, 9, 3); g.stroke(); }
+        else { g.fillStyle='#AEB9C8'; rr(lx+2, ty-12, 14, 9, 3); g.fill(); }
+      }else{
+        const col = t.done ? ((t.star || t.nostar) ? DONE : HALF) : '#E0574C';
+        g.beginPath(); g.arc(lx+9, ty-7, 7, 0, Math.PI*2);
+        if(light){ g.strokeStyle=col; g.lineWidth=2.5; g.stroke(); }
+        else { g.fillStyle=col; g.fill(); }
+      }
       g.fillStyle = t.evt ? '#8A94A3' : (t.done ? '#9AA6B5' : INK);
       g.fillText(txt, lx+28, ty);
       const tw = g.measureText(txt).width;
@@ -1247,7 +1264,8 @@ function stampText(){
   return (n.getMonth()+1)+'/'+n.getDate()+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' 時点';
 }
 function openImageSheet(maker, title, prefix, hint){
-  let cv = maker(), blob = null;
+  let light = false;
+  let cv = maker(light), blob = null;
   const mkBlob = ()=>{ blob = null; cv.toBlob(b=>{ blob = b; }, 'image/png'); };
   mkBlob();
   const canShare = !!(navigator.canShare && navigator.share);
@@ -1256,12 +1274,17 @@ function openImageSheet(maker, title, prefix, hint){
     + '<img class="shot" id="shotImg" src="'+cv.toDataURL('image/png')+'" alt="'+title+'">'
     + (canShare ? '<button class="bigbtn" id="svShare">提出する（アプリをえらんで送る）</button>' : '')
     + '<button class="'+(canShare?'subbtn':'bigbtn')+'" id="svImg">画像を保存する</button>'
-    + '<button class="subbtn" id="reImg">いまの内容で作り直す</button>');
-  sh.querySelector('#reImg').onclick = ()=>{
-    cv = maker(); mkBlob();
+    + '<button class="subbtn" id="reImg">いまの内容で作り直す</button>'
+    + '<label class="chk" style="padding:12px 2px 0"><input type="checkbox" id="pLight">印刷用（うすい色にしてインクを節約）</label>');
+  const redraw = ()=>{
+    cv = maker(light); mkBlob();
     sh.querySelector('#shotImg').src = cv.toDataURL('image/png');
-    toast('いまの内容で作り直しました');
   };
+  sh.querySelector('#pLight').onchange = e => {
+    light = !!e.target.checked; redraw();
+    toast(light ? '印刷用にしました' : 'ふつうにもどしました');
+  };
+  sh.querySelector('#reImg').onclick = ()=>{ redraw(); toast('いまの内容で作り直しました'); };
   if(canShare) sh.querySelector('#svShare').onclick = ()=>{
     const name = prefix+'_'+S.cur+'.png';
     const go = async b => {
@@ -1441,7 +1464,7 @@ $('#goals').onclick = e => {
 $('#btnGoalAdd').onclick = ()=>openGoalEditor(null);
 
 /* ---------- 時間わり（10分きざみのタイムテーブル） ---------- */
-function drawTimeline(){
+function drawTimeline(light){
   const W = 1080, PAD = 30, F = "'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif";
   const m = parseISO(S.cur);
   const toMin = t => { const a = (t||'').split(':').map(Number); return (a.length===2 && !isNaN(a[0])) ? a[0]*60+a[1] : null; };
@@ -1515,16 +1538,22 @@ function drawTimeline(){
       const x = gx + i*colW + 3 + (o.col||0)*cw;
       const y = gy + (o.st-lo)/10*ROW, h = Math.max(ROW, (o.en-o.st)/10*ROW);
       const w = cw - (cols > 1 ? 2 : 0);
-      if(o.t.evt){ g.fillStyle='#E4E9F0'; rr(x, y+1, w, h-2, 6); g.fill(); g.strokeStyle='#B7C1CF'; g.lineWidth=1.5; rr(x, y+1, w, h-2, 6); g.stroke(); }
+      const col = o.t.evt ? '#8A94A3'
+        : (o.t.done ? ((o.t.star || o.t.nostar) ? '#12A06A' : '#DFA125') : '#E0574C');
+      if(light){
+        g.fillStyle='#fff'; rr(x, y+1, w, h-2, 6); g.fill();
+        g.strokeStyle=col; g.lineWidth=2; rr(x, y+1, w, h-2, 6); g.stroke();
+      }
+      else if(o.t.evt){ g.fillStyle='#E4E9F0'; rr(x, y+1, w, h-2, 6); g.fill(); g.strokeStyle='#B7C1CF'; g.lineWidth=1.5; rr(x, y+1, w, h-2, 6); g.stroke(); }
       else if(o.t.done && (o.t.star || o.t.nostar)){ g.fillStyle='rgba(18,160,106,.88)'; rr(x, y+1, w, h-2, 6); g.fill(); }
       else if(o.t.done){ g.fillStyle='rgba(223,161,37,.92)'; rr(x, y+1, w, h-2, 6); g.fill(); }
       else { g.fillStyle='#FBE4E1'; rr(x, y+1, w, h-2, 6); g.fill(); g.strokeStyle='#E0574C'; g.lineWidth=1.5; rr(x, y+1, w, h-2, 6); g.stroke(); }
       const label = (o.t.star?'★':'') + o.t.text + (o.t.note?' → '+o.t.note:'');
-      g.fillStyle = o.t.evt ? '#69748A' : (o.t.done ? '#fff' : INK); g.textAlign='left';
+      g.fillStyle = light ? INK : (o.t.evt ? '#69748A' : (o.t.done ? '#fff' : INK)); g.textAlign='left';
       if(h >= 24){
         g.font='700 13px '+F;
         g.fillText(clip(label, w-11), x+6, y+16);
-        if(h >= 40){ g.fillStyle = (o.t.done && !o.t.evt) ? 'rgba(255,255,255,.85)' : MUT; g.font='700 11px '+F;
+        if(h >= 40){ g.fillStyle = (!light && o.t.done && !o.t.evt) ? 'rgba(255,255,255,.85)' : MUT; g.font='700 11px '+F;
           g.fillText(o.t.time+'〜 '+fmtHM(o.en-o.st), x+6, y+32); }
       }else if(h >= 16){
         g.font='700 11px '+F;
@@ -1542,11 +1571,13 @@ function drawTimeline(){
     g.fillStyle=MUT; g.font='900 13px '+F; g.textAlign='right'; g.fillText('時こくなし', gx-10, y0+16);
     days.forEach((dd,i)=>{ const x = gx + i*colW + 3;
       dd.free.forEach((t,j)=>{ const y = y0 + j*24;
-        if(t.evt){ g.fillStyle='#E4E9F0'; rr(x, y, colW-6, 21, 6); g.fill(); }
+        const c2 = t.evt ? '#8A94A3' : (t.done ? ((t.star || t.nostar) ? '#12A06A' : '#DFA125') : '#E0574C');
+        if(light){ g.fillStyle='#fff'; rr(x, y, colW-6, 21, 6); g.fill(); g.strokeStyle=c2; g.lineWidth=2; rr(x, y, colW-6, 21, 6); g.stroke(); }
+        else if(t.evt){ g.fillStyle='#E4E9F0'; rr(x, y, colW-6, 21, 6); g.fill(); }
         else if(t.done && (t.star || t.nostar)){ g.fillStyle='rgba(18,160,106,.88)'; rr(x, y, colW-6, 21, 6); g.fill(); }
         else if(t.done){ g.fillStyle='rgba(223,161,37,.92)'; rr(x, y, colW-6, 21, 6); g.fill(); }
         else { g.fillStyle='#FBE4E1'; rr(x, y, colW-6, 21, 6); g.fill(); }
-        g.fillStyle = t.evt ? '#69748A' : (t.done ? '#fff' : INK); g.font='700 12px '+F; g.textAlign='left';
+        g.fillStyle = light ? INK : (t.evt ? '#69748A' : (t.done ? '#fff' : INK)); g.font='700 12px '+F; g.textAlign='left';
         g.fillText(clip((t.star?'★':'')+t.text+'（'+fmtHM(t.min)+'）', colW-14), x+6, y+15); });
     });
   }

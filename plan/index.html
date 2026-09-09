@@ -150,6 +150,19 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.95;}
 .task .del{width:28px; height:34px; display:grid; place-items:center; flex:none; margin-top:2px;}
 .task .del svg{width:16px; height:16px; stroke:var(--muted); fill:none; stroke-width:2.2; stroke-linecap:round;}
 
+/* 上のまとめ（目標＋今週のTQC） */
+.topcard{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); margin-top:10px; overflow:hidden;}
+.tc-goal{display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:11px 13px;}
+.tc-goal svg{width:17px; height:17px; stroke:var(--accent); fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+.tc-goal .nm{flex:1; min-width:0; font-size:14.5px; font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.tc-goal .lf{font-size:14.5px; font-weight:900; color:var(--accent); flex:none;}
+.tc-goal .lf.soon{color:var(--new);}
+.tc-goal .lf.past{color:var(--muted);}
+.tc-score{display:flex; align-items:baseline; gap:6px; padding:10px 14px; background:linear-gradient(100deg, var(--navy1), var(--navy2)); color:#fff;}
+.tc-score .lb{font-size:12px; font-weight:900; opacity:.8; flex:1;}
+.tc-score b{font-size:23px; font-weight:900; color:var(--gold); line-height:1.1;}
+.tc-score .u{font-size:11px; opacity:.75; font-weight:900;}
+
 /* カウントダウン */
 .timerbar{margin-top:8px; background:var(--accent); color:#fff; border-radius:14px; padding:9px 12px 10px; box-shadow:var(--shadow);}
 .timerbar.over{background:var(--sun);}
@@ -389,7 +402,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v33</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v34</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -418,6 +431,14 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <span class="t"><b>更新があります</b><span id="updVer">新しいバージョン</span></span>
       <span class="go">更新する</span>
     </button>
+
+    <div class="topcard" id="topCard">
+      <button class="tc-goal hidden" id="tcGoal">
+        <svg viewBox="0 0 24 24"><path d="M4.5 21V4M4.5 4.5h13l-2.4 3.8 2.4 3.7h-13"/></svg>
+        <span class="nm" id="tcName"></span><span class="lf" id="tcLeft"></span>
+      </button>
+      <div class="tc-score"><span class="lb">今週のTQCスコア</span><b class="num" id="tcTqc">0</b><span class="u">点</span></div>
+    </div>
 
     <div class="startcd" id="btnCd">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8.2"/><path d="M12 9v4.2l2.6 1.6M9 2.6h6"/></svg>
@@ -576,7 +597,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v33</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v34</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -601,7 +622,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 33;
+const VER = 34;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -841,6 +862,21 @@ function renderDay(){
     + '<div><div class="k">Q</div><div class="v num">'+s.q+'</div></div>'
     + '<div><div class="k">C</div><div class="v num">'+s.c+'%</div></div>';
 }
+function renderTop(){
+  const today = iso(new Date());
+  const gs = goalsOf().filter(g=>g.date).sort((a,b)=> a.date < b.date ? -1 : 1);
+  const g = gs.find(x=>x.date >= today) || gs[gs.length-1] || null;
+  const el = $('#tcGoal');
+  if(g){
+    const dl = daysLeftText(g.date);
+    $('#tcName').textContent = g.name;
+    $('#tcLeft').textContent = dl.txt;
+    $('#tcLeft').className = 'lf ' + dl.cls;
+    el.classList.remove('hidden');
+  }else el.classList.add('hidden');
+  $('#tcTqc').textContent = tqcOf(S.cur).score;
+}
+$('#tcGoal').onclick = ()=>{ document.querySelector('nav.tabs button[data-tab="Goal"]').click(); window.scrollTo(0,0); };
 function renderTQC(){
   const r = tqcOf(S.cur), goalH = Number(S.weekGoal)||0;
   $('#tqcCard').innerHTML =
@@ -853,7 +889,7 @@ function renderTQC(){
   + '</div>'
   + '<div class="formula">'+fmtH(r.T)+' × '+r.Q+' × '+r.C+' ÷ 1000 ＝ '+r.score+'</div>';
 }
-function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderKinds(); renderDay(); renderTQC(); renderPast(); renderGoals(); save(); }
+function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderKinds(); renderDay(); renderTQC(); renderTop(); renderPast(); renderGoals(); save(); }
 
 function renderHist(){
   const keys = Object.keys(S.weeks).filter(k=>{ const r = tqcOf(k); return r.all>0; }).sort();
@@ -1200,7 +1236,7 @@ function drawWeek(){
   });
 
   g.textAlign='center'; g.fillStyle=MUT; g.font='700 19px '+F;
-  g.fillText('赤＝これから　黄＝できた（★まだ）　緑＝極まった（★）　TQCスコア ＝ T × Q × C ÷ 1000', W/2, y+34);
+  g.fillText('赤＝これから　黄＝できた（★まだ）　緑＝極まった（★）', W/2, y+34);
   g.textAlign='right'; g.fillStyle='#AEB9C8'; g.font='700 16px '+F;
   g.fillText(stampText(), W-PAD, y+34);
   return cv;
@@ -1211,16 +1247,30 @@ function stampText(){
   return (n.getMonth()+1)+'/'+n.getDate()+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' 時点';
 }
 function openImageSheet(maker, title, prefix, hint){
-  let cv = maker();
+  let cv = maker(), blob = null;
+  const mkBlob = ()=>{ blob = null; cv.toBlob(b=>{ blob = b; }, 'image/png'); };
+  mkBlob();
+  const canShare = !!(navigator.canShare && navigator.share);
   const sh = openSheet('<h2>'+title+'</h2>'
     + '<p style="color:var(--muted); font-size:12.5px; margin-bottom:10px">'+(hint||'スクリーンショットを撮るか、下のボタンで画像として保存できます。')+'</p>'
     + '<img class="shot" id="shotImg" src="'+cv.toDataURL('image/png')+'" alt="'+title+'">'
-    + '<button class="bigbtn" id="svImg">画像を保存する</button>'
+    + (canShare ? '<button class="bigbtn" id="svShare">提出する（アプリをえらんで送る）</button>' : '')
+    + '<button class="'+(canShare?'subbtn':'bigbtn')+'" id="svImg">画像を保存する</button>'
     + '<button class="subbtn" id="reImg">いまの内容で作り直す</button>');
   sh.querySelector('#reImg').onclick = ()=>{
-    cv = maker();
+    cv = maker(); mkBlob();
     sh.querySelector('#shotImg').src = cv.toDataURL('image/png');
     toast('いまの内容で作り直しました');
+  };
+  if(canShare) sh.querySelector('#svShare').onclick = ()=>{
+    const name = prefix+'_'+S.cur+'.png';
+    const go = async b => {
+      const file = new File([b], name, { type:'image/png' });
+      if(!navigator.canShare({ files:[file] })){ toast('この端末では送れません'); return; }
+      try{ await navigator.share({ files:[file] }); }catch(e){}
+    };
+    if(blob) go(blob);
+    else cv.toBlob(b=>{ if(b) go(b); }, 'image/png');
   };
   sh.querySelector('#svImg').onclick = ()=>{
     cv.toBlob(async b=>{
@@ -1325,12 +1375,12 @@ function openGoalEditor(g){
     const dt = sh.querySelector('#goDate').value || '';
     if(isNew) goalsOf().push({ id:uid(), name:nm, date:dt, items:[] });
     else { g.name = nm; g.date = dt; }
-    sh.remove(); renderGoals(); save();
+    sh.remove(); renderGoals(); renderTop(); save();
   };
   if(!isNew) sh.querySelector('#goDel').onclick = ()=>{
     if(!confirm('「'+g.name+'」を消しますか？')) return;
     S.goals = goalsOf().filter(x=>x.id !== g.id);
-    sh.remove(); renderGoals(); save();
+    sh.remove(); renderGoals(); renderTop(); save();
   };
 }
 function openItemEditor(g, it){

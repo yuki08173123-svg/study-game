@@ -402,7 +402,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v35</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v36</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -500,6 +500,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <div class="dayparts" id="dayTqc"></div>
       <textarea id="dayMemo" rows="1" placeholder="この日のふりかえり（なくてもOK）"></textarea>
     </div>
+    <button class="subbtn hidden" id="btnQSend">この日のQをQランキングに送る</button>
 
     <div class="tqc" id="tqcCard"></div>
 
@@ -573,6 +574,12 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <button class="subbtn" id="btnNotifPerm">アプリの通知をゆるす</button>
       <p class="note">決まった時間に必ず知らせるには、カレンダーが確実です。ふだん使っているほうのボタンを押すと、「計画マップを書く」の予定が毎週日曜のこの時間に入ります。<br>Googleカレンダーは、ひらいた画面で<b>「保存」</b>を押してください。<br>時間を変えたときは、もう一度ボタンを押して入れ直してください。<br>「アプリの通知をゆるす」は、カウントダウンが終わったときなど、アプリを開いているあいだのお知らせに使います。</p>
     </div>
+    <div class="field hidden" id="qField">
+      <div class="lab">Qランキング</div>
+      <div class="row2" style="margin-top:6px"><span class="u" id="qNameNow">名前：まだえらんでいません</span></div>
+      <button class="subbtn" id="btnQName" style="margin-top:8px">名前をえらぶ</button>
+      <p class="note">その日のQを、Qランキングのスプレッドシートに送れます。<br>最初に一度だけ、自分の名前をえらんでください。えらんだあとは「今週」タブの<b>「この日のQをQランキングに送る」</b>を押すだけです。</p>
+    </div>
     <div class="field">
       <div class="lab">音</div>
       <label class="chk"><input type="checkbox" id="setSound" checked>時間になったら音を鳴らす</label>
@@ -597,7 +604,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v35</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v36</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -622,7 +629,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 35;
+const VER = 36;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -651,6 +658,11 @@ function renderProfs(){
 }
 const WD = ['月','火','水','木','金','土','日'];
 const DEF_MIN = 30;
+/* Qランキング（スプレッドシート）に送る設定
+   plan/gas/QRanking.gs をスプレッドシートに貼って「ウェブアプリ」としてデプロイし、
+   出てきたURLを Q_GAS_URL に入れる。空のあいだは、この機能は表示されない。 */
+const Q_GAS_URL = '';
+const Q_SECRET  = 'hiramap-2026';
 
 let S = { weeks:{}, name:'', weekGoal:'', defMin:DEF_MIN, cur:'', day:0,
           notifTime:'20:00', limitMin:30, tEnd:0, tLeft:0, tDone:0, sound:true };
@@ -889,7 +901,7 @@ function renderTQC(){
   + '</div>'
   + '<div class="formula">'+fmtH(r.T)+' × '+r.Q+' × '+r.C+' ÷ 1000 ＝ '+r.score+'</div>';
 }
-function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderKinds(); renderDay(); renderTQC(); renderTop(); renderPast(); renderGoals(); save(); }
+function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderKinds(); renderDay(); renderTQC(); renderTop(); renderPast(); renderGoals(); renderQ(); save(); }
 
 function renderHist(){
   const keys = Object.keys(S.weeks).filter(k=>{ const r = tqcOf(k); return r.all>0; }).sort();
@@ -1710,6 +1722,62 @@ function openDurPicker(t){
     t.min = cur; sh.remove(); renderDays(); renderDay(); renderTQC(); save();
   };
 }
+/* ---------- Qランキングに送る ---------- */
+function qOn(){ return !!Q_GAS_URL; }
+function jsonp(params, cb){
+  if(!qOn()){ cb(null); return; }
+  const nm = 'qcb' + Math.random().toString(36).slice(2);
+  const q = new URLSearchParams(Object.assign({ secret:Q_SECRET, callback:nm }, params));
+  const el = document.createElement('script');
+  let done = false;
+  const fin = d => { if(done) return; done = true; try{ delete window[nm]; }catch(e){} el.remove(); cb(d); };
+  window[nm] = fin;
+  el.src = Q_GAS_URL + '?' + q.toString();
+  el.onerror = ()=>fin(null);
+  document.body.appendChild(el);
+  setTimeout(()=>fin(null), 12000);
+}
+function renderQ(){
+  if(!qOn()){ $('#qField').classList.add('hidden'); $('#btnQSend').classList.add('hidden'); return; }
+  $('#qField').classList.remove('hidden');
+  $('#qNameNow').textContent = S.qName ? ('名前：'+S.qName) : '名前：まだえらんでいません';
+  const s = sumDay(dayOf(S.cur, S.day));
+  $('#btnQSend').textContent = 'この日のQ（★'+s.q+'）をQランキングに送る';
+  $('#btnQSend').classList.toggle('hidden', !S.qName);
+}
+$('#btnQName').onclick = ()=>{
+  toast('名前をとってきています…');
+  jsonp({ action:'names' }, d => {
+    if(!d || !d.ok){ toast((d && d.err) || 'つながりませんでした'); return; }
+    const list = d.names || [];
+    if(!list.length){ toast('名前が見つかりません'); return; }
+    const guess = list.find(n=>n === S.name) || list.find(n=>S.name && n.replace(/[\s　]/g,'') === S.name.replace(/[\s　]/g,''));
+    const sh = openSheet('<h2>Qランキングの名前</h2>'
+      + '<p style="font-size:13px; color:var(--muted)">'+esc(d.month||'')+'のシートにある名前です。自分の名前をえらんでください。</p>'
+      + '<div class="mchips" id="qNames" style="margin-top:10px">'
+      + list.map(n=>'<button data-n="'+esc(n)+'" class="'+((S.qName===n||(!S.qName&&n===guess))?'on':'')+'" style="padding:9px 15px; font-size:14px">'+esc(n)+'</button>').join('')
+      + '</div>');
+    sh.querySelector('#qNames').onclick = e => {
+      const b = e.target.closest('button'); if(!b) return;
+      S.qName = b.dataset.n; save(); sh.remove(); renderQ();
+      toast('「'+S.qName+'」にしました');
+    };
+  });
+};
+$('#btnQSend').onclick = ()=>{
+  if(!S.qName){ toast('先に設定で名前をえらんでください'); return; }
+  const d = addDays(parseISO(S.cur), S.day), now = new Date();
+  if(d.getFullYear() !== now.getFullYear() || d.getMonth() !== now.getMonth()){
+    toast('今月の分だけ送れます'); return;
+  }
+  const s = sumDay(dayOf(S.cur, S.day));
+  toast('送っています…');
+  jsonp({ action:'put', name:S.qName, day:d.getDate(), q:s.q }, r => {
+    if(r && r.ok) toast((d.getMonth()+1)+'月'+d.getDate()+'日のQ（'+s.q+'）を送りました');
+    else toast((r && r.err) || '送れませんでした');
+  });
+};
+
 /* ---------- テンプレート ---------- */
 function tplList(){ if(!Array.isArray(S.templates)) S.templates = []; return S.templates; }
 function tplCount(tp){ return (tp.days||[]).reduce((n,a)=>n+(a?a.length:0), 0); }

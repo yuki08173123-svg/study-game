@@ -244,7 +244,12 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.95;}
 .addrow .add{width:38px; height:38px; border-radius:12px; background:var(--accent); display:grid; place-items:center; flex:none;}
 .addrow .add svg{width:20px; height:20px; stroke:var(--accent-ink); fill:none; stroke-width:3; stroke-linecap:round;}
 .repeat{display:flex; align-items:center; gap:6px; background:var(--accent-soft); padding:9px 11px 6px;}
-.kinds{display:flex; align-items:center; gap:6px; background:var(--accent-soft); padding:0 11px 10px;}
+.durrow{display:flex; align-items:center; gap:5px; background:var(--accent-soft); padding:8px 11px 0;}
+.durrow .rl{font-size:11px; font-weight:900; color:var(--muted); flex:none;}
+.durrow .qd{background:var(--card); border-radius:9px; padding:7px 8px; font-size:11.5px; font-weight:900; color:var(--accent); flex:none;}
+.durrow .zero{background:var(--card); border-radius:9px; padding:7px 8px; font-size:11px; font-weight:900; color:var(--muted); flex:none;}
+.durrow .now{margin-left:auto; font-size:14px; font-weight:900; padding:6px 10px; border-radius:9px; background:var(--card); flex:none;}
+.kinds{display:flex; align-items:center; gap:6px; background:var(--accent-soft); padding:8px 11px 10px;}
 .kinds .rl{font-size:11px; font-weight:900; color:var(--muted); flex:none;}
 .kinds button{flex:1; background:var(--card); border-radius:9px; padding:7px 4px; font-size:11.5px; font-weight:900; color:var(--muted);}
 .kinds button.on{background:var(--accent); color:var(--accent-ink);}
@@ -402,7 +407,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v37</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v38</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -478,6 +483,14 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <button class="add" id="btnAdd" aria-label="追加"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     </div>
     <div class="sugg" id="sugg"></div>
+    <div class="durrow" id="durRow">
+      <span class="rl">かかる時間</span>
+      <button class="qd" data-d="15">＋15分</button>
+      <button class="qd" data-d="30">＋30分</button>
+      <button class="qd" data-d="60">＋60分</button>
+      <button class="zero" data-d="0">0に</button>
+      <button class="now num" id="pendMin">30分</button>
+    </div>
     <div class="repeat">
       <span class="rl">入れる曜日</span>
       <div class="rdays" id="rdays"></div>
@@ -604,7 +617,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v37</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v38</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -629,7 +642,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 37;
+const VER = 38;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -766,12 +779,15 @@ function renderRep(){
   $('#rdays').innerHTML = WD.map((w,i)=>'<button data-i="'+i+'" class="'+(REP[i]?'on':'')+'">'+w+'</button>').join('');
   $('#btnAllDays').textContent = REP.every(Boolean) ? 'この日だけ' : '毎日';
 }
-function histAdd(text){
+function histAdd(text, time, min){
   const x = (text||'').trim(); if(!x) return;
   if(!Array.isArray(S.hist)) S.hist = [];
   let h = S.hist.find(o=>o.t === x);
-  if(h){ h.n = (h.n||0)+1; h.at = Date.now(); }
-  else S.hist.push({ t:x, n:1, at:Date.now() });
+  if(h){ h.n = (h.n||0)+1; h.at = Date.now();
+    if(time !== undefined) h.time = time;
+    if(min) h.min = min;
+  }
+  else S.hist.push({ t:x, n:1, at:Date.now(), time:time||'', min:min||S.defMin });
   if(S.hist.length > 200){ S.hist.sort((a,b)=>(b.at||0)-(a.at||0)); S.hist.length = 200; }
 }
 function histBuild(){   // 古いデータから候補をつくる（1回だけ）
@@ -797,7 +813,13 @@ $('#newText').addEventListener('input', renderSugg);
 $('#newText').addEventListener('focus', renderSugg);
 $('#sugg').onclick = e => {
   const b = e.target.closest('button[data-t]'); if(!b) return;
-  $('#newText').value = b.dataset.t; renderSugg(); $('#newText').focus();
+  const o = (S.hist||[]).find(x=>x.t === b.dataset.t);
+  $('#newText').value = b.dataset.t;
+  if(o){                                   // 前に使った時こく・かかる時間もいっしょに入れる
+    if(o.time) $('#newTime').value = o.time;
+    if(o.min){ S.pendMin = o.min; renderPend(); }
+  }
+  renderSugg(); $('#newText').focus();
 };
 function openHistEditor(){
   const list = ()=> (S.hist||[]).slice().sort((a,b)=>(b.at||0)-(a.at||0));
@@ -901,7 +923,7 @@ function renderTQC(){
   + '</div>'
   + '<div class="formula">'+fmtH(r.T)+' × '+r.Q+' × '+r.C+' ÷ 1000 ＝ '+r.score+'</div>';
 }
-function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderKinds(); renderDay(); renderTQC(); renderTop(); renderPast(); renderGoals(); renderQ(); save(); }
+function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderKinds(); renderPend(); renderDay(); renderTQC(); renderTop(); renderPast(); renderGoals(); renderQ(); save(); }
 
 function renderHist(){
   const keys = Object.keys(S.weeks).filter(k=>{ const r = tqcOf(k); return r.all>0; }).sort();
@@ -1625,11 +1647,12 @@ function addTask(){
   const tm = $('#newTime').value;
   let targets = REP.map((v,i)=>v?i:-1).filter(i=>i>=0);
   if(!targets.length) targets = [S.day];
-  histAdd(txt);
+  const mn = (typeof S.pendMin === 'number' && S.pendMin >= 0) ? S.pendMin : S.defMin;
+  histAdd(txt, tm, mn);
   const k = S.newKind || '';
   targets.forEach(i=>{
     const d = dayOf(S.cur, i);
-    d.tasks.push({ time:tm, text:txt, min:S.defMin, done:false, star:false,
+    d.tasks.push({ time:tm, text:txt, min:mn, done:false, star:false,
                    nostar: k === 'nostar', evt: k === 'evt', note:'' });
     d.tasks.sort((a,b)=> a.time&&b.time ? (a.time<b.time?-1:a.time>b.time?1:0) : a.time?-1:b.time?1:0);
   });
@@ -1694,34 +1717,52 @@ function openTaskEditor(t){
   inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); done(); } });
   sh.querySelector('#edNote').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); done(); } });
 }
-function openDurPicker(t){
-  let cur = Math.max(0, Math.round(Number(t.min)||0));
-  const adds = [5,10,15,20,30,60,90];
-  const chips = adds.map(v=>'<button data-v="'+v+'" style="padding:9px 14px; font-size:14px">＋'+v+'分</button>').join('');
+function openMinPicker(sub, start, onOK){
+  let cur = Math.max(0, Math.round(Number(start)||0));
+  const adds = [5,10,15,20,30,60,90], subs = [5,10,15,30];
+  const plus = adds.map(v=>'<button data-v="'+v+'" style="padding:9px 14px; font-size:14px">＋'+v+'分</button>').join('');
+  const minus = subs.map(v=>'<button data-v="-'+v+'" style="padding:9px 14px; font-size:14px; color:var(--sun)">−'+v+'分</button>').join('');
   let hO='', mO='';
   for(let i=0;i<=8;i++) hO += '<option value="'+i+'">'+i+'</option>';
   for(let i=0;i<60;i++) mO += '<option value="'+i+'">'+String(i).padStart(2,'0')+'</option>';
-  const sh = openSheet('<h2>かかる時間</h2><p style="color:var(--muted); font-size:13px">'+esc(t.text)+'</p>'
+  const sh = openSheet('<h2>かかる時間</h2>'
+    + (sub ? '<p style="color:var(--muted); font-size:13px">'+esc(sub)+'</p>' : '')
     + '<div class="durnow"><b class="num" id="dNow">0分</b><button id="dZero">0にもどす</button></div>'
-    + '<div class="mchips" id="pkChips">'+chips+'</div>'
-    + '<p class="note" style="margin:8px 2px 0">ボタンは<b>たし算</b>です。＋5分と＋20分を押せば25分になります。</p>'
+    + '<div class="mchips" id="pkChips">'+plus+'</div>'
+    + '<div class="mchips" id="pkChips2" style="margin-top:8px">'+minus+'</div>'
+    + '<p class="note" style="margin:8px 2px 0">ボタンは<b>たし算・ひき算</b>です。＋5分と＋20分を押せば25分になります。</p>'
     + '<h3>こまかく決める（1分きざみ）</h3>'
     + '<div class="picker"><select id="pkH">'+hO+'</select><span>時間</span><select id="pkM">'+mO+'</select><span>分</span></div>'
     + '<button class="bigbtn" id="pkOK">きめる</button>');
   const now = sh.querySelector('#dNow'), selH = sh.querySelector('#pkH'), selM = sh.querySelector('#pkM');
   const sync = ()=>{ now.textContent = fmtHM(cur); selH.value = Math.min(8, Math.floor(cur/60)); selM.value = cur%60; };
   sync();
-  sh.querySelector('#pkChips').onclick = e => {
+  const add = e => {
     const b = e.target.closest('button'); if(!b) return;
-    cur = Math.min(539, cur + (+b.dataset.v)); sync();
+    cur = Math.max(0, Math.min(539, cur + (+b.dataset.v))); sync();
   };
+  sh.querySelector('#pkChips').onclick = add;
+  sh.querySelector('#pkChips2').onclick = add;
   sh.querySelector('#dZero').onclick = ()=>{ cur = 0; sync(); };
   const fromSel = ()=>{ cur = (+selH.value)*60 + (+selM.value); sync(); };
   selH.onchange = fromSel; selM.onchange = fromSel;
-  sh.querySelector('#pkOK').onclick = ()=>{
-    t.min = cur; sh.remove(); renderDays(); renderDay(); renderTQC(); save();
-  };
+  sh.querySelector('#pkOK').onclick = ()=>{ sh.remove(); onOK(cur); };
 }
+function openDurPicker(t){
+  openMinPicker(t.text, t.min, v => { t.min = v; renderDays(); renderDay(); renderTQC(); save(); });
+}
+/* 入力欄の「かかる時間」 */
+function renderPend(){
+  if(typeof S.pendMin !== 'number') S.pendMin = S.defMin;
+  $('#pendMin').textContent = fmtHM(S.pendMin);
+}
+$('#durRow').onclick = e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.id === 'pendMin'){ openMinPicker('これから入れるやること', S.pendMin, v => { S.pendMin = v; renderPend(); save(); }); return; }
+  const d = +b.dataset.d;
+  S.pendMin = d === 0 ? 0 : Math.min(539, (Number(S.pendMin)||0) + d);
+  renderPend(); save();
+};
 /* ---------- Qランキングに送る ---------- */
 function qOn(){ return !!Q_GAS_URL; }
 function jsonp(params, cb){

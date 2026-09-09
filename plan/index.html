@@ -402,7 +402,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v36</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v37</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -604,7 +604,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <input type="file" id="fileIn" accept="application/json" class="hidden">
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v36</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v37</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -629,7 +629,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 36;
+const VER = 37;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -661,7 +661,7 @@ const DEF_MIN = 30;
 /* Qランキング（スプレッドシート）に送る設定
    plan/gas/QRanking.gs をスプレッドシートに貼って「ウェブアプリ」としてデプロイし、
    出てきたURLを Q_GAS_URL に入れる。空のあいだは、この機能は表示されない。 */
-const Q_GAS_URL = '';
+const Q_GAS_URL = 'https://script.google.com/macros/s/AKfycbwdmkn5BE6mdMd9PSsnUoXXf6njRZ1vYXflA1Z-FLGG_HDzNHWukIWU7t065iL-xCbH/exec';
 const Q_SECRET  = 'hiramap-2026';
 
 let S = { weeks:{}, name:'', weekGoal:'', defMin:DEF_MIN, cur:'', day:0,
@@ -1773,7 +1773,7 @@ $('#btnQSend').onclick = ()=>{
   const s = sumDay(dayOf(S.cur, S.day));
   toast('送っています…');
   jsonp({ action:'put', name:S.qName, day:d.getDate(), q:s.q }, r => {
-    if(r && r.ok) toast((d.getMonth()+1)+'月'+d.getDate()+'日のQ（'+s.q+'）を送りました');
+    if(r && r.ok) toast(r.month+r.day+'日 '+r.name+' のQ（'+r.q+'）を入れました');
     else toast((r && r.err) || '送れませんでした');
   });
 };

@@ -424,7 +424,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v40</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v41</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -655,7 +655,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <p class="note" id="bkNote"></p>
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v40</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v41</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -680,7 +680,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 40;
+const VER = 41;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1878,7 +1878,7 @@ function qOn(){ return !!Q_GAS_URL; }
    空のあいだは、この機能は表示されない。
    しくみ: 1人分のデータ（S）をまるごと、同期コードごとに預ける。
    S.mt（さいごに中身が変わった時刻）が新しいほうが勝つ。 */
-const SYNC_URL = '';
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbztk0Zk4YnnAjKcOgsVU690-gAn_FfN5xGILx5u_YUj6syG5xk80sV6Biqa1WOce-uQ/exec';
 function syncOn(){ return !!SYNC_URL; }
 let syncT = null, syncBusy = false, syncErr = '';
 async function syncCall(params){

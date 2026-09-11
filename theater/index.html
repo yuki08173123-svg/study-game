@@ -582,7 +582,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 50;
+const VER = 51;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -642,7 +642,7 @@ let favs = [];
 let folders = [];       /* 生徒が自分で作るフォルダ [{id, name, ids:[]}] */
 let outs = {};          /* アウトプット {動画id: [{at:時刻, t:本文}]} */
 let mych = [];          /* マイチャンネル（自分で足した ヒラ先生の動画）[{id, t, at}] */
-let cfg  = { speed:1, autonext:true, loop:false, cc:false, rv:5 };
+let cfg  = { speed:1, autonext:true, loop:false, cc:false, rv:5, noauto:false };
 let view = { name:'home' };
 let admin = null;         /* 管理画面のしたがき */
 
@@ -1753,6 +1753,9 @@ function vSet(){
         <div class="sw ${cfg.loop?'on':''}" id="swLoop"><i></i></div></div>
       <div class="item" ${cfg.loop?'style="opacity:.45"':''}><div class="nm">見終わったら次の動画へ</div>
         <div class="sw ${cfg.autonext?'on':''}" id="swNext"><i></i></div></div>
+      <div class="item"><div class="nm">動画を開いても すぐ再生しない<br>
+        <span style="font-size:.76rem;color:var(--ink3);font-weight:600">付箋やアウトプットを見て、思い出してから再生したいとき</span></div>
+        <div class="sw ${cfg.noauto?'on':''}" id="swNoAuto"><i></i></div></div>
       <div class="item"><div class="nm">はじめの再生の速さ</div>
         <div class="ct" id="spdLbl">${cfg.speed}倍</div>
         <button class="pb" id="spdBtn" style="color:var(--ink2)">${ICO.down({s:20})}</button></div>
@@ -1811,6 +1814,8 @@ function vSet(){
   $('#swLoop').onclick = () => { cfg.loop = !cfg.loop; saveCfg(); vSet();
     toast(cfg.loop ? 'くり返し再生にしました' : 'くり返しをやめました'); };
   $('#swNext').onclick = () => { cfg.autonext = !cfg.autonext; saveCfg(); vSet(); };
+  $('#swNoAuto').onclick = () => { cfg.noauto = !cfg.noauto; saveCfg(); vSet();
+    toast(cfg.noauto ? '開いても すぐには再生しません' : '開いたら すぐ再生します'); };
   $('#swCC').onclick = () => { cfg.cc = !cfg.cc; saveCfg(); applyCCSoon(); vSet();
     toast(cfg.cc ? '字幕を出します' : '字幕を消しました'); };
   $('#spdBtn').onclick = $('#spdLbl').onclick = () =>
@@ -2199,7 +2204,7 @@ function applyCCSoon(){
   [300, 900, 2000].forEach(ms => setTimeout(applyCC, ms));
 }
 
-function openPlay(id, push){
+function openPlay(id, push, opt){
   const v = vid(id); if(!v) return;
   if(NEWIDS.delete(id)){ /* 一度開いたらNEWを外す */ }
   curId = id; started = false;
@@ -2236,16 +2241,26 @@ function openPlay(id, push){
   $('#catch').classList.remove('hidden');
   $('#ctrl').classList.remove('hidden');
   const start = startSecOf(v);
+  /* 「開いたら すぐ再生しない」設定のときは、読みこむだけで止めておく。
+     付箋やアウトプットを見て 思い出してから再生したい人のため（Yuuydさんの要望）。
+     ただし「見終わったら次の動画へ」で開いたときは、流れを止めないように再生する。
+     ※ seekTo は止まっている動画でも再生を始めてしまうので、止めておくときは cueVideoById を使う */
+  const auto = !cfg.noauto || !!(opt && opt.auto);
   if(player && playerReady){
-    /* すでに用意ができていれば、タップと同じ流れで再生に入る（iPhone対策） */
-    try{ player.loadVideoById({ videoId:id, startSeconds:start }); }catch(e){}
+    if(auto){
+      /* すでに用意ができていれば、タップと同じ流れで再生に入る（iPhone対策） */
+      try{ player.loadVideoById({ videoId:id, startSeconds:start }); }catch(e){}
+      setTimeout(() => { if(!started) $('#phint').classList.remove('hidden'); }, 1600);
+      $('#phint').textContent = 'もう一度 再生ボタンを押してください';
+    }else{
+      try{ player.cueVideoById({ videoId:id, startSeconds:start }); }catch(e){}
+    }
     applyCCSoon();   /* 動画を切りかえたときも 字幕の設定を言い直す */
-    setTimeout(() => { if(!started) $('#phint').classList.remove('hidden'); }, 1600);
-    $('#phint').textContent = 'もう一度 再生ボタンを押してください';
   }else{
     makePlayer().then(() => {
       if(curId !== id) return;
-      try{ player.seekTo(start, true); player.playVideo(); }catch(e){}
+      if(auto){ try{ player.seekTo(start, true); player.playVideo(); }catch(e){} }
+      else    { try{ player.cueVideoById({ videoId:id, startSeconds:start }); }catch(e){} }
     });
   }
 }
@@ -2322,7 +2337,7 @@ function onEnded(){
     nextT = setInterval(() => {
       left--;
       const el = $('#cd'); if(el) el.textContent = left;
-      if(left <= 0){ stopCount(); openPlay(nx.id); }
+      if(left <= 0){ stopCount(); openPlay(nx.id, undefined, { auto:true }); }
     }, 1000);
     $('#stopauto').onclick = () => {
       stopCount(); cfg.autonext = false; saveCfg(); onEnded();

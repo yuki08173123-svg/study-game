@@ -582,7 +582,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 49;
+const VER = 50;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
@@ -1533,7 +1533,7 @@ function vLv(){
       ・レベルは<b>下がりません</b>。
     </div>
     <div class="lead" style="margin-top:12px">
-      書いたアウトプットは この端末の中に残ります。先生に見せるときは
+      書いたアウトプットは、同じ Discord でログインした端末どうしで共有されます。先生に見せるときは
       「まとめてコピー」で貼りつけるか、この画面のスクショを送ってください。</div>
 
     <div class="sec"><h2>称号</h2></div>
@@ -1771,7 +1771,9 @@ function vSet(){
       : '見終わったら、下の動画へ自動で進みます。'}</div>
     <div class="lead" style="margin-top:8px">速さは動画ごとに覚えます。ここで決めるのは、まだ速さを変えていない動画の速さです。</div>
     <div class="lead" style="margin-top:8px">字幕は、その動画に字幕が用意されているときだけ出ます。映像に焼きこまれている字幕は消せません。</div>
-    <div class="lead" style="margin-top:8px">記録はこの端末の中だけに残ります。外には送られません。</div>
+    <div class="lead" style="margin-top:8px">見た回数・アウトプットなどの記録は、<b>同じ Discord でログインした端末どうしで自動で同じになります</b>。
+      データはヒラの管理する場所にあずかります（Discord に出しているものと同じ種類の内容です）。
+      アウトプットの写真だけは、この端末の中に残ります。</div>
 
     <div class="sec"><h2>記録の持ち出し</h2></div>
     <div class="group">
@@ -1780,7 +1782,8 @@ function vSet(){
       <button class="item" id="impo"><div class="nm">記録を読みこむ</div>
         <div class="chev">${ICO.chev({s:20})}</div></button>
     </div>
-    <div class="lead" style="margin-top:8px">スマホを買いかえるときは、先に書き出しておいてください。記録はこの端末の中だけにあるので、何もしないと消えます。</div>
+    <div class="lead" style="margin-top:8px">スマホを買いかえても、同じ Discord でログインすれば記録は戻ります。
+      アウトプットの写真も持っていきたいときは、先に書き出しておいてください。</div>
 
     <div class="sec"><h2>アプリ</h2></div>
     <div class="group">
@@ -2545,30 +2548,47 @@ async function checkHiraVideo(id){
   return { ok:true, t:j.title || 'ヒラ先生の動画' };
 }
 
+/* Loom は「誰の動画か」を教えてくれない（oEmbed に持ち主が入っていない）ので、持ち主の確認はしない。
+   Loom は説明を録画して共有するための道具で、おすすめ欄も娯楽の動画もない。
+   Theater が防ぎたい「もう1本だけ」が起きない場所なので、足せるようにしている。
+   ここでは 動画が実在するか と 題名 だけを確かめる。 */
+async function checkLoomVideo(id){
+  let r;
+  try{
+    r = await fetch('https://www.loom.com/v1/oembed?url=' +
+      encodeURIComponent('https://www.loom.com/share/' + id.slice(5)), { cache:'no-store' });
+  }catch(e){ return { ok:false, why:'net' }; }
+  if(r.status === 401 || r.status === 403) return { ok:false, why:'private' };
+  if(!r.ok) return { ok:false, why:'notfound' };
+  let j = null; try{ j = await r.json(); }catch(e){}
+  if(!j) return { ok:false, why:'notfound' };
+  return { ok:true, t:j.title || 'ヒラ先生の動画（Loom）' };
+}
+
 function askAddMych(after){
   openSheet(`
     <h3>マイチャンネルに動画を足す</h3>
     <div class="lead" style="margin:-4px 2px 10px;line-height:1.9">
       Theater に入っていない <b>ヒラ先生の動画</b>（個別のレビューなど）を、自分用に足せます。<br>
-      YouTube の「共有」でコピーした URL を貼りつけてください。</div>
-    <div class="fld"><input id="myUrl" type="url" inputmode="url" placeholder="https://youtu.be/xxxxxxxxxxx"></div>
+      YouTube か Loom の URL を貼りつけてください。</div>
+    <div class="fld"><input id="myUrl" type="url" inputmode="url" placeholder="https://youtu.be/… や https://www.loom.com/share/…"></div>
     <div class="lead" id="myMsg" style="margin-top:8px;min-height:1.6em"></div>
     <div class="acts" style="margin-top:10px">
       <button class="btn" id="myNo">やめる</button>
       <button class="btn pri" id="myOk">足す</button>
     </div>
     <div class="lead" style="margin-top:12px;font-size:.74rem">
-      ヒラ先生のチャンネル以外の動画は足せません（理由は「マイチャンネルとは？」に書いています）。</div>`, () => {
+      YouTube は、ヒラ先生のチャンネルの動画だけ足せます（理由は「マイチャンネルとは？」に書いています）。</div>`, () => {
     const msg = t => { $('#myMsg').innerHTML = t; };
     $('#myNo').onclick = closeSheet;
     $('#myOk').onclick = async () => {
       const id = ytId($('#myUrl').value);
-      if(!id || isLoom(id)) return msg('YouTube の URL を貼りつけてください。');
+      if(!id) return msg('YouTube か Loom の URL を貼りつけてください。');
       if(DATA.videos.some(v => v.id === id)) return msg('この動画は もう Theater に入っています。「さがす」から見られます。');
       if(mych.some(m => m.id === id)) return msg('この動画は もうマイチャンネルに入っています。');
       if(mych.length >= MAX_MYCH) return msg(`マイチャンネルは ${MAX_MYCH}本までです。`);
       msg('確かめています…');
-      const c = await checkHiraVideo(id);
+      const c = isLoom(id) ? await checkLoomVideo(id) : await checkHiraVideo(id);
       if(!c.ok){
         return msg(({
           other:   `この動画は <b>${esc(c.who) || 'ほかの人'}</b> さんのチャンネルの動画なので、足せません。<br>マイチャンネルには ヒラ先生の動画だけ足せます。`,
@@ -2596,9 +2616,12 @@ function mychAbout(){
     'せっかく YouTube から離れたのに、その誘惑を自分のアプリに持ちこむことになります。<br><br>' +
     'また、ご家族にも「Theater には塾の動画しか入っていない」と安心してもらえていることが、' +
     'このアプリを使い続けられる理由のひとつです。そこを守りたいので、ヒラ先生の動画だけにしています。<br><br>' +
+    '<b>Loom の動画について</b><br>' +
+    'Loom は説明を録画して共有するための道具で、おすすめ欄も娯楽の動画もありません。' +
+    'Theater の中に「もう1本だけ」が生まれる心配がないので、Loom の URL はそのまま足せます。<br><br>' +
     '<b>そのほか</b><br>' +
     '・見た回数は数えますが、レベルには入りません（みんな同じ動画で比べられるようにするため）<br>' +
-    '・この端末の中に保存されます');
+    '・同じ Discord でログインした端末どうしで、同じ一覧になります');
 }
 
 /* いつ見るかを決める。「あとで見る」を日付つきでできるようにするため。

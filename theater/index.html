@@ -467,6 +467,8 @@ textarea{min-height:96px;resize:vertical;line-height:1.7;font-size:.88rem}
 select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;padding:11px 12px;
   width:100%;outline:none;-webkit-appearance:none;appearance:none}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;line-height:1.6}
+/* マイチャンネルの「外す」 */
+.mydel{display:block;margin:-4px 0 12px auto;color:var(--ink3);font-size:.72rem;font-weight:700;padding:4px 6px}
 /* 未アウトプットの印 */
 .tag.todo{background:none;border:1px solid var(--acc);color:var(--acc);opacity:.85}
 /* いつ見る（予定） */
@@ -580,9 +582,9 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 48;
+const VER = 49;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
-      K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man',
+      K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
 
 /* 塾生かどうかをたしかめる入口。中身（動画リスト）は公開の場所には置いていない。
@@ -639,6 +641,7 @@ let prog = {};            /* {動画id: {t:秒, d:全体の秒, done:1, last:時
 let favs = [];
 let folders = [];       /* 生徒が自分で作るフォルダ [{id, name, ids:[]}] */
 let outs = {};          /* アウトプット {動画id: [{at:時刻, t:本文}]} */
+let mych = [];          /* マイチャンネル（自分で足した ヒラ先生の動画）[{id, t, at}] */
 let cfg  = { speed:1, autonext:true, loop:false, cc:false, rv:5 };
 let view = { name:'home' };
 let admin = null;         /* 管理画面のしたがき */
@@ -651,12 +654,15 @@ function load(){
   try{ outs = JSON.parse(localStorage.getItem(K_OUT) || '{}'); }catch(e){ outs = {}; }
   if(!outs || typeof outs !== 'object') outs = {};
   try{ Object.assign(cfg, JSON.parse(localStorage.getItem(K_CFG) || '{}')); }catch(e){}
+  try{ mych = JSON.parse(localStorage.getItem(K_MYCH) || '[]'); }catch(e){ mych = []; }
+  if(!Array.isArray(mych)) mych = [];
 }
 /* 記録を保存したら、少しあとに預け先にも送る（schedulePush は下の方で定義） */
 const saveProg = () => { localStorage.setItem(K_PROG, JSON.stringify(prog)); schedulePush(); };
 const saveFav  = () => { localStorage.setItem(K_FAV,  JSON.stringify(favs));   schedulePush(); };
 const saveFold = () => { localStorage.setItem(K_FOLD, JSON.stringify(folders)); schedulePush(); };
 const saveOut  = () => { localStorage.setItem(K_OUT,  JSON.stringify(outs));   schedulePush(); };
+const saveMych = () => { localStorage.setItem(K_MYCH, JSON.stringify(mych));   schedulePush(); };
 /* ---------- アウトプットに貼る写真 ----------
    写真は大きいので、ほかの記録とは別のところ（IndexedDB）にしまう。
    **この端末の中だけに残る。** ほかの端末には送っていない（通信量と保管量の都合）。
@@ -806,7 +812,10 @@ function ymd4(d){
   const m = String(d).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   return m ? `${m[1]}/${+m[2]}/${+m[3]}` : String(d);
 }
-const vid = id => DATA.videos.find(v => v.id === id);
+const vid = id => DATA.videos.find(v => v.id === id) || mychVid(id);
+/* マイチャンネルの動画を、ほかの動画と同じ形にして返す */
+const mychVid = id => { const m = mych.find(x => x.id === id);
+  return m ? { id:m.id, t:m.t, cat:'mych', g:'', d:'', date:'', _mine:1 } : undefined; };
 /* videos は新しい順で持っている。asc のカテゴリだけ ひっくり返して古い順にする */
 const catAsc = c => !!(DATA.cats.find(x => x.id === c) || {}).asc;
 const catOf  = c => DATA.cats.find(x => x.id === c) || {};
@@ -829,7 +838,7 @@ const inCat  = c => {
   const pinned = l.filter(v => v.pin);
   return pinned.length ? pinned.concat(l.filter(v => !v.pin)) : l;
 };
-const catName = c => (DATA.cats.find(x => x.id === c) || {}).name || '';
+const catName = c => c === 'mych' ? 'マイチャンネル' : ((DATA.cats.find(x => x.id === c) || {}).name || '');
 /* Loom のサムネイルは外から取れないので、代わりの絵を描く */
 const thumbHTML = id => isLoom(id)
   ? `<span class="lm">${ICO.play({s:20})}<b>Loom</b></span>`
@@ -1043,14 +1052,15 @@ const stamp = () => { try{ localStorage.setItem(K_AT, String(now())); }catch(e){
 const stampAt = () => +(localStorage.getItem(K_AT) || 0);
 
 /* この端末の記録をひとまとめにする。速さやループは端末ごとの好みなので送らない */
-const myRec = () => ({ prog, favs, folders, outs, name: cfg.name || '', at: stampAt() });
+const myRec = () => ({ prog, favs, folders, outs, mych, name: cfg.name || '', at: stampAt() });
 
 function applyRec(r){
   prog = r.prog || {}; favs = Array.isArray(r.favs) ? r.favs : [];
   folders = Array.isArray(r.folders) ? r.folders : [];
   outs = (r.outs && typeof r.outs === 'object') ? r.outs : {};
+  if(Array.isArray(r.mych)) mych = r.mych;
   if(r.name && !cfg.name){ cfg.name = r.name; saveCfg(); }
-  saveProg(); saveFav(); saveFold(); saveOut();
+  saveProg(); saveFav(); saveFold(); saveOut(); saveMych();
 }
 
 /* 2つの記録を合体する。どちらかを捨てない、が原則 */
@@ -1103,6 +1113,9 @@ function mergeRec(a, b){
   out.favs = Array.isArray(newer.favs) ? newer.favs : [];
   out.folders = Array.isArray(newer.folders) ? newer.folders : [];
   out.name = newer.name || a.name || b.name || '';
+  /* マイチャンネルは両方を残す（同じ動画は1つに） */
+  const seenM = {}; out.mych = [];
+  (a.mych || []).concat(b.mych || []).forEach(m => { if(m && !seenM[m.id]){ seenM[m.id] = 1; out.mych.push(m); } });
   return out;
 }
 
@@ -1653,6 +1666,9 @@ function vSaved(){
       ${row('__fav', '保存', favs.length)}
       ${folders.map(f => row(f.id, f.name, f.ids.length)).join('')}
     </div>
+    <div class="sec"><h2>マイチャンネル</h2></div>
+    ${row('__mych', 'マイチャンネル', mych.length)}
+    <div class="lead" style="margin-top:8px">Theater に入っていない ヒラ先生の動画を、自分用に足せます。</div>
     <div class="sec"><h2>アウトプット待ち</h2></div>
     ${row('__todo', '見たけど まだ書いていない', needOutList().length)}
     <div class="lead" style="margin-top:8px">最後まで見た動画のうち、アウトプットをまだ書いていないもの。
@@ -1671,24 +1687,40 @@ function vFolder(){
   const fid = view.p;
   const isFavF = fid === '__fav';
   const isTodo = fid === '__todo';
+  const isMych = fid === '__mych';
   const f = isFavF ? { id:'__fav', name:'保存', ids:favs }
           : isTodo ? { id:'__todo', name:'アウトプット待ち', ids:needOutList().map(v => v.id) }
+          : isMych ? { id:'__mych', name:'マイチャンネル', ids:mych.map(m => m.id) }
           : foldOf(fid);
   if(!f) return go('saved');
   $('#tbar').innerHTML = `<button class="tbtn" id="fback">${ICO.back({s:20})}</button>
     <div class="ttl"></div>
-    ${(isFavF || isTodo) ? '' : `<button class="tbtn" id="fmenu">${ICO.gear({s:18})}</button>`}`;
+    ${(isFavF || isTodo) ? '' : isMych ? `<button class="tbtn" id="myadd" aria-label="動画を足す">${ICO.plus({s:20})}</button>`
+                          : `<button class="tbtn" id="fmenu">${ICO.gear({s:18})}</button>`}`;
   $('#fback').onclick = () => go('saved');
   const list = f.ids.map(id => vid(id)).filter(Boolean);
   $('#main').innerHTML = `
     <div class="chead"><h1>${esc(f.name)}</h1><div class="st">${list.length}本</div></div>
     <div class="vlist" style="margin-top:16px">
-      ${list.length ? list.map(v => card(v)).join('')
+      ${isMych ? `<button class="btn pri" id="myadd2" style="margin-bottom:12px">${ICO.plus({s:18})}<span>ヒラ先生の動画を足す</span></button>` : ''}
+      ${list.length ? list.map(v => card(v, isMych ? { tag:false } : undefined) +
+                        (isMych ? `<button class="mydel" data-mydel="${esc(v.id)}">マイチャンネルから外す</button>` : '')).join('')
+                    : isMych ? emptyBox('まだ入っていません。<br>上の「ヒラ先生の動画を足す」から足せます。')
                     : isTodo ? emptyBox('見た動画は、ぜんぶアウトプットを書いてあります。')
                              : emptyBox('まだ入っていません。<br>動画の画面の「フォルダ」から入れられます。')}
     </div>
     ${isTodo ? `<div class="lead" style="margin-top:12px">最後まで見た動画のうち、まだアウトプットを書いていないもの。
-      最近見た順です。書くと ここから消えます。</div>` : ''}`;
+      最近見た順です。書くと ここから消えます。</div>` : ''}
+    ${isMych ? `<button class="btn" id="myabout" style="margin-top:14px">マイチャンネルとは？（ヒラ先生の動画だけの理由）</button>` : ''}`;
+  if(isMych){
+    const add = () => askAddMych(vFolder);
+    if($('#myadd'))  $('#myadd').onclick  = add;
+    if($('#myadd2')) $('#myadd2').onclick = add;
+    $('#myabout').onclick = mychAbout;
+    $$('#main [data-mydel]').forEach(b => b.onclick = () => askYes(
+      { title:'マイチャンネルから外しますか？', msg:'見た回数や付箋は残ります。', ok:'外す', danger:true },
+      () => { mych = mych.filter(m => m.id !== b.dataset.mydel); saveMych(); vFolder(); toast('外しました'); }));
+  }
   if($('#fmenu')) $('#fmenu').onclick = () => {
     openSheet(`
       <h3>${esc(f.name)}</h3>
@@ -1954,7 +1986,7 @@ function pickFolder(id, after){
 /* 機種変更で記録が消えるのを防ぐ。見た回数・フォルダ・保存・設定をまとめて出し入れする */
 function backupData(){
   return { app:'Theater', v:VER, at:new Date().toISOString(),
-           prog, favs, folders, cfg, outs };
+           prog, favs, folders, cfg, outs, mych };
 }
 /* 機種変更で写真も持っていけるように、書き出しには写真も入れる */
 const blobToURL = b => new Promise(res => {
@@ -2031,7 +2063,8 @@ async function applyBackup(j){
   folders = Array.isArray(j.folders) ? j.folders : [];
   if(j.cfg && typeof j.cfg === 'object') Object.assign(cfg, j.cfg);
   outs = (j.outs && typeof j.outs === 'object') ? j.outs : {};
-  saveProg(); saveFav(); saveFold(); saveCfg(); saveOut();
+  mych = Array.isArray(j.mych) ? j.mych : [];
+  saveProg(); saveFav(); saveFold(); saveCfg(); saveOut(); saveMych();
 }
 function doImport(){
   openSheet(`
@@ -2299,6 +2332,10 @@ function stopCount(){ if(nextT){ clearInterval(nextT); nextT = null; } }
 /* 次の動画 = 同じカテゴリの、ひとつ下（古い方）。なければ全体のつぎ */
 function nextVideo(){
   const v = vid(curId); if(!v) return null;
+  if(v.cat === 'mych'){
+    const i = mych.findIndex(x => x.id === curId);
+    return (i >= 0 && mych[i+1]) ? mychVid(mych[i+1].id) : null;
+  }
   const same = inCat(v.cat);
   const i = same.findIndex(x => x.id === curId);
   if(i >= 0 && same[i+1]) return same[i+1];
@@ -2481,6 +2518,87 @@ function askLoomStart(id, after){
     };
     $('#lsNo').onclick = closeSheet;
   });
+}
+
+/* ===================== マイチャンネル =====================
+   Theater に入っていない ヒラ先生の動画（個別の手元動画レビューなど）を、自分用に足せる。
+   **ヒラ先生のチャンネル（@hirastudy）の動画だけ。** ほかの人の動画は足せない。
+   理由：Theater は「YouTubeのおすすめに流されない」ためのアプリなので、
+   何でも入れられると Theater の中に また「もう1本だけ」が生まれてしまう。
+   確認は YouTube の oEmbed（誰のチャンネルの動画か）を使う。github.io からそのまま呼べる。
+   ※ 見た回数はつくが、レベル（EXP）には入れない。塾の動画で比べられるようにするため */
+const HIRA_CH = ['@hirastudy'];
+const MAX_MYCH = 100;
+
+async function checkHiraVideo(id){
+  let r;
+  try{
+    r = await fetch('https://www.youtube.com/oembed?format=json&url=' +
+      encodeURIComponent('https://www.youtube.com/watch?v=' + id), { cache:'no-store' });
+  }catch(e){ return { ok:false, why:'net' }; }
+  if(r.status === 401 || r.status === 403) return { ok:false, why:'private' };
+  if(!r.ok) return { ok:false, why:'notfound' };
+  let j = null; try{ j = await r.json(); }catch(e){}
+  if(!j) return { ok:false, why:'notfound' };
+  const au = String(j.author_url || '');
+  if(!HIRA_CH.some(h => au.indexOf(h) >= 0)) return { ok:false, why:'other', who:j.author_name || '' };
+  return { ok:true, t:j.title || 'ヒラ先生の動画' };
+}
+
+function askAddMych(after){
+  openSheet(`
+    <h3>マイチャンネルに動画を足す</h3>
+    <div class="lead" style="margin:-4px 2px 10px;line-height:1.9">
+      Theater に入っていない <b>ヒラ先生の動画</b>（個別のレビューなど）を、自分用に足せます。<br>
+      YouTube の「共有」でコピーした URL を貼りつけてください。</div>
+    <div class="fld"><input id="myUrl" type="url" inputmode="url" placeholder="https://youtu.be/xxxxxxxxxxx"></div>
+    <div class="lead" id="myMsg" style="margin-top:8px;min-height:1.6em"></div>
+    <div class="acts" style="margin-top:10px">
+      <button class="btn" id="myNo">やめる</button>
+      <button class="btn pri" id="myOk">足す</button>
+    </div>
+    <div class="lead" style="margin-top:12px;font-size:.74rem">
+      ヒラ先生のチャンネル以外の動画は足せません（理由は「マイチャンネルとは？」に書いています）。</div>`, () => {
+    const msg = t => { $('#myMsg').innerHTML = t; };
+    $('#myNo').onclick = closeSheet;
+    $('#myOk').onclick = async () => {
+      const id = ytId($('#myUrl').value);
+      if(!id || isLoom(id)) return msg('YouTube の URL を貼りつけてください。');
+      if(DATA.videos.some(v => v.id === id)) return msg('この動画は もう Theater に入っています。「さがす」から見られます。');
+      if(mych.some(m => m.id === id)) return msg('この動画は もうマイチャンネルに入っています。');
+      if(mych.length >= MAX_MYCH) return msg(`マイチャンネルは ${MAX_MYCH}本までです。`);
+      msg('確かめています…');
+      const c = await checkHiraVideo(id);
+      if(!c.ok){
+        return msg(({
+          other:   `この動画は <b>${esc(c.who) || 'ほかの人'}</b> さんのチャンネルの動画なので、足せません。<br>マイチャンネルには ヒラ先生の動画だけ足せます。`,
+          private: 'この動画は非公開のため、確かめられませんでした。',
+          notfound:'動画が見つかりませんでした。URL をもう一度確かめてください。',
+          net:     'つながりませんでした。電波のよいところで、もう一度お試しください。'
+        })[c.why]);
+      }
+      mych.unshift({ id, t:c.t, at:now() });
+      saveMych(); closeSheet(); after();
+      toast('マイチャンネルに足しました');
+    };
+    setTimeout(() => { try{ $('#myUrl').focus(); }catch(e){} }, 80);
+  });
+}
+
+function mychAbout(){
+  info('マイチャンネルとは？',
+    'Theater に入っていない <b>ヒラ先生の動画</b>（個別の手元動画レビューなど）を、' +
+    '自分用に足しておける場所です。何度も見返したい動画をまとめておけます。<br><br>' +
+    '<b>なぜ ヒラ先生の動画だけなのか</b><br>' +
+    'Theater は「YouTube を開くと、ほかの動画に流されてしまう」をなくすために作りました。<br><br>' +
+    'もし どんな動画でも足せるようにすると、Theater の中に 好きな動画・気になる動画が並ぶようになり、' +
+    '結局 YouTube と同じ「もう1本だけ」が Theater の中で起きてしまいます。' +
+    'せっかく YouTube から離れたのに、その誘惑を自分のアプリに持ちこむことになります。<br><br>' +
+    'また、ご家族にも「Theater には塾の動画しか入っていない」と安心してもらえていることが、' +
+    'このアプリを使い続けられる理由のひとつです。そこを守りたいので、ヒラ先生の動画だけにしています。<br><br>' +
+    '<b>そのほか</b><br>' +
+    '・見た回数は数えますが、レベルには入りません（みんな同じ動画で比べられるようにするため）<br>' +
+    '・この端末の中に保存されます');
 }
 
 /* いつ見るかを決める。「あとで見る」を日付つきでできるようにするため。

@@ -263,6 +263,7 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 .x{width:36px; height:36px; border-radius:10px; background:var(--chip); display:grid; place-items:center; font-size:17px; font-weight:700; color:var(--muted); flex:none;}
 
 .btnrow{display:flex; gap:8px; margin-top:12px;}
+#hsBox .hs-btns{gap:8px} #hsBox .lead{padding:10px 2px 0} #hsBox .hs-code{margin-top:0}
 .btn{flex:1; border-radius:11px; padding:13px 10px; font-size:15.5px; font-weight:700; text-align:center; border:1px solid var(--line); background:var(--card); color:var(--ink);}
 .btn.primary{background:var(--accent); color:var(--accent-ink); border-color:transparent;}
 .varrow{display:flex; gap:8px; margin:12px 0 4px; flex-wrap:wrap;}
@@ -351,7 +352,376 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 
 <script src="data.js"></script>
 <script>
-const VER = 24;
+/* HSYNC BEGIN ─────────────────────────────────────────────
+   同期（スマホとパソコンで同じにする）。Takutoさんの要望（2026-09-11）。
+   ※ Mindrest の HSYNC をそのまま持ってきたもの。違いは ask/yes（アプリの画面で聞く）だけ。
+
+   預け先は計画マップと同じ Google Apps Script（plan/gas/Sync.gs）。サーバー側は変えていない。
+   ・同期コードは全アプリで1つ。計画マップのコードをそのまま入れればよい。
+   ・サーバーには、そのコードから作った「アプリごとのコード」で預ける（アプリどうしが上書きし合わない）。
+   ・預けるのは config.keys の localStorage だけ。写真（IndexedDB）や端末ごとの設定は預けない。
+   ・lists に書いたキーは「id ごとに足し合わせる」。2台で別々に書いても、どちらも残る。
+     消したものは「消したしるし（tomb）」で相手にも伝える。それ以外のキーは新しいほうが勝つ。
+   ─────────────────────────────────────────────────────────── */
+const HSync = (function(){
+  const URL = 'https://script.google.com/macros/s/AKfycbztk0Zk4YnnAjKcOgsVU690-gAn_FfN5xGILx5u_YUj6syG5xk80sV6Biqa1WOce-uQ/exec';
+  const SECRET = 'hiramap-2026';
+  const CH = 'abcdefghjkmnpqrstuvwxyz23456789';      // 0/o/1/l/i は使わない（計画マップと同じ）
+  const TOMB_DAYS = 90;
+
+  let C = null;                 // 設定（init で受けとる）
+  let M = null;                 // この端末の同期の記録 { code, mt, at, dirty, err }
+  let T = {};                   // 消したしるし { key: { id: 時刻 } }
+  let applying = false, busy = false, seq = 0, timer = null, pending = null;
+  const ls = window.localStorage;
+  const _set = Storage.prototype.setItem, _get = Storage.prototype.getItem, _rm = Storage.prototype.removeItem;
+
+  /* ---------- 小道具 ---------- */
+  const now = () => Date.now();
+  const metaKey = () => 'hs.' + C.app, tombKey = () => 'hs.' + C.app + '.tomb';
+  function loadMeta(){
+    try{ M = JSON.parse(_get.call(ls, metaKey()) || 'null') || {}; }catch(e){ M = {}; }
+    try{ T = JSON.parse(_get.call(ls, tombKey()) || 'null') || {}; }catch(e){ T = {}; }
+  }
+  function saveMeta(){ try{ _set.call(ls, metaKey(), JSON.stringify(M)); _set.call(ls, tombKey(), JSON.stringify(T)); }catch(e){} }
+  function norm(v){
+    const a = String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    return a.length === 8 ? a.slice(0, 4) + '-' + a.slice(4) : '';
+  }
+  /* コード X から、このアプリ用のコードを作る（どの端末でも同じになる） */
+  function h32(s, seed){ let h = seed >>> 0; for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h >>> 0; }
+  function derive(master){
+    let a = h32(master + '|' + C.app, 2166136261), b = h32(C.app + '|' + master, 0x9747b28c), s = '';
+    for(let i = 0; i < 8; i++){
+      if(i === 4) s += '-';
+      if(i < 4){ s += CH[a % 31]; a = Math.floor(a / 31); } else { s += CH[b % 31]; b = Math.floor(b / 31); }
+    }
+    return s;
+  }
+  async function call(p){
+    const r = await fetch(URL, { method:'POST', body: JSON.stringify(Object.assign({ secret:SECRET }, p)) });
+    return r.json();
+  }
+  const say = (m) => { try{ C.toast && C.toast(m); }catch(e){} };
+  /* 入力と確認。C.ask / C.yes があればアプリの画面で聞く（iPhoneのホーム画面アプリでは prompt/confirm が出ないことがあるため） */
+  const ask = (msg) => C.ask ? C.ask(msg) : Promise.resolve(prompt(msg));
+  const yes = (msg) => C.yes ? C.yes(msg) : Promise.resolve(confirm(msg));
+  const fmt = (t) => { const d = new Date(t); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+
+  /* ---------- 中身の出し入れ ---------- */
+  function collect(){
+    const keys = {};
+    C.keys.forEach(k => { const v = _get.call(ls, k); if(v !== null) keys[k] = v; });
+    pruneTomb();
+    return { app: C.app, v: 1, keys, tomb: T };
+  }
+  function hasLocal(){ return C.hasData ? !!C.hasData() : C.keys.some(k => _get.call(ls, k) !== null); }
+  function pruneTomb(){
+    const lim = now() - TOMB_DAYS * 864e5;
+    Object.keys(T).forEach(k => { Object.keys(T[k] || {}).forEach(id => { if(T[k][id] < lim) delete T[k][id]; }); });
+  }
+  const idOf = (spec, x) => (x && x[spec.id] !== undefined) ? String(x[spec.id]) : null;
+
+  /* 消したものを覚える（lists のキーだけ） */
+  function tombDiff(k, oldRaw, newRaw){
+    const spec = C.lists && C.lists[k]; if(!spec) return;
+    let a = [], b = [];
+    try{ a = JSON.parse(oldRaw || '[]') || []; }catch(e){}
+    try{ b = JSON.parse(newRaw || '[]') || []; }catch(e){}
+    if(!Array.isArray(a) || !Array.isArray(b)) return;
+    const keep = {}; b.forEach(x => { const id = idOf(spec, x); if(id) keep[id] = 1; });
+    a.forEach(x => { const id = idOf(spec, x); if(id && !keep[id]){ (T[k] = T[k] || {})[id] = now(); } });
+    b.forEach(x => { const id = idOf(spec, x); if(id && T[k] && T[k][id]) delete T[k][id]; });   // 戻したものは消さない
+  }
+
+  /* 2台の中身を合わせる。lists は id ごとに足し合わせ、ほかは新しいほうの値 */
+  function merge(loc, rem, remNewer){
+    const out = { app: C.app, v: 1, keys: {}, tomb: {} };
+    const tb = {};
+    [loc.tomb || {}, rem.tomb || {}].forEach(t => Object.keys(t).forEach(k => Object.keys(t[k] || {}).forEach(id => {
+      tb[k] = tb[k] || {}; tb[k][id] = Math.max(tb[k][id] || 0, t[k][id]);
+    })));
+    out.tomb = tb;
+    C.keys.forEach(k => {
+      const lv = loc.keys[k], rv = rem.keys[k];
+      const spec = C.lists && C.lists[k];
+      if(!spec){
+        const v = remNewer ? (rv !== undefined ? rv : lv) : (lv !== undefined ? lv : rv);
+        if(v !== undefined) out.keys[k] = v;
+        return;
+      }
+      let la = [], ra = [];
+      try{ la = JSON.parse(lv || '[]') || []; }catch(e){}
+      try{ ra = JSON.parse(rv || '[]') || []; }catch(e){}
+      const first = remNewer ? ra : la, second = remNewer ? la : ra;   // 同じ id は新しい側を優先
+      const map = {}, order = [];
+      first.concat(second).forEach(x => {
+        const id = idOf(spec, x); if(!id) return;
+        const cur = map[id];
+        if(!cur){ map[id] = x; order.push(id); return; }
+        if(spec.t && (Number(x[spec.t]) || 0) > (Number(cur[spec.t]) || 0)) map[id] = x;
+      });
+      const dead = tb[k] || {};
+      let arr = order.filter(id => !(dead[id] && !(spec.t && (Number(map[id][spec.t]) || 0) > dead[id]))).map(id => map[id]);
+      if(spec.sort) arr.sort(spec.sort);
+      out.keys[k] = JSON.stringify(arr);
+    });
+    return out;
+  }
+
+  /* 預かっていた中身をこの端末に入れて、画面を読みなおす */
+  function applyAndReload(obj, msg){
+    if(isBusy()){ pending = { obj, msg }; setTimeout(retryPending, 5000); return; }
+    applying = true;
+    try{
+      C.keys.forEach(k => {
+        if(obj.keys && obj.keys[k] !== undefined) _set.call(ls, k, obj.keys[k]);
+        else _rm.call(ls, k);
+      });
+      T = obj.tomb || {};
+    }catch(e){}
+    applying = false;
+    saveMeta();
+    try{ sessionStorage.setItem('hs.msg', msg || '同期しました'); }catch(e){}
+    location.reload();
+  }
+  function retryPending(){ if(!pending) return; const p = pending; pending = null; applyAndReload(p.obj, p.msg); }
+  function isBusy(){
+    try{ if(C.busy && C.busy()) return true; }catch(e){}
+    const a = document.activeElement;
+    return !!(a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /text|search|number|time|date/.test(a.type || 'text'))));
+  }
+
+  /* ---------- 変わったら送る ---------- */
+  function touch(){
+    if(!M.code) return;
+    seq++;
+    M.mt = Math.max(now(), (M.mt || 0) + 1);   // 端末の時計が多少ずれていても前に進む
+    M.dirty = true; saveMeta();
+    clearTimeout(timer);
+    timer = setTimeout(push, C.delay || 3000);
+  }
+  /* localStorage への書きこみを見張る。アプリ側のコードは直さなくてよい */
+  Storage.prototype.setItem = function(k, v){
+    if(this === ls && C && !applying && C.keys.indexOf(k) >= 0){
+      const old = _get.call(this, k);
+      _set.call(this, k, v);
+      if(old !== String(v)){ tombDiff(k, old, String(v)); touch(); }
+      return;
+    }
+    return _set.call(this, k, v);
+  };
+  Storage.prototype.removeItem = function(k){
+    if(this === ls && C && !applying && C.keys.indexOf(k) >= 0){
+      const old = _get.call(this, k);
+      _rm.call(this, k);
+      if(old !== null){ tombDiff(k, old, '[]'); touch(); }
+      return;
+    }
+    return _rm.call(this, k);
+  };
+
+  async function push(){
+    if(!M.code) return;
+    if(busy){ clearTimeout(timer); timer = setTimeout(push, 1500); return; }
+    busy = true;
+    const mySeq = seq;
+    try{
+      const r = await call({ action:'put', code:derive(M.code), mt:M.mt || 0, name:C.label, data:JSON.stringify(collect()) });
+      if(r && r.ok && r.stale) await onRemote(r);
+      else if(r && r.ok){ M.at = now(); M.err = ''; if(seq === mySeq) M.dirty = false; }
+      else M.err = (r && r.err) || '送れませんでした';
+    }catch(e){ M.err = 'つながりませんでした'; }
+    busy = false; saveMeta(); render();
+    if(M.err){ clearTimeout(timer); timer = setTimeout(push, 30000); }
+    else if(M.dirty && seq !== mySeq){ clearTimeout(timer); timer = setTimeout(push, C.delay || 3000); }
+  }
+  /* 閉じるとき。書いた直後に閉じても届くように */
+  function flush(){
+    if(!M || !M.code || !M.dirty) return;
+    const body = JSON.stringify({ secret:SECRET, action:'put', code:derive(M.code), mt:M.mt || 0, name:C.label, data:JSON.stringify(collect()) });
+    if(body.length > 60000) return;            // keepalive で送れる大きさをこえたら、次に開いたときに送る
+    try{ fetch(URL, { method:'POST', body, keepalive:true }); }catch(e){}
+  }
+
+  /* 預かりのほうが新しかったとき */
+  async function onRemote(r){
+    let rem = null; try{ rem = JSON.parse(r.data || 'null'); }catch(e){}
+    if(!rem || rem.app !== C.app || !rem.keys){ M.err = 'このコードの中身が読めません'; return; }
+    if(!M.dirty){
+      M.mt = r.mt || M.mt; M.at = now(); M.err = ''; saveMeta();
+      applyAndReload(rem, 'ほかの端末の記録を受けとりました');
+      return;
+    }
+    // この端末にもまだ送っていない書きこみがある → 合わせて、合わせたものを預けなおす
+    const merged = merge(collect(), rem, true);
+    M.mt = Math.max(now(), (r.mt || 0) + 1); M.dirty = true; M.at = now(); M.err = ''; saveMeta();
+    applyAndReload(merged, '2台の記録を合わせました');
+  }
+
+  async function pull(quiet){
+    if(!M.code) return;
+    if(busy) return;
+    busy = true;
+    try{
+      const r = await call({ action:'get', code:derive(M.code) });
+      busy = false;
+      if(r && r.ok && r.found){
+        if((r.mt || 0) > (M.mt || 0)){ await onRemote(r); }
+        else if((r.mt || 0) < (M.mt || 0) || M.dirty){ await push(); return; }
+        else { M.at = now(); M.err = ''; if(!quiet) say('同期ずみです'); }
+      }else if(r && r.ok){ await push(); return; }
+      else M.err = (r && r.err) || '受けとれませんでした';
+    }catch(e){ busy = false; M.err = 'つながりませんでした'; }
+    saveMeta(); render();
+  }
+
+  /* ---------- ボタン ---------- */
+  async function start(){
+    say('コードを作っています…');
+    try{
+      const r = await call({ action:'new' });
+      if(!r || !r.ok){ say((r && r.err) || 'つながりませんでした'); return; }
+      M = { code:r.code, mt:now(), dirty:true, at:0, err:'' }; saveMeta(); render();
+      await push();
+      say(M.err ? M.err : '同期をはじめました');
+    }catch(e){ say('つながりませんでした'); }
+  }
+  async function join(){
+    const v = await ask('同期コード（8文字）を入れてください。\n計画マップなど、ほかのアプリで使っているコードと同じでOKです。');
+    if(v === null) return;
+    const code = norm(v);
+    if(!code){ say('コードは8文字です（例 abcd-2345）'); return; }
+    try{
+      const r = await call({ action:'get', code:derive(code) });
+      if(r && r.ok && !r.found &&
+         !(await yes('コード「' + code + '」の' + C.label + 'の記録は、まだ預けられていません。\nこの端末の記録を、このコードで預けはじめますか？\n\n計画マップなどで使っているコードなら、このままで大丈夫です。打ちまちがいがないかだけ確認してください。'))) return;
+    }catch(e){}
+    joinWith(code);
+  }
+  async function stop(){
+    if(!(await yes('この端末の同期をやめます。記録はこの端末に残り、預けたぶんも消えません。よろしいですか？'))) return;
+    M = {}; saveMeta(); render(); say('同期をやめました');
+  }
+  /* 同じサイトのほかのアプリが同期コードを持っていれば、それを使える（パソコン・Android。
+     iPhoneのホーム画面アプリはアプリごとに保存場所が別なので、たいてい見つからない） */
+  function siblingCode(){
+    const tries = [];
+    try{
+      for(let i = 0; i < ls.length; i++){
+        const k = ls.key(i); let o = null;
+        if(/^planmap_(v1|p.+)$/.test(k)){ try{ o = JSON.parse(_get.call(ls, k) || '{}'); }catch(e){} if(o && o.syncCode) tries.push(['計画マップ', o.syncCode]); }
+        else if(k === 'mn_sync'){ try{ o = JSON.parse(_get.call(ls, k) || '{}'); }catch(e){} if(o && o.code) tries.push(['ReNote', o.code]); }
+        else if(/^hs\.[a-z]+$/.test(k) && k !== metaKey()){ try{ o = JSON.parse(_get.call(ls, k) || '{}'); }catch(e){} if(o && o.code) tries.push(['ほかのアプリ', o.code]); }
+      }
+    }catch(e){}
+    for(const t of tries){ const c = norm(t[1]); if(c) return { from:t[0], code:c }; }
+    return null;
+  }
+  async function joinWith(code){
+    say('さがしています…');
+    try{
+      const r = await call({ action:'get', code:derive(code) });
+      if(!r || !r.ok){ say((r && r.err) || 'つながりませんでした'); return; }
+      if(r.found){
+        let rem = null; try{ rem = JSON.parse(r.data || 'null'); }catch(e){}
+        if(!rem || rem.app !== C.app || !rem.keys){ say('このコードの中身が読めません'); return; }
+        if(C.lists && hasLocal()){
+          if(!(await yes('この端末の記録と、コード「' + code + '」に預けてある記録を合わせます。\nどちらの記録も残ります。よろしいですか？'))) return;
+          const merged = merge(collect(), rem, true);
+          M = { code, mt:Math.max(now(), (r.mt || 0) + 1), dirty:true, at:now(), err:'' }; saveMeta();
+          applyAndReload(merged, '2台の記録を合わせました');
+          return;
+        }
+        if(hasLocal() && !(await yes('この端末のいまの記録は、コード「' + code + '」の記録に入れかわります。よろしいですか？\n（この端末にだけある記録は消えます）'))) return;
+        M = { code, mt:r.mt || 0, dirty:false, at:now(), err:'' }; saveMeta();
+        applyAndReload(rem, '同じ記録になりました');
+        return;
+      }
+      M = { code, mt:now(), dirty:true, at:0, err:'' }; saveMeta(); render();
+      await push();
+      say(M.err ? M.err : '同期をはじめました');
+    }catch(e){ say('つながりませんでした'); }
+  }
+  async function copy(){
+    try{ await navigator.clipboard.writeText(M.code); say('コピーしました'); }
+    catch(e){ say('長押しでコピーしてください'); }
+  }
+
+  /* ---------- 画面 ---------- */
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  function render(){
+    const el = C && document.querySelector(C.mount); if(!el) return;
+    const k = C.cls || {};
+    if(!M.code){
+      const sib = siblingCode();
+      el.innerHTML =
+        '<div class="hs-btns">' +
+          (sib ? '<button class="' + (k.btn || '') + '" data-hs="sib" data-code="' + sib.code + '">' + sib.from + 'と同じコード（' + sib.code + '）で同期する</button>' : '') +
+          '<button class="' + (sib ? (k.ghost || k.btn || '') : (k.btn || '')) + '" data-hs="start">同期をはじめる（この端末の記録をあずける）</button>' +
+          '<button class="' + (k.ghost || k.btn || '') + '" data-hs="join">ほかの端末・アプリのコードを入れる</button>' +
+        '</div>' +
+        '<p class="' + (k.dim || '') + '">1台目で「同期をはじめる」を押すと、<b>同期コード</b>（8文字）が出ます。2台目でそのコードを入れると同じ記録になり、そのあとは<b>書くたびに自動で同期</b>します。<br>' +
+        '<b>計画マップで同期している人は、そのコードをここに入れればOK</b>です（コードは全アプリ共通）。<br>' +
+        (C.note ? C.note + '<br>' : '') +
+        '記録は、ヒラのGoogleドライブに預けます。コードを知っている人は中身を見られるので、コードは人に見せないでください。</p>';
+    }else{
+      const st = M.err
+        ? '<span class="hs-dot bad"></span>' + esc(M.err) + '。つながったら自動でもう一度送ります。'
+        : '<span class="hs-dot"></span>さいごの同期：' + (M.at ? fmt(M.at) : 'まだ');
+      el.innerHTML =
+        '<div class="hs-code"><span>同期コード</span><b>' + esc(M.code) + '</b><button data-hs="copy">コピー</button></div>' +
+        '<p class="' + (k.dim || '') + '">' + st + '<br>ほかの端末でも、このコードを入れてください。計画マップなど、ほかのアプリも同じコードで同期できます。' +
+        (C.note ? '<br>' + C.note : '') + '</p>' +
+        '<div class="hs-btns">' +
+          '<button class="' + (k.btn || '') + '" data-hs="now">いま同期する</button>' +
+          '<button class="' + (k.ghost || k.btn || '') + '" data-hs="stop">同期をやめる（この端末だけ）</button>' +
+        '</div>';
+    }
+  }
+  function onClick(e){
+    const b = e.target.closest && e.target.closest('[data-hs]'); if(!b) return;
+    const a = b.getAttribute('data-hs');
+    if(a === 'start') start();
+    else if(a === 'join') join();
+    else if(a === 'stop') stop();
+    else if(a === 'copy') copy();
+    else if(a === 'sib') joinWith(b.getAttribute('data-code'));
+    else if(a === 'now'){ say('同期しています…'); pull(false); }
+  }
+
+  function init(cfg){
+    C = cfg;
+    loadMeta();
+    const st = document.createElement('style');
+    st.textContent =
+      '.hs-btns{display:flex;flex-direction:column;gap:0;margin:8px 0 0}' +
+      '.hs-code{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;margin:8px 0;' +
+        'background:' + (C.codeBg || 'rgba(127,127,127,.12)') + '}' +
+      '.hs-code span{font-size:11px;opacity:.7;flex:none}' +
+      '.hs-code b{flex:1;font-size:20px;letter-spacing:.08em;font-family:ui-monospace,Menlo,monospace;user-select:all;-webkit-user-select:all}' +
+      '.hs-code button{flex:none;padding:7px 12px;border-radius:9px;font-size:12px;font-weight:700;' +
+        'border:1px solid currentColor;background:transparent;color:inherit;opacity:.85}' +
+      '.hs-dot{display:inline-block;width:8px;height:8px;border-radius:99px;background:#35b37e;margin-right:6px;vertical-align:middle}' +
+      '.hs-dot.bad{background:#e0762a}';
+    document.head.appendChild(st);
+    document.addEventListener('click', onClick);
+    render();
+    try{ const m = sessionStorage.getItem('hs.msg'); if(m){ sessionStorage.removeItem('hs.msg'); setTimeout(() => say(m), 600); } }catch(e){}
+    if(M.code){
+      setTimeout(() => { if(M.dirty) push(); else pull(true); }, 1200);
+    }
+    let lastPull = 0;
+    const wake = () => { if(M.code && !document.hidden && now() - lastPull > 20000){ lastPull = now(); pull(true); } };
+    document.addEventListener('visibilitychange', () => { if(document.hidden) flush(); else { wake(); retryPending(); } });
+    addEventListener('focus', wake);
+    addEventListener('pagehide', flush);
+  }
+  return { init, render, pull, push, _derive: m => derive(m), _merge: merge, _collect: collect };
+})();
+/* HSYNC END */
+
+const VER = 25;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
 const EXTRA_MATH = ['nyumon_ia'];
@@ -413,6 +783,7 @@ let tab = 'route';
 function render(){
   const v = document.getElementById('view');
   v.innerHTML = tab === 'route' ? viewRoute() : tab === 'score' ? viewScore() : tab === 'tetsu' ? viewTetsu() : viewSet();
+  if(tab === 'set') HSync.render();
   document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   window.scrollTo(0, 0);
 }
@@ -746,6 +1117,7 @@ function viewSet(){
   h += '<a class="setrow" href="https://docs.google.com/spreadsheets/d/17o7_aitaIZ9ufh5w5Ox7gxaqnwveaHVix4uHpL7BjmI/edit" target="_blank" rel="noopener"><span class="tx"><b>元のスプレッドシート</b><span>写真や図はこちらで見られます</span></span><span class="val">開く</span></a>';
   h += '<button class="setrow" onclick="clearMarks()"><span class="tx"><b>「いまここ」の印をぜんぶ消す</b><span>すごろくの印をリセットします</span></span><span class="val" style="color:var(--red)">消す</span></button>';
   h += '</div>';
+  h += '<div class="sec-title">同期（スマホとパソコンで同じにする）</div><div class="card"><div id="hsBox"></div></div>';
   h += '<div class="sec-title">このアプリについて</div><div class="card"><div class="lead" style="padding:0">'
     + '高校ルート（全体計画・日ごとの計画表・鉄則）を、そのまま見られるようにしたものです。<br><br>'
     + '計画がうまくいかなくなったときは、すぐに修正するか、必ず相談してください。（全体鉄則③）</div></div>';
@@ -1289,6 +1661,49 @@ render();
 checkUpdate(false);
 document.addEventListener('visibilitychange', () => { if(!document.hidden) checkUpdate(false); });
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+/* ───────── 同期 ─────────
+   預けるのは route.v1（すごろくの「いまここ」の印・表示する問題集・選んだ版・相談の記録・見た目）。
+   1つのまとまりなので、新しいほうが勝つ（足し合わせはしない）。
+   同期コードは計画マップ・ReNote・Mindrest と共通。 */
+function hsAsk(msg){
+  return new Promise(res => {
+    openSheet('同期コード',
+      '<div class="lead" style="white-space:pre-line">' + esc(msg) + '</div>' +
+      '<input id="hsIn" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="abcd-2345" ' +
+      'style="width:100%;box-sizing:border-box;padding:13px 12px;border-radius:11px;border:1px solid var(--line);' +
+      'background:var(--card);color:var(--ink);font-size:18px;letter-spacing:.08em;font-family:ui-monospace,Menlo,monospace">' +
+      '<div class="btnrow" style="margin-top:12px"><button class="btn" id="hsNo">やめる</button>' +
+      '<button class="btn primary" id="hsOk">入れる</button></div>');
+    const done = v => { closeSheet(); res(v); };
+    document.getElementById('hsOk').onclick = () => done(document.getElementById('hsIn').value);
+    document.getElementById('hsNo').onclick = () => done(null);
+    document.getElementById('mask').onclick = () => done(null);
+    setTimeout(() => { try{ document.getElementById('hsIn').focus(); }catch(e){} }, 80);
+  });
+}
+function hsYes(msg){
+  return new Promise(res => {
+    openSheet('確認',
+      '<div class="lead" style="white-space:pre-line">' + esc(msg) + '</div>' +
+      '<div class="btnrow" style="margin-top:12px"><button class="btn" id="hsNo">やめる</button>' +
+      '<button class="btn primary" id="hsOk">はい</button></div>');
+    const done = v => { closeSheet(); res(v); };
+    document.getElementById('hsOk').onclick = () => done(true);
+    document.getElementById('hsNo').onclick = () => done(false);
+    document.getElementById('mask').onclick = () => done(false);
+  });
+}
+HSync.init({
+  app: 'route', label: '高校ルート',
+  keys: [KEY],
+  hasData: function(){ return !!(S.mark && Object.keys(S.mark).length) || !!(S.hidden && Object.keys(S.hidden).length); },
+  busy: function(){ return document.getElementById('sheet').classList.contains('on'); },
+  mount: '#hsBox', cls: { btn: 'btn primary', ghost: 'btn', dim: 'lead' },
+  note: 'すごろくの「いまここ」の印・表示する問題集・選んだ版が同期されます。',
+  delay: 3000,
+  toast: toast, ask: hsAsk, yes: hsYes
+});
 </script>
 </body>
 </html>

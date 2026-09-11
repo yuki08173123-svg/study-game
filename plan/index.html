@@ -259,6 +259,12 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.95;}
 .rdays button.on{background:var(--accent); color:var(--accent-ink);}
 .repeat .rp{font-size:11px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:5px 10px; flex:none;}
 
+.synccode{display:flex; align-items:center; gap:10px; background:var(--accent-soft); border-radius:12px; padding:10px 12px; margin-top:6px;}
+.synccode span{font-size:11px; font-weight:900; color:var(--muted); flex:none;}
+.synccode b{flex:1; font-size:20px; letter-spacing:.08em; font-family:ui-monospace,Menlo,monospace; color:var(--ink); user-select:all; -webkit-user-select:all;}
+.synccode button{background:var(--card); border-radius:9px; padding:7px 11px; font-size:12px; font-weight:900; color:var(--accent); flex:none;}
+.syncdot{display:inline-block; width:8px; height:8px; border-radius:999px; background:var(--done); margin-right:5px; vertical-align:middle;}
+.syncdot.bad{background:#e0762a;}
 .moretog{display:flex; align-items:center; gap:8px; width:100%; background:var(--accent-soft); padding:9px 11px 9px 13px; font-size:12px; font-weight:900; color:var(--muted); text-align:left;}
 .moretog .sum{flex:1; color:var(--ink); font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .moretog .chev{width:22px; height:22px; border-radius:999px; background:var(--card); display:grid; place-items:center; flex:none; transition:transform .18s;}
@@ -627,6 +633,20 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <div class="sec-label">アプリ</div>
       <button class="subbtn" id="btnCheckUpd" style="margin-top:4px">更新があるか調べる</button>
     </div>
+    <div class="card hidden" style="margin-top:12px" id="syncCard">
+      <div class="sec-label">同期（スマホとパソコンで同じにする）</div>
+      <div id="syncOff">
+        <button class="subbtn" id="btnSyncNew" style="margin-top:4px">同期をはじめる（この端末のデータをあずける）</button>
+        <button class="subbtn" id="btnSyncJoin">ほかの端末のコードを入れる</button>
+        <p class="note">1台目で「同期をはじめる」を押すと、<b>同期コード</b>（8文字）が出ます。2台目でそのコードを入れると同じデータになり、そのあとは<b>書くたびに自動で同期</b>します。<br>データは、ヒラのGoogleドライブにあずけます。</p>
+      </div>
+      <div id="syncOnBox" class="hidden">
+        <div class="synccode"><span>同期コード</span><b id="syncCodeV"></b><button id="btnSyncCopy">コピー</button></div>
+        <p class="note" id="syncNote"></p>
+        <button class="subbtn" id="btnSyncNow">いま同期する</button>
+        <button class="subbtn" id="btnSyncStop">同期をやめる（この端末だけ）</button>
+      </div>
+    </div>
     <div class="card" style="margin-top:12px">
       <div class="sec-label">データ</div>
       <button class="subbtn" id="btnBackup" style="margin-top:4px">バックアップを書き出す</button>
@@ -700,8 +720,9 @@ const DEF_MIN = 30;
 const Q_GAS_URL = 'https://script.google.com/macros/s/AKfycbwdmkn5BE6mdMd9PSsnUoXXf6njRZ1vYXflA1Z-FLGG_HDzNHWukIWU7t065iL-xCbH/exec';
 const Q_SECRET  = 'hiramap-2026';
 
-let S = { weeks:{}, name:'', weekGoal:'', defMin:DEF_MIN, cur:'', day:0,
-          notifTime:'20:00', limitMin:30, tEnd:0, tLeft:0, tDone:0, sound:true };
+function defS(){ return { weeks:{}, name:'', weekGoal:'', defMin:DEF_MIN, cur:'', day:0,
+          notifTime:'20:00', limitMin:30, tEnd:0, tLeft:0, tDone:0, sound:true }; }
+let S = defS();
 let REP = [false,false,false,false,false,false,false];
 
 function eachDay(fn){
@@ -722,7 +743,16 @@ function load(){
   histBuild();
 }
 let saveT = null;
-function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} syncProfileName(); }, 200); }
+function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{
+  const sn = snap();
+  // 端末の時計が少しずれていても、あとから書いたほうが必ず新しくなるようにする
+  if(sn !== lastSnap){ lastSnap = sn; S.mt = Math.max(Date.now(), (S.mt||0)+1); syncSchedule(); }
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+  syncProfileName();
+}, 200); }
+/* 「中身が変わったか」を見るための写し。時刻や同期の記録は含めない */
+function snap(){ return JSON.stringify(S, (k,v)=>(k==='mt'||k==='syncAt'||k==='tLeft'||k==='tEnd'||k==='tDone') ? undefined : v); }
+let lastSnap = null;
 
 function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function parseISO(s){ const p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
@@ -1842,6 +1872,114 @@ $('#durRow').onclick = e => {
 };
 /* ---------- Qランキングに送る ---------- */
 function qOn(){ return !!Q_GAS_URL; }
+
+/* ---------- 同期（スマホとパソコンで同じにする） ----------
+   plan/gas/Sync.gs をスプレッドシートに貼ってデプロイし、そのURLを SYNC_URL に入れる。
+   空のあいだは、この機能は表示されない。
+   しくみ: 1人分のデータ（S）をまるごと、同期コードごとに預ける。
+   S.mt（さいごに中身が変わった時刻）が新しいほうが勝つ。 */
+const SYNC_URL = '';
+function syncOn(){ return !!SYNC_URL; }
+let syncT = null, syncBusy = false, syncErr = '';
+async function syncCall(params){
+  const r = await fetch(SYNC_URL, { method:'POST', body: JSON.stringify(Object.assign({ secret:Q_SECRET }, params)) });
+  return r.json();
+}
+function syncSchedule(ms){
+  if(!syncOn() || !S.syncCode) return;
+  clearTimeout(syncT);
+  syncT = setTimeout(()=>{ if(syncBusy){ syncSchedule(1500); return; } syncPush(); }, ms || 2500);
+}
+async function syncPush(){
+  if(!syncOn() || !S.syncCode || syncBusy) return;
+  syncBusy = true;
+  try{
+    const r = await syncCall({ action:'put', code:S.syncCode, mt:S.mt||0, name:S.name||'', data:JSON.stringify(S) });
+    if(r && r.ok && r.stale){ applyRemote(r); }
+    else if(r && r.ok){ S.syncAt = Date.now(); syncErr = ''; save(); }
+    else syncErr = (r && r.err) || '送れませんでした';
+  }catch(e){ syncErr = 'つながりませんでした'; }
+  syncBusy = false; renderSync();
+  if(syncErr) syncSchedule(30000);   // 送れなかったら30秒後にもう一度
+}
+async function syncPull(quiet){
+  if(!syncOn() || !S.syncCode || syncBusy) return;
+  syncBusy = true;
+  try{
+    const r = await syncCall({ action:'get', code:S.syncCode });
+    if(r && r.ok && r.found){
+      if((r.mt||0) > (S.mt||0)){ applyRemote(r); if(!quiet) toast('ほかの端末の内容にそろえました'); }
+      else if((r.mt||0) < (S.mt||0)){ syncBusy = false; await syncPush(); return; }
+      else { S.syncAt = Date.now(); syncErr = ''; save(); if(!quiet) toast('同期ずみです'); }
+    } else if(r && r.ok){ syncBusy = false; await syncPush(); return; }
+    else syncErr = (r && r.err) || '受け取れませんでした';
+  }catch(e){ syncErr = 'つながりませんでした'; }
+  syncBusy = false; renderSync();
+}
+/* 預かっているデータで、この端末の中身を入れかえる */
+function applyRemote(r){
+  let o = null; try{ o = JSON.parse(r.data); }catch(e){}
+  if(!o || !o.weeks) return;
+  const code = S.syncCode;
+  o.syncCode = code; o.syncAt = Date.now(); o.mt = r.mt || o.mt || 0;
+  try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){}
+  S = defS(); load(); lastSnap = snap(); syncErr = '';
+  boot(); renderSync();
+}
+function fmtAt(t){ const d = new Date(t); return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function renderSync(){
+  const card = $('#syncCard'); if(!card) return;
+  card.classList.toggle('hidden', !syncOn());
+  if(!syncOn()) return;
+  const on = !!S.syncCode;
+  $('#syncOff').classList.toggle('hidden', on);
+  $('#syncOnBox').classList.toggle('hidden', !on);
+  if(!on) return;
+  $('#syncCodeV').textContent = S.syncCode;
+  const n = $('#syncNote');
+  if(syncErr) n.innerHTML = '<span class="syncdot bad"></span>'+esc(syncErr)+'。つながったら自動でもう一度送ります。';
+  else n.innerHTML = '<span class="syncdot"></span>さいごの同期：'+(S.syncAt ? fmtAt(S.syncAt) : 'まだ')+'<br>ほかの端末でも、設定の「ほかの端末のコードを入れる」にこのコードを入れてください。';
+}
+function normCode(v){
+  const a = String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  return a.length === 8 ? a.slice(0,4)+'-'+a.slice(4) : '';
+}
+function hasData(){ let n = 0; eachDay(d=>{ n += ((d.tasks||[]).length); }); return n > 0 || (S.goals||[]).length > 0; }
+$('#btnSyncNew').onclick = async ()=>{
+  toast('コードを作っています…');
+  try{
+    const r = await syncCall({ action:'new' });
+    if(!r || !r.ok){ toast((r && r.err) || 'つながりませんでした'); return; }
+    S.syncCode = r.code; save(); renderSync();
+    await syncPush();
+    toast('同期をはじめました');
+  }catch(e){ toast('つながりませんでした'); }
+};
+$('#btnSyncJoin').onclick = async ()=>{
+  const v = prompt('ほかの端末に出ている同期コード（8文字）を入れてください');
+  if(v === null) return;
+  const code = normCode(v);
+  if(!code){ toast('コードは8文字です（例 abcd-2345）'); return; }
+  toast('さがしています…');
+  try{
+    const r = await syncCall({ action:'get', code });
+    if(!r || !r.ok){ toast((r && r.err) || 'つながりませんでした'); return; }
+    if(!r.found){ toast('そのコードは見つかりません'); return; }
+    if(hasData() && !confirm('この端末のいまのデータは、コード「'+code+'」のデータに入れかわります。よろしいですか？')) return;
+    S.syncCode = code; save();
+    applyRemote(r);
+    toast('同じデータになりました');
+  }catch(e){ toast('つながりませんでした'); }
+};
+$('#btnSyncCopy').onclick = async ()=>{
+  try{ await navigator.clipboard.writeText(S.syncCode); toast('コピーしました'); }
+  catch(e){ toast('長押しでコピーしてください'); }
+};
+$('#btnSyncNow').onclick = ()=>{ toast('同期しています…'); syncPull(false); };
+$('#btnSyncStop').onclick = ()=>{
+  if(!confirm('この端末の同期をやめます。データはこの端末に残り、預けたぶんも消えません。よろしいですか？')) return;
+  S.syncCode = ''; S.syncAt = 0; syncErr = ''; save(); renderSync(); toast('同期をやめました');
+};
 function jsonp(params, cb){
   if(!qOn()){ cb(null); return; }
   const nm = 'qcb' + Math.random().toString(36).slice(2);
@@ -2290,8 +2428,8 @@ async function doUpdate(){
 }
 $('#btnUpdate').onclick = doUpdate;
 $('#btnCheckUpd').onclick = ()=>checkUpdate(false);
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ checkUpdate(true); renderCd(); checkDayChange(); } });
-window.addEventListener('focus', checkDayChange);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ checkUpdate(true); renderCd(); checkDayChange(); syncPull(true); } });
+window.addEventListener('focus', ()=>{ checkDayChange(); syncPull(true); });
 
 function boot(){
   if(!S.cur) S.cur = iso(mondayOf(new Date()));
@@ -2304,15 +2442,17 @@ function boot(){
   renderProfs();
   $('#setLimit').value = S.limitMin;
   $('#verTag').textContent = 'v'+VER; $('#verTag2').textContent = 'v'+VER;
-  bkNote(); askPersist();
+  bkNote(); askPersist(); renderSync();
   syncRep(); renderAll(); renderCd();
   // 再読みこみでカウントダウンが続いているときは、最初のタップで音を使えるようにする
   if(cdRunning()) document.addEventListener('pointerdown', ()=>audioUnlock(), { once:true });
 }
 load();
 (function(){ const nowK = iso(mondayOf(new Date())); if(!S.cur || S.cur < nowK){ S.cur = nowK; S.day = (new Date().getDay()+6)%7; } })();
+lastSnap = snap();
 boot();
 checkUpdate(true);
+syncPull(true);
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
 </script>
 </body>

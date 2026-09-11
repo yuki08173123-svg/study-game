@@ -393,7 +393,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 23;
+const VER = 24;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -467,9 +467,9 @@ function applyGrade(n, g){
   n.upd = now();
   return ivl;
 }
-const saveNotes = () => localStorage.setItem(K_N, JSON.stringify(notes));
-const saveFolders = () => localStorage.setItem(K_F, JSON.stringify(folders));
-const saveCfg = () => localStorage.setItem(K_C, JSON.stringify(cfg));
+const saveNotes = () => { localStorage.setItem(K_N, JSON.stringify(notes)); syncDirty(); };
+const saveFolders = () => { localStorage.setItem(K_F, JSON.stringify(folders)); syncDirty(); };
+const saveCfg = () => { localStorage.setItem(K_C, JSON.stringify(cfg)); syncDirty(); };
 
 function load(){
   try{ notes = JSON.parse(localStorage.getItem(K_N) || '[]'); }catch(e){ notes = []; }
@@ -692,6 +692,7 @@ function go(screen, opt){
   render();
 }
 function render(){
+  syncFlushPending();
   const r = { home:renderHome, list:renderList, note:renderNote, write:renderWrite, review:renderReview, set:renderSet }[S.screen];
   r();
   $('#fab').classList.toggle('hidden', !(S.screen === 'home' || S.screen === 'list') || !!S.sel);
@@ -1499,6 +1500,7 @@ function renderSet(){
   bar('', '設定', '', true);
   const pics = live().reduce((a,n) => a + (n.imgs||[]).length, 0);
   $('#main').innerHTML = `
+    ${syncCard()}
     <div class="label">書き出し</div>
     <div class="group">
       ${rowItem({ ic:ICO.down({s:19}), nm:'JSON（写真ごと・復元用）', attr:'data-x="json"' })}
@@ -1556,6 +1558,7 @@ function renderSet(){
     <div class="note-txt" id="dataInfo" style="margin:10px 4px 0">メモ ${live().length}件・写真 ${pics}枚</div>
     <input type="file" id="impfile" accept="application/json,.json" class="hidden">`;
   $$('#main [data-x]').forEach(b => b.onclick = () => setAct(b.dataset.x));
+  syncPaint();
   $$('#pace button').forEach(b => b.onclick = () => {
     cfg.pace = b.dataset.p; saveCfg(); render(); toast(`ペースを「${PACE_LBL[cfg.pace]}」にしました`);
   });
@@ -1577,6 +1580,11 @@ function setAct(x){
   if(x === 'autodone'){ cfg.autoDone = !cfg.autoDone; saveCfg(); render();
                     toast(cfg.autoDone ? '◎が3回つづいたら卒業します' : '自動の卒業をやめました'); return; }
   if(x === 'done')  return go('list', { fid:null, q:'', view:'list', only:'done' });
+  if(x === 'systart') return syncStart();
+  if(x === 'syjoin')  return syncJoin();
+  if(x === 'synow'){ toast('同期しています…'); return syncPull(true); }
+  if(x === 'systop')  return syncStop();
+  if(x === 'sycopy'){ navigator.clipboard.writeText(sy.code).then(() => toast('コードをコピーしました'), () => toast(sy.code)); return; }
   if(x === 'storage') return storageSheet();
   if(x === 'trash') return trashSheet();
   if(x === 'help') return helpSheet();
@@ -1974,6 +1982,222 @@ async function doUpd(){
   location.replace(location.pathname + '?v=' + now());
 }
 
+/* ===================== 同期（計画マップと同じ預け先・同じコード） =====================
+   データ本体は計画マップ用に公開ずみの Apps Script（ヒラのGoogleドライブ）に預ける。
+   コードは計画マップと共通。アプリごとの置き場所は「コード｜アプリ名」から作る別コードにする
+   （同じコードを入れても、計画マップのデータとは混ざらない）。
+   写真は1枚ずつ別に預ける（中身が変わらないので、上げたら上げっぱなし）。 */
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbztk0Zk4YnnAjKcOgsVU690-gAn_FfN5xGILx5u_YUj6syG5xk80sV6Biqa1WOce-uQ/exec';
+const SYNC_SECRET = 'hiramap-2026';
+const SYNC_APP = 'renote';
+const K_SY = 'mn_sync', K_SYUP = 'mn_sync_up';
+const CODE_CH = 'abcdefghjkmnpqrstuvwxyz23456789';
+let sy = {};                 // { code, mt, at, err }
+let syApplying = false, syPushT = null, syLast = '', syPending = null, syPullAt = 0;
+let syImgBusy = false, syImgMsg = '';
+
+function loadSync(){ try{ sy = JSON.parse(localStorage.getItem(K_SY) || '{}') || {}; }catch(e){ sy = {}; } }
+function saveSync(){ localStorage.setItem(K_SY, JSON.stringify(sy)); }
+const normCode = c => { const s = String(c || '').toLowerCase().replace(/[^a-z0-9]/g, ''); return s.length === 8 ? s.slice(0,4) + '-' + s.slice(4) : ''; };
+async function deriveCode(master, sub){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(master + '|' + sub));
+  const b = new Uint8Array(buf); let s = '';
+  for(let i = 0; i < 8; i++){ if(i === 4) s += '-'; s += CODE_CH[b[i] % CODE_CH.length]; }
+  return s;
+}
+async function syncCall(body){
+  const r = await fetch(SYNC_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ secret:SYNC_SECRET }, body)) });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.err || '同期できませんでした');
+  return j;
+}
+function planCodeHere(){                        // この端末の計画マップの同期コード（同じサイトなので読める）
+  try{
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(!/^planmap_(v1|p.+)$/.test(k)) continue;
+      const o = JSON.parse(localStorage.getItem(k) || '{}');
+      const c = o && normCode(o.syncCode);
+      if(c) return c;
+    }
+  }catch(e){}
+  return '';
+}
+const syncSnap = () => JSON.stringify({ v:1, notes, folders, cfg });
+
+function syncDirty(){                           // 保存のたびに呼ばれる
+  if(syApplying || !sy.code) return;
+  const s = syncSnap();
+  if(s === syLast) return;
+  syLast = s;
+  sy.mt = Math.max(now(), (sy.mt || 0) + 1); saveSync();
+  clearTimeout(syPushT); syPushT = setTimeout(syncPush, 2500);
+}
+async function syncPush(){
+  if(!sy.code) return;
+  try{
+    const j = await syncCall({ action:'put', code: await deriveCode(sy.code, SYNC_APP),
+                               mt: sy.mt || now(), name:'ReNote', data: syncSnap() });
+    if(j.stale) syncApply(j.data, j.mt);
+    sy.at = now(); sy.err = ''; saveSync();
+    syncImages();
+  }catch(e){
+    sy.err = String(e.message || e); saveSync();
+    clearTimeout(syPushT); syPushT = setTimeout(syncPush, 30000);
+  }
+  syncPaint();
+}
+async function syncPull(force){
+  if(!sy.code) return;
+  if(!force && now() - syPullAt < 15000) return;   // 立て続けに呼ばれたときは間引く
+  syPullAt = now();
+  try{
+    const j = await syncCall({ action:'get', code: await deriveCode(sy.code, SYNC_APP) });
+    if(j.found && (j.mt || 0) > (sy.mt || 0)) syncApply(j.data, j.mt);
+    else if(!j.found || (sy.mt || 0) > (j.mt || 0)){ await syncPush(); return; }
+    sy.at = now(); sy.err = ''; saveSync();
+    syncImages();
+  }catch(e){ sy.err = String(e.message || e); saveSync(); }
+  syncPaint();
+}
+function syncApply(data, mt){
+  if(S.screen === 'write'){ syPending = { data, mt }; return; }   // 書いている途中は入れかえない
+  let o; try{ o = JSON.parse(data); }catch(e){ return; }
+  if(!o || !Array.isArray(o.notes)) return;
+  syApplying = true;
+  notes = o.notes;
+  folders = Array.isArray(o.folders) ? o.folders : [];
+  cfg = Object.assign({}, cfg, o.cfg || {});
+  saveNotes(); saveFolders(); saveCfg();
+  load();
+  syApplying = false;
+  sy.mt = mt || now(); saveSync();
+  syLast = syncSnap();
+  revQ = []; revI = 0;
+  render();
+}
+function syncFlushPending(){
+  if(syPending && S.screen !== 'write'){ const p = syPending; syPending = null; syncApply(p.data, p.mt); }
+}
+
+/* 写真：参照されているのに手元にない → もらう／手元にあってまだ上げていない → 上げる */
+async function syncImages(){
+  if(syImgBusy || !sy.code) return;
+  syImgBusy = true;
+  let up;
+  try{ up = JSON.parse(localStorage.getItem(K_SYUP) || '{}'); }catch(e){ up = {}; }
+  if(up.code !== sy.code) up = { code: sy.code, ids: [] };
+  const done = new Set(up.ids);
+  const ids = [...new Set(notes.flatMap(n => n.imgs || []))].filter(id => !done.has(id));
+  let got = 0, sent = 0, i = 0;
+  try{
+    for(const id of ids){
+      i++; syImgMsg = `写真を同期中… ${i} / ${ids.length}`; syncPaint();
+      const code = await deriveCode(sy.code, 'img:' + id);
+      const local = await getImg(id);
+      if(local){
+        await syncCall({ action:'put', code, mt:1, name:'ReNote（写真）', data: JSON.stringify({ d: await blobToData(local) }) });
+        sent++;
+      }else{
+        const j = await syncCall({ action:'get', code });
+        if(!j.found) continue;                 // もう1台がまだ上げていない。次の同期でもう一度
+        await putImg(id, await dataToBlob(JSON.parse(j.data).d));
+        urlCache.delete(id); got++;
+      }
+      done.add(id);
+      localStorage.setItem(K_SYUP, JSON.stringify({ code: sy.code, ids: [...done] }));
+    }
+    syImgMsg = '';
+  }catch(e){ syImgMsg = '写真の同期がとちゅうで止まりました（次の同期でつづきから）'; }
+  syImgBusy = false;
+  if(got){ fillImgs($('#main')); lazyImgs($('#main')); }
+  syncPaint();
+}
+
+/* つなぐ：預け先にデータがあれば選んでもらう／なければこの端末のデータを預ける */
+async function syncConnect(master){
+  master = normCode(master);
+  if(!master){ alert('コードの形がちがいます。abcd-2345 のような8文字です。'); return; }
+  toast('つないでいます…');
+  let j;
+  try{ j = await syncCall({ action:'get', code: await deriveCode(master, SYNC_APP) }); }
+  catch(e){ alert('つながりませんでした。電波のよいところで、もう一度ためしてください。\n（' + e.message + '）'); return; }
+  const mine = live().length;
+  let theirs = 0;
+  if(j.found){ try{ theirs = (JSON.parse(j.data).notes || []).filter(n => !n.del).length; }catch(e){} }
+  const startHere = async () => {
+    sy = { code:master, mt: now() }; saveSync(); syLast = '';
+    await syncPush(); render(); toast('同期をはじめました');
+  };
+  const takeThere = () => {
+    sy = { code:master, mt:0 }; saveSync();
+    syncApply(j.data, j.mt); syncImages(); toast(`同期しました（${theirs}件）`);
+  };
+  if(!j.found) return startHere();
+  if(mine === 0) return takeThere();
+  sheet(`<h3>どちらのデータにしますか</h3>
+    <div class="note-txt" style="margin:-10px 2px 16px">このコードには、ReNote のデータがすでに <b>${theirs}件</b> 預けてあります。
+      この端末には <b>${mine}件</b> あります。同期すると、どちらか一方にそろいます。</div>
+    <button class="btn pri" id="syThere">預けてあるデータにする（${theirs}件）</button>
+    <div class="note-txt" style="margin:8px 2px 14px">この端末の${mine}件は置きかわります。ほかの端末で書いてきた人はこちら。</div>
+    <button class="btn sec" id="syHere">この端末のデータで預けなおす（${mine}件）</button>
+    <div class="note-txt" style="margin:8px 2px 0">預けてある${theirs}件は置きかわります。</div>`, close => {
+    $('#syThere').onclick = () => { if(!confirm(`この端末の${mine}件は、預けてある${theirs}件に置きかわります。よろしいですか？`)) return; close(); takeThere(); };
+    $('#syHere').onclick  = () => { if(!confirm(`預けてある${theirs}件は、この端末の${mine}件に置きかわります。よろしいですか？`)) return; close(); startHere(); };
+  });
+}
+async function syncStart(){
+  let code = planCodeHere();
+  if(!code){
+    try{ code = (await syncCall({ action:'new' })).code; }
+    catch(e){ alert('つながりませんでした。電波のよいところで、もう一度ためしてください。'); return; }
+  }
+  return syncConnect(code);
+}
+function syncJoin(){
+  const c = prompt('ほかの端末（または計画マップ）の同期コードを入れてください\n例: abcd-2345');
+  if(c) syncConnect(c);
+}
+function syncStop(){
+  if(!confirm('この端末の同期をやめます。この端末のメモはそのまま残ります。よろしいですか？')) return;
+  sy = {}; saveSync(); localStorage.removeItem(K_SYUP);
+  render(); toast('同期をやめました');
+}
+function syncPaint(){
+  const el = $('#systat');
+  if(!el) return;
+  el.innerHTML = syImgMsg ? esc(syImgMsg)
+    : sy.err ? `<span style="color:var(--ng)">うまく同期できていません（${esc(sy.err)}）。電波のよいところで「いま同期する」を押してください。</span>`
+    : sy.at ? `さいごの同期：${fmtDate(sy.at)}` : '';
+}
+function syncCard(){
+  if(!sy.code){
+    const pc = planCodeHere();
+    return `
+    <div class="label">同期（スマホとパソコンで同じにする）</div>
+    <div class="group">
+      ${rowItem({ ic:ICO.loop({s:19}), nm: pc ? `計画マップと同じコードで同期する` : '同期をはじめる', attr:'data-x="systart"',
+                  right: pc ? `<span class="ct mono">${pc}</span>` : '' })}
+      ${rowItem({ ic:ICO.up({s:19}), nm:'ほかの端末のコードを入れる', attr:'data-x="syjoin"' })}
+    </div>
+    <div class="note-txt" style="margin:10px 4px 0">
+      計画マップで同期している人は、<b>同じコード</b>がそのまま使えます。
+      2台とも同じコードにすると、書いたメモが自動でそろいます。写真もいっしょに送られます。<br>
+      データはヒラのGoogleドライブに預かります。コードを知っている人は中身を見られるので、人に見せないでください。</div>`;
+  }
+  return `
+    <div class="label">同期</div>
+    <div class="group">
+      ${rowItem({ ic:ICO.check({s:19}), nm:'同期コード（押すとコピー）', attr:'data-x="sycopy"', right:`<span class="ct mono">${sy.code}</span>` })}
+      ${rowItem({ ic:ICO.loop({s:19}), nm:'いま同期する', attr:'data-x="synow"' })}
+      ${rowItem({ ic:ICO.x({s:19}), nm:'同期をやめる（この端末だけ）', attr:'data-x="systop"', col:'var(--ng)' })}
+    </div>
+    <div class="note-txt" id="systat" style="margin:10px 4px 0"></div>
+    <div class="note-txt" style="margin:6px 4px 0">書くたびに自動で送られ、開くたびに自動で受け取ります。
+      同時に2台で書くと、あとから書いたほうが残ります。片方で書いたら、もう片方は開き直してから使ってください。</div>`;
+}
+
 /* ===================== 起動 ===================== */
 const TABS = [
   { id:'notes',  ic:ICO.note,  lbl:'ノート',   go:() => go('home') },
@@ -1982,6 +2206,8 @@ const TABS = [
 ];
 function boot(){
   load();
+  loadSync();
+  syLast = sy.code ? syncSnap() : '';
   $('#tabin').innerHTML = TABS.map(t =>
     `<button class="tab" data-tab="${t.id}">${t.ic({s:22,w:1.8})}<span>${t.lbl}</span></button>`).join('');
   $$('#tabin .tab').forEach(b => b.onclick = () => TABS.find(t => t.id === b.dataset.tab).go());
@@ -2001,6 +2227,9 @@ function boot(){
   if(!cfg.seenHelp){ cfg.seenHelp = 1; saveCfg(); setTimeout(helpSheet, 500); }
   checkUpd(true);
   setTimeout(sweepImgs, 4000);
+  if(sy.code) setTimeout(() => syncPull(true), 800);
+  document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && S.screen !== 'write') syncPull(); });
+  addEventListener('focus', () => { if(S.screen !== 'write') syncPull(); });
   if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 }

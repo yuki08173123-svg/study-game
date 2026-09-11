@@ -3,7 +3,7 @@
    ネットがない時だけキャッシュで動く。キャッシュ優先にすると「直したのに古い画面が出る」ので、しない。
    例外は sounds/ の録音。中身が変わらない大きめのファイルなので、
    一度取ったら手元のを使い（キャッシュ優先）、更新のたびに取り直さない。 */
-const VER = 'md-v50';
+const VER = 'md-v51';
 const SND = 'md-sounds-v1';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {

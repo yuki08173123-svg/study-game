@@ -259,6 +259,14 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.95;}
 .rdays button.on{background:var(--accent); color:var(--accent-ink);}
 .repeat .rp{font-size:11px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:5px 10px; flex:none;}
 
+.moretog{display:flex; align-items:center; gap:8px; width:100%; background:var(--accent-soft); padding:9px 11px 9px 13px; font-size:12px; font-weight:900; color:var(--muted); text-align:left;}
+.moretog .sum{flex:1; color:var(--ink); font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.moretog .chev{width:22px; height:22px; border-radius:999px; background:var(--card); display:grid; place-items:center; flex:none; transition:transform .18s;}
+.moretog .chev svg{width:12px; height:12px; stroke:var(--accent); fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round;}
+.addbox.open .moretog .chev{transform:rotate(180deg);}
+.addbox .more{display:none;}
+.addbox.open .more{display:block;}
+.addbox.open .moretog{border-bottom:1px dashed rgba(127,127,127,.25);}
 .starnote{display:flex; gap:9px; align-items:flex-start; margin-top:10px; padding:11px 13px; background:var(--star-soft); border-radius:14px; font-size:12.5px; line-height:1.7;}
 .starnote svg{width:17px; height:17px; fill:var(--star); stroke:var(--star); stroke-width:2; stroke-linejoin:round; flex:none; margin-top:3px;}
 .starnote b{font-weight:900;}
@@ -410,7 +418,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v39</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v40</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -486,6 +494,11 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <button class="add" id="btnAdd" aria-label="追加"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     </div>
     <div class="sugg" id="sugg"></div>
+    <button class="moretog" id="btnMore" aria-expanded="false">
+      <span class="rl">くわしく</span><span class="sum" id="moreSum"></span>
+      <span class="chev"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+    </button>
+    <div class="more" id="addMore">
     <div class="durrow" id="durRow">
       <span class="rl">かかる時間</span>
       <button class="qd" data-d="15">＋15分</button>
@@ -503,6 +516,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <span class="rl">しゅるい</span>
       <button data-k="nostar">★なし</button>
       <button data-k="evt">予定</button>
+    </div>
     </div>
     </div>
 
@@ -621,7 +635,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <p class="note" id="bkNote"></p>
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v39</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v40</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -646,7 +660,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 39;
+const VER = 40;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -787,6 +801,7 @@ function renderDays(){
 function renderRep(){
   $('#rdays').innerHTML = WD.map((w,i)=>'<button data-i="'+i+'" class="'+(REP[i]?'on':'')+'">'+w+'</button>').join('');
   $('#btnAllDays').textContent = REP.every(Boolean) ? 'この日だけ' : '毎日';
+  renderMore();
 }
 function histAdd(text, time, min){
   const x = (text||'').trim(); if(!x) return;
@@ -1669,7 +1684,26 @@ $('#kinds').onclick = e => {
 function renderKinds(){
   const k = S.newKind || '';
   document.querySelectorAll('#kinds button').forEach(x=>x.classList.toggle('on', x.dataset.k === k));
+  renderMore();
 }
+/* 入力欄の「くわしく」（かかる時間・入れる曜日・しゅるい）はたたんでおき、1行のまとめだけ見せる */
+function renderMore(){
+  const el = $('#moreSum'); if(!el) return;
+  const min = typeof S.pendMin === 'number' ? S.pendMin : S.defMin;
+  const n = REP.filter(Boolean).length;
+  const days = REP.every(Boolean) ? '毎日'
+    : (n <= 1 && REP[S.day]) ? 'この日だけ'
+    : (n === 0 ? 'この日だけ' : WD.filter((w,i)=>REP[i]).join(''));
+  const kind = S.newKind === 'nostar' ? '・★なし' : S.newKind === 'evt' ? '・予定' : '';
+  el.textContent = fmtHM(min) + '・' + days + kind;
+}
+function setMore(open){
+  $('.addbox').classList.toggle('open', open);
+  $('#btnMore').setAttribute('aria-expanded', open ? 'true' : 'false');
+  try{ localStorage.setItem('planmap_more', open ? '1' : '0'); }catch(e){}
+}
+$('#btnMore').onclick = ()=>setMore(!$('.addbox').classList.contains('open'));
+(function(){ let o = '0'; try{ o = localStorage.getItem('planmap_more') || '0'; }catch(e){} setMore(o === '1'); })();
 $('#rdays').onclick = e => { const b = e.target.closest('button'); if(!b) return; REP[+b.dataset.i] = !REP[+b.dataset.i]; renderRep(); };
 $('#btnAllDays').onclick = ()=>{ const all = REP.every(Boolean); REP = REP.map(()=>!all); if(all) REP[S.day] = true; renderRep(); };
 
@@ -1797,6 +1831,7 @@ function openDurPicker(t){
 function renderPend(){
   if(typeof S.pendMin !== 'number') S.pendMin = S.defMin;
   $('#pendMin').textContent = fmtHM(S.pendMin);
+  renderMore();
 }
 $('#durRow').onclick = e => {
   const b = e.target.closest('button'); if(!b) return;
@@ -2082,7 +2117,7 @@ const SLIDES = [
     <button class="rp">毎日</button>
   </div>
 </div>
-<p>入力欄の下の<b>「入れる曜日」</b>で曜日をえらんでから ＋ を押すと、その曜日ぜんぶに同じやることが入ります。<br>
+<p>入力欄の<b>「くわしく」</b>を開いて<b>「入れる曜日」</b>で曜日をえらんでから ＋ を押すと、その曜日ぜんぶに同じやることが入ります。<br>
 <b>「毎日」</b>を押せば、7日ぶんが一度に入ります。<br>
 <b>「ほかの曜日から」</b>を押すと、ほかの日のやることを見ながらコピーできます。</p>`,
 
@@ -2126,7 +2161,7 @@ const SLIDES = [
 <p>おわったら左の<b>◯</b>を押します。押した分だけ「できた」の時間がふえます。<br>
 答えを見ずに<b>自力で全部とけるようになった</b>ものだけ、右の<b>★</b>を押します。<br>
 <b>やることの文字を押す</b>と、その日だけページ数などを書きなおせます。「実際にやったこと」も書けます。<br>
-入力欄の下の<b>「しゅるい」</b>は、ふだんは<b>押さなくて大丈夫</b>です。<br>
+入力欄の<b>「くわしく」</b>の中の<b>「しゅるい」</b>は、ふだんは<b>押さなくて大丈夫</b>です。<br>
 <b>★なし</b>＝理解（講義・動画・解説読み）・仕分け・軽い復習など、★を使わないもの（勉強時間には入ります）。<br>
 <b>予定</b>＝ヒラ会・試験など、勉強時間に入れないもの。</p>`,
 

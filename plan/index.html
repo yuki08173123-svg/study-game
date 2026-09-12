@@ -424,7 +424,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v41</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v42</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -655,7 +655,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <p class="note" id="bkNote"></p>
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v41</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v42</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -680,7 +680,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 41;
+const VER = 42;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1233,16 +1233,17 @@ function drawWeek(light){
   let bodyH = 0;
   for(let i=0;i<7;i++){
     const d = dayRaw(S.cur,i), s = sumDay(d), ts = (d && d.tasks) || [];
-    const show = ts.slice(0,7);
-    const h = Math.max(126, 86 + show.length*33 + (ts.length>show.length ? 28 : 0));
+    const show = ts;                       // 何件あっても全部のせる（箱の高さで受ける）
+    const h = Math.max(126, 86 + show.length*33);
     days.push({ i, date:addDays(m,i), s, show, more:ts.length-show.length, h });
     bodyH += h + 12;
   }
   const HEAD = 132, BAND = 236, FOOT = 62;
   const H = HEAD + BAND + 16 + bodyH + FOOT;
 
-  const dpr = 2, cv = document.createElement('canvas');
-  cv.width = W*dpr; cv.height = H*dpr;
+  // やることが多くて縦に長くなっても、iPhoneのcanvasの上限（約1,600万px）を超えないようにする
+  const dpr = Math.min(2, Math.sqrt(16000000 / (W*H))), cv = document.createElement('canvas');
+  cv.width = Math.floor(W*dpr); cv.height = Math.floor(H*dpr);
   const g = cv.getContext('2d'); g.scale(dpr,dpr);
   const INK='#16202F', MUT='#7C8899', LINE='#E2E8F1', ACC='#2C6FE4', DONE='#12A06A', HALF='#DFA125', GOLD='#C9982F';
   const rr = (x,y,w,h,rad)=>{ g.beginPath(); g.moveTo(x+rad,y); g.arcTo(x+w,y,x+w,y+h,rad); g.arcTo(x+w,y+h,x,y+h,rad); g.arcTo(x,y+h,x,y,rad); g.arcTo(x,y,x+w,y,rad); g.closePath(); };

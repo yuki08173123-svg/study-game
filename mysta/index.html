@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>マイスタ</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0D0E12">
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Cormorant+Garamond:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#0D0E12; --card:#15171E; --card2:#1C1F28; --line:#272B37; --line2:#333846;
+  --ink:#EDE8DC; --muted:#9A9DA8; --faint:#6B6F7B;
+  --gold:#C9A45C; --gold-hi:#EBD59A; --gold-dp:#9B7633; --gold-soft:rgba(201,164,92,.13); --gold-line:rgba(201,164,92,.38);
+  --ok:#5FC59A; --danger:#E0574C;
+  --shadow:0 1px 3px rgba(0,0,0,.5); --shadow-lg:0 12px 34px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%; background:var(--bg);}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Zen Kaku Gothic New','Hiragino Sans','Hiragino Kaku Gothic ProN',sans-serif;
+  font-size:16px; line-height:1.7; min-height:100vh;
+}
+.serif{font-family:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho',serif;}
+.latin{font-family:'Cormorant Garamond','Shippori Mincho',serif; letter-spacing:.22em; text-transform:uppercase;}
+.num{font-variant-numeric:tabular-nums;}
+.wrap{max-width:560px; margin:0 auto; padding:0 16px calc(96px + env(safe-area-inset-bottom));}
+button, input, textarea, select{font-family:inherit; color:inherit; font-size:16px;}
+button{background:none; border:none; cursor:pointer; touch-action:manipulation;}
+button:active{transform:scale(.98);}
+button:disabled{opacity:.4; pointer-events:none;}
+.hidden{display:none !important;}
+svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+
+header.app{position:sticky; top:0; z-index:30; background:linear-gradient(var(--bg) 82%, rgba(13,14,18,0)); padding:calc(12px + env(safe-area-inset-top)) 2px 10px;}
+.title-row{display:flex; align-items:baseline; gap:10px; padding:0 2px;}
+.title-row h1{font-size:24px; font-weight:600; letter-spacing:.08em; color:var(--gold-hi);}
+.title-row .sub{font-size:10px; color:var(--gold); opacity:.85;}
+.title-row .spacer{flex:1;}
+.title-row .ver{font-size:11px; color:var(--faint);}
+.saved{font-size:11px; font-weight:700; color:var(--ok); opacity:0; transition:opacity .25s;}
+.saved.on{opacity:1;}
+.hairline{height:1px; background:linear-gradient(90deg, transparent, var(--gold-line), transparent); margin:8px 0 0;}
+
+.update{width:100%; margin-top:10px; background:var(--gold); color:#1A1508; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:10px; text-align:left;}
+.update svg{width:22px; height:22px; stroke:#1A1508; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+.update .t{flex:1; line-height:1.3;}
+.update .t b{display:block; font-size:15px; font-weight:700;}
+.update .t span{font-size:11px; opacity:.85; font-weight:500;}
+.update .go{background:rgba(0,0,0,.18); border-radius:999px; padding:7px 13px; font-size:13px; font-weight:700; flex:none;}
+
+/* カード */
+.card{background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:16px; margin-bottom:12px;}
+.card h3{font-size:14px; font-weight:700; letter-spacing:.06em; color:var(--gold); margin-bottom:10px; display:flex; align-items:center; gap:8px;}
+.card h3 .r{margin-left:auto; font-size:12px; color:var(--muted); font-weight:500; letter-spacing:0;}
+.note{font-size:13px; color:var(--muted); line-height:1.7;}
+
+/* ヒーロー */
+.hero{position:relative; overflow:hidden; background:linear-gradient(160deg, #1B1D26, #101116); border:1px solid var(--gold-line); border-radius:22px; padding:20px 18px 18px; margin-bottom:12px; box-shadow:var(--shadow-lg);}
+.hero::after{content:''; position:absolute; inset:-40% -20% auto auto; width:70%; aspect-ratio:1; border-radius:50%; background:radial-gradient(closest-side, rgba(201,164,92,.16), transparent 70%); pointer-events:none;}
+.hero .lab{font-size:10px; color:var(--gold); margin-bottom:2px;}
+.hero .stats{display:flex; gap:22px; align-items:flex-end;}
+.hero .st b{display:block; font-size:44px; line-height:1; font-weight:600; color:var(--gold-hi); letter-spacing:.02em;}
+.hero .st span{font-size:12px; color:var(--muted);}
+.hero .st.small b{font-size:28px; padding-bottom:4px;}
+.hero .msg{margin-top:12px; font-size:14px; color:var(--ink); line-height:1.7; border-top:1px solid var(--line); padding-top:10px;}
+
+.btn-gold{width:100%; display:flex; align-items:center; justify-content:center; gap:10px; background:linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-dp)); color:#1A1508; font-weight:700; font-size:17px; border-radius:16px; padding:16px; box-shadow:0 6px 20px rgba(201,164,92,.25), inset 0 1px 0 rgba(255,255,255,.35); letter-spacing:.04em;}
+.btn-gold svg{width:22px; height:22px; stroke:#1A1508; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;}
+.btn-line{width:100%; display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--line2); border-radius:14px; padding:13px; font-weight:700; font-size:15px; color:var(--ink); background:var(--card2);}
+.btn-line.gold{border-color:var(--gold-line); color:var(--gold-hi);}
+.btn-line.danger{color:var(--danger); border-color:rgba(224,87,76,.4);}
+.btn-line svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+.row{display:flex; gap:10px;}
+.row > *{flex:1;}
+
+/* 記録一覧 */
+.sec-title{display:flex; align-items:baseline; gap:8px; margin:20px 2px 10px;}
+.sec-title h2{font-size:16px; font-weight:600; letter-spacing:.08em; color:var(--ink);}
+.sec-title .latin{font-size:10px; color:var(--gold);}
+.sec-title .r{margin-left:auto; font-size:12px; color:var(--muted);}
+.rec{width:100%; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:13px 14px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start;}
+.rec .no{flex:none; width:40px; text-align:center; line-height:1; padding-top:2px;}
+.rec .no b{display:block; font-size:20px; color:var(--gold); font-weight:600;}
+.rec .no span{font-size:9px; color:var(--gold); opacity:.8;}
+.rec .body{flex:1; min-width:0;}
+.rec .what{font-size:16px; font-weight:700; line-height:1.45; word-break:break-word;}
+.rec .meta{font-size:12px; color:var(--muted); margin-top:3px; display:flex; gap:8px; flex-wrap:wrap;}
+.rec .key{font-size:13px; color:var(--gold-hi); margin-top:6px; line-height:1.5;}
+.rec .key::before{content:'◆ '; font-size:9px; color:var(--gold); vertical-align:2px;}
+.tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+.tag{font-size:12px; padding:3px 9px; border-radius:999px; background:var(--gold-soft); color:var(--gold-hi); border:1px solid var(--gold-line); line-height:1.5;}
+.tag.plain{background:var(--card2); color:var(--muted); border-color:var(--line2);}
+.subj{display:inline-block; font-size:11px; font-weight:700; padding:1px 8px; border-radius:6px; background:var(--card2); border:1px solid var(--line2); color:var(--muted);}
+
+.empty{text-align:center; padding:34px 14px; color:var(--muted); font-size:14px; line-height:1.9;}
+.empty .big{font-size:40px; color:var(--gold); line-height:1; margin-bottom:12px; font-weight:500;}
+
+/* マイスタ画面 */
+.style-hero{background:linear-gradient(160deg, #1B1D26, #101116); border:1px solid var(--gold-line); border-radius:22px; padding:18px; margin-bottom:12px; text-align:center; box-shadow:var(--shadow-lg);}
+.style-hero .lab{font-size:10px; color:var(--gold);}
+.style-hero .t{font-size:20px; font-weight:600; color:var(--gold-hi); margin:4px 0 6px; letter-spacing:.06em;}
+.style-hero .d{font-size:13px; color:var(--muted); line-height:1.7;}
+.mrow{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line);}
+.mrow:last-child{border-bottom:none;}
+.mrow .rank{width:22px; font-size:12px; color:var(--faint); text-align:center; flex:none;}
+.mrow .name{flex:1; min-width:0;}
+.mrow .name b{display:block; font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.mrow .bar{height:5px; border-radius:3px; background:var(--card2); margin-top:5px; overflow:hidden;}
+.mrow .bar i{display:block; height:100%; background:linear-gradient(90deg, var(--gold-dp), var(--gold-hi)); border-radius:3px;}
+.mrow .cnt{flex:none; text-align:right; line-height:1.1;}
+.mrow .cnt b{display:block; font-size:18px; font-weight:600; color:var(--gold-hi);}
+.mrow .cnt span{font-size:10px; color:var(--muted);}
+.lvl{display:inline-block; font-size:10px; font-weight:700; padding:1px 7px; border-radius:5px; margin-left:6px; vertical-align:2px; letter-spacing:.06em;}
+.lvl.l3{background:linear-gradient(180deg, var(--gold-hi), var(--gold)); color:#1A1508;}
+.lvl.l2{background:var(--gold-soft); color:var(--gold-hi); border:1px solid var(--gold-line);}
+.lvl.l1{background:var(--card2); color:var(--muted); border:1px solid var(--line2);}
+.keys li{list-style:none; padding:8px 0 8px 18px; border-bottom:1px solid var(--line); position:relative; font-size:14px; line-height:1.6;}
+.keys li:last-child{border-bottom:none;}
+.keys li::before{content:'◆'; position:absolute; left:2px; top:11px; font-size:9px; color:var(--gold);}
+.keys li span{display:block; font-size:11px; color:var(--faint); margin-top:1px;}
+.bysubj{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.bysubj .b{background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:10px 12px;}
+.bysubj .b b{display:block; font-size:13px; color:var(--gold); margin-bottom:3px;}
+.bysubj .b div{font-size:13px; line-height:1.6;}
+
+/* 設定 */
+.srow{display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--line);}
+.srow:last-child{border-bottom:none;}
+.srow .t{flex:1;}
+.srow .t b{display:block; font-size:15px; font-weight:700;}
+.srow .t span{font-size:12px; color:var(--muted);}
+.srow button.sm{background:var(--card2); border:1px solid var(--line2); border-radius:10px; padding:8px 13px; font-size:13px; font-weight:700;}
+
+/* タブ */
+nav.tabs{position:fixed; left:0; right:0; bottom:0; z-index:40; background:rgba(13,14,18,.92); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-top:1px solid var(--line); display:flex; padding:6px 8px calc(6px + env(safe-area-inset-bottom));}
+nav.tabs button{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 0 4px; border-radius:12px; position:relative;}
+nav.tabs svg{width:23px; height:23px; stroke:var(--faint); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+nav.tabs span{font-size:10px; font-weight:700; color:var(--faint); letter-spacing:.04em;}
+nav.tabs button.on svg{stroke:var(--gold-hi);}
+nav.tabs button.on span{color:var(--gold-hi);}
+nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; border-radius:50%; background:var(--gold); border:2px solid var(--bg);}
+
+/* ===== インタビュー(質問に答える画面) ===== */
+.iv{position:fixed; inset:0; z-index:60; background:var(--bg); display:flex; flex-direction:column; transform:translateY(100%); transition:transform .32s cubic-bezier(.2,.8,.2,1);}
+.iv.on{transform:translateY(0);}
+.iv .top{display:flex; align-items:center; gap:10px; padding:calc(10px + env(safe-area-inset-top)) 14px 8px;}
+.iv .top .x{width:38px; height:38px; border-radius:12px; border:1px solid var(--line2); display:grid; place-items:center; color:var(--muted);}
+.iv .top .x svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round;}
+.iv .steps{flex:1; display:flex; gap:6px; justify-content:center;}
+.iv .steps i{display:block; width:22px; height:3px; border-radius:2px; background:var(--line2); transition:background .25s;}
+.iv .steps i.done{background:var(--gold-dp);}
+.iv .steps i.cur{background:var(--gold-hi);}
+.iv .top .cnt{width:38px; text-align:right; font-size:12px; color:var(--faint);}
+.iv .body{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:8px 18px 20px;}
+.iv .qno{font-size:11px; color:var(--gold); margin-bottom:6px;}
+.iv .q{font-size:24px; font-weight:600; line-height:1.5; color:var(--ink); letter-spacing:.02em; margin-bottom:6px;}
+.iv .hint{font-size:13px; color:var(--muted); line-height:1.7; margin-bottom:16px;}
+.iv .bottom{display:flex; gap:10px; padding:10px 16px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); background:var(--bg);}
+.iv .bottom .back{flex:none; width:54px; border:1px solid var(--line2); border-radius:14px; color:var(--muted); display:grid; place-items:center;}
+.iv .bottom .back svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+.iv .bottom .next{flex:1;}
+.iv .bottom .skip{flex:none; padding:0 14px; color:var(--muted); font-size:14px; font-weight:700;}
+
+.field{width:100%; background:var(--card); border:1px solid var(--line2); border-radius:14px; padding:13px 14px; font-size:17px; line-height:1.6; outline:none; resize:none; color:var(--ink);}
+.field:focus{border-color:var(--gold);}
+.field::placeholder{color:var(--faint);}
+textarea.field{min-height:120px;}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+.chip{padding:9px 14px; border-radius:999px; border:1px solid var(--line2); background:var(--card); font-size:15px; font-weight:500; color:var(--ink); line-height:1.4;}
+.chip.on{background:var(--gold-soft); border-color:var(--gold); color:var(--gold-hi); font-weight:700;}
+.chip.add{color:var(--muted); border-style:dashed;}
+.lab2{font-size:12px; color:var(--muted); margin:14px 0 6px; letter-spacing:.04em;}
+.ex{font-size:13px; color:var(--faint); margin-top:8px; line-height:1.7;}
+.ex b{color:var(--muted); font-weight:500;}
+
+/* 完成画面 */
+.finish{position:fixed; inset:0; z-index:70; background:rgba(13,14,18,.96); display:none; align-items:center; justify-content:center; padding:20px;}
+.finish.on{display:flex;}
+.finish .cardx{width:100%; max-width:420px; background:linear-gradient(160deg, #1C1E28, #0F1015); border:1px solid var(--gold-line); border-radius:24px; padding:26px 22px 20px; text-align:center; box-shadow:var(--shadow-lg); position:relative; overflow:hidden; animation:pop .5s cubic-bezier(.2,.9,.2,1.2);}
+.finish .cardx::before{content:''; position:absolute; inset:0; background:linear-gradient(115deg, transparent 30%, rgba(235,213,154,.18) 50%, transparent 70%); transform:translateX(-120%); animation:shine 1.6s .3s ease-out forwards;}
+@keyframes pop{from{transform:scale(.85); opacity:0} to{transform:scale(1); opacity:1}}
+@keyframes shine{to{transform:translateX(120%)}}
+.finish .lab{font-size:11px; color:var(--gold);}
+.finish .no{font-size:52px; line-height:1.1; color:var(--gold-hi); font-weight:600; margin:4px 0;}
+.finish .what{font-size:18px; font-weight:700; line-height:1.5; margin:8px 0 4px; word-break:break-word;}
+.finish .how{font-size:13px; color:var(--muted); line-height:1.6;}
+.finish .find{margin-top:14px; background:var(--gold-soft); border:1px solid var(--gold-line); border-radius:12px; padding:10px 12px; font-size:14px; color:var(--gold-hi); line-height:1.6; text-align:left;}
+.finish .find b{display:block; font-size:11px; letter-spacing:.1em; margin-bottom:2px;}
+.finish .btn-gold{margin-top:18px;}
+
+/* 詳細シート */
+.sheet-bg{position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6); display:none;}
+.sheet-bg.on{display:block;}
+.sheet{position:fixed; left:0; right:0; bottom:0; z-index:55; background:var(--card); border-radius:22px 22px 0 0; border-top:1px solid var(--line2); max-height:88vh; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px 16px calc(20px + env(safe-area-inset-bottom)); transform:translateY(105%); transition:transform .3s cubic-bezier(.2,.8,.2,1); box-shadow:var(--shadow-lg);}
+.sheet.on{transform:translateY(0);}
+.sheet .grab{width:38px; height:4px; border-radius:2px; background:var(--line2); margin:0 auto 12px;}
+.dl{margin:10px 0;}
+.dl .k{font-size:11px; color:var(--gold); letter-spacing:.06em; margin-bottom:2px;}
+.dl .v{font-size:15px; line-height:1.7; white-space:pre-wrap; word-break:break-word;}
+.dl .v.dim{color:var(--faint);}
+
+.toast{position:fixed; left:50%; bottom:calc(92px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(10px); background:var(--gold-hi); color:#1A1508; padding:10px 18px; border-radius:999px; font-size:14px; font-weight:700; opacity:0; transition:all .25s; z-index:90; pointer-events:none; white-space:nowrap; box-shadow:var(--shadow-lg);}
+.toast.on{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <div class="title-row">
+      <h1 class="serif">マイスタ</h1>
+      <span class="sub latin">My Style</span>
+      <span class="spacer"></span>
+      <span class="saved" id="savedMark">保存済み</span>
+      <span class="ver">v<span id="verNo"></span></span>
+    </div>
+    <div class="hairline"></div>
+    <button class="update hidden" id="btnUpdate">
+      <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>
+      <span class="t"><b>更新があります</b><span id="updVer"></span></span>
+      <span class="go">更新する</span>
+    </button>
+  </header>
+
+  <!-- ホーム -->
+  <section id="vHome">
+    <div class="hero">
+      <div class="lab latin">Mastered</div>
+      <div class="stats">
+        <div class="st"><b class="serif num" id="hCount">0</b><span>極めた記録</span></div>
+        <div class="st small"><b class="serif num" id="hStyle">0</b><span>確立した型</span></div>
+      </div>
+      <div class="msg" id="hMsg"></div>
+    </div>
+    <button class="btn-gold" id="btnNew">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>極めたことを記録する
+    </button>
+    <div class="sec-title"><h2 class="serif">記録</h2><span class="latin">Records</span><span class="r" id="recCount"></span></div>
+    <div id="recList"></div>
+  </section>
+
+  <!-- マイスタ -->
+  <section id="vStyle" class="hidden">
+    <div id="styleBody"></div>
+  </section>
+
+  <!-- 設定 -->
+  <section id="vSet" class="hidden">
+    <div class="card">
+      <h3>このアプリの考え方</h3>
+      <p class="note">自分に合った勉強法とは、自分が「極めた方法」のことです。<br>
+      まず「何を完璧にしたか」を記録し、次に「どうやって極めたか」を具体的に書く。<br>
+      これをためていくと、繰り返し出てくる方法が見えてきます。それが、あなたの型（マイスタ）です。<br><br>
+      同じ方法が3回出てきたら「確立」、5回で「マイスタ」と表示します。</p>
+    </div>
+    <div class="card">
+      <h3>控え（バックアップ）</h3>
+      <div class="srow"><div class="t"><b>控えを書き出す</b><span>記録をファイルに保存します</span></div><button class="sm" id="btnExport">書き出す</button></div>
+      <div class="srow"><div class="t"><b>控えから読みこむ</b><span>同じ記録は上書き、新しいものは追加</span></div><button class="sm" id="btnImport">読みこむ</button><input type="file" id="fileImport" accept="application/json,.json" class="hidden"></div>
+    </div>
+    <div class="card">
+      <h3>アプリ</h3>
+      <div class="srow"><div class="t"><b>更新を確認する</b><span>いま v<span id="verNo2"></span></span></div><button class="sm" id="btnCheckUpd">確認</button></div>
+      <div class="srow"><div class="t"><b>記録をすべて消す</b><span>元に戻せません</span></div><button class="sm" id="btnWipe" style="color:var(--danger)">消す</button></div>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs">
+  <button class="on" data-v="vHome"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/></svg><span>ホーム</span></button>
+  <button data-v="vStyle"><svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg><span>マイスタ</span></button>
+  <button data-v="vSet"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>設定</span><i class="dot hidden" id="tabDot"></i></button>
+</nav>
+
+<!-- インタビュー -->
+<div class="iv" id="iv">
+  <div class="top">
+    <button class="x" id="ivClose"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="steps" id="ivSteps"></div>
+    <div class="cnt num" id="ivCnt"></div>
+  </div>
+  <div class="body" id="ivBody"></div>
+  <div class="bottom">
+    <button class="back" id="ivBack"><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button>
+    <button class="skip hidden" id="ivSkip">あとで</button>
+    <button class="btn-gold next" id="ivNext">次へ</button>
+  </div>
+</div>
+
+<!-- 完成 -->
+<div class="finish" id="done">
+  <div class="cardx">
+    <div class="lab latin">Mastered</div>
+    <div class="no serif" id="doneNo"></div>
+    <div class="what" id="doneWhat"></div>
+    <div class="how" id="doneHow"></div>
+    <div class="find hidden" id="doneFind"></div>
+    <button class="btn-gold" id="doneOk">記録に加える</button>
+  </div>
+</div>
+
+<!-- 詳細 -->
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const VER = 1;
+const KEY = 'mysta_v1', BK = 'mysta_backup';
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+$('#verNo').textContent = VER; $('#verNo2').textContent = VER;
+
+const SUBJ = ['英語','数学','国語','理科','社会','その他'];
+const PROOFS = ['テストで満点だった','何も見ずに全部言える・書ける','人に説明できた','制限時間内に全部解けた','その他'];
+const DEF_TAGS = ['繰り返し解く','音読する','書いて覚える','人に説明する','暗記カード','間違えノート','小分けにする','毎日少しずつ','寝る前に見る','朝に復習','タイマーで区切る','声に出す','図にする','まとめ直す'];
+const DURS = ['1日','2〜3日','1週間','2週間','1か月','それ以上'];
+
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today = () => ymd(new Date());
+const md = s => { const [y,m,d] = s.split('-'); return Number(m)+'/'+Number(d); };
+const ymdJ = s => { const [y,m,d] = s.split('-'); return y+'年'+Number(m)+'月'+Number(d)+'日'; };
+
+/* ===================== データ ===================== */
+let S = load();
+function norm(j){
+  j.recs = Array.isArray(j.recs) ? j.recs : [];
+  j.tags = Array.isArray(j.tags) ? j.tags : [];
+  j.recs.forEach(r => { r.tags = Array.isArray(r.tags) ? r.tags : []; r.no = Number(r.no)||0; });
+  // 番号のない記録に番号をふる(古い順)
+  let n = Math.max(0, ...j.recs.map(r => r.no));
+  j.recs.slice().sort((a,b) => a.created < b.created ? -1 : 1).forEach(r => { if(!r.no) r.no = ++n; });
+  return j;
+}
+function load(){
+  for(const k of [KEY, BK]){
+    try{ const j = JSON.parse(localStorage.getItem(k) || 'null'); if(j && j.recs) return norm(j); }catch(e){}
+  }
+  return norm({ recs:[], tags:[] });
+}
+let savedT = null;
+function save(show){
+  const s = JSON.stringify(S);
+  try{ localStorage.setItem(KEY, s); localStorage.setItem(BK, s); }catch(e){ toast('保存できませんでした'); return; }
+  const m = $('#savedMark'); m.classList.add('on'); clearTimeout(savedT); savedT = setTimeout(()=>m.classList.remove('on'), 1500);
+  if(show) toast('保存しました');
+}
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const byId = id => S.recs.find(x => x.id === id);
+const allTags = () => [...DEF_TAGS, ...S.tags.filter(t => !DEF_TAGS.includes(t))];
+function rememberTags(ts){ ts.forEach(t => { if(!DEF_TAGS.includes(t) && !S.tags.includes(t)) S.tags.push(t); }); }
+
+/* 型の集計: 方法タグごとの回数 */
+function tagStats(recs){
+  const m = new Map();
+  (recs || S.recs).forEach(r => r.tags.forEach(t => m.set(t, (m.get(t)||0)+1)));
+  return [...m.entries()].map(([name, n]) => ({ name, n })).sort((a,b) => b.n - a.n || a.name.localeCompare(b.name, 'ja'));
+}
+const lvlOf = n => n >= 5 ? 3 : n >= 3 ? 2 : 1;
+const lvlName = n => n >= 5 ? 'マイスタ' : n >= 3 ? '確立' : n >= 2 ? '芽' : '';
+const styleCount = () => tagStats().filter(t => t.n >= 3).length;
+
+/* ===================== 画面 ===================== */
+let toastT = null;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('on'), 2000); }
+
+function showView(v){
+  ['vHome','vStyle','vSet'].forEach(id => $('#'+id).classList.toggle('hidden', id !== v));
+  $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  window.scrollTo(0,0);
+  if(v === 'vStyle') renderStyle();
+}
+$$('nav.tabs button').forEach(b => b.onclick = () => showView(b.dataset.v));
+
+function homeMsg(){
+  const n = S.recs.length, st = tagStats();
+  if(n === 0) return '最初の1枚を記録しましょう。<br>「完璧にしたこと」がひとつあれば、それで十分です。';
+  const top = st[0];
+  if(top && top.n >= 5) return '「'+esc(top.name)+'」があなたのマイスタです。<br>次に極めるときも、まずこの方法から。';
+  if(top && top.n >= 3) return '「'+esc(top.name)+'」が'+top.n+'回。あなたの型として確立しました。';
+  if(top && top.n === 2) return '「'+esc(top.name)+'」が2回目。あと1回で、あなたの型になります。';
+  return '記録が'+n+'枚。<br>ためていくと、繰り返し出てくる方法が見えてきます。';
+}
+function renderHome(){
+  $('#hCount').textContent = S.recs.length;
+  $('#hStyle').textContent = styleCount();
+  $('#hMsg').innerHTML = homeMsg();
+  $('#recCount').textContent = S.recs.length ? S.recs.length+'枚' : '';
+  const list = S.recs.slice().sort((a,b) => b.no - a.no);
+  if(!list.length){
+    $('#recList').innerHTML = '<div class="empty"><div class="big serif">M</div>まだ記録がありません。<br>上のボタンから、質問に答えるだけで1枚できます。</div>';
+    return;
+  }
+  $('#recList').innerHTML = list.map(r => `
+    <button class="rec" data-id="${r.id}">
+      <div class="no"><span class="latin">No.</span><b class="serif num">${r.no}</b></div>
+      <div class="body">
+        <div class="what">${esc(r.what)}</div>
+        <div class="meta"><span class="subj">${esc(r.subj)}</span><span>${md(r.created)}</span>${r.dur ? '<span>'+esc(r.dur)+'</span>' : ''}</div>
+        ${r.key ? '<div class="key">'+esc(r.key)+'</div>' : ''}
+        ${r.tags.length ? '<div class="tags">'+r.tags.map(t => '<span class="tag">'+esc(t)+'</span>').join('')+'</div>' : ''}
+      </div>
+    </button>`).join('');
+  $$('#recList .rec').forEach(b => b.onclick = () => openDetail(b.dataset.id));
+}
+
+function renderStyle(){
+  const st = tagStats(), n = S.recs.length;
+  let h = '';
+  const top = st[0];
+  h += '<div class="style-hero"><div class="lab latin">My Style</div>';
+  if(!n){
+    h += '<div class="t serif">まだ見えていません</div><div class="d">極めたことを記録していくと、ここに<br>あなたの勉強法が浮かび上がります。</div></div>';
+    $('#styleBody').innerHTML = h; return;
+  }
+  if(top && top.n >= 3) h += '<div class="t serif">'+esc(top.name)+'</div><div class="d">'+n+'枚の記録のうち'+top.n+'枚に出てくる方法。<br>これがあなたの型です。</div>';
+  else h += '<div class="t serif">見えはじめています</div><div class="d">同じ方法が3回出てきたら「確立」。<br>いちばん多いのは「'+esc(top ? top.name : '—')+'」（'+(top ? top.n : 0)+'回）。</div>';
+  h += '</div>';
+
+  h += '<div class="card"><h3>極めた方法<span class="r">回数の多い順</span></h3>';
+  const mx = top ? top.n : 1;
+  h += st.map((t, i) => `
+    <div class="mrow">
+      <div class="rank num">${i+1}</div>
+      <div class="name"><b>${esc(t.name)}${lvlName(t.n) ? '<span class="lvl l'+lvlOf(t.n)+'">'+lvlName(t.n)+'</span>' : ''}</b><div class="bar"><i style="width:${Math.round(t.n/mx*100)}%"></i></div></div>
+      <div class="cnt"><b class="serif num">${t.n}</b><span>回</span></div>
+    </div>`).join('') || '<p class="note">方法のタグがまだありません。</p>';
+  h += '</div>';
+
+  const keys = S.recs.filter(r => r.key).sort((a,b) => b.no - a.no);
+  if(keys.length){
+    h += '<div class="card"><h3>いちばん効いたこと</h3><ul class="keys">'+keys.map(r => '<li>'+esc(r.key)+'<span>No.'+r.no+'　'+esc(r.what)+'</span></li>').join('')+'</ul></div>';
+  }
+
+  const subs = SUBJ.filter(s => S.recs.some(r => r.subj === s));
+  if(subs.length >= 1){
+    h += '<div class="card"><h3>教科ごとの型</h3><div class="bysubj">'+subs.map(s => {
+      const rs = S.recs.filter(r => r.subj === s), ts = tagStats(rs).slice(0,3);
+      return '<div class="b"><b>'+esc(s)+'　<span class="num" style="color:var(--muted);font-weight:500">'+rs.length+'枚</span></b><div>'+(ts.length ? ts.map(t => esc(t.name)+'（'+t.n+'）').join('<br>') : '<span style="color:var(--faint)">方法なし</span>')+'</div></div>';
+    }).join('')+'</div></div>';
+  }
+  $('#styleBody').innerHTML = h;
+}
+
+/* ===================== 詳細 ===================== */
+function openDetail(id){
+  const r = byId(id); if(!r) return;
+  const dl = (k, v, dim) => '<div class="dl"><div class="k">'+k+'</div><div class="v'+(dim?' dim':'')+'">'+(v ? esc(v) : '—')+'</div></div>';
+  $('#sheetBody').innerHTML = `
+    <div style="display:flex;align-items:baseline;gap:8px"><span class="latin" style="font-size:11px;color:var(--gold)">No.</span><span class="serif num" style="font-size:26px;color:var(--gold-hi)">${r.no}</span><span class="spacer" style="flex:1"></span><span class="note">${ymdJ(r.created)}</span></div>
+    <div class="dl"><div class="k">極めたこと</div><div class="v" style="font-size:18px;font-weight:700"><span class="subj" style="vertical-align:3px;margin-right:6px">${esc(r.subj)}</span>${esc(r.what)}</div></div>
+    ${dl('「完璧」の確かめ方', r.proof + (r.proofNote ? '　'+r.proofNote : ''))}
+    <div class="dl"><div class="k">方法</div>${r.tags.length ? '<div class="tags" style="margin:2px 0 6px">'+r.tags.map(t => '<span class="tag">'+esc(t)+'</span>').join('')+'</div>' : ''}<div class="v${r.how?'':' dim'}">${r.how ? esc(r.how) : '—'}</div></div>
+    ${dl('いちばん効いたこと', r.key)}
+    ${dl('かかった期間', r.dur)}
+    <div class="row" style="margin-top:14px">
+      <button class="btn-line danger" id="dDel">消す</button>
+      <button class="btn-line gold" id="dEdit">直す</button>
+    </div>`;
+  $('#dDel').onclick = () => { if(!confirm('この記録を消しますか？')) return; S.recs = S.recs.filter(x => x.id !== id); save(); closeSheet(); renderHome(); toast('消しました'); };
+  $('#dEdit').onclick = () => { closeSheet(); startInterview(r); };
+  $('#sheetBg').classList.add('on'); $('#sheet').classList.add('on');
+}
+function closeSheet(){ $('#sheetBg').classList.remove('on'); $('#sheet').classList.remove('on'); }
+$('#sheetBg').onclick = closeSheet;
+
+/* ===================== インタビュー ===================== */
+/* 質問は5つ。1つずつ答えると1枚の記録になる。 */
+let iv = null;   // { step, a:{...}, editId }
+const STEPS = [
+  { key:'what', q:'何を極めましたか？', hint:'「完璧にした」と言えるものを、ひとつ。範囲や量まで書くと、あとで役に立ちます。', required:true },
+  { key:'proof', q:'「完璧」と、どう確かめましたか？', hint:'極めた証拠です。いちばん近いものを選んでください。', required:true },
+  { key:'how', q:'どうやって極めましたか？', hint:'使った方法を選び、下に具体的なやり方を書いてください。回数・順番・工夫など。', required:true },
+  { key:'key', q:'いちばん効いたのは、何でしたか？', hint:'ひとことで。ここが、あなたの勉強法の核になります。', required:false },
+  { key:'dur', q:'どのくらいかかりましたか？', hint:'だいたいで大丈夫です。', required:false },
+];
+function startInterview(edit){
+  iv = { step:0, editId: edit ? edit.id : null,
+    a: edit ? { subj:edit.subj, what:edit.what, proof:edit.proof, proofNote:edit.proofNote||'', tags:edit.tags.slice(), how:edit.how||'', key:edit.key||'', dur:edit.dur||'' }
+            : { subj:'', what:'', proof:'', proofNote:'', tags:[], how:'', key:'', dur:'' } };
+  renderStep();
+  $('#iv').classList.add('on');
+}
+function closeInterview(){ $('#iv').classList.remove('on'); iv = null; }
+$('#ivClose').onclick = () => { if(!iv) return; const hasAny = iv.a.what || iv.a.tags.length || iv.a.how; if(hasAny && !confirm('途中ですが、閉じますか？')) return; closeInterview(); };
+
+function renderStep(){
+  const i = iv.step, st = STEPS[i], a = iv.a;
+  $('#ivSteps').innerHTML = STEPS.map((_, k) => '<i class="'+(k < i ? 'done' : k === i ? 'cur' : '')+'"></i>').join('');
+  $('#ivCnt').textContent = (i+1)+'/'+STEPS.length;
+  $('#ivBack').classList.toggle('hidden', i === 0);
+  $('#ivSkip').classList.toggle('hidden', st.required);
+  $('#ivNext').textContent = i === STEPS.length-1 ? (iv.editId ? '保存する' : '完成') : '次へ';
+  let h = '<div class="qno latin">Question '+(i+1)+'</div><div class="q serif">'+st.q+'</div><div class="hint">'+st.hint+'</div>';
+  if(st.key === 'what'){
+    h += '<div class="lab2">教科</div><div class="chips">'+SUBJ.map(s => '<button class="chip'+(a.subj===s?' on':'')+'" data-subj="'+s+'">'+s+'</button>').join('')+'</div>';
+    h += '<textarea class="field" id="fWhat" rows="3" placeholder="例：英単語帳の1〜300番">'+esc(a.what)+'</textarea>';
+    h += '<div class="ex"><b>例</b>　英単語帳の 1〜300 番／数学の二次関数のワーク全問／歴史の江戸時代の年号／古文の助動詞の活用表</div>';
+  }else if(st.key === 'proof'){
+    h += '<div class="chips">'+PROOFS.map(p => '<button class="chip'+(a.proof===p?' on':'')+'" data-proof="'+p+'">'+p+'</button>').join('')+'</div>';
+    h += '<input class="field" id="fProofNote" placeholder="補足があれば（例：単語テスト 3回連続で満点）" value="'+esc(a.proofNote)+'">';
+  }else if(st.key === 'how'){
+    h += '<div class="lab2">使った方法（いくつでも）</div><div class="chips" id="tagChips">'+allTags().map(t => '<button class="chip'+(a.tags.includes(t)?' on':'')+'" data-tag="'+esc(t)+'">'+esc(t)+'</button>').join('')+'<button class="chip add" id="tagAdd">＋ 自分の方法</button></div>';
+    h += '<div class="lab2">具体的に</div><textarea class="field" id="fHow" rows="5" placeholder="例：1日30語ずつ音読して、翌朝に赤シートで確認。間違えた語だけカードにして、寝る前に見た。">'+esc(a.how)+'</textarea>';
+  }else if(st.key === 'key'){
+    h += '<input class="field" id="fKey" placeholder="例：翌朝にもう一度やること" value="'+esc(a.key)+'">';
+    h += '<div class="ex"><b>例</b>　翌朝にもう一度やること／間違えた問題だけを集めたこと／声に出したこと／量を小さく区切ったこと</div>';
+  }else if(st.key === 'dur'){
+    h += '<div class="chips">'+DURS.map(d => '<button class="chip'+(a.dur===d?' on':'')+'" data-dur="'+d+'">'+d+'</button>').join('')+'</div>';
+    // 最後の確認
+    h += '<div class="card" style="margin-top:8px"><h3>この内容で記録します</h3>'
+      + '<div class="dl"><div class="k">極めたこと</div><div class="v"><span class="subj" style="margin-right:6px;vertical-align:2px">'+esc(a.subj)+'</span>'+esc(a.what)+'</div></div>'
+      + '<div class="dl"><div class="k">確かめ方</div><div class="v">'+esc(a.proof)+(a.proofNote?'　'+esc(a.proofNote):'')+'</div></div>'
+      + '<div class="dl"><div class="k">方法</div>'+(a.tags.length?'<div class="tags" style="margin:2px 0 6px">'+a.tags.map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+'</div>':'')+'<div class="v'+(a.how?'':' dim')+'">'+(a.how?esc(a.how):'—')+'</div></div>'
+      + '<div class="dl"><div class="k">いちばん効いたこと</div><div class="v'+(a.key?'':' dim')+'">'+(a.key?esc(a.key):'—')+'</div></div>'
+      + '</div>';
+  }
+  $('#ivBody').innerHTML = h;
+  $('#ivBody').scrollTop = 0;
+  // イベント
+  $$('#ivBody [data-subj]').forEach(b => b.onclick = () => { a.subj = b.dataset.subj; $$('#ivBody [data-subj]').forEach(x => x.classList.toggle('on', x === b)); });
+  $$('#ivBody [data-proof]').forEach(b => b.onclick = () => { a.proof = b.dataset.proof; $$('#ivBody [data-proof]').forEach(x => x.classList.toggle('on', x === b)); if(a.proof === 'その他') $('#fProofNote').focus(); });
+  $$('#ivBody [data-dur]').forEach(b => b.onclick = () => { a.dur = (a.dur === b.dataset.dur) ? '' : b.dataset.dur; $$('#ivBody [data-dur]').forEach(x => x.classList.toggle('on', x.dataset.dur === a.dur)); });
+  $$('#ivBody [data-tag]').forEach(b => b.onclick = () => { const t = b.dataset.tag; if(a.tags.includes(t)) a.tags = a.tags.filter(x => x !== t); else a.tags.push(t); b.classList.toggle('on', a.tags.includes(t)); });
+  const tagAdd = $('#tagAdd');
+  if(tagAdd) tagAdd.onclick = () => {
+    const t = (prompt('自分の方法を短く（例：先生に質問する）') || '').trim().slice(0, 20);
+    if(!t) return;
+    if(!a.tags.includes(t)) a.tags.push(t);
+    rememberTags([t]); save(); renderStep();
+  };
+  const f = $('#fWhat, #fProofNote, #fHow, #fKey'.split(',').map(s=>s.trim()).find(s => $(s)));
+  if(f && !('ontouchstart' in window)) setTimeout(() => f.focus(), 120);
+}
+function pullStep(){
+  const a = iv.a;
+  if($('#fWhat')) a.what = $('#fWhat').value.trim();
+  if($('#fProofNote')) a.proofNote = $('#fProofNote').value.trim();
+  if($('#fHow')) a.how = $('#fHow').value.trim();
+  if($('#fKey')) a.key = $('#fKey').value.trim();
+}
+function validStep(){
+  const st = STEPS[iv.step], a = iv.a;
+  if(st.key === 'what'){ if(!a.subj){ toast('教科を選んでください'); return false; } if(!a.what){ toast('極めたことを書いてください'); return false; } }
+  if(st.key === 'proof' && !a.proof){ toast('確かめ方を選んでください'); return false; }
+  if(st.key === 'how' && !a.tags.length && !a.how){ toast('方法を1つ選ぶか、書いてください'); return false; }
+  return true;
+}
+$('#ivBack').onclick = () => { pullStep(); if(iv.step > 0){ iv.step--; renderStep(); } };
+$('#ivSkip').onclick = () => { pullStep(); goNext(true); };
+$('#ivNext').onclick = () => { pullStep(); goNext(false); };
+function goNext(skip){
+  if(!skip && !validStep()) return;
+  if(iv.step < STEPS.length-1){ iv.step++; renderStep(); return; }
+  finishInterview();
+}
+function finishInterview(){
+  const a = iv.a;
+  const before = new Map(tagStats().map(t => [t.name, t.n]));
+  let r;
+  if(iv.editId){
+    r = byId(iv.editId);
+    Object.assign(r, { subj:a.subj, what:a.what, proof:a.proof, proofNote:a.proofNote, tags:a.tags.slice(), how:a.how, key:a.key, dur:a.dur });
+  }else{
+    const no = Math.max(0, ...S.recs.map(x => x.no)) + 1;
+    r = { id:newId(), no, created:today(), subj:a.subj, what:a.what, proof:a.proof, proofNote:a.proofNote, tags:a.tags.slice(), how:a.how, key:a.key, dur:a.dur };
+    S.recs.push(r);
+  }
+  const isNew = !iv.editId;
+  rememberTags(a.tags);
+  save();
+  closeInterview();
+  renderHome();
+  if(isNew) showDone(r, before); else toast('直しました');
+}
+function showDone(r, before){
+  $('#doneNo').textContent = 'No.'+r.no;
+  $('#doneWhat').innerHTML = '<span class="subj" style="margin-right:6px;vertical-align:2px">'+esc(r.subj)+'</span>'+esc(r.what);
+  $('#doneHow').textContent = (r.tags.length ? r.tags.join('・') : '') + (r.key ? '　◆ '+r.key : '');
+  // 型の発見(回数が節目に達したタグ)
+  const now = tagStats();
+  let find = '';
+  for(const t of now){
+    const b = before.get(t.name) || 0;
+    if(t.n >= 5 && b < 5){ find = '<b>MY STYLE</b>「'+esc(t.name)+'」が5回目。あなたのマイスタです。'; break; }
+    if(t.n >= 3 && b < 3){ find = '<b>確立</b>「'+esc(t.name)+'」が3回目。あなたの型として確立しました。'; break; }
+    if(t.n === 2 && b < 2){ find = '<b>芽</b>「'+esc(t.name)+'」が2回目。あと1回で、あなたの型になります。'; }
+  }
+  $('#doneFind').innerHTML = find; $('#doneFind').classList.toggle('hidden', !find);
+  $('#done').classList.add('on');
+}
+$('#doneOk').onclick = () => { $('#done').classList.remove('on'); showView('vHome'); };
+$('#btnNew').onclick = () => startInterview(null);
+
+/* ===================== 控え ===================== */
+$('#btnExport').onclick = () => {
+  const blob = new Blob([JSON.stringify({ app:'mysta', v:VER, exported:new Date().toISOString(), data:S }, null, 1)], { type:'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mysta-'+today()+'.json'; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  toast('書き出しました');
+};
+$('#btnImport').onclick = () => $('#fileImport').click();
+$('#fileImport').onchange = async e => {
+  const f = e.target.files[0]; if(!f) return; e.target.value = '';
+  try{
+    const j = JSON.parse(await f.text()); const d = norm(j.data && j.data.recs ? j.data : j);
+    let add = 0, up = 0;
+    d.recs.forEach(r => { const cur = byId(r.id); if(cur){ Object.assign(cur, r); up++; } else { S.recs.push(r); add++; } });
+    rememberTags(d.tags); norm(S); save(); renderHome();
+    toast('読みこみました（追加'+add+'・上書き'+up+'）');
+  }catch(err){ toast('読みこめませんでした'); }
+};
+$('#btnWipe').onclick = () => {
+  if(!confirm('記録をすべて消しますか？（元に戻せません）')) return;
+  if(!confirm('本当に消しますか？')) return;
+  S = norm({ recs:[], tags:[] }); save(); renderHome(); toast('消しました');
+};
+
+/* ===================== 更新の確認 ===================== */
+async function checkUpdate(silent){
+  try{
+    const res = await fetch('version.json?t='+Date.now(), { cache:'no-store' });
+    if(!res.ok) throw 0;
+    const j = await res.json(), v = Number(j.v)||0;
+    if(v > VER){
+      $('#updVer').textContent = 'v'+VER+' → v'+v+(j.note ? '　'+j.note : '');
+      $('#btnUpdate').classList.remove('hidden'); $('#tabDot').classList.remove('hidden');
+    }else{
+      $('#btnUpdate').classList.add('hidden'); $('#tabDot').classList.add('hidden');
+      if(!silent) toast('いまが最新です（v'+VER+'）');
+    }
+  }catch(e){ if(!silent) toast('調べられませんでした'); }
+}
+async function doUpdate(){
+  save(); toast('更新しています…');
+  try{
+    if('serviceWorker' in navigator){ const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.unregister())); }
+    if(window.caches){ const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
+  }catch(e){}
+  location.replace(location.pathname + '?u=' + Date.now());
+}
+$('#btnUpdate').onclick = doUpdate;
+$('#btnCheckUpd').onclick = () => checkUpdate(false);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) checkUpdate(true); else save(); });
+window.addEventListener('pagehide', () => save());
+
+/* 起動 */
+renderHome();
+checkUpdate(true);
+try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
+if('serviceWorker' in navigator){ window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
+</script>
+</body>
+</html>

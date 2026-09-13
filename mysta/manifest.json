@@ -1,0 +1,17 @@
+{
+  "name": "マイスタ",
+  "short_name": "マイスタ",
+  "description": "極めたことと、その方法を記録して、自分に合った勉強法を見つけるアプリ",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0D0E12",
+  "theme_color": "#0D0E12",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

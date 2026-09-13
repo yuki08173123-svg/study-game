@@ -471,6 +471,19 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 .mydel{display:block;margin:-4px 0 12px auto;color:var(--ink3);font-size:.72rem;font-weight:700;padding:4px 6px}
 /* 未アウトプットの印 */
 .tag.todo{background:none;border:1px solid var(--acc);color:var(--acc);opacity:.85}
+/* 今日のゴール */
+.goal{display:block;width:100%;text-align:left;background:var(--surf);border:1px solid var(--line);
+  border-radius:var(--r);padding:13px 15px;margin-top:12px}
+.goal .gl{color:var(--ink3);font-size:.7rem;font-weight:800;letter-spacing:.1em}
+.goal .gv{display:flex;align-items:baseline;gap:5px;margin-top:3px}
+.goal .gv b{font-size:1.7rem;font-weight:800;color:var(--acc);font-variant-numeric:tabular-nums;line-height:1.1}
+.goal .gv span{font-size:.8rem;color:var(--ink2);font-weight:700}
+.goal .gv i{font-style:normal;font-size:.8rem;color:var(--ink3);font-weight:700;margin-left:2px}
+.goal .gok{margin-left:auto;background:var(--acc-soft);color:var(--acc);font-size:.68rem;font-weight:800;
+  border-radius:20px;padding:3px 10px;letter-spacing:.06em}
+.goal .bar{margin-top:9px}
+.goal.done{border-color:var(--acc)}
+.goal.off .gv2{color:var(--ink2);font-size:.9rem;font-weight:700;margin-top:4px}
 /* いつ見る（予定） */
 .pq{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .pq button{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
@@ -582,10 +595,10 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 52;
+const VER = 53;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
-      K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at';
+      K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day';
 
 /* 塾生かどうかをたしかめる入口。中身（動画リスト）は公開の場所には置いていない。
    ここに毎回聞きにいって、Discordのサーバーに「いま」いる人にだけ渡してもらう。 */
@@ -642,7 +655,8 @@ let favs = [];
 let folders = [];       /* 生徒が自分で作るフォルダ [{id, name, ids:[]}] */
 let outs = {};          /* アウトプット {動画id: [{at:時刻, t:本文}]} */
 let mych = [];          /* マイチャンネル（自分で足した ヒラ先生の動画）[{id, t, at}] */
-let cfg  = { speed:1, autonext:true, loop:false, cc:false, rv:5, noauto:false };
+let day = {};           /* 日ごとに見た秒数 { 'YYYY-MM-DD': 秒 } */
+let cfg  = { speed:1, autonext:true, loop:false, cc:false, rv:5, noauto:false, goal:0 };
 let view = { name:'home' };
 let admin = null;         /* 管理画面のしたがき */
 
@@ -656,6 +670,8 @@ function load(){
   try{ Object.assign(cfg, JSON.parse(localStorage.getItem(K_CFG) || '{}')); }catch(e){}
   try{ mych = JSON.parse(localStorage.getItem(K_MYCH) || '[]'); }catch(e){ mych = []; }
   if(!Array.isArray(mych)) mych = [];
+  try{ day = JSON.parse(localStorage.getItem(K_DAY) || '{}'); }catch(e){ day = {}; }
+  if(!day || typeof day !== 'object') day = {};
 }
 /* 記録を保存したら、少しあとに預け先にも送る（schedulePush は下の方で定義） */
 const saveProg = () => { localStorage.setItem(K_PROG, JSON.stringify(prog)); schedulePush(); };
@@ -663,6 +679,24 @@ const saveFav  = () => { localStorage.setItem(K_FAV,  JSON.stringify(favs));   s
 const saveFold = () => { localStorage.setItem(K_FOLD, JSON.stringify(folders)); schedulePush(); };
 const saveOut  = () => { localStorage.setItem(K_OUT,  JSON.stringify(outs));   schedulePush(); };
 const saveMych = () => { localStorage.setItem(K_MYCH, JSON.stringify(mych));   schedulePush(); };
+/* 見た時間は毎秒変わるので、ここでは同期を急かさない（閉じるときとほかの変化のついでに送る） */
+const saveDay  = () => { try{ localStorage.setItem(K_DAY, JSON.stringify(day)); }catch(e){} };
+
+/* ---------- 今日のゴール（Yuuydさんの提案・2026-09-13） ----------
+   長い動画を1本見終わるのは重いので、「今日は何分見る」を自分で決められるようにした。
+   レベルの数え方（最後まで見て＋10）は変えていない。これは別のものさし。 */
+const GOALS = [5, 10, 15, 20, 30, 45, 60];
+function addWatch(sec){
+  if(!(sec > 0) || sec > 2) return;
+  const k = todayStr();
+  day[k] = (day[k] || 0) + sec;
+  /* 古い日のぶんは持たない（2か月ぶんだけ残す） */
+  const lim = new Date(Date.now() - 62 * 864e5).toISOString().slice(0, 10);
+  Object.keys(day).forEach(d => { if(d < lim) delete day[d]; });
+  if(Math.floor(day[k]) % 10 === 0) saveDay();
+}
+const todayMin = () => Math.floor((day[todayStr()] || 0) / 60);
+const goalMin  = () => +cfg.goal || 0;
 /* ---------- アウトプットに貼る写真 ----------
    写真は大きいので、ほかの記録とは別のところ（IndexedDB）にしまう。
    **この端末の中だけに残る。** ほかの端末には送っていない（通信量と保管量の都合）。
@@ -1093,13 +1127,15 @@ const stamp = () => { try{ localStorage.setItem(K_AT, String(now())); }catch(e){
 const stampAt = () => +(localStorage.getItem(K_AT) || 0);
 
 /* この端末の記録をひとまとめにする。速さやループは端末ごとの好みなので送らない */
-const myRec = () => ({ prog, favs, folders, outs, mych, name: cfg.name || '', at: stampAt() });
+const myRec = () => ({ prog, favs, folders, outs, mych, day, goal: goalMin(), name: cfg.name || '', at: stampAt() });
 
 function applyRec(r){
   prog = r.prog || {}; favs = Array.isArray(r.favs) ? r.favs : [];
   folders = Array.isArray(r.folders) ? r.folders : [];
   outs = (r.outs && typeof r.outs === 'object') ? r.outs : {};
   if(Array.isArray(r.mych)) mych = r.mych;
+  if(r.day && typeof r.day === 'object'){ day = r.day; saveDay(); }
+  if(r.goal != null && !cfg.goal){ cfg.goal = +r.goal || 0; saveCfg(); }
   if(r.name && !cfg.name){ cfg.name = r.name; saveCfg(); }
   saveProg(); saveFav(); saveFold(); saveOut(); saveMych();
 }
@@ -1163,6 +1199,11 @@ function mergeRec(a, b){
   /* マイチャンネルは両方を残す（同じ動画は1つに） */
   const seenM = {}; out.mych = [];
   (a.mych || []).concat(b.mych || []).forEach(m => { if(m && !seenM[m.id]){ seenM[m.id] = 1; out.mych.push(m); } });
+  /* 見た時間は 日ごとに多いほうを採る（2台で見た日も、どちらかの多いほうが残る） */
+  out.day = {};
+  [a.day || {}, b.day || {}].forEach(o => Object.keys(o).forEach(d => {
+    out.day[d] = Math.max(out.day[d] || 0, +o[d] || 0); }));
+  out.goal = newer.goal != null ? newer.goal : (a.goal != null ? a.goal : b.goal);
   return out;
 }
 
@@ -1362,6 +1403,18 @@ function vHome(){
       </div>
       <div class="dt">${new Date().toLocaleDateString('ja-JP')} 時点 ・ 押すと上がり方がわかります</div>
     </button>`;
+
+  /* 今日のゴール。1本を見終わるのが重い人でも、今日のぶんが見えると進みやすい */
+  const gm = goalMin(), tm = todayMin();
+  h += gm
+    ? `<button class="goal ${tm >= gm ? 'done' : ''}" data-goal="1">
+         <div class="gl">今日のゴール</div>
+         <div class="gv"><b>${tm}</b><span>分</span><i>/ ${gm}分</i>
+           ${tm >= gm ? `<span class="gok">達成</span>` : ''}</div>
+         <div class="bar"><i style="width:${Math.min(100, gm ? Math.round(tm / gm * 100) : 0)}%"></i></div>
+       </button>`
+    : `<button class="goal off" data-goal="1"><div class="gl">今日のゴール</div>
+         <div class="gv2">今日は何分見るか決める</div></button>`;
 
   /* 今日までに見ると決めた動画。あとで見る予定を忘れないように、いちばん上に出す */
   const due = plannedList().filter(v => planDate(planOf(v.id)) <= todayStr());
@@ -1806,6 +1859,10 @@ function vSet(){
       <div class="item"><div class="nm">はじめの再生の速さ</div>
         <div class="ct" id="spdLbl">${cfg.speed}倍</div>
         <button class="pb" id="spdBtn" style="color:var(--ink2)">${ICO.down({s:20})}</button></div>
+      <div class="item"><div class="nm">今日のゴール<br>
+        <span style="font-size:.76rem;color:var(--ink3);font-weight:600">今日は何分見るか</span></div>
+        <div class="ct" id="goalLbl">${goalMin() ? goalMin() + '分' : '決めていない'}</div>
+        <button class="pb" id="goalBtn" style="color:var(--ink2)">${ICO.down({s:20})}</button></div>
       <div class="item"><div class="nm">字幕<br>
         <span style="font-size:.76rem;color:var(--ink3);font-weight:600">字幕のある動画で出す</span></div>
         <div class="sw ${cfg.cc?'on':''}" id="swCC"><i></i></div></div>
@@ -1863,6 +1920,7 @@ function vSet(){
   $('#swNext').onclick = () => { cfg.autonext = !cfg.autonext; saveCfg(); vSet(); };
   $('#swNoAuto').onclick = () => { cfg.noauto = !cfg.noauto; saveCfg(); vSet();
     toast(cfg.noauto ? '開いても すぐには再生しません' : '開いたら すぐ再生します'); };
+  $('#goalBtn').onclick = $('#goalLbl').onclick = () => pickGoal();
   $('#swCC').onclick = () => { cfg.cc = !cfg.cc; saveCfg(); applyCCSoon(); vSet();
     toast(cfg.cc ? '字幕を出します' : '字幕を消しました'); };
   $('#spdBtn').onclick = $('#spdLbl').onclick = () =>
@@ -2041,7 +2099,7 @@ function pickFolder(id, after){
 /* 機種変更で記録が消えるのを防ぐ。見た回数・フォルダ・保存・設定をまとめて出し入れする */
 function backupData(){
   return { app:'Theater', v:VER, at:new Date().toISOString(),
-           prog, favs, folders, cfg, outs, mych };
+           prog, favs, folders, cfg, outs, mych, day };
 }
 /* 機種変更で写真も持っていけるように、書き出しには写真も入れる */
 const blobToURL = b => new Promise(res => {
@@ -2119,6 +2177,8 @@ async function applyBackup(j){
   if(j.cfg && typeof j.cfg === 'object') Object.assign(cfg, j.cfg);
   outs = (j.outs && typeof j.outs === 'object') ? j.outs : {};
   mych = Array.isArray(j.mych) ? j.mych : [];
+  day = (j.day && typeof j.day === 'object') ? j.day : {};
+  saveDay();
   saveProg(); saveFav(); saveFold(); saveCfg(); saveOut(); saveMych();
 }
 function doImport(){
@@ -2422,13 +2482,14 @@ function onTick(){
   if(lastT >= 0 && t > lastT && t - lastT < 2 && d){
     const p = prog[curId] || (prog[curId] = { t:0, d:0 });
     p.d = d; p.w = (p.w || 0) + (t - lastT);
+    addWatch(t - lastT);
     checkFull(false);
   }
   lastT = t;
   clipWatch(t);
   if(++saveCount % 20 === 0) saveNow();   /* 5秒に1回だけ書きこむ */
 }
-function saveNow(){
+function saveNow(){ saveDay();
   /* まだ一度も再生していないときは書きこまない。
      （iPhoneで自動再生されずに閉じたとき、つづきの位置が0で消えてしまうため） */
   if(!curId || !player || !playerReady || !started) return;
@@ -2537,6 +2598,7 @@ addEventListener('message', e => {
     /* 実際に流れた分だけ足す。とばした分は足さないので、飛ばしても回数にならない */
     if(loomLast >= 0 && t > loomLast && t - loomLast < 2){
       p.w = (p.w || 0) + (t - loomLast);
+      addWatch(t - loomLast);
       checkFull(false);
     }
     loomLast = t;
@@ -2824,6 +2886,28 @@ function jumpPoints(id){
   const out = [];
   for(let t = 0; t < d - 60; t += step) out.push(t);
   return out;
+}
+
+/* 今日のゴールを決める */
+function pickGoal(){
+  const cur = goalMin();
+  openSheet(`
+    <h3>今日のゴール</h3>
+    <div class="lead" style="margin:-4px 2px 10px;line-height:1.9">
+      「今日は何分見る」を決めておくと、長い動画でも少しずつ進められます。<br>
+      毎日0時に、その日のぶんは0からになります。</div>
+    <div class="spds">${GOALS.map(m => `<button class="spd1 ${m === cur ? 'on' : ''}" data-g="${m}">${m}分</button>`).join('')}</div>
+    <button class="btn" id="gOff" style="margin-top:12px">${cur ? 'ゴールを決めない（消す）' : 'とじる'}</button>`,
+  () => {
+    $$('#shin [data-g]').forEach(b => b.onclick = () => {
+      cfg.goal = +b.dataset.g; saveCfg(); schedulePush(); closeSheet(); render();
+      toast(`今日のゴールを ${cfg.goal}分 にしました`);
+    });
+    $('#gOff').onclick = () => {
+      if(cur){ cfg.goal = 0; saveCfg(); schedulePush(); closeSheet(); render(); toast('ゴールをやめました'); }
+      else closeSheet();
+    };
+  });
 }
 
 /* 速さを一覧から選ぶ。1回ずつ送るより、2倍速にすぐ行けるように */
@@ -3518,6 +3602,7 @@ async function boot(){
     const t = e.target.closest('[data-tile]');
     if(t){ catG = 'all'; go('cat', t.dataset.tile); return; }
     if(e.target.closest('[data-man]')){ go('man'); return; }
+    if(e.target.closest('[data-goal]')){ pickGoal(); return; }
     if(e.target.closest('[data-lv]')){ go('lv'); }
   });
 

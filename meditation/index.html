@@ -155,13 +155,18 @@ body.tab-home:not(.bgm):not(.wc):not(.upd):not(.ambopen) .app{overflow-y:hidden}
 .chrcell.next .cl{color:var(--warm)}
 .chrcell .lock{filter:brightness(.18) saturate(0)}
 
-.picks{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;max-width:276px}
+.picks{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;max-width:340px}
 .pick{width:60px;min-width:60px;padding:clamp(7px,1.1vh,10px) 0;padding:clamp(7px,1.1dvh,10px) 0;border-radius:999px;background:var(--surf);
   border:1px solid var(--line);color:var(--ink2);font-size:.95rem;transition:.25s}
 .pick .m{font-size:1.05rem;font-weight:500}
 .pick .s{font-size:.72rem;color:var(--dim);margin-left:3px}
 .pick[aria-pressed="true"]{background:rgba(159,216,214,.14);border-color:rgba(159,216,214,.45);color:#eafaf8;
   box-shadow:0 0 22px rgba(120,190,195,.18)}
+.pick.adj{background:none;border-style:dashed;border-color:rgba(255,255,255,.16);color:var(--dim);
+  -webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.pick.adj .m{font-size:.95rem}
+.pick.adj:active{border-color:rgba(159,216,214,.45);color:#eafaf8}
+.pick.adj:disabled{opacity:.3}
 
 .ambs{width:100%;max-width:300px}
 .ambhead{display:flex;align-items:center;justify-content:center;gap:14px}
@@ -711,6 +716,8 @@ body.bgm .stage{gap:14px}
       <button class="pick" data-min="20"><span class="m mono">20</span><span class="s">分</span></button>
       <button class="pick" data-min="30"><span class="m mono">30</span><span class="s">分</span></button>
       <button class="pick" data-min="60"><span class="m mono">60</span><span class="s">分</span></button>
+      <button class="pick adj" data-adj="-1" aria-label="1分へらす"><span class="m mono">−1</span><span class="s">分</span></button>
+      <button class="pick adj" data-adj="1" aria-label="1分ふやす"><span class="m mono">＋1</span><span class="s">分</span></button>
     </div>
 
     <div class="ambs" id="ambs">
@@ -829,6 +836,7 @@ body.bgm .stage{gap:14px}
           <li>その横の<b>「音の設定」</b>で、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。雨・波・風・たき火・せせらぎ・虫の声は<b>本物の録音</b>です（アプリが作る「合成」の音にも切りかえられます）。録音は選んだ音だけ、はじめて流すときに読み込みます。</li>
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
+          <li><b>ボタンに無い長さ</b>にしたいときは、近い長さを押してから<b>「＋1分」「−1分」</b>で調整してください（押しっぱなしで早く進みます）。いま何分にしているかは、まん中の「◯分　はじめる」で分かります。</li>
           <li>終わると自動で記録されます。<b>いまの気分</b>を5段階でひと押しでき、「ひとこと」に感じたことも残せます（声でも入れられます）。<b>気分を押しそびれても、あとから入れられます</b>——「記録」で日や記録を押すと、気分とひとことをまとめて直せます。</li>
           <li>「記録」で、続いた日数やこれまでの時間を見られます。<b>カレンダー</b>は月ごとに見られ、‹ › で始めた月までさかのぼれます。<b>日を押すと、何時から何分すわったか、流していた音、気分、書いたひとことが日記のように見られます</b>。</li>
           <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。1日後・3日後・7日後…と<b>復習</b>が出てきます。復習は<b>問題に答える形</b>です。答えるまでにかかった時間も出るので、同じ問題を前より速く答えられたかが分かります。正解なら次に出る日がのびて、まちがえたら翌日また出ます。覚えているかどうかを自分で決めなくてよいので、迷いません。問題の難しさは<b>やさしい／ふつう／激ムズ</b>から選べます。「力だめし」を押すと、学んだところからランダムに出題されます（こちらは復習の日には影響しません）。まちがえてチェックを外しても、つけ直せば復習の進みぐあいはそのまま戻ります。</li>
@@ -1386,7 +1394,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 'use strict';
-const VER = 51;
+const VER = 52;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -2034,18 +2042,56 @@ $('tabs').addEventListener('click', function(e){
 });
 
 /* ───────── 時間えらび ───────── */
-let picked = parseInt(localStorage.getItem(KEY_PICK) || '5', 10);
-if([1,3,5,10,15,20,30,60].indexOf(picked) < 0) picked = 5;
+/* 決まった長さのほかに、＋1分／−1分 でこまかく決められる（Yuuyさんの「7分にしたい」）。
+   1〜120分。7分・12分・45分のような、ボタンに無い長さもこれで作る。 */
+const PICK_MIN = 1, PICK_MAX = 120;
+const clampMin = (n) => Math.max(PICK_MIN, Math.min(PICK_MAX, n));
+let picked = clampMin(parseInt(localStorage.getItem(KEY_PICK) || '5', 10) || 5);
 function renderPick(){
   document.querySelectorAll('.pick').forEach(function(b){
-    b.setAttribute('aria-pressed', parseInt(b.dataset.min,10) === picked ? 'true' : 'false');
+    if(b.dataset.adj){                          // ＋1／−1 は「選ばれている」状態にしない
+      b.disabled = clampMin(picked + parseInt(b.dataset.adj, 10)) === picked;
+      return;
+    }
+    b.setAttribute('aria-pressed', parseInt(b.dataset.min, 10) === picked ? 'true' : 'false');
   });
+  const s = $('btnStart');                      // 何分やるかは、ここで確かめられる
+  if(s) s.textContent = picked + '分　はじめる';
+}
+function setPick(n){
+  picked = clampMin(n);
+  try{ localStorage.setItem(KEY_PICK, String(picked)); }catch(e){}
+  renderPick();
 }
 $('picks').addEventListener('click', function(e){
   const b = e.target.closest('.pick'); if(!b) return;
+  if(b.dataset.adj){                            // 押しっぱなしのときは、はなしたあとの1回は数えない
+    if(!holdFired) setPick(picked + parseInt(b.dataset.adj, 10));
+    holdFired = false;
+    return;
+  }
   picked = parseInt(b.dataset.min, 10);
   localStorage.setItem(KEY_PICK, String(picked));
   renderPick();
+});
+/* ＋1／−1 は押しっぱなしでも進む。45分のような長さを作るとき、何度も押さなくてよい */
+let holdFired = false, holdT = null, holdIv = null;
+function holdStop(){ clearTimeout(holdT); clearInterval(holdIv); holdT = null; holdIv = null; }
+$('picks').addEventListener('pointerdown', function(e){
+  const b = e.target.closest('.pick.adj'); if(!b || b.disabled) return;
+  const d = parseInt(b.dataset.adj, 10);
+  holdFired = false; holdStop();
+  holdT = setTimeout(function(){
+    holdFired = true;
+    let n = 0;
+    holdIv = setInterval(function(){
+      if(clampMin(picked + d) === picked){ holdStop(); return; }
+      setPick(picked + d * (++n > 12 ? 5 : 1));   // 長く押すほど、5分ずつに
+    }, 140);
+  }, 450);
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach(function(ev){
+  $('picks').addEventListener(ev, holdStop);
 });
 
 /* ───────── セッション ───────── */
@@ -4154,7 +4200,7 @@ function applyImport(txt){
     saveBak();
   }
   if(d.amb){ ambKind = d.amb; try{ localStorage.setItem('med.amb.v1', ambKind); }catch(e){} renderAmb(); }
-  if(d.pick){ picked = d.pick; try{ localStorage.setItem(KEY_PICK, String(picked)); }catch(e){} renderPick(); }
+  if(d.pick) setPick(parseInt(d.pick, 10) || picked);
   renderTop(); renderLog(); renderLearn(); renderChar();
   toast('記録を ' + add + '件 読みこみました');
 }

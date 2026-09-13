@@ -239,7 +239,27 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.95;}
 .daylist .row.did{background:var(--done-soft); border-color:transparent;}
 .daylist .row.did .tx::after{content:'　✓ 入れました'; color:var(--done); font-size:11px; font-weight:900;}
 .addrow{display:flex; align-items:center; gap:8px; padding:5px 11px 9px;}
-.addrow input[type=time]{width:74px; flex:none; font-size:14px; font-weight:700; color:var(--accent); background:var(--chip); border-radius:9px; padding:6px 4px; text-align:center;}
+.addrow .timebtn{width:74px; flex:none; font-size:14px; font-weight:900; color:var(--accent); background:var(--chip); border-radius:9px; padding:9px 4px; text-align:center;}
+.timebtn.none{color:var(--muted); font-weight:700;}
+.timebtn.wide{width:100%; font-size:18px; padding:12px; background:var(--chip); border-radius:12px; color:var(--accent); font-weight:900; text-align:left;}
+.tpick .big{font-size:34px; font-weight:900; text-align:center; color:var(--accent); margin:2px 0 10px; font-variant-numeric:tabular-nums;}
+.tpick .big.none{color:var(--muted); font-size:22px;}
+.tpick .lab{font-size:11.5px; font-weight:900; color:var(--muted); margin:8px 0 5px;}
+.tpick .grid{display:grid; grid-template-columns:repeat(6,1fr); gap:6px;}
+.tpick .grid button{background:var(--chip); border-radius:10px; padding:10px 0; font-size:15px; font-weight:900; font-variant-numeric:tabular-nums;}
+.tpick .grid button.on{background:var(--accent); color:var(--accent-ink);}
+.tpick .grid button.dim{color:var(--muted); font-weight:700;}
+.mv .mvday{margin-top:12px;}
+.mv .mvday h4{font-size:13px; font-weight:900; color:var(--muted); margin:0 0 4px; display:flex; align-items:center; gap:8px;}
+.mv .mvday h4 .to{margin-left:auto; background:var(--accent-soft); color:var(--accent); border-radius:999px; padding:5px 11px; font-size:12px; font-weight:900;}
+.mv .mvday h4 .to.here{background:var(--accent); color:var(--accent-ink);}
+.mv .row{display:flex; align-items:center; gap:8px; width:100%; text-align:left; background:var(--chip); border-radius:10px; padding:9px 11px; margin-bottom:5px; font-size:14px; font-weight:800;}
+.mv .row .tm{color:var(--accent); font-size:12.5px; font-weight:900; flex:none; min-width:40px;}
+.mv .row.sel{background:var(--accent); color:var(--accent-ink);}
+.mv .row.sel .tm{color:var(--accent-ink);}
+.mv .row.done{opacity:.55; text-decoration:line-through;}
+.mv .empty{color:var(--muted); font-size:12.5px; padding:4px 2px 6px;}
+.mv .pick{position:sticky; top:0; z-index:2; background:var(--accent-soft); border-radius:12px; padding:9px 12px; font-size:13px; font-weight:900; color:var(--ink); margin-bottom:4px;}
 .addrow input[type=text]{flex:1; font-size:16px;}
 .addrow .add{width:38px; height:38px; border-radius:12px; background:var(--accent); display:grid; place-items:center; flex:none;}
 .addrow .add svg{width:20px; height:20px; stroke:var(--accent-ink); fill:none; stroke-width:3; stroke-linecap:round;}
@@ -424,7 +444,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v42</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v43</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -495,7 +515,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
     </div>
     <div class="addhead"><span class="c1">時こく</span><span class="c2">やること</span><button class="fromday" id="btnFromDay">ほかの曜日から</button></div>
     <div class="addrow">
-      <input type="time" id="newTime" aria-label="はじめる時刻">
+      <button class="timebtn none" id="newTime" data-v="" aria-label="はじめる時刻">時こく</button>
       <input type="text" id="newText" placeholder="例）英単語 300〜500番" enterkeyhint="done" autocomplete="off">
       <button class="add" id="btnAdd" aria-label="追加"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     </div>
@@ -550,6 +570,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
     </button>
     <button class="subbtn" id="btnTpl">テンプレート（毎週おなじやること）</button>
     <button class="subbtn" id="btnCopyPrev">先週のやることをコピーする</button>
+    <button class="subbtn" id="btnMove">やることを べつの日に移す</button>
   </section>
 
   <section id="tabGoal" class="hidden">
@@ -655,7 +676,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <p class="note" id="bkNote"></p>
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v42</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v43</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -680,7 +701,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 42;
+const VER = 43;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -766,6 +787,47 @@ function dayOf(k, i){
   if(!w.days[key]) w.days[key] = { memo:'', tasks:[] };
   if(!w.days[key].tasks) w.days[key].tasks = [];
   return w.days[key];
+}
+function sortTasks(d){ d.tasks.sort((a,b)=> a.time&&b.time ? (a.time<b.time?-1:a.time>b.time?1:0) : a.time?-1:b.time?1:0); }
+/* やることを、同じ週のべつの日へ移す（時こく・かかる時間・★などはそのまま） */
+function moveTask(srcI, idx, dstI){
+  if(srcI === dstI) return null;
+  const src = dayOf(S.cur, srcI), t = src.tasks.splice(idx, 1)[0]; if(!t) return null;
+  const dst = dayOf(S.cur, dstI); dst.tasks.push(t); sortTasks(dst);
+  return t;
+}
+/* 1週間のやることを見ながら、タップで べつの日へ組みかえるシート */
+function openMoveSheet(){
+  const m = parseISO(S.cur);
+  let sel = null;   // {i, idx}
+  const sh = openSheet('<div class="mv"><h2>やることを べつの日に移す</h2>'
+    + '<div class="pick" id="mvPick"></div><div id="mvList"></div></div>');
+  const draw = ()=>{
+    const pick = sh.querySelector('#mvPick');
+    pick.textContent = sel ? '「'+(dayOf(S.cur, sel.i).tasks[sel.idx]||{}).text+'」を どの日へ？　→ 日付の横の「ここへ」を押してください' : '① 移したい「やること」をタップ　② 移す先の「ここへ」をタップ';
+    sh.querySelector('#mvList').innerHTML = [...Array(7).keys()].map(i=>{
+      const d = dayRaw(S.cur, i), ts = (d && d.tasks) || [], dt = addDays(m, i);
+      return '<div class="mvday"><h4>'+WD[i]+' '+(dt.getMonth()+1)+'/'+dt.getDate()
+        + (sel ? '<button class="to '+(sel.i===i?'here':'')+'" data-to="'+i+'" '+(sel.i===i?'disabled':'')+'>'+(sel.i===i?'いまここ':'ここへ')+'</button>' : '')+'</h4>'
+        + (ts.length ? ts.map((t,idx)=>'<button class="row '+(sel && sel.i===i && sel.idx===idx ? 'sel' : '')+(t.done?' done':'')+'" data-i="'+i+'" data-idx="'+idx+'"><span class="tm">'+esc(t.time||'')+'</span><span>'+esc(t.text)+'</span></button>').join('')
+                     : '<div class="empty">（やることなし）</div>')
+        + '</div>';
+    }).join('');
+  };
+  draw();
+  sh.querySelector('#mvList').onclick = e => {
+    const to = e.target.closest('button[data-to]');
+    if(to && sel){
+      const t = moveTask(sel.i, sel.idx, +to.dataset.to);
+      sel = null; draw(); renderDays(); renderDay(); renderTQC(); renderPast(); save();
+      if(t) toast('「'+t.text+'」を'+WD[+to.dataset.to]+'曜日に移しました');
+      return;
+    }
+    const row = e.target.closest('button.row'); if(!row) return;
+    const i = +row.dataset.i, idx = +row.dataset.idx;
+    sel = (sel && sel.i === i && sel.idx === idx) ? null : { i, idx };
+    draw();
+  };
 }
 function dayRaw(k, i){ const w = S.weeks[k]; return (w && w.days[iso(addDays(parseISO(k), i))]) || null; }
 
@@ -865,12 +927,41 @@ function renderSugg(){
 function renderPast(){ renderSugg(); }
 $('#newText').addEventListener('input', renderSugg);
 $('#newText').addEventListener('focus', renderSugg);
+/* 時こくは 5分きざみで選ぶ（1分きざみのホイールより速い） */
+function setTimeBtn(el, v){
+  el.dataset.v = v || '';
+  el.textContent = v || (el.classList.contains('wide') ? 'なし（時こくを決めない）' : '時こく');
+  el.classList.toggle('none', !v);
+}
+function openTimePicker(start, onOK){
+  let h = null, m = 0;
+  if(/^\d\d:\d\d$/.test(start||'')){ h = +start.slice(0,2); m = +start.slice(3); m = Math.round(m/5)*5; if(m===60){ m=0; h=(h+1)%24; } }
+  const hours = [...Array(24).keys()].map(x=>(x+5)%24);           // 5時から並べる
+  const mins = [0,5,10,15,20,25,30,35,40,45,50,55];
+  const sh = openSheet('<div class="tpick"><h2>はじめる時こく</h2>'
+    + '<div class="big" id="tpBig"></div>'
+    + '<div class="lab">時</div><div class="grid" id="tpH">'+hours.map(x=>'<button data-h="'+x+'" class="'+(x<5?'dim':'')+'">'+x+'</button>').join('')+'</div>'
+    + '<div class="lab">分（5分きざみ）</div><div class="grid" id="tpM">'+mins.map(x=>'<button data-m="'+x+'">'+String(x).padStart(2,'0')+'</button>').join('')+'</div>'
+    + '<div class="row2" style="margin-top:14px; gap:8px"><button class="subbtn" id="tpNone" style="margin:0; flex:1">なし</button><button class="bigbtn" id="tpOK" style="margin:0; flex:2">きめる</button></div></div>');
+  const val = ()=> h === null ? '' : String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+  const draw = ()=>{
+    const b = sh.querySelector('#tpBig'); b.textContent = val() || 'なし'; b.classList.toggle('none', h === null);
+    sh.querySelectorAll('#tpH button').forEach(x=>x.classList.toggle('on', +x.dataset.h === h));
+    sh.querySelectorAll('#tpM button').forEach(x=>x.classList.toggle('on', h !== null && +x.dataset.m === m));
+  };
+  draw();
+  sh.querySelector('#tpH').onclick = e => { const b = e.target.closest('button'); if(!b) return; h = +b.dataset.h; draw(); };
+  sh.querySelector('#tpM').onclick = e => { const b = e.target.closest('button'); if(!b) return; if(h === null) h = new Date().getHours(); m = +b.dataset.m; draw(); onOK(val()); sh.remove(); };
+  sh.querySelector('#tpOK').onclick = ()=>{ onOK(val()); sh.remove(); };
+  sh.querySelector('#tpNone').onclick = ()=>{ onOK(''); sh.remove(); };
+}
+$('#newTime').onclick = ()=>openTimePicker($('#newTime').dataset.v, v=>setTimeBtn($('#newTime'), v));
 $('#sugg').onclick = e => {
   const b = e.target.closest('button[data-t]'); if(!b) return;
   const o = (S.hist||[]).find(x=>x.t === b.dataset.t);
   $('#newText').value = b.dataset.t;
   if(o){                                   // 前に使った時こく・かかる時間もいっしょに入れる
-    if(o.time) $('#newTime').value = o.time;
+    if(o.time) setTimeBtn($('#newTime'), o.time);
     if(o.min){ S.pendMin = o.min; renderPend(); }
   }
   renderSugg(); $('#newText').focus();
@@ -1740,7 +1831,7 @@ $('#btnAllDays').onclick = ()=>{ const all = REP.every(Boolean); REP = REP.map((
 
 function addTask(){
   const txt = $('#newText').value.trim(); if(!txt) return;
-  const tm = $('#newTime').value;
+  const tm = $('#newTime').dataset.v || '';
   let targets = REP.map((v,i)=>v?i:-1).filter(i=>i>=0);
   if(!targets.length) targets = [S.day];
   const mn = (typeof S.pendMin === 'number' && S.pendMin >= 0) ? S.pendMin : S.defMin;
@@ -1752,7 +1843,7 @@ function addTask(){
                    nostar: k === 'nostar', evt: k === 'evt', note:'' });
     d.tasks.sort((a,b)=> a.time&&b.time ? (a.time<b.time?-1:a.time>b.time?1:0) : a.time?-1:b.time?1:0);
   });
-  $('#newText').value = ''; $('#newTime').value = '';
+  $('#newText').value = ''; setTimeBtn($('#newTime'), '');
   renderDays(); renderDay(); renderTQC(); renderPast(); save();
   const kn = k === 'nostar' ? '★なし' : k === 'evt' ? '予定' : '';
   if(targets.length > 1) toast(targets.length+'日ぶんに入れました'+(kn ? '（'+kn+'）' : ''));
@@ -1788,7 +1879,10 @@ function openTaskEditor(t){
   const orig = t.text;
   const sh = openSheet('<h2>やることを直す</h2>'
     + '<div class="field"><div class="lab">やること</div><input type="text" id="edText" value="'+esc(t.text)+'" enterkeyhint="done"></div>'
-    + '<div class="field"><div class="lab">はじめる時こく（なくてもOK）</div><input type="time" class="wide" id="edTime" value="'+esc(t.time||'')+'"></div>'
+    + '<div class="field"><div class="lab">はじめる時こく（なくてもOK）</div><button class="timebtn wide" id="edTime" data-v="'+esc(t.time||'')+'"></button></div>'
+    + '<div class="field"><div class="lab">べつの日に移す</div><div class="mchips" id="edMove" style="margin:7px 0 0">'
+    + WD.map((w,i)=>'<button data-i="'+i+'" '+(i===S.day?'disabled style="opacity:.35; padding:9px 13px"':'style="padding:9px 13px"')+'>'+w+'</button>').join('')
+    + '</div></div>'
     + '<div class="field"><div class="lab">実際にやったこと（なくてもOK）</div><input type="text" id="edNote" value="'+esc(t.note||'')+'" placeholder="例）予備時間 → 英単語の復習をした" enterkeyhint="done"></div>'
     + '<div class="field"><div class="lab">しゅるい</div><div class="mchips" id="edKind" style="margin:7px 0 0">'
     + [['nostar','★なし'],['evt','予定']].map(x=>'<button data-k="'+x[0]+'" style="padding:9px 15px; font-size:13.5px">'+x[1]+'</button>').join('')
@@ -1797,6 +1891,15 @@ function openTaskEditor(t){
     + '<button class="bigbtn" id="edOK">きめる</button>');
   const inp = sh.querySelector('#edText');
   setTimeout(()=>{ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }, 50);
+  const tb = sh.querySelector('#edTime'); setTimeBtn(tb, t.time||'');
+  tb.onclick = ()=>openTimePicker(tb.dataset.v, v=>setTimeBtn(tb, v));
+  sh.querySelector('#edMove').onclick = e => {
+    const b = e.target.closest('button[data-i]'); if(!b || b.disabled) return;
+    const src = dayOf(S.cur, S.day), idx = src.tasks.indexOf(t); if(idx < 0) return;
+    moveTask(S.day, idx, +b.dataset.i);
+    sh.remove(); renderDays(); renderDay(); renderTQC(); renderPast(); save();
+    toast('「'+t.text+'」を'+WD[+b.dataset.i]+'曜日に移しました');
+  };
   let kind = t.evt ? 'evt' : (t.nostar ? 'nostar' : '');
   const kb = sh.querySelectorAll('#edKind button');
   const kSync = ()=>kb.forEach(x=>x.classList.toggle('on', x.dataset.k === kind));
@@ -1804,7 +1907,7 @@ function openTaskEditor(t){
   sh.querySelector('#edKind').onclick = e => { const b = e.target.closest('button'); if(!b) return; kind = (kind === b.dataset.k) ? '' : b.dataset.k; kSync(); };
   const done = ()=>{
     const txt = inp.value.trim(); if(!txt){ toast('やることを書いてください'); return; }
-    const tm = sh.querySelector('#edTime').value || '';
+    const tm = sh.querySelector('#edTime').dataset.v || '';
     if(sh.querySelector('#edAll').checked){
       let n = 0;
       for(let i=0;i<7;i++){ const dd = dayRaw(S.cur, i); if(!dd) continue;
@@ -2108,6 +2211,7 @@ function openTemplates(){
 }
 $('#btnTpl').onclick = openTemplates;
 
+$('#btnMove').onclick = openMoveSheet;
 $('#btnCopyPrev').onclick = ()=>{
   const pk = iso(addDays(parseISO(S.cur), -7)), pw = S.weeks[pk];
   if(!pw){ toast('その週には、やることがありません'); return; }

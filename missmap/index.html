@@ -81,7 +81,10 @@ header.app{position:sticky; top:0; z-index:30; background:var(--bg); padding:cal
 .sec-label .spacer{flex:1;}
 .sec-label .lnk{font-size:12px; color:var(--accent); font-weight:600;}
 
-.hero{background:linear-gradient(135deg,var(--navy1),var(--navy2)); color:#fff; border-radius:18px; padding:16px 16px 14px; box-shadow:var(--shadow-lg); margin-bottom:12px; display:flex; align-items:center; gap:14px;}
+.hero{background:linear-gradient(135deg,var(--navy1),var(--navy2)); color:#fff; border-radius:18px; padding:16px 16px 14px; box-shadow:var(--shadow-lg); margin-bottom:12px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+.hero .big{width:100%; margin-top:8px; background:var(--gold); color:var(--navy1); border-radius:14px; padding:14px; font-size:18px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(0,0,0,.25);}
+.hero .big svg{width:22px; height:22px; stroke:var(--navy1); fill:none; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round;}
+.empty .btn-primary{margin-top:12px;}
 .hero .n{font-size:44px; font-weight:600; line-height:1; color:var(--gold); min-width:60px; text-align:center;}
 .hero .n small{font-size:14px; color:#fff; margin-left:2px;}
 .hero .t{flex:1;}
@@ -143,6 +146,15 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 .field input[type=text], .field textarea{width:100%; background:transparent; border:none; font-size:16px; line-height:1.6; resize:none; outline:none;}
 .field input::placeholder, .field textarea::placeholder{color:var(--muted); opacity:.75;}
 .field.req{border-color:var(--accent); border-width:1.5px;}
+.sub-in{margin:6px 0 4px;}
+.sub-in label{font-size:12px; margin-bottom:1px;}
+.sub-in input[type=text]{background:var(--chip); border-radius:10px; padding:8px 10px; font-size:16px; width:100%; border:none; outline:none;}
+.sub-in .chips{margin:2px 0 4px;}
+.pv{background:var(--accent-soft); border-radius:10px; padding:8px 10px; font-size:15px; line-height:1.6; margin-top:8px; font-weight:600;}
+.pv.off{opacity:.55; font-weight:400;}
+.err{background:var(--accent); color:#fff; border-radius:10px; padding:9px 12px; font-size:14px; line-height:1.65; margin-top:8px; white-space:pre-wrap;}
+.err b{font-weight:600; display:block;}
+.field.bad{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
 .field .hint{font-size:13px; color:var(--muted); line-height:1.6; margin-top:6px; padding-top:6px; border-top:1px dashed var(--line);}
 .chips{display:flex; flex-wrap:wrap; gap:7px;}
 .chip{background:var(--chip); border:1.5px solid transparent; border-radius:999px; padding:7px 14px; font-size:14px; font-weight:600; color:var(--ink);}
@@ -386,7 +398,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 3;
+const VER = 4;
 const KEY = 'miss_v1', BK = 'miss_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -445,7 +457,7 @@ function norm(j){
   j.cfg.gaps = g;
   j.cfg.randN = [3,5,10].includes(j.cfg.randN) ? j.cfg.randN : 5;
   j.cfg.randMast = !!j.cfg.randMast;
-  j.items.forEach(it => { it.imgs = it.imgs || []; it.log = it.log || []; it.stage = Number(it.stage)||0; it.text = it.text || ''; it.why = it.why || ''; it.fix = it.fix || ''; it.tag = it.tag || ''; });
+  j.items.forEach(it => { it.imgs = it.imgs || []; it.log = it.log || []; it.stage = Number(it.stage)||0; it.text = it.text || ''; it.why = it.why || ''; it.fix = it.fix || ''; it.tag = it.tag || ''; it.whyP = it.whyP || null; it.fixP = it.fixP || null; });
   return j;
 }
 function load(){
@@ -467,7 +479,7 @@ const byId = id => S.items.find(x => x.id === id);
 
 function addItem(o){
   const t = today();
-  const it = { id:newId(), subj:o.subj, text:(o.text||'').trim(), imgs:o.imgs||[], tag:o.tag||'', why:(o.why||'').trim(), fix:(o.fix||'').trim(),
+  const it = { id:newId(), subj:o.subj, text:(o.text||'').trim(), imgs:o.imgs||[], tag:o.tag||'', why:(o.why||'').trim(), fix:(o.fix||'').trim(), whyP:o.whyP||null, fixP:o.fixP||null,
     created:t, stage:0, due:addDays(t, gaps()[0]), done:false, doneAt:'', log:[] };
   S.items.unshift(it);
   save(); return it;
@@ -600,13 +612,14 @@ function renderToday(){
   let h = '';
   if(!S.items.length){
     h += `<div class="empty">${ICO.empty}<b>まず、ミスした問題を「作る」</b>
-      <p>問題（写真か文字）と、間違えた理由・改善点を登録すると、<br>翌日・3日後・1週間後・2週間後・1か月後に<br>「今日の問題」としてここに届きます。</p></div>`;
+      <p>問題（写真か文字）と、間違えた理由・改善点を登録すると、<br>翌日・3日後・1週間後・2週間後・1か月後に<br>「今日の問題」としてここに届きます。</p>
+      <button class="btn-primary" id="goAdd">問題を作る</button></div>`;
     h += flowCard();
   }else{
     const over = tl.filter(i => i.due < today()).length;
     h += `<div class="hero ${tl.length?'':'zero'}"><div class="n num">${tl.length}<small>問</small></div>
-      <div class="t"><b>今日の問題</b><span>${tl.length ? (over ? `うち ${over} 問は前の日からの繰り越し。` : '') + '問題だけを見て「間違えた理由」と「改善点」を言えるか、試してください。' : '今日の分は終わりました。次の予定は下にあります。'}</span></div>
-      ${tl.length ? `<button class="go" id="goSeq">順に解く</button>` : ''}</div>`;
+      <div class="t"><b>今日の問題</b><span>${tl.length ? (over ? `うち ${over} 問は前の日からの繰り越し。` : '') + '問題だけを見て「間違えた理由」と「改善点」を言えるか、試してください。' : '今日の分は終わりました。下の「ランダムに解く」で練習もできます。'}</span></div>
+      ${tl.length ? `<button class="big" id="goSeq">${ICO.check}今日の問題を解く（${tl.length}問）</button>` : ''}</div>`;
     if(tl.length) h += `<div class="items">${tl.map(i => cardHtml(i, 'today')).join('')}</div>`;
     const pool = randPool();
     h += `<div class="rand" style="margin-top:12px"><div class="row"><b>ランダムに解く</b><span class="dim">${pool.length}問から</span>
@@ -626,6 +639,7 @@ function renderToday(){
   root.innerHTML = h;
   bindOpen(root);
   const gm = root.querySelector('[data-gomap]'); if(gm) gm.onclick = () => goTab('Map');
+  const ga = root.querySelector('#goAdd'); if(ga) ga.onclick = () => goTab('Add');
   root.querySelectorAll('[data-rn]').forEach(b => b.onclick = () => { S.cfg.randN = Number(b.dataset.rn); save(); renderToday(); });
   const gs = root.querySelector('#goSeq'); if(gs) gs.onclick = () => startSession(todayList().map(i => i.id), 'due');
   const gr = root.querySelector('#goRand'); if(gr) gr.onclick = () => {
@@ -714,8 +728,77 @@ function openSolve(id, opt){
 }
 function closePage(){ $('#host').innerHTML = ''; }
 
+/* ===================== 理由・改善点の形と判定 ===================== */
+/* 改善点は「いつ・何を・どうする」に分けて書く（案C）。明らかに行動になっていないものだけ弾く（案A）。
+   基準は Discord #ミスマップ でのヒラの指摘: 行動になっているか／数値化できるか／知識不足でないか。 */
+const WHEN = ['解く前','解いている途中','解き終わったら','丸付けのとき','見直しのとき'];
+const KNOW = /(覚えて(い)?な(かった|い)|知らな(かった|い)|習って(い)?な(い|かった)|忘れ(て(い)?た|た)|わから(なかった|ない)|分から(なかった|ない)|未習|初めて見た|覚えてなかった)/g;
+const VAGUE = /(気を?つけ|注意|頑張|がんば|意識|ちゃんと|しっかり|きちんと|見直|確認|復習|練習|集中|落ち着|慎重|丁寧|ていねい|忘れない|ミスしない|間違えない|しないように|ようにする|徹底|大事に|大切に)/g;
+const COUNTY = /(たくさん|何度も|何回も|いっぱい|早く|速く|多く|なるべく|できるだけ)/;
+const PARTS = /[をがはにのでとてへも、。・\s]|する/g;
+const emptyWhy = () => ({ did:'', then:'' });
+const emptyFix = () => ({ when:'', what:'', how:'' });
+const composeWhy = d => { const a = d.did.trim(), b = d.then.trim(); return b ? a+' → '+b : a; };
+const composeFix = d => { const w = d.what.trim(); return (d.when ? d.when+'、' : '') + w + (/[をにへと]$/.test(w) ? '' : 'を') + d.how.trim(); };
+function checkWhy(d){
+  const a = d.did.trim(), t = a + d.then.trim();
+  if(a.length < 4) return { t:'何をした（しなかった）かを書いてください', ex:'例：問題文の「合計」を読み飛ばした' };
+  if(KNOW.test(t) && t.replace(KNOW, '').replace(PARTS, '').length < 6) return { t:'「覚えていなかった」「わからなかった」だけの理由は、知識不足なのでミスマップに入れません（それは暗記で解決）。', ex:'知っていたのに間違えたなら、そのとき何をしてしまったかを書いてください。例：公式は知っていたが、代入する数を取り違えた' };
+  return null;
+}
+function checkFix(d){
+  const w = d.what.trim(), h = d.how.trim();
+  if(!d.when) return { t:'「いつ」をひとつ選んでください', ex:'改善点は、いつやるかが決まっていないと実行できません' };
+  if(w.length < 2) return { t:'「何を」を書いてください', ex:'例：問題文の条件／代入した式の符号／つづり' };
+  if(h.length < 3) return { t:'「どうする」を書いてください', ex:'例：指でさして確かめる／丸をつけてから解く／声に出して1文字ずつ読む' };
+  if(/な(い|いようにする|いようにします)$/.test(h)) return { t:'「〜しない」は行動ではありません。代わりに何をするかを書いてください。', ex:'例：符号を間違えない → 符号を指でさして元の式と見くらべる' };
+  if(h.replace(VAGUE, '').replace(PARTS, '').length < 3) return { t:'「気をつける」「見直す」「確認する」だけでは、行動になっていません。手・目・口で何をするかを書いてください。', ex:'例：丸をつける／指でさす／声に出して読む／余白に書き出す' };
+  if(COUNTY.test(h) && !/[0-9０-９一二三四五六七八九十]/.test(h)) return { t:'「たくさん」「早く」は、数にしてください。', ex:'例：3回解く／10分で解く／1日5問' };
+  return null;
+}
+function whyFields(p, d){
+  return `<div class="sub-in"><label>何をした／しなかった</label><input type="text" id="${p}Did" value="${esc(d.did)}" placeholder="例：問題文の「合計」を読み飛ばした" autocomplete="off"></div>
+    <div class="sub-in"><label>そのとき何が起きた（任意）</label><input type="text" id="${p}Then" value="${esc(d.then)}" placeholder="例：片方だけ計算して答えた" autocomplete="off"></div>
+    <div class="hint">「〜を覚えていなかった」だけの知識不足はミスマップに入れません（それは暗記で解決）。ここに入れるのは、知っていたのに間違えた問題です。</div>
+    <div class="err hidden" id="${p}WhyErr"></div>`;
+}
+function fixFields(p, d){
+  return `<div class="sub-in"><label>いつ</label><div class="chips" id="${p}When">${WHEN.map(w => `<button class="chip sm ${d.when===w?'on':''}" data-w="${w}">${w}</button>`).join('')}</div></div>
+    <div class="sub-in"><label>何を</label><input type="text" id="${p}What" value="${esc(d.what)}" placeholder="例：代入した式の符号" autocomplete="off"></div>
+    <div class="sub-in"><label>どうする</label><input type="text" id="${p}How" value="${esc(d.how)}" placeholder="例：指でさして、元の式と1つずつ見くらべる" autocomplete="off"></div>
+    <div class="pv off" id="${p}FixPv"></div>
+    <div class="hint">「気をつける」ではなく、手・目・口で何をするかを書きます。解き直しのときに、この改善点を実際にやります。</div>
+    <div class="err hidden" id="${p}FixErr"></div>`;
+}
+/* root: 探す範囲（document か シート）。d を書き換えつつ、プレビューを更新する */
+function bindWhyFix(root, p, why, fix){
+  const q = sel => root.querySelector(sel);
+  const pv = () => { const el = q('#'+p+'FixPv'); const ok = fix.when || fix.what.trim() || fix.how.trim(); el.textContent = ok ? composeFix(fix) : 'ここに改善点が1文で組み上がります'; el.classList.toggle('off', !ok); };
+  q('#'+p+'Did').oninput = e => { why.did = e.target.value; hideErr(root, p+'WhyErr'); };
+  q('#'+p+'Then').oninput = e => { why.then = e.target.value; hideErr(root, p+'WhyErr'); };
+  q('#'+p+'What').oninput = e => { fix.what = e.target.value; pv(); hideErr(root, p+'FixErr'); };
+  q('#'+p+'How').oninput = e => { fix.how = e.target.value; pv(); hideErr(root, p+'FixErr'); };
+  q('#'+p+'When').querySelectorAll('.chip').forEach(b => b.onclick = () => { fix.when = fix.when === b.dataset.w ? '' : b.dataset.w; q('#'+p+'When').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.w === fix.when)); pv(); hideErr(root, p+'FixErr'); });
+  pv();
+}
+function showErr(root, id, e){
+  const el = root.querySelector('#'+id); if(!el) return;
+  el.innerHTML = `<b>${esc(e.t)}</b>${esc(e.ex)}`; el.classList.remove('hidden');
+  const f = el.closest('.field'); if(f) f.classList.add('bad');
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+function hideErr(root, id){ const el = root.querySelector('#'+id); if(!el) return; el.classList.add('hidden'); const f = el.closest('.field'); if(f) f.classList.remove('bad'); }
+/* 登録前の判定。ダメなら表示して false */
+function validateWhyFix(root, p, why, fix){
+  const e1 = checkWhy(why), e2 = checkFix(fix);
+  if(e1) showErr(root, p+'WhyErr', e1); else hideErr(root, p+'WhyErr');
+  if(e2) showErr(root, p+'FixErr', e2); else hideErr(root, p+'FixErr');
+  if(e1){ const el = root.querySelector('#'+p+'WhyErr'); el.scrollIntoView({ behavior:'smooth', block:'center' }); }
+  return !e1 && !e2;
+}
+
 /* ===================== 作る（登録） ===================== */
-let draft = { imgs:[], subj:'', text:'', tag:'', why:'', fix:'' };
+let draft = { imgs:[], subj:'', text:'', tag:'', whyP:emptyWhy(), fixP:emptyFix() };
 let busy = false;
 function renderAdd(){
   const root = $('#tab-Add');
@@ -734,17 +817,11 @@ function renderAdd(){
 
     <div class="field req"><label>教科<b>必須</b></label><div class="chips" id="addSubj">${SUBJ.map(s => `<button class="chip sub ${draft.subj===s?'on':''}" data-s="${s}" style="--c:${SUBJC[s]}">${s}</button>`).join('')}</div></div>
 
-    <div class="field req"><label>間違えた理由<b>必須</b></label>
-      <textarea id="addWhy" rows="2" placeholder="例：問題文の「合計」を読み飛ばして、片方だけ計算した">${esc(draft.why)}</textarea>
-      <div class="hint">「〜を覚えていなかった」だけの知識不足はミスマップに入れません（それは暗記で解決）。ここに入れるのは、知っていたのに間違えた問題です。</div>
-    </div>
+    <div class="field req"><label>間違えた理由<b>必須</b></label>${whyFields('add', draft.whyP)}</div>
 
     <div class="field"><label>ミスの種類（分析用・任意）</label><div class="chips" id="addTag">${TAGS.map(t => `<button class="chip sm ${draft.tag===t?'on':''}" data-t="${t}">${t}</button>`).join('')}</div></div>
 
-    <div class="field req"><label>改善点<b>必須</b></label>
-      <textarea id="addFix" rows="2" placeholder="例：問題文の条件に丸をつけてから解き始める／解き終わったらバックスキャンする">${esc(draft.fix)}</textarea>
-      <div class="hint">「気をつける」ではなく、次に何をするかを行動で。解き直しのときに、この改善点を実際にやります。</div>
-    </div>
+    <div class="field req"><label>改善点（いつ・何を・どうする）<b>必須</b></label>${fixFields('add', draft.fixP)}</div>
 
     <button class="btn-primary" id="addGo">この問題を登録する</button>
     <div class="dim" style="text-align:center; margin-top:8px">登録すると ${gapLabel(gaps()[0])}に「今日の問題」として届きます。</div>`;
@@ -753,19 +830,17 @@ function renderAdd(){
   $('#fCam').onchange = e => takeFiles(e.target.files);
   $('#fPick').onchange = e => takeFiles(e.target.files);
   $('#addText').oninput = e => draft.text = e.target.value;
-  $('#addWhy').oninput = e => draft.why = e.target.value;
-  $('#addFix').oninput = e => draft.fix = e.target.value;
+  bindWhyFix(document, 'add', draft.whyP, draft.fixP);
   $('#addSubj').querySelectorAll('.chip').forEach(b => b.onclick = () => { draft.subj = b.dataset.s; $('#addSubj').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); });
   $('#addTag').querySelectorAll('.chip').forEach(b => b.onclick = () => { draft.tag = draft.tag === b.dataset.t ? '' : b.dataset.t; $('#addTag').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.t === draft.tag)); });
   $('#addGo').onclick = () => {
     if(busy) return toast('写真を取り込み中です');
     if(!draft.imgs.length && !draft.text.trim()) return toast('問題を、写真か文字で入れてください');
     if(!draft.subj) return toast('教科を選んでください');
-    if(!draft.why.trim()) return toast('間違えた理由を書いてください');
-    if(!draft.fix.trim()) return toast('改善点を書いてください');
+    if(!validateWhyFix(document, 'add', draft.whyP, draft.fixP)) return toast('赤い所を直してください');
     const keepSubj = draft.subj;
-    addItem(draft);
-    draft = { imgs:[], subj:keepSubj, text:'', tag:'', why:'', fix:'' };
+    addItem({ ...draft, why:composeWhy(draft.whyP), fix:composeFix(draft.fixP), whyP:{ ...draft.whyP }, fixP:{ ...draft.fixP } });
+    draft = { imgs:[], subj:keepSubj, text:'', tag:'', whyP:emptyWhy(), fixP:emptyFix() };
     renderAdd(); renderAll();
     window.scrollTo({ top:0, behavior:'smooth' });
     toast(`登録しました。${gapLabel(gaps()[0])}に届きます`);
@@ -793,7 +868,7 @@ function renderAddThumbs(){
 /* 直す（編集） */
 function openEdit(id, opt){
   const it = byId(id); if(!it) return;
-  const d = { subj:it.subj, text:it.text, tag:it.tag, why:it.why, fix:it.fix, imgs:it.imgs.slice() };
+  const d = { subj:it.subj, text:it.text, tag:it.tag, imgs:it.imgs.slice(), whyP:{ ...(it.whyP || { did:it.why, then:'' }) }, fixP:{ ...(it.fixP || { when:'', what:'', how:it.fix }) } };
   const bg = document.createElement('div'); bg.className = 'sheet-bg';
   bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>問題を直す</h2>
     <div class="field"><label>写真</label><div class="photos-in" id="edThumbs"></div>
@@ -801,9 +876,9 @@ function openEdit(id, opt){
       <input type="file" id="edFCam" accept="image/*" capture="environment" class="hidden"><input type="file" id="edFPick" accept="image/*" multiple class="hidden"></div>
     <div class="field"><label>問題（文字）</label><textarea id="edText" rows="2">${esc(d.text)}</textarea></div>
     <div class="field"><label>教科</label><div class="chips" id="edSubj">${SUBJ.map(s => `<button class="chip sub ${s===d.subj?'on':''}" data-s="${s}" style="--c:${SUBJC[s]}">${s}</button>`).join('')}</div></div>
-    <div class="field"><label>間違えた理由</label><textarea id="edWhy" rows="2">${esc(d.why)}</textarea></div>
+    <div class="field"><label>間違えた理由</label>${whyFields('ed', d.whyP)}</div>
     <div class="field"><label>ミスの種類</label><div class="chips" id="edTag">${TAGS.map(t => `<button class="chip sm ${t===d.tag?'on':''}" data-t="${t}">${t}</button>`).join('')}</div></div>
-    <div class="field"><label>改善点</label><textarea id="edFix" rows="2">${esc(d.fix)}</textarea></div>
+    <div class="field"><label>改善点（いつ・何を・どうする）</label>${fixFields('ed', d.fixP)}</div>
     <button class="btn-primary" id="edSave">保存する</button>
     <button class="btn-line danger" id="edDel">この問題を消す</button>
     <button class="close" id="edClose">閉じる</button></div>`;
@@ -826,12 +901,14 @@ function openEdit(id, opt){
   bg.querySelector('#edFPick').onchange = e => take(e.target.files);
   bg.querySelectorAll('#edSubj .chip').forEach(b => b.onclick = () => { d.subj = b.dataset.s; bg.querySelectorAll('#edSubj .chip').forEach(x => x.classList.toggle('on', x === b)); });
   bg.querySelectorAll('#edTag .chip').forEach(b => b.onclick = () => { d.tag = d.tag === b.dataset.t ? '' : b.dataset.t; bg.querySelectorAll('#edTag .chip').forEach(x => x.classList.toggle('on', x.dataset.t === d.tag)); });
+  bindWhyFix(bg, 'ed', d.whyP, d.fixP);
   const close = async () => { bg.remove(); await sweepImgs(); };
   bg.querySelector('#edClose').onclick = close;
   bg.addEventListener('click', e => { if(e.target === bg) close(); });
   bg.querySelector('#edSave').onclick = async () => {
-    it.subj = d.subj; it.text = bg.querySelector('#edText').value.trim(); it.tag = d.tag;
-    it.why = bg.querySelector('#edWhy').value.trim(); it.fix = bg.querySelector('#edFix').value.trim(); it.imgs = d.imgs;
+    if(!validateWhyFix(bg, 'ed', d.whyP, d.fixP)) return toast('赤い所を直してください');
+    it.subj = d.subj; it.text = bg.querySelector('#edText').value.trim(); it.tag = d.tag; it.imgs = d.imgs;
+    it.whyP = { ...d.whyP }; it.fixP = { ...d.fixP }; it.why = composeWhy(d.whyP); it.fix = composeFix(d.fixP);
     save(); bg.remove(); await sweepImgs(); openSolve(it.id, opt); renderAll(); toast('直しました');
   };
   bg.querySelector('#edDel').onclick = async () => {
@@ -998,7 +1075,8 @@ function openHelp(){
     <p>紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）をアプリにしたものです。目的は同じで、<b>同じミスを二度としない</b>こと。</p>
     <h3>1. 問題を作る</h3>
     <p>「作る」タブで、ミスした問題を写真に撮るか文字で入れ、教科を選び、<b>間違えた理由</b>と<b>改善点</b>を書いて登録します。<br>
-    「覚えていなかった」だけの知識不足は入れません。知っていたのに間違えた問題（計算ミス・読み飛ばし・スペルミスなど）を入れます。</p>
+    「覚えていなかった」だけの知識不足は入れません。知っていたのに間違えた問題（計算ミス・読み飛ばし・スペルミスなど）を入れます。<br>
+    改善点は「<b>いつ</b>・<b>何を</b>・<b>どうする</b>」の3つに分けて書きます（例：解き終わったら、代入した式の符号を、指でさして確かめる）。「気をつける」「見直す」のように行動になっていないと、登録できません。</p>
     <h3>2. 問題を解く</h3>
     <p>登録した問題は、翌日・3日後・1週間後・2週間後・1か月後に「今日の問題」として届きます。<br>
     <b>問題だけ</b>を見て、「なぜ間違えたか」「次はどうするか」を自分の口で言ってから、「答え合わせ」で登録した内容と比べます。</p>

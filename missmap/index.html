@@ -54,6 +54,14 @@ header.app{position:sticky; top:0; z-index:30; background:var(--bg); padding:cal
 .update .t span{font-size:12.5px; opacity:.9; font-weight:600;}
 .update .go{background:rgba(255,255,255,.22); border-radius:999px; padding:7px 13px; font-size:13px; font-weight:600; flex:none;}
 
+.warn{width:100%; margin-top:8px; background:var(--miss-soft); border:1.5px solid var(--miss); color:var(--ink); border-radius:16px; padding:12px 14px; display:flex; align-items:center; gap:10px; text-align:left;}
+.warn svg{width:22px; height:22px; stroke:var(--miss); fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+.warn .t{flex:1; line-height:1.45;}
+.warn .t b{display:block; font-size:15px; font-weight:600; color:var(--miss); white-space:nowrap;}
+.warn .t span{font-size:12.5px; color:var(--muted); font-weight:600;}
+.warn .go{background:var(--miss); color:var(--miss-ink); border-radius:999px; padding:7px 13px; font-size:13px; font-weight:600; flex:none;}
+.note{background:var(--star-soft); border:1px solid var(--star); border-radius:12px; padding:10px 12px; font-size:13.5px; line-height:1.7; color:var(--ink); margin-bottom:10px;}
+.note b{color:var(--star); font-weight:600;}
 .card{background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:14px; margin-bottom:10px;}
 .card h3{font-size:15px; font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:8px;}
 .card h3 svg{width:20px; height:20px; stroke:var(--accent); fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;}
@@ -208,6 +216,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 .judge .ng{background:var(--miss-soft); color:var(--miss); border:1.5px solid var(--miss);}
 .judge .ng svg{stroke:var(--miss);}
 .judge .mast{grid-column:1/-1; background:var(--star-soft); color:var(--star); border:1.5px solid var(--star); box-shadow:none;}
+.judge .skip{grid-column:1/-1; background:none; box-shadow:none; color:var(--muted); font-size:14px; font-weight:600; padding:6px;}
 .judge .hint{grid-column:1/-1; text-align:center; font-size:13px; color:var(--muted); font-weight:600; margin-top:-2px;}
 .prog{font-size:12.5px; color:var(--muted); font-weight:600; text-align:center; margin:-2px 0 8px;}
 
@@ -319,6 +328,11 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
       <span class="t"><b>更新があります</b><span id="updVer"></span></span>
       <span class="go">更新する</span>
     </button>
+    <button class="warn hidden" id="btnInstall">
+      <svg viewBox="0 0 24 24"><path d="M12 3v11"/><path d="m8 10.5 4 4 4-4"/><path d="M5 20h14"/><circle cx="12" cy="17.5" r=".1"/></svg>
+      <span class="t"><b>ホーム画面に追加</b><span>しないと、しばらく開かない間に記録が消えることがあります</span></span>
+      <span class="go">やり方</span>
+    </button>
   </header>
 
   <section id="tab-Today"></section>
@@ -363,6 +377,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
     <div class="card">
       <h3><svg viewBox="0 0 24 24"><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/></svg>控え（バックアップ）</h3>
+      <div id="bkNote"></div>
       <div class="dim" style="margin-bottom:8px">データは、この端末の中だけに保存されています（外には送りません）。機種変更や万一のために、ときどき控えを残してください。写真も一緒に入ります。</div>
       <div class="btnrow" style="margin-top:0">
         <button class="btn-chip acc" id="btnExport"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>ファイルに保存</button>
@@ -413,7 +428,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 7;
+const VER = 8;
 const KEY = 'miss_v1', BK = 'miss_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -472,6 +487,7 @@ function norm(j){
   j.cfg.gaps = g;
   j.cfg.randN = [3,5,10].includes(j.cfg.randN) ? j.cfg.randN : 5;
   j.cfg.randMast = !!j.cfg.randMast;
+  j.cfg.lastBackup = typeof j.cfg.lastBackup === 'string' ? j.cfg.lastBackup : '';
   j.items.forEach(it => { it.imgs = it.imgs || []; it.log = it.log || []; it.stage = Number(it.stage)||0; it.text = it.text || ''; it.why = it.why || ''; it.fix = it.fix || ''; it.tag = it.tag || ''; it.whyP = it.whyP || null; it.fixP = it.fixP || null; });
   return j;
 }
@@ -628,7 +644,8 @@ function renderToday(){
   if(!S.items.length){
     h += `<div class="empty">${ICO.empty}<b>まず、ミスした問題を「作る」</b>
       <p>問題（写真か文字）と、間違えた理由・改善点を登録すると、<br>翌日・3日後・1週間後・2週間後・1か月後に<br>「今日の問題」としてここに届きます。</p>
-      <button class="btn-primary" id="goAdd">問題を作る</button></div>`;
+      <button class="btn-primary" id="goAdd">問題を作る</button>
+      <button class="btn-line" id="goHelp">はじめに使い方を見る</button></div>`;
     h += flowCard();
   }else{
     const over = tl.filter(i => i.due < today()).length;
@@ -655,6 +672,7 @@ function renderToday(){
   bindOpen(root);
   const gm = root.querySelector('[data-gomap]'); if(gm) gm.onclick = () => goTab('Map');
   const ga = root.querySelector('#goAdd'); if(ga) ga.onclick = () => goTab('Add');
+  const gh = root.querySelector('#goHelp'); if(gh) gh.onclick = openHelp;
   root.querySelectorAll('[data-rn]').forEach(b => b.onclick = () => { S.cfg.randN = Number(b.dataset.rn); save(); renderToday(); });
   const gs = root.querySelector('#goSeq'); if(gs) gs.onclick = () => startSession(todayList().map(i => i.id), 'due');
   const gr = root.querySelector('#goRand'); if(gr) gr.onclick = () => {
@@ -713,10 +731,12 @@ function openSolve(id, opt){
   </div>
   <div class="judge"><div class="inner" id="judge">
     <button class="reveal" id="svReveal">${ICO.eye}答え合わせ（理由と改善点を見る）</button>
+    ${opt.inSession ? `<button class="skip" id="svSkip">この問題はとばす</button>` : ''}
   </div></div></div>`;
   fillImgs(host);
   $('#svBack').onclick = () => { sess = null; closePage(); renderAll(); };
   $('#svEdit').onclick = () => openEdit(it.id, opt);
+  const sk = $('#svSkip'); if(sk) sk.onclick = () => nextInSession();
   host.querySelectorAll('[data-g]').forEach(el => el.onclick = () => openGallery(it.imgs, Number(el.dataset.g)));
   $('#svReveal').onclick = () => {
     $('#ask').innerHTML = `
@@ -732,7 +752,9 @@ function openSolve(id, opt){
         ${practice ? `<div class="hint">ランダム練習：「言えなかった」だけ記録して翌日からやり直し。「言えた」は予定を変えません。</div>` : (early ? `<div class="hint">予定より早い挑戦です（押しても構いません）</div>` : '')}`;
       $('#svOk').onclick = () => {
         markOk(it, practice);
-        if(!practice){ if(it.done) toast('極まった！ 5回つづけて言えました'); else toast('言えた。次は '+gapLabel(gaps()[it.stage])+'（'+md(it.due)+'）'); }
+        if(practice) toast('言えた（練習なので予定はそのまま）');
+        else if(it.done) toast('極まった！ 5回つづけて言えました');
+        else toast('言えた。次は '+gapLabel(gaps()[it.stage])+'（'+md(it.due)+'）');
         after();
       };
       $('#svNg').onclick = () => { markMiss(it, practice); toast('記録しました。'+gapLabel(gaps()[0])+'にもう一度'); after(); };
@@ -747,24 +769,31 @@ function closePage(){ $('#host').innerHTML = ''; }
 /* 改善点は「いつ・何を・どうする」に分けて書く（案C）。明らかに行動になっていないものだけ弾く（案A）。
    基準は Discord #ミスマップ でのヒラの指摘: 行動になっているか／数値化できるか／知識不足でないか。 */
 const WHEN = ['解く前','解いている途中','解き終わったら','丸付けのとき','見直しのとき'];
-const KNOW = /(覚えて(い)?な(かった|い)|知らな(かった|い)|習って(い)?な(い|かった)|忘れ(て(い)?た|た)|わから(なかった|ない)|分から(なかった|ない)|未習|初めて見た|覚えてなかった)/g;
+/* 「〜し忘れた」（書き忘れた・つけ忘れた）はケアレスミスなので、忘れ は入れない */
+const KNOW = /(覚えて(い)?な(かった|い)|知らな(かった|い)|習って(い)?な(い|かった)|わから(なかった|ない)|分から(なかった|ない)|未習|初めて見た|覚えてなかった)/g;
 const VAGUE = /(気を?つけ|注意|頑張|がんば|意識|ちゃんと|しっかり|きちんと|見直|確認|復習|練習|集中|落ち着|慎重|丁寧|ていねい|忘れない|ミスしない|間違えない|しないように|ようにする|徹底|大事に|大切に)/g;
 const COUNTY = /(たくさん|何度も|何回も|いっぱい|早く|速く|多く|なるべく|できるだけ)/;
 const PARTS = /[をがはにのでとてへも、。・\s]|する/g;
 const emptyWhy = () => ({ did:'', then:'' });
 const emptyFix = () => ({ when:'', what:'', how:'' });
 const composeWhy = d => { const a = d.did.trim(), b = d.then.trim(); return b ? a+' → '+b : a; };
-const composeFix = d => { const w = d.what.trim(); return (d.when ? d.when+'、' : '') + w + (/[をにへと]$/.test(w) ? '' : 'を') + d.how.trim(); };
+const composeFix = d => {
+  const w = d.what.trim(), h = d.how.trim();
+  /* 「符号」+「指でさす」→「符号を指でさす」。「単位」+「丸をつける」→「単位に丸をつける」
+     （どうする側にすでに「を」があるときは、「を」が二重になるので「に」でつなぐ） */
+  const j = /[をにへとがはも]$/.test(w) ? '' : (/を/.test(h) ? 'に' : 'を');
+  return (d.when ? d.when+'、' : '') + w + j + h;
+};
 function checkWhy(d){
   const a = d.did.trim(), t = a + d.then.trim();
   if(a.length < 4) return { t:'何をした（しなかった）かを書いてください', ex:'例：問題文の「合計」を読み飛ばした' };
-  if(KNOW.test(t) && t.replace(KNOW, '').replace(PARTS, '').length < 6) return { t:'「覚えていなかった」「わからなかった」だけの理由は、知識不足なのでミスマップに入れません（それは暗記で解決）。', ex:'知っていたのに間違えたなら、そのとき何をしてしまったかを書いてください。例：公式は知っていたが、代入する数を取り違えた' };
+  if(KNOW.test(t) && t.replace(KNOW, '').replace(PARTS, '').length < 4) return { t:'「覚えていなかった」「わからなかった」だけの理由は、知識不足なのでミスマップに入れません（それは暗記で解決）。', ex:'知っていたのに間違えたなら、そのとき何をしてしまったかを書いてください。例：公式は知っていたが、代入する数を取り違えた' };
   return null;
 }
 function checkFix(d){
   const w = d.what.trim(), h = d.how.trim();
   if(!d.when) return { t:'「いつ」をひとつ選んでください', ex:'改善点は、いつやるかが決まっていないと実行できません' };
-  if(w.length < 2) return { t:'「何を」を書いてください', ex:'例：問題文の条件／代入した式の符号／つづり' };
+  if(!w) return { t:'「何を」を書いてください', ex:'例：問題文の条件／代入した式の符号／つづり' };
   if(h.length < 3) return { t:'「どうする」を書いてください', ex:'例：指でさして確かめる／丸をつけてから解く／声に出して1文字ずつ読む' };
   if(/な(い|いようにする|いようにします)$/.test(h)) return { t:'「〜しない」は行動ではありません。代わりに何をするかを書いてください。', ex:'例：符号を間違えない → 符号を指でさして元の式と見くらべる' };
   if(h.replace(VAGUE, '').replace(PARTS, '').length < 3) return { t:'「気をつける」「見直す」「確認する」だけでは、行動になっていません。手・目・口で何をするかを書いてください。', ex:'例：丸をつける／指でさす／声に出して読む／余白に書き出す' };
@@ -779,21 +808,22 @@ function whyFields(p, d){
 }
 function fixFields(p, d){
   return `<div class="sub-in"><label>いつ</label><div class="chips" id="${p}When">${WHEN.map(w => `<button class="chip sm ${d.when===w?'on':''}" data-w="${w}">${w}</button>`).join('')}</div></div>
-    <div class="sub-in"><label>何を</label><input type="text" id="${p}What" value="${esc(d.what)}" placeholder="例：代入した式の符号" autocomplete="off"></div>
+    <div class="sub-in"><label>何を</label><input type="text" id="${p}What" value="${esc(d.what)}" placeholder="例：代入した式の符号／問題文の条件" autocomplete="off"></div>
     <div class="sub-in"><label>どうする</label><input type="text" id="${p}How" value="${esc(d.how)}" placeholder="例：指でさして、元の式と1つずつ見くらべる" autocomplete="off"></div>
     <div class="pv off" id="${p}FixPv"></div>
     <div class="hint">「気をつける」ではなく、手・目・口で何をするかを書きます。解き直しのときに、この改善点を実際にやります。</div>
     <div class="err hidden" id="${p}FixErr"></div>`;
 }
 /* root: 探す範囲（document か シート）。d を書き換えつつ、プレビューを更新する */
-function bindWhyFix(root, p, why, fix){
+function bindWhyFix(root, p, why, fix, onch){
   const q = sel => root.querySelector(sel);
+  const ch = () => { if(onch) onch(); };
   const pv = () => { const el = q('#'+p+'FixPv'); const ok = fix.when || fix.what.trim() || fix.how.trim(); el.textContent = ok ? composeFix(fix) : 'ここに改善点が1文で組み上がります'; el.classList.toggle('off', !ok); };
-  q('#'+p+'Did').oninput = e => { why.did = e.target.value; hideErr(root, p+'WhyErr'); };
-  q('#'+p+'Then').oninput = e => { why.then = e.target.value; hideErr(root, p+'WhyErr'); };
-  q('#'+p+'What').oninput = e => { fix.what = e.target.value; pv(); hideErr(root, p+'FixErr'); };
-  q('#'+p+'How').oninput = e => { fix.how = e.target.value; pv(); hideErr(root, p+'FixErr'); };
-  q('#'+p+'When').querySelectorAll('.chip').forEach(b => b.onclick = () => { fix.when = fix.when === b.dataset.w ? '' : b.dataset.w; q('#'+p+'When').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.w === fix.when)); pv(); hideErr(root, p+'FixErr'); });
+  q('#'+p+'Did').oninput = e => { why.did = e.target.value; hideErr(root, p+'WhyErr'); ch(); };
+  q('#'+p+'Then').oninput = e => { why.then = e.target.value; hideErr(root, p+'WhyErr'); ch(); };
+  q('#'+p+'What').oninput = e => { fix.what = e.target.value; pv(); hideErr(root, p+'FixErr'); ch(); };
+  q('#'+p+'How').oninput = e => { fix.how = e.target.value; pv(); hideErr(root, p+'FixErr'); ch(); };
+  q('#'+p+'When').querySelectorAll('.chip').forEach(b => b.onclick = () => { fix.when = fix.when === b.dataset.w ? '' : b.dataset.w; q('#'+p+'When').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.w === fix.when)); pv(); hideErr(root, p+'FixErr'); ch(); });
   pv();
 }
 function showErr(root, id, e){
@@ -813,7 +843,21 @@ function validateWhyFix(root, p, why, fix){
 }
 
 /* ===================== 作る（登録） ===================== */
-let draft = { imgs:[], subj:'', text:'', tag:'', whyP:emptyWhy(), fixP:emptyFix() };
+const DKEY = 'miss_draft';
+const blankDraft = () => ({ imgs:[], subj:'', text:'', tag:'', whyP:emptyWhy(), fixP:emptyFix() });
+function loadDraft(){
+  try{
+    const d = JSON.parse(localStorage.getItem(DKEY) || 'null');
+    if(d && Array.isArray(d.imgs)) return { ...blankDraft(), ...d, whyP:{ ...emptyWhy(), ...(d.whyP||{}) }, fixP:{ ...emptyFix(), ...(d.fixP||{}) } };
+  }catch(e){}
+  return blankDraft();
+}
+let dT = null;
+/* 書きかけは 500ms ごとに控える。アプリが閉じられても写真と文章が残る */
+function saveDraft(){ clearTimeout(dT); dT = setTimeout(() => { try{ localStorage.setItem(DKEY, JSON.stringify(draft)); }catch(e){} }, 500); }
+function clearDraft(){ clearTimeout(dT); try{ localStorage.removeItem(DKEY); }catch(e){} }
+const draftFilled = () => !!(draft.imgs.length || draft.text.trim() || draft.whyP.did.trim() || draft.fixP.what.trim() || draft.fixP.how.trim());
+let draft = loadDraft();
 let busy = false;
 function renderAdd(){
   const root = $('#tab-Add');
@@ -839,15 +883,16 @@ function renderAdd(){
     <div class="field req"><label>改善点（いつ・何を・どうする）<b>必須</b></label>${fixFields('add', draft.fixP)}</div>
 
     <button class="btn-primary" id="addGo">この問題を登録する</button>
-    <div class="dim" style="text-align:center; margin-top:8px">登録すると ${gapLabel(gaps()[0])}に「今日の問題」として届きます。</div>`;
+    <div class="dim" style="text-align:center; margin-top:8px">登録すると ${gapLabel(gaps()[0])}に「今日の問題」として届きます。<br>書きかけは自動で残るので、とちゅうで閉じても大丈夫です。</div>
+    ${draftFilled() ? `<button class="btn-line" id="addClear">書きかけを消す</button>` : ''}`;
   $('#btnCam').onclick = () => $('#fCam').click();
   $('#btnPick').onclick = () => $('#fPick').click();
   $('#fCam').onchange = e => takeFiles(e.target.files);
   $('#fPick').onchange = e => takeFiles(e.target.files);
-  $('#addText').oninput = e => draft.text = e.target.value;
-  bindWhyFix(document, 'add', draft.whyP, draft.fixP);
-  $('#addSubj').querySelectorAll('.chip').forEach(b => b.onclick = () => { draft.subj = b.dataset.s; $('#addSubj').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); });
-  $('#addTag').querySelectorAll('.chip').forEach(b => b.onclick = () => { draft.tag = draft.tag === b.dataset.t ? '' : b.dataset.t; $('#addTag').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.t === draft.tag)); });
+  $('#addText').oninput = e => { draft.text = e.target.value; saveDraft(); };
+  bindWhyFix(document, 'add', draft.whyP, draft.fixP, saveDraft);
+  $('#addSubj').querySelectorAll('.chip').forEach(b => b.onclick = () => { draft.subj = b.dataset.s; $('#addSubj').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); saveDraft(); });
+  $('#addTag').querySelectorAll('.chip').forEach(b => b.onclick = () => { draft.tag = draft.tag === b.dataset.t ? '' : b.dataset.t; $('#addTag').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.t === draft.tag)); saveDraft(); });
   $('#addGo').onclick = () => {
     if(busy) return toast('写真を取り込み中です');
     if(!draft.imgs.length && !draft.text.trim()) return toast('問題を、写真か文字で入れてください');
@@ -855,10 +900,18 @@ function renderAdd(){
     if(!validateWhyFix(document, 'add', draft.whyP, draft.fixP)) return toast('赤い所を直してください');
     const keepSubj = draft.subj;
     addItem({ ...draft, why:composeWhy(draft.whyP), fix:composeFix(draft.fixP), whyP:{ ...draft.whyP }, fixP:{ ...draft.fixP } });
-    draft = { imgs:[], subj:keepSubj, text:'', tag:'', whyP:emptyWhy(), fixP:emptyFix() };
+    draft = { ...blankDraft(), subj:keepSubj };
+    clearDraft();
     renderAdd(); renderAll();
     window.scrollTo({ top:0, behavior:'smooth' });
     toast(`登録しました。${gapLabel(gaps()[0])}に届きます`);
+  };
+  const ac = $('#addClear');
+  if(ac) ac.onclick = async () => {
+    if(!confirm('書きかけを消しますか？')) return;
+    const ids = draft.imgs.slice(); draft = blankDraft(); clearDraft(); renderAdd();
+    for(const id of ids) await delImg(id);
+    toast('消しました');
   };
   renderAddThumbs();
 }
@@ -867,7 +920,7 @@ async function takeFiles(files){
   busy = true; $('#btnCam').classList.add('busy'); $('#btnPick').classList.add('busy');
   toast(list.length > 1 ? `${list.length}枚を取り込んでいます…` : '写真を取り込んでいます…');
   for(const f of list){
-    try{ const b = await shrink(f); const id = newId(); await putImg(id, b); draft.imgs.push(id); renderAddThumbs(); }
+    try{ const b = await shrink(f); const id = newId(); await putImg(id, b); draft.imgs.push(id); saveDraft(); renderAddThumbs(); }
     catch(e){ toast('この写真は取り込めませんでした'); }
   }
   busy = false; $('#btnCam').classList.remove('busy'); $('#btnPick').classList.remove('busy');
@@ -876,7 +929,7 @@ async function takeFiles(files){
 function renderAddThumbs(){
   const box = $('#addThumbs'); if(!box) return;
   box.innerHTML = draft.imgs.map((id, i) => `<div class="thumb"><img data-img="${id}" alt=""><span class="no">${i+1}</span><button class="x" data-rm="${id}">${ICO.x}</button></div>`).join('');
-  box.querySelectorAll('[data-rm]').forEach(b => b.onclick = async () => { const id = b.dataset.rm; draft.imgs = draft.imgs.filter(x => x !== id); await delImg(id); renderAddThumbs(); });
+  box.querySelectorAll('[data-rm]').forEach(b => b.onclick = async () => { const id = b.dataset.rm; draft.imgs = draft.imgs.filter(x => x !== id); saveDraft(); await delImg(id); renderAddThumbs(); });
   fillImgs(box);
 }
 
@@ -1023,6 +1076,9 @@ function renderSet(){
     S.cfg.gaps[Number(inp.dataset.gi)] = v; save(); renderToday();
   });
   $('#tgRandMast').classList.toggle('on', S.cfg.randMast);
+  const lb = S.cfg.lastBackup, days = lb ? diffDays(lb, today()) : 9999;
+  $('#bkNote').innerHTML = (S.items.length >= 5 && days >= 30)
+    ? `<div class="note"><b>控えをとりましょう。</b>${lb ? md(lb)+' から' : 'まだ一度も'}控えをとっていません。下の「ファイルに保存」を押して、出てきた画面から「ファイル」アプリなどに保存してください。</div>` : '';
   $('#verNow').textContent = 'v'+VER;
   if(!$('#setSlides').innerHTML) renderSlides();
   renderChanges();
@@ -1044,6 +1100,7 @@ async function exportData(){
   toast('控えを作っています…');
   const imgs = {};
   for(const it of S.items) for(const id of it.imgs){ try{ const b = await getImg(id); if(b) imgs[id] = await blobToDataUrl(b); }catch(e){} }
+  S.cfg.lastBackup = today(); save();
   const j = { app:'missmap', v:1, exported:new Date().toISOString(), data:S, imgs };
   const text = JSON.stringify(j);
   const name = 'missmap-'+today()+'.json';
@@ -1096,9 +1153,11 @@ const SLIDES = [
   { ico:'eye', t:'5. 問題だけを見て言う', p:'問題だけを見て、「なぜ間違えたか」「次はどうするか」を<b>自分の口で言って</b>から、「答え合わせ」で登録した内容と比べます。', ex:'言えた → 次の間隔へ。5回つづけて言えたら「極まった」。言えなかった → 翌日からやり直し。' },
   { ico:'shuffle', t:'6. ランダムに解く', p:'予定に関係なく、3・5・10問を練習できます。ランダムのときは「言えなかった」だけ記録され、「言えた」は予定を変えません。', ex:'間隔をあけて覚える仕組みを崩さないためです。' },
   { ico:'chart', t:'7. ミスマップを見る', p:'教科別の件数と、ミスの種類別の件数（<b>ミスパターン分析</b>）が自動でたまります。いちばん多い種類が、あなたのミスのクセです。', ex:'そのクセの改善点を、ほかの問題にも使ってみてください。' },
-  { ico:'save', t:'8. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の「控え」から、ときどきファイルに残してください。', ex:'iPhone の「ショートカット」で毎朝自動で開く設定も、設定にあります。' },
+  { ico:'install', t:'8. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、登録した問題と写真が消えてしまうことがあります。', ex:'Safari の共有ボタン →「ホーム画面に追加」→「追加」。やり方は、上の赤い帯の「やり方」からも見られます。' },
+  { ico:'save', t:'9. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の「控え」から、ときどきファイルに残してください。', ex:'iPhone の「ショートカット」で毎朝自動で開く設定も、設定にあります。' },
 ];
 const CHANGES = [
+  { v:8, d:'9/14', t:'ホーム画面に追加の案内。書きかけの自動保存。とばす。判定の誤りを修正。' },
   { v:7, d:'9/13', t:'暗い地で文字が読みやすいように、線を太く・薄い色を明るく・小さい字を大きく。' },
   { v:6, d:'9/13', t:'白い面をなくし、深い紺の地に金の差し色へ。' },
   { v:5, d:'9/13', t:'使い方スライドと更新の履歴を設定に追加。配色を青系に。' },
@@ -1113,6 +1172,7 @@ const SICO = {
   fix: '<svg viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="m12.5 7.5 4 4"/></svg>',
   chart: '<svg viewBox="0 0 24 24"><path d="M3 20h18"/><rect x="5" y="11" width="3.5" height="9"/><rect x="10.25" y="6" width="3.5" height="14"/><rect x="15.5" y="14" width="3.5" height="6"/></svg>',
   save: '<svg viewBox="0 0 24 24"><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/></svg>',
+  install: '<svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M12 7v7"/><path d="m9 11.5 3 3 3-3"/></svg>',
 };
 function slidesHtml(){
   return `<div class="slides"><div class="sl-track">${SLIDES.map((sl, i) => `<div class="sl"><div class="no num">${i+1} / ${SLIDES.length}</div><div class="pic">${SICO[sl.ico]||''}</div><h4>${sl.t}</h4><p>${sl.p}</p>${sl.ex ? `<div class="ex">${sl.ex}</div>` : ''}</div>`).join('')}</div>
@@ -1165,6 +1225,36 @@ function openHelpOld(){
 }
 $('#btnHelp').onclick = openHelp;
 
+/* ===================== ホーム画面に追加（データを守る） =====================
+   iPhone の Safari は、ホーム画面に追加していないサイトの保存データを、
+   しばらく開かないと消すことがある。このアプリは30日あけて解く作りなので、
+   追加していない生徒は記録を失う。追加するまで帯を出し続ける。 */
+function isInstalled(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function openInstall(){
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const bg = document.createElement('div'); bg.className = 'sheet-bg';
+  bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>ホーム画面に追加する</h2>
+    <div class="note"><b>なぜ必要か：</b>ホーム画面に追加していないと、iPhone が「しばらく使っていないサイト」と判断して、登録した問題と写真を消してしまうことがあります。追加すれば消えません。ふつうのアプリと同じように開けるようにもなります。</div>
+    ${ios ? `<h3>iPhone・iPad の場合</h3>
+    <ol><li>この画面を <b>Safari</b> で開く（LINE や Instagram の中で開いていたら、右下などの「Safari で開く」を押してください）</li>
+      <li>画面の下にある <b>共有ボタン</b>（四角から矢印が出ている印）を押す</li>
+      <li>少し下にスクロールして <b>「ホーム画面に追加」</b> を押す</li>
+      <li>右上の <b>「追加」</b> を押す</li>
+      <li>ホーム画面にできたアイコンから、これからは開く</li></ol>
+    <p class="dim" style="margin-top:10px">追加したあとは、この帯は出なくなります。</p>`
+    : `<h3>Android の場合</h3>
+    <ol><li>この画面を <b>Chrome</b> で開く</li><li>右上の <b>⋮</b> を押す</li><li><b>「ホーム画面に追加」</b>（または「アプリをインストール」）を押す</li></ol>
+    <p class="dim" style="margin-top:10px">パソコンで見ている場合は、そのままでも構いません。</p>`}
+    <button class="close">閉じる</button></div>`;
+  document.body.appendChild(bg);
+  bg.querySelector('.close').onclick = () => bg.remove();
+  bg.addEventListener('click', e => { if(e.target === bg) bg.remove(); });
+}
+$('#btnInstall').onclick = openInstall;
+function checkInstall(){ $('#btnInstall').classList.toggle('hidden', isInstalled()); }
+
 /* ===================== タブ・全体 ===================== */
 function goTab(name){ const b = document.querySelector(`nav.tabs button[data-tab="${name}"]`); if(b) b.click(); }
 $$('nav.tabs button').forEach(b => b.onclick = () => {
@@ -1216,6 +1306,7 @@ window.addEventListener('beforeunload', () => save());
 
 /* 起動 */
 renderToday();
+checkInstall();
 renderAdd();
 checkUpdate(true);
 try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}

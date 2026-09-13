@@ -484,6 +484,23 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 .goal .bar{margin-top:9px}
 .goal.done{border-color:var(--acc)}
 .goal.off .gv2{color:var(--ink2);font-size:.9rem;font-weight:700;margin-top:4px}
+/* ゴールのカレンダー */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .h{text-align:center;font-size:.66rem;font-weight:800;color:var(--ink3);padding:2px 0 3px}
+.cal .c{position:relative;aspect-ratio:1;max-height:58px;border-radius:9px;background:var(--surf2);border:1px solid var(--line2);
+  display:flex;align-items:center;justify-content:center}
+.cal .c .dn{position:absolute;top:3px;left:5px;font-size:.6rem;font-weight:700;color:var(--ink3)}
+.cal .c b{font-size:.92rem;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:6px}
+.cal .c.zero{background:transparent}
+.cal .c.hit{background:var(--acc-soft);border-color:var(--acc)}
+.cal .c.hit b,.cal .c.hit .dn{color:var(--acc)}
+.cal .c.now{box-shadow:0 0 0 2px var(--ink2) inset}
+.cal .c.fut{opacity:.3;background:transparent}
+.calsum{margin-top:10px;font-size:.78rem;color:var(--ink2);font-weight:600;line-height:1.7}
+.calsum b{color:var(--ink);font-weight:800}
+.callg{font-size:.7rem;color:var(--ink3);font-weight:600;margin-top:2px}
+.callg i{display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--acc-soft);
+  border:1px solid var(--acc);vertical-align:-1px}
 /* いつ見る（予定） */
 .pq{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .pq button{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
@@ -595,10 +612,10 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 53;
+const VER = 54;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
-      K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day';
+      K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal';
 
 /* 塾生かどうかをたしかめる入口。中身（動画リスト）は公開の場所には置いていない。
    ここに毎回聞きにいって、Discordのサーバーに「いま」いる人にだけ渡してもらう。 */
@@ -656,6 +673,7 @@ let folders = [];       /* 生徒が自分で作るフォルダ [{id, name, ids:
 let outs = {};          /* アウトプット {動画id: [{at:時刻, t:本文}]} */
 let mych = [];          /* マイチャンネル（自分で足した ヒラ先生の動画）[{id, t, at}] */
 let day = {};           /* 日ごとに見た秒数 { 'YYYY-MM-DD': 秒 } */
+let dgoal = {};         /* その日に決めていたゴール（分）{ 'YYYY-MM-DD': 分 }。あとでゴールを変えても、過去の達成が変わらないように */
 let cfg  = { speed:1, autonext:true, loop:false, cc:false, rv:5, noauto:false, goal:0 };
 let view = { name:'home' };
 let admin = null;         /* 管理画面のしたがき */
@@ -672,6 +690,8 @@ function load(){
   if(!Array.isArray(mych)) mych = [];
   try{ day = JSON.parse(localStorage.getItem(K_DAY) || '{}'); }catch(e){ day = {}; }
   if(!day || typeof day !== 'object') day = {};
+  try{ dgoal = JSON.parse(localStorage.getItem(K_DGOAL) || '{}'); }catch(e){ dgoal = {}; }
+  if(!dgoal || typeof dgoal !== 'object') dgoal = {};
 }
 /* 記録を保存したら、少しあとに預け先にも送る（schedulePush は下の方で定義） */
 const saveProg = () => { localStorage.setItem(K_PROG, JSON.stringify(prog)); schedulePush(); };
@@ -680,7 +700,7 @@ const saveFold = () => { localStorage.setItem(K_FOLD, JSON.stringify(folders)); 
 const saveOut  = () => { localStorage.setItem(K_OUT,  JSON.stringify(outs));   schedulePush(); };
 const saveMych = () => { localStorage.setItem(K_MYCH, JSON.stringify(mych));   schedulePush(); };
 /* 見た時間は毎秒変わるので、ここでは同期を急かさない（閉じるときとほかの変化のついでに送る） */
-const saveDay  = () => { try{ localStorage.setItem(K_DAY, JSON.stringify(day)); }catch(e){} };
+const saveDay  = () => { try{ localStorage.setItem(K_DAY, JSON.stringify(day)); localStorage.setItem(K_DGOAL, JSON.stringify(dgoal)); }catch(e){} };
 
 /* ---------- 今日のゴール（Yuuydさんの提案・2026-09-13） ----------
    長い動画を1本見終わるのは重いので、「今日は何分見る」を自分で決められるようにした。
@@ -693,10 +713,50 @@ function addWatch(sec){
   /* 古い日のぶんは持たない（2か月ぶんだけ残す） */
   const lim = new Date(Date.now() - 62 * 864e5).toISOString().slice(0, 10);
   Object.keys(day).forEach(d => { if(d < lim) delete day[d]; });
+  Object.keys(dgoal).forEach(d => { if(d < lim) delete dgoal[d]; });
+  if(goalMin()) dgoal[k] = goalMin();
   if(Math.floor(day[k]) % 10 === 0) saveDay();
 }
 const todayMin = () => Math.floor((day[todayStr()] || 0) / 60);
 const goalMin  = () => +cfg.goal || 0;
+/* その日のゴールに届いたか。今日は今のゴール、過去の日はその日に決めていたゴールで判定 */
+function dayHit(d){
+  const g = d === todayStr() ? goalMin() : (+dgoal[d] || 0);
+  return g > 0 && (day[d] || 0) >= g * 60;
+}
+/* ゴールを決め直したら、今日のぶんに反映（過去の日はそのまま） */
+function setGoal(m){
+  cfg.goal = m; saveCfg();
+  const k = todayStr();
+  if(m) dgoal[k] = m; else delete dgoal[k];
+  saveDay(); schedulePush();
+}
+
+/* 5週間のカレンダー。何分見たか と ゴールに届いた日 が一目でわかる（×は出さない）。
+   Yuuydさんの提案（2026-09-13） */
+function calHtml(){
+  const t = new Date(); t.setHours(0,0,0,0);
+  const dow = (t.getDay() + 6) % 7;                 /* 月曜はじまり */
+  const end = new Date(t); end.setDate(t.getDate() + (6 - dow));
+  const start = new Date(end); start.setDate(end.getDate() - 34);
+  const tk = todayStr();
+  let cells = '', hit = 0, total = 0, days = 0;
+  for(let i = 0; i < 35; i++){
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const z = n => String(n).padStart(2,'0');
+    const k = d.getFullYear() + '-' + z(d.getMonth()+1) + '-' + z(d.getDate());
+    const sec = day[k] || 0, m = Math.floor(sec / 60);
+    const fut = k > tk, h = !fut && dayHit(k);
+    if(!fut){ total += sec; if(m) days++; if(h) hit++; }
+    cells += `<div class="c ${h ? 'hit' : ''} ${k === tk ? 'now' : ''} ${fut ? 'fut' : ''} ${!fut && !m ? 'zero' : ''}">
+      <span class="dn">${d.getDate()}</span>${!fut && m ? `<b>${m}</b>` : ''}</div>`;
+  }
+  const hh = Math.floor(total / 3600), mm = Math.floor(total % 3600 / 60);
+  return `<div class="cal">
+    ${['月','火','水','木','金','土','日'].map(w => `<div class="h">${w}</div>`).join('')}${cells}</div>
+    <div class="calsum">この5週間：見た日 <b>${days}</b>日 ・ ゴールに届いた日 <b>${hit}</b>日 ・ 合計 <b>${hh ? hh + '時間' : ''}${mm}分</b></div>
+    <div class="callg">数字はその日に見た分。<i></i> はゴールに届いた日。</div>`;
+}
 /* ---------- アウトプットに貼る写真 ----------
    写真は大きいので、ほかの記録とは別のところ（IndexedDB）にしまう。
    **この端末の中だけに残る。** ほかの端末には送っていない（通信量と保管量の都合）。
@@ -1127,14 +1187,16 @@ const stamp = () => { try{ localStorage.setItem(K_AT, String(now())); }catch(e){
 const stampAt = () => +(localStorage.getItem(K_AT) || 0);
 
 /* この端末の記録をひとまとめにする。速さやループは端末ごとの好みなので送らない */
-const myRec = () => ({ prog, favs, folders, outs, mych, day, goal: goalMin(), name: cfg.name || '', at: stampAt() });
+const myRec = () => ({ prog, favs, folders, outs, mych, day, dgoal, goal: goalMin(), name: cfg.name || '', at: stampAt() });
 
 function applyRec(r){
   prog = r.prog || {}; favs = Array.isArray(r.favs) ? r.favs : [];
   folders = Array.isArray(r.folders) ? r.folders : [];
   outs = (r.outs && typeof r.outs === 'object') ? r.outs : {};
   if(Array.isArray(r.mych)) mych = r.mych;
-  if(r.day && typeof r.day === 'object'){ day = r.day; saveDay(); }
+  if(r.day && typeof r.day === 'object'){ day = r.day; }
+  if(r.dgoal && typeof r.dgoal === 'object'){ dgoal = r.dgoal; }
+  saveDay();
   if(r.goal != null && !cfg.goal){ cfg.goal = +r.goal || 0; saveCfg(); }
   if(r.name && !cfg.name){ cfg.name = r.name; saveCfg(); }
   saveProg(); saveFav(); saveFold(); saveOut(); saveMych();
@@ -1203,6 +1265,8 @@ function mergeRec(a, b){
   out.day = {};
   [a.day || {}, b.day || {}].forEach(o => Object.keys(o).forEach(d => {
     out.day[d] = Math.max(out.day[d] || 0, +o[d] || 0); }));
+  /* その日のゴールは 新しい記録のほうを優先、なければ古いほう */
+  out.dgoal = Object.assign({}, (newer === a ? b : a).dgoal || {}, newer.dgoal || {});
   out.goal = newer.goal != null ? newer.goal : (a.goal != null ? a.goal : b.goal);
   return out;
 }
@@ -2099,7 +2163,7 @@ function pickFolder(id, after){
 /* 機種変更で記録が消えるのを防ぐ。見た回数・フォルダ・保存・設定をまとめて出し入れする */
 function backupData(){
   return { app:'Theater', v:VER, at:new Date().toISOString(),
-           prog, favs, folders, cfg, outs, mych, day };
+           prog, favs, folders, cfg, outs, mych, day, dgoal };
 }
 /* 機種変更で写真も持っていけるように、書き出しには写真も入れる */
 const blobToURL = b => new Promise(res => {
@@ -2178,6 +2242,7 @@ async function applyBackup(j){
   outs = (j.outs && typeof j.outs === 'object') ? j.outs : {};
   mych = Array.isArray(j.mych) ? j.mych : [];
   day = (j.day && typeof j.day === 'object') ? j.day : {};
+  dgoal = (j.dgoal && typeof j.dgoal === 'object') ? j.dgoal : {};
   saveDay();
   saveProg(); saveFav(); saveFold(); saveCfg(); saveOut(); saveMych();
 }
@@ -2893,18 +2958,19 @@ function pickGoal(){
   const cur = goalMin();
   openSheet(`
     <h3>今日のゴール</h3>
-    <div class="lead" style="margin:-4px 2px 10px;line-height:1.9">
+    ${calHtml()}
+    <div class="lead" style="margin:14px 2px 10px;line-height:1.9">
       「今日は何分見る」を決めておくと、長い動画でも少しずつ進められます。<br>
       毎日0時に、その日のぶんは0からになります。</div>
     <div class="spds">${GOALS.map(m => `<button class="spd1 ${m === cur ? 'on' : ''}" data-g="${m}">${m}分</button>`).join('')}</div>
     <button class="btn" id="gOff" style="margin-top:12px">${cur ? 'ゴールを決めない（消す）' : 'とじる'}</button>`,
   () => {
     $$('#shin [data-g]').forEach(b => b.onclick = () => {
-      cfg.goal = +b.dataset.g; saveCfg(); schedulePush(); closeSheet(); render();
+      setGoal(+b.dataset.g); closeSheet(); render();
       toast(`今日のゴールを ${cfg.goal}分 にしました`);
     });
     $('#gOff').onclick = () => {
-      if(cur){ cfg.goal = 0; saveCfg(); schedulePush(); closeSheet(); render(); toast('ゴールをやめました'); }
+      if(cur){ setGoal(0); closeSheet(); render(); toast('ゴールをやめました'); }
       else closeSheet();
     };
   });

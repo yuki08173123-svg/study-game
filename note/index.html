@@ -393,7 +393,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 24;
+const VER = 25;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -477,7 +477,7 @@ function load(){
   try{ folders = JSON.parse(localStorage.getItem(K_F) || '[]'); }catch(e){ folders = []; }
   if(!Array.isArray(folders)) folders = [];
   try{ cfg = JSON.parse(localStorage.getItem(K_C) || '{}'); }catch(e){ cfg = {}; }
-  cfg = Object.assign({ revN:5, revScope:'*', hidePhotos:true, pace:'normal', autoDone:false }, cfg);
+  cfg = Object.assign({ revN:5, revScope:'*', hidePhotos:true, pace:'normal', autoDone:false, autoTrash:0 }, cfg);
   if(cfg.revScope && cfg.revScope !== '*' && cfg.revScope !== '' && !folders.some(f => f.id === cfg.revScope)){
     cfg.revScope = '*'; saveCfg();
   }
@@ -1006,6 +1006,13 @@ function renderNote(){
       ${picsHtml((n.imgs||[]).filter(i => !(n.back||[]).includes(i)))}
       ${(n.back||[]).length ? `<div class="backlabel">裏</div>${picsHtml((n.imgs||[]).filter(i => (n.back||[]).includes(i)))}` : ''}
     </div>
+    ${(n.rts||[]).length ? `<div class="label">記憶の記録（思い出すまでの時間）</div>
+    <div class="group">${n.rts.slice().reverse().slice(0, 8).map(r => `<div class="item" style="min-height:44px;padding:9px 15px">
+        <span class="nm" style="font-weight:500;color:var(--ink2);font-size:.88rem">${fmtDate(r.t)}</span>
+        <span class="ct mono" style="color:var(--ink)">${fmtSec(r.s)}</span>
+        <span class="${GRADES[r.g] ? GRADES[r.g].cls : ''}" style="width:30px;text-align:center;border-radius:8px;font-weight:700">${GRADES[r.g] ? GRADES[r.g].mark : ''}</span>
+      </div>`).join('')}</div>
+    <div class="note-txt" style="margin:8px 4px 0">${esc(rtSummary(n))}　表が出てから「続きを表示」または仕分けを押すまでの時間です。短くなっていれば、思い出しやすくなっています。</div>` : ''}
     <div class="label">このメモ</div>
     <div class="group">
       ${rowItem({ ic:ICO.loop({s:19}), nm:'このカードを確認する', attr:'data-a="check"' })}
@@ -1240,6 +1247,12 @@ function doSave(){
 
 /* ===================== 振り返り ===================== */
 let revQ = [], revI = 0, revOk = 0, revNg = 0, revOpen = false, revMode = 'quiz', revPic = false, revList = null, revRec = true;
+let revT0 = 0, revFor = -1, revSecs = null, revSessSecs = [];   // 表が出た時刻・どのカードか・思い出すまでの秒数
+function revClock(){                          // 表を出した瞬間から計る（同じカードの再描画では計り直さない）
+  if(revFor !== revI){ revFor = revI; revT0 = now(); revSecs = null; }
+}
+function revStopClock(){ if(revSecs === null) revSecs = Math.round((now() - revT0) / 100) / 10; return revSecs; }
+const fmtSec = s => s < 60 ? s.toFixed(1) + '秒' : Math.floor(s/60) + '分' + Math.round(s%60) + '秒';
 
 function scopeNotes(){                       // 振り返る範囲のメモ（卒業したものは出さない）
   const sc = cfg.revScope || '*';
@@ -1323,6 +1336,7 @@ function renderReview(){
           <div class="stat"><b style="color:var(--ok)">${revOk}</b><span>覚えている</span></div>
           <div class="stat"><b style="color:var(--ng)">${revNg}</b><span>あいまい</span></div>
         </div>
+        ${revSessSecs.length ? `<div class="note-txt" style="margin-top:12px">思い出すまでの平均 <b>${fmtSec(revSessSecs.reduce((a,b)=>a+b,0)/revSessSecs.length)}</b></div>` : ''}
       </div>
       <button class="btn pri" id="back2top" style="margin-top:14px">件数や範囲を選びなおす</button>
       <button class="btn sec" id="again" style="margin-top:10px">同じ範囲でもう一度</button>` : `
@@ -1429,6 +1443,7 @@ function renderReview(){
   const hasMore = !!(rest || backP.length || hidePic);
   const veiled = hasMore && !revOpen;
   const picVeiled = hidePic && !revOpen && !revPic;
+  revClock();
   $('#main').innerHTML = `
     <div class="rev">
       <div class="step">${revI+1} / ${revQ.length}${revRec ? '' : '　・　確認するだけ'}</div>
@@ -1452,7 +1467,7 @@ function renderReview(){
   fillImgs($('#main'));
   const sp = $('#showpic');
   if(sp) sp.onclick = () => { revPic = true; render(); };
-  if(veiled) $('#rshow').onclick = () => { revOpen = true; render(); };
+  if(veiled) $('#rshow').onclick = () => { revStopClock(); revOpen = true; render(); };
   else if(revRec) $$('#main [data-g]').forEach(b => b.onclick = () => revAnswer(+b.dataset.g));
   else $('#rnext').onclick = () => {
     revI++; revOpen = false; revPic = false;
@@ -1464,7 +1479,7 @@ function renderReview(){
 function startRevWith(list, rec){            // いま出ている一覧を、そのまま振り返る
   list = list.filter(n => !n.del);
   if(!list.length){ toast('振り返るメモがありません'); return; }
-  revRec = rec !== false;
+  revRec = rec !== false; revSessSecs = []; revFor = -1;
   revList = revRec ? list.slice() : null;
   const pool = list.slice();
   for(let i = pool.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [pool[i],pool[j]] = [pool[j],pool[i]]; }
@@ -1480,7 +1495,7 @@ function startRev(mode){
   }else{
     revQ = pickReview(cfg.revN);
   }
-  revList = null; revRec = true;
+  revList = null; revRec = true; revSessSecs = []; revFor = -1;
   revI = 0; revOk = 0; revNg = 0; revOpen = false; revPic = false;
   if(!revQ.length){ toast('メモがありません'); return; }
   render();
@@ -1488,11 +1503,55 @@ function startRev(mode){
 function revAnswer(g){
   const n = revQ[revI];
   if(n){
+    const secs = revStopClock();
     const ivl = applyGrade(n, g);
+    n.rts = (n.rts || []).concat([{ t: now(), s: secs, g }]).slice(-30);   // 思い出すまでの記録（直近30回）
+    revSessSecs.push(secs);
     if(g <= 2) revOk++; else revNg++;
-    toast(n.done ? '卒業しました' : (ivl <= 0 ? 'つぎの回にまた出ます' : `つぎは${ivl}日後`));
+    toast(`${fmtSec(secs)}　·　` + (n.done ? '卒業しました' : (ivl <= 0 ? 'つぎの回にまた出ます' : `つぎは${ivl}日後`)));
   }
   revI++; revOpen = false; revPic = false; saveNotes(); render();
+}
+/* 何日も触れていないメモを、自動でゴミ箱へ（重要★と卒業は残す。戻せる） */
+const AUTO_TRASH = { 0:'なし', 7:'1週間', 14:'2週間', 30:'1ヶ月', 60:'2ヶ月' };
+const lastTouch = n => Math.max(n.upd || 0, n.revAt || 0, n.cre || 0);
+function autoTrashSweep(){
+  const days = +cfg.autoTrash || 0;
+  if(!days) return;
+  const limit = now() - days * 86400000;
+  const hit = notes.filter(n => !n.del && !n.star && !n.done && lastTouch(n) < limit);
+  if(!hit.length) return;
+  hit.forEach(n => { n.del = true; n.autoDel = now(); n.upd = now(); });
+  saveNotes(); render();
+  toast(`${days === 7 ? '1週間' : AUTO_TRASH[days]}触れていない${hit.length}件をゴミ箱へ`, '元に戻す', () => {
+    hit.forEach(n => { n.del = false; delete n.autoDel; n.upd = now(); }); saveNotes(); render();
+  });
+}
+function autoTrashSheet(){
+  sheet(`<h3>触れていないメモを自動でゴミ箱へ</h3>
+    <div class="note-txt" style="margin:-10px 2px 14px">書いた・直した・振り返った、のどれもしていない日数がこれを超えたメモを、
+      開いたときに自動でゴミ箱へ移します。<b>重要★と卒業したメモは対象外</b>です。
+      ゴミ箱に残るので、必要ならいつでも戻せます。</div>
+    <div class="group">${Object.keys(AUTO_TRASH).map(k => `<button class="item" data-at="${k}">
+        <span class="ic">${+k ? ICO.trash({s:18}) : ICO.x({s:18})}</span>
+        <span class="nm">${AUTO_TRASH[k]}${+k ? '触れていなければ' : '（自動では消さない）'}</span>
+        ${(+cfg.autoTrash||0) === +k ? `<span style="color:var(--pri)">${ICO.check({s:18,w:2.2})}</span>` : ''}
+      </button>`).join('')}</div>`, close => {
+    $$('#host [data-at]').forEach(b => b.onclick = () => {
+      cfg.autoTrash = +b.dataset.at; saveCfg(); close(); render();
+      toast(cfg.autoTrash ? `${AUTO_TRASH[cfg.autoTrash]}触れていないメモをゴミ箱へ移します` : '自動では消しません');
+      if(cfg.autoTrash) setTimeout(autoTrashSweep, 400);
+    });
+  });
+}
+function rtSummary(n){                       // 直近3回と、その前3回の平均をくらべる
+  const r = (n.rts || []).filter(x => typeof x.s === 'number');
+  if(r.length < 2) return '';
+  const avg = a => a.reduce((x,y) => x + y.s, 0) / a.length;
+  const late = r.slice(-3), early = r.slice(-6, -3);
+  if(!early.length){ return `直近${late.length}回の平均 ${fmtSec(avg(late))}`; }
+  const a = avg(late), b = avg(early), d = Math.round((b - a) / b * 100);
+  return `直近3回の平均 ${fmtSec(a)}（その前の3回 ${fmtSec(b)}）` + (d >= 10 ? '　・　速くなっています' : d <= -10 ? '　・　遅くなっています' : '');
 }
 
 /* ===================== 設定 ===================== */
@@ -1524,6 +1583,8 @@ function renderSet(){
         <span class="nm">◎が3回つづいたら卒業</span>
         <span class="sw ${cfg.autoDone ? 'on' : ''}"></span>
       </button>
+      ${rowItem({ ic:ICO.trash({s:19}), nm:'触れていないメモを自動でゴミ箱へ', attr:'data-x="autotrash"',
+                  right:`<span class="ct">${AUTO_TRASH[+cfg.autoTrash||0]}</span><span class="chev">${ICO.right({s:18,w:2})}</span>` })}
       ${rowItem({ ic:ICO.book({s:19}), nm:'卒業したメモ', attr:'data-x="done"',
                   right:`<span class="ct">${live().filter(n=>n.done).length}</span><span class="chev">${ICO.right({s:18,w:2})}</span>` })}
     </div>
@@ -1580,6 +1641,7 @@ function setAct(x){
   if(x === 'autodone'){ cfg.autoDone = !cfg.autoDone; saveCfg(); render();
                     toast(cfg.autoDone ? '◎が3回つづいたら卒業します' : '自動の卒業をやめました'); return; }
   if(x === 'done')  return go('list', { fid:null, q:'', view:'list', only:'done' });
+  if(x === 'autotrash') return autoTrashSheet();
   if(x === 'systart') return syncStart();
   if(x === 'syjoin')  return syncJoin();
   if(x === 'synow'){ toast('同期しています…'); return syncPull(true); }
@@ -1785,7 +1847,7 @@ function trashSheet(){
     box.innerHTML = bin.length ? `<div class="group">${bin.map(n => {
       const lead = (n.body || '').split('\n').find(l => l.trim()) || '（写真のみ）';
       return `<div class="item">
-        <span class="nm" style="font-weight:500">${esc(lead.slice(0, 40))}</span>
+        <span class="nm" style="font-weight:500">${esc(lead.slice(0, 40))}${n.autoDel ? ' <span class="tag" style="background:var(--surf2);color:var(--ink3)">自動</span>' : ''}</span>
         <button class="pill" data-back="${n.id}">戻す</button>
       </div>`;
     }).join('')}</div>
@@ -1793,7 +1855,7 @@ function trashSheet(){
     : `<div class="empty" style="padding:34px 10px">ゴミ箱は空です</div>`;
     $$('#tlist [data-back]').forEach(b => b.onclick = () => {
       const n = notes.find(x => x.id === b.dataset.back);
-      if(n){ n.del = false; n.upd = now(); saveNotes(); }
+      if(n){ n.del = false; delete n.autoDel; n.upd = now(); saveNotes(); }
       paint(); toast('戻しました');
     });
     const te = $('#tempty');
@@ -1839,7 +1901,7 @@ function helpSheet(){
           ['消しても中身は残る','中のメモは親フォルダ（なければ未分類）に移ります。']] }),
     slide({ c:C.gold, ic:ICO.loop({s:23,w:1.7}), sub:'REVIEW', t:'振り返り',
       p:['しばらく開いていないメモを数件えらびます。'],
-      kv:[['4段階で答える','◎即答 ・○できた ・△あいまい ・✕わからない。答えると「つぎは◯日後」と出ます。'],
+      kv:[['4段階で答える','◎即答 ・○できた ・△あいまい ・✕わからない。答えると秒数と「つぎは◯日後」が出ます。'],
           ['できたものほど間隔がのびる','◎が続くと次に出るまでが長くなります。ペースは設定で変えられます。'],
           ['範囲と件数','「範囲」でフォルダや単元を、件数は − ＋ と数字のボタンで選べます。']] }),
     slide({ c:C.gray, ic:ICO.down({s:23,w:1.7}), sub:'KEEP', t:'保管',
@@ -2227,6 +2289,7 @@ function boot(){
   if(!cfg.seenHelp){ cfg.seenHelp = 1; saveCfg(); setTimeout(helpSheet, 500); }
   checkUpd(true);
   setTimeout(sweepImgs, 4000);
+  setTimeout(autoTrashSweep, 1500);
   if(sy.code) setTimeout(() => syncPull(true), 800);
   document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && S.screen !== 'write') syncPull(); });
   addEventListener('focus', () => { if(S.screen !== 'write') syncPull(); });

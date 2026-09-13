@@ -67,11 +67,41 @@ header.app{position:sticky; top:0; z-index:30; background:linear-gradient(var(--
 .hero{position:relative; overflow:hidden; background:linear-gradient(160deg, #2A1B58, #170D33); border:1px solid var(--gold-line); border-radius:22px; padding:20px 18px 18px; margin-bottom:12px; box-shadow:var(--shadow-lg);}
 .hero::after{content:''; position:absolute; inset:-40% -20% auto auto; width:70%; aspect-ratio:1; border-radius:50%; background:radial-gradient(closest-side, rgba(201,180,245,.18), transparent 70%); pointer-events:none;}
 .hero .lab{font-size:10px; color:var(--gold); margin-bottom:2px;}
-.hero .stats{display:flex; gap:22px; align-items:flex-end;}
+.hero .stats{display:flex; gap:18px; align-items:flex-end;}
 .hero .st b{display:block; font-size:44px; line-height:1; font-weight:600; color:var(--gold-hi); letter-spacing:.02em;}
+.hero .st b small{font-size:18px; letter-spacing:.08em; margin-right:2px;}
 .hero .st span{font-size:12px; color:var(--muted);}
-.hero .st.small b{font-size:28px; padding-bottom:4px;}
+.hero .st.small b{font-size:26px; padding-bottom:5px;}
+.hero .prog{margin-top:14px;}
+.hero .prog .pl{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:5px;}
+.hero .prog .pl b{color:var(--gold-hi); font-weight:700;}
+.hero .prog .bar{height:8px; border-radius:4px; background:rgba(0,0,0,.35); overflow:hidden; border:1px solid var(--line);}
+.hero .prog .bar i{display:block; height:100%; border-radius:4px; background:linear-gradient(90deg, var(--gold-dp), var(--gold-hi)); transition:width .6s cubic-bezier(.2,.8,.2,1);}
 .hero .msg{margin-top:12px; font-size:14px; color:var(--ink); line-height:1.7; border-top:1px solid var(--line); padding-top:10px;}
+/* マイルストーン発表 */
+.ms{position:fixed; inset:0; z-index:75; background:rgba(21,12,46,.97); display:none; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));}
+.ms.on{display:block;}
+.ms .cardx{max-width:440px; margin:0 auto; background:linear-gradient(160deg, #2A1B58, #150C2E); border:1px solid var(--gold-line); border-radius:24px; padding:26px 20px 20px; box-shadow:var(--shadow-lg); position:relative; overflow:hidden; animation:pop .5s cubic-bezier(.2,.9,.2,1.2);}
+.ms .cardx::before{content:''; position:absolute; inset:0; background:linear-gradient(115deg, transparent 30%, rgba(237,229,255,.22) 50%, transparent 70%); transform:translateX(-120%); animation:shine 1.6s .3s ease-out forwards; pointer-events:none;}
+.ms .lab{font-size:11px; color:var(--gold); text-align:center;}
+.ms .ttl{font-size:24px; font-weight:600; color:var(--gold-hi); text-align:center; letter-spacing:.06em; margin:4px 0 2px;}
+.ms .sub{font-size:13px; color:var(--muted); text-align:center; margin-bottom:16px;}
+.ms .blk{border-top:1px solid var(--line); padding:12px 0 4px;}
+.ms .blk .k{font-size:11px; color:var(--gold); letter-spacing:.08em; margin-bottom:6px;}
+.ms .top1{font-size:22px; font-weight:700; color:var(--gold-hi); line-height:1.4;}
+.ms .top1 small{font-size:13px; color:var(--muted); font-weight:500; margin-left:6px;}
+.ms .tl{font-size:15px; line-height:1.9;}
+.ms .tl span{color:var(--muted); font-size:12px; margin-left:6px;}
+.ms .word{margin-top:14px; font-size:14px; color:var(--ink); line-height:1.8; background:var(--gold-soft); border:1px solid var(--gold-line); border-radius:12px; padding:10px 12px;}
+.ms .btn-gold{margin-top:16px;}
+.msrow{width:100%; text-align:left; display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);}
+.msrow:last-child{border-bottom:none;}
+.msrow .n{flex:none; width:44px; text-align:center; line-height:1.1;}
+.msrow .n b{display:block; font-size:18px; color:var(--gold-hi); font-weight:600;}
+.msrow .n span{font-size:9px; color:var(--gold);}
+.msrow .t{flex:1; min-width:0;}
+.msrow .t b{display:block; font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.msrow .t span{font-size:12px; color:var(--muted);}
 
 .btn-gold{width:100%; display:flex; align-items:center; justify-content:center; gap:10px; background:linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-dp)); color:#1A0F3A; font-weight:700; font-size:17px; border-radius:16px; padding:16px; box-shadow:0 6px 20px rgba(152,120,224,.35), inset 0 1px 0 rgba(255,255,255,.35); letter-spacing:.04em;}
 .btn-gold svg{width:22px; height:22px; stroke:#1A0F3A; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;}
@@ -233,11 +263,14 @@ textarea.field{min-height:120px;}
   <!-- ホーム -->
   <section id="vHome">
     <div class="hero">
-      <div class="lab latin">Mastered</div>
+      <div class="lab latin">My Style</div>
       <div class="stats">
-        <div class="st"><b class="serif num" id="hCount">0</b><span>極めた記録</span></div>
+        <div class="st"><b class="serif num"><small>Lv.</small><span id="hLv">1</span></b><span>レベル</span></div>
+        <div class="st small"><b class="serif num" id="hScore">0</b><span>スコア</span></div>
+        <div class="st small"><b class="serif num" id="hCount">0</b><span>極めた記録</span></div>
         <div class="st small"><b class="serif num" id="hStyle">0</b><span>確立した型</span></div>
       </div>
+      <div class="prog"><div class="pl"><span id="hNextLab"></span><b id="hNextCnt"></b></div><div class="bar"><i id="hBar" style="width:0%"></i></div></div>
       <div class="msg" id="hMsg"></div>
     </div>
     <button class="btn-gold" id="btnNew">
@@ -259,7 +292,9 @@ textarea.field{min-height:120px;}
       <p class="note">自分に合った勉強法とは、自分が「極めた方法」のことです。<br>
       まず「何を完璧にしたか」を記録し、次に「どうやって極めたか」を具体的に書く。<br>
       これをためていくと、繰り返し出てくる方法が見えてきます。それが、あなたの型（マイスタ）です。<br><br>
-      同じ方法が3回出てきたら「確立」、5回で「マイスタ」と表示します。</p>
+      同じ方法が3回出てきたら「確立」、5回で「マイスタ」と表示します。<br><br>
+      記録が10枚たまるごとに「暫定マイスタ発表」を出します。そのときの、あなたの勉強法のまとめです。<br>
+      スコアは、記録1枚で10点、方法が確立するごとに30点、マイスタになるごとに50点。レベルは記録10枚ごとに1つ上がります。</p>
     </div>
     <div class="card">
       <h3>控え（バックアップ）</h3>
@@ -307,6 +342,9 @@ textarea.field{min-height:120px;}
   </div>
 </div>
 
+<!-- 暫定マイスタ発表 -->
+<div class="ms" id="ms"><div class="cardx" id="msBody"></div></div>
+
 <!-- 詳細 -->
 <div class="sheet-bg" id="sheetBg"></div>
 <div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
@@ -314,7 +352,7 @@ textarea.field{min-height:120px;}
 <div class="toast" id="toast"></div>
 
 <script>
-const VER = 2;
+const VER = 3;
 const KEY = 'mysta_v1', BK = 'mysta_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -337,6 +375,7 @@ let S = load();
 function norm(j){
   j.recs = Array.isArray(j.recs) ? j.recs : [];
   j.tags = Array.isArray(j.tags) ? j.tags : [];
+  j.ms = Array.isArray(j.ms) ? j.ms : [];
   j.recs.forEach(r => { r.tags = Array.isArray(r.tags) ? r.tags : []; r.no = Number(r.no)||0; });
   // 番号のない記録に番号をふる(古い順)
   let n = Math.max(0, ...j.recs.map(r => r.no));
@@ -370,6 +409,10 @@ function tagStats(recs){
 const lvlOf = n => n >= 5 ? 3 : n >= 3 ? 2 : 1;
 const lvlName = n => n >= 5 ? 'マイスタ' : n >= 3 ? '確立' : n >= 2 ? '芽' : '';
 const styleCount = () => tagStats().filter(t => t.n >= 3).length;
+/* スコアとレベル */
+const MS_EVERY = 10;
+function score(){ const st = tagStats(); return S.recs.length*10 + st.filter(t => t.n >= 3).length*30 + st.filter(t => t.n >= 5).length*50; }
+const level = () => Math.floor(S.recs.length / MS_EVERY) + 1;
 
 /* ===================== 画面 ===================== */
 let toastT = null;
@@ -393,8 +436,15 @@ function homeMsg(){
   return '記録が'+n+'枚。<br>ためていくと、繰り返し出てくる方法が見えてきます。';
 }
 function renderHome(){
-  $('#hCount').textContent = S.recs.length;
+  const n = S.recs.length;
+  $('#hCount').textContent = n;
   $('#hStyle').textContent = styleCount();
+  $('#hLv').textContent = level();
+  $('#hScore').textContent = score();
+  const next = (Math.floor(n / MS_EVERY) + 1) * MS_EVERY, left = next - n, inLv = n % MS_EVERY;
+  $('#hNextLab').textContent = '第'+(Math.floor(n / MS_EVERY) + 1)+'回 暫定マイスタ発表まで';
+  $('#hNextCnt').textContent = 'あと'+left+'枚';
+  $('#hBar').style.width = Math.round(inLv / MS_EVERY * 100)+'%';
   $('#hMsg').innerHTML = homeMsg();
   $('#recCount').textContent = S.recs.length ? S.recs.length+'枚' : '';
   const list = S.recs.slice().sort((a,b) => b.no - a.no);
@@ -438,6 +488,9 @@ function renderStyle(){
     </div>`).join('') || '<p class="note">方法のタグがまだありません。</p>';
   h += '</div>';
 
+  if(S.ms.length){
+    h += '<div class="card"><h3>暫定マイスタ発表<span class="r">'+MS_EVERY+'枚ごと</span></h3>'+S.ms.slice().reverse().map(m => '<button class="msrow" data-ms="'+m.id+'"><div class="n"><span class="latin">No.</span><b class="serif num">'+m.k+'</b></div><div class="t"><b>'+(m.tags[0] ? esc(m.tags[0].name) : '判定なし')+'</b><span>'+m.n+'枚達成　'+ymdJ(m.date)+'</span></div>'+ICO_R+'</button>').join('')+'</div>';
+  }
   const keys = S.recs.filter(r => r.key).sort((a,b) => b.no - a.no);
   if(keys.length){
     h += '<div class="card"><h3>いちばん効いたこと</h3><ul class="keys">'+keys.map(r => '<li>'+esc(r.key)+'<span>No.'+r.no+'　'+esc(r.what)+'</span></li>').join('')+'</ul></div>';
@@ -451,7 +504,9 @@ function renderStyle(){
     }).join('')+'</div></div>';
   }
   $('#styleBody').innerHTML = h;
+  $$('#styleBody [data-ms]').forEach(b => b.onclick = () => { const m = S.ms.find(x => x.id === b.dataset.ms); if(m) showMilestone(m, false); });
 }
+const ICO_R = '<svg class="i" viewBox="0 0 24 24" style="color:var(--faint)"><path d="m9 6 6 6-6 6"/></svg>';
 
 /* ===================== 詳細 ===================== */
 function openDetail(id){
@@ -460,10 +515,10 @@ function openDetail(id){
   $('#sheetBody').innerHTML = `
     <div style="display:flex;align-items:baseline;gap:8px"><span class="latin" style="font-size:11px;color:var(--gold)">No.</span><span class="serif num" style="font-size:26px;color:var(--gold-hi)">${r.no}</span><span class="spacer" style="flex:1"></span><span class="note">${ymdJ(r.created)}</span></div>
     <div class="dl"><div class="k">極めたこと</div><div class="v" style="font-size:18px;font-weight:700"><span class="subj" style="vertical-align:3px;margin-right:6px">${esc(r.subj)}</span>${esc(r.what)}</div></div>
-    ${dl('「完璧」の確かめ方', r.proof + (r.proofNote ? '　'+r.proofNote : ''))}
-    <div class="dl"><div class="k">方法</div>${r.tags.length ? '<div class="tags" style="margin:2px 0 6px">'+r.tags.map(t => '<span class="tag">'+esc(t)+'</span>').join('')+'</div>' : ''}<div class="v${r.how?'':' dim'}">${r.how ? esc(r.how) : '—'}</div></div>
+    ${r.proof ? dl('「完璧」の確かめ方', r.proof + (r.proofNote ? '　'+r.proofNote : '')) : ''}
+    <div class="dl"><div class="k">方法</div>${r.tags.length ? '<div class="tags" style="margin:2px 0 6px">'+r.tags.map(t => '<span class="tag">'+esc(t)+'</span>').join('')+'</div>' : '<div class="v dim">—</div>'}${r.how ? '<div class="v">'+esc(r.how)+'</div>' : ''}</div>
     ${dl('いちばん効いたこと', r.key)}
-    ${dl('かかった期間', r.dur)}
+    ${r.dur ? dl('かかった期間', r.dur) : ''}
     <div class="row" style="margin-top:14px">
       <button class="btn-line danger" id="dDel">消す</button>
       <button class="btn-line gold" id="dEdit">直す</button>
@@ -476,14 +531,11 @@ function closeSheet(){ $('#sheetBg').classList.remove('on'); $('#sheet').classLi
 $('#sheetBg').onclick = closeSheet;
 
 /* ===================== インタビュー ===================== */
-/* 質問は5つ。1つずつ答えると1枚の記録になる。 */
+/* 質問は2つだけ。答えると1枚の記録になる。(多いと続かないので増やさない) */
 let iv = null;   // { step, a:{...}, editId }
 const STEPS = [
-  { key:'what', q:'何を極めましたか？', hint:'「完璧にした」と言えるものを、ひとつ。範囲や量まで書くと、あとで役に立ちます。', required:true },
-  { key:'proof', q:'「完璧」と、どう確かめましたか？', hint:'極めた証拠です。いちばん近いものを選んでください。', required:true },
-  { key:'how', q:'どうやって極めましたか？', hint:'使った方法を選び、下に具体的なやり方を書いてください。回数・順番・工夫など。', required:true },
-  { key:'key', q:'いちばん効いたのは、何でしたか？', hint:'ひとことで。ここが、あなたの勉強法の核になります。', required:false },
-  { key:'dur', q:'どのくらいかかりましたか？', hint:'だいたいで大丈夫です。', required:false },
+  { key:'what', q:'何を極めましたか？', hint:'「完璧にした」と言えるものを、ひとつ。', required:true },
+  { key:'how', q:'どうやって極めましたか？', hint:'使った方法を選ぶだけでOK。ひとこと添えると、あとで効きます。', required:true },
 ];
 function startInterview(edit){
   iv = { step:0, editId: edit ? edit.id : null,
@@ -507,31 +559,14 @@ function renderStep(){
     h += '<div class="lab2">教科</div><div class="chips">'+SUBJ.map(s => '<button class="chip'+(a.subj===s?' on':'')+'" data-subj="'+s+'">'+s+'</button>').join('')+'</div>';
     h += '<textarea class="field" id="fWhat" rows="3" placeholder="例：英単語帳の1〜300番">'+esc(a.what)+'</textarea>';
     h += '<div class="ex"><b>例</b>　英単語帳の 1〜300 番／数学の二次関数のワーク全問／歴史の江戸時代の年号／古文の助動詞の活用表</div>';
-  }else if(st.key === 'proof'){
-    h += '<div class="chips">'+PROOFS.map(p => '<button class="chip'+(a.proof===p?' on':'')+'" data-proof="'+p+'">'+p+'</button>').join('')+'</div>';
-    h += '<input class="field" id="fProofNote" placeholder="補足があれば（例：単語テスト 3回連続で満点）" value="'+esc(a.proofNote)+'">';
   }else if(st.key === 'how'){
     h += '<div class="lab2">使った方法（いくつでも）</div><div class="chips" id="tagChips">'+allTags().map(t => '<button class="chip'+(a.tags.includes(t)?' on':'')+'" data-tag="'+esc(t)+'">'+esc(t)+'</button>').join('')+'<button class="chip add" id="tagAdd">＋ 自分の方法</button></div>';
-    h += '<div class="lab2">具体的に</div><textarea class="field" id="fHow" rows="5" placeholder="例：1日30語ずつ音読して、翌朝に赤シートで確認。間違えた語だけカードにして、寝る前に見た。">'+esc(a.how)+'</textarea>';
-  }else if(st.key === 'key'){
-    h += '<input class="field" id="fKey" placeholder="例：翌朝にもう一度やること" value="'+esc(a.key)+'">';
-    h += '<div class="ex"><b>例</b>　翌朝にもう一度やること／間違えた問題だけを集めたこと／声に出したこと／量を小さく区切ったこと</div>';
-  }else if(st.key === 'dur'){
-    h += '<div class="chips">'+DURS.map(d => '<button class="chip'+(a.dur===d?' on':'')+'" data-dur="'+d+'">'+d+'</button>').join('')+'</div>';
-    // 最後の確認
-    h += '<div class="card" style="margin-top:8px"><h3>この内容で記録します</h3>'
-      + '<div class="dl"><div class="k">極めたこと</div><div class="v"><span class="subj" style="margin-right:6px;vertical-align:2px">'+esc(a.subj)+'</span>'+esc(a.what)+'</div></div>'
-      + '<div class="dl"><div class="k">確かめ方</div><div class="v">'+esc(a.proof)+(a.proofNote?'　'+esc(a.proofNote):'')+'</div></div>'
-      + '<div class="dl"><div class="k">方法</div>'+(a.tags.length?'<div class="tags" style="margin:2px 0 6px">'+a.tags.map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+'</div>':'')+'<div class="v'+(a.how?'':' dim')+'">'+(a.how?esc(a.how):'—')+'</div></div>'
-      + '<div class="dl"><div class="k">いちばん効いたこと</div><div class="v'+(a.key?'':' dim')+'">'+(a.key?esc(a.key):'—')+'</div></div>'
-      + '</div>';
+    h += '<div class="lab2">いちばん効いたこと（ひとこと・任意）</div><input class="field" id="fKey" placeholder="例：翌朝にもう一度やった" value="'+esc(a.key)+'">';
   }
   $('#ivBody').innerHTML = h;
   $('#ivBody').scrollTop = 0;
   // イベント
   $$('#ivBody [data-subj]').forEach(b => b.onclick = () => { a.subj = b.dataset.subj; $$('#ivBody [data-subj]').forEach(x => x.classList.toggle('on', x === b)); });
-  $$('#ivBody [data-proof]').forEach(b => b.onclick = () => { a.proof = b.dataset.proof; $$('#ivBody [data-proof]').forEach(x => x.classList.toggle('on', x === b)); if(a.proof === 'その他') $('#fProofNote').focus(); });
-  $$('#ivBody [data-dur]').forEach(b => b.onclick = () => { a.dur = (a.dur === b.dataset.dur) ? '' : b.dataset.dur; $$('#ivBody [data-dur]').forEach(x => x.classList.toggle('on', x.dataset.dur === a.dur)); });
   $$('#ivBody [data-tag]').forEach(b => b.onclick = () => { const t = b.dataset.tag; if(a.tags.includes(t)) a.tags = a.tags.filter(x => x !== t); else a.tags.push(t); b.classList.toggle('on', a.tags.includes(t)); });
   const tagAdd = $('#tagAdd');
   if(tagAdd) tagAdd.onclick = () => {
@@ -540,7 +575,7 @@ function renderStep(){
     if(!a.tags.includes(t)) a.tags.push(t);
     rememberTags([t]); save(); renderStep();
   };
-  const f = $('#fWhat, #fProofNote, #fHow, #fKey'.split(',').map(s=>s.trim()).find(s => $(s)));
+  const f = $(['#fWhat','#fKey'].find(s => $(s)));
   if(f && !('ontouchstart' in window)) setTimeout(() => f.focus(), 120);
 }
 function pullStep(){
@@ -553,8 +588,7 @@ function pullStep(){
 function validStep(){
   const st = STEPS[iv.step], a = iv.a;
   if(st.key === 'what'){ if(!a.subj){ toast('教科を選んでください'); return false; } if(!a.what){ toast('極めたことを書いてください'); return false; } }
-  if(st.key === 'proof' && !a.proof){ toast('確かめ方を選んでください'); return false; }
-  if(st.key === 'how' && !a.tags.length && !a.how){ toast('方法を1つ選ぶか、書いてください'); return false; }
+  if(st.key === 'how' && !a.tags.length && !a.key){ toast('方法を1つ選ぶか、ひとこと書いてください'); return false; }
   return true;
 }
 $('#ivBack').onclick = () => { pullStep(); if(iv.step > 0){ iv.step--; renderStep(); } };
@@ -600,7 +634,39 @@ function showDone(r, before){
   $('#doneFind').innerHTML = find; $('#doneFind').classList.toggle('hidden', !find);
   $('#done').classList.add('on');
 }
-$('#doneOk').onclick = () => { $('#done').classList.remove('on'); showView('vHome'); };
+$('#doneOk').onclick = () => { $('#done').classList.remove('on'); showView('vHome'); maybeMilestone(); };
+
+/* ===================== 暫定マイスタ発表（10枚ごと） ===================== */
+function buildMilestone(){
+  const n = S.recs.length, st = tagStats();
+  const bySubj = {}; S.recs.forEach(r => bySubj[r.subj] = (bySubj[r.subj]||0)+1);
+  const subj = Object.entries(bySubj).sort((a,b) => b[1]-a[1])[0];
+  const keys = S.recs.filter(r => r.key).sort((a,b) => b.no - a.no).slice(0,3).map(r => r.key);
+  return { id:newId(), n, k:Math.round(n / MS_EVERY), date:today(), score:score(), tags:st.slice(0,3), subj: subj ? subj[0] : '', subjN: subj ? subj[1] : 0, keys };
+}
+function maybeMilestone(){
+  const n = S.recs.length;
+  if(n === 0 || n % MS_EVERY !== 0) return;
+  if(S.ms.some(m => m.n === n)) return;
+  const m = buildMilestone(); S.ms.push(m); save();
+  showMilestone(m, true);
+}
+function showMilestone(m, fresh){
+  const top = m.tags[0];
+  let h = '<div class="lab latin">Milestone '+m.k+'</div><div class="ttl serif">第'+m.k+'回 暫定マイスタ発表</div><div class="sub">'+m.n+'枚達成　'+ymdJ(m.date)+'　スコア '+m.score+'</div>';
+  h += '<div class="blk"><div class="k">いまのあなたの勉強法</div>';
+  if(top) h += '<div class="top1">'+esc(top.name)+'<small>'+top.n+'回</small></div>';
+  if(m.tags.length > 1) h += '<div class="tl">'+m.tags.slice(1).map(t => esc(t.name)+'<span>'+t.n+'回</span>').join('<br>')+'</div>';
+  if(!top) h += '<div class="tl" style="color:var(--muted)">方法のタグがまだ少なく、判定できません。</div>';
+  h += '</div>';
+  if(m.subj) h += '<div class="blk"><div class="k">いちばん極めた教科</div><div class="tl"><b>'+esc(m.subj)+'</b><span>'+m.subjN+'枚</span></div></div>';
+  if(m.keys.length) h += '<div class="blk"><div class="k">効いたこと</div><div class="tl">'+m.keys.map(k => '◆ '+esc(k)).join('<br>')+'</div></div>';
+  h += '<div class="word">'+(top ? '次に何かを極めるときは、まず「'+esc(top.name)+'」から。<br>これが、いまの時点でのあなたのマイスタです。' : '方法のタグを選んで記録していくと、次の発表で型が見えてきます。')+'</div>';
+  h += '<button class="btn-gold" id="msOk">'+(fresh ? 'つづける' : '閉じる')+'</button>';
+  $('#msBody').innerHTML = h;
+  $('#msOk').onclick = () => $('#ms').classList.remove('on');
+  $('#ms').classList.add('on');
+}
 $('#btnNew').onclick = () => startInterview(null);
 
 /* ===================== 控え ===================== */
@@ -617,14 +683,14 @@ $('#fileImport').onchange = async e => {
     const j = JSON.parse(await f.text()); const d = norm(j.data && j.data.recs ? j.data : j);
     let add = 0, up = 0;
     d.recs.forEach(r => { const cur = byId(r.id); if(cur){ Object.assign(cur, r); up++; } else { S.recs.push(r); add++; } });
-    rememberTags(d.tags); norm(S); save(); renderHome();
+    rememberTags(d.tags); d.ms.forEach(m => { if(!S.ms.some(x => x.id === m.id)) S.ms.push(m); }); norm(S); save(); renderHome();
     toast('読みこみました（追加'+add+'・上書き'+up+'）');
   }catch(err){ toast('読みこめませんでした'); }
 };
 $('#btnWipe').onclick = () => {
   if(!confirm('記録をすべて消しますか？（元に戻せません）')) return;
   if(!confirm('本当に消しますか？')) return;
-  S = norm({ recs:[], tags:[] }); save(); renderHome(); toast('消しました');
+  S = norm({ recs:[], tags:[], ms:[] }); save(); renderHome(); toast('消しました');
 };
 
 /* ===================== 更新の確認 ===================== */

@@ -471,6 +471,12 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 .mydel{display:block;margin:-4px 0 12px auto;color:var(--ink3);font-size:.72rem;font-weight:700;padding:4px 6px}
 /* 未アウトプットの印 */
 .tag.todo{background:none;border:1px solid var(--acc);color:var(--acc);opacity:.85}
+/* いま集中したいこと */
+.focus{display:block;width:100%;text-align:left;background:var(--acc-soft);border:1px solid var(--acc);
+  border-radius:var(--r);padding:13px 15px;margin-bottom:12px}
+.focus .gl{color:var(--acc);font-size:.7rem;font-weight:800;letter-spacing:.1em}
+.focus .fx{margin-top:5px;font-size:1.02rem;font-weight:800;color:var(--ink);line-height:1.6;
+  overflow-wrap:anywhere}
 /* 今日のゴール */
 .goal{display:block;width:100%;text-align:left;background:var(--surf);border:1px solid var(--line);
   border-radius:var(--r);padding:13px 15px;margin-top:12px}
@@ -612,7 +618,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 54;
+const VER = 55;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal';
@@ -1187,7 +1193,7 @@ const stamp = () => { try{ localStorage.setItem(K_AT, String(now())); }catch(e){
 const stampAt = () => +(localStorage.getItem(K_AT) || 0);
 
 /* この端末の記録をひとまとめにする。速さやループは端末ごとの好みなので送らない */
-const myRec = () => ({ prog, favs, folders, outs, mych, day, dgoal, goal: goalMin(), name: cfg.name || '', at: stampAt() });
+const myRec = () => ({ prog, favs, folders, outs, mych, day, dgoal, goal: goalMin(), focus: focusText(), name: cfg.name || '', at: stampAt() });
 
 function applyRec(r){
   prog = r.prog || {}; favs = Array.isArray(r.favs) ? r.favs : [];
@@ -1198,6 +1204,7 @@ function applyRec(r){
   if(r.dgoal && typeof r.dgoal === 'object'){ dgoal = r.dgoal; }
   saveDay();
   if(r.goal != null && !cfg.goal){ cfg.goal = +r.goal || 0; saveCfg(); }
+  if(r.focus != null && !focusText()){ cfg.focus = String(r.focus).slice(0, 120); saveCfg(); }
   if(r.name && !cfg.name){ cfg.name = r.name; saveCfg(); }
   saveProg(); saveFav(); saveFold(); saveOut(); saveMych();
 }
@@ -1268,6 +1275,7 @@ function mergeRec(a, b){
   /* その日のゴールは 新しい記録のほうを優先、なければ古いほう */
   out.dgoal = Object.assign({}, (newer === a ? b : a).dgoal || {}, newer.dgoal || {});
   out.goal = newer.goal != null ? newer.goal : (a.goal != null ? a.goal : b.goal);
+  out.focus = newer.focus != null ? newer.focus : (a.focus != null ? a.focus : b.focus);
   return out;
 }
 
@@ -1451,7 +1459,13 @@ function vHome(){
     .sort((a,b) => (prog[b.id].last||0) - (prog[a.id].last||0))[0];
 
   const exp = totalExp(), L = levelOf(exp);
-  let h = `<button class="lvcard" data-lv="1">
+  /* いま集中したいこと。書いてあるときだけ、いちばん上に出す（Yuuydさんの提案・2026-09-13）
+     チェックもカレンダーもなし。何のために見ているかが目に入るだけ */
+  let h = focusText()
+    ? `<button class="focus" data-focus="1"><div class="gl">いま集中したいこと</div>
+         <div class="fx">${esc(focusText()).replace(/\n/g, '<br>')}</div></button>`
+    : '';
+  h += `<button class="lvcard" data-lv="1">
       ${cfg.name ? `<div class="nm2">${esc(cfg.name)}</div>` : `<div class="nm2">わたしのレベル</div>`}
       <div class="lvrow">
         <span class="lvl">LEVEL</span>
@@ -1923,6 +1937,10 @@ function vSet(){
       <div class="item"><div class="nm">はじめの再生の速さ</div>
         <div class="ct" id="spdLbl">${cfg.speed}倍</div>
         <button class="pb" id="spdBtn" style="color:var(--ink2)">${ICO.down({s:20})}</button></div>
+      <div class="item"><div class="nm">いま集中したいこと<br>
+        <span style="font-size:.76rem;color:var(--ink3);font-weight:600">ホームのいちばん上に出る・3行まで</span></div>
+        <div class="ct" id="fxLbl">${focusText() ? '書いてある' : 'なし'}</div>
+        <button class="pb" id="fxBtn" style="color:var(--ink2)">${ICO.down({s:20})}</button></div>
       <div class="item"><div class="nm">今日のゴール<br>
         <span style="font-size:.76rem;color:var(--ink3);font-weight:600">今日は何分見るか</span></div>
         <div class="ct" id="goalLbl">${goalMin() ? goalMin() + '分' : '決めていない'}</div>
@@ -1985,6 +2003,7 @@ function vSet(){
   $('#swNoAuto').onclick = () => { cfg.noauto = !cfg.noauto; saveCfg(); vSet();
     toast(cfg.noauto ? '開いても すぐには再生しません' : '開いたら すぐ再生します'); };
   $('#goalBtn').onclick = $('#goalLbl').onclick = () => pickGoal();
+  $('#fxBtn').onclick = $('#fxLbl').onclick = () => editFocus();
   $('#swCC').onclick = () => { cfg.cc = !cfg.cc; saveCfg(); applyCCSoon(); vSet();
     toast(cfg.cc ? '字幕を出します' : '字幕を消しました'); };
   $('#spdBtn').onclick = $('#spdLbl').onclick = () =>
@@ -2953,6 +2972,34 @@ function jumpPoints(id){
   return out;
 }
 
+/* いま集中したいこと（3行まで） */
+const focusText = () => String(cfg.focus || '').trim();
+function editFocus(){
+  const cur = focusText();
+  openSheet(`
+    <h3>いま集中したいこと</h3>
+    <div class="lead" style="margin:-4px 2px 10px;line-height:1.9">
+      何のために動画を見ているかを、3行までで。ホームのいちばん上に出ます。<br>
+      チェックはありません。書き換えたくなったら、いつでも。</div>
+    <textarea id="fxIn" rows="3" maxlength="120" placeholder="例）数学は解く前に「何を聞かれてるか」を書く
+例）朝、机に座ったら5分だけ動画"></textarea>
+    <div class="acts" style="margin-top:14px">
+      <button class="btn" id="fxNo">${cur ? '消す' : 'やめる'}</button>
+      <button class="btn pri" id="fxOk">決める</button>
+    </div>`, () => {
+    const i = $('#fxIn');
+    i.value = cur;
+    setTimeout(() => { try{ i.focus(); }catch(e){} }, 80);
+    const put = v => { cfg.focus = v; saveCfg(); schedulePush(); closeSheet(); render(); };
+    $('#fxOk').onclick = () => {
+      const v = i.value.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 3).join('\n');
+      if(!v) return;
+      put(v); toast('ホームのいちばん上に出しました');
+    };
+    $('#fxNo').onclick = () => { if(cur){ put(''); toast('消しました'); } else closeSheet(); };
+  });
+}
+
 /* 今日のゴールを決める */
 function pickGoal(){
   const cur = goalMin();
@@ -3669,6 +3716,7 @@ async function boot(){
     if(t){ catG = 'all'; go('cat', t.dataset.tile); return; }
     if(e.target.closest('[data-man]')){ go('man'); return; }
     if(e.target.closest('[data-goal]')){ pickGoal(); return; }
+    if(e.target.closest('[data-focus]')){ editFocus(); return; }
     if(e.target.closest('[data-lv]')){ go('lv'); }
   });
 

@@ -141,6 +141,12 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 .sub-in label{font-size:12.5px; margin-bottom:1px;}
 .sub-in input[type=text]{background:var(--chip); border-radius:10px; padding:8px 10px; font-size:16px; width:100%; border:none; outline:none;}
 .sub-in .chips{margin:2px 0 4px;}
+.sugg{margin:2px 0 10px;}
+.sugg .lbl{font-size:12.5px; font-weight:600; color:var(--muted); margin-bottom:5px; display:block;}
+.sugg .s{width:100%; text-align:left; background:var(--chip); border:1px solid var(--line); border-radius:12px; padding:9px 12px; font-size:14px; line-height:1.6; margin-bottom:6px; display:flex; align-items:center; gap:8px;}
+.sugg .s svg{width:16px; height:16px; stroke:var(--accent); fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+.sugg .s span{flex:1; min-width:0;}
+.sugg .none{font-size:13px; color:var(--muted); line-height:1.7; background:var(--chip); border-radius:12px; padding:9px 12px;}
 .pv{background:var(--accent-soft); border-radius:10px; padding:8px 10px; font-size:15px; line-height:1.6; margin-top:8px; font-weight:600;}
 .pv.off{opacity:.55; font-weight:400;}
 .err{background:var(--miss); color:var(--miss-ink); border-radius:10px; padding:9px 12px; font-size:14px; line-height:1.65; margin-top:8px; white-space:pre-wrap;}
@@ -380,12 +386,15 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
     <div class="card">
       <h3><svg viewBox="0 0 24 24"><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/></svg>控え（バックアップ）</h3>
       <div id="bkNote"></div>
-      <div class="dim" style="margin-bottom:8px">データは、この端末の中だけに保存されています（外には送りません）。機種変更や万一のために、ときどき控えを残してください。写真も一緒に入ります。</div>
+      <div class="dim" style="margin-bottom:8px">データは、この端末の中だけに保存されています（外には送りません）。機種変更や万一のために、ときどき控えを残してください。</div>
+      <button class="btn-chip acc" id="btnExport" style="width:100%"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>記録の控えをとる<span id="bkSize" class="dim" style="font-weight:600"></span></button>
+      <div class="dim" style="margin:6px 0 10px">問題・間違えた理由・改善点・解いた記録が入ります。軽いので、いつでも押せます。</div>
       <div class="btnrow" style="margin-top:0">
-        <button class="btn-chip acc" id="btnExport"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>ファイルに保存</button>
-        <button class="btn-chip" id="btnImportFile"><svg viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7.5 7.5 4.5-4.5 4.5 4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>ファイルから読みこむ</button>
+        <button class="btn-chip" id="btnExportPhotos"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-5 4 4 2.5-2.5L20 17"/></svg>写真もとる</button>
+        <button class="btn-chip" id="btnImportFile"><svg viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7.5 7.5 4.5-4.5 4.5 4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>控えから戻す</button>
       </div>
-      <input type="file" id="impFile" accept="application/json,.json" class="hidden">
+      <div class="dim" style="margin-top:6px">写真は重いので、何回かに分けて保存します。機種変更のときだけで十分です。</div>
+      <input type="file" id="impFile" accept="application/json,.json" class="hidden" multiple>
       <div class="dim" style="margin:12px 0 6px">控えの中身を貼りつけて読みこむこともできます。</div>
       <textarea class="settext" id="impText" placeholder="ここに控えの中身（JSON）を貼りつける"></textarea>
       <button class="btn-line" id="btnImportText">貼りつけた内容を読みこむ</button>
@@ -430,7 +439,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 9;
+const VER = 10;
 const KEY = 'miss_v1', BK = 'miss_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -440,6 +449,48 @@ const SUBJC = { '英語':'#7FA6FF', '数学':'#5ED3A2', '国語':'#FF8C7E', '理
 /* ミスの種類（ミスパターン分析用）。Discordでヒラが挙げた例をもとにした */
 const TAGS = ['計算ミス','スペルミス','漢字ミス','時制ミス','条件の読み飛ばし','見落とし','解答欄のズレ','書き方が雑','その他'];
 const DEF_GAPS = [1,3,7,14,30];
+/* ミスの種類ごとの「よくある改善点」。押すと いつ・何を・どうする が入る。
+   中身は Discord #ミスマップ でヒラが出していた指導（指さし・バックスキャン・条件に丸・数値化）にそろえてある。 */
+const FIXES = {
+  '計算ミス': [
+    { when:'解き終わったら', what:'答え', how:'元の式に入れて合うか確かめる' },
+    { when:'解き終わったら', what:'解いた式', how:'バックスキャンして確かめる' },
+    { when:'解いている途中', what:'途中式', how:'省かずに全部書く' },
+    { when:'見直しのとき', what:'計算', how:'逆からもう一度たどる' },
+  ],
+  'スペルミス': [
+    { when:'解き終わったら', what:'つづり', how:'声に出して1文字ずつ読む' },
+    { when:'丸付けのとき', what:'まちがえた単語', how:'3回書いて声に出す' },
+  ],
+  '漢字ミス': [
+    { when:'解き終わったら', what:'書いた漢字', how:'声に出して1画ずつ確かめる' },
+    { when:'丸付けのとき', what:'まちがえた漢字', how:'教科書と見くらべて3回書く' },
+  ],
+  '時制ミス': [
+    { when:'解く前', what:'「いつ」を表す言葉', how:'丸をつける' },
+    { when:'解き終わったら', what:'動詞', how:'「いつ」の言葉と合っているか確かめる' },
+  ],
+  '条件の読み飛ばし': [
+    { when:'解く前', what:'問題文の条件', how:'丸をつけてから解きはじめる' },
+    { when:'解く前', what:'問題文', how:'指でなぞりながら読む' },
+  ],
+  '見落とし': [
+    { when:'解く前', what:'問題文', how:'指でなぞりながら読む' },
+    { when:'解く前', what:'図や表に出ている数', how:'全部書き出す' },
+  ],
+  '解答欄のズレ': [
+    { when:'解いている途中', what:'問題番号と解答欄の番号', how:'1問ごとに指でさして合わせる' },
+    { when:'見直しのとき', what:'解答用紙の番号', how:'上から順に指でさして確かめる' },
+  ],
+  '書き方が雑': [
+    { when:'解いている途中', what:'数字', how:'1マスに1文字で書く' },
+    { when:'解いている途中', what:'6と0、1と7', how:'はっきり書き分ける' },
+  ],
+  'その他': [
+    { when:'解き終わったら', what:'答え', how:'問題文に戻って合うか確かめる' },
+    { when:'解く前', what:'問題文の大事なところ', how:'丸をつける' },
+  ],
+};
 const ICO = {
   x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   back: '<svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg>',
@@ -808,8 +859,15 @@ function whyFields(p, d){
     <div class="hint">「〜を覚えていなかった」だけの知識不足はミスマップに入れません（それは暗記で解決）。ここに入れるのは、知っていたのに間違えた問題です。</div>
     <div class="err hidden" id="${p}WhyErr"></div>`;
 }
-function fixFields(p, d){
-  return `<div class="sub-in"><label>いつ</label><div class="chips" id="${p}When">${WHEN.map(w => `<button class="chip sm ${d.when===w?'on':''}" data-w="${w}">${w}</button>`).join('')}</div></div>
+function suggHtml(p, tag){
+  const list = FIXES[tag];
+  if(!list) return `<div class="sugg"><div class="none">先に「ミスの種類」を選ぶと、その種類でよく効く改善点が候補で出ます。</div></div>`;
+  return `<div class="sugg"><span class="lbl">${esc(tag)}によく効く改善点（押すと入ります）</span>
+    ${list.map((f, i) => `<button class="s" data-sg="${i}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>${esc(composeFix(f))}</span></button>`).join('')}</div>`;
+}
+function fixFields(p, d, tag){
+  return `<div id="${p}Sugg">${suggHtml(p, tag)}</div>
+    <div class="sub-in"><label>いつ</label><div class="chips" id="${p}When">${WHEN.map(w => `<button class="chip sm ${d.when===w?'on':''}" data-w="${w}">${w}</button>`).join('')}</div></div>
     <div class="sub-in"><label>何を</label><input type="text" id="${p}What" value="${esc(d.what)}" placeholder="例：代入した式の符号／問題文の条件" autocomplete="off"></div>
     <div class="sub-in"><label>どうする</label><input type="text" id="${p}How" value="${esc(d.how)}" placeholder="例：指でさして、元の式と1つずつ見くらべる" autocomplete="off"></div>
     <div class="pv off" id="${p}FixPv"></div>
@@ -817,10 +875,34 @@ function fixFields(p, d){
     <div class="err hidden" id="${p}FixErr"></div>`;
 }
 /* root: 探す範囲（document か シート）。d を書き換えつつ、プレビューを更新する */
+function bindSugg(root, p, fix, onch){
+  root.querySelectorAll('#'+p+'Sugg [data-sg]').forEach(b => b.onclick = () => {
+    const tag = root.__tag ? root.__tag() : '';
+    const f = (FIXES[tag] || [])[Number(b.dataset.sg)];
+    if(!f) return;
+    Object.assign(fix, f);
+    const box = root.querySelector('#'+p+'When');
+    box.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.w === fix.when));
+    root.querySelector('#'+p+'What').value = fix.what;
+    root.querySelector('#'+p+'How').value = fix.how;
+    if(root.__pv) root.__pv();
+    hideErr(root, p+'FixErr');
+    if(onch) onch();
+    toast('入りました。自分の言葉に直してもかまいません');
+  });
+}
+/* ミスの種類が変わったら候補を出しなおす */
+function refreshSugg(root, p, tag, fix, onch){
+  const box = root.querySelector('#'+p+'Sugg');
+  if(!box) return;
+  box.innerHTML = suggHtml(p, tag);
+  bindSugg(root, p, fix, onch);
+}
 function bindWhyFix(root, p, why, fix, onch){
   const q = sel => root.querySelector(sel);
   const ch = () => { if(onch) onch(); };
   const pv = () => { const el = q('#'+p+'FixPv'); const ok = fix.when || fix.what.trim() || fix.how.trim(); el.textContent = ok ? composeFix(fix) : 'ここに改善点が1文で組み上がります'; el.classList.toggle('off', !ok); };
+  root.__pv = pv;
   q('#'+p+'Did').oninput = e => { why.did = e.target.value; hideErr(root, p+'WhyErr'); ch(); };
   q('#'+p+'Then').oninput = e => { why.then = e.target.value; hideErr(root, p+'WhyErr'); ch(); };
   q('#'+p+'What').oninput = e => { fix.what = e.target.value; pv(); hideErr(root, p+'FixErr'); ch(); };
@@ -880,9 +962,11 @@ function renderAdd(){
 
     <div class="field req"><label>間違えた理由<b>必須</b></label>${whyFields('add', draft.whyP)}</div>
 
-    <div class="field"><label>ミスの種類（分析用・任意）</label><div class="chips" id="addTag">${TAGS.map(t => `<button class="chip sm ${draft.tag===t?'on':''}" data-t="${t}">${t}</button>`).join('')}</div></div>
+    <div class="field req"><label>ミスの種類<b>必須</b></label><div class="chips" id="addTag">${TAGS.map(t => `<button class="chip sm ${draft.tag===t?'on':''}" data-t="${t}">${t}</button>`).join('')}</div>
+      <div class="hint">同じ種類のミスが集まると、それがあなたのクセです。ミスマップのタブで見られます。</div>
+      <div class="err hidden" id="addTagErr"></div></div>
 
-    <div class="field req"><label>改善点（いつ・何を・どうする）<b>必須</b></label>${fixFields('add', draft.fixP)}</div>
+    <div class="field req"><label>改善点（いつ・何を・どうする）<b>必須</b></label>${fixFields('add', draft.fixP, draft.tag)}</div>
 
     <button class="btn-primary" id="addGo">この問題を登録する</button>
     <div class="dim" style="text-align:center; margin-top:8px">登録すると ${gapLabel(gaps()[0])}に「今日の問題」として届きます。<br>書きかけは自動で残るので、とちゅうで閉じても大丈夫です。</div>
@@ -894,11 +978,20 @@ function renderAdd(){
   $('#addText').oninput = e => { draft.text = e.target.value; saveDraft(); };
   bindWhyFix(document, 'add', draft.whyP, draft.fixP, saveDraft);
   $('#addSubj').querySelectorAll('.chip').forEach(b => b.onclick = () => { draft.subj = b.dataset.s; $('#addSubj').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); saveDraft(); });
-  $('#addTag').querySelectorAll('.chip').forEach(b => b.onclick = () => { draft.tag = draft.tag === b.dataset.t ? '' : b.dataset.t; $('#addTag').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.t === draft.tag)); saveDraft(); });
+  document.__tag = () => draft.tag;
+  $('#addTag').querySelectorAll('.chip').forEach(b => b.onclick = () => {
+    draft.tag = draft.tag === b.dataset.t ? '' : b.dataset.t;
+    $('#addTag').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.t === draft.tag));
+    hideErr(document, 'addTagErr');
+    refreshSugg(document, 'add', draft.tag, draft.fixP, saveDraft);
+    saveDraft();
+  });
+  bindSugg(document, 'add', draft.fixP, saveDraft);
   $('#addGo').onclick = () => {
     if(busy) return toast('写真を取り込み中です');
     if(!draft.imgs.length && !draft.text.trim()) return toast('問題を、写真か文字で入れてください');
     if(!draft.subj) return toast('教科を選んでください');
+    if(!draft.tag){ showErr(document, 'addTagErr', { t:'ミスの種類をひとつ選んでください', ex:'選ぶと、その種類でよく効く改善点が候補で出ます。' }); return toast('赤い所を直してください'); }
     if(!validateWhyFix(document, 'add', draft.whyP, draft.fixP)) return toast('赤い所を直してください');
     const keepSubj = draft.subj;
     addItem({ ...draft, why:composeWhy(draft.whyP), fix:composeFix(draft.fixP), whyP:{ ...draft.whyP }, fixP:{ ...draft.fixP } });
@@ -947,8 +1040,8 @@ function openEdit(id, opt){
     <div class="field"><label>問題（文字）</label><textarea id="edText" rows="2">${esc(d.text)}</textarea></div>
     <div class="field"><label>教科</label><div class="chips" id="edSubj">${SUBJ.map(s => `<button class="chip sub ${s===d.subj?'on':''}" data-s="${s}" style="--c:${SUBJC[s]}">${s}</button>`).join('')}</div></div>
     <div class="field"><label>間違えた理由</label>${whyFields('ed', d.whyP)}</div>
-    <div class="field"><label>ミスの種類</label><div class="chips" id="edTag">${TAGS.map(t => `<button class="chip sm ${t===d.tag?'on':''}" data-t="${t}">${t}</button>`).join('')}</div></div>
-    <div class="field"><label>改善点（いつ・何を・どうする）</label>${fixFields('ed', d.fixP)}</div>
+    <div class="field"><label>ミスの種類</label><div class="chips" id="edTag">${TAGS.map(t => `<button class="chip sm ${t===d.tag?'on':''}" data-t="${t}">${t}</button>`).join('')}</div><div class="err hidden" id="edTagErr"></div></div>
+    <div class="field"><label>改善点（いつ・何を・どうする）</label>${fixFields('ed', d.fixP, d.tag)}</div>
     <button class="btn-primary" id="edSave">保存する</button>
     <button class="btn-line danger" id="edDel">この問題を消す</button>
     <button class="close" id="edClose">閉じる</button></div>`;
@@ -970,12 +1063,20 @@ function openEdit(id, opt){
   bg.querySelector('#edFCam').onchange = e => take(e.target.files);
   bg.querySelector('#edFPick').onchange = e => take(e.target.files);
   bg.querySelectorAll('#edSubj .chip').forEach(b => b.onclick = () => { d.subj = b.dataset.s; bg.querySelectorAll('#edSubj .chip').forEach(x => x.classList.toggle('on', x === b)); });
-  bg.querySelectorAll('#edTag .chip').forEach(b => b.onclick = () => { d.tag = d.tag === b.dataset.t ? '' : b.dataset.t; bg.querySelectorAll('#edTag .chip').forEach(x => x.classList.toggle('on', x.dataset.t === d.tag)); });
+  bg.__tag = () => d.tag;
+  bg.querySelectorAll('#edTag .chip').forEach(b => b.onclick = () => {
+    d.tag = d.tag === b.dataset.t ? '' : b.dataset.t;
+    bg.querySelectorAll('#edTag .chip').forEach(x => x.classList.toggle('on', x.dataset.t === d.tag));
+    hideErr(bg, 'edTagErr');
+    refreshSugg(bg, 'ed', d.tag, d.fixP);
+  });
   bindWhyFix(bg, 'ed', d.whyP, d.fixP);
+  bindSugg(bg, 'ed', d.fixP);
   const close = async () => { bg.remove(); await sweepImgs(); };
   bg.querySelector('#edClose').onclick = close;
   bg.addEventListener('click', e => { if(e.target === bg) close(); });
   bg.querySelector('#edSave').onclick = async () => {
+    if(!d.tag){ showErr(bg, 'edTagErr', { t:'ミスの種類をひとつ選んでください', ex:'ミスマップの分析に使います。' }); return toast('赤い所を直してください'); }
     if(!validateWhyFix(bg, 'ed', d.whyP, d.fixP)) return toast('赤い所を直してください');
     it.subj = d.subj; it.text = bg.querySelector('#edText').value.trim(); it.tag = d.tag; it.imgs = d.imgs;
     it.whyP = { ...d.whyP }; it.fixP = { ...d.fixP }; it.why = composeWhy(d.whyP); it.fix = composeFix(d.fixP);
@@ -1080,7 +1181,8 @@ function renderSet(){
   $('#tgRandMast').classList.toggle('on', S.cfg.randMast);
   const lb = S.cfg.lastBackup, days = lb ? diffDays(lb, today()) : 9999;
   $('#bkNote').innerHTML = (S.items.length >= 5 && days >= 30)
-    ? `<div class="note"><b>控えをとりましょう。</b>${lb ? md(lb)+' から' : 'まだ一度も'}控えをとっていません。下の「ファイルに保存」を押して、出てきた画面から「ファイル」アプリなどに保存してください。</div>` : '';
+    ? `<div class="note"><b>控えをとりましょう。</b>${lb ? md(lb)+' から' : 'まだ一度も'}控えをとっていません。下の「記録の控えをとる」を押して、出てきた画面から「ファイル」アプリなどに保存してください。</div>` : '';
+  try{ const kb = Math.max(1, Math.round(JSON.stringify({ data:S }).length/1024)); $('#bkSize').textContent = S.items.length ? `（${kb}KB）` : ''; }catch(e){}
   $('#verNow').textContent = 'v'+VER;
   if(!$('#setSlides').innerHTML) renderSlides();
   renderChanges();
@@ -1098,24 +1200,79 @@ function dataUrlToBlob(u){
   if(m[2]){ const bin = atob(m[3]); const a = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return new Blob([a], { type }); }
   return new Blob([decodeURIComponent(m[3])], { type });
 }
-async function exportData(){
-  toast('控えを作っています…');
-  const imgs = {};
-  for(const it of S.items) for(const id of it.imgs){ try{ const b = await getImg(id); if(b) imgs[id] = await blobToDataUrl(b); }catch(e){} }
-  S.cfg.lastBackup = today(); save();
-  const j = { app:'missmap', v:1, exported:new Date().toISOString(), data:S, imgs };
-  const text = JSON.stringify(j);
-  const name = 'missmap-'+today()+'.json';
+/* 控えは2種類に分けた。
+   写真をぜんぶ1つのファイルに詰めると、問題が増えたとき iPhone で作れなくなるため
+   （160問で100MBを超える）。記録は軽いので、こちらを普段の控えにする。 */
+const BK_N = 12;   // 写真の控え1ファイルに入れる枚数（1ファイル10MB前後におさまる）
+function photoIds(){ const set = new Set(); S.items.forEach(i => (i.imgs||[]).forEach(x => set.add(x))); return [...set]; }
+/* share はユーザーが押した直後でないと iPhone で弾かれるので、必ず同期で呼ぶ */
+function shareText(text, name, onDone){
   const file = new File([text], name, { type:'application/json' });
   if(navigator.canShare && navigator.canShare({ files:[file] })){
-    try{ await navigator.share({ files:[file], title:'ミスマップの控え' }); return; }catch(e){ if(e && e.name === 'AbortError') return; }
+    navigator.share({ files:[file], title:name })
+      .then(() => { if(onDone) onDone(); })
+      .catch(e => { if(!(e && e.name === 'AbortError')) toast('保存できませんでした'); });
+    return;
   }
-  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  if(onDone) onDone();
 }
-async function importText(text){
-  let j; try{ j = JSON.parse(text); }catch(e){ toast('読みこめません（形式が違います）'); return; }
+function exportRecord(){
+  if(!S.items.length) return toast('まだ問題がありません');
+  const text = JSON.stringify({ app:'missmap', v:VER, kind:'data', exported:new Date().toISOString(), data:S });
+  S.cfg.lastBackup = today(); save(); renderSet();
+  shareText(text, 'missmap-kiroku-'+today()+'.json', () => toast('記録の控えをとりました'));
+}
+async function buildPhotoPart(ids, part, total){
+  const imgs = {};
+  for(const id of ids){ try{ const b = await getImg(id); if(b) imgs[id] = await blobToDataUrl(b); }catch(e){} }
+  return JSON.stringify({ app:'missmap', v:VER, kind:'imgs', part, total, exported:new Date().toISOString(), imgs });
+}
+function openPhotoBackup(){
+  const all = photoIds();
+  if(!all.length) return toast('写真がありません');
+  const total = Math.ceil(all.length / BK_N);
+  let part = 1, text = '';
+  const bg = document.createElement('div'); bg.className = 'sheet-bg';
+  bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>写真の控えをとる</h2>
+    <p>写真が <b class="num">${all.length}</b> 枚あります。1つのファイルにまとめると大きすぎて失敗するので、<b class="num">${total}</b> 回に分けて保存します。</p>
+    <div class="note" style="margin-top:10px"><b>やり方：</b>下のボタンを押すと共有の画面が出ます。「ファイル」アプリなどに保存してください。保存し終わると、次の番号に変わります。${total} 個ぜんぶ保存してください。</div>
+    <div id="pbBody"></div>
+    <button class="close">閉じる</button></div>`;
+  document.body.appendChild(bg);
+  const body = bg.querySelector('#pbBody');
+  bg.querySelector('.close').onclick = () => bg.remove();
+  bg.addEventListener('click', e => { if(e.target === bg) bg.remove(); });
+  const draw = () => {
+    body.innerHTML = text
+      ? `<button class="btn-primary" id="pbGo">${part} / ${total} 個目を保存する</button>`
+      : `<div class="dim" style="text-align:center; padding:14px">${part} / ${total} 個目を用意しています…</div>`;
+    const go = body.querySelector('#pbGo');
+    if(go) go.onclick = () => shareText(text, `missmap-shashin-${part}of${total}-${today()}.json`, () => {
+      if(part < total){ part++; text = ''; draw(); prep(); }
+      else { S.cfg.lastBackup = today(); save(); renderSet(); bg.remove(); toast('写真の控えがそろいました'); }
+    });
+  };
+  const prep = async () => { text = await buildPhotoPart(all.slice((part-1)*BK_N, part*BK_N), part, total); draw(); };
+  draw(); prep();
+}
+async function importImgs(imgs){
+  let n = 0;
+  for(const [id, u] of Object.entries(imgs)){ try{ const b = dataUrlToBlob(u); if(b){ await putImg(id, b); n++; } }catch(e){} }
+  return n;
+}
+async function importText(text, quiet){
+  let j; try{ j = JSON.parse(text); }catch(e){ toast('読みこめません（形式が違います）'); return null; }
+  /* 写真だけのファイル */
+  if(j && j.imgs && !j.data && !Array.isArray(j.items)){
+    const n = await importImgs(j.imgs);
+    if(!quiet) toast(`写真を ${n}枚 読みこみました`);
+    return { imgs:n };
+  }
   const d = j && (j.data || j);
-  if(!d || !Array.isArray(d.items)){ toast('ミスマップの控えではないようです'); return; }
+  if(!d || !Array.isArray(d.items)){ toast('ミスマップの控えではないようです'); return null; }
   let added = 0, updated = 0;
   for(const it of d.items){
     if(!it || !it.id) continue;
@@ -1126,15 +1283,25 @@ async function importText(text){
   S.items.sort((a,b) => a.created < b.created ? 1 : a.created > b.created ? -1 : 0);
   norm(S);
   let nImg = 0;
-  if(j.imgs && typeof j.imgs === 'object'){
-    for(const [id, u] of Object.entries(j.imgs)){ try{ const b = dataUrlToBlob(u); if(b){ await putImg(id, b); nImg++; } }catch(e){} }
-  }
+  if(j.imgs && typeof j.imgs === 'object') nImg = await importImgs(j.imgs);
   save(); renderAll(); renderSet();
-  toast(`読みこみました（追加 ${added}・更新 ${updated}・写真 ${nImg}枚）`);
+  if(!quiet) toast(`読みこみました（追加 ${added}・更新 ${updated}・写真 ${nImg}枚）`);
+  return { added, updated, imgs:nImg };
 }
-$('#btnExport').onclick = exportData;
+$('#btnExport').onclick = exportRecord;
+$('#btnExportPhotos').onclick = openPhotoBackup;
 $('#btnImportFile').onclick = () => $('#impFile').click();
-$('#impFile').onchange = async e => { const f = e.target.files[0]; if(!f) return; try{ await importText(await f.text()); }catch(err){ toast('読みこめませんでした'); } e.target.value = ''; };
+$('#impFile').onchange = async e => {
+  const fs = Array.from(e.target.files || []); e.target.value = '';
+  if(!fs.length) return;
+  let a = 0, u = 0, im = 0, ng = 0;
+  for(const f of fs){
+    try{ const r = await importText(await f.text(), true); if(r){ a += r.added||0; u += r.updated||0; im += r.imgs||0; } else ng++; }
+    catch(err){ ng++; }
+  }
+  renderAll(); renderSet();
+  toast(`読みこみました（追加 ${a}・更新 ${u}・写真 ${im}枚${ng ? '・読めず '+ng+'件' : ''}）`);
+};
 $('#btnImportText').onclick = async () => { const t = $('#impText').value.trim(); if(!t) return toast('貼りつけてから押してください'); await importText(t); $('#impText').value = ''; };
 $('#btnWipe').onclick = async () => {
   if(!confirm('登録した問題と写真をすべて消します。よろしいですか？')) return;
@@ -1156,9 +1323,10 @@ const SLIDES = [
   { ico:'shuffle', t:'6. ランダムに解く', p:'予定に関係なく、3・5・10問を練習できます。ランダムのときは「言えなかった」だけ記録され、「言えた」は予定を変えません。', ex:'間隔をあけて覚える仕組みを崩さないためです。' },
   { ico:'chart', t:'7. ミスマップを見る', p:'教科別の件数と、ミスの種類別の件数（<b>ミスパターン分析</b>）が自動でたまります。いちばん多い種類が、あなたのミスのクセです。', ex:'そのクセの改善点を、ほかの問題にも使ってみてください。' },
   { ico:'install', t:'8. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、登録した問題と写真が消えてしまうことがあります。', ex:'Safari の共有ボタン →「ホーム画面に追加」→「追加」。やり方は、上の赤い帯の「やり方」からも見られます。' },
-  { ico:'save', t:'9. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の「控え」から、ときどきファイルに残してください。', ex:'iPhone の「ショートカット」で毎朝自動で開く設定も、設定にあります。' },
+  { ico:'save', t:'9. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の <b>「記録の控えをとる」</b> を、ときどき押してください。軽いのですぐ終わります。', ex:'写真も残したいときは「写真もとる」。重いので何回かに分けて保存します。機種変更のときだけで十分です。' },
 ];
 const CHANGES = [
+  { v:10, d:'9/14', t:'ミスの種類ごとに「よくある改善点」を候補で出すように。種類は必須。控えを記録と写真に分けた。' },
   { v:9, d:'9/14', t:'ミスマップの一覧で、写真つきの問題の文字が縦に崩れていたのを修正。' },
   { v:8, d:'9/14', t:'ホーム画面に追加の案内。書きかけの自動保存。とばす。判定の誤りを修正。' },
   { v:7, d:'9/13', t:'暗い地で文字が読みやすいように、線を太く・薄い色を明るく・小さい字を大きく。' },

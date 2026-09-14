@@ -329,6 +329,26 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
 .toast{position:fixed; left:50%; bottom:calc(80px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:var(--ink); color:var(--bg); font-size:13px; font-weight:700; padding:10px 16px; border-radius:999px; z-index:100; box-shadow:var(--shadow-lg); opacity:0; pointer-events:none; transition:opacity .2s; width:max-content; max-width:calc(100vw - 28px); text-align:center;}
 .toast.on{opacity:1;}
+/* 部屋に出す（10問ごとに画像にして Discord #ミスマップ へ） */
+.send{border-color:var(--accent-line);}
+.send .sh{display:flex; flex-direction:column; gap:2px; margin-bottom:8px;}
+.send .sh b{font-size:15px; font-weight:700;}
+.send .sh span{font-size:13px; color:var(--muted); font-weight:700;}
+.send .sh span i{font-style:normal; font-size:20px; color:var(--accent); margin:0 2px;}
+.seg10{display:flex; gap:4px; margin-bottom:10px;}
+.seg10 i{flex:1; height:10px; border-radius:5px; background:var(--chip); border:1px solid var(--line);}
+.seg10 i.on{background:var(--accent); border-color:var(--accent);}
+.send .btn-primary{margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px;}
+.send .btn-primary svg{width:22px; height:22px; stroke:var(--accent-ink); fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;}
+.send .dim{font-size:13.5px;}
+.send .dim b{white-space:nowrap; color:var(--ink);}
+.shot{display:block; width:100%; border-radius:12px; border:1px solid var(--line); margin:6px 0 12px; background:var(--card);}
+.srow{width:100%; text-align:left; display:flex; align-items:center; gap:10px; padding:10px 2px; border-bottom:1px solid var(--line); font-size:14px;}
+.srow:last-child{border-bottom:none;}
+.srow b{color:var(--accent); font-weight:700; min-width:52px;}
+.srow span{flex:1; color:var(--muted);}
+.srow svg{width:18px; height:18px; stroke:var(--muted); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+.steps3{margin:4px 0 10px 20px; font-size:14px; line-height:1.85;}
 </style>
 </head>
 <body>
@@ -446,7 +466,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 14;
+const VER = 15;
 const KEY = 'miss_v1', BK = 'miss_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -556,7 +576,8 @@ function norm(j){
   j.cfg.randN = [3,5,10].includes(j.cfg.randN) ? j.cfg.randN : 5;
   j.cfg.randMast = !!j.cfg.randMast;
   j.cfg.lastBackup = typeof j.cfg.lastBackup === 'string' ? j.cfg.lastBackup : '';
-  j.items.forEach(it => { it.imgs = it.imgs || []; it.log = it.log || []; it.stage = Number(it.stage)||0; it.text = it.text || ''; it.why = it.why || ''; it.fix = it.fix || ''; it.tag = it.tag || ''; it.whyP = it.whyP || null; it.fixP = it.fixP || null; });
+  j.sends = Array.isArray(j.sends) ? j.sends.filter(x => x && Array.isArray(x.ids)) : [];   // 部屋に出した記録 [{id, no, d, ids}]
+  j.items.forEach(it => { it.imgs = it.imgs || []; it.log = it.log || []; it.stage = Number(it.stage)||0; it.text = it.text || ''; it.why = it.why || ''; it.fix = it.fix || ''; it.tag = it.tag || ''; it.whyP = it.whyP || null; it.fixP = it.fixP || null; it.sent = typeof it.sent === 'string' ? it.sent : ''; });
   return j;
 }
 function load(){
@@ -605,6 +626,12 @@ const cmpDue = (a,b) => a.due < b.due ? -1 : a.due > b.due ? 1 : 0;
 const todayList = () => active().filter(i => i.due <= today()).sort(cmpDue);
 const upcoming = () => active().filter(i => i.due > today()).sort(cmpDue);
 const mastered = () => S.items.filter(i => i.done).sort((a,b) => a.doneAt < b.doneAt ? 1 : -1);
+/* まだ部屋に出していない問題（古い順）。10問たまったら1枚の画像にして出す */
+const SEND_N = 10;
+function unsent(){
+  const idx = new Map(S.items.map((it, i) => [it.id, i]));
+  return S.items.filter(i => !i.sent).sort((a,b) => a.created < b.created ? -1 : a.created > b.created ? 1 : idx.get(b.id) - idx.get(a.id));
+}
 
 /* ===================== 写真（IndexedDB） ===================== */
 const DB = 'missmap', STORE = 'imgs';
@@ -721,6 +748,7 @@ function renderToday(){
     h += `<div class="hero ${tl.length?'':'zero'}"><div class="n num">${tl.length}<small>問</small></div>
       <div class="t"><b>今日の問題</b><span>${tl.length ? (over ? `うち ${over} 問は前の日からの繰り越し。` : '') + '問題だけを見て「間違えた理由」と「改善点」を言えるか、試してください。' : '今日の分は終わりました。下の「ランダムに解く」で練習もできます。'}</span></div>
       ${tl.length ? `<button class="big" id="goSeq">${ICO.check}今日の問題を解く（${tl.length}問）</button>` : ''}</div>`;
+    h += sendCard();
     if(tl.length) h += `<div class="items">${tl.map(i => cardHtml(i, 'today')).join('')}</div>`;
     const pool = randPool();
     h += `<div class="rand" style="margin-top:12px"><div class="row"><b>ランダムに解く</b><span class="dim">${pool.length}問から</span>
@@ -743,6 +771,7 @@ function renderToday(){
   const ga = root.querySelector('#goAdd'); if(ga) ga.onclick = () => goTab('Add');
   const gh = root.querySelector('#goHelp'); if(gh) gh.onclick = openHelp;
   root.querySelectorAll('[data-rn]').forEach(b => b.onclick = () => { S.cfg.randN = Number(b.dataset.rn); save(); renderToday(); });
+  bindSend(root);
   const gs = root.querySelector('#goSeq'); if(gs) gs.onclick = () => startSession(todayList().map(i => i.id), 'due');
   const gr = root.querySelector('#goRand'); if(gr) gr.onclick = () => {
     const p = randPool().map(i => i.id);
@@ -1170,6 +1199,7 @@ function renderMap(){
     h += `<div class="empty"><b>まだ問題がありません</b><p>問題を作って解いていくと、どの教科・どんな種類のミスが多いか（ミスパターン分析）が、ここに集まります。</p></div>`;
     root.innerHTML = h; return;
   }
+  h += sendHistoryCard();
   h += `<div class="card"><h3>教科別（まだ極まっていない問題）</h3><div class="bars">${bySubj.map(x => `<button class="bar ${x.n?'':'zero'} ${mapFilter===x.s?'sel':''}" data-f="${x.s}"><span class="nm">${x.s}</span><span class="tr"><i style="--c:${SUBJC[x.s]}; width:${x.n/maxS*100}%"></i></span><span class="v num">${x.n}</span></button>`).join('')}</div>
     <div class="dim" style="margin-top:6px">教科をタップすると、下の一覧をしぼりこめます。</div></div>`;
   h += `<div class="card"><h3>ミスパターン分析（種類別・すべての問題）</h3><div class="bars">${byTag.map(x => `<div class="bar ${x.n?'':'zero'}"><span class="nm">${x.t}</span><span class="tr"><i style="width:${x.n/maxT*100}%"></i></span><span class="v num">${x.n}</span></div>`).join('')}</div>
@@ -1184,7 +1214,235 @@ function renderMap(){
   root.innerHTML = h;
   root.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { mapFilter = (mapFilter === b.dataset.f && b.classList.contains('bar')) ? 'all' : b.dataset.f; renderMap(); });
   const tg = root.querySelector('#tglMast'); if(tg) tg.onclick = () => { showMast = !showMast; renderMap(); };
+  bindSend(root);
   bindOpen(root);
+}
+
+/* ===================== ミスマップの部屋に出す =====================
+   10問たまるごとに、紙のミスマップと同じ並び（日付・教科・種類・問題・理由・改善点・解き直し）の
+   1枚の画像にして、Discord の #ミスマップ に出す。ひとりで進めず、先生のフィードバックをもらうため。 */
+function sendCard(){
+  const u = unsent().length, no = S.sends.length + 1;
+  const full = u >= SEND_N, left = Math.max(0, SEND_N - u);
+  let h = `<div class="card send"><div class="sh"><b>ミスマップの部屋に出す</b><span>${full ? `第${no}回 <i class="num">${u}</i>問たまりました` : `第${no}回まで あと<i class="num">${left}</i>問`}</span></div>
+    <div class="seg10">${Array.from({ length:SEND_N }, (_, i) => `<i class="${i < u ? 'on' : ''}"></i>`).join('')}</div>`;
+  if(full){
+    h += `<div class="dim">${u > SEND_N ? `古い順に ${SEND_N}問を` : ''}1枚の画像にして、Discord の <b>#ミスマップ</b> に出しましょう。フィードバックがもらえます。</div>
+      <button class="btn-primary" data-send>${ICO.image}画像にして部屋に出す</button>`;
+  }else{
+    h += `<div class="dim">問題を ${SEND_N}問作るごとに、1枚の画像にして Discord の #ミスマップ に出します。</div>`;
+  }
+  return h + '</div>';
+}
+function sendHistoryCard(){
+  const u = unsent();
+  let h = `<div class="card send"><h3>${ICO.image}部屋に出したミスマップ</h3>`;
+  h += S.sends.length
+    ? S.sends.slice().reverse().map(x => `<button class="srow" data-again="${x.id}"><b>第${x.no}回</b><span>${md(x.d)} に出した・${x.ids.length}問</span>${ICO.chev}</button>`).join('')
+    : `<div class="dim">まだ出していません。問題が ${SEND_N}問たまると「解く」タブに案内が出ます。</div>`;
+  if(u.length) h += `<button class="btn-line" data-send>${u.length >= SEND_N ? `次の ${SEND_N}問を画像にする` : `いまの ${u.length}問で画像にする`}</button>`;
+  return h + '</div>';
+}
+function bindSend(root){
+  root.querySelectorAll('[data-send]').forEach(b => b.onclick = () => {
+    const ids = unsent().slice(0, SEND_N).map(i => i.id);
+    if(ids.length) openSendSheet({ ids, no:S.sends.length + 1 });
+  });
+  root.querySelectorAll('[data-again]').forEach(b => b.onclick = () => {
+    const x = S.sends.find(v => v.id === b.dataset.again); if(x) openSendSheet({ ids:x.ids, no:x.no, d:x.d, again:true });
+  });
+}
+function markSent(ids, no){
+  if(S.sends.some(x => x.no === no)) return;
+  const t = today();
+  S.sends.push({ id:newId(), no, d:t, ids:ids.slice() });
+  ids.forEach(id => { const it = byId(id); if(it) it.sent = t; });
+  save(); renderAll();
+}
+
+/* 画像を作る（幅1080px。iPhone の canvas の上限 約1,600万px をこえないように縮める） */
+async function drawSend(items, no, dateStr){
+  const FF = "'BIZ UDPGothic','Hiragino Sans','Hiragino Kaku Gothic ProN',sans-serif";
+  try{ await Promise.all([document.fonts.load('700 30px "BIZ UDPGothic"'), document.fonts.load('400 30px "BIZ UDPGothic"')]); }catch(e){}
+  const W = 1080, PAD = 40, CW = W - PAD*2, TH = 210, IN = 22, RX = PAD + IN + TH + 26, RW = W - PAD - IN - RX;
+  const C = { bg:'#0F1830', card:'#172342', line:'#2A3A62', ink:'#EEF1F8', mut:'#B6C0D6', gold:'#D8BB6E', done:'#3FBF95', chip:'#1F2C4E' };
+  const mc = document.createElement('canvas').getContext('2d');
+  const wrap = (g, text, font, width, max) => {
+    g.font = font; const out = [];
+    for(const para of String(text || '').split('\n')){
+      let line = '';
+      for(const ch of para){
+        if(g.measureText(line + ch).width > width && line){ out.push(line); line = ch; } else line += ch;
+      }
+      out.push(line);
+    }
+    if(out.length > max){ const cut = out.slice(0, max); let l = cut[max-1]; while(l && g.measureText(l + '…').width > width) l = l.slice(0, -1); cut[max-1] = l + '…'; return cut; }
+    return out;
+  };
+  const F_T = '400 29px '+FF, LH = 42;
+  // 1問ごとの高さをはかる
+  const rows = items.map(it => {
+    const hasImg = !!it.imgs[0];
+    const qLeft = !hasImg ? wrap(mc, it.text || '（問題なし）', '400 24px '+FF, TH - 24, 6) : [];   // 枠の高さ210pxに6行まで
+    const qRight = hasImg && it.text ? wrap(mc, it.text, F_T, RW, 2) : [];
+    const why = wrap(mc, it.why, F_T, RW, 4), fix = wrap(mc, it.fix, F_T, RW, 4);
+    let hh = IN + 40 + 10;
+    if(qRight.length) hh += 30 + qRight.length*LH + 8;
+    hh += 30 + why.length*LH + 10 + 30 + fix.length*LH + IN;
+    return { it, hasImg, qLeft, qRight, why, fix, h:Math.max(TH + IN*2, hh) };
+  });
+  const tagN = {}; items.forEach(it => { const t = it.tag || '未設定'; tagN[t] = (tagN[t]||0) + 1; });
+  const tags = Object.entries(tagN).sort((a,b) => b[1] - a[1]);
+  const HEAD = 150, FOOT = 110 + tags.length*52 + 40;
+  let H = HEAD + rows.reduce((n, r) => n + r.h + 16, 0) + FOOT;
+  const dpr = Math.min(1.5, Math.sqrt(12000000 / (W*H)));   // 送る画像は軽く（Discord の上限と iPhone のメモリ）
+  const cv = document.createElement('canvas'); cv.width = Math.floor(W*dpr); cv.height = Math.floor(H*dpr);
+  const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x+r, y); g.arcTo(x+w, y, x+w, y+h, r); g.arcTo(x+w, y+h, x, y+h, r); g.arcTo(x, y+h, x, y, r); g.arcTo(x, y, x+w, y, r); g.closePath(); };
+  g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+  g.textBaseline = 'alphabetic';
+
+  // 見出し
+  const ds = items.map(i => i.created).sort();
+  g.fillStyle = C.gold; g.font = '700 50px '+FF; g.textAlign = 'left'; g.fillText('ミスマップ', PAD, 78);
+  const tw = g.measureText('ミスマップ').width;
+  g.fillStyle = C.ink; g.font = '700 34px '+FF; g.fillText(`第${no}回　${items.length}問`, PAD + tw + 22, 76);
+  g.fillStyle = C.mut; g.font = '400 25px '+FF;
+  g.fillText(`${md(ds[0])}〜${md(ds[ds.length-1])} に作った問題`, PAD, 122);
+  g.textAlign = 'right'; g.fillText(`${md(dateStr)} 提出`, W - PAD, 122); g.textAlign = 'left';
+  g.fillStyle = C.gold; g.globalAlpha = .55; g.fillRect(PAD, 138, CW, 2); g.globalAlpha = 1;
+
+  let y = HEAD;
+  for(let k = 0; k < rows.length; k++){
+    const r = rows[k], it = r.it;
+    g.fillStyle = C.card; rr(PAD, y, CW, r.h, 20); g.fill();
+    g.strokeStyle = C.line; g.lineWidth = 2; rr(PAD, y, CW, r.h, 20); g.stroke();
+    // 左: 写真 か 問題の文字
+    const tx = PAD + IN, ty = y + IN;
+    g.save(); rr(tx, ty, TH, TH, 14); g.clip();
+    g.fillStyle = C.chip; g.fillRect(tx, ty, TH, TH);
+    if(r.hasImg){
+      try{
+        const b = await getImg(it.imgs[0]);
+        const bmp = b ? await createImageBitmap(b) : null;
+        if(bmp){ const sc = Math.max(TH / bmp.width, TH / bmp.height), dw = bmp.width*sc, dh = bmp.height*sc; g.drawImage(bmp, tx + (TH - dw)/2, ty + (TH - dh)/2, dw, dh); if(bmp.close) bmp.close(); }
+      }catch(e){}
+    }else{
+      g.fillStyle = C.ink; g.font = '400 24px '+FF;
+      r.qLeft.forEach((l, i) => g.fillText(l, tx + 12, ty + 38 + i*29));
+    }
+    g.restore();
+    if(r.hasImg && it.imgs.length > 1){
+      g.fillStyle = 'rgba(15,24,48,.85)'; rr(tx + TH - 74, ty + TH - 40, 66, 32, 16); g.fill();
+      g.fillStyle = C.ink; g.font = '700 20px '+FF; g.textAlign = 'center'; g.fillText(`${it.imgs.length}枚`, tx + TH - 41, ty + TH - 17); g.textAlign = 'left';
+    }
+    // 右: 1行目（番号・日付・教科・種類・解き直し）
+    let cy = y + IN + 32, cx = RX;
+    g.fillStyle = C.gold; g.font = '700 28px '+FF; const nt = `${k+1}`; g.fillText(nt, cx, cy); cx += g.measureText(nt).width + 16;
+    g.fillStyle = C.mut; g.font = '400 25px '+FF; const dt = md(it.created); g.fillText(dt, cx, cy); cx += g.measureText(dt).width + 16;
+    const pill = (text, col) => {
+      g.font = '700 22px '+FF; const w = g.measureText(text).width + 22;
+      g.fillStyle = C.chip; rr(cx, cy - 26, w, 34, 17); g.fill();
+      g.strokeStyle = col; g.lineWidth = 2; rr(cx, cy - 26, w, 34, 17); g.stroke();
+      g.fillStyle = col; g.fillText(text, cx + 11, cy - 1); cx += w + 10;
+    };
+    pill(it.subj, SUBJC[it.subj] || SUBJC['その他']);
+    if(it.tag) pill(it.tag, C.ink);
+    // 解き直し（●＝言えた回数）
+    const n = gaps().length, dr = 8, dx0 = RX + RW - n*22 + 6;
+    for(let i = 0; i < n; i++){
+      g.beginPath(); g.arc(dx0 + i*22, cy - 9, dr, 0, Math.PI*2);
+      if(it.done || i < it.stage){ g.fillStyle = it.done ? C.gold : C.done; g.fill(); } else { g.strokeStyle = C.mut; g.lineWidth = 2; g.stroke(); }
+    }
+    cy += 18;
+    const block = (label, lines) => {
+      cy += 30; g.fillStyle = C.gold; g.font = '700 22px '+FF; g.fillText(label, RX, cy);
+      g.fillStyle = C.ink; g.font = F_T;
+      lines.forEach(l => { cy += LH; g.fillText(l, RX, cy); });
+      cy += 10;
+    };
+    if(r.qRight.length) block('問題', r.qRight);
+    block('間違えた理由', r.why);
+    block('改善点', r.fix);
+    y += r.h + 16;
+  }
+
+  // ミスパターン分析（この回の問題だけ）
+  y += 14;
+  g.fillStyle = C.gold; g.font = '700 32px '+FF; g.fillText('ミスパターン分析', PAD, y + 34);
+  if(tags[0]){ g.fillStyle = C.ink; g.font = '400 25px '+FF; g.textAlign = 'right'; g.fillText(`いちばん多いのは「${tags[0][0]}」`, W - PAD, y + 32); g.textAlign = 'left'; }
+  y += 62;
+  const mx = Math.max(1, ...tags.map(t => t[1])), BX = PAD + 230, BW = CW - 230 - 70;
+  tags.forEach(([t, c]) => {
+    g.fillStyle = C.ink; g.font = '400 25px '+FF; g.fillText(t, PAD, y + 28);
+    g.fillStyle = C.chip; rr(BX, y + 8, BW, 24, 12); g.fill();
+    g.fillStyle = C.gold; rr(BX, y + 8, Math.max(24, BW * c / mx), 24, 12); g.fill();
+    g.fillStyle = C.ink; g.font = '700 26px '+FF; g.textAlign = 'right'; g.fillText(`${c}問`, W - PAD, y + 30); g.textAlign = 'left';
+    y += 52;
+  });
+  return cv;
+}
+
+function openSendSheet(o){
+  const items = o.ids.map(byId).filter(Boolean);
+  if(!items.length){ toast('この回の問題は、もう消えています'); return; }
+  const dateStr = o.d || today();
+  const canShare = !!(navigator.canShare && navigator.share);
+  const bg = document.createElement('div'); bg.className = 'sheet-bg';
+  bg.innerHTML = `<div class="sheet"><div class="grab"></div>
+    <h2>ミスマップの部屋に出す（第${o.no}回）</h2>
+    <p class="dim" id="sdMsg">画像を作っています…</p>
+    <div id="sdBody" class="hidden">
+      <img class="shot" id="sdImg" alt="ミスマップ 第${o.no}回">
+      <ol class="steps3">
+        <li>下の「部屋に出す」を押す</li>
+        <li>出てきた画面で <b>Discord</b> を選ぶ（出てこないときは「画像を保存」してから、Discord で画像を選ぶ）</li>
+        <li><b>#ミスマップ</b> の部屋を選んで送る</li>
+      </ol>
+      <button class="btn-primary" id="sdShare">${canShare ? '部屋に出す（Discord をえらぶ）' : '画像を保存する'}</button>
+      ${o.again ? '' : `<button class="btn-line" id="sdDone">スクショなどで出した（提出済みにする）</button>`}
+    </div>
+    <button class="close" id="sdClose">閉じる</button></div>`;
+  document.body.appendChild(bg);
+  const close = () => { bg.remove(); if(url) URL.revokeObjectURL(url); };
+  bg.querySelector('#sdClose').onclick = close;
+  bg.addEventListener('click', e => { if(e.target === bg) close(); });
+  const name = `ミスマップ_第${o.no}回_${dateStr}.jpg`;
+  let blob = null;
+  const done = () => {
+    if(o.again) return;
+    markSent(o.ids, o.no);
+    toast(`第${o.no}回を提出済みにしました`);
+    close();
+  };
+  let url = '';
+  const fail = () => { bg.querySelector('#sdMsg').textContent = '画像を作れませんでした。もう一度開いてください。'; };
+  drawSend(items, o.no, dateStr).then(cv => {
+    /* 変換は1回だけ（toDataURL と toBlob を両方やると、縦に長い画像で iPhone が重くなる） */
+    cv.toBlob(b => {
+      if(!b) return fail();
+      blob = b; url = URL.createObjectURL(b);
+      cv.width = cv.height = 1;
+      bg.querySelector('#sdImg').src = url;
+      bg.querySelector('#sdMsg').classList.add('hidden');
+      bg.querySelector('#sdBody').classList.remove('hidden');
+    }, 'image/jpeg', 0.9);
+  }).catch(fail);
+  /* share は押した直後（同期）でないと iPhone で弾かれるので、画像は先に作っておく */
+  bg.querySelector('#sdShare').onclick = () => {
+    if(!blob) return toast('まだ作っています');
+    const file = new File([blob], name, { type:'image/jpeg' });
+    if(canShare && navigator.canShare({ files:[file] })){
+      navigator.share({ files:[file] }).then(done).catch(e => { if(!(e && e.name === 'AbortError')) toast('送れませんでした'); });
+      return;
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+    toast('画像を保存しました。Discord の #ミスマップ に出してください');
+    if(!o.again){ const d2 = bg.querySelector('#sdDone'); if(d2) d2.textContent = '部屋に出した（提出済みにする）'; }
+  };
+  const sd = bg.querySelector('#sdDone'); if(sd) sd.onclick = done;
 }
 
 /* ===================== 問題が届く間隔（自分で決める） =====================
@@ -1394,6 +1652,7 @@ async function importText(text, quiet){
     if(cur){ Object.assign(cur, it); updated++; } else { S.items.push(it); added++; }
   }
   if(!S.items.length && d.cfg && d.cfg.gaps) S.cfg.gaps = d.cfg.gaps;
+  if(Array.isArray(d.sends)){ S.sends = Array.isArray(S.sends) ? S.sends : []; d.sends.forEach(x => { if(x && x.id && !S.sends.some(v => v.id === x.id || v.no === x.no)) S.sends.push(x); }); S.sends.sort((a,b) => a.no - b.no); }
   S.items.sort((a,b) => a.created < b.created ? 1 : a.created > b.created ? -1 : 0);
   norm(S);
   let nImg = 0;
@@ -1420,7 +1679,7 @@ $('#btnImportText').onclick = async () => { const t = $('#impText').value.trim()
 $('#btnWipe').onclick = async () => {
   if(!confirm('登録した問題と写真をすべて消します。よろしいですか？')) return;
   if(!confirm('本当に消しますか？（控えを取っていなければ戻せません）')) return;
-  S = norm({ items:[], cfg:{} }); save();
+  S = norm({ items:[], cfg:{}, sends:[] }); save();
   try{ await tx_('readwrite', st => st.clear()); }catch(e){}
   urlCache.clear(); renderAll(); renderSet(); toast('すべて消しました');
 };
@@ -1436,10 +1695,12 @@ function slides(){ return [
   { ico:'eye', t:'5. 問題だけを見て言う', p:'問題だけを見て、「なぜ間違えたか」「次はどうするか」を<b>自分の口で言って</b>から、「答え合わせ」で登録した内容と比べます。', ex:`言えた → 次の間隔へ。${gaps().length}回つづけて言えたら「極まった」。言えなかった → 翌日からやり直し。` },
   { ico:'shuffle', t:'6. ランダムに解く', p:'予定に関係なく、3・5・10問を練習できます。ランダムのときは「言えなかった」だけ記録され、「言えた」は予定を変えません。', ex:'間隔をあけて覚える仕組みを崩さないためです。' },
   { ico:'chart', t:'7. ミスマップを見る', p:'教科別の件数と、ミスの種類別の件数（<b>ミスパターン分析</b>）が自動でたまります。いちばん多い種類が、あなたのミスのクセです。', ex:'そのクセの改善点を、ほかの問題にも使ってみてください。' },
-  { ico:'install', t:'8. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、登録した問題と写真が消えてしまうことがあります。', ex:'Safari の共有ボタン →「ホーム画面に追加」→「追加」。やり方は、上の赤い帯の「やり方」からも見られます。' },
-  { ico:'save', t:'9. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の <b>「記録の控えをとる」</b> を、ときどき押してください。軽いのですぐ終わります。', ex:'写真も残したいときは「写真もとる」。重いので何回かに分けて保存します。機種変更のときだけで十分です。' },
+  { ico:'send', t:'8. ミスマップの部屋に出す', p:`問題を <b>${SEND_N}問</b> 作るごとに、紙のミスマップと同じ形の <b>1枚の画像</b> にして、Discord の <b>#ミスマップ</b> に出します。ひとりで進めずに、フィードバックをもらうためです。`, ex:'「解く」タブの「ミスマップの部屋に出す」から。共有の画面で Discord を選び、#ミスマップ に送ります。出した回は「ミスマップ」タブにたまり、あとから出し直せます。' },
+  { ico:'install', t:'9. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、登録した問題と写真が消えてしまうことがあります。', ex:'Safari の共有ボタン →「ホーム画面に追加」→「追加」。やり方は、上の赤い帯の「やり方」からも見られます。' },
+  { ico:'save', t:'10. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の <b>「記録の控えをとる」</b> を、ときどき押してください。軽いのですぐ終わります。', ex:'写真も残したいときは「写真もとる」。重いので何回かに分けて保存します。機種変更のときだけで十分です。' },
 ]; }
 const CHANGES = [
+  { v:15, d:'9/14', t:'10問たまるごとに、ミスマップを1枚の画像にして Discord の #ミスマップ に出せるように。' },
   { v:14, d:'9/14', t:'問題が届く間隔と、くり返す回数を自分で決められるように（設定）。' },
   { v:13, d:'9/14', t:'文字を、見まちがえにくい書体（BIZ UDPゴシック）に変えました。' },
   { v:12, d:'9/14', t:'アイコンを作り直しました（✕から✓へ。金属の質感）。' },
@@ -1461,6 +1722,7 @@ const SICO = {
   fix: '<svg viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="m12.5 7.5 4 4"/></svg>',
   chart: '<svg viewBox="0 0 24 24"><path d="M3 20h18"/><rect x="5" y="11" width="3.5" height="9"/><rect x="10.25" y="6" width="3.5" height="14"/><rect x="15.5" y="14" width="3.5" height="6"/></svg>',
   save: '<svg viewBox="0 0 24 24"><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/></svg>',
+  send: '<svg viewBox="0 0 24 24"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="m10 13 5-5"/></svg>',
   install: '<svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M12 7v7"/><path d="m9 11.5 3 3 3-3"/></svg>',
 };
 function slidesHtml(){

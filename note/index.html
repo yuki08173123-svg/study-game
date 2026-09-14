@@ -281,6 +281,11 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
   padding:28px 22px;min-height:56vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lift)}
 .rev .step{font-size:.7rem;color:var(--ink3);font-weight:700;letter-spacing:.16em;margin-bottom:6px}
 .rev .when{font-size:.71rem;color:var(--ink3);font-weight:600;margin-bottom:22px;letter-spacing:.03em}
+.rev .rhead{display:flex;align-items:flex-start;gap:12px}
+.rev .rhead > div{flex:1;min-width:0}
+.rev .b-top{flex:none;background:var(--pri);color:var(--on-pri);border-radius:999px;
+  padding:9px 16px;font-size:.8rem;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+.rev .b-top:active{opacity:.75}
 .rev .leadhint{font-size:.82rem;color:var(--ink3);font-weight:600;letter-spacing:.03em}
 .rev .lead{font-family:var(--serif);font-size:1.34rem;font-weight:600;line-height:1.78;
   white-space:pre-wrap;word-break:break-word;letter-spacing:.03em}
@@ -393,7 +398,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 25;
+const VER = 26;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -1446,8 +1451,10 @@ function renderReview(){
   revClock();
   $('#main').innerHTML = `
     <div class="rev">
-      <div class="step">${revI+1} / ${revQ.length}${revRec ? '' : '　・　確認するだけ'}</div>
-      <div class="when">${fmtDate(n.cre)}${n.revAt ? '　前回の確認は' + daysAgo(n.revAt) + '日前' : '　未確認'}</div>
+      <div class="rhead"><div>
+        <div class="step">${revI+1} / ${revQ.length}${revRec ? '' : '　・　確認するだけ'}</div>
+        <div class="when">${fmtDate(n.cre)}${n.revAt ? '　前回の確認は' + daysAgo(n.revAt) + '日前' : '　未確認'}</div>
+      </div>${veiled ? `<button class="b-top" id="rshow2">続きを表示</button>` : ''}</div>
       ${lead ? `<div class="lead">${esc(lead)}</div>`
              : `<div class="leadhint">写真を見て、思い出してください</div>`}
       <div class="${picVeiled?'veil':''}" id="revpics">${picsHtml(frontP)}</div>
@@ -1467,7 +1474,7 @@ function renderReview(){
   fillImgs($('#main'));
   const sp = $('#showpic');
   if(sp) sp.onclick = () => { revPic = true; render(); };
-  if(veiled) $('#rshow').onclick = () => { revStopClock(); revOpen = true; render(); };
+  if(veiled) $('#rshow').onclick = $('#rshow2').onclick = () => { revStopClock(); revOpen = true; render(); };
   else if(revRec) $$('#main [data-g]').forEach(b => b.onclick = () => revAnswer(+b.dataset.g));
   else $('#rnext').onclick = () => {
     revI++; revOpen = false; revPic = false;

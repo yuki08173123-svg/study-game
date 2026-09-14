@@ -295,11 +295,19 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
 /* 設定 */
 .steps{margin:6px 0 0 20px; font-size:14px; line-height:1.9;}
-.gaps{display:grid; grid-template-columns:repeat(5,1fr); gap:6px;}
-.gap{background:var(--chip); border-radius:12px; padding:8px 4px; text-align:center;}
-.gap label{display:block; font-size:12.5px; font-weight:700; color:var(--muted);}
-.gap input{width:100%; background:transparent; border:none; text-align:center; font-size:19px; font-weight:700; outline:none;}
-.gap span{font-size:12.5px; color:var(--muted); font-weight:700;}
+.gp-presets{display:flex; flex-direction:column; gap:6px; margin-bottom:12px;}
+.gp-presets .chip{text-align:left; border-radius:12px; padding:9px 12px; display:flex; align-items:center; gap:8px;}
+.gp-presets .chip small{font-size:12.5px; font-weight:400; opacity:.8; margin-left:auto;}
+.gp-rows{display:flex; flex-direction:column; gap:6px;}
+.gp-row{display:grid; grid-template-columns:56px 84px 1fr 36px; align-items:center; gap:8px; background:var(--chip); border-radius:12px; padding:6px 8px;}
+.gp-row .n{font-size:13px; font-weight:700; color:var(--muted);}
+.gp-row input{width:100%; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:6px 8px; font-size:18px; font-weight:700; text-align:center; outline:none;}
+.gp-row input.bad{border-color:var(--miss); box-shadow:0 0 0 2px var(--miss-soft);}
+.gp-row .lb{font-size:13.5px; font-weight:700; color:var(--muted);}
+.gp-row .rm{width:36px; height:36px; border-radius:50%; display:grid; place-items:center;}
+.gp-row .rm svg{width:15px; height:15px; stroke:var(--muted); fill:none; stroke-width:2.6; stroke-linecap:round;}
+.gp-pv{background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:12px; padding:10px 12px; font-size:14px; line-height:1.8; margin-top:10px;}
+.gp-pv b{color:var(--accent); font-weight:700;}
 .settext{width:100%; background:var(--chip); border:none; border-radius:12px; padding:10px; font-size:13px; min-height:90px; outline:none; resize:vertical; font-family:ui-monospace, Menlo, monospace;}
 .kv{display:flex; justify-content:space-between; align-items:center; font-size:14px; padding:6px 0;}
 .kv b{font-weight:700;}
@@ -357,10 +365,8 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
     <div class="card">
       <h3><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 8v4l2.5 2.5"/></svg>問題が届く間隔</h3>
-      <div class="dim" style="margin-bottom:8px">「言えた」から数えて、何日後にまた届くか。5回つづけて言えたら「極まった」になります。</div>
-      <div class="gaps" id="gaps"></div>
-      <div class="dim" style="margin-top:8px">変えた間隔は、次に「言えた」を押したときから使われます。</div>
-      <button class="btn-line" id="btnGapReset">標準（1・3・7・14・30日）に戻す</button>
+      <div class="dim" style="margin-bottom:10px">何日あけて、何回くり返すかを自分で決められます。日数は、前にその問題を解いた日から数えます。</div>
+      <div id="gapBox"></div>
     </div>
 
     <div class="card">
@@ -440,7 +446,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 13;
+const VER = 14;
 const KEY = 'miss_v1', BK = 'miss_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -450,6 +456,12 @@ const SUBJC = { '英語':'#7FA6FF', '数学':'#5ED3A2', '国語':'#FF8C7E', '理
 /* ミスの種類（ミスパターン分析用）。Discordでヒラが挙げた例をもとにした */
 const TAGS = ['計算ミス','スペルミス','漢字ミス','時制ミス','条件の読み飛ばし','見落とし','解答欄のズレ','書き方が雑','その他'];
 const DEF_GAPS = [1,3,7,14,30];
+const GAP_MIN = 2, GAP_MAX = 8;   // くり返す回数は 2〜8回
+const PRESETS = [
+  { name:'標準', note:'はじめはこれ', g:[1,3,7,14,30] },
+  { name:'テスト前', note:'間隔をみじかく', g:[1,2,4,7] },
+  { name:'じっくり', note:'長く覚えておく', g:[1,3,7,14,30,60] },
+];
 /* ミスの種類ごとの「よくある改善点」。押すと いつ・何を・どうする が入る。
    中身は Discord #ミスマップ でヒラが出していた指導（指さし・バックスキャン・条件に丸・数値化）にそろえてある。 */
 const FIXES = {
@@ -524,7 +536,7 @@ function relDay(s){
 }
 function gapLabel(d){
   d = Number(d);
-  if(d === 1) return '翌日'; if(d === 7) return '1週間後'; if(d === 14) return '2週間後';
+  if(d === 1) return '翌日'; if(d === 7) return '1週間後'; if(d === 14) return '2週間後'; if(d === 21) return '3週間後';
   if(d === 30 || d === 31) return '1か月後'; if(d === 60) return '2か月後'; if(d === 90) return '3か月後';
   return d+'日後';
 }
@@ -536,8 +548,10 @@ let S = load();
 function norm(j){
   j.items = Array.isArray(j.items) ? j.items : [];
   j.cfg = j.cfg || {};
-  let g = Array.isArray(j.cfg.gaps) ? j.cfg.gaps.map(x => Math.max(1, Math.round(Number(x)||0))) : DEF_GAPS.slice();
-  while(g.length < 5) g.push(DEF_GAPS[g.length]); g = g.slice(0,5);
+  /* 回数は 2〜8回、日数は 1〜365日。順番が逆（3日の次に2日など）のときは、消さずに小さい順に並べなおす */
+  let g = Array.isArray(j.cfg.gaps) ? j.cfg.gaps.map(x => Math.max(1, Math.min(365, Math.round(Number(x)||0)))) : DEF_GAPS.slice();
+  g = g.slice(0, GAP_MAX).sort((a, b) => a - b);
+  if(g.length < GAP_MIN) g = DEF_GAPS.slice();
   j.cfg.gaps = g;
   j.cfg.randN = [3,5,10].includes(j.cfg.randN) ? j.cfg.randN : 5;
   j.cfg.randMast = !!j.cfg.randMast;
@@ -559,6 +573,7 @@ function save(show){
   if(show) toast('保存しました');
 }
 const gaps = () => S.cfg.gaps;
+const gapsText = g => (g || gaps()).map(gapLabel).join('・');
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const byId = id => S.items.find(x => x.id === id);
 
@@ -669,7 +684,7 @@ function stageDots(it){
   for(let i = 0; i < n; i++) h += `<i class="${it.done ? 'star' : (i < it.stage ? 'on' : '')}"></i>`;
   return h + '</span>';
 }
-function stageText(it){ return it.done ? '極まった' : (it.stage+1)+'回目'; }
+function stageText(it){ return it.done ? '極まった' : (Math.min(it.stage, gaps().length-1)+1)+'回目'; }
 function titleOf(it){
   if(it.text) return { t:it.text.split('\n')[0], dim:false };
   return { t:'写真の問題（'+mdw(it.created)+' 登録）', dim:true };
@@ -697,7 +712,7 @@ function renderToday(){
   let h = '';
   if(!S.items.length){
     h += `<div class="empty">${ICO.empty}<b>まず、ミスした問題を「作る」</b>
-      <p>問題（写真か文字）と、間違えた理由・改善点を登録すると、<br>翌日・3日後・1週間後・2週間後・1か月後に<br>「今日の問題」としてここに届きます。</p>
+      <p>問題（写真か文字）と、間違えた理由・改善点を登録すると、<br>${gapsText()}に<br>「今日の問題」としてここに届きます。</p>
       <button class="btn-primary" id="goAdd">問題を作る</button>
       <button class="btn-line" id="goHelp">はじめに使い方を見る</button></div>`;
     h += flowCard();
@@ -740,7 +755,7 @@ function flowCard(){
   return `<div class="card" style="margin-top:10px"><h3>${ICO.redo}ミスマップの使い方（紙と同じ）</h3>
     <p>紙のミスマップは「日付・ミス内容・間違えた理由・改善点・解き直し」の表でした。<br>
     このアプリでは、<b>問題だけ</b>を見て「なぜ間違えたか」「次はどうするか」を自分の口で言えるかを練習します。<br>
-    5回つづけて言えたら「極まった」。言えなかったら翌日からやり直しです。</p></div>`;
+    ${gaps().length}回つづけて言えたら「極まった」。言えなかったら翌日からやり直しです。</p></div>`;
 }
 
 /* ===================== 解く（1問の画面） ===================== */
@@ -779,7 +794,7 @@ function openSolve(id, opt){
       <div class="q"><span class="k">2</span><div><b>改善点は？</b><span>次に同じ問題を解くとき、何をどう変えるか。</span></div></div>
     </div>
     <div class="card" style="padding:12px 14px">
-      <div class="stage">${stageDots(it)}<b>${it.done ? '極まった' : stageText(it)}</b><span>${it.done ? md(it.doneAt)+' に5回そろいました' : (early ? '予定は '+mdw(it.due) : (it.due ? '次の予定 '+mdw(it.due) : ''))}</span></div>
+      <div class="stage">${stageDots(it)}<b>${it.done ? '極まった' : stageText(it)}</b><span>${it.done ? md(it.doneAt)+' に極まりました' : (early ? '予定は '+mdw(it.due) : (it.due ? '次の予定 '+mdw(it.due) : ''))}</span></div>
       ${logs ? `<div class="log">${logs}</div>` : ''}
     </div>
   </div>
@@ -807,7 +822,7 @@ function openSolve(id, opt){
       $('#svOk').onclick = () => {
         markOk(it, practice);
         if(practice) toast('言えた（練習なので予定はそのまま）');
-        else if(it.done) toast('極まった！ 5回つづけて言えました');
+        else if(it.done) toast('極まった！ '+gaps().length+'回つづけて言えました');
         else toast('言えた。次は '+gapLabel(gaps()[it.stage])+'（'+md(it.due)+'）');
         after();
       };
@@ -1164,21 +1179,120 @@ function renderMap(){
   h += list.length ? `<div class="mlist">${list.map(rowHtml).join('')}</div>` : `<div class="empty"><b>この教科の問題はありません</b></div>`;
   h += `<div class="sec-label" style="margin-top:18px">極まった問題<span class="cnt num">${mas.length}</span><span class="spacer"></span>${mas.length ? `<button class="lnk" id="tglMast">${showMast ? 'たたむ' : '見る ›'}</button>` : ''}</div>`;
   if(showMast && mas.length) h += `<div class="mlist">${mas.map(rowHtml).join('')}</div>`;
-  else if(mas.length) h += `<div class="dim">5回つづけて言えた問題です。消えずにここに残ります。</div>`;
-  else h += `<div class="dim">5回「言えた」がそろうと、ここに移ります。</div>`;
+  else if(mas.length) h += `<div class="dim">${gaps().length}回つづけて言えた問題です。消えずにここに残ります。</div>`;
+  else h += `<div class="dim">${gaps().length}回「言えた」がそろうと、ここに移ります。</div>`;
   root.innerHTML = h;
   root.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { mapFilter = (mapFilter === b.dataset.f && b.classList.contains('bar')) ? 'all' : b.dataset.f; renderMap(); });
   const tg = root.querySelector('#tglMast'); if(tg) tg.onclick = () => { showMast = !showMast; renderMap(); };
   bindOpen(root);
 }
 
+/* ===================== 問題が届く間隔（自分で決める） =====================
+   その場で保存はしない。「この間隔にする」を押したときだけ変わる（打ちまちがいで予定が崩れないように）。
+   変えたときに、今ある問題の予定を計算しなおすかを選べる。 */
+let gapEdit = null;   // 設定画面で編集中の間隔（まだ保存していない）
+const sameG = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+function gapErr(g){
+  for(let i = 0; i < g.length; i++){
+    if(!Number.isInteger(g[i]) || g[i] < 1 || g[i] > 365) return { i, t:`${i+1}回目の日数は、1〜365の数で入れてください` };
+    if(i > 0 && g[i] < g[i-1]) return { i, t:`${i+1}回目は、${i}回目（${g[i-1]}日）と同じか、それより長くしてください` };
+  }
+  return null;
+}
+/* 最後に本番で解いた日（ランダム練習はのぞく）。なければ登録日 */
+function baseDay(it){
+  for(let i = it.log.length - 1; i >= 0; i--) if(!it.log[i].r) return it.log[i].d;
+  return it.created;
+}
+function replan(it, g){
+  if(it.stage >= g.length) return { done:true };
+  return { done:false, due:addDays(baseDay(it), g[it.stage]) };
+}
+function gapPreviewHtml(g){
+  const e = gapErr(g);
+  if(e) return `<div class="err">${esc(e.t)}</div>`;
+  let c = 0; const days = g.map(x => (c += x));
+  return `<div class="gp-pv"><b>届き方：</b>${gapsText(g)}<br>
+    毎回その日に解くと、登録から <b class="num">${days.join('・')}</b> 日目に届きます。<br>
+    <b class="num">${g.length}回</b>つづけて言えたら「極まった」。</div>`;
+}
+function renderGaps(){
+  if(!gapEdit) gapEdit = gaps().slice();
+  const box = $('#gapBox'); if(!box) return;
+  const saved = gaps(), e = gapErr(gapEdit), same = !e && sameG(gapEdit, saved);
+  box.innerHTML = `
+    <div class="gp-presets">${PRESETS.map((p, i) => `<button class="chip ${sameG(p.g, gapEdit) ? 'on' : ''}" data-pr="${i}"><b>${p.name}</b><span class="num">${p.g.join('・')}日</span><small>${p.note}</small></button>`).join('')}</div>
+    <div class="gp-rows">${gapEdit.map((g, i) => `<div class="gp-row">
+      <span class="n">${i+1}回目</span>
+      <input type="number" inputmode="numeric" min="1" max="365" value="${Number.isFinite(g) ? g : ''}" data-gi="${i}" class="${e && e.i === i ? 'bad' : ''}">
+      <span class="lb">日後</span>
+      <button class="rm" data-rm="${i}" ${gapEdit.length <= GAP_MIN ? 'disabled' : ''} aria-label="${i+1}回目を消す">${ICO.x}</button></div>`).join('')}</div>
+    <button class="btn-line" id="gpAdd" ${gapEdit.length >= GAP_MAX ? 'disabled' : ''}>＋ くり返す回数をふやす</button>
+    <div id="gpPv">${gapPreviewHtml(gapEdit)}</div>
+    <button class="btn-primary" id="gpApply" style="margin-top:10px" ${same || e ? 'disabled' : ''}>この間隔にする</button>
+    ${same ? `<div class="dim" style="text-align:center; margin-top:6px">いまはこの間隔です</div>` : `<button class="btn-line" id="gpUndo">変更をやめる</button>`}`;
+  box.querySelectorAll('[data-pr]').forEach(b => b.onclick = () => { gapEdit = PRESETS[Number(b.dataset.pr)].g.slice(); renderGaps(); });
+  box.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { gapEdit.splice(Number(b.dataset.rm), 1); renderGaps(); });
+  box.querySelector('#gpAdd').onclick = () => { const last = gapEdit[gapEdit.length-1]; gapEdit.push(Math.min(365, Number.isFinite(last) ? last * 2 : 30)); renderGaps(); };
+  box.querySelectorAll('[data-gi]').forEach(inp => {
+    /* 打っているあいだは入力欄を作りなおさない（キーボードが閉じないように） */
+    inp.oninput = () => {
+      const v = inp.value.trim() === '' ? NaN : Math.round(Number(inp.value));
+      gapEdit[Number(inp.dataset.gi)] = v;
+      const er = gapErr(gapEdit);
+      box.querySelector('#gpPv').innerHTML = gapPreviewHtml(gapEdit);
+      box.querySelectorAll('[data-gi]').forEach(x => x.classList.toggle('bad', !!er && er.i === Number(x.dataset.gi)));
+      box.querySelector('#gpApply').disabled = !!er || sameG(gapEdit, gaps());
+    };
+    inp.onchange = () => renderGaps();
+  });
+  const un = box.querySelector('#gpUndo'); if(un) un.onclick = () => { gapEdit = gaps().slice(); renderGaps(); };
+  box.querySelector('#gpApply').onclick = () => { if(!gapErr(gapEdit)) askApplyGaps(gapEdit.slice()); };
+}
+function commitGaps(g, replanAll){
+  S.cfg.gaps = g;
+  let n = 0;
+  if(replanAll){
+    for(const it of active()){
+      const r = replan(it, g);
+      if(r.done){ it.done = true; it.doneAt = today(); it.due = ''; n++; }
+      else if(r.due !== it.due){ it.due = r.due; n++; }
+    }
+  }
+  save(); gapEdit = null;
+  renderGaps(); renderSlides(); renderAdd(); renderAll();
+  toast(replanAll ? (n ? `間隔を変えて、${n}問の予定を計算しなおしました` : '間隔を変えました。今ある問題の予定は変わりません') : '間隔を変えました。次に「言えた」を押したときから使われます');
+}
+function askApplyGaps(g){
+  const act = active();
+  if(!act.length) return commitGaps(g, false);
+  let sooner = 0, later = 0, keep = 0, mast = 0;
+  for(const it of act){
+    const r = replan(it, g);
+    if(r.done) mast++; else if(r.due < it.due) sooner++; else if(r.due > it.due) later++; else keep++;
+  }
+  /* 1問も予定が変わらないなら、聞く意味がないのでそのまま確定する */
+  if(!sooner && !later && !mast) return commitGaps(g, true);
+  const parts = [sooner && `早まる ${sooner}問`, later && `おそくなる ${later}問`, keep && `そのまま ${keep}問`, mast && `極まったになる ${mast}問`].filter(Boolean).join('・');
+  const bg = document.createElement('div'); bg.className = 'sheet-bg';
+  bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>今ある問題の予定は、どうしますか？</h2>
+    <p>まだ極まっていない問題が <b class="num">${act.length}</b> 問あります。</p>
+    <button class="btn-primary" id="gpRe" style="margin-top:12px">新しい間隔で計算しなおす</button>
+    <div class="dim" style="margin:6px 2px 0">${parts}。テスト前に間隔を短くしたときなどは、こちらにしてください。</div>
+    <button class="btn-line" id="gpKeep" style="margin-top:14px">いまの予定のままにする</button>
+    <div class="dim" style="margin:6px 2px 0">次に「言えた」を押したときから、新しい間隔になります。</div>
+    <button class="close">やめる</button></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.querySelector('#gpRe').onclick = () => { close(); commitGaps(g, true); };
+  bg.querySelector('#gpKeep').onclick = () => { close(); commitGaps(g, false); };
+  bg.querySelector('.close').onclick = close;
+  bg.addEventListener('click', ev => { if(ev.target === bg) close(); });
+}
+
 /* ===================== 設定 ===================== */
 function renderSet(){
-  $('#gaps').innerHTML = gaps().map((g, i) => `<div class="gap"><label>${i+1}回目</label><input type="number" inputmode="numeric" min="1" max="365" value="${g}" data-gi="${i}"><span>日後</span></div>`).join('');
-  $('#gaps').querySelectorAll('input').forEach(inp => inp.onchange = () => {
-    const v = Math.max(1, Math.min(365, Math.round(Number(inp.value)||1))); inp.value = v;
-    S.cfg.gaps[Number(inp.dataset.gi)] = v; save(); renderToday();
-  });
+  renderGaps();
   $('#tgRandMast').classList.toggle('on', S.cfg.randMast);
   const lb = S.cfg.lastBackup, days = lb ? diffDays(lb, today()) : 9999;
   $('#bkNote').innerHTML = (S.items.length >= 5 && days >= 30)
@@ -1190,7 +1304,6 @@ function renderSet(){
   $('#cntAll').textContent = S.items.length+'問（極まった '+mastered().length+'）';
   countImgs().then(n => { $('#cntImg').textContent = n+'枚'; });
 }
-$('#btnGapReset').onclick = () => { S.cfg.gaps = DEF_GAPS.slice(); save(); renderSet(); renderToday(); toast('標準に戻しました'); };
 $('#tgRandMast').onclick = () => { S.cfg.randMast = !S.cfg.randMast; save(); renderSet(); renderToday(); };
 
 /* 控え */
@@ -1314,19 +1427,20 @@ $('#btnWipe').onclick = async () => {
 
 /* ===================== 使い方（スライド）と更新の履歴 =====================
    ルール: 機能を変えたら、ここ（SLIDES）と CHANGES を必ず同じ更新で直す。 */
-const SLIDES = [
+function slides(){ return [
   { ico:'doc', t:'ミスマップとは', p:'同じミスを<b>二度としない</b>ための道具です。紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）を、そのままアプリにしました。', ex:'ここに入れるのは「知っていたのに間違えた問題」。覚えていなかっただけの問題は、暗記で解決します。' },
   { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、ミスした問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科を選びます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。' },
   { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。「そのとき何が起きた」は任意です。', ex:'例：問題文の「合計」を読み飛ばした → 片方だけ計算して答えた' },
   { ico:'fix', t:'3. 改善点は3つに分けて', p:'「<b>いつ</b>・<b>何を</b>・<b>どうする</b>」で書くと、1文に組み上がります。「気をつける」「見直す」のように行動になっていないと、登録できません。', ex:'例：解き終わったら、代入した式の符号を、指でさして元の式と見くらべる' },
-  { ico:'redo', t:'4. 問題が届く', p:'登録した問題は、<b>翌日・3日後・1週間後・2週間後・1か月後</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。', ex:'やり残しは消えず、次の日に繰り越されます。' },
-  { ico:'eye', t:'5. 問題だけを見て言う', p:'問題だけを見て、「なぜ間違えたか」「次はどうするか」を<b>自分の口で言って</b>から、「答え合わせ」で登録した内容と比べます。', ex:'言えた → 次の間隔へ。5回つづけて言えたら「極まった」。言えなかった → 翌日からやり直し。' },
+  { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます。' },
+  { ico:'eye', t:'5. 問題だけを見て言う', p:'問題だけを見て、「なぜ間違えたか」「次はどうするか」を<b>自分の口で言って</b>から、「答え合わせ」で登録した内容と比べます。', ex:`言えた → 次の間隔へ。${gaps().length}回つづけて言えたら「極まった」。言えなかった → 翌日からやり直し。` },
   { ico:'shuffle', t:'6. ランダムに解く', p:'予定に関係なく、3・5・10問を練習できます。ランダムのときは「言えなかった」だけ記録され、「言えた」は予定を変えません。', ex:'間隔をあけて覚える仕組みを崩さないためです。' },
   { ico:'chart', t:'7. ミスマップを見る', p:'教科別の件数と、ミスの種類別の件数（<b>ミスパターン分析</b>）が自動でたまります。いちばん多い種類が、あなたのミスのクセです。', ex:'そのクセの改善点を、ほかの問題にも使ってみてください。' },
   { ico:'install', t:'8. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、登録した問題と写真が消えてしまうことがあります。', ex:'Safari の共有ボタン →「ホーム画面に追加」→「追加」。やり方は、上の赤い帯の「やり方」からも見られます。' },
   { ico:'save', t:'9. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の <b>「記録の控えをとる」</b> を、ときどき押してください。軽いのですぐ終わります。', ex:'写真も残したいときは「写真もとる」。重いので何回かに分けて保存します。機種変更のときだけで十分です。' },
-];
+]; }
 const CHANGES = [
+  { v:14, d:'9/14', t:'問題が届く間隔と、くり返す回数を自分で決められるように（設定）。' },
   { v:13, d:'9/14', t:'文字を、見まちがえにくい書体（BIZ UDPゴシック）に変えました。' },
   { v:12, d:'9/14', t:'アイコンを作り直しました（✕から✓へ。金属の質感）。' },
   { v:11, d:'9/14', t:'アイコンを作り直しました（濃紺に金の丸）。' },
@@ -1350,15 +1464,16 @@ const SICO = {
   install: '<svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M12 7v7"/><path d="m9 11.5 3 3 3-3"/></svg>',
 };
 function slidesHtml(){
-  return `<div class="slides"><div class="sl-track">${SLIDES.map((sl, i) => `<div class="sl"><div class="no num">${i+1} / ${SLIDES.length}</div><div class="pic">${SICO[sl.ico]||''}</div><h4>${sl.t}</h4><p>${sl.p}</p>${sl.ex ? `<div class="ex">${sl.ex}</div>` : ''}</div>`).join('')}</div>
-    <div class="sl-nav"><button class="prev">${ICO.back}</button><span class="dots">${SLIDES.map((_, i) => `<i class="${i?'':'on'}"></i>`).join('')}</span><button class="next"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button></div></div>`;
+  const SL = slides();
+  return `<div class="slides"><div class="sl-track">${SL.map((sl, i) => `<div class="sl"><div class="no num">${i+1} / ${SL.length}</div><div class="pic">${SICO[sl.ico]||''}</div><h4>${sl.t}</h4><p>${sl.p}</p>${sl.ex ? `<div class="ex">${sl.ex}</div>` : ''}</div>`).join('')}</div>
+    <div class="sl-nav"><button class="prev">${ICO.back}</button><span class="dots">${SL.map((_, i) => `<i class="${i?'':'on'}"></i>`).join('')}</span><button class="next"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button></div></div>`;
 }
 function bindSlides(root){
   const track = root.querySelector('.sl-track'), dots = root.querySelectorAll('.sl-nav .dots i');
   let idx = 0;
   const step = () => track.children[0].offsetWidth + 10;
   const mark = () => dots.forEach((d, k) => d.classList.toggle('on', k === idx));
-  const go = i => { idx = Math.max(0, Math.min(SLIDES.length-1, i)); mark(); track.scrollTo({ left:idx * step(), behavior:'smooth' }); };
+  const go = i => { idx = Math.max(0, Math.min(track.children.length-1, i)); mark(); track.scrollTo({ left:idx * step(), behavior:'smooth' }); };
   let st = null;
   track.addEventListener('scroll', () => { clearTimeout(st); st = setTimeout(() => { idx = Math.round(track.scrollLeft / step()); mark(); }, 80); }, { passive:true });
   root.querySelector('.sl-nav .prev').onclick = () => go(idx-1);
@@ -1371,30 +1486,6 @@ function openHelp(){
   bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>ミスマップの使い方</h2>${slidesHtml()}<button class="close">閉じる</button></div>`;
   document.body.appendChild(bg);
   bindSlides(bg);
-  bg.querySelector('.close').onclick = () => bg.remove();
-  bg.addEventListener('click', e => { if(e.target === bg) bg.remove(); });
-}
-function openHelpOld(){
-  const bg = document.createElement('div'); bg.className = 'sheet-bg';
-  bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>ミスマップの使い方</h2>
-    <p>紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）をアプリにしたものです。目的は同じで、<b>同じミスを二度としない</b>こと。</p>
-    <h3>1. 問題を作る</h3>
-    <p>「作る」タブで、ミスした問題を写真に撮るか文字で入れ、教科を選び、<b>間違えた理由</b>と<b>改善点</b>を書いて登録します。<br>
-    「覚えていなかった」だけの知識不足は入れません。知っていたのに間違えた問題（計算ミス・読み飛ばし・スペルミスなど）を入れます。<br>
-    改善点は「<b>いつ</b>・<b>何を</b>・<b>どうする</b>」の3つに分けて書きます（例：解き終わったら、代入した式の符号を、指でさして確かめる）。「気をつける」「見直す」のように行動になっていないと、登録できません。</p>
-    <h3>2. 問題を解く</h3>
-    <p>登録した問題は、翌日・3日後・1週間後・2週間後・1か月後に「今日の問題」として届きます。<br>
-    <b>問題だけ</b>を見て、「なぜ間違えたか」「次はどうするか」を自分の口で言ってから、「答え合わせ」で登録した内容と比べます。</p>
-    <ul><li><b>言えた</b>：次の間隔へ進みます。5回つづけて言えたら「極まった」です。</li>
-    <li><b>言えなかった</b>：翌日からやり直しです。</li></ul>
-    <h3>3. ランダムに解く</h3>
-    <p>「解く」タブの「ランダムに解く」で、予定に関係なく3・5・10問を練習できます。ランダムのときは「言えなかった」だけが記録され、「言えた」は予定を変えません。</p>
-    <h3>4. ミスマップを見る</h3>
-    <p>教科別の件数と、ミスの種類別（ミスパターン分析）が自動でたまります。いちばん多い種類が、自分のクセです。</p>
-    <h3>データについて</h3>
-    <p>写真も記録も、この端末の中だけに保存されます。設定の「控え」からときどきファイルに残してください。</p>
-    <button class="close">閉じる</button></div>`;
-  document.body.appendChild(bg);
   bg.querySelector('.close').onclick = () => bg.remove();
   bg.addEventListener('click', e => { if(e.target === bg) bg.remove(); });
 }

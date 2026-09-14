@@ -226,7 +226,7 @@ footer{font-family:var(--sans);font-size:11px;color:var(--muted);text-align:cent
 <audio id="audio" preload="metadata"></audio>
 
 <script>
-const VERSION = 'v8';
+const VERSION = 'v9';
 const LS_KEY = 'hirajio-state-v1';
 const KEY_LS = 'hirajio-key';
 const $ = s => document.querySelector(s);
@@ -256,7 +256,12 @@ function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${String(d.g
 function addDays(iso, n){ const [y,m,d]=iso.split('-').map(Number); const t=new Date(y,m-1,d+n); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; }
 function jpDate(d){ if(!d) return ''; const [y,m,dd]=d.split('-'); const w='日月火水木金土'[new Date(y,m-1,dd).getDay()]; return `${+m}月${+dd}日（${w}）`; }
 function jpDateTime(ms){ const d=new Date(ms); return `${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
-function dateOf(ep){ return member && member.start ? addDays(member.start, ep.no-1) : ''; }
+function dateOf(ep){
+  if(!member) return '';
+  // 確認用（全回表示）は、いちばん新しい回が今日になるように数える
+  if(member.all){ const top = pool.length ? Math.max(...pool.map(e=>e.no)) : ep.no; return addDays(todayISO(), ep.no - top); }
+  return member.start ? addDays(member.start, ep.no-1) : '';
+}
 function epOf(id){ return pool.find(e=>e.id===id); }
 function epByNo(no){ return pool.find(e=>e.no===no); }
 function marks(n){ if(!n) return ''; return n<=5 ? '✓'.repeat(n) : '✓×'+n; }

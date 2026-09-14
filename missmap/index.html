@@ -439,7 +439,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 10;
+const VER = 11;
 const KEY = 'miss_v1', BK = 'miss_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -1326,6 +1326,7 @@ const SLIDES = [
   { ico:'save', t:'9. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の <b>「記録の控えをとる」</b> を、ときどき押してください。軽いのですぐ終わります。', ex:'写真も残したいときは「写真もとる」。重いので何回かに分けて保存します。機種変更のときだけで十分です。' },
 ];
 const CHANGES = [
+  { v:11, d:'9/14', t:'アイコンを作り直しました（濃紺に金の丸）。' },
   { v:10, d:'9/14', t:'ミスの種類ごとに「よくある改善点」を候補で出すように。種類は必須。控えを記録と写真に分けた。' },
   { v:9, d:'9/14', t:'ミスマップの一覧で、写真つきの問題の文字が縦に崩れていたのを修正。' },
   { v:8, d:'9/14', t:'ホーム画面に追加の案内。書きかけの自動保存。とばす。判定の誤りを修正。' },

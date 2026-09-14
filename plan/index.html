@@ -269,7 +269,7 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.95;}
 .wkpick button{background:var(--chip); border-radius:999px; padding:9px 14px; font-size:13px; font-weight:900; color:var(--muted);}
 .wkpick button.on{background:var(--accent); color:var(--accent-ink);}
 .wkpick button small{font-weight:900; opacity:.75; margin-left:5px;}
-.mv .pick{position:sticky; top:0; z-index:2; background:var(--accent-soft); border-radius:12px; padding:9px 12px; font-size:13px; font-weight:900; color:var(--ink); margin-bottom:4px;}
+.mv .pick{position:sticky; top:40px; z-index:2; background:var(--accent-soft); border-radius:12px; padding:9px 12px; font-size:13px; font-weight:900; color:var(--ink); margin-bottom:4px;}
 .addrow input[type=text]{flex:1; font-size:16px;}
 .addrow .add{width:38px; height:38px; border-radius:12px; background:var(--accent); display:grid; place-items:center; flex:none;}
 .addrow .add svg{width:20px; height:20px; stroke:var(--accent-ink); fill:none; stroke-width:3; stroke-linecap:round;}
@@ -372,6 +372,10 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 .sheet-bg{position:fixed; inset:0; background:rgba(15,25,40,.5); z-index:50; display:grid; place-items:end center;}
 .sheet{background:var(--bg); width:100%; max-width:560px; max-height:92vh; overflow:auto; border-radius:20px 20px 0 0; padding:8px 16px calc(24px + env(safe-area-inset-bottom)); box-shadow:var(--shadow-lg);}
 .sheet .grab{width:38px; height:4px; border-radius:2px; background:var(--line); margin:6px auto 12px;}
+.sheet-top{position:sticky; top:-8px; z-index:6; background:var(--bg); margin:-8px -16px 4px; padding:8px 12px 6px; display:flex; align-items:center; min-height:44px;}
+.sheet-top .grab{position:absolute; left:50%; top:10px; transform:translateX(-50%); margin:0;}
+.sheet .close.back{width:auto; margin:0; background:var(--chip); border-radius:999px; padding:8px 14px 8px 10px; font-size:13px; font-weight:900; color:var(--accent); display:flex; align-items:center; gap:2px;}
+.sheet .close.back svg{width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; pointer-events:none;}
 .sheet h2{font-size:18px; font-weight:900; margin-bottom:10px;}
 .sheet h3{font-size:14px; font-weight:900; margin:16px 0 6px; color:var(--accent);}
 .sheet p{font-size:14px; line-height:1.85;}
@@ -454,7 +458,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v47</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v48</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -688,7 +692,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <p class="note" id="bkNote"></p>
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v47</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v48</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -713,7 +717,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 47;
+const VER = 48;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -996,8 +1000,9 @@ $('#btnHist').onclick = openHistEditor;
 /* ---------- ほかの曜日からコピー ---------- */
 function copyTaskTo(t, i){
   const d = dayOf(S.cur, i);
-  d.tasks.push({ time:t.time||'', text:t.text, min:Number(t.min)||S.defMin, done:false, star:false });
-  d.tasks.sort((a,b)=> a.time&&b.time ? (a.time<b.time?-1:a.time>b.time?1:0) : a.time?-1:b.time?1:0);
+  const n = { time:t.time||'', text:t.text, min:Number(t.min)||S.defMin, done:false, star:false, nostar:!!t.nostar, evt:!!t.evt, note:'' };
+  d.tasks.push(n); sortTasks(d);
+  return n;
 }
 function openFromDay(){
   const m = parseISO(S.cur); let html = '', any = false;
@@ -1012,14 +1017,35 @@ function openFromDay(){
   const sh = openSheet('<h2>ほかの曜日からコピー</h2>'
     + '<p style="font-size:13px; color:var(--muted); margin-bottom:4px">押したものが「'+md(addDays(m,S.day))+'（'+WD[S.day]+'）」に入ります。文字を直したいときは、入れたあとに押して直せます。</p>'
     + (any ? '<div class="daylist">'+html+'</div>' : '<p style="text-align:center; color:var(--muted); padding:18px 0">ほかの曜日には、まだやることがありません</p>'));
+  const wk = S.cur, dy = S.day;
+  const refresh = ()=>{ renderDays(); renderDay(); renderTQC(); save(); };
+  // 入れたものを取り消す（シートを閉じたあとでも、20秒のあいだは戻せる）
+  const undoable = (added, rows, msg)=>{
+    refresh();
+    toastUndo(msg, ()=>{
+      const d = dayOf(wk, dy);
+      d.tasks = d.tasks.filter(x=>added.indexOf(x) < 0);
+      rows.forEach(r=>r.classList.remove('did'));
+      refresh(); toast('取り消しました');
+    });
+  };
   sh.onclick = e => {
-    if(e.target === sh || e.target.classList.contains('close')){ sh.remove(); renderDays(); renderDay(); renderTQC(); save(); return; }
+    if(e.target === sh || e.target.closest('.close')){ sh.remove(); refresh(); return; }
     const all = e.target.closest('button[data-all]');
-    if(all){ const i = +all.dataset.all; const ts = (dayRaw(S.cur,i)||{}).tasks||[]; ts.forEach(t=>copyTaskTo(t, S.day));
-      sh.querySelectorAll('.row[data-i="'+i+'"]').forEach(r=>r.classList.add('did')); toast(ts.length+'件入れました'); return; }
+    if(all){
+      const i = +all.dataset.all;
+      const rows = [...sh.querySelectorAll('.row[data-i="'+i+'"]')].filter(r=>!r.classList.contains('did'));
+      const ts = (dayRaw(wk,i)||{}).tasks||[];
+      const added = rows.map(r=>copyTaskTo(ts[+r.dataset.j], dy));
+      rows.forEach(r=>r.classList.add('did'));
+      if(!added.length){ toast('この日のは、もう全部入れました'); return; }
+      undoable(added, rows, added.length+'件入れました');
+      return;
+    }
     const r = e.target.closest('.row'); if(!r || r.classList.contains('did')) return;
-    const t = ((dayRaw(S.cur,+r.dataset.i)||{}).tasks||[])[+r.dataset.j]; if(!t) return;
-    copyTaskTo(t, S.day); r.classList.add('did'); toast('入れました');
+    const t = ((dayRaw(wk,+r.dataset.i)||{}).tasks||[])[+r.dataset.j]; if(!t) return;
+    const n = copyTaskTo(t, dy); r.classList.add('did');
+    undoable([n], [r], '「'+t.text+'」を入れました');
   };
 }
 $('#btnFromDay').onclick = openFromDay;
@@ -1117,8 +1143,10 @@ function toastUndo(msg, undo){
 }
 function openSheet(html){
   const bg = document.createElement('div'); bg.className = 'sheet-bg';
-  bg.innerHTML = '<div class="sheet"><div class="grab"></div>'+html+'<button class="close">とじる</button></div>';
-  bg.onclick = e => { if(e.target === bg || e.target.classList.contains('close')) bg.remove(); };
+  // 長いシートでも、いつでも上の「もどる」で閉じられるように（下の「とじる」まで行かなくていい）
+  bg.innerHTML = '<div class="sheet"><div class="sheet-top"><button class="close back" aria-label="もどる"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>もどる</button><div class="grab"></div></div>'
+    + html + '<button class="close">とじる</button></div>';
+  bg.onclick = e => { if(e.target === bg || e.target.closest('.close')) bg.remove(); };
   document.body.appendChild(bg);
   return bg;
 }

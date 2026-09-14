@@ -557,6 +557,14 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 .mkrow .t{color:var(--acc);font-weight:700;font-size:.82rem;font-variant-numeric:tabular-nums;flex:none}
 .mkrow .m{flex:1;font-size:.86rem;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mkrow .x{flex:none;color:var(--ink3);font-size:.76rem;padding:4px 6px}
+/* 切り抜き・付箋の時間を直す */
+.tsbox{display:flex;flex-direction:column;margin-top:6px}
+.tsl{font-size:.74rem;font-weight:800;color:var(--ink3);letter-spacing:.08em;margin:14px 2px 6px}
+.tstep{display:grid;grid-template-columns:1fr 1fr 1.5fr 1fr 1fr;gap:6px;align-items:center}
+.tstep button{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;padding:11px 0;
+  font-size:.84rem;font-weight:700;color:var(--ink2);font-variant-numeric:tabular-nums}
+.tstep button:active{opacity:.7}
+.tstep b{text-align:center;font-size:1.25rem;font-weight:800;color:var(--acc);font-variant-numeric:tabular-nums}
 /* 長い動画の飛び先 */
 .jmp{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .jmp button{background:var(--surf2);border:1px solid var(--line2);border-radius:999px;
@@ -618,7 +626,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 55;
+const VER = 56;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal';
@@ -1032,7 +1040,7 @@ function delClip(id, i){
 let clip = null, clipMark = null;
 function playClip(id, i){
   const c = clipsOf(id)[i]; if(!c) return;
-  clip = { id, i, s:c[0], e:c[1], t:c[2] };
+  clip = { id, i, s:c[0], e:c[1], t:c[2], at:now() };
   seekTo(c[0]);
   drawBody();
   toast(`${hhmm(c[0])}〜${hhmm(c[1])} をくり返します`);
@@ -1042,10 +1050,14 @@ function stopClip(quiet){
   clip = null; drawBody();
   if(!quiet) toast('切り抜きのくり返しをやめました');
 }
-/* 再生位置が切り抜きの外に出たら、始まりに戻す */
+/* 終わりまで来たら始まりに戻す。
+   目次・付箋・10秒送りなどで よそへ飛んだときは、引き戻さずに くり返しをやめる
+   （前は引き戻していたので、くり返し中は別の場所で次の切り抜きを作れなかった。2026-09-14） */
 function clipWatch(t){
   if(!clip || clip.id !== curId) return;
-  if(t >= clip.e - 0.15 || t < clip.s - 2) seekTo(clip.s);
+  if(now() - (clip.at || 0) < 1500) return;          /* 飛んだ直後は、位置がまだ古いことがある */
+  if(t >= clip.e - 0.15 && t < clip.e + 3){ clip.at = now(); seekTo(clip.s); return; }
+  if(t < clip.s - 2 || t >= clip.e + 3) stopClip();
 }
 
 /* 付箋（動画の中の「ここ」を覚えておく）。prog の中に [[秒, ひとこと], ...] で持つ */
@@ -1066,11 +1078,27 @@ function delMark(id, sec){
   if(!p.mk.length) delete p.mk;
   p.last = now(); saveProg();
 }
-function setMarkMemo(id, sec, memo){
-  const p = prog[id]; if(!p || !p.mk) return;
-  const m = p.mk.find(x => x[0] === sec); if(!m) return;
-  m[1] = String(memo || '').slice(0, 60);
+/* 付箋の場所とひとことを直す。近くにほかの付箋があるときは直さない */
+function setMark(id, sec, nsec, memo){
+  const p = prog[id]; if(!p || !p.mk) return false;
+  const m = p.mk.find(x => x[0] === sec); if(!m) return false;
+  const t = Math.max(0, Math.round(nsec));
+  if(p.mk.some(x => x !== m && Math.abs(x[0] - t) < 3)) return false;
+  m[0] = t; m[1] = String(memo || '').slice(0, 60);
+  p.mk.sort((a, b) => a[0] - b[0]);
   p.last = now(); saveProg();
+  return true;
+}
+/* 切り抜きの名前・始まり・終わりを直す。並べ直したあとの番号を返す（直せなければ -1） */
+function setClip(id, i, s0, e0, name){
+  const p = prog[id]; if(!p || !p.cl || !p.cl[i]) return -1;
+  const a = Math.max(0, Math.round(Math.min(s0, e0))), b = Math.round(Math.max(s0, e0));
+  if(b - a < 3) return -1;
+  const row = [a, b, String(name || '').slice(0, 40)];
+  p.cl[i] = row;
+  p.cl.sort((x, y) => x[0] - y[0]);
+  p.last = now(); saveProg();
+  return p.cl.indexOf(row);
 }
 
 /* いつ見るか（見る予定）。prog の中に pl として持つ。
@@ -2952,12 +2980,82 @@ function askEditOut(id, i, after){
   });
 }
 
-/* 付箋のひとことを書く */
-function askMemo(id, sec){
-  const m = marksOf(id).find(x => x[0] === sec);
-  askText({ title:`${hhmm(sec)} の付箋`, value:(m && m[1]) || '', max:60,
-            ph:'例）ここの話をやってみる', ok:'決定' },
-    v => { setMarkMemo(id, sec, v); drawBody(); });
+/* ---------- 切り抜き・付箋を直す（Yuuydさんの提案・2026-09-14） ----------
+   ずれて切り取ってしまっても、作り直さずに 1秒・5秒ずつ動かして直せる。
+   シートの後ろで動画が流れるので、「ここから流して確かめる」で耳で確かめられる */
+function stepHTML(k, sec, label, tryLabel){
+  return `<div class="tsl">${label}</div>
+    <div class="tstep">
+      <button data-k="${k}" data-d="-5">−5秒</button><button data-k="${k}" data-d="-1">−1</button>
+      <b id="tv_${k}">${hhmm(sec)}</b>
+      <button data-k="${k}" data-d="1">+1</button><button data-k="${k}" data-d="5">+5秒</button>
+    </div>
+    <button class="btn sm" data-try="${k}" style="margin-top:7px">${tryLabel}</button>`;
+}
+function bindStep(st, d){
+  const clamp = v => Math.max(0, d ? Math.min(Math.floor(d), v) : v);
+  $$('#shin [data-d]').forEach(b => b.onclick = () => {
+    const k = b.dataset.k;
+    st[k] = clamp(st[k] + (+b.dataset.d));
+    $('#tv_' + k).textContent = hhmm(st[k]);
+  });
+  $$('#shin [data-try]').forEach(b => b.onclick = () => {
+    const k = b.dataset.try;
+    stopClip(true);
+    const at = k === 'e' ? Math.max(st.s || 0, st.e - 3) : st[k];
+    seekTo(at);
+    toast(k === 'e' ? `${hhmm(st.e)} の3秒前から流しています` : `${hhmm(at)} から流しています`);
+  });
+}
+function editClip(id, i){
+  const c = clipsOf(id)[i]; if(!c) return;
+  const st = { s:c[0], e:c[1] };
+  openSheet(`
+    <h3>切り抜きを直す</h3>
+    <input id="clN" type="text" maxlength="40" placeholder="名前（例：ここが自分に必要）">
+    <div class="tsbox">
+      ${stepHTML('s', st.s, '始まり', 'ここから流して確かめる')}
+      ${stepHTML('e', st.e, '終わり', '終わりの3秒前から流す')}
+    </div>
+    <div class="acts" style="margin-top:16px">
+      <button class="btn" id="clDel">消す</button>
+      <button class="btn pri" id="clOk">決める</button>
+    </div>`, () => {
+    $('#clN').value = c[2] || '';
+    bindStep(st, (prog[id] && prog[id].d) || 0);
+    $('#clOk').onclick = () => {
+      if(st.e - st.s < 3) return toast('終わりは、始まりより3秒以上あとにしてください');
+      stopClip(true);
+      const ni = setClip(id, i, st.s, st.e, $('#clN').value.trim());
+      if(ni < 0) return toast('直せませんでした');
+      closeSheet(); drawBody(); playClip(id, ni);
+    };
+    $('#clDel').onclick = () => askYes(
+      { title:'この切り抜きを消しますか？', msg:'動画そのものは消えません。', ok:'消す', danger:true },
+      () => { if(clip && clip.id === id) clip = null; delClip(id, i); drawBody(); toast('消しました'); });
+  });
+}
+function editMark(id, sec){
+  const m = marksOf(id).find(x => x[0] === sec); if(!m) return;
+  const st = { p:m[0] };
+  openSheet(`
+    <h3>付箋を直す</h3>
+    <input id="mkN" type="text" maxlength="60" placeholder="ひとこと（例：ここの話をやってみる）">
+    <div class="tsbox">${stepHTML('p', st.p, '場所', 'ここから流して確かめる')}</div>
+    <div class="acts" style="margin-top:16px">
+      <button class="btn" id="mkDel">消す</button>
+      <button class="btn pri" id="mkOk">決める</button>
+    </div>`, () => {
+    $('#mkN').value = m[1] || '';
+    bindStep(st, (prog[id] && prog[id].d) || 0);
+    $('#mkOk').onclick = () => {
+      if(!setMark(id, sec, st.p, $('#mkN').value.trim()))
+        return toast('すぐ近くに別の付箋があります。3秒以上はなしてください');
+      closeSheet(); drawBody(); toast('直しました');
+    };
+    $('#mkDel').onclick = () => askYes({ title:'この付箋を消しますか？', ok:'消す', danger:true },
+      () => { delMark(id, sec); drawBody(); toast('消しました'); });
+  });
 }
 
 /* 長い動画の飛び先。目次があるときは目次にまかせる。
@@ -3159,15 +3257,16 @@ function drawBody(){
       <div class="mks">${clipsOf(v.id).map((c,i) => `
         <div class="mkrow">
           <button class="t" data-clip="${i}">${hhmm(c[0])}〜${hhmm(c[1])}</button>
-          <button class="m" data-clip="${i}">${c[2] ? esc(c[2]) : '（名前なし）'}</button>
-          <button class="x" data-cldel="${i}">消す</button>
+          <button class="m" data-cled="${i}">${c[2] ? esc(c[2]) : '（名前なし）'}</button>
+          <button class="x" data-cled="${i}">直す</button>
         </div>`).join('')}</div>
-      <div class="lead" style="margin-top:8px">押すと、その区間だけをくり返し流します。</div>` : ''}
+      <div class="lead" style="margin-top:8px">時間を押すと、その区間だけをくり返し流します。<br>
+        名前か「直す」で、名前と時間を直せます（1秒ずつ動かせます）。</div>` : ''}
     ${marksOf(v.id).length ? `<div class="mks">${marksOf(v.id).map(m => `
         <div class="mkrow">
           <button class="t" data-jump="${m[0]}">${hhmm(m[0])}</button>
-          <button class="m" data-memo="${m[0]}">${m[1] ? esc(m[1]) : '（ひとことを書く）'}</button>
-          <button class="x" data-mkdel="${m[0]}">消す</button>
+          <button class="m" data-mked="${m[0]}">${m[1] ? esc(m[1]) : '（ひとことを書く）'}</button>
+          <button class="x" data-mked="${m[0]}">直す</button>
         </div>`).join('')}</div>` : ''}
     ${false ? '' : `<div class="cnt3">
       <div class="c1">${ICO.check({s:19})}<span>見た回数</span><b>${seenN(v.id)}</b><span>回</span></div>
@@ -3228,6 +3327,7 @@ function drawBody(){
   $('#clipBtn').onclick = () => {
     const t = nowSec();
     if(clipMark == null){
+      if(clip && clip.id === v.id) stopClip(true);   /* くり返し中でも、そのまま次を作れるように */
       clipMark = t; drawBody();
       toast(`${hhmm(t)} から。終わりまで来たら もう一度押してください`);
       return;
@@ -3245,10 +3345,7 @@ function drawBody(){
   if($('#clipCancel')) $('#clipCancel').onclick = () => { clipMark = null; drawBody(); toast('やめました'); };
   if($('#clipStop')) $('#clipStop').onclick = () => stopClip();
   $$('#pvbody [data-clip]').forEach(b => b.onclick = () => playClip(v.id, +b.dataset.clip));
-  $$('#pvbody [data-cldel]').forEach(b => b.onclick = () => askYes(
-    { title:'この切り抜きを消しますか？', msg:'動画そのものは消えません。', ok:'消す', danger:true },
-    () => { const i = +b.dataset.cldel; if(clip && clip.id === v.id && clip.i === i) clip = null;
-            delClip(v.id, i); drawBody(); toast('消しました'); }));
+  $$('#pvbody [data-cled]').forEach(b => b.onclick = () => editClip(v.id, +b.dataset.cled));
   if($('#lreload')) $('#lreload').onclick = () => { loomReload(v.id); toast('読み込み直しました'); };
   if($('#lstart'))  $('#lstart').onclick  = () => askLoomStart(v.id, drawBody);
   if($('#lhead'))   $('#lhead').onclick   = () => { setLoomStart(v.id, 0); drawBody(); loomReload(v.id); toast('はじめから再生します'); };
@@ -3259,13 +3356,10 @@ function drawBody(){
     catch(e){ t = (prog[v.id] || {}).t || 0; }
     if(!addMark(v.id, t)) return toast('そこにはもう付箋があります');
     drawBody();
-    toast(`${hhmm(t)} に付箋をつけました`, { label:'ひとこと', fn: () => askMemo(v.id, Math.round(t)) });
+    toast(`${hhmm(t)} に付箋をつけました`, { label:'ひとこと', fn: () => editMark(v.id, Math.round(t)) });
   };
   $$('#pvbody [data-jump]').forEach(b => b.onclick = () => seekTo(+b.dataset.jump));
-  $$('#pvbody [data-memo]').forEach(b => b.onclick = () => askMemo(v.id, +b.dataset.memo));
-  $$('#pvbody [data-mkdel]').forEach(b => b.onclick = () => askYes(
-    { title:'この付箋を消しますか？', ok:'消す', danger:true },
-    () => { delMark(v.id, +b.dataset.mkdel); drawBody(); toast('消しました'); }));
+  $$('#pvbody [data-mked]').forEach(b => b.onclick = () => editMark(v.id, +b.dataset.mked));
   $('#wout').onclick = () => openSheet(`
     <h3>アウトプット</h3>
     <div class="lead" style="margin:-4px 2px 10px;line-height:1.9">

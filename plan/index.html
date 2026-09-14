@@ -265,6 +265,10 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.95;}
 .mv .bar{position:sticky; bottom:0; background:var(--bg); padding:10px 0 2px; margin-top:8px;}
 .mv .bar .bigbtn{margin:0; background:#D9463A;}
 .mv .bar .bigbtn:disabled{opacity:.4;}
+.wkpick{display:flex; flex-wrap:wrap; gap:7px; margin:2px 0 11px;}
+.wkpick button{background:var(--chip); border-radius:999px; padding:9px 14px; font-size:13px; font-weight:900; color:var(--muted);}
+.wkpick button.on{background:var(--accent); color:var(--accent-ink);}
+.wkpick button small{font-weight:900; opacity:.75; margin-left:5px;}
 .mv .pick{position:sticky; top:0; z-index:2; background:var(--accent-soft); border-radius:12px; padding:9px 12px; font-size:13px; font-weight:900; color:var(--ink); margin-bottom:4px;}
 .addrow input[type=text]{flex:1; font-size:16px;}
 .addrow .add{width:38px; height:38px; border-radius:12px; background:var(--accent); display:grid; place-items:center; flex:none;}
@@ -450,7 +454,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v46</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v47</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -684,7 +688,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <p class="note" id="bkNote"></p>
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v46</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v47</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -709,7 +713,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 46;
+const VER = 47;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1325,22 +1329,28 @@ $('#btnNotifPerm').onclick = async ()=>{
 };
 
 /* ---------- 1週間まとめの画像 ---------- */
-function drawWeek(light){
+function drawWeek(light, keys){
   const W = 1080, PAD = 34, F = "'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif";
-  const r = tqcOf(S.cur), m = parseISO(S.cur);
-  const days = [];
-  let bodyH = 0;
-  for(let i=0;i<7;i++){
-    const d = dayRaw(S.cur,i), s = sumDay(d), ts = (d && d.tasks) || [];
-    const show = ts;                       // 何件あっても全部のせる（箱の高さで受ける）
-    const cols = show.length >= 5 ? 2 : 1;   // 5件以上は右半分も使って2列に（縦に長くなりすぎないように）
-    const rows = Math.ceil(show.length/cols);
-    const h = Math.max(126, 86 + rows*33);
-    days.push({ i, date:addDays(m,i), s, show, more:ts.length-show.length, h, cols, rows });
-    bodyH += h + 12;
-  }
-  const HEAD = 132, BAND = 236, FOOT = 62;
-  const H = HEAD + BAND + 16 + bodyH + FOOT;
+  const wk = (keys && keys.length ? keys.slice() : [S.cur]).sort();   // えらんだ週を、古い順に上から
+  const nowK = iso(mondayOf(new Date()));
+  const HEAD0 = 86, TITLE = 52, BAND = 236, FOOT = 62, GAPW = 24;
+
+  // まず高さをはかる
+  const blocks = wk.map(k=>{
+    const r = tqcOf(k), m = parseISO(k), days = [];
+    let bodyH = 0;
+    for(let i=0;i<7;i++){
+      const d = dayRaw(k,i), s = sumDay(d), ts = (d && d.tasks) || [];
+      const cols = ts.length >= 5 ? 2 : 1;   // 5件以上は右半分も使って2列に（縦に長くなりすぎないように）
+      const rows = Math.ceil(ts.length/cols);
+      const h = Math.max(126, 86 + rows*33);
+      days.push({ i, date:addDays(m,i), s, show:ts, h, cols, rows });
+      bodyH += h + 12;
+    }
+    return { k, r, m, days, h: TITLE + BAND + bodyH };
+  });
+  let H = HEAD0 + 16 + FOOT;
+  blocks.forEach((b,i)=>{ H += b.h + (i ? GAPW : 0); });
 
   // やることが多くて縦に長くなっても、iPhoneのcanvasの上限（約1,600万px）を超えないようにする
   const dpr = Math.min(2, Math.sqrt(16000000 / (W*H))), cv = document.createElement('canvas');
@@ -1352,108 +1362,115 @@ function drawWeek(light){
 
   g.fillStyle = '#F4F7FB'; g.fillRect(0,0,W,H);
 
-  // header
+  // 見出し（アプリ名と名前は一番上に1回だけ）
   g.fillStyle = INK; g.font = '900 40px '+F; g.textAlign='left'; g.textBaseline='alphabetic';
   g.fillText('計画マップ', PAD, 60);
   if(S.name){ g.fillStyle = MUT; g.font = '700 26px '+F; g.textAlign='right'; g.fillText(S.name, W-PAD, 58); }
-  g.fillStyle = ACC; g.font = '900 34px '+F; g.textAlign='left';
-  g.fillText(md(m)+'（月）〜 '+md(addDays(m,6))+'（日）', PAD, 108);
 
-  // score band
-  const bx = PAD, by = HEAD, bw = W-PAD*2, bh = BAND-16;
-  if(light){
-    g.fillStyle='#fff'; rr(bx,by,bw,bh,26); g.fill();
-    g.strokeStyle='#16202F'; g.lineWidth=2.5; rr(bx,by,bw,bh,26); g.stroke();
-  }else{
-    const grad = g.createLinearGradient(bx,by,bx+bw,by+bh);
-    grad.addColorStop(0,'#12203C'); grad.addColorStop(1,'#2A4A79');
-    g.fillStyle = grad; rr(bx,by,bw,bh,26); g.fill();
-  }
-  const bInk = light ? '#16202F' : '#fff';
-  const bSub = light ? '#66707E' : 'rgba(255,255,255,.6)';
-  const bNum = light ? '#16202F' : '#E7CE93';
-  const bLbl = light ? '#2C6FE4' : '#E7CE93';
-  g.fillStyle = bSub; g.font = '900 22px '+F; g.textAlign='left';
-  g.fillText('今週のTQCスコア', bx+38, by+48);
-  g.fillStyle = bNum; g.font = '900 108px '+F;
-  const scoreW = g.measureText(String(r.score)).width;
-  g.fillText(String(r.score), bx+34, by+152);
-  g.fillStyle = bSub; g.font = '900 24px '+F;
-  g.fillText('点', bx+34+scoreW+10, by+152);
-  g.fillStyle = bSub; g.font = '700 20px '+F;
-  g.fillText(fmtH(r.T)+' × '+r.Q+' × '+r.C+' ÷ 1000', bx+36, by+188);
+  let y = HEAD0;
+  blocks.forEach((b, bi)=>{
+    if(bi) y += GAPW;
+    const r = b.r;
 
-  const stats = [['T', fmtHM(r.Tmin), '勉強した時間'], ['Q', String(r.Q), '★ 極まった数'], ['C', r.C+'%', r.done+'/'+r.all+' 完了']];
-  stats.forEach((st,i)=>{
-    const cx = bx+bw-330+i*110;
-    g.textAlign='center';
-    g.fillStyle=bLbl; g.font='900 20px '+F; g.fillText(st[0], cx, by+58);
-    g.fillStyle=bInk; g.font='900 '+(st[1].length>5?22:30)+'px '+F; g.fillText(st[1], cx, by+100);
-    g.fillStyle=bSub; g.font='700 15px '+F; g.fillText(st[2], cx, by+130);
-  });
+    // その週の日づけ
+    g.fillStyle = ACC; g.font = '900 34px '+F; g.textAlign='left';
+    g.fillText(md(b.m)+'（月）〜 '+md(addDays(b.m,6))+'（日）', PAD, y+34);
 
-  // days
-  let y = HEAD + BAND;
-  days.forEach(dd=>{
-    const x = PAD, w = W-PAD*2, h = dd.h;
-    g.fillStyle='#fff'; rr(x,y,w,h,20); g.fill();
-    g.strokeStyle=LINE; g.lineWidth=1.5; rr(x,y,w,h,20); g.stroke();
-
-    const isSat = dd.i===5, isSun = dd.i===6;
-    g.textAlign='center'; g.textBaseline='alphabetic';
-    g.fillStyle = isSun?'#E0574C':isSat?'#3E80D8':MUT; g.font='900 20px '+F;
-    g.fillText(WD[dd.i], x+56, y+42);
-    g.fillStyle = isSun?'#E0574C':isSat?'#3E80D8':INK; g.font='900 38px '+F;
-    g.fillText(String(dd.date.getDate()), x+56, y+84);
-
-    const lx = x+116, lw = w-116-28;
-    g.textAlign='left';
-    g.fillStyle=MUT; g.font='700 20px '+F;
-    g.fillText('予定 '+fmtHM(dd.s.plan), lx, y+38);
-    g.fillStyle=DONE; g.fillText('できた '+fmtHM(dd.s.act), lx+200, y+38);
-    if(dd.s.q>0){ g.fillStyle=GOLD; g.font='900 20px '+F; g.fillText('★ '+dd.s.q, lx+400, y+38); }
-
-    g.fillStyle = light ? '#F4F6FA' : '#EDF1F7'; rr(lx, y+50, lw, 10, 5); g.fill();
-    if(dd.s.all){
-      g.fillStyle = light ? 'rgba(223,161,37,.38)' : HALF;
-      rr(lx, y+50, Math.max(10, lw*dd.s.done/dd.s.all), 10, 5); g.fill();
-      if(dd.s.ok) { g.fillStyle = light ? 'rgba(18,160,106,.45)' : DONE;
-        rr(lx, y+50, Math.max(10, lw*dd.s.ok/dd.s.all), 10, 5); g.fill(); }
+    // score band
+    const bx = PAD, by = y+TITLE, bw = W-PAD*2, bh = BAND-16;
+    if(light){
+      g.fillStyle='#fff'; rr(bx,by,bw,bh,26); g.fill();
+      g.strokeStyle='#16202F'; g.lineWidth=2.5; rr(bx,by,bw,bh,26); g.stroke();
+    }else{
+      const grad = g.createLinearGradient(bx,by,bx+bw,by+bh);
+      grad.addColorStop(0,'#12203C'); grad.addColorStop(1,'#2A4A79');
+      g.fillStyle = grad; rr(bx,by,bw,bh,26); g.fill();
     }
+    const bInk = light ? '#16202F' : '#fff';
+    const bSub = light ? '#66707E' : 'rgba(255,255,255,.6)';
+    const bNum = light ? '#16202F' : '#E7CE93';
+    const bLbl = light ? '#2C6FE4' : '#E7CE93';
+    g.fillStyle = bSub; g.font = '900 22px '+F; g.textAlign='left';
+    g.fillText(b.k === nowK ? '今週のTQCスコア' : 'この週のTQCスコア', bx+38, by+48);
+    g.fillStyle = bNum; g.font = '900 108px '+F;
+    const scoreW = g.measureText(String(r.score)).width;
+    g.fillText(String(r.score), bx+34, by+152);
+    g.fillStyle = bSub; g.font = '900 24px '+F;
+    g.fillText('点', bx+34+scoreW+10, by+152);
+    g.fillStyle = bSub; g.font = '700 20px '+F;
+    g.fillText(fmtH(r.T)+' × '+r.Q+' × '+r.C+' ÷ 1000', bx+36, by+188);
 
-    const gap = 22, cw = dd.cols === 2 ? Math.floor((lw-gap)/2) : lw;
-    dd.show.forEach((t,k)=>{
-      const cx = lx + Math.floor(k/dd.rows)*(cw+gap), ty = y+90 + (k%dd.rows)*33;
-      g.font='700 '+(dd.cols === 2 ? 19 : 21)+'px '+F;
-      g.fillStyle = t.done ? '#9AA6B5' : INK;
-      const tm = t.time ? t.time+'  ' : '';
-      const label = tm + t.text + (t.star ? '  ★' : '');
-      const noteW = t.note ? Math.min(g.measureText('  → '+t.note).width, (cw-30)*0.5) : 0;
-      const txt = clip(label, cw-30-noteW);
-      if(t.evt){
-        if(light){ g.strokeStyle='#8A94A3'; g.lineWidth=2; rr(cx+2, ty-12, 14, 9, 3); g.stroke(); }
-        else { g.fillStyle='#AEB9C8'; rr(cx+2, ty-12, 14, 9, 3); g.fill(); }
-      }else{
-        const col = t.done ? ((t.star || t.nostar) ? DONE : HALF) : '#E0574C';
-        g.beginPath(); g.arc(cx+9, ty-7, 7, 0, Math.PI*2);
-        if(light){ g.strokeStyle=col; g.lineWidth=2.5; g.stroke(); }
-        else { g.fillStyle=col; g.fill(); }
-      }
-      g.fillStyle = t.evt ? '#8A94A3' : (t.done ? '#9AA6B5' : INK);
-      g.fillText(txt, cx+28, ty);
-      const tw = g.measureText(txt).width;
-      if(t.done && !t.evt){
-        g.strokeStyle='#9AA6B5'; g.lineWidth=2;
-        g.beginPath(); g.moveTo(cx+28, ty-7); g.lineTo(cx+28+tw, ty-7); g.stroke();
-      }
-      if(t.note){   // 実際にやったことは、消さずに緑で添える
-        g.fillStyle = DONE;
-        g.fillText(clip('  → '+t.note, cw-30-tw), cx+28+tw, ty);
-      }
+    const stats = [['T', fmtHM(r.Tmin), '勉強した時間'], ['Q', String(r.Q), '★ 極まった数'], ['C', r.C+'%', r.done+'/'+r.all+' 完了']];
+    stats.forEach((st,i)=>{
+      const sx = bx+bw-330+i*110;
+      g.textAlign='center';
+      g.fillStyle=bLbl; g.font='900 20px '+F; g.fillText(st[0], sx, by+58);
+      g.fillStyle=bInk; g.font='900 '+(st[1].length>5?22:30)+'px '+F; g.fillText(st[1], sx, by+100);
+      g.fillStyle=bSub; g.font='700 15px '+F; g.fillText(st[2], sx, by+130);
     });
-    if(dd.more>0){ g.fillStyle=MUT; g.font='700 19px '+F; g.fillText('ほか '+dd.more+'件', lx+28, ty); }
-    if(!dd.show.length){ g.fillStyle='#C3CCD9'; g.font='700 20px '+F; g.fillText('（やることなし）', lx+6, y+92); }
-    y += h + 12;
+
+    // days
+    y = y + TITLE + BAND;
+    b.days.forEach(dd=>{
+      const x = PAD, w = W-PAD*2, h = dd.h;
+      g.fillStyle='#fff'; rr(x,y,w,h,20); g.fill();
+      g.strokeStyle=LINE; g.lineWidth=1.5; rr(x,y,w,h,20); g.stroke();
+
+      const isSat = dd.i===5, isSun = dd.i===6;
+      g.textAlign='center'; g.textBaseline='alphabetic';
+      g.fillStyle = isSun?'#E0574C':isSat?'#3E80D8':MUT; g.font='900 20px '+F;
+      g.fillText(WD[dd.i], x+56, y+42);
+      g.fillStyle = isSun?'#E0574C':isSat?'#3E80D8':INK; g.font='900 38px '+F;
+      g.fillText(String(dd.date.getDate()), x+56, y+84);
+
+      const lx = x+116, lw = w-116-28;
+      g.textAlign='left';
+      g.fillStyle=MUT; g.font='700 20px '+F;
+      g.fillText('予定 '+fmtHM(dd.s.plan), lx, y+38);
+      g.fillStyle=DONE; g.fillText('できた '+fmtHM(dd.s.act), lx+200, y+38);
+      if(dd.s.q>0){ g.fillStyle=GOLD; g.font='900 20px '+F; g.fillText('★ '+dd.s.q, lx+400, y+38); }
+
+      g.fillStyle = light ? '#F4F6FA' : '#EDF1F7'; rr(lx, y+50, lw, 10, 5); g.fill();
+      if(dd.s.all){
+        g.fillStyle = light ? 'rgba(223,161,37,.38)' : HALF;
+        rr(lx, y+50, Math.max(10, lw*dd.s.done/dd.s.all), 10, 5); g.fill();
+        if(dd.s.ok) { g.fillStyle = light ? 'rgba(18,160,106,.45)' : DONE;
+          rr(lx, y+50, Math.max(10, lw*dd.s.ok/dd.s.all), 10, 5); g.fill(); }
+      }
+
+      const gap = 22, cw = dd.cols === 2 ? Math.floor((lw-gap)/2) : lw;
+      dd.show.forEach((t,k)=>{
+        const cx = lx + Math.floor(k/dd.rows)*(cw+gap), ty = y+90 + (k%dd.rows)*33;
+        g.font='700 '+(dd.cols === 2 ? 19 : 21)+'px '+F;
+        g.fillStyle = t.done ? '#9AA6B5' : INK;
+        const tm = t.time ? t.time+'  ' : '';
+        const label = tm + t.text + (t.star ? '  ★' : '');
+        const noteW = t.note ? Math.min(g.measureText('  → '+t.note).width, (cw-30)*0.5) : 0;
+        const txt = clip(label, cw-30-noteW);
+        if(t.evt){
+          if(light){ g.strokeStyle='#8A94A3'; g.lineWidth=2; rr(cx+2, ty-12, 14, 9, 3); g.stroke(); }
+          else { g.fillStyle='#AEB9C8'; rr(cx+2, ty-12, 14, 9, 3); g.fill(); }
+        }else{
+          const col = t.done ? ((t.star || t.nostar) ? DONE : HALF) : '#E0574C';
+          g.beginPath(); g.arc(cx+9, ty-7, 7, 0, Math.PI*2);
+          if(light){ g.strokeStyle=col; g.lineWidth=2.5; g.stroke(); }
+          else { g.fillStyle=col; g.fill(); }
+        }
+        g.fillStyle = t.evt ? '#8A94A3' : (t.done ? '#9AA6B5' : INK);
+        g.fillText(txt, cx+28, ty);
+        const tw = g.measureText(txt).width;
+        if(t.done && !t.evt){
+          g.strokeStyle='#9AA6B5'; g.lineWidth=2;
+          g.beginPath(); g.moveTo(cx+28, ty-7); g.lineTo(cx+28+tw, ty-7); g.stroke();
+        }
+        if(t.note){   // 実際にやったことは、消さずに緑で添える
+          g.fillStyle = DONE;
+          g.fillText(clip('  → '+t.note, cw-30-tw), cx+28+tw, ty);
+        }
+      });
+      if(!dd.show.length){ g.fillStyle='#C3CCD9'; g.font='700 20px '+F; g.fillText('（やることなし）', lx+6, y+92); }
+      y += h + 12;
+    });
   });
 
   g.textAlign='center'; g.fillStyle=MUT; g.font='700 19px '+F;
@@ -1467,30 +1484,65 @@ function stampText(){
   const n = new Date();
   return (n.getMonth()+1)+'/'+n.getDate()+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' 時点';
 }
-function openImageSheet(maker, title, prefix, hint){
+/* 画像にする週をえらぶチップ（やることがある週＋今週を、新しい順に8つまで） */
+function weekChoices(){
+  const nowK = iso(mondayOf(new Date()));
+  const set = {};
+  Object.keys(S.weeks||{}).forEach(k=>{
+    const w = S.weeks[k], days = (w && w.days) || {};
+    if(Object.keys(days).some(dk=>((days[dk].tasks||[]).length))) set[k] = 1;
+  });
+  set[nowK] = 1;
+  return Object.keys(set).sort().slice(-8).reverse().map(k=>{
+    const m = parseISO(k), diff = Math.round((parseISO(nowK) - m) / 604800000);
+    return { k, label: md(m)+'〜', tag: diff === 0 ? '今週' : diff === 1 ? '先週' : diff === -1 ? '来週' : '' };
+  });
+}
+function openImageSheet(maker, title, prefix, hint, pick){
   let light = false;
-  let cv = maker(light), blob = null;
+  let sel = [S.cur];
+  const call = l => pick ? maker(l, sel) : maker(l);
+  let cv = call(light), blob = null;
   const mkBlob = ()=>{ blob = null; cv.toBlob(b=>{ blob = b; }, 'image/png'); };
   mkBlob();
   const canShare = !!(navigator.canShare && navigator.share);
+  const chips = pick ? weekChoices() : [];
+  const fileName = ()=>{
+    const a = sel.slice().sort();
+    return prefix + '_' + a[0] + (a.length > 1 ? '_' + a[a.length-1] : '') + '.png';
+  };
   const sh = openSheet('<h2>'+title+'</h2>'
     + '<p style="color:var(--muted); font-size:12.5px; margin-bottom:10px">'+(hint||'スクリーンショットを撮るか、下のボタンで画像として保存できます。')+'</p>'
+    + (pick ? '<div class="wkpick" id="wkPick">'+chips.map(c=>'<button data-k="'+c.k+'">'+c.label+(c.tag?'<small>'+c.tag+'</small>':'')+'</button>').join('')
+              + '</div><p class="note" id="wkNote" style="margin:-6px 0 10px">えらんだ週が、上から順に1枚の画像になります。2つえらべば、まとめて提出できます。</p>' : '')
     + '<img class="shot" id="shotImg" src="'+cv.toDataURL('image/png')+'" alt="'+title+'">'
     + (canShare ? '<button class="bigbtn" id="svShare">提出する（アプリをえらんで送る）</button>' : '')
     + '<button class="'+(canShare?'subbtn':'bigbtn')+'" id="svImg">画像を保存する</button>'
     + '<button class="subbtn" id="reImg">いまの内容で作り直す</button>'
     + '<label class="chk" style="padding:12px 2px 0"><input type="checkbox" id="pLight">印刷用（うすい色にしてインクを節約）</label>');
   const redraw = ()=>{
-    cv = maker(light); mkBlob();
+    cv = call(light); mkBlob();
     sh.querySelector('#shotImg').src = cv.toDataURL('image/png');
   };
+  if(pick){
+    const drawChips = ()=>sh.querySelectorAll('#wkPick button').forEach(b=>b.classList.toggle('on', sel.indexOf(b.dataset.k) >= 0));
+    drawChips();
+    sh.querySelector('#wkPick').onclick = e => {
+      const b = e.target.closest('button[data-k]'); if(!b) return;
+      const k = b.dataset.k, i = sel.indexOf(k);
+      if(i >= 0){ if(sel.length === 1){ toast('1つはえらんでください'); return; } sel.splice(i,1); }
+      else sel.push(k);
+      drawChips(); redraw();
+      toast(sel.length > 1 ? sel.length+'週ぶんを1枚にしました' : '1週ぶんにしました');
+    };
+  }
   sh.querySelector('#pLight').onchange = e => {
     light = !!e.target.checked; redraw();
     toast(light ? '印刷用にしました' : 'ふつうにもどしました');
   };
   sh.querySelector('#reImg').onclick = ()=>{ redraw(); toast('いまの内容で作り直しました'); };
   if(canShare) sh.querySelector('#svShare').onclick = ()=>{
-    const name = prefix+'_'+S.cur+'.png';
+    const name = fileName();
     const go = async b => {
       const file = new File([b], name, { type:'image/png' });
       if(!navigator.canShare({ files:[file] })){ toast('この端末では送れません'); return; }
@@ -1502,7 +1554,7 @@ function openImageSheet(maker, title, prefix, hint){
   sh.querySelector('#svImg').onclick = ()=>{
     cv.toBlob(async b=>{
       if(!b) return;
-      const name = prefix+'_'+S.cur+'.png';
+      const name = fileName();
       const file = new File([b], name, {type:'image/png'});
       if(navigator.canShare && navigator.canShare({files:[file]})){
         try{ await navigator.share({files:[file]}); return; }catch(e){ if(e && e.name === 'AbortError') return; }
@@ -1514,7 +1566,7 @@ function openImageSheet(maker, title, prefix, hint){
     }, 'image/png');
   };
 }
-$('#btnWeekView').onclick = ()=>openImageSheet(drawWeek, '1週間のまとめ', '計画マップ');
+$('#btnWeekView').onclick = ()=>openImageSheet(drawWeek, '1週間のまとめ', '計画マップ', null, true);
 $('#btnTimeline').onclick = ()=>openImageSheet(drawTimeline, '時間わり（10分きざみ）', '計画マップ_時間わり',
   '開始時こくを書いたやることが、時間の位置に出ます。緑＝できた、青＝これから。時こくが無いものは下に並びます。');
 

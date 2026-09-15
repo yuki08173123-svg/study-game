@@ -626,7 +626,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 57;
+const VER = 58;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal';
@@ -2049,9 +2049,10 @@ function vSet(){
   $('#upd').onclick = () => checkUpd();
   $('#guide2').onclick = () => showGuide(0);
   $('#about').onclick = () => info('入っている動画について',
-    'ヒラ先生のDiscordにある部屋から、<b>9つの区分</b>を取りこんでいます。<br><br>' +
-    'はじめに／マインド動画／シークレット会／プレミア動画／コンテンツ動画／勉強法／ヒラマップ／ヒラ会／塾生実績<br><br>' +
+    'ヒラ先生のDiscordにある部屋から、<b>10の区分</b>を取りこんでいます。<br><br>' +
+    'はじめに／マインド動画／シークレット会／プレミア動画／コンテンツ動画／勉強法／ヒラマップ／ヒラ会／塾生実績／自叙伝<br><br>' +
     '<b>どこから見ればいいか迷ったら</b><br>「はじめに」を上から順番に見てください。塾の進め方やヒラチャレの説明が入っています。<br><br>' +
+    '<b>自叙伝</b><br>ヒラ先生自身の話です。見なくても進められます。ヒラ先生のことを知りたくなったときにどうぞ。<br><br>' +
     'それ以外（YouTubeの新企画・Limit・定期動画・ライブなど）は<b>入っていません</b>。<br><br>' +
     '<b>日付について</b><br>出ているのは、その動画が<b>塾のDiscordに届いた日</b>です。' +
     '撮影した日ではありません。<br><br>' +

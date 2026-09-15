@@ -155,6 +155,17 @@ main{max-width:620px;margin:0 auto;padding:4px 18px calc(var(--tabh) + 48px + en
 .field:focus{border-color:var(--ink3)}
 .field::placeholder{color:var(--ink3)}
 textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;padding:18px}
+/* 書く画面：1行目だけ太字に見せる（下に同じ文字を描き、入力欄の文字は透明にする） */
+.edwrap{position:relative}
+.edwrap .edmirror,.edwrap textarea.field{line-height:2.05;font-size:1rem;padding:18px;letter-spacing:normal;
+  white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;tab-size:4;
+  font-feature-settings:inherit;font-kerning:inherit;font-variant:inherit;text-rendering:inherit}
+.edwrap .edmirror{position:absolute;inset:0;overflow:hidden;pointer-events:none;color:var(--ink)}
+.edwrap .edmirror b{font-weight:inherit;-webkit-text-stroke:.6px currentColor}
+.edwrap textarea.field{position:relative;display:block;background:transparent;box-shadow:none;
+  color:transparent;-webkit-text-fill-color:transparent;caret-color:var(--ink);scrollbar-width:none}
+.edwrap textarea.field::-webkit-scrollbar{display:none}
+.edwrap textarea.field::placeholder{color:var(--ink3);-webkit-text-fill-color:var(--ink3)}
 .onlybar{display:flex;align-items:center;justify-content:space-between;gap:10px;
   background:var(--pri-soft);border-radius:12px;padding:10px 13px;margin-bottom:12px;
   font-size:.83rem;font-weight:700;color:var(--ink)}
@@ -398,7 +409,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 26;
+const VER = 27;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -1090,7 +1101,7 @@ function renderWrite(){
       `<button class="tbtn accent" data-save>保存</button>`);
   $('#main').innerHTML = `
     <div class="pills" id="fpick" style="margin:4px 0 12px"></div>
-    <textarea class="field" id="body" placeholder="学んだこと、気づいたことを書く">${esc(n ? n.body : '')}</textarea>
+    <div class="edwrap"><div class="field edmirror" id="bodym" aria-hidden="true"></div><textarea class="field" id="body" placeholder="学んだこと、気づいたことを書く">${esc(n ? n.body : '')}</textarea></div>
     <div class="pills" style="margin:10px 0 8px">
       <button class="pill ${draftTb?'':'on'}" data-tb="0">1行目を表に出す</button>
       <button class="pill ${draftTb?'on':''}" data-tb="1">本文はぜんぶ裏</button>
@@ -1104,11 +1115,21 @@ function renderWrite(){
   paintFolderPick(); paintDraft();
   $('#tbar [data-cancel]').onclick = back;
   $('#tbar [data-save]').onclick = doSave;
+  const bodyT = $('#body'), bodyM = $('#bodym');
+  const paintMirror = () => {
+    const v = bodyT.value, i = v.indexOf('\n');
+    const first = i < 0 ? v : v.slice(0, i), rest = i < 0 ? '' : v.slice(i);
+    bodyM.innerHTML = (draftTb || !first ? esc(first) : `<b>${esc(first)}</b>`) + esc(rest) + '\u200b';
+    bodyM.scrollTop = bodyT.scrollTop;
+  };
+  bodyT.addEventListener('input', paintMirror);
+  bodyT.addEventListener('scroll', () => { bodyM.scrollTop = bodyT.scrollTop; });
   const paintTb = () => {
+    paintMirror();
     $$('#main [data-tb]').forEach(b => b.classList.toggle('on', (b.dataset.tb === '1') === draftTb));
     $('#tbhint').innerHTML = draftTb
       ? '振り返りでは<b>表の写真だけ</b>が出ます。本文は「続きを表示」で出ます。間違えた問題の写真を表にして、直しを本文に書くときに使ってください。'
-      : '<b>1行目が「表」</b>、2行目からが「裏」になります。振り返りでは1行目だけが出て、「続きを表示」で残りが出ます。';
+      : '<b>1行目が「表」</b>（太字で表示）、2行目からが「裏」になります。振り返りでは1行目だけが出て、「続きを表示」で残りが出ます。';
   };
   $$('#main [data-tb]').forEach(b => b.onclick = () => { draftTb = b.dataset.tb === '1'; paintTb(); });
   paintTb();

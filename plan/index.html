@@ -390,11 +390,15 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 .goal .gaim{display:flex; align-items:center; gap:7px; margin-top:6px; background:var(--star-soft); border-radius:10px; padding:7px 10px; font-size:14.5px; font-weight:900; color:var(--ink); word-break:break-word;}
 .goal .gaim .lb{flex:none; font-size:11px; font-weight:900; color:#9A6B00; background:rgba(201,152,47,.18); border-radius:999px; padding:3px 8px;}
 .goal .gd{display:flex; align-items:baseline; gap:10px; margin-top:3px;}
-.goal .gd .day{font-size:13px; font-weight:900; color:var(--muted);}
+.goal .gd .day{font-size:13px; font-weight:900; color:var(--muted); min-width:0;}
 .gorange{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
-.gorange input[type=date]{width:150px;}
+.gorange + .gorange{margin-top:8px;}
+.gorange input[type=date]{width:140px;}
 .gorange span{font-weight:900; color:var(--muted);}
-.goal .gd .left{font-size:16px; font-weight:900; color:var(--accent); margin-left:auto;}
+.gorange .rm{width:30px; height:30px; border-radius:50%; background:var(--chip); color:var(--muted); font-weight:900; flex:none;}
+.spanadd{margin-top:9px; font-size:12.5px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:7px 13px;}
+.gitem .dd{font-size:10.5px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:6px; padding:2px 7px; flex:none; margin-top:3px;}
+.goal .gd .left{font-size:16px; font-weight:900; color:var(--accent); margin-left:auto; white-space:nowrap; flex:none;}
 .goal .gd .left.soon{color:var(--new);}
 .goal .gd .left.past{color:var(--muted);}
 .gbar{height:8px; border-radius:4px; background:var(--chip); margin:10px 0 4px; overflow:hidden;}
@@ -463,7 +467,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v50</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v51</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -697,7 +701,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <p class="note" id="bkNote"></p>
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v50</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v51</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -722,7 +726,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 50;
+const VER = 51;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1617,26 +1621,39 @@ function goalsSorted(){
   });
 }
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
-function goalStart(g){ return g.start || g.date || ''; }
-function goalEnd(g){ return g.date || g.start || ''; }
-/* 「2026/12/6（日）」／「2026/12/1（火）〜12/6（日）」 */
-function goalRangeText(g){
-  const a = goalStart(g), b = goalEnd(g);
-  if(!a) return '日づけなし';
-  const wd = d => '（'+WD[(d.getDay()+6)%7]+'）';
-  const da = parseISO(a), db = parseISO(b);
-  const one = da.getFullYear()+'/'+md(da)+wd(da);
-  if(a === b) return one;
-  return one+'〜'+(db.getFullYear() !== da.getFullYear() ? db.getFullYear()+'/' : '')+md(db)+wd(db);
+/* 目標の日にちは「区切り」のならび。1つの区切りは {s:はじまり, e:おわり}（1日だけなら s=e）
+   例）6/17・6/20 → [{s:6/17,e:6/17},{s:6/20,e:6/20}]、12/1〜12/6 → [{s:12/1,e:12/6}]
+   古いデータ（start/date だけ）もここで読みかえる */
+function goalSpans(g){
+  let a = [];
+  if(Array.isArray(g.spans) && g.spans.length) a = g.spans.filter(x=>x && x.s).map(x=>({ s:x.s, e:(x.e && x.e >= x.s) ? x.e : x.s }));
+  else if(g.date || g.start) a = [{ s:g.start || g.date, e:g.date || g.start }];
+  return a.sort((x,y)=> x.s < y.s ? -1 : x.s > y.s ? 1 : 0);
 }
-/* はじまりまで「あと◯日」、期間の中なら「期間中」、おわったら「◯日すぎました」 */
+function goalStart(g){ const a = goalSpans(g); return a.length ? a[0].s : ''; }
+function goalEnd(g){ return goalSpans(g).reduce((m,x)=> x.e > m ? x.e : m, ''); }
+/* 「2026/6/17（水）・6/20（土）」／「2026/12/1（火）〜12/6（日）」 */
+function goalRangeText(g){
+  const a = goalSpans(g);
+  if(!a.length) return '日づけなし';
+  const wd = d => '（'+WD[(d.getDay()+6)%7]+'）';
+  const y0 = parseISO(a[0].s).getFullYear();
+  let lastY = null;
+  const f = ds => { const d = parseISO(ds), y = d.getFullYear(); const t = (lastY === null || y !== lastY ? y+'/' : '')+md(d)+wd(d); lastY = y; return t; };
+  lastY = null;
+  return a.map(x=> x.s === x.e ? f(x.s) : f(x.s)+'〜'+f(x.e)).join('・');
+}
+/* つぎの日にちまで「あと◯日」、その日なら「今日です」、期間の中なら「期間中」、ぜんぶ終わったら「◯日すぎました」 */
 function goalLeft(g){
-  const a = goalStart(g), b = goalEnd(g);
-  if(!a) return { txt:'', cls:'' };
+  const a = goalSpans(g);
+  if(!a.length) return { txt:'', cls:'' };
   const today = iso(new Date());
-  if(a < b && a <= today && today <= b) return { txt:'期間中', cls:'soon' };
-  if(b < today) return daysLeftText(b);
-  return daysLeftText(a);
+  const i = a.findIndex(x=>x.e >= today);
+  if(i < 0) return daysLeftText(goalEnd(g));
+  const x = a[i];
+  if(x.s <= today) return x.s === x.e ? { txt:'今日です', cls:'soon' } : { txt:'期間中', cls:'soon' };
+  const dl = daysLeftText(x.s);
+  return i > 0 ? { txt:'次は'+dl.txt, cls:dl.cls } : dl;
 }
 function daysLeftText(ds){
   if(!ds) return { txt:'', cls:'' };
@@ -1666,7 +1683,8 @@ function renderGoals(){
     const dl = goalLeft(g);
     const bySubj = g.view === 'subj';
     const groups = {};
-    items.forEach(x=>{ const k = bySubj ? (x.subj||'') : (x.due||''); (groups[k] = groups[k] || []).push(x); });
+    items.forEach(x=>{ const k = bySubj ? (x.subj||'') : dueToDate(x.due).slice(0,7); (groups[k] = groups[k] || []).push(x); });
+    Object.keys(groups).forEach(k=>groups[k].sort((p,q)=>{ const a = dueToDate(p.due), b = dueToDate(q.due); return a === b ? 0 : !a ? 1 : !b ? -1 : a < b ? -1 : 1; }));
     const keys = Object.keys(groups).sort((a,b)=>{
       if(a === '') return 1; if(b === '') return -1;
       if(bySubj) return SUBJ.indexOf(a) - SUBJ.indexOf(b);
@@ -1679,6 +1697,7 @@ function renderGoals(){
       + arr.map(x=>'<div class="gitem'+(x.done?' did':'')+'" data-g="'+g.id+'" data-i="'+x.id+'">'
         + '<button class="ck" data-act="gdone" aria-label="できた"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button>'
         + (bySubj ? '' : (x.subj ? '<span class="sj">'+esc(x.subj)+'</span>' : ''))
+        + (x.due && !/^\d{4}-\d{2}$/.test(x.due) ? '<span class="dd">'+esc(md(parseISO(x.due)))+'</span>' : '')
         + '<span class="gt" data-act="gedit">'+esc(x.text)+'</span>'
         + '<button class="tow" data-act="gweek">今週へ</button>'
         + '<button class="del2" data-act="gdel" aria-label="消す"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>'
@@ -1697,37 +1716,53 @@ function renderGoals(){
       + '<button class="gadd" data-act="gitemadd">＋ やることをふやす</button></div>';
   }).join('');
 }
-function monthOptions(sel){
-  const now = new Date(); let o = '<option value="">いつでも</option>';
-  for(let i=0;i<18;i++){
-    const d = new Date(now.getFullYear(), now.getMonth()+i, 1);
-    const v = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-    o += '<option value="'+v+'"'+(v===sel?' selected':'')+'>'+monthLabel(v)+'</option>';
-  }
-  return o;
+/* やることの「いつまでに」。前は「月」だけ（2026-06）だったので、その月の最後の日として読みかえる */
+function dueToDate(due){
+  if(!due) return '';
+  if(/^\d{4}-\d{2}$/.test(due)){ const y = +due.slice(0,4), m = +due.slice(5,7); return iso(new Date(y, m, 0)); }
+  return due;
 }
 function openGoalEditor(g){
   const isNew = !g;
   const sh = openSheet('<h2>'+(isNew?'目標をふやす':'目標を直す')+'</h2>'
     + '<div class="field"><div class="lab">何にむけて？（テスト・試験の名前）</div><input type="text" id="goName" value="'+esc(g?g.name:'')+'" placeholder="例）2学期の中間テスト" enterkeyhint="next"></div>'
     + '<div class="field"><div class="lab">目標（なくてもOK）</div><input type="text" id="goAim" value="'+esc(g?(g.aim||''):'')+'" placeholder="例）クラス3位・数学80点" enterkeyhint="done"></div>'
-    + '<div class="field"><div class="lab">いつ？（1日だけなら左だけでOK）</div><div class="gorange">'
-    + '<input type="date" id="goDate" class="wide" value="'+esc(g?goalStart(g):'')+'"><span>〜</span>'
-    + '<input type="date" id="goEnd" class="wide" value="'+esc(g && g.start && g.date !== g.start ? g.date : '')+'"></div></div>'
+    + '<div class="field"><div class="lab">いつ？（1日だけなら左だけでOK）</div><div id="goSpans"></div>'
+    + '<button class="spanadd" id="goSpanAdd">＋ 日にちをふやす（とびとびの日など）</button></div>'
     + '<button class="bigbtn" id="goOK">きめる</button>'
     + (isNew ? '' : '<button class="subbtn" id="goDel">この目標を消す</button>'));
   const inp = sh.querySelector('#goName');
   setTimeout(()=>inp.focus(), 60);
+  const box = sh.querySelector('#goSpans');
+  const addRow = (x)=>{
+    const r = document.createElement('div'); r.className = 'gorange';
+    r.innerHTML = '<input type="date" class="wide gs" value="'+esc(x ? x.s : '')+'"><span>〜</span>'
+      + '<input type="date" class="wide ge2" value="'+esc(x && x.e !== x.s ? x.e : '')+'">'
+      + '<button class="rm" aria-label="この日にちを消す">×</button>';
+    box.appendChild(r);
+  };
+  const syncRm = ()=>{ const rs = box.querySelectorAll('.gorange'); rs.forEach(r=>{ r.querySelector('.rm').style.visibility = rs.length > 1 ? 'visible' : 'hidden'; }); };
+  const init = g ? goalSpans(g) : [];
+  (init.length ? init : [null]).forEach(addRow); syncRm();
+  sh.querySelector('#goSpanAdd').onclick = ()=>{ addRow(null); syncRm(); const ins = box.querySelectorAll('.gs'); ins[ins.length-1].focus(); };
+  box.onclick = e => { const b = e.target.closest('.rm'); if(!b) return; b.closest('.gorange').remove(); syncRm(); };
   sh.querySelector('#goOK').onclick = ()=>{
     const nm = inp.value.trim(); if(!nm){ toast('何にむけての目標かを書いてください'); return; }
-    let a = sh.querySelector('#goDate').value || '', b = sh.querySelector('#goEnd').value || '';
-    if(!a && b){ a = b; b = ''; }
-    if(a && b && b < a){ const t = a; a = b; b = t; }    // 逆に入れても直す
-    const start = (a && b && a !== b) ? a : '';
-    const dt = b || a;                                    // date は「おわりの日」（1日だけならその日）
+    const spans = [];
+    box.querySelectorAll('.gorange').forEach(r=>{
+      let a = r.querySelector('.gs').value || '', b = r.querySelector('.ge2').value || '';
+      if(!a && b){ a = b; b = ''; }
+      if(!a) return;
+      if(b && b < a){ const t = a; a = b; b = t; }      // 逆に入れても直す
+      spans.push({ s:a, e:b || a });
+    });
+    spans.sort((x,y)=> x.s < y.s ? -1 : x.s > y.s ? 1 : 0);
+    // 古いバージョンのアプリ（同期先など）でも読めるように、ぜんたいの はじまり／おわり も持っておく
+    const first = spans.length ? spans[0].s : '', last = spans.reduce((m,x)=> x.e > m ? x.e : m, '');
+    const start = (first && first !== last) ? first : '';
     const aim = (sh.querySelector('#goAim').value || '').trim();
-    if(isNew) goalsOf().push({ id:uid(), name:nm, aim:aim, start:start, date:dt, items:[] });
-    else { g.name = nm; g.aim = aim; g.start = start; g.date = dt; }
+    if(isNew) goalsOf().push({ id:uid(), name:nm, aim:aim, spans:spans, start:start, date:last, items:[] });
+    else { g.name = nm; g.aim = aim; g.spans = spans; g.start = start; g.date = last; }
     sh.remove(); renderGoals(); renderTop(); save();
   };
   if(!isNew) sh.querySelector('#goDel').onclick = ()=>{
@@ -1743,10 +1778,13 @@ function openItemEditor(g, it){
     + '<div class="field"><div class="lab">やること</div><input type="text" id="itText" value="'+esc(it?it.text:'')+'" placeholder="例）数学ワーク p1〜p60 を1周" enterkeyhint="done"></div>'
     + '<div class="field"><div class="lab">教科（なくてもOK）</div><div class="mchips" id="itSubj" style="margin:6px 0 0">'
     + ['', ...SUBJ].map(v=>'<button data-v="'+v+'" class="'+((it?(it.subj||''):'')===v?'on':'')+'" style="padding:8px 13px; font-size:13.5px">'+(v||'なし')+'</button>').join('')+'</div></div>'
-    + '<div class="field"><div class="lab">いつまでに</div><div class="picker" style="padding:6px 0 2px; justify-content:flex-start"><select id="itDue">'+monthOptions(it?(it.due||''):'')+'</select></div></div>'
+    + '<div class="field"><div class="lab">いつまでに（なくてもOK）</div><div class="gorange" style="margin-top:6px">'
+    + '<input type="date" id="itDue" class="wide" value="'+esc(dueToDate(it ? it.due : ''))+'">'
+    + '<button class="rm" id="itDueClr" aria-label="日にちを消す" style="width:auto; border-radius:999px; padding:0 12px; font-size:12px">いつでも</button></div></div>'
     + '<button class="bigbtn" id="itOK">きめる</button>');
   const inp = sh.querySelector('#itText');
   setTimeout(()=>inp.focus(), 60);
+  sh.querySelector('#itDueClr').onclick = ()=>{ sh.querySelector('#itDue').value = ''; toast('「いつでも」にしました'); };
   let subj = it ? (it.subj||'') : '';
   sh.querySelector('#itSubj').onclick = e => {
     const b = e.target.closest('button'); if(!b) return;

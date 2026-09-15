@@ -285,6 +285,8 @@ main{max-width:680px;margin:0 auto;
 .pvbody .desc{color:var(--ink2);font-size:.88rem;line-height:1.9;white-space:pre-wrap;margin-top:12px}
 .acts{display:flex;gap:9px;margin-top:14px}
 .acts .btn{flex:1}
+/* リンクで作ったボタン（テキストを見る）。ふつうのリンクの青と下線を消す */
+a.btn{color:var(--ink);text-decoration:none}
 #pv.exp{overflow:hidden}
 #pv.exp .stage{position:fixed;inset:0;z-index:80;background:#000;display:flex;
   align-items:center;justify-content:center}
@@ -626,7 +628,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 58;
+const VER = 59;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal';
@@ -1403,7 +1405,8 @@ function normalize(j){
   const videos = (Array.isArray(j.videos) ? j.videos : [])
     .map(v => ({ id:ytId(v.id || v.url || ''), t:v.t || v.title || '(無題)',
                  cat:v.cat || '', g:v.g || '', d:v.d || v.desc || '', date:v.date || '',
-                 sec:+v.sec || 0, pin:v.pin ? 1 : 0, nn:v.nn ? 1 : 0 }))
+                 sec:+v.sec || 0, pin:v.pin ? 1 : 0, nn:v.nn ? 1 : 0,
+                 doc:/^https:\/\/[^\s"'<>]+$/.test(v.doc || '') ? v.doc : '' }))
     .filter(v => v.id);
   /* 元の並び順を覚えておく。同じ日に何本も投稿されたとき、
      古い順に並べ直しても 1・2・3・4 の順が崩れないようにするため */
@@ -3301,6 +3304,9 @@ function drawBody(){
       この動画は <b>Loom</b> という別のしくみで作られています。<br>
       <b>回数のカウント・つづきから・付箋は使えます。</b>
       速さの切りかえだけは Loom の画面の中（右下）で行ってください。</div>` : ''}
+    ${v.doc ? `<a class="btn" id="docbtn" href="${esc(v.doc)}" target="_blank" rel="noopener" style="margin-top:14px">
+      ${ICO.book({s:18})}<span>この動画のテキストを見る</span></a>
+      <div class="lead" style="margin-top:6px">動画の内容を1枚にまとめたものです（別の画面で開きます）。</div>` : ''}
     ${v.d ? `<div class="desc">${esc(v.d)}</div>` : ''}
     ${canReview(v.id) ? `<div class="sec"><h2>ふりかえり</h2></div>
       <div class="lead" style="margin-top:-2px">見出しを見て、その話を思い出せるか試せます。</div>

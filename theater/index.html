@@ -293,7 +293,7 @@ main{max-width:680px;margin:0 auto;
 #pv.exp.rot .vwrap{flex:none;width:min(100vh,177.78vw);transform:rotate(90deg)}
 
 /* ---------- 使用マニュアル ----------
-   8つの区分（金＋カード）とは別の見え方にする。
+   区分（金＋カード）とは別の見え方にする。
    落ち着いた藍色＋明朝の見出しで「手引き」らしくした。 */
 :root{ --mn:#8fb8d9; --mn-soft:#151d26; --mn-line:#22323f; }
 .mban{display:block;width:100%;text-align:left;border-radius:16px;padding:16px 17px;
@@ -626,7 +626,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 56;
+const VER = 57;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal';
@@ -926,6 +926,8 @@ const mychVid = id => { const m = mych.find(x => x.id === id);
   return m ? { id:m.id, t:m.t, cat:'mych', g:'', d:'', date:'', _mine:1 } : undefined; };
 /* videos は新しい順で持っている。asc のカテゴリだけ ひっくり返して古い順にする */
 const catAsc = c => !!(DATA.cats.find(x => x.id === c) || {}).asc;
+/* fixed の区分は、videos.json に書いた順のまま見せる（「はじめに」のように見る順番が決まっているもの） */
+const catFixed = c => !!(DATA.cats.find(x => x.id === c) || {}).fixed;
 const catOf  = c => DATA.cats.find(x => x.id === c) || {};
 /* その区分に出てくるジャンルを、videos.json の genreOrder の順に並べて返す */
 function genresIn(c){
@@ -941,7 +943,8 @@ function numOf(v){
 }
 const inCat  = c => {
   let l = DATA.videos.filter(v => v.cat === c);
-  if(catAsc(c)) l = l.slice().sort((a,b) => (a.date||'').localeCompare(b.date||'') || a._i - b._i);
+  if(catFixed(c)) l = l.slice().sort((a,b) => a._i - b._i);
+  else if(catAsc(c)) l = l.slice().sort((a,b) => (a.date||'').localeCompare(b.date||'') || a._i - b._i);
   /* pin を付けた動画（実績動画についてなど）は、いつも先頭に置く */
   const pinned = l.filter(v => v.pin);
   return pinned.length ? pinned.concat(l.filter(v => !v.pin)) : l;
@@ -1809,7 +1812,8 @@ function findList(){
     /* タイトル・ジャンル・説明に加えて、動画の中の目次からも探す */
     return (v.t + ' ' + v.g + ' ' + v.d).toLowerCase().includes(q) || chapText(v.id).includes(q);
   });
-  if(catAsc(findCat)) list = list.sort((a,b) => (a.date||'').localeCompare(b.date||'') || a._i - b._i);
+  if(catFixed(findCat)) list = list.sort((a,b) => a._i - b._i);
+  else if(catAsc(findCat)) list = list.sort((a,b) => (a.date||'').localeCompare(b.date||'') || a._i - b._i);
   return list;
 }
 function drawFind(){
@@ -2045,8 +2049,9 @@ function vSet(){
   $('#upd').onclick = () => checkUpd();
   $('#guide2').onclick = () => showGuide(0);
   $('#about').onclick = () => info('入っている動画について',
-    'ヒラ先生のDiscordにある部屋から、<b>8つの区分</b>を取りこんでいます。<br><br>' +
-    'マインド動画／シークレット会／プレミア動画／コンテンツ動画／勉強法／ヒラマップ／ヒラ会／塾生実績<br><br>' +
+    'ヒラ先生のDiscordにある部屋から、<b>9つの区分</b>を取りこんでいます。<br><br>' +
+    'はじめに／マインド動画／シークレット会／プレミア動画／コンテンツ動画／勉強法／ヒラマップ／ヒラ会／塾生実績<br><br>' +
+    '<b>どこから見ればいいか迷ったら</b><br>「はじめに」を上から順番に見てください。塾の進め方やヒラチャレの説明が入っています。<br><br>' +
     'それ以外（YouTubeの新企画・Limit・定期動画・ライブなど）は<b>入っていません</b>。<br><br>' +
     '<b>日付について</b><br>出ているのは、その動画が<b>塾のDiscordに届いた日</b>です。' +
     '撮影した日ではありません。<br><br>' +
@@ -2074,7 +2079,7 @@ const GUIDE = [
   { ic:'play',   t:'Theater へようこそ',
     d:'ヒラ先生の動画<b>だけ</b>が入っているアプリです。<br>YouTube を開かなくても見られるので、<br>ほかの動画に気をとられません。' },
   { ic:'home',   t:'まず、見たい種類をえらぶ',
-    d:'ホームの四角をタップすると、<br>その種類の動画が<b>ぜんぶ</b>出てきます。<br>マインド動画は<b>上から順番に</b>見てください。' },
+    d:'ホームの四角をタップすると、<br>その種類の動画が<b>ぜんぶ</b>出てきます。<br>迷ったら<b>「はじめに」</b>から。<br>マインド動画は<b>上から順番に</b>見てください。' },
   { ic:'check',  t:'最後まで見ると 1回ふえる',
     d:'回数は<b>自分ではふやせません</b>。<br>動画を<b>最後まで見たときだけ</b>、自動で1つふえます。<br>倍速でも大丈夫。とばした分は数えません。' },
   { ic:'star',   t:'レベルが上がっていく',

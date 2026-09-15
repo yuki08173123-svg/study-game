@@ -393,9 +393,17 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 .goal .gd .day{font-size:13px; font-weight:900; color:var(--muted); min-width:0;}
 .gorange{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
 .gorange + .gorange{margin-top:8px;}
-.gorange input[type=date]{width:140px;}
+/* 日付の欄：色をはっきり決める（ダークモードで文字が消えないように）＋指で押しやすい高さ */
+.gorange input[type=date]{-webkit-appearance:none; appearance:none; box-sizing:border-box; width:180px; min-width:0; min-height:48px; padding:0 12px;
+  background:var(--chip); color:var(--ink); border:1.5px solid var(--line); border-radius:12px; font-size:15px; font-weight:800; font-family:inherit; line-height:48px;}
+.gorange input[type=date]::-webkit-date-and-time-value{text-align:left; color:var(--ink);}
+.gorange input[type=date]:focus{border-color:var(--accent); outline:none;}
+@media (prefers-color-scheme: dark){ .gorange input[type=date]{color-scheme:dark;} }
+/* 目標の日にちの行は1行におさめる：[はじまり] 〜 [おわり] × */
+.gorange.gspan{display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) 36px; gap:6px; flex-wrap:nowrap;}
+.gorange.gspan input[type=date]{width:100%; font-size:14px; padding:0 8px;}
 .gorange span{font-weight:900; color:var(--muted);}
-.gorange .rm{width:30px; height:30px; border-radius:50%; background:var(--chip); color:var(--muted); font-weight:900; flex:none;}
+.gorange .rm{width:36px; height:36px; border-radius:50%; background:var(--chip); color:var(--muted); font-weight:900; flex:none;}
 .spanadd{margin-top:9px; font-size:12.5px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:7px 13px;}
 .gitem .dd{font-size:10.5px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:6px; padding:2px 7px; flex:none; margin-top:3px;}
 .goal .gd .left{font-size:16px; font-weight:900; color:var(--accent); margin-left:auto; white-space:nowrap; flex:none;}
@@ -467,7 +475,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v51</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v52</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -701,7 +709,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <p class="note" id="bkNote"></p>
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v51</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v52</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -726,7 +734,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 51;
+const VER = 52;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1735,7 +1743,7 @@ function openGoalEditor(g){
   setTimeout(()=>inp.focus(), 60);
   const box = sh.querySelector('#goSpans');
   const addRow = (x)=>{
-    const r = document.createElement('div'); r.className = 'gorange';
+    const r = document.createElement('div'); r.className = 'gorange gspan';
     r.innerHTML = '<input type="date" class="wide gs" value="'+esc(x ? x.s : '')+'"><span>〜</span>'
       + '<input type="date" class="wide ge2" value="'+esc(x && x.e !== x.s ? x.e : '')+'">'
       + '<button class="rm" aria-label="この日にちを消す">×</button>';

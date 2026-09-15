@@ -240,11 +240,17 @@ main{max-width:680px;margin:0 auto;
 /* 一時停止するとYouTubeがタイトルとロゴを上に出すので、そこだけ隠す。
    **画面ぜんぶを覆わないこと。** 覆うと、止めて読みたいスライドが見えなくなる
    （生徒からの指摘。板書やチェックリストをメモしたいときに使えなくなる）。
+   v60（2026-09-15）：前は「高さ26%＋黒から透明へのグラデーション」だったが、
+   黒の濃い部分が短くてYouTubeのチャンネル名が透けて「黒いもや」に見えていた（Takutoさんの指摘）。
+   また横長の画面では26%が大きすぎた。いまは上の帯と同じ色の「タイトルバー」にして、
+   高さはYouTubeの行（スマホで約52px）を必ず覆う 60〜84px に固定。ぼかしの尾は付けない。
    タップは下の .catch に通すので pointer-events:none にしておく */
-.scrim{position:absolute;left:0;right:0;top:0;height:26%;min-height:52px;z-index:2;
-  pointer-events:none;
-  background:linear-gradient(#000 0%,#000 62%,rgba(0,0,0,.72) 84%,rgba(0,0,0,0) 100%)}
-.scrim img,.scrim .pb2{display:none}
+.scrim{position:absolute;left:0;right:0;top:0;height:clamp(60px,14%,84px);z-index:2;
+  pointer-events:none;display:flex;align-items:center;gap:10px;padding:0 14px;
+  background:var(--bg);border-bottom:1px solid var(--line)}
+.scrim .sp{flex:none;font-size:.66rem;font-weight:800;letter-spacing:.12em;color:var(--acc)}
+.scrim .st{flex:1;min-width:0;font-size:.84rem;font-weight:700;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .catch.off{pointer-events:none}
 .poster{position:absolute;inset:0;z-index:4;background:#000;display:flex;
   align-items:center;justify-content:center}
@@ -616,7 +622,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
         allow="fullscreen; autoplay; encrypted-media; picture-in-picture"
         referrerpolicy="strict-origin-when-cross-origin"></iframe>
       <div class="catch" id="catch"></div>
-      <div class="scrim hidden" id="scrim"><img id="scrimimg" alt=""><span class="pb2">${''}</span></div>
+      <div class="scrim hidden" id="scrim"><span class="sp">一時停止中</span><span class="st" id="scrimt"></span></div>
       <div class="ctrl fade" id="ctrl"></div>
       <div class="poster" id="poster"><img id="posterimg" alt=""><button class="bigplay" id="bigplay"></button><div class="phint hidden" id="phint"></div></div>
       <div class="endcard hidden" id="endcard"></div>
@@ -628,7 +634,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 59;
+const VER = 60;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal';
@@ -2448,7 +2454,7 @@ function openPlay(id, push, opt){
   else $('#posterimg').src = `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
   $('#poster').classList.remove('hidden');
   $('#scrim').classList.add('hidden');
-  $('#scrimimg').src = isLoom(id) ? '' : `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+  $('#scrimt').textContent = (vid(id) || {}).t || '';
   $('#phint').classList.add('hidden');
   stopCount();
   $('#endcard').classList.add('hidden');
@@ -3794,7 +3800,6 @@ async function boot(){
   $$('#tabin .tab').forEach(b => b.onclick = () => go(b.dataset.tab));
   $('#pvback').innerHTML = ICO.back({ s:20 });
   $('#bigplay').innerHTML = ICO.play({ s:26 });
-  $('#scrim').querySelector('.pb2').innerHTML = ICO.play({ s:24 });
   $('#pvback').onclick = () => { closePlay(); try{ history.back(); }catch(e){} };
 
   /* 動画の上をタップ = 操作パネルの出し入れ。YouTubeへは絶対に飛ばさない */

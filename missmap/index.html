@@ -289,9 +289,6 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 .sl-nav button svg{width:18px; height:18px; stroke:var(--ink); fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;}
 .sheet .slides{margin:0;}
 .sheet .sl-track{padding:0 0 6px;}
-.changes{margin-top:6px;}
-.changes .c{display:grid; grid-template-columns:44px 1fr; gap:8px; font-size:13.5px; line-height:1.7; padding:5px 0; border-top:1px dashed var(--line);}
-.changes .c b{font-weight:700; color:var(--accent);}
 
 /* 設定 */
 .steps{margin:6px 0 0 20px; font-size:14px; line-height:1.9;}
@@ -431,8 +428,6 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
       <h3><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>更新</h3>
       <div class="kv"><span>いまのバージョン</span><b id="verNow"></b></div>
       <button class="btn-line" id="btnCheckUpd">更新があるか調べる</button>
-      <div class="dim" style="margin-top:12px; font-weight:700">更新の履歴</div>
-      <div class="changes" id="changes"></div>
     </div>
 
     <div class="card">
@@ -466,7 +461,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 15;
+const VER = 16;
 const KEY = 'miss_v1', BK = 'miss_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -1558,7 +1553,6 @@ function renderSet(){
   try{ const kb = Math.max(1, Math.round(JSON.stringify({ data:S }).length/1024)); $('#bkSize').textContent = S.items.length ? `（${kb}KB）` : ''; }catch(e){}
   $('#verNow').textContent = 'v'+VER;
   if(!$('#setSlides').innerHTML) renderSlides();
-  renderChanges();
   $('#cntAll').textContent = S.items.length+'問（極まった '+mastered().length+'）';
   countImgs().then(n => { $('#cntImg').textContent = n+'枚'; });
 }
@@ -1684,8 +1678,9 @@ $('#btnWipe').onclick = async () => {
   urlCache.clear(); renderAll(); renderSet(); toast('すべて消しました');
 };
 
-/* ===================== 使い方（スライド）と更新の履歴 =====================
-   ルール: 機能を変えたら、ここ（SLIDES）と CHANGES を必ず同じ更新で直す。 */
+/* ===================== 使い方（スライド） =====================
+   ルール: 機能を変えたら、ここ（slides()）を必ず同じ更新で直す。
+   ※ 設定の「更新の履歴」は v16 で廃止（生徒には不要というユーザー判断）。CHANGES 配列も消した。 */
 function slides(){ return [
   { ico:'doc', t:'ミスマップとは', p:'同じミスを<b>二度としない</b>ための道具です。紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）を、そのままアプリにしました。', ex:'ここに入れるのは「知っていたのに間違えた問題」。覚えていなかっただけの問題は、暗記で解決します。' },
   { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、ミスした問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科を選びます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。' },
@@ -1699,23 +1694,6 @@ function slides(){ return [
   { ico:'install', t:'9. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、登録した問題と写真が消えてしまうことがあります。', ex:'Safari の共有ボタン →「ホーム画面に追加」→「追加」。やり方は、上の赤い帯の「やり方」からも見られます。' },
   { ico:'save', t:'10. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の <b>「記録の控えをとる」</b> を、ときどき押してください。軽いのですぐ終わります。', ex:'写真も残したいときは「写真もとる」。重いので何回かに分けて保存します。機種変更のときだけで十分です。' },
 ]; }
-const CHANGES = [
-  { v:15, d:'9/14', t:'10問たまるごとに、ミスマップを1枚の画像にして Discord の #ミスマップ に出せるように。' },
-  { v:14, d:'9/14', t:'問題が届く間隔と、くり返す回数を自分で決められるように（設定）。' },
-  { v:13, d:'9/14', t:'文字を、見まちがえにくい書体（BIZ UDPゴシック）に変えました。' },
-  { v:12, d:'9/14', t:'アイコンを作り直しました（✕から✓へ。金属の質感）。' },
-  { v:11, d:'9/14', t:'アイコンを作り直しました（濃紺に金の丸）。' },
-  { v:10, d:'9/14', t:'ミスの種類ごとに「よくある改善点」を候補で出すように。種類は必須。控えを記録と写真に分けた。' },
-  { v:9, d:'9/14', t:'ミスマップの一覧で、写真つきの問題の文字が縦に崩れていたのを修正。' },
-  { v:8, d:'9/14', t:'ホーム画面に追加の案内。書きかけの自動保存。とばす。判定の誤りを修正。' },
-  { v:7, d:'9/13', t:'暗い地で文字が読みやすいように、線を太く・薄い色を明るく・小さい字を大きく。' },
-  { v:6, d:'9/13', t:'白い面をなくし、深い紺の地に金の差し色へ。' },
-  { v:5, d:'9/13', t:'使い方スライドと更新の履歴を設定に追加。配色を青系に。' },
-  { v:4, d:'9/13', t:'改善点を「いつ・何を・どうする」で書く形に。行動になっていない改善点は登録できない。大きな「今日の問題を解く」ボタン。' },
-  { v:3, d:'9/13', t:'文字を少し太く・大きく。' },
-  { v:2, d:'9/13', t:'書体を Klee One に。' },
-  { v:1, d:'9/13', t:'はじめての公開。' },
-];
 const SICO = {
   doc: ICO.doc, camera: ICO.camera, redo: ICO.redo, eye: ICO.eye, shuffle: ICO.shuffle,
   why: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
@@ -1742,7 +1720,6 @@ function bindSlides(root){
   root.querySelector('.sl-nav .next').onclick = () => go(idx+1);
 }
 function renderSlides(){ const box = $('#setSlides'); box.innerHTML = slidesHtml(); bindSlides(box); }
-function renderChanges(){ $('#changes').innerHTML = CHANGES.map(c => `<div class="c"><b class="num">v${c.v}</b><span>${esc(c.t)}</span></div>`).join(''); }
 function openHelp(){
   const bg = document.createElement('div'); bg.className = 'sheet-bg';
   bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>ミスマップの使い方</h2>${slidesHtml()}<button class="close">閉じる</button></div>`;

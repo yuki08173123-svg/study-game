@@ -114,6 +114,23 @@ header.app{position:sticky; top:0; z-index:30; background:linear-gradient(var(--
 .ms .tl span{color:var(--muted); font-size:12px; margin-left:6px;}
 .ms .word{margin-top:14px; font-size:14px; color:var(--ink); line-height:1.8; background:var(--gold-soft); border:1px solid var(--gold-line); border-radius:12px; padding:10px 12px;}
 .ms .btn-gold{margin-top:16px;}
+.msrow .badge{flex:none; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; background:var(--gold-soft); color:var(--gold-hi); border:1px solid var(--gold-line);}
+.msrow .badge.dim{background:var(--card2); color:var(--muted); border-color:var(--line2);}
+.ms .btn-line{margin-top:8px;}
+/* 発表を画像にして部屋に出す */
+.sendv{position:fixed; inset:0; z-index:85; background:rgba(21,12,46,.97); display:none; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:calc(20px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));}
+.sendv.on{display:block;}
+.sendv .inner{max-width:440px; margin:0 auto;}
+.sendv h2{font-size:19px; font-weight:600; color:var(--gold-hi); letter-spacing:.04em; margin-bottom:8px;}
+.sendv .lead{font-size:13px; color:var(--muted); line-height:1.8; margin-bottom:10px;}
+.sendv .shot{display:block; width:100%; border-radius:14px; border:1px solid var(--line2); margin-bottom:12px;}
+.sendv ol{margin:0 0 14px 20px; font-size:14px; line-height:1.9; color:var(--ink);}
+.sendv ol b{color:var(--gold-hi);}
+.nudge{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:var(--gold-soft); border:1px solid var(--gold-line); border-radius:16px; padding:12px 14px; margin-bottom:12px;}
+.nudge .t{flex:1; line-height:1.4;}
+.nudge .t b{display:block; font-size:14px; font-weight:700; color:var(--gold-hi);}
+.nudge .t span{font-size:11.5px; color:var(--muted);}
+.nudge .go{flex:none; font-size:12px; font-weight:700; color:#1A0F3A; background:linear-gradient(180deg, var(--gold-hi), var(--gold-dp)); border-radius:999px; padding:8px 13px;}
 .msrow{width:100%; text-align:left; display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);}
 .msrow:last-child{border-bottom:none;}
 .msrow .n{flex:none; width:44px; text-align:center; line-height:1.1;}
@@ -300,6 +317,11 @@ textarea.field{min-height:120px;}
       <div class="prog"><div class="pl"><span id="hNextLab"></span><b id="hNextCnt"></b></div><div class="seg" id="hSeg"></div></div>
       <div class="msg" id="hMsg"></div>
     </div>
+    <button class="nudge hidden" id="btnNudge">
+      <svg class="i" viewBox="0 0 24 24" style="color:var(--gold-hi); width:24px; height:24px"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="m10 13 5-5"/></svg>
+      <span class="t"><b id="nudgeT"></b><span>画像にして、部屋に出しましょう</span></span>
+      <span class="go">出す</span>
+    </button>
     <button class="btn-gold" id="btnNew">
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>極めたことを記録する
     </button>
@@ -321,7 +343,8 @@ textarea.field{min-height:120px;}
       これをためていくと、繰り返し出てくる方法が見えてきます。それが、あなたの型（マイスタ）です。<br><br>
       同じ方法が3回出てきたら「確立」、5回で「マイスタ」と表示します。<br><br>
       記録が10枚たまるごとに「暫定マイスタ発表」を出します。そのときの、あなたの勉強法のまとめです。<br>
-      スコアは、記録1枚で10点、方法が確立するごとに30点、マイスタになるごとに50点。レベルは記録10枚ごとに1つ上がります。</p>
+      スコアは、記録1枚で10点、方法が確立するごとに30点、マイスタになるごとに50点。レベルは記録10枚ごとに1つ上がります。<br><br>
+      発表が出たら、<b>「画像にして部屋に出す」</b>から Discord の部屋に送ってください。勉強法を見てもらえます。</p>
     </div>
     <div class="card">
       <h3>控え（バックアップ）</h3>
@@ -372,6 +395,9 @@ textarea.field{min-height:120px;}
 <!-- 暫定マイスタ発表 -->
 <div class="ms" id="ms"><div class="cardx" id="msBody"></div></div>
 
+<!-- 発表を部屋に出す -->
+<div class="sendv" id="sendv"><div class="inner" id="sendvBody"></div></div>
+
 <!-- 詳細 -->
 <div class="sheet-bg" id="sheetBg"></div>
 <div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
@@ -379,7 +405,7 @@ textarea.field{min-height:120px;}
 <div class="toast" id="toast"></div>
 
 <script>
-const VER = 6;
+const VER = 7;
 const KEY = 'mysta_v1', BK = 'mysta_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -403,6 +429,7 @@ function norm(j){
   j.recs = Array.isArray(j.recs) ? j.recs : [];
   j.tags = Array.isArray(j.tags) ? j.tags : [];
   j.ms = Array.isArray(j.ms) ? j.ms : [];
+  j.ms.forEach(m => { m.sent = typeof m.sent === 'string' ? m.sent : ''; m.keys = Array.isArray(m.keys) ? m.keys : []; m.tags = Array.isArray(m.tags) ? m.tags : []; });
   j.recs.forEach(r => { r.tags = Array.isArray(r.tags) ? r.tags : []; r.no = Number(r.no)||0; });
   // 番号のない記録に番号をふる(古い順)
   let n = Math.max(0, ...j.recs.map(r => r.no));
@@ -484,6 +511,9 @@ function renderHome(){
   const C = 2*Math.PI*52; $('#hRing').style.strokeDashoffset = C*(1 - inLv/MS_EVERY);
   $('#hSeg').innerHTML = Array.from({length:MS_EVERY}, (_, i) => '<i class="'+(i < inLv ? 'on' : i === MS_EVERY-1 ? 'last' : '')+'" style="animation-delay:'+(i*40)+'ms"></i>').join('');
   $('#hMsg').innerHTML = homeMsg();
+  const um = unsentMs();
+  $('#btnNudge').classList.toggle('hidden', !um);
+  if(um) $('#nudgeT').textContent = '第'+um.k+'回の発表が、まだ部屋に出ていません';
   $('#recCount').textContent = S.recs.length ? S.recs.length+'枚' : '';
   const list = S.recs.slice().sort((a,b) => b.no - a.no);
   if(!list.length){
@@ -527,7 +557,7 @@ function renderStyle(){
   h += '</div>';
 
   if(S.ms.length){
-    h += '<div class="card"><h3>暫定マイスタ発表<span class="r">'+MS_EVERY+'枚ごと</span></h3>'+S.ms.slice().reverse().map(m => '<button class="msrow" data-ms="'+m.id+'"><div class="n"><span class="latin">No.</span><b class="serif num">'+m.k+'</b></div><div class="t"><b>'+(m.tags[0] ? esc(m.tags[0].name) : '判定なし')+'</b><span>'+m.n+'枚達成　'+ymdJ(m.date)+'</span></div>'+ICO_R+'</button>').join('')+'</div>';
+    h += '<div class="card"><h3>暫定マイスタ発表<span class="r">'+MS_EVERY+'枚ごと</span></h3>'+S.ms.slice().reverse().map(m => '<button class="msrow" data-ms="'+m.id+'"><div class="n"><span class="latin">No.</span><b class="serif num">'+m.k+'</b></div><div class="t"><b>'+(m.tags[0] ? esc(m.tags[0].name) : '判定なし')+'</b><span>'+m.n+'枚達成　'+ymdJ(m.date)+'</span></div><span class="badge'+(m.sent ? '' : ' dim')+'">'+(m.sent ? '提出済み' : 'まだ')+'</span>'+ICO_R+'</button>').join('')+'</div>';
   }
   const keys = S.recs.filter(r => r.key).sort((a,b) => b.no - a.no);
   if(keys.length){
@@ -679,8 +709,9 @@ function buildMilestone(){
   const n = S.recs.length, st = tagStats();
   const bySubj = {}; S.recs.forEach(r => bySubj[r.subj] = (bySubj[r.subj]||0)+1);
   const subj = Object.entries(bySubj).sort((a,b) => b[1]-a[1])[0];
-  const keys = S.recs.filter(r => r.key).sort((a,b) => b.no - a.no).slice(0,3).map(r => r.key);
-  return { id:newId(), n, k:Math.round(n / MS_EVERY), date:today(), score:score(), tags:st.slice(0,3), subj: subj ? subj[0] : '', subjN: subj ? subj[1] : 0, keys };
+  /* 同じ言葉を何度も書く人が多いので、重複はまとめる */
+  const keys = [...new Set(S.recs.filter(r => r.key).sort((a,b) => b.no - a.no).map(r => r.key))].slice(0,3);
+  return { id:newId(), n, k:Math.round(n / MS_EVERY), date:today(), score:score(), lv:level(), tags:st.slice(0,3), subj: subj ? subj[0] : '', subjN: subj ? subj[1] : 0, keys, sent:'' };
 }
 function maybeMilestone(){
   const n = S.recs.length;
@@ -700,12 +731,185 @@ function showMilestone(m, fresh){
   if(m.subj) h += '<div class="blk"><div class="k">いちばん極めた教科</div><div class="tl"><b>'+esc(m.subj)+'</b><span>'+m.subjN+'枚</span></div></div>';
   if(m.keys.length) h += '<div class="blk"><div class="k">効いたこと</div><div class="tl">'+m.keys.map(k => '◆ '+esc(k)).join('<br>')+'</div></div>';
   h += '<div class="word">'+(top ? '次に何かを極めるときは、まず「'+esc(top.name)+'」から。<br>これが、いまの時点でのあなたのマイスタです。' : '方法のタグを選んで記録していくと、次の発表で型が見えてきます。')+'</div>';
-  h += '<button class="btn-gold" id="msOk">'+(fresh ? 'つづける' : '閉じる')+'</button>';
+  h += '<button class="btn-gold" id="msSend"><svg class="i" viewBox="0 0 24 24" style="stroke:#1A0F3A; width:22px; height:22px"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="m10 13 5-5"/></svg>画像にして部屋に出す</button>';
+  h += '<button class="btn-line" id="msOk">'+(fresh ? 'あとで' : '閉じる')+'</button>';
   $('#msBody').innerHTML = h;
+  $('#msSend').onclick = () => openSendView(m);
   $('#msOk').onclick = () => $('#ms').classList.remove('on');
   $('#ms').classList.add('on');
 }
 $('#btnNew').onclick = () => startInterview(null);
+
+/* ===================== 発表を画像にして部屋に出す =====================
+   ひとりで進めるアプリにしないため、10枚ごとの発表を1枚の画像にして Discord に出す。 */
+const msRecs = m => S.recs.filter(r => r.no > (m.k-1)*MS_EVERY && r.no <= m.k*MS_EVERY).sort((a,b) => a.no - b.no);
+const unsentMs = () => S.ms.filter(m => !m.sent).sort((a,b) => a.k - b.k)[0] || null;
+
+async function drawMs(m){
+  const MIN = "'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho',serif";
+  const GO = "'Zen Kaku Gothic New','Hiragino Sans','Hiragino Kaku Gothic ProN',sans-serif";
+  try{ await Promise.all([document.fonts.load('600 40px "Shippori Mincho"'), document.fonts.load('700 28px "Zen Kaku Gothic New"'), document.fonts.load('400 28px "Zen Kaku Gothic New"')]); }catch(e){}
+  const W = 1080, PAD = 44, CW = W - PAD*2, IN = 22;
+  const C = { bg:'#150C2E', card:'#1E1440', card2:'#271B4E', line:'#43346E', ink:'#F1ECFF', mut:'#A79DC9', g:'#C9B4F5', gh:'#EDE5FF', gd:'#9878E0' };
+  const mc = document.createElement('canvas').getContext('2d');
+  const wrap = (g, text, font, width, max) => {
+    g.font = font; const out = [];
+    for(const para of String(text || '').split('\n')){
+      let line = '';
+      for(const ch of para){ if(g.measureText(line + ch).width > width && line){ out.push(line); line = ch; } else line += ch; }
+      out.push(line);
+    }
+    if(out.length > max){ const cut = out.slice(0, max); let l = cut[max-1]; while(l && g.measureText(l + '…').width > width) l = l.slice(0, -1); cut[max-1] = l + '…'; return cut; }
+    return out;
+  };
+  const recs = msRecs(m), RW = CW - IN*2 - 64, LH = 40;
+  const rows = recs.map(r => {
+    const what = wrap(mc, r.what, '700 28px '+GO, RW, 2);
+    const key = r.key ? wrap(mc, '◆ ' + r.key, '400 25px '+GO, RW, 2) : [];
+    return { r, what, key, h: IN + what.length*LH + (r.tags.length ? 36 : 0) + (key.length ? key.length*34 : 0) + IN };
+  });
+  const HEAD = 250, BLK1 = 244, BLK2 = m.subj ? 92 : 0, LIST_H = 72 + rows.reduce((n, x) => n + x.h + 12, 0), WORD = 150;
+  let H = HEAD + BLK1 + BLK2 + LIST_H + WORD + 40;
+  const dpr = Math.min(1.5, Math.sqrt(12000000 / (W*H)));
+  const cv = document.createElement('canvas'); cv.width = Math.floor(W*dpr); cv.height = Math.floor(H*dpr);
+  const g = cv.getContext('2d'); g.scale(dpr, dpr); g.textBaseline = 'alphabetic';
+  const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x+r, y); g.arcTo(x+w, y, x+w, y+h, r); g.arcTo(x+w, y+h, x, y+h, r); g.arcTo(x, y+h, x, y, r); g.arcTo(x, y, x+w, y, r); g.closePath(); };
+  const grad = g.createLinearGradient(0, 0, W, H); grad.addColorStop(0, '#2A1B58'); grad.addColorStop(.55, C.bg); grad.addColorStop(1, '#1B1040');
+  g.fillStyle = grad; g.fillRect(0, 0, W, H);
+
+  g.textAlign = 'center';
+  g.fillStyle = C.g; g.font = '400 24px '+GO; g.fillText('M Y   S T Y L E', W/2, 66);
+  g.fillStyle = C.gh; g.font = '600 52px '+MIN; g.fillText('第'+m.k+'回　暫定マイスタ発表', W/2, 132);
+  g.fillStyle = C.mut; g.font = '400 26px '+GO; g.fillText(m.n+'枚達成　'+ymdJ(m.date), W/2, 178);
+  const st = [['Lv.'+(m.lv || Math.floor(m.n/MS_EVERY)+1), 'レベル'], [String(m.score), 'スコア'], [String(m.n), '極めた記録']];
+  const sw = CW/3;
+  st.forEach((x, i) => {
+    const cx = PAD + sw*i + sw/2;
+    g.fillStyle = C.gh; g.font = '600 40px '+MIN; g.fillText(x[0], cx, 226);
+    g.fillStyle = C.mut; g.font = '400 20px '+GO; g.fillText(x[1], cx, 250);
+  });
+  g.textAlign = 'left';
+
+  let y = HEAD;
+  const label = t => { g.fillStyle = C.g; g.font = '400 22px '+GO; g.fillText(t, PAD, y); y += 16; };
+  g.fillStyle = C.g; g.globalAlpha = .45; g.fillRect(PAD, y + 6, CW, 2); g.globalAlpha = 1;
+  y += 50; label('いまのあなたの勉強法');
+  const top = m.tags[0];
+  if(top){
+    y += 40; g.fillStyle = C.gh; g.font = '700 42px '+GO; g.fillText(top.name, PAD, y);
+    const tw = g.measureText(top.name).width;
+    g.fillStyle = C.mut; g.font = '400 24px '+GO; g.fillText(top.n+'回', PAD + tw + 14, y);
+    y += 16;
+    const mx = top.n;
+    m.tags.forEach(t => {
+      y += 40; g.fillStyle = C.ink; g.font = '400 26px '+GO; g.fillText(t.name, PAD, y);
+      const bx = PAD + 300, bw = CW - 300 - 80;
+      g.fillStyle = C.card2; rr(bx, y - 20, bw, 20, 10); g.fill();
+      g.fillStyle = C.gd; rr(bx, y - 20, Math.max(20, bw*t.n/mx), 20, 10); g.fill();
+      g.fillStyle = C.gh; g.font = '700 26px '+GO; g.textAlign = 'right'; g.fillText(t.n+'回', W - PAD, y); g.textAlign = 'left';
+    });
+  }else{
+    y += 44; g.fillStyle = C.mut; g.font = '400 26px '+GO; g.fillText('方法のタグがまだ少なく、判定できません。', PAD, y);
+  }
+  y += 40;
+  if(m.subj){
+    label('いちばん極めた教科');
+    y += 42; g.fillStyle = C.gh; g.font = '700 34px '+GO; g.fillText(m.subj, PAD, y);
+    const w2 = g.measureText(m.subj).width;
+    g.fillStyle = C.mut; g.font = '400 24px '+GO; g.fillText(m.subjN+'枚', PAD + w2 + 14, y);
+    y += 36;
+  }
+
+  label('この'+recs.length+'枚で極めたこと');
+  y += 18;
+  rows.forEach(x => {
+    const r = x.r;
+    g.fillStyle = C.card; rr(PAD, y, CW, x.h, 18); g.fill();
+    g.strokeStyle = C.line; g.lineWidth = 2; rr(PAD, y, CW, x.h, 18); g.stroke();
+    let cy = y + IN + 26;
+    g.fillStyle = C.g; g.font = '600 28px '+MIN; g.fillText(String(r.no), PAD + IN, cy);
+    const nx = PAD + IN + 46;
+    g.fillStyle = C.ink; g.font = '700 28px '+GO;
+    x.what.forEach((l, i) => g.fillText(l, nx, cy + i*LH));
+    cy += (x.what.length-1)*LH + 10;
+    if(r.tags.length){
+      cy += 30; let tx = nx;
+      g.font = '400 22px '+GO;
+      r.tags.slice(0, 4).forEach(t => {
+        const w = g.measureText(t).width + 20;
+        if(tx + w > W - PAD - IN) return;
+        g.fillStyle = C.card2; rr(tx, cy - 22, w, 32, 16); g.fill();
+        g.fillStyle = C.g; g.fillText(t, tx + 10, cy); tx += w + 8;
+      });
+    }
+    if(x.key.length){
+      g.fillStyle = C.gh; g.font = '400 25px '+GO;
+      x.key.forEach(l => { cy += 34; g.fillText(l, nx, cy); });
+    }
+    y += x.h + 12;
+  });
+
+  y += 16;
+  g.fillStyle = 'rgba(201,180,245,.12)'; rr(PAD, y, CW, 104, 18); g.fill();
+  g.strokeStyle = C.g; g.globalAlpha = .5; g.lineWidth = 2; rr(PAD, y, CW, 104, 18); g.stroke(); g.globalAlpha = 1;
+  g.fillStyle = C.gh; g.font = '400 27px '+GO;
+  const word = top ? '次に何かを極めるときは、まず「'+top.name+'」から。' : '方法をえらんで記録していくと、次の発表で型が見えてきます。';
+  wrap(g, word, '400 27px '+GO, CW - 48, 2).forEach((l, i) => g.fillText(l, PAD + 24, y + 44 + i*36));
+  return cv;
+}
+
+function openSendView(m){
+  const v = $('#sendv'), box = $('#sendvBody');
+  box.innerHTML = `<h2>第${m.k}回の発表を、部屋に出す</h2>
+    <p class="lead" id="svMsg">画像を作っています…</p>
+    <div id="svBody" class="hidden">
+      <img class="shot" id="svImg" alt="第${m.k}回 暫定マイスタ発表">
+      <ol>
+        <li>下の <b>「部屋に出す」</b> を押す</li>
+        <li>出てきた画面で <b>Discord</b> を選ぶ</li>
+        <li>マイスタを出す部屋をえらんで送る</li>
+      </ol>
+      <button class="btn-gold" id="svShare">部屋に出す</button>
+      ${m.sent ? '' : '<button class="btn-line" id="svDone">スクショなどで出した（提出済みにする）</button>'}
+    </div>
+    <button class="btn-line" id="svClose">閉じる</button>`;
+  let blob = null, url = '';
+  const close = () => { v.classList.remove('on'); if(url) URL.revokeObjectURL(url); };
+  $('#svClose').onclick = close;
+  const name = `マイスタ_第${m.k}回_${m.date}.jpg`;
+  const done = () => {
+    if(!m.sent){ m.sent = today(); save(); renderHome(); toast('第'+m.k+'回を提出済みにしました'); }
+    close(); $('#ms').classList.remove('on');
+  };
+  const fail = () => { $('#svMsg').textContent = '画像を作れませんでした。もう一度ひらいてください。'; };
+  drawMs(m).then(cv => {
+    /* 変換は1回だけ（縦に長い画像で iPhone が重くならないように） */
+    cv.toBlob(b => {
+      if(!b) return fail();
+      blob = b; url = URL.createObjectURL(b);
+      cv.width = cv.height = 1;
+      $('#svImg').src = url;
+      $('#svMsg').classList.add('hidden');
+      $('#svBody').classList.remove('hidden');
+    }, 'image/jpeg', 0.9);
+  }).catch(fail);
+  /* share は押した直後（同期）でないと iPhone で弾かれる */
+  $('#svShare').onclick = () => {
+    if(!blob) return toast('まだ作っています');
+    const file = new File([blob], name, { type:'image/jpeg' });
+    if(navigator.canShare && navigator.canShare({ files:[file] })){
+      navigator.share({ files:[file] }).then(done).catch(e => { if(!(e && e.name === 'AbortError')) toast('送れませんでした'); });
+      return;
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+    toast('画像を保存しました。Discord の部屋に出してください');
+  };
+  const sd = $('#svDone'); if(sd) sd.onclick = done;
+  v.classList.add('on');
+}
+$('#btnNudge').onclick = () => { const m = unsentMs(); if(m) openSendView(m); };
 
 /* ===================== 控え ===================== */
 $('#btnExport').onclick = () => {
@@ -761,6 +965,8 @@ window.addEventListener('pagehide', () => save());
 
 /* 起動 */
 renderHome();
+/* 10枚目の完成カードを閉じずにアプリを終えると発表が出ないままになるので、起動時にも確かめる */
+maybeMilestone();
 checkUpdate(true);
 try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
 if('serviceWorker' in navigator){ window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }

@@ -275,6 +275,41 @@ textarea.field{min-height:120px;}
 .dl .v{font-size:15px; line-height:1.7; white-space:pre-wrap; word-break:break-word;}
 .dl .v.dim{color:var(--faint);}
 
+/* ヘッダの「？」 */
+.hbtn{width:34px; height:34px; border-radius:11px; border:1px solid var(--line2); background:var(--card); display:grid; place-items:center; flex:none;}
+.hbtn svg{width:19px; height:19px; stroke:var(--gold-hi); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+/* ホーム画面に追加の帯（追加するまで出し続ける） */
+.inst{width:100%; margin-top:10px; display:flex; align-items:center; gap:10px; text-align:left; background:rgba(240,122,112,.14); border:1px solid rgba(240,122,112,.5); border-radius:14px; padding:11px 13px;}
+.inst svg{width:22px; height:22px; stroke:var(--danger); fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+.inst .t{flex:1; line-height:1.45;}
+.inst .t b{display:block; font-size:14px; font-weight:700; color:var(--danger);}
+.inst .t span{font-size:11.5px; color:var(--muted);}
+.inst .go{flex:none; background:var(--danger); color:#20090A; border-radius:999px; padding:7px 13px; font-size:12px; font-weight:700;}
+/* 使い方スライド */
+.slides{margin:2px 0 0;}
+.sl-track{display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; padding-bottom:6px; scrollbar-width:none;}
+.sl-track::-webkit-scrollbar{display:none;}
+.sl{flex:0 0 100%; scroll-snap-align:start; background:var(--card2); border:1px solid var(--line2); border-radius:16px; padding:16px 14px 14px;}
+.sl .no{font-size:10px; color:var(--gold); letter-spacing:.14em; margin-bottom:8px;}
+.sl .pic{width:44px; height:44px; border-radius:12px; background:var(--gold-soft); border:1px solid var(--gold-line); display:grid; place-items:center; margin-bottom:10px;}
+.sl .pic svg{width:24px; height:24px; stroke:var(--gold-hi); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+.sl h4{font-size:16px; font-weight:700; color:var(--gold-hi); margin-bottom:6px;}
+.sl p{font-size:14px; line-height:1.8; color:var(--ink);}
+.sl p b{color:var(--gold-hi);}
+.sl .ex{margin-top:8px; font-size:12.5px; line-height:1.75; color:var(--muted); border-top:1px solid var(--line); padding-top:8px;}
+.sl-nav{display:flex; align-items:center; justify-content:center; gap:12px; margin-top:6px;}
+.sl-nav button{width:34px; height:34px; border-radius:50%; border:1px solid var(--line2); background:var(--card2); display:grid; place-items:center;}
+.sl-nav button svg{width:18px; height:18px; stroke:var(--ink); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+.sl-nav .dots{display:flex; gap:5px;}
+.sl-nav .dots i{width:6px; height:6px; border-radius:50%; background:var(--line2);}
+.sl-nav .dots i.on{background:var(--gold-hi);}
+/* 自分で追加した方法 */
+.trow{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); font-size:15px;}
+.trow:last-child{border-bottom:none;}
+.trow b{flex:1; font-weight:700; min-width:0; word-break:break-word;}
+.trow span{font-size:12px; color:var(--muted); flex:none;}
+.trow button{flex:none; width:32px; height:32px; border-radius:10px; border:1px solid var(--line2); background:var(--card2); display:grid; place-items:center;}
+.trow button svg{width:16px; height:16px; stroke:var(--danger); fill:none; stroke-width:2.2; stroke-linecap:round;}
 .toast{position:fixed; left:50%; bottom:calc(92px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(10px); background:var(--gold-hi); color:#1A0F3A; padding:10px 18px; border-radius:999px; font-size:14px; font-weight:700; opacity:0; transition:all .25s; z-index:90; pointer-events:none; white-space:nowrap; box-shadow:var(--shadow-lg);}
 .toast.on{opacity:1; transform:translateX(-50%) translateY(0);}
 </style>
@@ -288,8 +323,14 @@ textarea.field{min-height:120px;}
       <span class="spacer"></span>
       <span class="saved" id="savedMark">保存済み</span>
       <span class="ver">v<span id="verNo"></span></span>
+      <button class="hbtn" id="btnHelp" title="使い方"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
     </div>
     <div class="hairline"></div>
+    <button class="inst hidden" id="btnInstall">
+      <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      <span class="t"><b>ホーム画面に追加</b><span>しないと、しばらく開かない間に記録が消えることがあります</span></span>
+      <span class="go">やり方</span>
+    </button>
     <button class="update hidden" id="btnUpdate">
       <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>
       <span class="t"><b>更新があります</b><span id="updVer"></span></span>
@@ -336,6 +377,14 @@ textarea.field{min-height:120px;}
 
   <!-- 設定 -->
   <section id="vSet" class="hidden">
+    <div class="card">
+      <h3>使い方</h3>
+      <div id="setSlides"></div>
+    </div>
+    <div class="card">
+      <h3>自分で追加した方法<span class="r" id="tagCnt"></span></h3>
+      <div id="tagList"></div>
+    </div>
     <div class="card">
       <h3>このアプリの考え方</h3>
       <p class="note">自分に合った勉強法とは、自分が「極めた方法」のことです。<br>
@@ -405,7 +454,7 @@ textarea.field{min-height:120px;}
 <div class="toast" id="toast"></div>
 
 <script>
-const VER = 7;
+const VER = 8;
 const KEY = 'mysta_v1', BK = 'mysta_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -429,6 +478,7 @@ function norm(j){
   j.recs = Array.isArray(j.recs) ? j.recs : [];
   j.tags = Array.isArray(j.tags) ? j.tags : [];
   j.ms = Array.isArray(j.ms) ? j.ms : [];
+  j.seen = !!j.seen;   /* 使い方を一度でも開いたか */
   j.ms.forEach(m => { m.sent = typeof m.sent === 'string' ? m.sent : ''; m.keys = Array.isArray(m.keys) ? m.keys : []; m.tags = Array.isArray(m.tags) ? m.tags : []; });
   j.recs.forEach(r => { r.tags = Array.isArray(r.tags) ? r.tags : []; r.no = Number(r.no)||0; });
   // 番号のない記録に番号をふる(古い順)
@@ -453,6 +503,23 @@ const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2
 const byId = id => S.recs.find(x => x.id === id);
 const allTags = () => [...DEF_TAGS, ...S.tags.filter(t => !DEF_TAGS.includes(t))];
 function rememberTags(ts){ ts.forEach(t => { if(!DEF_TAGS.includes(t) && !S.tags.includes(t)) S.tags.push(t); }); }
+/* 打ちまちがいが候補に残り続けないように、どの記録にも使われていない「自分の方法」は消す。
+   記録を書いている途中は消さない（選ぶ前のタグが消えてしまうため）。 */
+function cleanTags(){
+  const used = new Set(); S.recs.forEach(r => r.tags.forEach(t => used.add(t)));
+  const before = S.tags.length;
+  S.tags = S.tags.filter(t => used.has(t));
+  return before !== S.tags.length;
+}
+/* 設定から消す。その方法を使っている記録からも外す */
+function deleteTag(t){
+  const n = S.recs.filter(r => r.tags.includes(t)).length;
+  const msg = n ? '「'+t+'」を消しますか？\n使っている記録 '+n+'枚 からも外れます。' : '「'+t+'」を消しますか？';
+  if(!confirm(msg)) return;
+  S.recs.forEach(r => { r.tags = r.tags.filter(x => x !== t); });
+  S.tags = S.tags.filter(x => x !== t);
+  save(); renderHome(); renderSet(); toast('消しました');
+}
 
 /* 型の集計: 方法タグごとの回数 */
 function tagStats(recs){
@@ -487,6 +554,17 @@ function showView(v){
   $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   window.scrollTo(0,0);
   if(v === 'vStyle') renderStyle();
+  if(v === 'vSet') renderSet();
+}
+function renderSet(){
+  if(!$('#setSlides').innerHTML){ $('#setSlides').innerHTML = slidesHtml(); bindSlides($('#setSlides')); }
+  const my = S.tags.slice();
+  $('#tagCnt').textContent = my.length ? my.length+'個' : '';
+  $('#tagList').innerHTML = my.length
+    ? my.map(t => { const n = S.recs.filter(r => r.tags.includes(t)).length;
+        return '<div class="trow"><b>'+esc(t)+'</b><span>'+n+'枚で使用中</span><button data-dt="'+esc(t)+'"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'; }).join('')
+    : '<p class="note">「＋ 自分の方法」で足した方法が、ここに並びます。どの記録にも使っていない方法は、自動で消えます。</p>';
+  $$('#tagList [data-dt]').forEach(b => b.onclick = () => deleteTag(b.dataset.dt));
 }
 $$('nav.tabs button').forEach(b => b.onclick = () => showView(b.dataset.v));
 
@@ -517,7 +595,8 @@ function renderHome(){
   $('#recCount').textContent = S.recs.length ? S.recs.length+'枚' : '';
   const list = S.recs.slice().sort((a,b) => b.no - a.no);
   if(!list.length){
-    $('#recList').innerHTML = '<div class="empty"><div class="big">◆</div>まだ記録がありません。<br>上のボタンから、質問に答えるだけで1枚できます。</div>';
+    $('#recList').innerHTML = '<div class="empty"><div class="big">◆</div>まだ記録がありません。<br>上のボタンから、質問に答えるだけで1枚できます。<br><br><button class="btn-line gold" id="goHelp" style="max-width:260px;margin:0 auto">はじめに使い方を見る</button></div>';
+    const gh = $('#goHelp'); if(gh) gh.onclick = openHelp;
     return;
   }
   $('#recList').innerHTML = list.map(r => `
@@ -591,7 +670,7 @@ function openDetail(id){
       <button class="btn-line danger" id="dDel">消す</button>
       <button class="btn-line gold" id="dEdit">直す</button>
     </div>`;
-  $('#dDel').onclick = () => { if(!confirm('この記録を消しますか？')) return; S.recs = S.recs.filter(x => x.id !== id); save(); closeSheet(); renderHome(); toast('消しました'); };
+  $('#dDel').onclick = () => { if(!confirm('この記録を消しますか？')) return; S.recs = S.recs.filter(x => x.id !== id); cleanTags(); save(); closeSheet(); renderHome(); toast('消しました'); };
   $('#dEdit').onclick = () => { closeSheet(); startInterview(r); };
   $('#sheetBg').classList.add('on'); $('#sheet').classList.add('on');
 }
@@ -681,6 +760,7 @@ function finishInterview(){
   }
   const isNew = !iv.editId;
   rememberTags(a.tags);
+  cleanTags();
   save();
   closeInterview();
   renderHome();
@@ -911,6 +991,82 @@ function openSendView(m){
 }
 $('#btnNudge').onclick = () => { const m = unsentMs(); if(m) openSendView(m); };
 
+/* ===================== 使い方（スライド） =====================
+   アプリを変えたら、ここも直す。生徒はここでしか使い方を知れない。 */
+const SICO = {
+  doc: '<svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h5M10 17h5"/></svg>',
+  plus: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
+  star: '<svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>',
+  tag: '<svg viewBox="0 0 24 24"><path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.4"/></svg>',
+  chart: '<svg viewBox="0 0 24 24"><path d="M3 20h18"/><rect x="5" y="11" width="3.5" height="9"/><rect x="10.25" y="6" width="3.5" height="14"/><rect x="15.5" y="14" width="3.5" height="6"/></svg>',
+  send: '<svg viewBox="0 0 24 24"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="m10 13 5-5"/></svg>',
+  install: '<svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M12 7v7"/><path d="m9 11.5 3 3 3-3"/></svg>',
+  save: '<svg viewBox="0 0 24 24"><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/></svg>',
+};
+const SLIDES = [
+  { ico:'doc', t:'マイスタとは', p:'自分に合った勉強法は、自分が <b>「極めた方法」</b> の中にあります。何を完璧にしたか、それをどうやって極めたかを記録していくと、くり返し出てくる方法が見えてきます。', ex:'それがあなたの型＝マイスタです。人のまねではなく、自分の中から見つけます。' },
+  { ico:'plus', t:'1. 記録する', p:'ホームの <b>「極めたことを記録する」</b> を押すと、質問が出ます。答えると記録が1枚できます。質問は <b>2つだけ</b> です。', ex:'完璧にしたものがひとつできたら、そのたびに1枚ずつ足していきます。' },
+  { ico:'star', t:'2. 何を極めた？', p:'教科をえらんで、ひとこと書きます。<b>「極めた」は大げさに考えなくて大丈夫。</b>「これはもう完璧」と言えるものなら、単語100個でも1枚です。', ex:'例：英単語帳の1〜300番 ／ 二次関数のワーク全問 ／ 古文の助動詞の活用表' },
+  { ico:'tag', t:'3. どうやって極めた？', p:'使った方法を <b>えらぶだけでOK</b>。「＋ 自分の方法」で足すこともできます。<b>「いちばん効いたこと」</b>を1行書いておくと、あとで効いてきます。', ex:'例：音読する／朝に復習　→　効いたこと「翌朝にもう一度やった」' },
+  { ico:'chart', t:'4. 型が見えてくる', p:'同じ方法が <b>2回で「芽」→ 3回で「確立」→ 5回で「マイスタ」</b> になります。<b>マイスタ</b>タブで、いまの自分の型がいつでも見られます。', ex:'教科ごとに、どの方法が効いているかも出ます。' },
+  { ico:'star', t:'5. レベルとスコア', p:'記録するたびに <b>スコア</b> が増えます。記録1枚で10点、方法が確立すると30点、マイスタになると50点。記録 <b>10枚ごとにレベル</b> が上がります。', ex:'ホームのいちばん上で、次の発表まであと何枚かが分かります。' },
+  { ico:'send', t:'6. 10枚で発表 → 部屋に出す', p:'記録が10枚たまると <b>「暫定マイスタ発表」</b> が出ます。そのまま <b>「画像にして部屋に出す」</b> を押して、共有から Discord をえらび、部屋に送ってください。', ex:'ひとりで進めずに、勉強法を見てもらうためです。出した回は「マイスタ」タブに残ります。' },
+  { ico:'install', t:'7. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、記録が消えてしまうことがあります。', ex:'Safari の共有ボタン →「ホーム画面に追加」→「追加」。やり方は、上の赤い帯からも見られます。' },
+  { ico:'save', t:'8. 控えをとる', p:'記録は <b>この端末の中だけ</b> に保存されます。設定の <b>「控えを書き出す」</b> を、ときどき押してください。', ex:'機種変更のときは、書き出した控えを新しい端末で「控えから読みこむ」で戻せます。' },
+];
+function slidesHtml(){
+  return '<div class="slides"><div class="sl-track">'+SLIDES.map((sl, i) =>
+    '<div class="sl"><div class="no latin">'+(i+1)+' / '+SLIDES.length+'</div><div class="pic">'+(SICO[sl.ico]||'')+'</div><h4>'+sl.t+'</h4><p>'+sl.p+'</p>'+(sl.ex ? '<div class="ex">'+sl.ex+'</div>' : '')+'</div>').join('')
+    +'</div><div class="sl-nav"><button class="prev"><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button><span class="dots">'+SLIDES.map((_, i) => '<i class="'+(i?'':'on')+'"></i>').join('')+'</span><button class="next"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button></div></div>';
+}
+function bindSlides(root){
+  const track = root.querySelector('.sl-track'), dots = root.querySelectorAll('.sl-nav .dots i');
+  let idx = 0;
+  const step = () => track.children[0].offsetWidth + 10;
+  const mark = () => dots.forEach((d, k) => d.classList.toggle('on', k === idx));
+  const go = i => { idx = Math.max(0, Math.min(track.children.length-1, i)); mark(); track.scrollTo({ left:idx*step(), behavior:'smooth' }); };
+  let st = null;
+  track.addEventListener('scroll', () => { clearTimeout(st); st = setTimeout(() => { idx = Math.round(track.scrollLeft/step()); mark(); }, 80); }, { passive:true });
+  root.querySelector('.sl-nav .prev').onclick = () => go(idx-1);
+  root.querySelector('.sl-nav .next').onclick = () => go(idx+1);
+}
+function openHelp(){
+  if(!S.seen){ S.seen = true; save(); }
+  $('#sheetBody').innerHTML = '<h2 class="serif" style="font-size:19px;color:var(--gold-hi);margin-bottom:10px">マイスタの使い方</h2>'+slidesHtml()
+    + '<button class="btn-line" id="hpClose" style="margin-top:14px">閉じる</button>';
+  bindSlides($('#sheetBody'));
+  $('#hpClose').onclick = closeSheet;
+  $('#sheetBg').classList.add('on'); $('#sheet').classList.add('on');
+}
+$('#btnHelp').onclick = openHelp;
+
+/* ===================== ホーム画面に追加（記録を守る） =====================
+   iPhone の Safari は、ホーム画面に追加していないサイトの保存データを、
+   しばらく開かないと消すことがある。追加するまで帯を出し続ける。 */
+function isInstalled(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function checkInstall(){ $('#btnInstall').classList.toggle('hidden', isInstalled()); }
+$('#btnInstall').onclick = () => {
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  $('#sheetBody').innerHTML = '<h2 class="serif" style="font-size:19px;color:var(--gold-hi);margin-bottom:10px">ホーム画面に追加する</h2>'
+    + '<div class="note" style="background:var(--gold-soft);border:1px solid var(--gold-line);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.8;color:var(--ink)"><b style="color:var(--gold-hi)">なぜ必要か：</b>ホーム画面に追加していないと、iPhone が「しばらく使っていないサイト」と判断して、記録を消してしまうことがあります。追加すれば消えません。ふつうのアプリと同じように開けるようにもなります。</div>'
+    + (ios
+      ? '<div class="dl"><div class="k">iPhone・iPad の場合</div></div><ol style="margin:0 0 4px 20px;font-size:14.5px;line-height:1.95">'
+        + '<li>この画面を <b>Safari</b> で開く（LINE や Instagram の中で開いていたら「Safari で開く」を押してください）</li>'
+        + '<li>画面の下にある <b>共有ボタン</b>（四角から矢印が出ている印）を押す</li>'
+        + '<li>少し下にスクロールして <b>「ホーム画面に追加」</b> を押す</li>'
+        + '<li>右上の <b>「追加」</b> を押す</li>'
+        + '<li>ホーム画面にできたアイコンから、これからは開く</li></ol>'
+        + '<p class="note" style="margin-top:10px">追加したあとは、この帯は出なくなります。</p>'
+      : '<div class="dl"><div class="k">Android の場合</div></div><ol style="margin:0 0 4px 20px;font-size:14.5px;line-height:1.95">'
+        + '<li>この画面を <b>Chrome</b> で開く</li><li>右上の <b>⋮</b> を押す</li><li><b>「ホーム画面に追加」</b>（または「アプリをインストール」）を押す</li></ol>'
+        + '<p class="note" style="margin-top:10px">パソコンで見ている場合は、そのままでも構いません。</p>')
+    + '<button class="btn-line" id="inClose" style="margin-top:14px">閉じる</button>';
+  $('#inClose').onclick = closeSheet;
+  $('#sheetBg').classList.add('on'); $('#sheet').classList.add('on');
+};
+
 /* ===================== 控え ===================== */
 $('#btnExport').onclick = () => {
   const blob = new Blob([JSON.stringify({ app:'mysta', v:VER, exported:new Date().toISOString(), data:S }, null, 1)], { type:'application/json' });
@@ -960,11 +1116,15 @@ async function doUpdate(){
 }
 $('#btnUpdate').onclick = doUpdate;
 $('#btnCheckUpd').onclick = () => checkUpdate(false);
-document.addEventListener('visibilitychange', () => { if(!document.hidden) checkUpdate(true); else save(); });
+document.addEventListener('visibilitychange', () => { if(!document.hidden){ checkUpdate(true); checkInstall(); } else save(); });
 window.addEventListener('pagehide', () => save());
 
 /* 起動 */
+if(cleanTags()) save();
 renderHome();
+checkInstall();
+/* はじめて開いた人には、使い方を出す */
+if(!S.seen && !S.recs.length) setTimeout(openHelp, 400);
 /* 10枚目の完成カードを閉じずにアプリを終えると発表が出ないままになるので、起動時にも確かめる */
 maybeMilestone();
 checkUpdate(true);

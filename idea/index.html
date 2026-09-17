@@ -80,6 +80,12 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
 .list{display:flex; flex-direction:column; gap:10px;}
 .item{background:var(--card); border-radius:16px; padding:13px 12px 12px 16px; box-shadow:var(--shadow); border:1px solid var(--line); display:flex; gap:10px; align-items:flex-start; transition:opacity .3s, transform .3s;}
 .item.leaving{opacity:0; transform:translateX(40px);}
+.list .item{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none;}
+.item.pressing{transform:scale(.98); transition:transform .35s;}
+.item.dragging{position:fixed; z-index:40; margin:0; transition:none; transform:scale(1.03); box-shadow:var(--shadow-lg); border-color:var(--accent); pointer-events:none;}
+.ph{border:2px dashed var(--accent); border-radius:16px; background:var(--accent-soft); opacity:.6;}
+.sortHint{font-size:12px; color:var(--muted); margin:-4px 4px 8px; text-align:right;}
+body.nowDragging{-webkit-user-select:none; user-select:none; overscroll-behavior:none;}
 .item .body{flex:1; min-width:0;}
 .item .txt{white-space:pre-wrap; word-break:break-word; font-size:16px;}
 .item .meta{font-size:12px; color:var(--muted); margin-top:4px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
@@ -157,10 +163,12 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
   </nav>
 
   <section id="tab-memo">
+    <div class="sortHint hidden" id="hintMemo">長押しで並べ替え</div>
     <div class="list" id="memoList"></div>
   </section>
 
   <section id="tab-keep" class="hidden">
+    <div class="sortHint hidden" id="hintKeep">長押しで並べ替え</div>
     <div class="list" id="keepList"></div>
   </section>
 
@@ -189,7 +197,7 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
 <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastBtn" class="hidden">元に戻す</button></div>
 
 <script>
-const VER = 3;
+const VER = 4;
 const KEY = 'idea_v1', BAK = 'idea_backup';
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -220,17 +228,23 @@ function fmtDay(ms){
 function fmtTime(ms){ const d = new Date(ms); return pad(d.getHours())+':'+pad(d.getMinutes()); }
 function fmtWhen(ms){ return fmtDay(ms)+' '+fmtTime(ms); }
 
+/* 並び順: pos が小さいほど上。pos がない古いメモは新しい順 */
+const posOf = x => (typeof x.pos === 'number') ? x.pos : -x.created;
+const byPos = (a,b) => posOf(a) - posOf(b);
+
 /* ===== 表示 ===== */
 function render(){
-  const memos = S.items.filter(x => x.kind !== 'keep' && !x.cleared).sort((a,b) => b.created - a.created);
-  const keeps = S.items.filter(x => x.kind === 'keep').sort((a,b) => b.created - a.created);
+  const memos = S.items.filter(x => x.kind !== 'keep' && !x.cleared).sort(byPos);
+  const keeps = S.items.filter(x => x.kind === 'keep').sort(byPos);
+  $('#hintMemo').classList.toggle('hidden', memos.length < 2);
+  $('#hintKeep').classList.toggle('hidden', keeps.length < 2);
   const recs = S.items.filter(x => x.cleared).sort((a,b) => b.cleared - a.cleared);
   $('#cntMemo').textContent = memos.length;
   $('#cntRec').textContent = recs.length;
   $('#cntKeep').textContent = keeps.length;
 
   $('#keepList').innerHTML = keeps.length ? keeps.map(x => `
-    <div class="item keep">
+    <div class="item keep" data-id="${x.id}">
       <span class="pin"><svg class="i" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg></span>
       <div class="body" data-edit="${x.id}">
         <div class="txt">${esc(x.text)}</div>
@@ -284,8 +298,10 @@ inp.addEventListener('keydown', e => { if(e.key === 'Enter' && (e.metaKey || e.c
 function addMemo(){
   const text = inp.value.trim();
   if(!text) return;
-  if(mode === 'keep') S.items.push({ id:uid(), kind:'keep', text, created:Date.now(), cleared:null });
-  else S.items.push({ id:uid(), text, created:Date.now(), cleared:null });
+  const same = S.items.filter(x => mode === 'keep' ? x.kind === 'keep' : (x.kind !== 'keep' && !x.cleared));
+  const top = same.length ? Math.min(...same.map(posOf)) - 1 : 0;
+  if(mode === 'keep') S.items.push({ id:uid(), kind:'keep', text, created:Date.now(), cleared:null, pos:top });
+  else S.items.push({ id:uid(), text, created:Date.now(), cleared:null, pos:top });
   save();
   inp.value = ''; syncBtn();
   showTab(mode === 'keep' ? 'keep' : 'memo');
@@ -350,6 +366,93 @@ function wipe(id){
   S.items = S.items.filter(y => y !== x); save(); render();
   toast('丸ごと消しました');
 }
+
+/* ===== 長押しで並べ替え ===== */
+const drag = { timer:null, el:null, ph:null, list:null, sx:0, sy:0, dy0:0, y:0, raf:0, moved:false, pid:null };
+let justDragged = false;
+function dragCancelPress(){
+  clearTimeout(drag.timer); drag.timer = null;
+  if(drag.el && !drag.ph) drag.el.classList.remove('pressing');
+  if(!drag.ph) drag.el = null;
+}
+function dragStart(){
+  const el = drag.el, r = el.getBoundingClientRect();
+  el.classList.remove('pressing');
+  drag.ph = document.createElement('div');
+  drag.ph.className = 'ph'; drag.ph.style.height = r.height + 'px';
+  el.after(drag.ph);
+  drag.dy0 = drag.sy - r.top;
+  Object.assign(el.style, { left:r.left+'px', top:r.top+'px', width:r.width+'px' });
+  el.classList.add('dragging');
+  document.body.classList.add('nowDragging');
+  try{ navigator.vibrate && navigator.vibrate(15); }catch(e){}
+  drag.y = drag.sy;
+  drag.raf = requestAnimationFrame(dragTick);
+}
+function dragPlace(){
+  const others = [...drag.list.children].filter(c => c.classList.contains('item') && c !== drag.el);
+  let before = null;
+  for(const c of others){ const r = c.getBoundingClientRect(); if(drag.y < r.top + r.height/2){ before = c; break; } }
+  const cur = drag.ph.nextElementSibling === drag.el ? drag.el.nextElementSibling : drag.ph.nextElementSibling;
+  if(cur === before) return;
+  /* 動くカードをなめらかに（FLIP） */
+  const first = new Map(others.map(c => [c, c.getBoundingClientRect().top]));
+  if(before) drag.list.insertBefore(drag.ph, before); else drag.list.appendChild(drag.ph);
+  for(const c of others){
+    const d = first.get(c) - c.getBoundingClientRect().top;
+    if(!d) continue;
+    c.style.transition = 'none'; c.style.transform = `translateY(${d}px)`;
+    requestAnimationFrame(() => { c.style.transition = 'transform .18s'; c.style.transform = ''; });
+  }
+}
+function dragTick(){
+  if(!drag.ph) return;
+  const h = window.innerHeight, edge = 70;
+  let v = 0;
+  if(drag.y < edge) v = -Math.ceil((edge - drag.y) / 6);
+  else if(drag.y > h - edge) v = Math.ceil((drag.y - (h - edge)) / 6);
+  if(v) window.scrollBy(0, v);
+  drag.el.style.top = (drag.y - drag.dy0) + 'px';
+  dragPlace();
+  drag.raf = requestAnimationFrame(dragTick);
+}
+function dragEnd(){
+  if(!drag.ph){ dragCancelPress(); return; }
+  cancelAnimationFrame(drag.raf);
+  const el = drag.el, list = drag.list;
+  drag.ph.replaceWith(el);
+  el.classList.remove('dragging');
+  el.style.left = el.style.top = el.style.width = '';
+  document.body.classList.remove('nowDragging');
+  const ids = [...list.children].filter(c => c.dataset.id).map(c => c.dataset.id);
+  ids.forEach((id, i) => { const x = find(id); if(x) x.pos = i; });
+  save();
+  drag.ph = null; drag.el = null;
+  justDragged = true; setTimeout(() => { justDragged = false; }, 400);
+  render();
+}
+for(const list of [$('#memoList'), $('#keepList')]){
+  list.addEventListener('pointerdown', e => {
+    if(e.button > 0 || drag.el) return;
+    const el = e.target.closest('.item');
+    if(!el || e.target.closest('button')) return;
+    drag.el = el; drag.list = list; drag.sx = e.clientX; drag.sy = e.clientY; drag.pid = e.pointerId;
+    el.classList.add('pressing');
+    drag.timer = setTimeout(() => { drag.timer = null; dragStart(); }, 450);
+  });
+  list.addEventListener('contextmenu', e => { if(e.target.closest('.item')) e.preventDefault(); });
+}
+document.addEventListener('pointermove', e => {
+  if(!drag.el || e.pointerId !== drag.pid) return;
+  if(drag.ph){ drag.y = e.clientY; e.preventDefault(); drag.el.style.top = (drag.y - drag.dy0) + 'px'; dragPlace(); return; }
+  if(Math.abs(e.clientX - drag.sx) > 10 || Math.abs(e.clientY - drag.sy) > 10) dragCancelPress();
+}, { passive:false });
+/* 並べ替え中は画面がスクロールしないようにする（iPhone） */
+document.addEventListener('touchmove', e => { if(drag.ph) e.preventDefault(); }, { passive:false });
+document.addEventListener('pointerup', e => { if(drag.el && e.pointerId === drag.pid) dragEnd(); });
+document.addEventListener('pointercancel', e => { if(drag.el && e.pointerId === drag.pid){ if(drag.ph) dragEnd(); else dragCancelPress(); } });
+/* 並べ替えた直後のタップ（直す画面が開く）を止める */
+document.addEventListener('click', e => { if(justDragged){ e.stopPropagation(); e.preventDefault(); } }, true);
 
 /* ===== 直す ===== */
 let editId = null;

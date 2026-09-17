@@ -1,0 +1,14 @@
+{
+  "name": "報告レビュー",
+  "short_name": "報告レビュー",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F7FB",
+  "theme_color": "#F4F7FB",
+  "icons": [
+    {"src": "icon-192-v1.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512-v1.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-maskable-v1.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

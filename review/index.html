@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>報告レビュー</title>
+<meta name="theme-color" content="#F4F7FB">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon-v1.png">
+<link rel="icon" href="icon-192-v1.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="報告レビュー">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#F4F7FB; --card:#FFFFFF; --ink:#1A2432; --muted:#54637A; --line:#DCE4EE;
+  --accent:#2C6FE4; --accent-soft:#E6EEFC; --accent-ink:#FFFFFF;
+  --done:#12A06A; --done-soft:#E3F5EC;
+  --warn:#D93B2B; --warn-soft:#FBE4E1;
+  --gold:#C9982F; --gold-soft:#FBF2DC;
+  --chip:#EDF1F7; --shadow:0 1px 3px rgba(20,40,70,.08); --shadow-lg:0 8px 24px rgba(20,40,70,.16);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#121721; --card:#1B2230; --ink:#E9EEF6; --muted:#93A1B4; --line:#2C3648;
+    --accent:#6FA4F5; --accent-soft:#23324B; --accent-ink:#0E1520;
+    --done:#4FCB98; --done-soft:#1B3A2E;
+    --warn:#F0776A; --warn-soft:#43241F;
+    --gold:#E4BC63; --gold-soft:#3A2E18;
+    --chip:#242D3D; --shadow:0 1px 3px rgba(0,0,0,.3); --shadow-lg:0 8px 24px rgba(0,0,0,.5);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans",system-ui,sans-serif;font-size:16px;line-height:1.6}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+.wrap{max-width:640px;margin:0 auto;padding:12px 14px 60px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0 4px}
+header.top h1{font-size:21px;margin:0;font-weight:900;letter-spacing:.02em}
+header.top .sub{font-size:13px;color:var(--muted)}
+.iconbtn{width:40px;height:40px;border-radius:12px;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;font-size:18px;flex:none}
+
+.card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:14px;margin:12px 0}
+.card h2{margin:0 0 8px;font-size:17px;display:flex;align-items:center;gap:8px}
+.card h2 .n{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:14px;font-weight:900;flex:none}
+.hint{font-size:13px;color:var(--muted);margin:0 0 10px}
+.mini{font-size:12px;color:var(--muted)}
+
+textarea{width:100%;min-height:220px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg);padding:12px;font-size:16px;line-height:1.6;resize:vertical}
+textarea:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px}
+input[type=text]{width:100%;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);padding:11px 12px;font-size:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:10px 16px;border-radius:14px;background:var(--chip);font-weight:900;font-size:15px}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.done{background:var(--done);color:#fff}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5;cursor:default}
+.count{font-size:12px;color:var(--muted);text-align:right;margin-top:4px}
+
+/* セルフチェック */
+.chk{list-style:none;margin:0;padding:0}
+.chk li{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px}
+.chk li:first-child{border-top:0}
+.chk .mk{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:900;margin-top:1px}
+.chk .ng .mk,.chk li.ng .mk{background:var(--warn-soft);color:var(--warn)}
+.chk li.ok .mk{background:var(--done-soft);color:var(--done)}
+.chk li.ask .mk{background:var(--gold-soft);color:var(--gold)}
+.chk b{font-weight:900}
+.chk .q{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.chk .w{background:var(--warn-soft);color:var(--warn);border-radius:6px;padding:0 5px;font-weight:700;white-space:nowrap}
+.sum{font-weight:900;font-size:15px;margin:0 0 4px}
+
+/* レビュー結果 */
+.review{margin-top:10px;white-space:pre-wrap;font-size:15.5px;line-height:1.75;background:var(--bg);border-radius:14px;padding:14px;border:1.5px solid var(--line)}
+.wait{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;padding:6px 0}
+.spin{width:20px;height:20px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:sp 1s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.spin{animation-duration:3s}}
+.note{font-size:13px;border-radius:12px;padding:10px 12px;margin-top:10px}
+.note.warn{background:var(--warn-soft);color:var(--warn)}
+.note.info{background:var(--accent-soft);color:var(--ink)}
+.note.gold{background:var(--gold-soft);color:var(--ink)}
+
+/* シート */
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(10,20,40,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet .box{background:var(--card);width:100%;max-width:640px;max-height:86vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-shadow:var(--shadow-lg)}
+.sheet h3{margin:0 0 10px;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+.hist{border-top:1px solid var(--line);padding:10px 0}
+.hist .d{font-weight:900;font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hist pre{white-space:pre-wrap;font:inherit;font-size:13px;color:var(--muted);margin:6px 0 0;max-height:150px;overflow:auto}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:700;z-index:40;box-shadow:var(--shadow-lg);max-width:90vw}
+.ver{text-align:center;font-size:11px;color:var(--muted);margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>報告レビュー</h1>
+      <div class="sub">勉強報告を出す前に、ヒラ先生の基準でチェック</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="iconbtn" id="histBtn" title="これまでのレビュー" aria-label="これまでのレビュー">🗂</button>
+      <button class="iconbtn" id="setBtn" title="設定" aria-label="設定">⚙️</button>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2><span class="n">1</span>勉強報告を入れる</h2>
+    <p class="hint">Discord に出す勉強報告の<b>全文</b>を貼ってください（①目標 ②長期のタスク・TQC・今日のタスク ③レビュー ④仕組みの達成度）。</p>
+    <textarea id="report" placeholder="ここに勉強報告の全文を貼る" autocomplete="off"></textarea>
+    <div class="count" id="count">0字</div>
+    <div class="row">
+      <button class="btn" id="pasteBtn">📋 貼りつける</button>
+      <button class="btn" id="loadBtn" hidden>📄 勉強報告アプリの今日の分を入れる</button>
+      <button class="btn" id="clearBtn">消す</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="n">2</span>セルフチェック<span class="mini" style="margin-left:auto">すぐ出る・何回でも</span></h2>
+    <p class="hint">ヒラ先生がいつも指摘する所を、この端末の中だけで調べます。</p>
+    <div id="selfOut"><p class="mini">報告を入れると、ここに結果が出ます。</p></div>
+  </section>
+
+  <section class="card">
+    <h2><span class="n">3</span>AIレビューをもらう</h2>
+    <p class="hint">ヒラ先生の過去のレビュー約400本をもとに、AIがレビューを書きます。セルフチェックで直せる所を直してから押すのがおすすめです。</p>
+    <button class="btn primary block" id="aiBtn">🤖 AIレビューをもらう</button>
+    <div id="aiState"></div>
+    <div id="aiOut" hidden>
+      <div class="review" id="reviewText"></div>
+      <div class="row">
+        <button class="btn done" id="copyReview">レビューをコピー</button>
+        <button class="btn" id="copyBoth">報告＋レビューをコピー</button>
+        <button class="btn" id="shareBtn" hidden>共有</button>
+      </div>
+      <div class="note gold" id="lenNote" hidden></div>
+      <div class="note info">このレビューを<b>勉強報告に添えて</b> Discord に出してください。質問（？の所）には、次の報告の一番上の「返信」で答えます。</div>
+    </div>
+  </section>
+
+  <div class="ver" id="ver"></div>
+</div>
+
+<div class="sheet" id="setSheet" hidden>
+  <div class="box">
+    <h3>設定 <button class="btn" data-close>とじる</button></h3>
+    <div class="mini" style="font-weight:900;margin:6px 0 4px">合言葉</div>
+    <input type="text" id="passInput" placeholder="Discord の案内にある合言葉" autocomplete="off" autocapitalize="off">
+    <p class="mini">AIレビューは塾生だけが使えます。合言葉はこの端末の中にだけ保存されます。</p>
+    <div class="row"><button class="btn primary" id="passSave">保存する</button></div>
+    <div class="note info" style="margin-top:14px">
+      ・AIレビューは1日3回まで。<br>
+      ・送られるのは貼った報告文だけです。名前などは送りません（報告文の中に書いた内容は送られます）。<br>
+      ・AIのレビューはヒラ先生本人のレビューではありません。まちがえることもあります。
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="histSheet" hidden>
+  <div class="box">
+    <h3>これまでのレビュー <button class="btn" data-close>とじる</button></h3>
+    <div id="histBody"></div>
+  </div>
+</div>
+
+<script>
+const VER = 1;
+/* AIレビューの中継サーバー（Cloudflare Worker）。空のあいだは「準備中」と出る */
+const API = '';
+const KEY = 'reportreview-v1';
+const REPORT_APP_KEY = 'studyreport-v1';
+
+const $ = id => document.getElementById(id);
+function el(tag, attrs, ...kids){
+  const e = document.createElement(tag);
+  for (const k in (attrs||{})) {
+    if (k === 'class') e.className = attrs[k];
+    else if (k.startsWith('on')) e[k] = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  kids.flat().forEach(c => e.append(c && c.nodeType ? c : document.createTextNode(c ?? '')));
+  return e;
+}
+function load(){ try{ return Object.assign({pass:'',dev:'',draft:'',hist:[]}, JSON.parse(localStorage.getItem(KEY))||{}); }catch(e){ return {pass:'',dev:'',draft:'',hist:[]}; } }
+let S = load();
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+if (!S.dev) { S.dev = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(36).slice(2)); save(); }
+
+let toastT;
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const t = el('div',{class:'toast',role:'status'},msg); document.body.append(t);
+  clearTimeout(toastT); toastT = setTimeout(()=>t.remove(), 2600);
+}
+async function copy(txt, okMsg){
+  try{ await navigator.clipboard.writeText(txt); toast(okMsg); }
+  catch(e){
+    const ta = el('textarea',{style:'position:fixed;opacity:0'}); ta.value = txt; document.body.append(ta); ta.select();
+    try{ document.execCommand('copy'); toast(okMsg); }catch(_){ toast('コピーできませんでした'); }
+    ta.remove();
+  }
+}
+function today(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+/* ── セルフチェック（端末の中だけ。ヒラ先生がいつも指摘する所） ───────── */
+const STOP_WORDS = [['意識','意識する'],['注意し','注意する'],['注目','注目する'],['気をつけ','気をつける'],['気を付け','気をつける'],['確認す','確認する'],['確認し','確認する'],['見直','見直し'],['見返','見返す'],['よく読','よく読む'],['復習す','復習する'],['復習し','復習する'],['徹底','徹底する'],['しっかり','しっかり'],['ちゃんと','ちゃんと'],['念頭','念頭に置く'],['把握','把握する'],['慣れ','慣れる'],['頑張','頑張る'],['がんば','頑張る'],['次から','次から'],['次回','次回'],['今後は','今後は'],['心がけ','心がける'],['応用問題','応用問題'],['ど忘れ','ど忘れ'],['うっかり','うっかり'],['気が抜け','気が抜けて'],['サボ','サボり']];
+function selfCheck(raw){
+  const t = raw.replace(/️/g,'');
+  const out = [];
+  const has = re => re.test(t);
+  const add = (type, title, q) => out.push({type, title, q});
+
+  // テンプレの項目
+  const parts = [
+    ['目標', /目標/], ['長期のタスク', /長期/], ['TQC（MAXと今日）', /MAX/i],
+    ['今日のタスク', /今日のタスク|今日の\s*To|本日のタスク/i], ['レビュー', /レビュー/], ['仕組みの達成度', /仕組み/],
+  ];
+  const miss = parts.filter(p => !p[1].test(t)).map(p => p[0]);
+  if (miss.length) add('ng', 'テンプレの項目が足りません：' + miss.join('・'), 'テンプレートを見て、自分で直してから出しましょう。');
+
+  // 止める言葉
+  const found = [...new Set(STOP_WORDS.filter(w => t.includes(w[0])).map(w => w[1]))];
+  if (found.length) out.push({type:'ng', words:found,
+    title:'「言ってるようで何も言ってない」言葉があります', q:'それは何をするんですか？ 丸をつける・線を引く・◯分で隠してテストする、のように「手が動く行動」に書き直しましょう。直した行動は、仕組みの達成度に入れます。'});
+
+  // 理解で終わる
+  if (has(/理解(し|でき|を深め|不足)|分かった|わかった|納得/)) add('ng', '「理解」で終わっていませんか', '理解ではなく暗記です。隠してテストして言えるところまでやりましたか。「暗記しました」で終わる形にしましょう。');
+
+  // 黄金ルート
+  const pcts = [...t.matchAll(/(\d{1,3})\s*[%％]/g)].map(m => +m[1]).filter(n => n <= 100);
+  const hasMiss = pcts.some(n => n < 100);
+  if (hasMiss) {
+    if (!has(/ブルポ|BP/)) add('ng', '間違えた問題があるのに「ブルポ」が出てきません', '黄金ルートは回しましたか。ブルポ → ブルポ暗記 → 時間をあけて解き直し、までやったなら書きましょう。');
+    else if (!has(/ブルポ暗記/)) add('ask', '「ブルポ暗記」が出てきません', 'ブルポを書いて終わりになっていませんか。ブルポを覚える時間を取って、隠してテストしましたか。');
+    if (!has(/解き直/)) add('ng', '「解き直し」が出てきません', '3〜4時間あけて、その日のうちに解き直しましたか。結果（何%になったか）も書きましょう。');
+  }
+  if (has(/(明日|あした|後日|今度|週末)[^。\n]{0,20}解き直/)) add('ng', '解き直しを先送りしていませんか', 'タスクをこなすことより解き直しが優先です。回らないなら、タスクの数を減らすか、夜の最後に解き直しの時間を固定しましょう。');
+  if (has(/解き直/) && !has(/\d\s*時間(後|あけ|空け|おい|置い)|翌朝|朝に解き直/)) add('ask', '解き直しまで、何時間あけたかが分かりません', '直後の解き直しは「答えを覚えているだけ」になります。「◯時間後に解き直して◯%」と書きましょう。');
+
+  // 正答率の矢印
+  if (pcts.length && !has(/\d\s*[%％]?\s*(→|⇒|->|➡)\s*\d/)) add('ask', '正答率が「最初→最後」の形になっていません', '例：55%→100%。最初は何%で、最後に何%まで持っていったかを書きましょう。');
+  if (pcts.length >= 3 && pcts.every(n => n === 100)) add('ask', '全部100%です', '「何も見ずに一発目で100%」ですか、「覚えた直後の100%」ですか。一発目で全部100%なら、教材が簡単すぎないか考えましょう。');
+
+  // なんで
+  if (hasMiss && !has(/なぜ|なんで|原因|理由|ため[、。]|から[、。]|ので/)) add('ng', '「なんで間違えたか」が見当たりません', 'どういう問題で、何を、なぜ間違えたのか。どうしておけば取れたのか。ここが中身です。');
+  if (has(/計算ミス|ケアレスミス|凡ミス|暗記不足|勉強不足|バックスキャン不足/)) add('ask', '「計算ミス」「暗記不足」などのラベルで終わっていませんか', 'どういうミスですか。次はどういうバックスキャンをしますか（どこを・どう確認するか）。なんでできなかったんですか。');
+
+  // 期限
+  if (has(/未定|作成中|そのうち|近いうち|来週|テスト前まで/)) add('ask', '期限があいまいな所があります', '何月何日、で書きましょう。暫定でも先に日付を決めないと「いつでもいいや」になります。');
+  if (has(/長期/) && !has(/\d{1,2}\s*[\/月]\s*\d{1,2}/)) add('ng', '長期のタスクに日付がありません', '「◯月◯日まで ◯周目 教材名」を、1周目・2周目・3周目それぞれに書きましょう。');
+
+  // TQC
+  const mx = t.match(/MAX[^\n]*?Q\s*[:：]?\s*(\d+(?:\.\d+)?)/i), td = t.match(/今日[^\n]*?Q\s*[:：]?\s*(\d+(?:\.\d+)?)/);
+  const cx = t.match(/今日[^\n]*?C\s*[:：]?\s*(\d+)/);
+  if (mx && td && +td[1] < +mx[1] || (cx && +cx[1] < 100)) add('ask', '今日のTQCがMAXに届いていません', 'T・Q・Cのどれが、いくつ足りなかったのか。その下にレビューを書きましたか。');
+  if (mx && td && +td[1] > +mx[1]) add('ng', '今日のQがMAXより大きくなっています', 'MAXは「その日に取りうる上限」です。数字を見直しましょう。');
+
+  // 仕組み
+  if (has(/仕組み/) && !has(/[⭕❌◯○×✕✖]/)) add('ng', '仕組みの達成度に ⭕️❌ が付いていません', 'できたかできなかったか、丸かバツだけです。❌なら理由と改善を書きます。');
+  if (has(/△/)) add('ask', '△ があります', '三角はありません。できたかできなかったか、⭕️か❌のどちらかにしましょう。');
+
+  // アフター
+  if (has(/やってみ(ます|たい)|試し(ます|てみ)|していきます|しようと思/)) add('ask', '「やります」で終わっている所があります', 'やったら、どうなったかを次の報告で書きます（アフター）。いつ報告するか、日付も決めましょう。');
+
+  return out;
+}
+
+function renderSelf(){
+  const t = $('report').value.trim();
+  const box = $('selfOut'); box.innerHTML = '';
+  if (t.length < 80) { box.append(el('p',{class:'mini'},'報告を入れると、ここに結果が出ます。')); return; }
+  const res = selfCheck(t);
+  if (!res.length) {
+    box.append(el('p',{class:'sum'},'✅ いつもの指摘に当たる所は見つかりませんでした'));
+    box.append(el('p',{class:'mini'},'中身（何を・なぜ間違えて・どう覚えて・どうなったか）が書けているかは、AIレビューで見てもらいましょう。'));
+    return;
+  }
+  const ng = res.filter(r => r.type==='ng').length;
+  box.append(el('p',{class:'sum'}, `直したい所 ${ng}個 ／ 確かめたい所 ${res.length-ng}個`));
+  const ul = el('ul',{class:'chk'});
+  res.forEach(r => {
+    const body = el('div',{}, el('b',{},r.title));
+    if (r.words) body.append(el('span',{class:'q'}, ...r.words.map(w => [el('span',{class:'w'}, '「'+w+'」'), ' '])));
+    body.append(el('span',{class:'q'}, r.q));
+    ul.append(el('li',{class:r.type}, el('span',{class:'mk'}, r.type==='ng'?'！':'？'), body));
+  });
+  box.append(ul);
+}
+
+/* ── 入力 ─────────────────────────────────────── */
+const ta = $('report');
+ta.value = S.draft || '';
+function onInput(){ $('count').textContent = ta.value.length + '字'; S.draft = ta.value; save(); renderSelf(); }
+let inT; ta.addEventListener('input', ()=>{ clearTimeout(inT); inT = setTimeout(onInput, 250); });
+$('pasteBtn').onclick = async () => {
+  try{ const t = await navigator.clipboard.readText(); if (t) { ta.value = t; onInput(); toast('貼りつけました'); } else toast('コピーした文がありません'); }
+  catch(e){ ta.focus(); toast('入力欄を長押しして「ペースト」してください'); }
+};
+$('clearBtn').onclick = () => { ta.value=''; onInput(); $('aiOut').hidden = true; $('aiState').innerHTML=''; };
+
+// 同じサイトにある「勉強報告」アプリで今日作った報告があれば、1タップで入れられる
+function reportAppToday(){
+  try{ const s = JSON.parse(localStorage.getItem(REPORT_APP_KEY)); const h = s && s.history && s.history[0]; return (h && h.text) ? h : null; }catch(e){ return null; }
+}
+const rep = reportAppToday();
+if (rep) { $('loadBtn').hidden = false; $('loadBtn').textContent = '📄 勉強報告アプリの最新（'+rep.date+'）を入れる'; $('loadBtn').onclick = () => { ta.value = rep.text; onInput(); toast('入れました'); }; }
+
+/* ── AIレビュー ───────────────────────────────── */
+let lastReview = '';
+function showReview(txt){
+  lastReview = txt;
+  $('reviewText').textContent = txt;
+  $('aiOut').hidden = false;
+  const both = ta.value.trim() + '\n\n' + txt;
+  const n = $('lenNote');
+  if (both.length > 2000) { n.hidden = false; n.textContent = `報告＋レビューで ${both.length}字あります。Discord は1回2000字までなので、報告とレビューを2回に分けて出してください。`; }
+  else n.hidden = true;
+  if (navigator.share) $('shareBtn').hidden = false;
+}
+$('copyReview').onclick = () => copy(lastReview, 'レビューをコピーしました');
+$('copyBoth').onclick = () => copy(ta.value.trim() + '\n\n' + lastReview, '報告＋レビューをコピーしました');
+$('shareBtn').onclick = async () => { try{ await navigator.share({text:lastReview}); }catch(e){} };
+
+function state(node){ const s = $('aiState'); s.innerHTML=''; if (node) s.append(node); }
+$('aiBtn').onclick = async () => {
+  const report = ta.value.trim();
+  if (report.length < 150) { state(el('div',{class:'note warn'},'勉強報告の全文を入れてください（短すぎます）。')); return; }
+  if (!API) { state(el('div',{class:'note gold'},'AIレビューは準備中です。ヒラ先生からの案内をお待ちください。それまでは上のセルフチェックを使ってください。')); return; }
+  const btn = $('aiBtn'); btn.disabled = true; $('aiOut').hidden = true;
+  state(el('div',{class:'wait'}, el('span',{class:'spin'}), 'レビューを書いています（30秒〜1分ほど）…'));
+  try{
+    const r = await fetch(API, {method:'POST', headers:{'content-type':'application/json','x-device-id':S.dev}, body:JSON.stringify({report, pass:S.pass})});
+    const j = await r.json().catch(()=>null);
+    if (!r.ok || !j || !j.review) {
+      const type = j && j.error && j.error.type, msg = (j && j.error && j.error.message) || 'うまくいきませんでした。少し待ってからもう一度ためしてください。';
+      state(el('div',{class:'note warn'}, msg));
+      if (type === 'bad_pass') openSheet('setSheet');
+      return;
+    }
+    state(typeof j.left === 'number' ? el('p',{class:'mini'}, `今日はあと ${Math.max(0,j.left)}回 使えます`) : null);
+    showReview(j.review);
+    S.hist.unshift({date:today(), at:Date.now(), review:j.review, head:report.slice(0,60)}); S.hist = S.hist.slice(0,40); save();
+    $('aiOut').scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(e){
+    state(el('div',{class:'note warn'},'通信できませんでした。電波のよい所でもう一度ためしてください。'));
+  }finally{ btn.disabled = false; }
+};
+
+/* ── シート ───────────────────────────────────── */
+function openSheet(id){ $(id).hidden = false; }
+document.querySelectorAll('.sheet').forEach(s => s.addEventListener('click', e => { if (e.target === s || e.target.hasAttribute('data-close')) s.hidden = true; }));
+$('setBtn').onclick = () => { $('passInput').value = S.pass || ''; openSheet('setSheet'); };
+$('passSave').onclick = () => { S.pass = $('passInput').value.trim(); save(); $('setSheet').hidden = true; toast('保存しました'); };
+$('histBtn').onclick = () => {
+  const b = $('histBody'); b.innerHTML = '';
+  if (!S.hist.length) b.append(el('p',{class:'mini'},'まだレビューがありません。'));
+  S.hist.forEach(h => b.append(el('div',{class:'hist'},
+    el('div',{class:'d'}, h.date, el('button',{class:'btn',style:'min-height:36px;padding:6px 12px',onclick:()=>copy(h.review,'コピーしました')},'コピー')),
+    el('pre',{}, h.review))));
+  openSheet('histSheet');
+};
+
+$('ver').textContent = '報告レビュー v' + VER;
+onInput();
+</script>
+</body>
+</html>

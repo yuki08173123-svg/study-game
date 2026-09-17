@@ -72,9 +72,9 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
 
 /* タブ */
 .tabs{display:flex; gap:6px; margin:22px 0 12px; background:var(--chip); border-radius:999px; padding:4px;}
-.tabs button{flex:1; padding:9px 0; border-radius:999px; font-size:14px; font-weight:700; color:var(--muted);}
+.tabs button{flex:1; padding:9px 0; border-radius:999px; font-size:13px; white-space:nowrap; font-weight:700; color:var(--muted);}
 .tabs button.on{background:var(--card); color:var(--ink); box-shadow:var(--shadow);}
-.tabs .cnt{display:inline-block; min-width:20px; margin-left:4px; font-size:12px; padding:0 6px; border-radius:999px; background:var(--accent-soft); color:var(--accent-deep);}
+.tabs .cnt{display:inline-block; min-width:18px; margin-left:3px; font-size:12px; padding:0 6px; border-radius:999px; background:var(--accent-soft); color:var(--accent-deep);}
 
 /* メモ一覧 */
 .list{display:flex; flex-direction:column; gap:10px;}
@@ -89,6 +89,13 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
 
 .empty{text-align:center; color:var(--muted); padding:36px 12px; font-size:14px;}
 .empty svg{width:40px; height:40px; stroke:var(--line); stroke-width:1.6; margin-bottom:6px;}
+
+.mode{display:flex; gap:6px; margin-bottom:8px;}
+.mode button{font-size:13px; font-weight:700; border-radius:999px; padding:5px 12px; background:var(--chip); color:var(--muted); display:flex; align-items:center; gap:4px;}
+.mode button svg{width:15px; height:15px;}
+.mode button.on{background:var(--accent); color:var(--accent-ink);}
+.keep .pin{flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent-soft); display:grid; place-items:center; color:var(--accent-deep); margin-top:2px;}
+.keep .pin svg{width:15px; height:15px;}
 
 /* 記録 */
 .recSum{font-size:13px; color:var(--muted); margin:0 2px 10px;}
@@ -132,20 +139,29 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
   <button class="update hidden" id="btnUpdate"><span id="updText">新しいバージョンがあります</span><b>更新</b></button>
 
   <section class="compose">
+    <div class="mode" id="mode">
+      <button class="on" data-mode="idea"><svg class="i" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>ひらめき</button>
+      <button data-mode="keep"><svg class="i" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>残すメモ</button>
+    </div>
     <textarea id="inp" placeholder="ひらめいたことを、そのまま書く" rows="3"></textarea>
     <div class="row">
-      <span class="hint" id="hint">書いたら「メモ」</span>
+      <span class="hint" id="hint">済んだら「消す」で片づけるメモ</span>
       <button class="btnAdd" id="btnAdd" disabled><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>メモ</button>
     </div>
   </section>
 
   <nav class="tabs">
-    <button class="on" data-tab="memo">メモ<span class="cnt num" id="cntMemo">0</span></button>
+    <button class="on" data-tab="memo">ひらめき<span class="cnt num" id="cntMemo">0</span></button>
+    <button data-tab="keep">残すメモ<span class="cnt num" id="cntKeep">0</span></button>
     <button data-tab="rec">消した記録<span class="cnt num" id="cntRec">0</span></button>
   </nav>
 
   <section id="tab-memo">
     <div class="list" id="memoList"></div>
+  </section>
+
+  <section id="tab-keep" class="hidden">
+    <div class="list" id="keepList"></div>
   </section>
 
   <section id="tab-rec" class="hidden">
@@ -173,7 +189,7 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
 <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastBtn" class="hidden">元に戻す</button></div>
 
 <script>
-const VER = 2;
+const VER = 3;
 const KEY = 'idea_v1', BAK = 'idea_backup';
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -206,10 +222,22 @@ function fmtWhen(ms){ return fmtDay(ms)+' '+fmtTime(ms); }
 
 /* ===== 表示 ===== */
 function render(){
-  const memos = S.items.filter(x => !x.cleared).sort((a,b) => b.created - a.created);
+  const memos = S.items.filter(x => x.kind !== 'keep' && !x.cleared).sort((a,b) => b.created - a.created);
+  const keeps = S.items.filter(x => x.kind === 'keep').sort((a,b) => b.created - a.created);
   const recs = S.items.filter(x => x.cleared).sort((a,b) => b.cleared - a.cleared);
   $('#cntMemo').textContent = memos.length;
   $('#cntRec').textContent = recs.length;
+  $('#cntKeep').textContent = keeps.length;
+
+  $('#keepList').innerHTML = keeps.length ? keeps.map(x => `
+    <div class="item keep">
+      <span class="pin"><svg class="i" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg></span>
+      <div class="body" data-edit="${x.id}">
+        <div class="txt">${esc(x.text)}</div>
+        <div class="meta">${fmtWhen(x.created)}<button class="wipe" data-wipe="${x.id}">丸ごと消す</button></div>
+      </div>
+    </div>`).join('')
+    : '<div class="empty">まだありません。<br>上で「残すメモ」を選んで書くと、ここにずっと残ります。</div>';
 
   $('#memoList').innerHTML = memos.length ? memos.map(x => `
     <div class="item" data-id="${x.id}">
@@ -235,7 +263,7 @@ function render(){
           <div class="txt">${esc(x.text)}</div>
           <div class="meta">メモ ${fmtWhen(x.created)} → 消した ${fmtTime(x.cleared)}</div>
           <div class="acts">
-            <button data-restore="${x.id}">メモに戻す</button>
+            <button data-restore="${x.id}">ひらめきに戻す</button>
             <button class="del" data-del="${x.id}">丸ごと消す</button>
           </div>
         </div>
@@ -256,14 +284,25 @@ inp.addEventListener('keydown', e => { if(e.key === 'Enter' && (e.metaKey || e.c
 function addMemo(){
   const text = inp.value.trim();
   if(!text) return;
-  S.items.push({ id:uid(), text, created:Date.now(), cleared:null });
+  if(mode === 'keep') S.items.push({ id:uid(), kind:'keep', text, created:Date.now(), cleared:null });
+  else S.items.push({ id:uid(), text, created:Date.now(), cleared:null });
   save();
   inp.value = ''; syncBtn();
-  showTab('memo');
+  showTab(mode === 'keep' ? 'keep' : 'memo');
   render();
-  toast('メモしました');
+  toast(mode === 'keep' ? '残すメモに入れました' : 'メモしました');
 }
 $('#btnAdd').onclick = addMemo;
+
+/* ひらめき／残すメモ の切りかえ（タブと連動） */
+let mode = 'idea';
+function setMode(m){
+  mode = m;
+  document.querySelectorAll('#mode button').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+  inp.placeholder = m === 'keep' ? '残しておきたいことを書く' : 'ひらめいたことを、そのまま書く';
+  $('#hint').textContent = m === 'keep' ? '消すまでずっと残るメモ' : '済んだら「消す」で片づけるメモ';
+}
+$('#mode').addEventListener('click', e => { const b = e.target.closest('button'); if(b){ setMode(b.dataset.mode); showTab(b.dataset.mode === 'keep' ? 'keep' : 'memo'); inp.focus(); } });
 
 /* ===== 消す（記録は残る） ===== */
 function find(id){ return S.items.find(x => x.id === id); }
@@ -284,13 +323,20 @@ $('#memoList').addEventListener('click', e => {
   if(ed) openEdit(ed.dataset.edit);
 });
 
+$('#keepList').addEventListener('click', e => {
+  const w = e.target.closest('[data-wipe]');
+  if(w){ wipe(w.dataset.wipe); return; }
+  const ed = e.target.closest('[data-edit]');
+  if(ed) openEdit(ed.dataset.edit);
+});
+
 $('#recList').addEventListener('click', e => {
   const r = e.target.closest('[data-restore]');
   if(r){
     const x = find(r.dataset.restore); if(!x) return;
     const was = x.cleared;
     x.cleared = null; save(); render();
-    toast('メモに戻しました', () => { x.cleared = was; save(); render(); });
+    toast('ひらめきに戻しました', () => { x.cleared = was; save(); render(); });
     return;
   }
   const d = e.target.closest('[data-del]');
@@ -326,7 +372,9 @@ $('#editOk').onclick = () => {
 function showTab(t){
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   $('#tab-memo').classList.toggle('hidden', t !== 'memo');
+  $('#tab-keep').classList.toggle('hidden', t !== 'keep');
   $('#tab-rec').classList.toggle('hidden', t !== 'rec');
+  if(t === 'keep') setMode('keep'); else if(t === 'memo') setMode('idea');
 }
 document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('button'); if(b) showTab(b.dataset.tab); });
 

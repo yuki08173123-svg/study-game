@@ -2,7 +2,7 @@
    方針:「ネットワーク優先」。まずネットから最新をとり、とれたものをキャッシュに控える。
    ネットがないときだけキャッシュで動く。キャッシュを先に見る方式にすると
    「直したのに古い画面が出る」事故になるので、ぜったいにしない。 */
-const VER = 'id-v2';
+const VER = 'id-v3';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {

@@ -82,7 +82,8 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
 .item.leaving{opacity:0; transform:translateX(40px);}
 .item .body{flex:1; min-width:0;}
 .item .txt{white-space:pre-wrap; word-break:break-word; font-size:16px;}
-.item .meta{font-size:12px; color:var(--muted); margin-top:4px;}
+.item .meta{font-size:12px; color:var(--muted); margin-top:4px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.item .wipe{font-size:12px; font-weight:700; color:var(--del); padding:2px 0;}
 .item .clear{flex:none; display:flex; flex-direction:column; align-items:center; gap:1px; color:var(--done); background:var(--done-soft); border-radius:12px; padding:8px 10px; font-size:11px; font-weight:900;}
 .item .clear svg{width:22px; height:22px; stroke-width:2.6;}
 
@@ -172,7 +173,7 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
 <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastBtn" class="hidden">元に戻す</button></div>
 
 <script>
-const VER = 1;
+const VER = 2;
 const KEY = 'idea_v1', BAK = 'idea_backup';
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -214,7 +215,7 @@ function render(){
     <div class="item" data-id="${x.id}">
       <div class="body" data-edit="${x.id}">
         <div class="txt">${esc(x.text)}</div>
-        <div class="meta">${fmtWhen(x.created)}</div>
+        <div class="meta">${fmtWhen(x.created)}<button class="wipe" data-wipe="${x.id}">丸ごと消す</button></div>
       </div>
       <button class="clear" data-clear="${x.id}" aria-label="消す">${ICON_CHECK}消す</button>
     </div>`).join('')
@@ -235,7 +236,7 @@ function render(){
           <div class="meta">メモ ${fmtWhen(x.created)} → 消した ${fmtTime(x.cleared)}</div>
           <div class="acts">
             <button data-restore="${x.id}">メモに戻す</button>
-            <button class="del" data-del="${x.id}">記録からも消す</button>
+            <button class="del" data-del="${x.id}">丸ごと消す</button>
           </div>
         </div>
       </div>`;
@@ -277,6 +278,8 @@ $('#memoList').addEventListener('click', e => {
     toast('消しました（記録に残っています）', () => { x.cleared = null; save(); render(); });
     return;
   }
+  const w = e.target.closest('[data-wipe]');
+  if(w){ wipe(w.dataset.wipe); return; }
   const ed = e.target.closest('[data-edit]');
   if(ed) openEdit(ed.dataset.edit);
 });
@@ -291,13 +294,16 @@ $('#recList').addEventListener('click', e => {
     return;
   }
   const d = e.target.closest('[data-del]');
-  if(d){
-    const x = find(d.dataset.del); if(!x) return;
-    if(!confirm('このメモを記録からも消します。元に戻せません。よろしいですか？\n\n「' + x.text.slice(0,40) + (x.text.length > 40 ? '…' : '') + '」')) return;
-    S.items = S.items.filter(y => y !== x); save(); render();
-    toast('記録からも消しました');
-  }
+  if(d) wipe(d.dataset.del);
 });
+
+/* ===== 丸ごと消す（記録にも残さない） ===== */
+function wipe(id){
+  const x = find(id); if(!x) return;
+  if(!confirm('このメモを丸ごと消します。「消した記録」にも残りません。元に戻せません。よろしいですか？\n\n「' + x.text.slice(0,40) + (x.text.length > 40 ? '…' : '') + '」')) return;
+  S.items = S.items.filter(y => y !== x); save(); render();
+  toast('丸ごと消しました');
+}
 
 /* ===== 直す ===== */
 let editId = null;

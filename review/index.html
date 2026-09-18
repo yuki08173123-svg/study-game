@@ -60,6 +60,8 @@ input[type=text]{width:100%;border:1.5px solid var(--line);border-radius:12px;ba
 .btn.block{width:100%}
 .btn:disabled{opacity:.5;cursor:default}
 .count{font-size:12px;color:var(--muted);text-align:right;margin-top:4px}
+.lbl{font-size:13px;font-weight:900;color:var(--muted);margin:14px 0 6px}
+textarea.out{min-height:200px;font-size:15px;line-height:1.7}
 
 /* セルフチェック */
 .chk{list-style:none;margin:0;padding:0}
@@ -123,11 +125,21 @@ input[type=text]{width:100%;border:1.5px solid var(--line);border-radius:12px;ba
 
   <section class="card">
     <h2><span class="n">2</span>セルフチェック<span class="mini" style="margin-left:auto">すぐ出る・何回でも</span></h2>
-    <p class="hint">ヒラ先生がいつも指摘する所を、この端末の中だけで調べます。</p>
+    <p class="hint">ヒラ先生がいつも指摘する所を、この端末の中だけで調べます。直せる所は直して、答えられる所は下の文章に書きこんで、報告に添えて出しましょう。</p>
     <div id="selfOut"><p class="mini">報告を入れると、ここに結果が出ます。</p></div>
+    <div id="selfTextWrap" hidden>
+      <div class="lbl">📝 報告に添える文章（→ の後ろに、直したこと・答えを書けます）</div>
+      <textarea id="selfText" class="out" spellcheck="false"></textarea>
+      <div class="row">
+        <button class="btn done" id="copySelf">この文章をコピー</button>
+        <button class="btn" id="copySelfBoth">報告＋この文章をコピー</button>
+        <button class="btn" id="remakeSelf">作り直す</button>
+      </div>
+      <div class="note gold" id="selfLenNote" hidden></div>
+    </div>
   </section>
 
-  <section class="card">
+  <section class="card" id="aiCard">
     <h2><span class="n">3</span>AIレビューをもらう</h2>
     <p class="hint">ヒラ先生の過去のレビュー約400本をもとに、AIがレビューを書きます。セルフチェックで直せる所を直してから押すのがおすすめです。</p>
     <button class="btn primary block" id="aiBtn">🤖 AIレビューをもらう</button>
@@ -170,7 +182,7 @@ input[type=text]{width:100%;border:1.5px solid var(--line);border-radius:12px;ba
 </div>
 
 <script>
-const VER = 1;
+const VER = 2;
 /* AIレビューの中継サーバー（Cloudflare Worker）。空のあいだは「準備中」と出る */
 const API = '';
 const KEY = 'reportreview-v1';
@@ -251,6 +263,21 @@ function selfCheck(raw){
   if (hasMiss && !has(/なぜ|なんで|原因|理由|ため[、。]|から[、。]|ので/)) add('ng', '「なんで間違えたか」が見当たりません', 'どういう問題で、何を、なぜ間違えたのか。どうしておけば取れたのか。ここが中身です。');
   if (has(/計算ミス|ケアレスミス|凡ミス|暗記不足|勉強不足|バックスキャン不足/)) add('ask', '「計算ミス」「暗記不足」などのラベルで終わっていませんか', 'どういうミスですか。次はどういうバックスキャンをしますか（どこを・どう確認するか）。なんでできなかったんですか。');
 
+  // 今日のタスクの5点セット（時間・正答率）
+  const todayIdx = t.search(/今日のタスク|本日のタスク/);
+  if (todayIdx >= 0) {
+    const rest = t.slice(todayIdx);
+    const end = rest.search(/\n\s*(③|レビュー|④|仕組み|MAX)/i);
+    const lines = rest.slice(0, end > 0 ? end : 600).split('\n').slice(1).map(l => l.trim()).filter(l => l && /[A-Za-z\u3040-\u30ff\u4e00-\u9fff]/.test(l) && !/^(MAX|今日|TQC)/i.test(l));
+    const noTime = lines.filter(l => !/\d\s*(分|m|h|時間|min|H)/i.test(l)).length;
+    const noPct = lines.filter(l => !/[%％]/.test(l)).length;
+    if (lines.length && noTime >= Math.ceil(lines.length/2)) add('ng', '今日のタスクに「時間」が書かれていない行があります', '5点セット（教科・教材名・範囲・時間・正答率）です。時間は測って書きましょう。');
+    if (lines.length && noPct >= Math.ceil(lines.length/2)) add('ng', '今日のタスクに「正答率」が書かれていない行があります', '最初→最後の正答率を書きましょう（例 55%→100%）。');
+  }
+  if (has(/長期/) && !has(/周/)) add('ask', '長期のタスクに「何周」が見当たりません', '教材・範囲・周回数・周回ごとの期限、がそろっているか見直しましょう。');
+  if (has(/(chatgpt|gpt|gemini|claude|AI|動画)[^。\n]{0,15}(理解|分か|わか|解決|納得)/i)) add('ask', 'AIや動画で「理解した」で終わっていませんか', '聞いて分かった、は理解した気になっているだけのことが多いです。すぐブルポして、自力で手を動かして解き直しましたか。');
+  if (has(/したいです|していきたい|できるようにしたい|上げたい|減らしたい/)) add('ask', '「〜したい」で終わっている所があります', '願望ではなく方法です。何を・いつ・どうやるかまで書きましょう。');
+
   // 期限
   if (has(/未定|作成中|そのうち|近いうち|来週|テスト前まで/)) add('ask', '期限があいまいな所があります', '何月何日、で書きましょう。暫定でも先に日付を決めないと「いつでもいいや」になります。');
   if (has(/長期/) && !has(/\d{1,2}\s*[\/月]\s*\d{1,2}/)) add('ng', '長期のタスクに日付がありません', '「◯月◯日まで ◯周目 教材名」を、1周目・2周目・3周目それぞれに書きましょう。');
@@ -274,8 +301,9 @@ function selfCheck(raw){
 function renderSelf(){
   const t = $('report').value.trim();
   const box = $('selfOut'); box.innerHTML = '';
-  if (t.length < 80) { box.append(el('p',{class:'mini'},'報告を入れると、ここに結果が出ます。')); return; }
+  if (t.length < 80) { box.append(el('p',{class:'mini'},'報告を入れると、ここに結果が出ます。')); renderSelfText(null); return; }
   const res = selfCheck(t);
+  renderSelfText(res, false);
   if (!res.length) {
     box.append(el('p',{class:'sum'},'✅ いつもの指摘に当たる所は見つかりませんでした'));
     box.append(el('p',{class:'mini'},'中身（何を・なぜ間違えて・どう覚えて・どうなったか）が書けているかは、AIレビューで見てもらいましょう。'));
@@ -292,6 +320,42 @@ function renderSelf(){
   });
   box.append(ul);
 }
+
+/* ── チェック結果を、報告に添える文章にする ─────────────────── */
+let selfEdited = false;
+function selfToText(res){
+  const ng = res.filter(r => r.type==='ng'), ask = res.filter(r => r.type==='ask');
+  const L = ['【セルフチェック】', 'お疲れさんです。見ていきます。', ''];
+  if (!res.length) {
+    L.push('いつもの指摘に当たる所は見つかりませんでした。中身（何を・なぜ間違えて・どう覚えて・どうなったか）が書けているかは、レビューで見てもらいます。', '');
+  }
+  if (ng.length) {
+    L.push('▼ 直すところ');
+    ng.forEach((r,i) => { L.push(`${i+1}. ${r.title}${r.words ? '（' + r.words.map(w=>'「'+w+'」').join('') + '）' : ''}`); L.push('　' + r.q); L.push('　→ '); });
+    L.push('');
+  }
+  if (ask.length) {
+    L.push('？ 確かめたいところ');
+    ask.forEach(r => { L.push('・' + r.title); L.push('　' + r.q); L.push('　→ '); });
+    L.push('');
+  }
+  L.push('はい、以上です。', '※アプリの自動チェックです。ヒラ先生のレビューではありません。');
+  return L.join('\n');
+}
+function renderSelfText(res, force){
+  const w = $('selfTextWrap'), ta2 = $('selfText');
+  if (!res) { w.hidden = true; return; }
+  w.hidden = false;
+  if (!selfEdited || force) { ta2.value = selfToText(res); selfEdited = false; }
+  const both = $('report').value.trim() + '\n\n' + ta2.value;
+  const n = $('selfLenNote');
+  if (both.length > 2000) { n.hidden = false; n.textContent = `報告＋文章で ${both.length}字あります。Discord は1回2000字までなので、2回に分けて出してください。`; }
+  else n.hidden = true;
+}
+$('selfText').addEventListener('input', () => { selfEdited = true; renderSelfText([], false); });
+$('copySelf').onclick = () => copy($('selfText').value, '文章をコピーしました');
+$('copySelfBoth').onclick = () => copy($('report').value.trim() + '\n\n' + $('selfText').value, '報告＋文章をコピーしました');
+$('remakeSelf').onclick = () => { renderSelfText(selfCheck($('report').value.trim()), true); toast('作り直しました'); };
 
 /* ── 入力 ─────────────────────────────────────── */
 const ta = $('report');
@@ -366,6 +430,7 @@ $('histBtn').onclick = () => {
   openSheet('histSheet');
 };
 
+$('aiCard').hidden = !API;
 $('ver').textContent = '報告レビュー v' + VER;
 onInput();
 </script>

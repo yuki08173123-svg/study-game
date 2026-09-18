@@ -182,7 +182,7 @@ textarea.out{min-height:200px;font-size:15px;line-height:1.7}
 </div>
 
 <script>
-const VER = 5;
+const VER = 6;
 /* AIレビューの中継サーバー（Cloudflare Worker）。空のあいだは「準備中」と出る */
 const API = '';
 const KEY = 'reportreview-v1';
@@ -350,15 +350,11 @@ function renderSelf(){
 /* ── チェック結果を、報告に添える文章にする ─────────────────── */
 let selfEdited = false;
 function selfToText(res){
-  if (!res.length) return 'セルフチェックでは、いつもの指摘に当たる所はありませんでした。このまま出して大丈夫です。';
-  const ng = res.filter(r => r.type==='ng'), ask = res.filter(r => r.type==='ask');
-  const items = [...ng, ...ask];
-  // 書き出しは毎回同じにしない（報告文から決めるので、同じ報告なら同じ文になる）
-  const seed = [...$('report').value].reduce((a,c) => (a*31 + c.charCodeAt(0)) >>> 0, 7);
-  const heads = ['', '', '以下が改善点です。', '気になった所をまとめます。', '次に出すときに直したい所です。', ''];
-  const head = ng.length ? heads[seed % heads.length] : ['', '出す前に、確かめたい所があります。'][seed % 2];
+  const head = '以下レビューです。';
+  if (!res.length) return head + '\n\nセルフチェックでは、いつもの指摘に当たる所はありませんでした。このまま出して大丈夫です。';
+  const items = [...res.filter(r => r.type==='ng'), ...res.filter(r => r.type==='ask')];
   const body = items.length >= 3 ? items.map((r,i) => `${i+1}. ${r.s}`).join('\n\n') : items.map(r => r.s).join('\n\n');
-  return head ? head + '\n\n' + body : body;
+  return head + '\n\n' + body;
 }
 function renderSelfText(res, force){
   const w = $('selfTextWrap'), ta2 = $('selfText');

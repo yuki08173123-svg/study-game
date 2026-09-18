@@ -409,7 +409,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 27;
+const VER = 28;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -1238,15 +1238,9 @@ async function storageSheet(title){
       形式が原因のこともあります。写真アプリからではなく「ファイル」から選んだ場合は、
       いったん写真アプリに保存してから選び直すと通ることがあります。</div>
     <button class="btn sec" id="stExport" style="margin-top:16px">いま JSON で書き出す</button>
-    <button class="btn danger" id="stTrash" style="margin-top:8px">ゴミ箱を空にする（${bin}件）</button>`, close => {
+    <button class="btn danger" id="stTrash" style="margin-top:8px">ゴミ箱を開く（${bin}件）</button>`, close => {
     $('#stExport').onclick = () => { close(); expJson(); };
-    $('#stTrash').onclick = async () => {
-      if(!confirm('ゴミ箱の中を完全に消します。もう戻せません。よろしいですか？')) return;
-      const b = notes.filter(n => n.del);
-      for(const n of b) for(const i of (n.imgs || [])){ urlCache.delete(i); try{ await delImg(i); }catch(e){} }
-      notes = notes.filter(n => !n.del);
-      saveNotes(); close(); render(); toast('ゴミ箱を空にしました');
-    };
+    $('#stTrash').onclick = () => { close(); trashSheet(); };
   });
 }
 function doSave(){
@@ -1867,37 +1861,83 @@ function moveSheet(n){
     n.fid = id; n.upd = now(); saveNotes(); render(); toast('移動しました');
   }, 'フォルダを移動');
 }
+async function wipeNotes(list){                 // 完全に削除（写真も消す）
+  const ids = list.map(n => n.id);
+  for(const n of list) for(const i of (n.imgs || [])){ urlCache.delete(i); try{ await delImg(i); }catch(e){} }
+  notes = notes.filter(n => !ids.includes(n.id));
+  saveNotes();
+}
 function trashSheet(){
+  let openId = '', askId = '', askAll = false;   // 中身を開いているメモ・最終確認をしているメモ
   const paint = () => {
     const bin = notes.filter(n => n.del).sort((a,b) => b.upd - a.upd);
     const box = $('#tlist');
     if(!box) return;
-    box.innerHTML = bin.length ? `<div class="group">${bin.map(n => {
+    const pics = bin.reduce((a, n) => a + (n.imgs || []).length, 0);
+    box.innerHTML = bin.length ? `${bin.map(n => {
       const lead = (n.body || '').split('\n').find(l => l.trim()) || '（写真のみ）';
-      return `<div class="item">
-        <span class="nm" style="font-weight:500">${esc(lead.slice(0, 40))}${n.autoDel ? ' <span class="tag" style="background:var(--surf2);color:var(--ink3)">自動</span>' : ''}</span>
-        <button class="pill" data-back="${n.id}">戻す</button>
+      const open = openId === n.id, ask = askId === n.id;
+      const np = (n.imgs || []).length;
+      return `<div class="group" style="margin-bottom:9px">
+        <div class="item" data-open="${n.id}">
+          <span class="nm" style="font-weight:500">${esc(lead.slice(0, 40))}${n.autoDel ? ' <span class="tag" style="background:var(--surf2);color:var(--ink3)">自動</span>' : ''}</span>
+          <button class="pill" data-back="${n.id}">戻す</button>
+          <span class="chev">${(open ? ICO.chevU : ICO.chevD)({ s:17, w:2.2 })}</span>
+        </div>
+        ${open ? `<div style="padding:2px 15px 15px">
+          <div class="note-txt" style="white-space:pre-wrap;word-break:break-word;max-height:38vh;overflow:auto">${esc((n.body || '').trim()) || '（本文はありません）'}</div>
+          ${np ? `<div class="thumbs" style="margin-top:10px">${thumbsHtml(n.imgs)}</div>` : ''}
+          <div class="note-txt" style="margin-top:8px">${fmtDate(n.cre)}に書いたメモ${np ? `・写真${np}枚` : ''}</div>
+          ${ask ? `<div class="warn" style="margin-top:12px"><div class="wtxt">
+              <b>このメモを完全に消します</b>
+              <div>${np ? `写真${np}枚もいっしょに消えます。` : ''}もう戻せません。</div></div>
+              <div class="wact">
+                <button class="pill" data-no="${n.id}">やめる</button>
+                <button class="pill" data-yes="${n.id}" style="color:var(--ng)">完全に消す</button>
+              </div></div>`
+            : `<button class="btn danger" data-ask="${n.id}" style="margin-top:12px">このメモを完全に削除</button>`}
+        </div>` : ''}
       </div>`;
-    }).join('')}</div>
-    <button class="btn danger" id="tempty" style="margin-top:14px">ゴミ箱を空にする（${bin.length}件）</button>`
+    }).join('')}
+    ${askAll ? `<div class="warn" style="margin-top:14px"><div class="wtxt">
+        <b>ゴミ箱の${bin.length}件を完全に消します</b>
+        <div>${pics ? `写真${pics}枚もいっしょに消えます。` : ''}もう戻せません。消す前に、上のメモを開いて中身を確かめてください。</div></div>
+        <div class="wact">
+          <button class="pill" id="tno">やめる</button>
+          <button class="pill" id="tyes" style="color:var(--ng)">完全に消す</button>
+        </div></div>`
+      : `<button class="btn danger" id="tempty" style="margin-top:14px">ゴミ箱を空にする（${bin.length}件）</button>`}`
     : `<div class="empty" style="padding:34px 10px">ゴミ箱は空です</div>`;
-    $$('#tlist [data-back]').forEach(b => b.onclick = () => {
+    fillImgs(box);
+    $$('#tlist [data-open]').forEach(r => r.onclick = () => {
+      openId = openId === r.dataset.open ? '' : r.dataset.open; askId = ''; paint();
+    });
+    $$('#tlist [data-back]').forEach(b => b.onclick = e => {
+      e.stopPropagation();
       const n = notes.find(x => x.id === b.dataset.back);
       if(n){ n.del = false; delete n.autoDel; n.upd = now(); saveNotes(); }
-      paint(); toast('戻しました');
+      openId = ''; askId = ''; paint(); toast('戻しました');
+    });
+    $$('#tlist [data-ask]').forEach(b => b.onclick = () => { askId = b.dataset.ask; paint(); });
+    $$('#tlist [data-no]').forEach(b => b.onclick = () => { askId = ''; paint(); });
+    $$('#tlist [data-yes]').forEach(b => b.onclick = async () => {
+      const n = notes.find(x => x.id === b.dataset.yes);
+      if(n) await wipeNotes([n]);
+      openId = ''; askId = ''; paint(); render(); toast('完全に消しました');
     });
     const te = $('#tempty');
-    if(te) te.onclick = async () => {
-      if(!confirm('ゴミ箱の中を完全に消します。もう戻せません。よろしいですか？')) return;
-      const bin2 = notes.filter(n => n.del);
-      for(const n of bin2) for(const i of (n.imgs || [])){ urlCache.delete(i); try{ await delImg(i); }catch(e){} }
-      notes = notes.filter(n => !n.del);
-      saveNotes(); paint(); render(); toast('空にしました');
+    if(te) te.onclick = () => { askAll = true; openId = ''; askId = ''; paint(); };
+    const tn = $('#tno');
+    if(tn) tn.onclick = () => { askAll = false; paint(); };
+    const ty = $('#tyes');
+    if(ty) ty.onclick = async () => {
+      await wipeNotes(notes.filter(n => n.del));
+      askAll = false; paint(); render(); toast('空にしました');
     };
   };
   sheet(`<h3>ゴミ箱</h3>
     <div class="note-txt" style="margin:-10px 2px 14px">削除したメモはここに残ります。「戻す」でいつでも元に戻せます。
-      端末の容量を空けたいときだけ、空にしてください。</div>
+      メモを押すと中身を確かめられます。完全に消すのは、確かめてからにしてください。</div>
     <div id="tlist"></div>`, () => paint());
 }
 

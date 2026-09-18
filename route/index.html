@@ -280,6 +280,22 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 .tabbar svg{width:23px; height:23px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
 .tabbar span{font-size:12px; font-weight:700;}
 
+.maps{display:grid; grid-template-columns:1fr; gap:10px; margin-top:4px;}
+.mapcard{display:block; width:100%; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:var(--shadow);}
+.mapcard img{display:block; width:100%; height:auto; background:#fff;}
+.mapcard .mcap{display:block; padding:10px 12px;}
+.mapcard .mcap b{display:block; font-size:15px; font-weight:700;}
+.mapcard .mcap span{display:block; font-size:13px; color:var(--muted); margin-top:2px;}
+.mapmk{display:inline-block; margin-left:6px; font-style:normal; font-size:11px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:6px; padding:2px 6px; vertical-align:middle;}
+.lightbox{position:fixed; inset:0; z-index:90; background:rgba(8,14,24,.94); display:none; flex-direction:column;}
+.lightbox.on{display:flex;}
+.lbbar{display:flex; align-items:center; gap:10px; padding:calc(8px + env(safe-area-inset-top)) 12px 8px; color:#fff;}
+.lbbar > span{flex:1; font-size:15px; font-weight:700;}
+.lbbar .lbo{color:#fff; background:rgba(255,255,255,.16); border-radius:9px; padding:7px 11px; font-size:13px; font-weight:700; text-decoration:none;}
+.lbbar .lbx{color:#fff; background:rgba(255,255,255,.16); border-radius:9px; width:34px; height:34px; font-size:16px; font-weight:700;}
+.lbimg{flex:1; overflow:auto; -webkit-overflow-scrolling:touch; display:flex; align-items:flex-start;}
+.lbimg img{width:100%; height:auto; margin:auto;}
+.lblead{color:rgba(255,255,255,.7); font-size:12.5px; text-align:center; padding:8px 12px calc(10px + env(safe-area-inset-bottom));}
 .toast{position:fixed; left:50%; bottom:calc(84px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(10px);
   background:var(--navy1); color:#fff; font-size:14.5px; font-weight:600; padding:12px 20px; border-radius:12px; z-index:80;
   opacity:0; pointer-events:none; transition:.2s; box-shadow:var(--shadow-lg); max-width:88vw; text-align:center;}
@@ -351,9 +367,11 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
   <div class="shead"><b id="sheetTitle"></b><button class="x" id="sheetX">✕</button></div>
   <div class="sbody" id="sheetBody"></div>
 </div>
+<div class="lightbox" id="lightbox"></div>
 <div class="toast" id="toast"></div>
 
 <script src="data.js"></script>
+<script src="maps.js"></script>
 <script>
 /* HSYNC BEGIN ─────────────────────────────────────────────
    同期（スマホとパソコンで同じにする）。Takutoさんの要望（2026-09-11）。
@@ -724,7 +742,7 @@ const HSync = (function(){
 })();
 /* HSYNC END */
 
-const VER = 28;
+const VER = 29;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
 const EXTRA_MATH = ['nyumon_ia'];
@@ -826,7 +844,8 @@ function viewRoute(){
     ids.forEach(id => {
       const b = bookOf(id), sp = spanOf(b.title);
       const mk = S.mark[id] || 0;
-      h += '<button class="pick'+(mk ? ' marked' : '')+'" onclick="openBook(\''+id+'\')"><b>'+esc(shortTitle(b.title))+'</b>'
+      h += '<button class="pick'+(mk ? ' marked' : '')+'" onclick="openBook(\''+id+'\')"><b>'+esc(shortTitle(b.title))
+        + (mapsOf(id).length ? '<i class="mapmk">マップ</i>' : '')+'</b>'
         + (mk ? '<span class="mk">いまここ '+mk+'日目</span>' : (sp ? '<span>'+esc(sp)+'</span>' : '')) + '</button>';
     });
     h += '</div>';
@@ -1235,10 +1254,37 @@ function renderSheetBook(id){
     }
     h += planTables(v, id);
   }
+  h += mapsHTML(id);
   document.getElementById('sheetTitle').innerHTML = esc(shortTitle(b.title));
   document.getElementById('sheetBody').innerHTML = h;
   document.getElementById('sheetBody').scrollTop = 0;
 }
+/* ===== 極めた人のマップ ===== */
+function mapsOf(id){ return (typeof MAPS !== 'undefined' && MAPS[id]) ? MAPS[id] : []; }
+function mapsHTML(id){
+  const list = mapsOf(id); if(!list.length) return '';
+  let h = '<div class="sec-title" style="margin-top:14px">極めた人のマップ</div>';
+  h += '<div class="lead">この問題集を極めた塾生が、実際に使った<b>問題集マップ2・暗記マップ</b>です。'
+    + '何日で・何分かけて・何周で仕上げたかが、そのまま書いてあります。押すと大きく見られます。</div>';
+  h += '<div class="maps">';
+  list.forEach((m, i) => {
+    h += '<button class="mapcard" onclick="openMap(\''+id+'\','+i+')">'
+      + '<img loading="lazy" src="maps/'+m.f+'.jpg" alt="'+esc(m.t)+'">'
+      + '<span class="mcap"><b>'+esc(m.t)+'</b>'+(m.d ? '<span>'+esc(m.d)+'</span>' : '')+'</span></button>';
+  });
+  return h + '</div>';
+}
+function openMap(id, i){
+  const m = mapsOf(id)[i]; if(!m) return;
+  const box = document.getElementById('lightbox');
+  box.innerHTML = '<div class="lbbar"><span>'+esc(m.t)+'</span>'
+    + '<a class="lbo" href="maps/orig/'+m.f+'.jpg" target="_blank" rel="noopener">原本を開く</a>'
+    + '<button class="lbx" onclick="closeMap()">✕</button></div>'
+    + '<div class="lbimg"><img src="maps/'+m.f+'.jpg" alt="'+esc(m.t)+'"></div>'
+    + '<div class="lblead">指でひろげると拡大できます。もっと大きく見たいときは「原本を開く」。</div>';
+  box.classList.add('on');
+}
+function closeMap(){ const b = document.getElementById('lightbox'); b.classList.remove('on'); b.innerHTML = ''; }
 function pickVar(id, i){ S.vari[id] = i; save(); renderSheetBook(id); }
 
 /* ===== すごろく（いまここ） ===== */

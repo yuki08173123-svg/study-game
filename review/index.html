@@ -96,6 +96,19 @@ textarea.out{min-height:200px;font-size:15px;line-height:1.7}
 .hist pre{white-space:pre-wrap;font:inherit;font-size:13px;color:var(--muted);margin:6px 0 0;max-height:150px;overflow:auto}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:700;z-index:40;box-shadow:var(--shadow-lg);max-width:90vw}
 .ver{text-align:center;font-size:11px;color:var(--muted);margin-top:18px}
+
+/* 更新のお知らせ */
+.update{width:100%;margin:10px 0 0;background:var(--gold);color:#241a02;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;text-align:left;box-shadow:var(--shadow)}
+.update .t{flex:1;line-height:1.35}
+.update .t b{display:block;font-size:15px;font-weight:900}
+.update .t span{font-size:11.5px;opacity:.85;font-weight:700}
+.update .go{background:rgba(0,0,0,.16);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:900;flex:none}
+.dot{position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 2px var(--card)}
+.iconbtn{position:relative}
+.srow{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding:12px 0 2px;margin-top:14px}
+.srow .t{flex:1;line-height:1.35}
+.srow .t b{display:block;font-size:14px;font-weight:900}
+.srow .t span{font-size:11.5px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -107,9 +120,14 @@ textarea.out{min-height:200px;font-size:15px;line-height:1.7}
     </div>
     <div style="display:flex;gap:8px">
       <button class="iconbtn" id="histBtn" title="これまでのレビュー" aria-label="これまでのレビュー">🗂</button>
-      <button class="iconbtn" id="setBtn" title="設定" aria-label="設定">⚙️</button>
+      <button class="iconbtn" id="setBtn" title="設定" aria-label="設定">⚙️<span class="dot" id="setDot" hidden></span></button>
     </div>
   </header>
+
+  <button class="update" id="btnUpdate" hidden>
+    <span class="t"><b>⬇️ 新しいバージョンがあります</b><span id="updVer"></span></span>
+    <span class="go">更新する</span>
+  </button>
 
   <section class="card">
     <h2><span class="n">1</span>勉強報告を入れる</h2>
@@ -162,7 +180,15 @@ textarea.out{min-height:200px;font-size:15px;line-height:1.7}
 <div class="sheet" id="setSheet" hidden>
   <div class="box">
     <h3>設定 <button class="btn" data-close>とじる</button></h3>
-    <div class="mini" style="font-weight:900;margin:6px 0 4px">合言葉</div>
+
+    <div class="srow" style="border-top:0;margin-top:0;padding-top:0">
+      <div class="t"><b>更新を確認する</b><span>いま v<span id="verNo"></span></span></div>
+      <button class="btn" id="btnCheckUpd">確認</button>
+    </div>
+    <p class="mini" id="updMsg" style="margin:6px 0 0"></p>
+
+    <div id="aiSet" hidden>
+    <div class="mini" style="font-weight:900;margin:16px 0 4px">合言葉</div>
     <input type="text" id="passInput" placeholder="Discord の案内にある合言葉" autocomplete="off" autocapitalize="off">
     <p class="mini">AIレビューは塾生だけが使えます。合言葉はこの端末の中にだけ保存されます。</p>
     <div class="row"><button class="btn primary" id="passSave">保存する</button></div>
@@ -170,6 +196,11 @@ textarea.out{min-height:200px;font-size:15px;line-height:1.7}
       ・AIレビューは1日3回まで。<br>
       ・送られるのは貼った報告文だけです。名前などは送りません（報告文の中に書いた内容は送られます）。<br>
       ・AIのレビューはヒラ先生本人のレビューではありません。まちがえることもあります。
+    </div>
+    </div>
+
+    <div class="note info" style="margin-top:14px">
+      入れた勉強報告とチェックの結果は、この端末の中だけに残ります。どこにも送られません。
     </div>
   </div>
 </div>
@@ -182,7 +213,7 @@ textarea.out{min-height:200px;font-size:15px;line-height:1.7}
 </div>
 
 <script>
-const VER = 6;
+const VER = 7;
 /* AIレビューの中継サーバー（Cloudflare Worker）。空のあいだは「準備中」と出る */
 const API = '';
 const KEY = 'reportreview-v1';
@@ -367,8 +398,16 @@ function renderSelfText(res, force){
   else n.hidden = true;
 }
 $('selfText').addEventListener('input', () => { selfEdited = true; renderSelfText([], false); });
-$('copySelf').onclick = () => copy($('selfText').value, '文章をコピーしました');
-$('copySelfBoth').onclick = () => copy($('report').value.trim() + '\n\n' + $('selfText').value, '報告＋文章をコピーしました');
+// コピーした文章は控えとして残す（同じ日に何度コピーしても1件だけ新しくする）
+function keepSelf(){
+  const txt = $('selfText').value.trim(); if (!txt) return;
+  const d = today(), i = S.hist.findIndex(h => h.date === d);
+  const rec = {date:d, at:Date.now(), review:txt, head:$('report').value.trim().slice(0,60)};
+  if (i >= 0) S.hist[i] = rec; else S.hist.unshift(rec);
+  S.hist = S.hist.slice(0,40); save();
+}
+$('copySelf').onclick = () => { keepSelf(); copy($('selfText').value, '文章をコピーしました'); };
+$('copySelfBoth').onclick = () => { keepSelf(); copy($('report').value.trim() + '\n\n' + $('selfText').value, '報告＋文章をコピーしました'); };
 $('remakeSelf').onclick = () => { renderSelfText(selfCheck($('report').value.trim()), true); toast('作り直しました'); };
 
 /* ── 入力 ─────────────────────────────────────── */
@@ -444,8 +483,43 @@ $('histBtn').onclick = () => {
   openSheet('histSheet');
 };
 
+/* ── 更新（新しいバージョンが出たら知らせて、押したら入れ直す） ────────── */
+async function checkUpdate(silent){
+  const msg = t => { if (!silent) $('updMsg').textContent = t; };
+  try{
+    const res = await fetch('version.json?t=' + Date.now(), {cache:'no-store'});
+    if (!res.ok) throw 0;
+    const j = await res.json(), v = Number(j.v) || 0;
+    if (v > VER) {
+      $('updVer').textContent = 'v' + VER + ' → v' + v + (j.note ? '　' + j.note : '');
+      $('btnUpdate').hidden = false; $('setDot').hidden = false;
+      msg('新しいバージョン v' + v + ' があります。' + (j.note || ''));
+    } else {
+      $('btnUpdate').hidden = true; $('setDot').hidden = true;
+      msg('いまが最新です（v' + VER + '）。');
+      if (!silent) toast('いまが最新です');
+    }
+  }catch(e){ msg('いまは調べられませんでした。電波のよい所でもう一度ためしてください。'); }
+}
+async function doUpdate(){
+  save();
+  toast('更新しています…');
+  try{
+    if ('serviceWorker' in navigator) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.unregister())); }
+    if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
+  }catch(e){}
+  location.replace(location.pathname + '?u=' + Date.now());
+}
+$('btnUpdate').onclick = doUpdate;
+$('btnCheckUpd').onclick = () => { $('updMsg').textContent = '調べています…'; checkUpdate(false); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(true); });
+
 $('aiCard').hidden = !API;
+$('aiSet').hidden = !API;
+$('verNo').textContent = VER;
 $('ver').textContent = '報告レビュー v' + VER;
+checkUpdate(true);
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
 onInput();
 </script>
 </body>

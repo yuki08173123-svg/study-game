@@ -280,6 +280,8 @@ table.plan.ovw tr.plain td, table.plan.ovw tr.plain .nm{color:var(--muted);}
 .tabbar svg{width:23px; height:23px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
 .tabbar span{font-size:12px; font-weight:700;}
 
+.mphead{margin:16px 0 6px; font-size:13px; font-weight:800; letter-spacing:.04em; color:var(--muted);}
+.mphead:first-of-type{margin-top:8px;}
 .mapsum{margin:2px 0 10px; padding:12px 14px;}
 .mapsum .msrow{display:flex; align-items:baseline; gap:10px; padding:7px 0; border-bottom:1px solid var(--line);}
 .mapsum .msrow:last-of-type{border-bottom:none;}
@@ -749,7 +751,7 @@ const HSync = (function(){
 })();
 /* HSYNC END */
 
-const VER = 30;
+const VER = 31;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
 const EXTRA_MATH = ['nyumon_ia'];
@@ -1267,32 +1269,44 @@ function renderSheetBook(id){
   document.getElementById('sheetBody').scrollTop = 0;
 }
 /* ===== 極めた人のマップ ===== */
+function recsOf(id){
+  const r = (typeof MAPS !== 'undefined') ? MAPS[id] : null;
+  if(!r) return [];
+  return r.recs ? r.recs : [{ sum:r.sum || null, items:r.items || [] }];
+}
 function mapsOf(id){
-  const m = (typeof MAPS !== 'undefined') ? MAPS[id] : null;
-  return m ? (m.items || []) : [];
+  let out = [];
+  recsOf(id).forEach(r => { out = out.concat(r.items || []); });
+  return out;
 }
 function mapsHTML(id){
-  const rec = (typeof MAPS !== 'undefined') ? MAPS[id] : null;
-  const list = rec ? (rec.items || []) : []; if(!list.length) return '';
-  const su = rec.sum || null;
+  const recs = recsOf(id).filter(r => (r.items || []).length);
+  if(!recs.length) return '';
   let h = '<div class="sec-title" style="margin-top:14px">極めた人のマップ</div>';
-  if(su){
-    h += '<div class="card mapsum">'
-      + '<div class="msrow"><span>やった期間</span><b>'+esc(su.from)+' 〜 '+esc(su.to)+'</b></div>'
-      + '<div class="msrow"><span>かかった日数</span><b>'+su.days+'日間<small>'+esc(su.span)+'</small></b></div>'
-      + '<div class="msrow"><span>周回数</span><b>'+esc(su.rounds)+'</b></div>'
-      + (su.note ? '<div class="msnote">'+esc(su.note)+'</div>' : '')
-      + '</div>';
-  }
   h += '<div class="lead">この問題集を極めた塾生が、実際に使った<b>問題集マップ2・暗記マップ</b>です。'
     + '1日ごとの範囲・かかった分数・正答率が、そのまま書いてあります。押すと大きく見られます。</div>';
-  h += '<div class="maps">';
-  list.forEach((m, i) => {
-    h += '<button class="mapcard" onclick="openMap(\''+id+'\','+i+')">'
-      + '<img loading="lazy" src="maps/'+m.f+'.jpg" alt="'+esc(m.t)+'">'
-      + '<span class="mcap"><b>'+esc(m.t)+'</b>'+(m.d ? '<span>'+esc(m.d)+'</span>' : '')+'</span></button>';
+  let n = 0;
+  recs.forEach((rec, ri) => {
+    if(recs.length > 1) h += '<div class="mphead">'+(ri+1)+'人目</div>';
+    const su = rec.sum || null;
+    if(su){
+      h += '<div class="card mapsum">'
+        + '<div class="msrow"><span>やった期間</span><b>'+esc(su.from)+' 〜 '+esc(su.to)+'</b></div>'
+        + '<div class="msrow"><span>かかった日数</span><b>'+su.days+'日間<small>'+esc(su.span)+'</small></b></div>'
+        + '<div class="msrow"><span>周回数</span><b>'+esc(su.rounds)+'</b></div>'
+        + (su.note ? '<div class="msnote">'+esc(su.note)+'</div>' : '')
+        + '</div>';
+    }
+    h += '<div class="maps">';
+    (rec.items || []).forEach(m => {
+      h += '<button class="mapcard" onclick="openMap(\''+id+'\','+n+')">'
+        + '<img loading="lazy" src="maps/'+m.f+'.jpg" alt="'+esc(m.t)+'">'
+        + '<span class="mcap"><b>'+esc(m.t)+'</b>'+(m.d ? '<span>'+esc(m.d)+'</span>' : '')+'</span></button>';
+      n++;
+    });
+    h += '</div>';
   });
-  return h + '</div>';
+  return h;
 }
 function openMap(id, i){
   const m = mapsOf(id)[i]; if(!m) return;

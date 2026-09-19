@@ -567,8 +567,14 @@ body.bgm .stage{gap:14px}
 }
 .breath .txt{position:relative;text-align:center}
 .breath .rem{font-size:2.9rem;font-weight:200;letter-spacing:.04em}
-.run .stop{margin-top:8px;padding:13px 34px;border-radius:999px;background:rgba(255,255,255,.06);
-  border:1px solid var(--line);color:var(--ink2);font-size:.88rem;letter-spacing:.18em}
+.run .runbtns{display:flex;gap:11px;margin-top:8px}
+.run .stop{padding:13px 26px;border-radius:999px;background:rgba(255,255,255,.06);
+  border:1px solid var(--line);color:var(--ink2);font-size:.88rem;letter-spacing:.14em}
+.run .pz{margin-top:10px;font-size:.78rem;letter-spacing:.2em;color:var(--warm);opacity:0;transition:.4s}
+.run.paused .pz{opacity:.9}
+/* 止めている間は、ふくらむ動きも止める */
+.run.paused .halo,.run.paused .edge,.run.paused .petal{animation-play-state:paused}
+.run.paused .rem{opacity:.55}
 .run .prog{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.06)}
 .run .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,rgba(159,216,214,.5),rgba(227,199,154,.75));transition:width .3s linear}
 
@@ -837,6 +843,7 @@ body.bgm .stage{gap:14px}
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
           <li><b>ボタンに無い長さ</b>にしたいときは、近い長さを押してから<b>「＋1分」「−1分」</b>で調整してください（押しっぱなしで早く進みます）。いま何分にしているかは、まん中の「◯分　はじめる」で分かります。</li>
+          <li>途中で人に話しかけられたときなどは、<b>「一時停止」</b>で止められます。もう一度押すと、続きから再開します。<b>止めていた時間は記録に入りません。</b>なお、<b>考えごとが浮かんだだけなら、止めなくて大丈夫</b>です。気づいて呼吸に戻ること自体が練習なので、そのまま続けてください。</li>
           <li>終わると自動で記録されます。<b>いまの気分</b>を5段階でひと押しでき、「ひとこと」に感じたことも残せます（声でも入れられます）。<b>気分を押しそびれても、あとから入れられます</b>——「記録」で日や記録を押すと、気分とひとことをまとめて直せます。</li>
           <li>「記録」で、続いた日数やこれまでの時間を見られます。<b>カレンダー</b>は月ごとに見られ、‹ › で始めた月までさかのぼれます。<b>日を押すと、何時から何分すわったか、流していた音、気分、書いたひとことが日記のように見られます</b>。</li>
           <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。1日後・3日後・7日後…と<b>復習</b>が出てきます。復習は<b>問題に答える形</b>です。答えるまでにかかった時間も出るので、同じ問題を前より速く答えられたかが分かります。正解なら次に出る日がのびて、まちがえたら翌日また出ます。覚えているかどうかを自分で決めなくてよいので、迷いません。問題の難しさは<b>やさしい／ふつう／激ムズ</b>から選べます。「力だめし」を押すと、学んだところからランダムに出題されます（こちらは復習の日には影響しません）。まちがえてチェックを外しても、つけ直せば復習の進みぐあいはそのまま戻ります。</li>
@@ -964,9 +971,13 @@ body.bgm .stage{gap:14px}
       <div class="halo"></div><div class="petal"></div><div class="edge"></div>
       <div class="txt">
         <div class="rem mono" id="remain">05:00</div>
+        <div class="pz" id="pauseNote">一時停止中</div>
       </div>
     </div>
-    <button class="stop" id="btnStop">やめる</button>
+    <div class="runbtns">
+      <button class="stop" id="btnPause">一時停止</button>
+      <button class="stop" id="btnStop">やめる</button>
+    </div>
   </div>
   <div class="prog"><i id="prog"></i></div>
 </div>
@@ -1394,7 +1405,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 'use strict';
-const VER = 52;
+const VER = 53;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -2115,20 +2126,62 @@ function start(){
   if(bgmOn){ bgmOn = false; renderBgm(); }
   stopAmb(false);
   startAmb();
-  sess = { min: min, total: total, endAt: Date.now() + total*1000, startAt: Date.now() };
+  sess = { min: min, total: total, endAt: Date.now() + total*1000, startAt: Date.now(), pausedAt: 0 };
   $('run').classList.remove('hidden');
+  $('run').classList.remove('paused');
+  $('btnPause').textContent = '一時停止';
   $('done').classList.add('hidden');
   keepScreen();
   update();
   tick = setInterval(update, 200);
 }
 
+/* 止めている間は、時計を進めない。
+   のこり時間は「終わる時刻 − いま」。止めているときは「止めた時刻」で数える。 */
+function leftSec(){
+  if(!sess) return 0;
+  const now = sess.pausedAt || Date.now();
+  return Math.max(0, (sess.endAt - now) / 1000);
+}
 function update(){
   if(!sess) return;
-  const left = Math.max(0, (sess.endAt - Date.now()) / 1000);
+  const left = leftSec();
   $('remain').textContent = fmt(Math.ceil(left));
   $('prog').style.width = (100 * (1 - left / sess.total)) + '%';
-  if(left <= 0) finish();
+  if(!sess.pausedAt && left <= 0) finish();
+}
+
+/* 一時停止。Yuuyさんの「ちょっと気が逸れた時に、一旦止めて、また戻れたら」。
+   終わりの鐘はあらかじめ予約してあるので、止めるときに消して、戻すときに入れ直す。 */
+function setPause(on){
+  if(!sess) return;
+  if(on){
+    if(sess.pausedAt) return;
+    sess.pausedAt = Date.now();
+    clearScheduled();                      // 予約ずみの終わりの鐘を消す
+    stopAmb(true);
+    releaseScreen();
+  }else{
+    if(!sess.pausedAt) return;
+    sess.endAt += Date.now() - sess.pausedAt;   // 止めていたぶん、終わりを後ろへ
+    sess.pausedAt = 0;
+    ensureAudio();
+    clearScheduled();
+    if(ac){
+      startKeepAlive();
+      const left = leftSec();
+      bell(left, 196, 10, 1);              // 終わりの鐘を入れ直す
+      if(snd.ring >= 3){
+        bell(left + 4.5, 196, 10, .8);
+        bell(left + 9, 196, 11, .65);
+      }
+    }
+    startAmb();
+    keepScreen();
+  }
+  $('run').classList.toggle('paused', !!sess.pausedAt);
+  $('btnPause').textContent = sess.pausedAt ? 'つづける' : '一時停止';
+  update();
 }
 
 function finish(overMin, partial){
@@ -2137,6 +2190,7 @@ function finish(overMin, partial){
   clearInterval(tick); tick = null;
   if(partial) clearScheduled();          // 途中でやめたら、予約してある終わりの鐘は鳴らさない
   sess = null;
+  $('run').classList.remove('paused');
   releaseScreen();
   stopKeepAlive();
   stopAmb(true);
@@ -2186,7 +2240,7 @@ function finish(overMin, partial){
 
 function askStop(){
   if(!sess) return;
-  const sec = Math.max(0, Math.floor((Date.now() - sess.startAt) / 1000));
+  const sec = Math.max(0, Math.floor(sess.total - leftSec()));   // 止めていた時間は数えない
   const m = Math.floor(sec / 60);
   const s = document.createElement('div');
   s.className = 'sheet';
@@ -2211,6 +2265,7 @@ function askStop(){
 function abort(){
   clearInterval(tick); tick = null;
   sess = null;
+  $('run').classList.remove('paused');
   clearScheduled();
   stopAmb(false);
   stopKeepAlive();
@@ -2220,6 +2275,7 @@ function abort(){
 
 $('btnStart').addEventListener('click', start);
 $('btnStop').addEventListener('click', askStop);
+$('btnPause').addEventListener('click', function(){ setPause(!sess || !sess.pausedAt); });
 /* 終わったあとの気分（5段階）。押すとすぐ記録に入る */
 function renderMood(){
   const m = (log[0] && log[0].m) || 0;
@@ -2255,8 +2311,8 @@ $('btnClose').addEventListener('click', function(){
 /* 画面に戻ってきたとき（裏に回っている間に終わっていたら締める） */
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
-  if(ac && ac.state === 'suspended' && sess) ac.resume();
-  if(sess){ keepScreen(); update(); }
+  if(ac && ac.state === 'suspended' && sess && !sess.pausedAt) ac.resume();
+  if(sess){ if(!sess.pausedAt) keepScreen(); update(); }
   if(!sess && Date.now() - lastCheck > 600000) checkUpdate(false);
 });
 

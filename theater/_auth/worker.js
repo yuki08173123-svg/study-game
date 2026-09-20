@@ -47,6 +47,7 @@ export default {
       if (path === '/data')     return cors(env, await data(url, env));
       if (path === '/sync')     return cors(env, await sync(req, url, env));
       if (path === '/roster')   return cors(env, await roster(url, env));
+      if (path === '/find')     return cors(env, await find(url, env));
       return cors(env, json({ error: 'not_found' }, 404));
     } catch (e) {
       return cors(env, json({ error: 'server_error', detail: String((e && e.message) || e) }, 500));
@@ -194,6 +195,76 @@ async function sync(req, url, env) {
   ).run();
 
   return json({ ok: true });
+}
+
+/* ---------- 動画の中で話している言葉から探す ----------
+   のぐさんの要望（2026-09-20）。タイトルや目次に無い言葉でも見つかるように、
+   YouTubeの字幕（自動文字起こし）を D1 に入れておき、ここで探す。
+   文字起こしは非公開リポジトリの tr/<動画ID>.json にあり、
+   **この Worker が自分で読みに行く**ので、新しい鍵は要らない。
+   一度に全部は入れられない（時間制限）ので、呼ばれるたびに少しずつ入れる。 */
+let trReady = false;
+async function ensureTr(env) {
+  if (trReady) return;
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS tr (
+       vid TEXT, sec INTEGER, txt TEXT)`).run();
+  await env.DB.prepare(`CREATE INDEX IF NOT EXISTS tr_vid ON tr(vid)`).run();
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS trmeta (vid TEXT PRIMARY KEY, n INTEGER, at INTEGER)`).run();
+  trReady = true;
+}
+
+/* 非公開リポジトリのファイルを読む（/data と同じやり方） */
+async function ghFile(env, path) {
+  const r = await fetch(
+    `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}`,
+    { headers: { authorization: 'Bearer ' + env.GITHUB_TOKEN,
+                 accept: 'application/vnd.github.raw', 'user-agent': 'theater-worker' } });
+  if (!r.ok) return null;
+  try { return JSON.parse(await r.text()); } catch (e) { return null; }
+}
+
+/* まだ入れていない動画を、1回につき数本だけ入れる */
+async function fillTr(env, want) {
+  const list = await ghFile(env, 'tr/index.json');
+  if (!list || !Array.isArray(list.ids)) return { done: 0, total: 0 };
+  const have = await env.DB.prepare('SELECT vid FROM trmeta').all();
+  const set = new Set(((have && have.results) || []).map(r => r.vid));
+  const todo = list.ids.filter(id => !set.has(id));
+  let n = 0;
+  for (const id of todo.slice(0, want)) {
+    const d = await ghFile(env, 'tr/' + id + '.json');
+    if (!d || !Array.isArray(d.c)) continue;
+    const st = [];
+    for (const [sec, txt] of d.c)
+      st.push(env.DB.prepare('INSERT INTO tr (vid, sec, txt) VALUES (?,?,?)').bind(id, sec, txt));
+    st.push(env.DB.prepare('INSERT OR REPLACE INTO trmeta (vid, n, at) VALUES (?,?,?)')
+      .bind(id, d.c.length, Date.now()));
+    await env.DB.batch(st);
+    n++;
+  }
+  /* expect ＝ 本当は何本ぶん入る予定か（字幕を取りおえていない分も含む） */
+  return { done: set.size + n, total: Math.max(+list.expect || 0, list.ids.length) };
+}
+
+async function find(url, env) {
+  if (!env.DB) return json({ ok: false, error: 'no_db' }, 503);
+  const r = await whoOf(url, env);
+  if (r.bad) return r.bad;
+  await ensureTr(env);
+
+  /* まだ入れ終わっていなければ、少しだけ入れてから探す */
+  const st = await fillTr(env, url.searchParams.get('fill') === '0' ? 0 : 6);
+
+  const q = String(url.searchParams.get('q') || '').trim().slice(0, 40);
+  if (!q) return json({ ok: true, list: [], ready: st });
+
+  const rows = await env.DB.prepare(
+    `SELECT vid, sec, txt FROM tr WHERE txt LIKE ? ESCAPE '\\' ORDER BY vid, sec LIMIT 60`)
+    .bind('%' + q.replace(/[\\%_]/g, c => '\\' + c) + '%').all();
+
+  return json({ ok: true, q, ready: st, list: (rows && rows.results) || [] });
 }
 
 /* 平山さんだけが見られる、みんなのレベル一覧 */

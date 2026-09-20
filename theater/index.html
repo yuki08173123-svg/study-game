@@ -565,6 +565,16 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 .mkrow .t{color:var(--acc);font-weight:700;font-size:.82rem;font-variant-numeric:tabular-nums;flex:none}
 .mkrow .m{flex:1;font-size:.86rem;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mkrow .x{flex:none;color:var(--ink3);font-size:.76rem;padding:4px 6px}
+/* 話している場面（中身からさがす） */
+.dgrp{margin-bottom:14px}
+.dgrp .dt{font-size:.9rem;font-weight:800;color:var(--ink);margin:0 2px 7px}
+.drow{display:flex;gap:10px;width:100%;text-align:left;background:var(--surf);border:1px solid var(--line);
+  border-radius:11px;padding:10px 12px;margin-bottom:7px;align-items:flex-start}
+.drow:active{opacity:.7}
+.drow .dsec{flex:none;color:var(--acc);font-weight:800;font-size:.78rem;font-variant-numeric:tabular-nums;
+  padding-top:2px}
+.drow .dtx{flex:1;font-size:.84rem;color:var(--ink2);line-height:1.7}
+.drow .dtx b{color:var(--ink);background:var(--acc-soft);border-radius:3px;padding:0 2px}
 /* 切り抜き・付箋の時間を直す */
 .tsbox{display:flex;flex-direction:column;margin-top:6px}
 .tsl{font-size:.74rem;font-weight:800;color:var(--ink3);letter-spacing:.08em;margin:14px 2px 6px}
@@ -634,7 +644,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 60;
+const VER = 61;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal';
@@ -1827,11 +1837,77 @@ function findList(){
 }
 function drawFind(){
   const list = findList();
+  const q = findQ.trim();
   $('#fres').innerHTML = `
     <div class="lead">${list.length}本</div>
     <div class="vlist" style="margin-top:8px">
       ${list.length ? list.map(v => card(v)).join('') : emptyBox('見つかりませんでした')}
-    </div>`;
+    </div>
+    ${q.length >= 2 ? `<button class="btn" id="deepb" style="margin-top:14px">${ICO.search({s:18})}
+        <span>動画の中で話している言葉からさがす</span></button>
+      <div class="lead" style="margin-top:6px">タイトルや目次に無い言葉でも、話している場面を見つけます。</div>` : ''}
+    <div id="deep" style="margin-top:12px"></div>`;
+  if($('#deepb')) $('#deepb').onclick = () => deepFind(q);
+}
+
+/* ---------- 動画の中で話している言葉からさがす（のぐさんの要望・2026-09-20） ----------
+   字幕（自動文字起こし）は Cloudflare 側に置いてあり、探すのもあちら。
+   スマホには結果だけ届くので、アプリは重くならない。 */
+let deepAt = 0;
+async function deepFind(q){
+  const box = $('#deep'); if(!box) return;
+  const my = ++deepAt;
+  box.innerHTML = `<div class="lead">探しています…</div>`;
+  let j = null;
+  try{
+    const r = await fetch(`${API}/find?t=${encodeURIComponent(tokGet())}&q=${encodeURIComponent(q)}&_=${now()}`,
+      { cache:'no-store' });
+    j = await r.json();
+  }catch(e){}
+  if(my !== deepAt) return;
+  if(!j || !j.ok){
+    box.innerHTML = emptyBox('いまは中身からさがせません。<br>少し時間をおいて、もう一度ためしてください。');
+    return;
+  }
+  const rd = j.ready || {};
+  const pre = (rd.total && rd.done < rd.total)
+    ? `<div class="note" style="margin-bottom:10px">用意しているところです（${rd.done}／${rd.total}本）。
+        いま見つからなくても、あとでもう一度ためすと見つかることがあります。</div>` : '';
+  const hits = (j.list || []).filter(x => vid(x.vid));
+  if(!hits.length){ box.innerHTML = pre + emptyBox('話している中にも見つかりませんでした'); return; }
+  /* 同じ動画は3件までにして、どの動画かを見やすくする */
+  const byV = {};
+  hits.forEach(h => { (byV[h.vid] = byV[h.vid] || []).push(h); });
+  box.innerHTML = pre + `<div class="sec"><h2>話している場面（${hits.length}件）</h2></div>` +
+    Object.keys(byV).map(id => {
+      const v = vid(id);
+      return `<div class="dgrp">
+        <div class="dt">${esc(v.t)}</div>
+        ${byV[id].slice(0,3).map(h => `<button class="drow" data-dv="${esc(id)}" data-ds="${h.sec}">
+            <span class="dsec">${hhmm(h.sec)}</span>
+            <span class="dtx">${hi(h.txt, q)}</span></button>`).join('')}
+        ${byV[id].length > 3 ? `<div class="lead" style="margin:2px 2px 0">ほか ${byV[id].length - 3}か所</div>` : ''}
+      </div>`;
+    }).join('');
+  $$('#deep [data-dv]').forEach(b => b.onclick = () => deepJump(b.dataset.dv, +b.dataset.ds));
+}
+/* 探した言葉を太字にする */
+function hi(txt, q){
+  const i = String(txt).toLowerCase().indexOf(q.toLowerCase());
+  if(i < 0) return esc(txt);
+  return esc(txt.slice(0, i)) + '<b>' + esc(txt.slice(i, i + q.length)) + '</b>' + esc(txt.slice(i + q.length));
+}
+/* その場面から再生する。プレーヤーの用意ができるまで少し待つ */
+function deepJump(id, sec){
+  openPlay(id);
+  let n = 0;
+  const go = () => {
+    n++;
+    const ready = isLoom(id) ? !!$('#loomfr') : (typeof playerReady !== 'undefined' && playerReady);
+    if(ready){ seekTo(sec); return; }
+    if(n < 40) setTimeout(go, 250);
+  };
+  setTimeout(go, 400);
 }
 function vFind(){
   $('#tbar').innerHTML = `<div class="ttl">さがす</div>`;

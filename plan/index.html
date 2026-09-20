@@ -475,7 +475,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>計画マップ</h1><span class="ver" id="verTag">v52</span><span class="who hidden" id="whoTag"></span>
+      <h1>計画マップ</h1><span class="ver" id="verTag">v53</span><span class="who hidden" id="whoTag"></span>
       <span class="spacer"></span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.6 2.7c-.5.2-.8.7-.8 1.2v.6"/><path d="M12 17h.01"/></svg>
@@ -709,7 +709,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <p class="note" id="bkNote"></p>
     </div>
     <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:18px; font-weight:700">
-      計画マップ <span id="verTag2">v52</span><br>データはこの端末の中だけに保存されます
+      計画マップ <span id="verTag2">v53</span><br>データはこの端末の中だけに保存されます
     </p>
   </section>
 </div>
@@ -734,7 +734,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 52;
+const VER = 53;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1374,7 +1374,7 @@ $('#btnNotifPerm').onclick = async ()=>{
 };
 
 /* ---------- 1週間まとめの画像 ---------- */
-function drawWeek(light, keys){
+function drawWeek(light, keys, side){
   const W = 1080, PAD = 34, F = "'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif";
   const wk = (keys && keys.length ? keys.slice() : [S.cur]).sort();   // えらんだ週を、古い順に上から
   const nowK = iso(mondayOf(new Date()));
@@ -1394,35 +1394,40 @@ function drawWeek(light, keys){
     }
     return { k, r, m, days, h: TITLE + BAND + bodyH };
   });
+  // side = true なら、週を「よこにならべる」（1週ぶん＝1列）
+  const cols = (side && blocks.length > 1) ? blocks.length : 1;
   let H = HEAD0 + 16 + FOOT;
-  blocks.forEach((b,i)=>{ H += b.h + (i ? GAPW : 0); });
+  if(cols > 1) H += blocks.reduce((m,b)=> Math.max(m, b.h), 0);
+  else blocks.forEach((b,i)=>{ H += b.h + (i ? GAPW : 0); });
+  const TW = W * cols;
 
   // やることが多くて縦に長くなっても、iPhoneのcanvasの上限（約1,600万px）を超えないようにする
-  const dpr = Math.min(2, Math.sqrt(16000000 / (W*H))), cv = document.createElement('canvas');
-  cv.width = Math.floor(W*dpr); cv.height = Math.floor(H*dpr);
+  const dpr = Math.min(2, Math.sqrt(16000000 / (TW*H))), cv = document.createElement('canvas');
+  cv.width = Math.floor(TW*dpr); cv.height = Math.floor(H*dpr);
   const g = cv.getContext('2d'); g.scale(dpr,dpr);
   const INK='#16202F', MUT='#7C8899', LINE='#E2E8F1', ACC='#2C6FE4', DONE='#12A06A', HALF='#DFA125', GOLD='#C9982F';
   const rr = (x,y,w,h,rad)=>{ g.beginPath(); g.moveTo(x+rad,y); g.arcTo(x+w,y,x+w,y+h,rad); g.arcTo(x+w,y+h,x,y+h,rad); g.arcTo(x,y+h,x,y,rad); g.arcTo(x,y,x+w,y,rad); g.closePath(); };
   const clip = (t,max)=>{ let s=t; while(g.measureText(s).width>max && s.length>1) s=s.slice(0,-1); return s===t?t:s+'…'; };
 
-  g.fillStyle = '#F4F7FB'; g.fillRect(0,0,W,H);
+  g.fillStyle = '#F4F7FB'; g.fillRect(0,0,TW,H);
 
   // 見出し（アプリ名と名前は一番上に1回だけ）
   g.fillStyle = INK; g.font = '900 40px '+F; g.textAlign='left'; g.textBaseline='alphabetic';
   g.fillText('計画マップ', PAD, 60);
-  if(S.name){ g.fillStyle = MUT; g.font = '700 26px '+F; g.textAlign='right'; g.fillText(S.name, W-PAD, 58); }
+  if(S.name){ g.fillStyle = MUT; g.font = '700 26px '+F; g.textAlign='right'; g.fillText(S.name, TW-PAD, 58); }
 
-  let y = HEAD0;
+  let y = HEAD0, maxY = HEAD0;
   blocks.forEach((b, bi)=>{
-    if(bi) y += GAPW;
+    const ox = cols > 1 ? bi*W : 0;
+    if(cols > 1) y = HEAD0; else if(bi) y += GAPW;
     const r = b.r;
 
     // その週の日づけ
     g.fillStyle = ACC; g.font = '900 34px '+F; g.textAlign='left';
-    g.fillText(md(b.m)+'（月）〜 '+md(addDays(b.m,6))+'（日）', PAD, y+34);
+    g.fillText(md(b.m)+'（月）〜 '+md(addDays(b.m,6))+'（日）', ox+PAD, y+34);
 
     // score band
-    const bx = PAD, by = y+TITLE, bw = W-PAD*2, bh = BAND-16;
+    const bx = ox+PAD, by = y+TITLE, bw = W-PAD*2, bh = BAND-16;
     if(light){
       g.fillStyle='#fff'; rr(bx,by,bw,bh,26); g.fill();
       g.strokeStyle='#16202F'; g.lineWidth=2.5; rr(bx,by,bw,bh,26); g.stroke();
@@ -1457,7 +1462,7 @@ function drawWeek(light, keys){
     // days
     y = y + TITLE + BAND;
     b.days.forEach(dd=>{
-      const x = PAD, w = W-PAD*2, h = dd.h;
+      const x = ox+PAD, w = W-PAD*2, h = dd.h;
       g.fillStyle='#fff'; rr(x,y,w,h,20); g.fill();
       g.strokeStyle=LINE; g.lineWidth=1.5; rr(x,y,w,h,20); g.stroke();
 
@@ -1516,12 +1521,14 @@ function drawWeek(light, keys){
       if(!dd.show.length){ g.fillStyle='#C3CCD9'; g.font='700 20px '+F; g.fillText('（やることなし）', lx+6, y+92); }
       y += h + 12;
     });
+    maxY = Math.max(maxY, y);
   });
+  y = maxY;
 
   g.textAlign='center'; g.fillStyle=MUT; g.font='700 19px '+F;
-  g.fillText('赤＝これから　黄＝できた（★まだ）　緑＝極まった（★）', W/2, y+34);
+  g.fillText('赤＝これから　黄＝できた（★まだ）　緑＝極まった（★）', TW/2, y+34);
   g.textAlign='right'; g.fillStyle='#AEB9C8'; g.font='700 16px '+F;
-  g.fillText(stampText(), W-PAD, y+34);
+  g.fillText(stampText(), TW-PAD, y+34);
   return cv;
 }
 
@@ -1545,8 +1552,8 @@ function weekChoices(){
 }
 function openImageSheet(maker, title, prefix, hint, pick){
   let light = false;
-  let sel = [S.cur];
-  const call = l => pick ? maker(l, sel) : maker(l);
+  let sel = [S.cur], side = false;
+  const call = l => pick ? maker(l, sel, side) : maker(l);
   let cv = call(light), blob = null;
   const mkBlob = ()=>{ blob = null; cv.toBlob(b=>{ blob = b; }, 'image/png'); };
   mkBlob();
@@ -1559,7 +1566,9 @@ function openImageSheet(maker, title, prefix, hint, pick){
   const sh = openSheet('<h2>'+title+'</h2>'
     + '<p style="color:var(--muted); font-size:12.5px; margin-bottom:10px">'+(hint||'スクリーンショットを撮るか、下のボタンで画像として保存できます。')+'</p>'
     + (pick ? '<div class="wkpick" id="wkPick">'+chips.map(c=>'<button data-k="'+c.k+'">'+c.label+(c.tag?'<small>'+c.tag+'</small>':'')+'</button>').join('')
-              + '</div><p class="note" id="wkNote" style="margin:-6px 0 10px">えらんだ週が、上から順に1枚の画像になります。2つえらべば、まとめて提出できます。</p>' : '')
+              + '</div><div class="wkpick hidden" id="wkLay"><span class="rl" style="align-self:center; margin-right:2px">ならべ方</span>'
+              + '<button data-s="0" class="on">たて（1枚に上下）</button><button data-s="1">よこにならべる</button></div>'
+              + '<p class="note" id="wkNote" style="margin:-6px 0 10px">えらんだ週が1枚の画像になります。2つえらべば、まとめて提出できます。</p>' : '')
     + '<img class="shot" id="shotImg" src="'+cv.toDataURL('image/png')+'" alt="'+title+'">'
     + (canShare ? '<button class="bigbtn" id="svShare">提出する（アプリをえらんで送る）</button>' : '')
     + '<button class="'+(canShare?'subbtn':'bigbtn')+'" id="svImg">画像を保存する</button>'
@@ -1570,8 +1579,21 @@ function openImageSheet(maker, title, prefix, hint, pick){
     sh.querySelector('#shotImg').src = cv.toDataURL('image/png');
   };
   if(pick){
-    const drawChips = ()=>sh.querySelectorAll('#wkPick button').forEach(b=>b.classList.toggle('on', sel.indexOf(b.dataset.k) >= 0));
+    const drawChips = ()=>{
+      sh.querySelectorAll('#wkPick button').forEach(b=>b.classList.toggle('on', sel.indexOf(b.dataset.k) >= 0));
+      sh.querySelector('#wkLay').classList.toggle('hidden', sel.length < 2);
+      sh.querySelectorAll('#wkLay button').forEach(b=>b.classList.toggle('on', (b.dataset.s === '1') === side));
+      sh.querySelector('#wkNote').textContent = sel.length < 2
+        ? 'えらんだ週が1枚の画像になります。2つえらべば、まとめて提出できます。'
+        : (side ? 'えらんだ週が、左から順に よこにならんで1枚の画像になります。' : 'えらんだ週が、上から順に たてにならんで1枚の画像になります。');
+    };
     drawChips();
+    sh.querySelector('#wkLay').onclick = e => {
+      const b = e.target.closest('button[data-s]'); if(!b) return;
+      const v = b.dataset.s === '1'; if(v === side) return;
+      side = v; drawChips(); redraw();
+      toast(side ? 'よこにならべました' : 'たてにならべました');
+    };
     sh.querySelector('#wkPick').onclick = e => {
       const b = e.target.closest('button[data-k]'); if(!b) return;
       const k = b.dataset.k, i = sel.indexOf(k);

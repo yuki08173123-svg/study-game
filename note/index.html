@@ -409,7 +409,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 28;
+const VER = 29;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -621,15 +621,20 @@ const draftThumbs = () => draft.map(d =>
     <button class="side" data-flip="${d.id}">${d.back ? '裏' : '表'}</button>
   </div>`).join('');
 
-async function shrink(file){
-  const MAX = 1600;
+async function shrink(file, MAX){
+  MAX = MAX || 1600;
   let src = null, w = 0, h = 0, bmp = null, tmp = '';
   try{ bmp = await createImageBitmap(file, { imageOrientation:'from-image' }); }
   catch(e){ try{ bmp = await createImageBitmap(file); }catch(e2){ bmp = null; } }
   if(bmp){ src = bmp; w = bmp.width; h = bmp.height; }
   else{
     tmp = URL.createObjectURL(file);
-    src = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = tmp; });
+    src = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = () => rej(new Error('画像として開けません'));
+      i.src = tmp;
+    });
     w = src.naturalWidth; h = src.naturalHeight;
   }
   const sc = Math.min(1, MAX / Math.max(w, h));
@@ -1134,7 +1139,11 @@ function renderWrite(){
   $$('#main [data-tb]').forEach(b => b.onclick = () => { draftTb = b.dataset.tb === '1'; paintTb(); });
   paintTb();
   $('#addphoto').onclick = () => $('#pfile').click();
-  $('#pfile').onchange = e => { addPhotos(e.target.files); e.target.value = ''; };
+  $('#pfile').onchange = async e => {
+    const inp = e.target;
+    try{ await addPhotos(inp.files); }
+    finally{ try{ inp.value = ''; }catch(_){} }   // 読み込み中に空にすると iOS で写真が読めなくなる
+  };
   if(!n) setTimeout(() => { const t = $('#body'); if(t) t.focus(); }, 120);
 }
 function paintFolderPick(){
@@ -1181,28 +1190,84 @@ function paintDraft(){
 const quotaLike = e => !!e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_STORAGE_FULL'
   || /quota|storage|容量/i.test(String((e && e.message) || e)));
 
+const MAXPIC = 8;
+
+/* 写真が入らなかったときの記録。あとから診断画面で見られるように残す */
+let lastPhotoErr = null;
+try{ lastPhotoErr = JSON.parse(localStorage.getItem('mn_photo_err') || 'null'); }catch(e){}
+function notePhotoErr(e, where, f){
+  lastPhotoErr = { at:now(), where, name:(e && e.name) || '', msg:String((e && e.message) || e || '').slice(0, 160),
+    f: f ? (((f.name || '').split('.').pop() || '?').slice(0, 6).toLowerCase() + '・' + Math.round((f.size || 0)/1024) + 'KB') : '' };
+  try{ localStorage.setItem('mn_photo_err', JSON.stringify(lastPhotoErr)); }catch(_){}
+}
+
 async function addPhotos(files){
-  const list = [...files].slice(0, 8);
+  let list = [...files];
   if(!list.length) return;
-  toast('写真を読み込み中…');
+  const room = Math.max(0, MAXPIC - draft.length);
+  if(!room){ toast(`写真は1件に${MAXPIC}枚までです`); return; }
+  let over = 0;
+  if(list.length > room){ over = list.length - room; list = list.slice(0, room); }
+
   let ok = 0; const errs = [];
-  for(const f of list){
-    if(f.type && !/^image\//.test(f.type)){ errs.push('type'); continue; }
+  for(let i = 0; i < list.length; i++){
+    const f = list[i];
+    toast(list.length > 1 ? `写真を読み込み中… ${i+1}/${list.length}枚め` : '写真を読み込み中…');
+    const looksImg = (f.type && /^image\//.test(f.type)) || /\.(jpe?g|png|gif|webp|heic|heif|avif|bmp)$/i.test(f.name || '');
+    if(!looksImg){ errs.push('type'); continue; }
+    if(f.size === 0){ errs.push('empty'); continue; }
+
+    // 縮小できないときは、もっと小さくして何度か試す（端末の空きが少ないときに効く）
     let blob = null;
-    try{ blob = await shrink(f); }
-    catch(e){ blob = (f.size && f.size <= 10*1024*1024) ? f : null; }   // 縮小できなくても、そのまま保存してみる
+    for(const mx of [1600, 1200, 800]){
+      try{ blob = await shrink(f, mx); }catch(e){ notePhotoErr(e, '読み込み', f); blob = null; }
+      if(blob) break;
+    }
     if(!blob){ errs.push('decode'); continue; }
+
     const id = uid('i');
-    try{ await putImg(id, blob); draft.push({ id }); ok++; }
-    catch(e){ errs.push(quotaLike(e) ? 'quota' : ('save:' + ((e && e.name) || 'error'))); lastPhotoErr = e; }
+    let saved = false;
+    try{ await putImg(id, blob); saved = true; }
+    catch(e){
+      notePhotoErr(e, '保存', f);
+      if(quotaLike(e)){                       // いっぱいのとき、一度だけ小さくして入れ直す
+        try{
+          const sm = await shrink(f, 900);
+          if(sm){ await putImg(id, sm); saved = true; }
+        }catch(e2){ notePhotoErr(e2, '保存（小さくして）', f); }
+      }
+      if(!saved) errs.push(quotaLike(e) ? 'quota' : 'save');
+    }
+    if(saved){ draft.push({ id }); ok++; }
   }
   paintDraft();
-  if(!errs.length){ if(ok) toast(`写真を${ok}枚 追加しました`); return; }
-  if(errs.includes('quota')) return storageSheet('写真を保存できませんでした');
-  if(errs.some(x => String(x).startsWith('save:'))) return storageSheet('写真を保存できませんでした');
-  toast('この写真は読み込めませんでした（対応していない形式かもしれません）');
+
+  const added = ok ? `写真を${ok}枚 追加しました` : '';
+  if(!errs.length){
+    if(over) toast(`${added}。写真は1件に${MAXPIC}枚までなので、${over}枚は入れていません`);
+    else if(ok) toast(added);
+    return;
+  }
+  if(errs.includes('quota') || errs.includes('save')) return storageSheet('写真を保存できませんでした');
+  if(errs.includes('empty')) return photoTrouble('写真を取り出せませんでした',
+    `中身のない写真として渡ってきました。iCloud に預けてある写真だと、
+     端末に降ろせていないときにこうなります。<br><br>
+     写真アプリでその写真を一度開いて、ぜんぶ表示されてから選び直すと通ります。`, ok, errs.length);
+  return photoTrouble('この写真は読み込めませんでした',
+    `対応していない形式かもしれません（HEIC など）。<br><br>
+     「ファイル」からではなく<b>写真アプリから</b>選ぶと、多くの場合その場で JPEG に変換されて通ります。
+     それでも入らないときは、写真アプリでその写真を一度編集して保存し、できたものを選んでください。`, ok, errs.length);
 }
-let lastPhotoErr = null;
+
+/* 入らなかったときの説明。診断までひと続きでたどりつけるようにする */
+function photoTrouble(title, html, ok, ng){
+  sheet(`<h3>${esc(title)}</h3>
+    <div class="note-txt" style="margin:-10px 2px 14px">${ng}枚が入りませんでした${ok ? `（${ok}枚は入りました）` : ''}。</div>
+    <div class="note-txt" style="margin:0 2px 16px">${html}</div>
+    <button class="btn sec" id="ptDiag">この端末の保存領域を調べる</button>`, close => {
+    $('#ptDiag').onclick = () => { close(); storageSheet(); };
+  });
+}
 
 /* 端末の保存領域を調べて、対処までたどりつけるようにする */
 async function storageSheet(title){
@@ -1229,6 +1294,12 @@ async function storageSheet(title){
       ${est ? rowItem({ ic:ICO.down({s:19}), nm:'使っている容量', right:`<span class="ct">${mb(usage)} / ${mb(quota)}</span>` }) : ''}
       ${rowItem({ ic:ICO.image({s:19}), nm:'写真の枚数', right:`<span class="ct">${pics}枚</span>` })}
       ${rowItem({ ic:ICO.trash({s:19}), nm:'ゴミ箱の中', right:`<span class="ct">${bin}件</span>` })}
+      ${lastPhotoErr ? rowItem({ ic:ICO.info({s:19}), nm:'最後に入らなかったとき',
+        right:`<span class="ct" style="max-width:190px;white-space:normal;text-align:right;line-height:1.5">${esc(
+          fmtDate(lastPhotoErr.at) + '　' + (lastPhotoErr.where || '')
+          + (lastPhotoErr.f ? '（' + lastPhotoErr.f + '）' : '')
+          + '　' + (lastPhotoErr.name && lastPhotoErr.name !== 'Error'
+              ? lastPhotoErr.name : (lastPhotoErr.msg || lastPhotoErr.name || '')))}</span>` }) : ''}
     </div>
     <div class="note-txt" style="margin:14px 4px 0">
       いっぱいのときは、この順で空けてください。<br>

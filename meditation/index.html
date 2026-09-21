@@ -469,6 +469,11 @@ body.bgm .stage{gap:14px}
 .qz-o:disabled{opacity:.55}
 .qz-o.right{background:rgba(159,216,214,.2);border-color:rgba(159,216,214,.6);color:#eafaf8;opacity:1}
 .qz-o.wrong{background:rgba(231,136,136,.13);border-color:rgba(231,136,136,.5);color:#ffd9d9;opacity:1}
+/* 「わからない」は選択肢ではないので、点線にして離して置く */
+.qz-dk{width:100%;margin-top:18px;padding:13px;border-radius:14px;background:none;
+  border:1px dashed rgba(255,255,255,.18);color:var(--dim);font-size:.88rem;letter-spacing:.06em}
+.qz-dk:active{border-color:rgba(159,216,214,.45);color:var(--ink2)}
+.qz-res.unk .qz-rh{color:var(--warm)}
 .qz-res{margin-top:22px;padding:16px 17px;border-radius:16px;border:1px solid var(--line);background:var(--card)}
 .qz-res.ok .qz-rh{color:var(--aqua)}
 .qz-res.ng .qz-rh{color:#e78888}
@@ -495,6 +500,7 @@ body.bgm .stage{gap:14px}
 .qzr-s{flex:none;color:var(--dim);font-size:.8rem}
 .qzr-c{flex:none;width:18px;text-align:center;color:var(--aqua);font-size:.95rem}
 .qzr-row.ng .qzr-c{color:#e78888}
+.qzr-row.unk .qzr-c{color:var(--warm)}
 .qzr-row.ng .qzr-n{color:var(--dim)}
 .qzr-note{margin:22px 0 0;color:var(--dim);font-size:.85rem;line-height:1.8}
 .qz-read h3{margin:0 0 10px;font-size:.86rem;letter-spacing:.08em;color:var(--dim);font-weight:500}
@@ -846,7 +852,7 @@ body.bgm .stage{gap:14px}
           <li>途中で人に話しかけられたときなどは、<b>「一時停止」</b>で止められます。もう一度押すと、続きから再開します。<b>止めていた時間は記録に入りません。</b>なお、<b>考えごとが浮かんだだけなら、止めなくて大丈夫</b>です。気づいて呼吸に戻ること自体が練習なので、そのまま続けてください。</li>
           <li>終わると自動で記録されます。<b>いまの気分</b>を5段階でひと押しでき、「ひとこと」に感じたことも残せます（声でも入れられます）。<b>気分を押しそびれても、あとから入れられます</b>——「記録」で日や記録を押すと、気分とひとことをまとめて直せます。</li>
           <li>「記録」で、続いた日数やこれまでの時間を見られます。<b>カレンダー</b>は月ごとに見られ、‹ › で始めた月までさかのぼれます。<b>日を押すと、何時から何分すわったか、流していた音、気分、書いたひとことが日記のように見られます</b>。</li>
-          <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。1日後・3日後・7日後…と<b>復習</b>が出てきます。復習は<b>問題に答える形</b>です。答えるまでにかかった時間も出るので、同じ問題を前より速く答えられたかが分かります。正解なら次に出る日がのびて、まちがえたら翌日また出ます。覚えているかどうかを自分で決めなくてよいので、迷いません。問題の難しさは<b>やさしい／ふつう／激ムズ</b>から選べます。「力だめし」を押すと、学んだところからランダムに出題されます（こちらは復習の日には影響しません）。まちがえてチェックを外しても、つけ直せば復習の進みぐあいはそのまま戻ります。</li>
+          <li>「学ぶ」で、瞑想について研究で分かっていることを1つずつ読めます。読み終えたら「学んだ」を押すとチェックがつきます。1日後・3日後・7日後…と<b>復習</b>が出てきます。復習は<b>問題に答える形</b>です。分からないときは、あてずっぽうで選ばずに<b>「わからない」</b>を押してください。まぐれで当たると、アプリが「覚えている」と思って次に出るのが先に延びてしまい、かえって忘れやすくなります。答えるまでにかかった時間も出るので、同じ問題を前より速く答えられたかが分かります。正解なら次に出る日がのびて、まちがえたら翌日また出ます。覚えているかどうかを自分で決めなくてよいので、迷いません。問題の難しさは<b>やさしい／ふつう／激ムズ</b>から選べます。「力だめし」を押すと、学んだところからランダムに出題されます（こちらは復習の日には影響しません）。まちがえてチェックを外しても、つけ直せば復習の進みぐあいはそのまま戻ります。</li>
         </ol>
         <p class="g-dim">途中でやめるときは、そこまで1分以上すわっていれば「◯分を記録してやめる」を選べます（1分未満は記録されません）。音はマナーモードだと鳴らないことがあるので、はじめる前に音量をたしかめてください。</p>
       </section>
@@ -1405,7 +1411,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 'use strict';
-const VER = 53;
+const VER = 54;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -2988,6 +2994,7 @@ function showQ(){
       '<div class="qz-opts">' +
         it.opts.map(function(t, i){ return '<button class="qz-o" data-i="' + i + '">' + t + '</button>'; }).join('') +
       '</div>' +
+      '<button class="qz-dk" data-dk="1">わからない</button>' +
     '</div>';
   $('rdBody').scrollTop = 0;
   $('rdFoot').classList.add('hidden');
@@ -3000,9 +3007,9 @@ function answerQ(pick){
   if(qDone) return; qDone = true;
   const ms = Date.now() - qT0;
   qMsTotal += ms;
-  const it = qQueue[qIdx], ok = pick === it.ci, L = LESSONS[it.li];
+  const it = qQueue[qIdx], dk = pick === -1, ok = !dk && pick === it.ci, L = LESSONS[it.li];
   if(ok) qRight++;
-  qLog.push({ name: QNAME[it.id] || L.n, ok: ok, ms: ms, li: it.li });
+  qLog.push({ name: QNAME[it.id] || L.n, ok: ok, dk: dk, ms: ms, li: it.li });
 
   // 同じ問題の、前回・最速とくらべる（正解したときだけ残す）
   const tk = it.id + '_' + it.q.d;
@@ -3022,6 +3029,7 @@ function answerQ(pick){
   }else if(old && old.best){
     tLine += '　最速 ' + secText(old.best);
   }
+  if(dk) tLine = '';                           // わからないときは、時間を出さない（速さは関係ない）
   if(qMode === 'review'){ ok ? markGot(it.id) : markVague(it.id); }
 
   document.querySelectorAll('.qz-o').forEach(function(b, i){
@@ -3029,15 +3037,16 @@ function answerQ(pick){
     if(i === it.ci) b.classList.add('right');
     else if(i === pick) b.classList.add('wrong');
   });
+  const dkb = document.querySelector('.qz-dk'); if(dkb) dkb.remove();
   const res = document.createElement('div');
-  res.className = 'qz-res ' + (ok ? 'ok' : 'ng');
-  res.innerHTML = '<div class="qz-rh">' + (ok ? '正解' : 'ざんねん') + '</div>' +
+  res.className = 'qz-res ' + (ok ? 'ok' : dk ? 'unk' : 'ng');
+  const lines = [];
+  if(tLine) lines.push('<span class="qz-t">' + tLine + '</span>');
+  if(qMode === 'review') lines.push(ok ? '次は ' + whenText(it.id).replace('あと', '') + '後に出ます'
+                                       : 'あす、もう一度出ます');
+  res.innerHTML = '<div class="qz-rh">' + (ok ? '正解' : dk ? '答えはこちら' : 'ざんねん') + '</div>' +
     '<p class="qz-e">' + it.q.e + '</p>' +
-    '<p class="qz-n2"><span class="qz-t">' + tLine + '</span>' +
-    (qMode === 'review'
-      ? '<br>' + (ok ? '次は ' + whenText(it.id).replace('あと', '') + '後に出ます'
-                     : 'あす、もう一度出ます')
-      : '') + '</p>';
+    (lines.length ? '<p class="qz-n2">' + lines.join('<br>') + '</p>' : '');
   document.querySelector('.qz').appendChild(res);
   const more = document.createElement('div');
   more.className = 'qz-read';
@@ -3076,11 +3085,11 @@ function showResult(n, r, wasTest, newBest){
       '<div class="qzr-time">' + secText(qMsTotal) + '　<span>1問あたり ' + secText(qMsTotal / n) + '</span></div>' +
       '<div class="qzr-list">' +
         qLog.map(function(x, i){
-          return '<div class="qzr-row' + (x.ok ? '' : ' ng') + '">' +
+          return '<div class="qzr-row' + (x.ok ? '' : x.dk ? ' unk ng' : ' ng') + '">' +
             '<span class="qzr-i mono">' + (i + 1) + '</span>' +
             '<span class="qzr-n">' + x.name + '</span>' +
-            '<span class="qzr-s mono">' + secText(x.ms) + '</span>' +
-            '<span class="qzr-c">' + (x.ok ? '○' : '×') + '</span></div>';
+            '<span class="qzr-s mono">' + (x.dk ? '' : secText(x.ms)) + '</span>' +
+            '<span class="qzr-c">' + (x.ok ? '○' : x.dk ? '？' : '×') + '</span></div>';
         }).join('') +
       '</div>' +
       (wasTest
@@ -3095,6 +3104,8 @@ function showResult(n, r, wasTest, newBest){
 }
 let qResult = false;
 $('rdBody').addEventListener('click', function(e){
+  const d = e.target.closest('.qz-dk');
+  if(d){ answerQ(-1); return; }                // わからない（Takutoさんの「適当に選ばないように」）
   const b = e.target.closest('.qz-o'); if(!b || b.disabled) return;
   answerQ(parseInt(b.dataset.i, 10));
 });

@@ -13,11 +13,31 @@
 <meta name="apple-mobile-web-app-title" content="Mindrest">
 <style>
 :root{
+  /* 色の素。明るい見た目はここを入れかえるだけで切りかわる（アンケート「ライトモードがあるといいです」） */
+  --aquaRGB:159,216,214;
+  --fgRGB:255,255,255;
+  --warmRGB:227,199,154;
+  --missRGB:231,136,136;
+  --aquaHi:#eafaf8;
+  --aquaSoft:#dff6f4;
+  --warmHi:#f2e6cf;
+  --miss:#e78888;
+  --missHi:#ffd9d9;
+  --fig:#4a5866;
+  --panel:#141b24;
+  --barBg:rgba(10,14,19,.96);
+  --scrim:rgba(4,7,10,.72);
+  --toastBg:rgba(20,27,36,.96);
+  --onAqua:#04202a;
+  --onWarm:#241a08;
+  --skyTop:#16202c;
+  --skyBtm:#0a0e13;
+  --blob:.5;
   --bg:#0a0e13;
   --bg2:#111823;
-  --surf:rgba(255,255,255,.045);
-  --surf2:rgba(255,255,255,.075);
-  --line:rgba(255,255,255,.10);
+  --surf:rgba(var(--fgRGB),.045);
+  --surf2:rgba(var(--fgRGB),.075);
+  --line:rgba(var(--fgRGB),.10);
   --ink:#e9f0f4;
   --ink2:#b3c1cc;
   --dim:#778794;
@@ -50,8 +70,8 @@ button{font:inherit;color:inherit;border:none;background:none;cursor:pointer;-we
 
 /* ゆっくり流れる背景の光 */
 .sky{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:
-  radial-gradient(120% 90% at 50% -10%, #16202c 0%, #0a0e13 62%)}
-.sky i{position:absolute;display:block;border-radius:50%;filter:blur(60px);opacity:.5}
+  radial-gradient(120% 90% at 50% -10%, var(--skyTop) 0%, var(--skyBtm) 62%)}
+.sky i{position:absolute;display:block;border-radius:50%;filter:blur(60px);opacity:var(--blob)}
 .sky i:nth-child(1){width:70vw;height:70vw;left:-15vw;top:-10vh;background:radial-gradient(circle,rgba(90,160,170,.42),rgba(90,160,170,0) 70%);animation:drift1 46s ease-in-out infinite}
 .sky i:nth-child(2){width:60vw;height:60vw;right:-12vw;top:22vh;background:radial-gradient(circle,rgba(120,120,190,.30),rgba(120,120,190,0) 70%);animation:drift2 62s ease-in-out infinite}
 .sky i:nth-child(3){width:80vw;height:80vw;left:5vw;bottom:-25vh;background:radial-gradient(circle,rgba(200,170,120,.16),rgba(200,170,120,0) 70%);animation:drift1 74s ease-in-out infinite reverse}
@@ -71,11 +91,11 @@ body.tab-home:not(.bgm):not(.wc):not(.upd):not(.ambopen) .app{overflow-y:hidden}
 
 /* ── 更新のお知らせ ── */
 .upd{display:flex;align-items:center;gap:11px;margin:12px 0 0;padding:12px 14px;border-radius:16px;
-  background:rgba(227,199,154,.10);border:1px solid rgba(227,199,154,.34)}
-.upd .ut{flex:1;min-width:0;font-size:.79rem;color:#f2e6cf;line-height:1.65}
-.upd .ut b{display:block;font-size:.86rem;color:#f8eeda}
-.upd .ub{flex:none;padding:10px 15px;border-radius:12px;background:rgba(227,199,154,.92);
-  color:#241a08;font-size:.8rem;font-weight:700;letter-spacing:.04em}
+  background:rgba(var(--warmRGB),.10);border:1px solid rgba(var(--warmRGB),.34)}
+.upd .ut{flex:1;min-width:0;font-size:.79rem;color:var(--warmHi);line-height:1.65}
+.upd .ut b{display:block;font-size:.86rem;color:var(--warmHi)}
+.upd .ub{flex:none;padding:10px 15px;border-radius:12px;background:rgba(var(--warmRGB),.92);
+  color:var(--onWarm);font-size:.8rem;font-weight:700;letter-spacing:.04em}
 .upd .ub:active{opacity:.85}
 
 /* ── 瞑想タブ ── */
@@ -85,12 +105,12 @@ body.tab-home:not(.bgm):not(.wc):not(.upd):not(.ambopen) .app{overflow-y:hidden}
 .stage > :last-child{margin-bottom:auto}
 
 .orb{position:relative;width:min(48vw,178px,19vh);width:min(48vw,178px,19dvh);aspect-ratio:1;display:grid;place-items:center;margin-top:clamp(8px,1.8vh,16px);margin-top:clamp(8px,1.8dvh,16px)}
-.orb .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(159,216,214,.22)}
-.orb .ring.r2{inset:-11px;border-color:rgba(159,216,214,.10)}
-.orb .ring.r3{inset:-22px;border-color:rgba(159,216,214,.05)}
+.orb .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(var(--aquaRGB),.22)}
+.orb .ring.r2{inset:-11px;border-color:rgba(var(--aquaRGB),.10)}
+.orb .ring.r3{inset:-22px;border-color:rgba(var(--aquaRGB),.05)}
 .orb .core{position:absolute;inset:12%;border-radius:50%;
-  background:radial-gradient(circle at 38% 32%, rgba(255,255,255,.30), rgba(159,216,214,.16) 42%, rgba(90,150,160,.10) 68%, rgba(90,150,160,0) 78%);
-  box-shadow:0 0 60px rgba(120,190,195,.22), inset 0 0 40px rgba(255,255,255,.05);
+  background:radial-gradient(circle at 38% 32%, rgba(var(--fgRGB),.30), rgba(var(--aquaRGB),.16) 42%, rgba(90,150,160,.10) 68%, rgba(90,150,160,0) 78%);
+  box-shadow:0 0 60px rgba(120,190,195,.22), inset 0 0 40px rgba(var(--fgRGB),.05);
   animation:idle 9s ease-in-out infinite}
 @keyframes idle{0%,100%{transform:scale(.94);opacity:.86}50%{transform:scale(1.03);opacity:1}}
 .orb{-webkit-appearance:none;background:none;border:none;padding:0}
@@ -133,10 +153,10 @@ body.tab-home:not(.bgm):not(.wc):not(.upd):not(.ambopen) .app{overflow-y:hidden}
 
 .chr-line{display:flex;align-items:center;gap:9px;margin-top:-8px}
 .chr-line .cn{font-size:1rem;color:var(--ink);letter-spacing:.08em}
-.chr-line .cm{font-size:.72rem;color:var(--aqua);border:1px solid rgba(159,216,214,.34);
+.chr-line .cm{font-size:.72rem;color:var(--aqua);border:1px solid rgba(var(--aquaRGB),.34);
   border-radius:999px;padding:3px 11px}
-.chr-line .cm.low{color:var(--warm);border-color:rgba(227,199,154,.4)}
-.chr-line .cm.bad{color:#e78888;border-color:rgba(231,136,136,.4)}
+.chr-line .cm.low{color:var(--warm);border-color:rgba(var(--warmRGB),.4)}
+.chr-line .cm.bad{color:var(--miss);border-color:rgba(var(--missRGB),.4)}
 
 /* キャラの詳しい画面 */
 .chrsheet .now{display:flex;align-items:center;gap:16px;margin-bottom:4px}
@@ -145,10 +165,10 @@ body.tab-home:not(.bgm):not(.wc):not(.upd):not(.ambopen) .app{overflow-y:hidden}
 .chrsheet .now .t1{font-size:1.15rem;color:var(--ink)}
 .chrsheet .now .t2{font-size:.8rem;color:var(--dim);margin-top:3px;line-height:1.7}
 .chrgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-.chrcell{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:14px;
+.chrcell{background:rgba(var(--fgRGB),.035);border:1px solid var(--line);border-radius:14px;
   padding:9px 6px 10px;text-align:center}
-.chrcell.on{background:rgba(159,216,214,.10);border-color:rgba(159,216,214,.34)}
-.chrcell.next{border-color:rgba(227,199,154,.45);background:rgba(227,199,154,.07)}
+.chrcell.on{background:rgba(var(--aquaRGB),.10);border-color:rgba(var(--aquaRGB),.34)}
+.chrcell.next{border-color:rgba(var(--warmRGB),.45);background:rgba(var(--warmRGB),.07)}
 .chrcell svg{display:block;width:74%;margin:0 auto;height:auto;overflow:visible}
 .chrcell .cl{font-size:.72rem;color:var(--dim);margin-top:5px}
 .chrcell.on .cl{color:var(--ink2)}
@@ -160,12 +180,12 @@ body.tab-home:not(.bgm):not(.wc):not(.upd):not(.ambopen) .app{overflow-y:hidden}
   border:1px solid var(--line);color:var(--ink2);font-size:.95rem;transition:.25s}
 .pick .m{font-size:1.05rem;font-weight:500}
 .pick .s{font-size:.72rem;color:var(--dim);margin-left:3px}
-.pick[aria-pressed="true"]{background:rgba(159,216,214,.14);border-color:rgba(159,216,214,.45);color:#eafaf8;
+.pick[aria-pressed="true"]{background:rgba(var(--aquaRGB),.14);border-color:rgba(var(--aquaRGB),.45);color:var(--aquaHi);
   box-shadow:0 0 22px rgba(120,190,195,.18)}
-.pick.adj{background:none;border-style:dashed;border-color:rgba(255,255,255,.16);color:var(--dim);
+.pick.adj{background:none;border-style:dashed;border-color:rgba(var(--fgRGB),.16);color:var(--dim);
   -webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 .pick.adj .m{font-size:.95rem}
-.pick.adj:active{border-color:rgba(159,216,214,.45);color:#eafaf8}
+.pick.adj:active{border-color:rgba(var(--aquaRGB),.45);color:var(--aquaHi)}
 .pick.adj:disabled{opacity:.3}
 
 .ambs{width:100%;max-width:300px}
@@ -180,7 +200,7 @@ body.tab-home:not(.bgm):not(.wc):not(.upd):not(.ambopen) .app{overflow-y:hidden}
 /* 「音量も選べると嬉しい」という声があった。じつは最初からあるのに、
    小さな下線の文字で見つけてもらえていなかったので、枠のある押せそうな形にした */
 .acfg{font-size:.76rem;color:var(--aqua);padding:5px 11px;border-radius:999px;
-  border:1px solid rgba(159,216,214,.3);background:rgba(159,216,214,.07);
+  border:1px solid rgba(var(--aquaRGB),.3);background:rgba(var(--aquaRGB),.07);
   display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .acfg::before{content:'';width:11px;height:11px;border-radius:50%;
   border:1.5px solid currentColor;border-right-color:transparent;border-bottom-color:transparent;
@@ -191,42 +211,42 @@ body.tab-home:not(.bgm):not(.wc):not(.upd):not(.ambopen) .app{overflow-y:hidden}
 .srow .sk{flex:1;min-width:0;font-size:.9rem;color:var(--ink)}
 .srow .sk small{display:block;font-size:.74rem;color:var(--dim);line-height:1.6;margin-top:2px}
 .seg{display:flex;gap:5px;flex:none}
-.seg button{padding:7px 12px;border-radius:10px;background:rgba(255,255,255,.05);
+.seg button{padding:7px 12px;border-radius:10px;background:rgba(var(--fgRGB),.05);
   border:1px solid var(--line);color:var(--dim);font-size:.8rem}
-.seg button[aria-pressed="true"]{background:rgba(159,216,214,.15);border-color:rgba(159,216,214,.42);color:#eafaf8}
-.tgl{width:52px;height:30px;border-radius:999px;background:rgba(255,255,255,.09);
+.seg button[aria-pressed="true"]{background:rgba(var(--aquaRGB),.15);border-color:rgba(var(--aquaRGB),.42);color:var(--aquaHi)}
+.tgl{width:52px;height:30px;border-radius:999px;background:rgba(var(--fgRGB),.09);
   border:1px solid var(--line);position:relative;flex:none;transition:.2s}
 .tgl i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
   background:var(--dim);transition:.2s}
-.tgl[aria-pressed="true"]{background:rgba(159,216,214,.28);border-color:rgba(159,216,214,.5)}
-.tgl[aria-pressed="true"] i{left:25px;background:#eafaf8}
+.tgl[aria-pressed="true"]{background:rgba(var(--aquaRGB),.28);border-color:rgba(var(--aquaRGB),.5)}
+.tgl[aria-pressed="true"] i{left:25px;background:var(--aquaHi)}
 .amb{width:76px;min-width:76px;padding:8px 0;border-radius:999px;background:var(--surf);border:1px solid var(--line);
   color:var(--dim);font-size:.8rem;text-align:center;transition:.2s}
-.amb[aria-pressed="true"]{background:rgba(159,216,214,.13);border-color:rgba(159,216,214,.42);color:#eafaf8}
+.amb[aria-pressed="true"]{background:rgba(var(--aquaRGB),.13);border-color:rgba(var(--aquaRGB),.42);color:var(--aquaHi)}
 
 .start{width:100%;max-width:290px;padding:clamp(13px,2vh,17px);padding:clamp(13px,2dvh,17px);border-radius:999px;
-  background:linear-gradient(180deg,rgba(159,216,214,.95),rgba(111,182,189,.9));
-  color:#07222a;font-weight:700;font-size:1.05rem;letter-spacing:.16em;
+  background:linear-gradient(180deg,rgba(var(--aquaRGB),.95),rgba(111,182,189,.9));
+  color:var(--onAqua);font-weight:700;font-size:1.05rem;letter-spacing:.16em;
   box-shadow:0 10px 34px rgba(110,180,190,.22);transition:.2s}
 .start:active{transform:scale(.985);opacity:.9}
 .bgmlink{font-size:.76rem;color:var(--ink2);text-decoration:underline;text-underline-offset:4px;
   margin-top:-6px;opacity:.85;padding:4px}
 .welcome{display:flex;align-items:flex-start;gap:10px;margin:12px 0 0;padding:14px 15px;
-  border-radius:16px;background:rgba(159,216,214,.10);border:1px solid rgba(159,216,214,.3);
+  border-radius:16px;background:rgba(var(--aquaRGB),.10);border:1px solid rgba(var(--aquaRGB),.3);
   animation:fade .4s ease}
-.welcome .wc-t{flex:1;font-size:.86rem;color:#dff6f4;line-height:1.8}
-.welcome .wc-t b{color:#eafaf8}
+.welcome .wc-t{flex:1;font-size:.86rem;color:var(--aquaSoft);line-height:1.8}
+.welcome .wc-t b{color:var(--aquaHi)}
 .welcome .wc-x{flex:none;color:var(--dim);font-size:.85rem;padding:2px 4px}
 
 .bgmbar{display:flex;align-items:center;gap:10px;margin:10px 0 0;
   padding:9px 12px;border-radius:14px;
-  background:rgba(159,216,214,.09);border:1px solid rgba(159,216,214,.3);
+  background:rgba(var(--aquaRGB),.09);border:1px solid rgba(var(--aquaRGB),.3);
   animation:fade .3s ease}
 .bgmbar .bb-t{flex:1;min-width:0;font-size:.82rem;color:var(--ink2);line-height:1.5}
 .bgmbar .bb-t b{color:var(--aqua)}
 .bgmbar .bb-t small{font-size:.68rem;color:var(--dim);margin-left:6px}
 .bgmbar .bb-x{flex:none;padding:7px 13px;border-radius:10px;font-size:.78rem;
-  background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--ink)}
+  background:rgba(var(--fgRGB),.07);border:1px solid var(--line);color:var(--ink)}
 
 
 body.bgm .hint{display:none}
@@ -243,25 +263,25 @@ body.bgm .stage{gap:14px}
 .lv-num b{font-size:1.55rem;color:var(--ink);font-weight:400;margin-left:5px;letter-spacing:0}
 .lv-title{flex:1;font-size:.95rem;color:var(--aqua);letter-spacing:.06em;text-align:right}
 .lv-arrow{color:var(--dim);font-size:1.05rem;flex:none}
-.lv-bar{height:6px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;margin:clamp(7px,1.2vh,11px) 0 clamp(5px,.8vh,7px);margin:clamp(7px,1.2dvh,11px) 0 clamp(5px,.8dvh,7px)}
+.lv-bar{height:6px;border-radius:999px;background:rgba(var(--fgRGB),.07);overflow:hidden;margin:clamp(7px,1.2vh,11px) 0 clamp(5px,.8vh,7px);margin:clamp(7px,1.2dvh,11px) 0 clamp(5px,.8dvh,7px)}
 .lv-bar i{display:block;height:100%;width:0;border-radius:999px;
-  background:linear-gradient(90deg,rgba(159,216,214,.95),rgba(227,199,154,.95));
-  box-shadow:0 0 12px rgba(159,216,214,.45);transition:width .9s ease}
+  background:linear-gradient(90deg,rgba(var(--aquaRGB),.95),rgba(var(--warmRGB),.95));
+  box-shadow:0 0 12px rgba(var(--aquaRGB),.45);transition:width .9s ease}
 .lv-sub{display:flex;justify-content:space-between;font-size:.72rem;color:var(--dim);letter-spacing:.04em}
 
 .bgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-.bg{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:14px;
+.bg{background:rgba(var(--fgRGB),.035);border:1px solid var(--line);border-radius:14px;
   padding:11px 7px 10px;text-align:center}
 .bg .bn{font-size:.8rem;color:var(--dim)}
 .bg .bd{font-size:.63rem;color:var(--dim);opacity:.65;margin-top:3px;line-height:1.5}
 .bg .bp{font-size:.63rem;color:var(--warm);margin-top:5px;opacity:.9}
-.bg.near{border-color:rgba(227,199,154,.28)}
-.soon{background:rgba(227,199,154,.08);border:1px solid rgba(227,199,154,.26);border-radius:14px;
+.bg.near{border-color:rgba(var(--warmRGB),.28)}
+.soon{background:rgba(var(--warmRGB),.08);border:1px solid rgba(var(--warmRGB),.26);border-radius:14px;
   padding:12px 14px;margin-bottom:11px;font-size:.84rem;color:var(--ink2);line-height:1.75}
-.soon b{color:#f4e8d2}
-.bg.got{background:rgba(159,216,214,.10);border-color:rgba(159,216,214,.34);
+.soon b{color:var(--warmHi)}
+.bg.got{background:rgba(var(--aquaRGB),.10);border-color:rgba(var(--aquaRGB),.34);
   box-shadow:0 0 18px rgba(120,190,195,.10)}
-.bg.got .bn{color:#eafaf8}
+.bg.got .bn{color:var(--aquaHi)}
 .bg.got .bd{color:var(--ink2);opacity:1}
 
 .tlist{display:flex;flex-direction:column;gap:5px}
@@ -270,7 +290,7 @@ body.bgm .stage{gap:14px}
 .tl .tn{display:block}
 .tl .ts{display:block;font-size:.7rem;opacity:.72;margin-top:1px;line-height:1.5}
 .tl.reached{color:var(--ink2)}
-.tl.now{background:rgba(159,216,214,.12);color:#eafaf8;border:1px solid rgba(159,216,214,.3)}
+.tl.now{background:rgba(var(--aquaRGB),.12);color:var(--aquaHi);border:1px solid rgba(var(--aquaRGB),.3)}
 
 .lvsheet h4{margin:18px 0 9px;font-size:.74rem;font-weight:600;color:var(--dim);letter-spacing:.18em}
 .lvsheet h4:first-of-type{margin-top:14px}
@@ -282,13 +302,13 @@ body.bgm .stage{gap:14px}
 .ltab{display:flex;flex-direction:column;gap:3px;margin-top:2px}
 .lr{display:flex;justify-content:space-between;gap:10px;font-size:.84rem;color:var(--dim);
   padding:7px 12px;border-radius:10px}
-.lr.now{background:rgba(159,216,214,.12);border:1px solid rgba(159,216,214,.3);color:#eafaf8}
+.lr.now{background:rgba(var(--aquaRGB),.12);border:1px solid rgba(var(--aquaRGB),.3);color:var(--aquaHi)}
 .lr.more{color:var(--dim);opacity:.65;font-size:.78rem;background:none;border:none;padding-top:2px}
 .sheet .btns.col{flex-direction:column}
 .sheet .btns.col button{width:100%}
 .sheet .hi{color:var(--aqua)}
 .ptag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:.62rem;
-  color:var(--warm);border:1px solid rgba(227,199,154,.35);vertical-align:1px}
+  color:var(--warm);border:1px solid rgba(var(--warmRGB),.35);vertical-align:1px}
 
 /* ── クラスのようす（ランキング） ── */
 .rank{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
@@ -301,24 +321,24 @@ body.bgm .stage{gap:14px}
   font-size:.76rem;color:var(--dim)}
 .rank .rk-me{color:var(--aqua)}
 .rank .rk-join{margin-top:11px;width:100%;padding:11px;border-radius:12px;
-  background:rgba(159,216,214,.14);border:1px solid rgba(159,216,214,.42);color:#eafaf8;font-size:.86rem}
+  background:rgba(var(--aquaRGB),.14);border:1px solid rgba(var(--aquaRGB),.42);color:var(--aquaHi);font-size:.86rem}
 
 .rlist{display:flex;flex-direction:column;gap:6px}
 .rrow{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;
-  background:rgba(255,255,255,.04);border:1px solid transparent;font-size:.9rem}
-.rrow.me{background:rgba(159,216,214,.12);border-color:rgba(159,216,214,.34)}
+  background:rgba(var(--fgRGB),.04);border:1px solid transparent;font-size:.9rem}
+.rrow.me{background:rgba(var(--aquaRGB),.12);border-color:rgba(var(--aquaRGB),.34)}
 .rrow .rk{flex:none;width:26px;text-align:center;color:var(--dim);font-size:.8rem}
-.rrow.top1 .rk{color:#f0dfb4}
+.rrow.top1 .rk{color:var(--warmHi)}
 .rrow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rrow .mn{flex:none;color:var(--ink2);font-size:.86rem}
 .rrow .lv{flex:none;width:64px;text-align:right;color:var(--dim);font-size:.74rem}
-.rsum{background:rgba(159,216,214,.08);border:1px solid rgba(159,216,214,.26);
+.rsum{background:rgba(var(--aquaRGB),.08);border:1px solid rgba(var(--aquaRGB),.26);
   border-radius:16px;padding:15px 16px;margin-bottom:14px;text-align:center}
 .rsum .t{font-size:1.7rem;font-weight:300;line-height:1.3}
 .rsum .s{font-size:.78rem;color:var(--dim);margin-top:3px}
-.nick{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);
+.nick{width:100%;background:rgba(var(--fgRGB),.05);border:1px solid var(--line);
   border-radius:14px;color:var(--ink);padding:13px 14px;font-size:1rem;outline:none;font-family:inherit}
-.nick:focus{border-color:rgba(159,216,214,.45)}
+.nick:focus{border-color:rgba(var(--aquaRGB),.45)}
 
 /* ── 記録タブ ── */
 .pane{padding-top:18px;animation:fade .35s ease}
@@ -340,22 +360,22 @@ body.bgm .stage{gap:14px}
 .calsum{margin-top:11px;text-align:center;font-size:.78rem;color:var(--dim)}
 
 .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
-.grid .d{aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.05);position:relative}
+.grid .d{aspect-ratio:1;border-radius:50%;background:rgba(var(--fgRGB),.05);
+  border:1px solid rgba(var(--fgRGB),.05);position:relative}
 .grid .d.on{background:radial-gradient(circle at 40% 35%, rgba(190,240,238,.95), rgba(120,190,195,.55) 70%);
   border-color:transparent;box-shadow:0 0 12px rgba(120,190,195,.35)}
-.grid .d.today{outline:1px solid rgba(227,199,154,.8);outline-offset:2px}
+.grid .d.today{outline:1px solid rgba(var(--warmRGB),.8);outline-offset:2px}
 .grid .d{display:grid;place-items:center;cursor:pointer}
 .grid .d.pad{visibility:hidden}
 .grid .d .dn{font-size:.62rem;color:var(--dim);position:relative;z-index:1}
-.grid .d.on .dn{color:#07222a;font-weight:700}
+.grid .d.on .dn{color:var(--onAqua);font-weight:700}
 .grid .d.future{opacity:.28}
 
 .dayrow{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:13px;
-  background:rgba(255,255,255,.04);border:1px solid var(--line);margin-bottom:8px}
+  background:rgba(var(--fgRGB),.04);border:1px solid var(--line);margin-bottom:8px}
 .dayrow .dt{flex:none;font-size:.76rem;color:var(--dim)}
 .stag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:.62rem;
-  color:var(--aqua);border:1px solid rgba(159,216,214,.32);vertical-align:1px}
+  color:var(--aqua);border:1px solid rgba(var(--aquaRGB),.32);vertical-align:1px}
 .dayrow .dm{flex:1;font-size:.95rem}
 .dayrow .dmemo{display:block;font-size:.8rem;color:var(--ink2);margin-top:4px;white-space:pre-wrap;line-height:1.7}
 .wk{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:8px}
@@ -364,7 +384,7 @@ body.bgm .stage{gap:14px}
 .list{display:flex;flex-direction:column;gap:8px}
 .row{display:flex;align-items:center;gap:12px;background:var(--surf);border:1px solid var(--line);
   border-radius:14px;padding:12px 14px}
-.row .dot{width:8px;height:8px;border-radius:50%;background:var(--aqua);flex:none;box-shadow:0 0 10px rgba(159,216,214,.6)}
+.row .dot{width:8px;height:8px;border-radius:50%;background:var(--aqua);flex:none;box-shadow:0 0 10px rgba(var(--aquaRGB),.6)}
 .row .r-main{flex:1;min-width:0}
 .row .r-d{font-size:.92rem}
 .row .r-t{font-size:.74rem;color:var(--dim)}
@@ -384,17 +404,17 @@ body.bgm .stage{gap:14px}
 .hint2{color:var(--dim);font-size:.76rem;line-height:1.7;margin:-4px 0 12px}
 
 /* ── ひとこと（音声入力つき） ── */
-.memo-ta{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);
+.memo-ta{width:100%;background:rgba(var(--fgRGB),.05);border:1px solid var(--line);
   border-radius:14px;color:var(--ink);padding:13px 14px;font-size:1rem;line-height:1.7;
   resize:none;outline:none;font-family:inherit;-webkit-appearance:none}
-.memo-ta:focus{border-color:rgba(159,216,214,.45)}
+.memo-ta:focus{border-color:rgba(var(--aquaRGB),.45)}
 .mic-row{display:flex;align-items:center;gap:12px;margin:12px 0 18px}
 .mic{display:inline-flex;align-items:center;gap:9px;padding:11px 18px;border-radius:999px;flex:none;
-  background:rgba(159,216,214,.12);border:1px solid rgba(159,216,214,.35);color:#dff6f4;font-size:.88rem}
+  background:rgba(var(--aquaRGB),.12);border:1px solid rgba(var(--aquaRGB),.35);color:var(--aquaSoft);font-size:.88rem}
 .mic .ic{font-size:1.02rem;line-height:1}
-.mic.on{background:rgba(230,110,110,.18);border-color:rgba(230,110,110,.55);color:#ffdcdc;
+.mic.on{background:rgba(var(--missRGB),.18);border-color:rgba(var(--missRGB),.55);color:var(--missHi);
   animation:pulse 1.5s ease-in-out infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(230,110,110,.34)}50%{box-shadow:0 0 0 11px rgba(230,110,110,0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(var(--missRGB),.34)}50%{box-shadow:0 0 0 11px rgba(var(--missRGB),0)}}
 .mic-note{font-size:.74rem;color:var(--dim);line-height:1.55}
 .memo-link{margin-top:20px;color:var(--ink2);font-size:.86rem;letter-spacing:.12em;
   text-decoration:underline;text-underline-offset:4px;opacity:.9}
@@ -412,15 +432,15 @@ body.bgm .stage{gap:14px}
 .gcard .g-dim{color:var(--dim);font-size:.82rem;line-height:1.8}
 .gcard .q{color:var(--aqua);font-weight:600;font-size:.92rem;margin:16px 0 4px}
 .gbtn{width:100%;margin:4px 0 12px;padding:13px;border-radius:14px;font-size:.9rem;
-  background:rgba(159,216,214,.13);border:1px solid rgba(159,216,214,.4);color:#eafaf8}
-.gbtn:active{background:rgba(159,216,214,.22)}
+  background:rgba(var(--aquaRGB),.13);border:1px solid rgba(var(--aquaRGB),.4);color:var(--aquaHi)}
+.gbtn:active{background:rgba(var(--aquaRGB),.22)}
 .gbtn.ghost{background:var(--surf2);border-color:var(--line);color:var(--ink2)}
 .gbtns{display:flex;gap:9px}
 .remrow{display:flex;gap:9px;align-items:stretch;margin:4px 0 10px}
-.remtime{flex:none;width:110px;background:rgba(255,255,255,.05);border:1px solid var(--line);
+.remtime{flex:none;width:110px;background:rgba(var(--fgRGB),.05);border:1px solid var(--line);
   border-radius:14px;color:var(--ink);padding:10px 12px;font-size:1.05rem;font-family:inherit;
   text-align:center;outline:none;-webkit-appearance:none;appearance:none}
-.remtime:focus{border-color:rgba(159,216,214,.45)}
+.remtime:focus{border-color:rgba(var(--aquaRGB),.45)}
 .remrow .gbtn{flex:1}
 .lnk{color:var(--aqua);text-decoration:underline;text-underline-offset:3px;font-size:.82rem;padding:2px 0}
 .gbtns .gbtn{flex:1}
@@ -436,7 +456,7 @@ body.bgm .stage{gap:14px}
 .lrn:active{background:var(--surf2)}
 .lrn .no{width:26px;height:26px;flex:none;border-radius:50%;border:1px solid var(--line);
   display:grid;place-items:center;font-size:.74rem;color:var(--dim)}
-.lrn.on .no{background:rgba(159,216,214,.16);border-color:rgba(159,216,214,.5);color:#eafaf8}
+.lrn.on .no{background:rgba(var(--aquaRGB),.16);border-color:rgba(var(--aquaRGB),.5);color:var(--aquaHi)}
 .lrn .ln{flex:1;min-width:0;display:block}
 .lrn .lt,.lrn .ld{display:block}
 .lrn .lt{font-size:.94rem;color:var(--ink)}
@@ -447,42 +467,42 @@ body.bgm .stage{gap:14px}
 .lrn-btns{display:flex;gap:8px;margin-top:12px}
 .lrn-btns button{flex:1;padding:11px;border-radius:12px;font-size:.85rem;
   background:var(--surf2);border:1px solid var(--line);color:var(--ink2)}
-.lrn-btns button.go{background:rgba(227,199,154,.16);border-color:rgba(227,199,154,.45);color:#f6e9d2}
+.lrn-btns button.go{background:rgba(var(--warmRGB),.16);border-color:rgba(var(--warmRGB),.45);color:var(--warmHi)}
 .lrn-btns button:disabled{opacity:.4}
 .lrn .st{flex:none;font-size:.66rem;color:var(--dim);text-align:right;line-height:1.5;min-width:44px}
 .lrn.due .st{color:var(--warm)}
-.rd-check.arm{border-color:rgba(227,199,154,.55);color:var(--warm);background:rgba(227,199,154,.1)}
+.rd-check.arm{border-color:rgba(var(--warmRGB),.55);color:var(--warm);background:rgba(var(--warmRGB),.1)}
 
 /* 問題の難しさ */
 .qlv{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap}
 .qlv-l{font-size:.8rem;color:var(--dim);margin-right:2px}
 .qlv button{flex:1;min-width:64px;padding:8px 0;border-radius:999px;background:var(--surf);
   border:1px solid var(--line);color:var(--ink2);font-size:.82rem}
-.qlv button[aria-pressed="true"]{background:rgba(159,216,214,.15);border-color:rgba(159,216,214,.45);color:#eafaf8}
+.qlv button[aria-pressed="true"]{background:rgba(var(--aquaRGB),.15);border-color:rgba(var(--aquaRGB),.45);color:var(--aquaHi)}
 .qtest{display:flex;flex-direction:column;align-items:center;gap:3px;
-  width:100%;margin-top:10px;padding:12px;border-radius:14px;background:rgba(227,199,154,.09);
-  border:1px solid rgba(227,199,154,.32);color:#f2e6cf;font-size:.9rem;letter-spacing:.06em}
+  width:100%;margin-top:10px;padding:12px;border-radius:14px;background:rgba(var(--warmRGB),.09);
+  border:1px solid rgba(var(--warmRGB),.32);color:var(--warmHi);font-size:.9rem;letter-spacing:.06em}
 .qtest:disabled{opacity:.45}
 .qtest #qtestSub{color:var(--dim);font-size:.76rem;letter-spacing:0}
 
 /* クイズ */
 .qz-tag{display:inline-block;padding:4px 12px;border-radius:999px;font-size:.74rem;letter-spacing:.06em;
-  background:rgba(159,216,214,.12);border:1px solid rgba(159,216,214,.3);color:#dff6f4}
+  background:rgba(var(--aquaRGB),.12);border:1px solid rgba(var(--aquaRGB),.3);color:var(--aquaSoft)}
 .qz-q{margin:16px 0 20px;font-size:1.16rem;line-height:1.75;font-weight:600;color:var(--ink)}
 .qz-opts{display:flex;flex-direction:column;gap:10px}
 .qz-o{width:100%;text-align:left;padding:15px 16px;border-radius:14px;background:var(--surf);
   border:1px solid var(--line);color:var(--ink);font-size:.95rem;line-height:1.65}
 .qz-o:disabled{opacity:.55}
-.qz-o.right{background:rgba(159,216,214,.2);border-color:rgba(159,216,214,.6);color:#eafaf8;opacity:1}
-.qz-o.wrong{background:rgba(231,136,136,.13);border-color:rgba(231,136,136,.5);color:#ffd9d9;opacity:1}
+.qz-o.right{background:rgba(var(--aquaRGB),.2);border-color:rgba(var(--aquaRGB),.6);color:var(--aquaHi);opacity:1}
+.qz-o.wrong{background:rgba(var(--missRGB),.13);border-color:rgba(var(--missRGB),.5);color:var(--missHi);opacity:1}
 /* 「わからない」は選択肢ではないので、点線にして離して置く */
 .qz-dk{width:100%;margin-top:18px;padding:13px;border-radius:14px;background:none;
-  border:1px dashed rgba(255,255,255,.18);color:var(--dim);font-size:.88rem;letter-spacing:.06em}
-.qz-dk:active{border-color:rgba(159,216,214,.45);color:var(--ink2)}
+  border:1px dashed rgba(var(--fgRGB),.18);color:var(--dim);font-size:.88rem;letter-spacing:.06em}
+.qz-dk:active{border-color:rgba(var(--aquaRGB),.45);color:var(--ink2)}
 .qz-res.unk .qz-rh{color:var(--warm)}
-.qz-res{margin-top:22px;padding:16px 17px;border-radius:16px;border:1px solid var(--line);background:var(--card)}
+.qz-res{margin-top:22px;padding:16px 17px;border-radius:16px;border:1px solid var(--line);background:var(--surf)}
 .qz-res.ok .qz-rh{color:var(--aqua)}
-.qz-res.ng .qz-rh{color:#e78888}
+.qz-res.ng .qz-rh{color:var(--miss)}
 .qz-rh{font-size:1rem;font-weight:700;letter-spacing:.08em;margin-bottom:7px}
 .qz-e{margin:0;color:var(--ink2);font-size:.92rem;line-height:1.85}
 .qz-n2{margin:9px 0 0;color:var(--dim);font-size:.82rem;line-height:1.9}
@@ -496,7 +516,7 @@ body.bgm .stage{gap:14px}
 .qzr-score span{font-size:1.5rem;color:var(--ink2)}
 .qzr-score .qzr-u{font-size:.86rem;color:var(--dim);margin-left:8px}
 .qzr-best{margin-top:10px;display:inline-block;padding:5px 14px;border-radius:999px;font-size:.78rem;
-  background:rgba(227,199,154,.13);border:1px solid rgba(227,199,154,.4);color:#f2e6cf}
+  background:rgba(var(--warmRGB),.13);border:1px solid rgba(var(--warmRGB),.4);color:var(--warmHi)}
 .qzr-time{margin-top:14px;color:var(--ink2);font-size:.95rem}
 .qzr-time span{color:var(--dim);font-size:.82rem}
 .qzr-list{margin-top:24px;text-align:left;border-top:1px solid var(--line)}
@@ -505,21 +525,21 @@ body.bgm .stage{gap:14px}
 .qzr-n{flex:1;min-width:0;color:var(--ink2);font-size:.86rem;line-height:1.5}
 .qzr-s{flex:none;color:var(--dim);font-size:.8rem}
 .qzr-c{flex:none;width:18px;text-align:center;color:var(--aqua);font-size:.95rem}
-.qzr-row.ng .qzr-c{color:#e78888}
+.qzr-row.ng .qzr-c{color:var(--miss)}
 .qzr-row.unk .qzr-c{color:var(--warm)}
 .qzr-row.ng .qzr-n{color:var(--dim)}
 .qzr-note{margin:22px 0 0;color:var(--dim);font-size:.85rem;line-height:1.8}
 .qz-read h3{margin:0 0 10px;font-size:.86rem;letter-spacing:.08em;color:var(--dim);font-weight:500}
-.lrn.mst .no{background:rgba(227,199,154,.18);border-color:rgba(227,199,154,.5);color:#f6e9d2}
+.lrn.mst .no{background:rgba(var(--warmRGB),.18);border-color:rgba(var(--warmRGB),.5);color:var(--warmHi)}
 .tabdot{display:inline-block;min-width:16px;height:16px;line-height:16px;margin-left:5px;
-  border-radius:999px;background:rgba(227,199,154,.9);color:#20180a;font-size:.64rem;
+  border-radius:999px;background:rgba(var(--warmRGB),.9);color:var(--onWarm);font-size:.64rem;
   font-weight:700;text-align:center;padding:0 4px;vertical-align:1px}
 
 /* 読む画面 */
 .reader{position:fixed;inset:0;z-index:35;background:var(--bg);display:flex;flex-direction:column;
   animation:fade .25s ease}
 .rd-head{display:flex;align-items:center;gap:12px;padding:calc(var(--safeT) + 10px) 18px 10px;
-  border-bottom:1px solid var(--line);background:rgba(10,14,19,.9);
+  border-bottom:1px solid var(--line);background:var(--barBg);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .rd-head .x{font-size:1.2rem;color:var(--ink2);padding:4px 8px 4px 0}
 .rd-head .n{flex:1;text-align:right;font-size:.74rem;color:var(--dim);letter-spacing:.1em}
@@ -530,26 +550,26 @@ body.bgm .stage{gap:14px}
 .rd-body p{font-size:.95rem;line-height:1.95;color:var(--ink2);margin:0 0 14px}
 .rd-body p:last-child{margin-bottom:0}
 .rd-body b{color:var(--ink);font-weight:600}
-.rd-body .fig{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:16px;
+.rd-body .fig{background:rgba(var(--fgRGB),.035);border:1px solid var(--line);border-radius:16px;
   padding:14px 12px;margin:18px 0}
 .rd-body .fig svg{display:block;width:100%;height:auto}
 .rd-body .fig figcaption{margin-top:9px;text-align:center;font-size:.72rem;color:var(--dim);line-height:1.6}
-.rd-body .ref{background:rgba(227,199,154,.06);border:1px solid rgba(227,199,154,.24);
+.rd-body .ref{background:rgba(var(--warmRGB),.06);border:1px solid rgba(var(--warmRGB),.24);
   border-radius:16px;padding:15px 16px;margin-top:22px}
 .rd-body .ref h3{margin:0 0 9px;font-size:.72rem;font-weight:600;color:var(--warm);letter-spacing:.2em}
 .rd-body .ref p{font-size:.84rem;line-height:1.85;color:var(--ink2);margin:0 0 9px}
 .rd-body .ref .src{font-size:.72rem;color:var(--dim);line-height:1.7;margin:0}
 .rd-foot{display:flex;gap:10px;padding:12px 18px calc(var(--safeB) + 14px);
-  border-top:1px solid var(--line);background:rgba(10,14,19,.92)}
+  border-top:1px solid var(--line);background:var(--barBg)}
 .rd-foot button{flex:1;padding:14px;border-radius:14px;font-size:.92rem;letter-spacing:.06em}
-.rd-check{background:rgba(159,216,214,.14);border:1px solid rgba(159,216,214,.42);color:#eafaf8}
-.rd-check.on{background:rgba(159,216,214,.30);color:#04202a;font-weight:600}
+.rd-check{background:rgba(var(--aquaRGB),.14);border:1px solid rgba(var(--aquaRGB),.42);color:var(--aquaHi)}
+.rd-check.on{background:rgba(var(--aquaRGB),.30);color:var(--onAqua);font-weight:600}
 .rd-next{background:var(--surf);border:1px solid var(--line);color:var(--ink2);max-width:38%}
 
 /* ── タブバー ── */
 .tabs{position:relative;z-index:5;flex:none;
   padding:8px 20px calc(var(--safeB) + 10px);
-  background:rgba(10,14,19,.96);border-top:1px solid rgba(255,255,255,.06);
+  background:var(--barBg);border-top:1px solid rgba(var(--fgRGB),.06);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .tabs .in{max-width:520px;margin:0 auto;display:flex;gap:6px}
 .tab{flex:1;padding:11px 3px;border-radius:14px;color:var(--dim);font-size:.82rem;letter-spacing:.01em;transition:.2s;white-space:nowrap}
@@ -565,12 +585,12 @@ body.bgm .stage{gap:14px}
 .run .inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:26px}
 .breath{position:relative;width:min(78vw,320px);aspect-ratio:1;display:grid;place-items:center}
 .breath .halo{position:absolute;inset:0;border-radius:50%;
-  background:radial-gradient(circle, rgba(159,216,214,.20) 0%, rgba(120,190,195,.10) 45%, rgba(120,190,195,0) 72%);
+  background:radial-gradient(circle, rgba(var(--aquaRGB),.20) 0%, rgba(120,190,195,.10) 45%, rgba(120,190,195,0) 72%);
   animation:slowGlow 16s ease-in-out infinite}
-.breath .edge{position:absolute;inset:14%;border-radius:50%;border:1px solid rgba(159,216,214,.35);
-  box-shadow:0 0 50px rgba(120,190,195,.28), inset 0 0 30px rgba(159,216,214,.10);
+.breath .edge{position:absolute;inset:14%;border-radius:50%;border:1px solid rgba(var(--aquaRGB),.35);
+  box-shadow:0 0 50px rgba(120,190,195,.28), inset 0 0 30px rgba(var(--aquaRGB),.10);
   animation:slowGlow 16s ease-in-out infinite}
-.breath .petal{position:absolute;inset:6%;border-radius:50%;border:1px solid rgba(159,216,214,.10);
+.breath .petal{position:absolute;inset:6%;border-radius:50%;border:1px solid rgba(var(--aquaRGB),.10);
   animation:slowGlow 16s ease-in-out infinite;animation-delay:-1.2s}
 @keyframes slowGlow{
   0%{transform:scale(.82);opacity:.85}
@@ -580,44 +600,44 @@ body.bgm .stage{gap:14px}
 .breath .txt{position:relative;text-align:center}
 .breath .rem{font-size:2.9rem;font-weight:200;letter-spacing:.04em}
 .run .runbtns{display:flex;gap:11px;margin-top:8px}
-.run .stop{padding:13px 26px;border-radius:999px;background:rgba(255,255,255,.06);
+.run .stop{padding:13px 26px;border-radius:999px;background:rgba(var(--fgRGB),.06);
   border:1px solid var(--line);color:var(--ink2);font-size:.88rem;letter-spacing:.14em}
 .run .pz{margin-top:10px;font-size:.78rem;letter-spacing:.2em;color:var(--warm);opacity:0;transition:.4s}
 .run.paused .pz{opacity:.9}
 /* 止めている間は、ふくらむ動きも止める */
 .run.paused .halo,.run.paused .edge,.run.paused .petal{animation-play-state:paused}
 .run.paused .rem{opacity:.55}
-.run .prog{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.06)}
-.run .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,rgba(159,216,214,.5),rgba(227,199,154,.75));transition:width .3s linear}
+.run .prog{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(var(--fgRGB),.06)}
+.run .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,rgba(var(--aquaRGB),.5),rgba(var(--warmRGB),.75));transition:width .3s linear}
 
 /* ── 終わりの画面 ── */
 .done{position:fixed;inset:0;z-index:30;overflow:auto;background:radial-gradient(110% 80% at 50% 40%, #16222c 0%, #080c11 70%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
   padding:40px 24px;text-align:center;animation:fadeIn 1.2s ease}
 .done .bloom{width:min(42vw,150px);aspect-ratio:1;border-radius:50%;margin-bottom:14px;
-  background:radial-gradient(circle at 44% 38%, rgba(255,255,255,.60), rgba(240,222,186,.34) 26%, rgba(159,216,214,.16) 52%, rgba(159,216,214,0) 74%);
+  background:radial-gradient(circle at 44% 38%, rgba(var(--fgRGB),.60), rgba(240,222,186,.34) 26%, rgba(var(--aquaRGB),.16) 52%, rgba(var(--aquaRGB),0) 74%);
   box-shadow:0 0 70px rgba(200,190,160,.22);animation:bloom 3.4s ease-out both}
 @keyframes bloom{0%{transform:scale(.5);opacity:0}60%{opacity:1}100%{transform:scale(1);opacity:.95}}
 .done h2{margin:0;font-size:1.35rem;font-weight:300;letter-spacing:.12em}
 .done p{margin:6px 0 0;color:var(--dim);font-size:.88rem}
 .done .msg{max-width:23em;margin:14px auto 0;animation:fadeIn 2s ease both;animation-delay:.5s}
 .done .msg .tag{display:inline-block;font-size:.66rem;letter-spacing:.24em;color:var(--warm);
-  border:1px solid rgba(227,199,154,.38);border-radius:999px;padding:3px 13px;margin-bottom:11px}
+  border:1px solid rgba(var(--warmRGB),.38);border-radius:999px;padding:3px 13px;margin-bottom:11px}
 .done .msg p{margin:0;color:var(--ink2);font-size:.94rem;line-height:1.95}
 .moodpick{margin-top:20px;animation:fadeIn 1.4s ease both;animation-delay:.7s}
 .moodpick .mp-q{font-size:.82rem;color:var(--dim);letter-spacing:.1em;margin-bottom:11px}
 .mp-row{display:flex;align-items:center;justify-content:center;gap:12px}
 .mp-row button{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
   background:none;border:none;padding:0}
-.mp-row button i{display:block;border-radius:50%;background:rgba(255,255,255,.13);
-  border:1px solid rgba(255,255,255,.16);transition:.25s}
+.mp-row button i{display:block;border-radius:50%;background:rgba(var(--fgRGB),.13);
+  border:1px solid rgba(var(--fgRGB),.16);transition:.25s}
 .mp-row button[data-m="1"] i{width:12px;height:12px}
 .mp-row button[data-m="2"] i{width:16px;height:16px}
 .mp-row button[data-m="3"] i{width:20px;height:20px}
 .mp-row button[data-m="4"] i{width:24px;height:24px}
 .mp-row button[data-m="5"] i{width:28px;height:28px}
-.mp-row button[aria-pressed="true"] i{background:radial-gradient(circle at 38% 34%,#eafaf8,#9fd8d6 70%);
-  border-color:rgba(159,216,214,.7);box-shadow:0 0 16px rgba(159,216,214,.45)}
+.mp-row button[aria-pressed="true"] i{background:radial-gradient(circle at 38% 34%,var(--aquaHi),var(--aqua) 70%);
+  border-color:rgba(var(--aquaRGB),.7);box-shadow:0 0 16px rgba(var(--aquaRGB),.45)}
 .mp-lb{display:flex;justify-content:space-between;max-width:236px;margin:9px auto 0;
   font-size:.68rem;color:var(--dim)}
 .mp-q2{font-size:.8rem;color:var(--dim);letter-spacing:.06em;margin-bottom:10px;text-align:left}
@@ -628,13 +648,13 @@ body.bgm .stage{gap:14px}
 
 .done .amt{margin-top:18px;font-size:.95rem;color:var(--dim)}
 .mtag{display:inline-flex;align-items:center;gap:3px;margin-left:8px;vertical-align:1px}
-.mtag i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.18)}
-.mtag i.on{background:var(--aqua);box-shadow:0 0 6px rgba(159,216,214,.6)}
+.mtag i{width:5px;height:5px;border-radius:50%;background:rgba(var(--fgRGB),.18)}
+.mtag i.on{background:var(--aqua);box-shadow:0 0 6px rgba(var(--aquaRGB),.6)}
 .done .gain{width:min(78vw,290px);margin:14px auto 0;animation:fadeIn 1.4s ease both;animation-delay:.9s}
 .done .gain .gx{font-size:1.15rem;color:var(--warm);letter-spacing:.06em;margin-bottom:9px}
 .done .gain .gs{display:flex;justify-content:space-between;font-size:.72rem;color:var(--dim);margin-top:7px}
 .done .lvup{margin-top:22px;padding:16px 22px;border-radius:18px;
-  background:rgba(159,216,214,.10);border:1px solid rgba(159,216,214,.36);
+  background:rgba(var(--aquaRGB),.10);border:1px solid rgba(var(--aquaRGB),.36);
   box-shadow:0 0 34px rgba(120,190,195,.18);animation:popIn 1s ease both;animation-delay:1.4s}
 @keyframes popIn{0%{opacity:0;transform:scale(.9)}60%{opacity:1;transform:scale(1.02)}100%{transform:scale(1)}}
 .done .lvup .tg{font-size:.66rem;letter-spacing:.34em;color:var(--warm)}
@@ -644,39 +664,127 @@ body.bgm .stage{gap:14px}
   animation:fadeIn 1.2s ease both;animation-delay:1.8s}
 .done .newb b{color:var(--warm);font-weight:600}
 .done .close{margin-top:30px;padding:14px 44px;border-radius:999px;
-  background:rgba(159,216,214,.14);border:1px solid rgba(159,216,214,.4);color:#eafaf8;letter-spacing:.2em}
+  background:rgba(var(--aquaRGB),.14);border:1px solid rgba(var(--aquaRGB),.4);color:var(--aquaHi);letter-spacing:.2em}
 
-.sheet{position:fixed;inset:0;z-index:40;background:rgba(4,7,10,.72);display:flex;align-items:flex-end;
+.sheet{position:fixed;inset:0;z-index:40;background:var(--scrim);display:flex;align-items:flex-end;
   animation:fadeIn .2s ease}
-.sheet .box{width:100%;max-width:520px;margin:0 auto;background:#141b24;border:1px solid var(--line);
+.sheet .box{width:100%;max-width:520px;margin:0 auto;background:var(--panel);border:1px solid var(--line);
   border-radius:22px 22px 0 0;padding:0 22px calc(var(--safeB) + 20px);animation:up .28s ease;
   will-change:transform}
 .sh-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:center;
   margin:0 -22px 14px;padding:15px 14px 13px;min-height:58px;border-radius:22px 22px 0 0;
-  background:#141b24;box-shadow:0 8px 14px -8px rgba(10,14,19,.95);touch-action:none}
-.sh-head .grab{width:40px;height:4px;border-radius:999px;background:rgba(255,255,255,.24)}
+  background:var(--panel);box-shadow:0 8px 14px -8px rgba(10,14,19,.95);touch-action:none}
+.sh-head .grab{width:40px;height:4px;border-radius:999px;background:rgba(var(--fgRGB),.24)}
 .sh-head .sh-x{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:1rem;
   color:var(--ink2);width:38px;height:38px;border-radius:12px;
-  background:rgba(255,255,255,.07);border:1px solid var(--line)}
-.sh-head .sh-x:active{background:rgba(255,255,255,.12)}
+  background:rgba(var(--fgRGB),.07);border:1px solid var(--line)}
+.sh-head .sh-x:active{background:rgba(var(--fgRGB),.12)}
 @keyframes up{from{transform:translateY(20px);opacity:.6}to{transform:none;opacity:1}}
 .sheet h3{margin:0 0 6px;font-size:1.05rem;font-weight:500}
 .sheet p{margin:0 0 18px;color:var(--dim);font-size:.86rem}
 .sheet .btns{display:flex;gap:10px}
 .sheet .btns button{flex:1;padding:14px;border-radius:14px;font-size:.92rem}
 .sheet .no{background:var(--surf);border:1px solid var(--line);color:var(--ink2)}
-.sheet .yes{background:rgba(227,120,120,.16);border:1px solid rgba(227,120,120,.4);color:#ffd7d7}
-.sheet .ok{background:rgba(159,216,214,.16);border:1px solid rgba(159,216,214,.45);color:#eafaf8}
+.sheet .yes{background:rgba(var(--missRGB),.16);border:1px solid rgba(var(--missRGB),.4);color:var(--missHi)}
+.sheet .ok{background:rgba(var(--aquaRGB),.16);border:1px solid rgba(var(--aquaRGB),.45);color:var(--aquaHi)}
 .sheet .box{max-height:88vh;overflow:auto;-webkit-overflow-scrolling:touch}
 
 .toast{position:fixed;left:50%;bottom:calc(var(--safeB) + 96px);transform:translateX(-50%);
-  z-index:50;background:rgba(20,27,36,.96);border:1px solid var(--line);color:var(--ink);
+  z-index:50;background:var(--toastBg);border:1px solid var(--line);color:var(--ink);
   padding:11px 18px;border-radius:999px;font-size:.84rem;box-shadow:0 10px 30px rgba(0,0,0,.5);
   animation:fadeIn .2s ease}
 
 @media (prefers-reduced-motion: reduce){
   .sky i,.orb .core{animation:none!important}
 }
+
+/* ───────── 明るい見た目 ─────────
+   アンケート「ライトモードがあるといいです」。
+   ただし **キャラのいる輪の中と、瞑想中・終わりの画面は夜のまま** にしてある。
+   あの薄暗さがあるからキャラの光が見えるので、ここを白くすると
+   生徒がいちばん好きだと言っているもの（Q11の1位）が消える。
+   仕組み：色の素（--aquaRGB など）を入れかえるだけ。
+   夜のままにしたい所は、その中でもう一度 暗いほうの値に戻している。 */
+:root[data-theme="light"]{
+  --bg:#eef1f5;
+  --bg2:#ffffff;
+  --surf:rgba(20,38,54,.05);
+  --surf2:rgba(20,38,54,.09);
+  --line:rgba(20,38,54,.14);
+  --ink:#16222c;
+  --ink2:#44535f;
+  --dim:#6a7884;
+  --aqua:#1c7472;
+  --aqua2:#155b5a;
+  --warm:#8a6420;
+  --aquaRGB:28,116,114;
+  --fgRGB:20,38,54;
+  --warmRGB:138,100,32;
+  --missRGB:176,68,62;
+  --aquaHi:#0d4746;
+  --aquaSoft:#14585a;
+  --warmHi:#6b4c12;
+  --miss:#b0443e;
+  --missHi:#8c2c27;
+  --fig:#96a4b0;
+  --panel:#ffffff;
+  --barBg:rgba(255,255,255,.94);
+  --scrim:rgba(20,38,54,.34);
+  --toastBg:rgba(32,46,58,.96);
+  --onAqua:#f2fbfb;
+  --onWarm:#fdf6e8;
+  --skyTop:#ffffff;
+  --skyBtm:#e7ecf1;
+  --blob:.34;
+}
+/* 明るいとき、トーストだけは暗いままなので中の文字を白へ */
+:root[data-theme="light"] .toast{color:#f2f6f8;border-color:rgba(255,255,255,.14)}
+
+/* ── 夜のまま残す所 ──
+   ここで色の素を暗いほうへ戻すと、中のものはぜんぶ元の見た目に戻る */
+:root[data-theme="light"] .orb,
+:root[data-theme="light"] .run,
+:root[data-theme="light"] .done,
+:root[data-theme="light"] .chrgrid,
+:root[data-theme="light"] .chrsheet .pic{
+  /* 文字色は body から「計算ずみの色」が降りてくるので、変数を戻すだけでは明るいままになる。
+     ここで色をもう一度あてて、暗いほうの --ink で計算し直させる */
+  color:var(--ink);
+  --surf:rgba(255,255,255,.045);
+  --surf2:rgba(255,255,255,.075);
+  --line:rgba(255,255,255,.10);
+  --ink:#e9f0f4;
+  --ink2:#b3c1cc;
+  --dim:#778794;
+  --aqua:#9fd8d6;
+  --aqua2:#6fb6bd;
+  --warm:#e3c79a;
+  --aquaRGB:159,216,214;
+  --fgRGB:255,255,255;
+  --warmRGB:227,199,154;
+  --missRGB:231,136,136;
+  --aquaHi:#eafaf8;
+  --aquaSoft:#dff6f4;
+  --warmHi:#f2e6cf;
+  --miss:#e78888;
+  --missHi:#ffd9d9;
+  --fig:#4a5866;
+}
+/* キャラは「夜をのぞく窓」の中に座らせる。
+   ここは何度か作り直した所で、気をつけることが2つある：
+   ・ふちをはっきり出すと「黒い穴」に見える。外へ向かって長く薄れさせること
+   ・下へ広げすぎると、すぐ下の称号（「見習い」など）に暗い色がかぶって読めなくなる */
+:root[data-theme="light"] .orb::before{
+  content:'';position:absolute;inset:-8px;border-radius:50%;z-index:-1;
+  background:radial-gradient(circle at 50% 44%,
+    #16202c 0%, #16202c 46%, rgba(22,32,44,.82) 62%,
+    rgba(22,32,44,.42) 76%, rgba(22,32,44,.14) 87%, rgba(22,32,44,0) 96%)}
+:root[data-theme="light"] .chrsheet .pic{background:#101925;border-color:rgba(255,255,255,.08)}
+/* 「姿」の一覧も夜の棚にする。
+   まだ見ていない姿は .lock（brightness .18）で影にしてあるので、
+   明るい地の上だと ただの黒い塊になってしまう */
+:root[data-theme="light"] .chrgrid{background:#101925;padding:10px;border-radius:16px;
+  border:1px solid rgba(255,255,255,.08)}
 
 /* ───────── 押した手応え ─────────
    アンケート「ボタンを押したことが少しわかりにくいので、アニメーションがあると視覚的に良い」。
@@ -707,6 +815,18 @@ body.bgm .stage{gap:14px}
   .sheet .btns button:active,.mp-row button:active,.dayrow:active{transform:none}
 }
 </style>
+<script>
+/* 見た目（暗い／明るい）。描く前に決めないと、開いた瞬間に一度暗く光ってしまう */
+(function(){
+  var t = 'dark';
+  try{ t = localStorage.getItem('med.theme.v1') || 'dark'; }catch(e){}
+  if(t === 'light'){
+    document.documentElement.dataset.theme = 'light';
+    var m = document.querySelector('meta[name=theme-color]');
+    if(m) m.setAttribute('content', '#eef1f5');
+  }
+})();
+</script>
 </head>
 <body>
 
@@ -770,7 +890,7 @@ body.bgm .stage{gap:14px}
     <div class="ambs" id="ambs">
       <div class="ambhead">
         <button class="ambtoggle" id="ambToggle">瞑想中の音　<b id="ambNow">なし</b><span class="cv">▾</span></button>
-        <button class="acfg" id="btnSnd">音の設定</button>
+        <button class="acfg" id="btnSnd">設定</button>
       </div>
       <div class="ambwrap hidden" id="ambWrap">
         <button class="amb" data-amb="none">なし</button>
@@ -787,7 +907,7 @@ body.bgm .stage{gap:14px}
 
     <button class="start" id="btnStart">はじめる</button>
     <button class="bgmlink" id="btnBgm">音だけ流す（勉強のおともに）</button>
-    <div class="hint hidden" id="hint">はじめと終わりに鐘が鳴ります。大きさは「音の設定」で変えられます。</div>
+    <div class="hint hidden" id="hint">はじめと終わりに鐘が鳴ります。大きさは「設定」で変えられます。</div>
   </div>
 
   <!-- 記録タブ -->
@@ -880,7 +1000,7 @@ body.bgm .stage{gap:14px}
           <li>「瞑想」で時間を選んで、<b>はじめる</b>を押します（1分から60分まで）。</li>
           <li>時間の下の<b>「瞑想中の音」</b>を押すと、雨・波・風・たき火・せせらぎ・虫の声・風鈴・おりん から選べます。押すと少しだけ試し聞きでき、選ぶとまたたたまれます。音が気になる人は「なし」のままで大丈夫です。</li>
           <li>瞑想せずに<b>音だけ流す</b>こともできます。「はじめる」の下の<b>「音だけ流す（勉強のおともに）」</b>を押すと、選んだ音がずっと流れます。<b>この時間は記録にもレベルにも入りません</b>。勉強や作業のおともにどうぞ。</li>
-          <li>その横の<b>「音の設定」</b>で、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。雨・波・風・たき火・せせらぎ・虫の声は<b>本物の録音</b>です（アプリが作る「合成」の音にも切りかえられます）。録音は選んだ音だけ、はじめて流すときに読み込みます。</li>
+          <li>その横の<b>「設定」</b>で、<b>見た目（暗い／明るい）</b>、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。<b>明るい</b>にすると、記録や「学ぶ」が昼間でも読みやすくなります（キャラクターのまわりと瞑想中の画面は、そのまま夜の色のままです）。雨・波・風・たき火・せせらぎ・虫の声は<b>本物の録音</b>です（アプリが作る「合成」の音にも切りかえられます）。録音は選んだ音だけ、はじめて流すときに読み込みます。</li>
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
           <li><b>ボタンに無い長さ</b>にしたいときは、近い長さを押してから<b>「＋1分」「−1分」</b>で調整してください（押しっぱなしで早く進みます）。いま何分にしているかは、まん中の「◯分　はじめる」で分かります。</li>
@@ -897,7 +1017,7 @@ body.bgm .stage{gap:14px}
         <p class="q">勉強しながら音だけ流したい。</p>
         <p>「瞑想」タブの「はじめる」の下にある<b>「音だけ流す（勉強のおともに）」</b>を押してください。選んだ音がずっと流れ、画面の下に「とめる」が出ます。<b>この時間は瞑想の記録にもレベルにも入りません</b>ので、勉強や作業のあいだに気がねなく使えます。</p>
         <p class="q">スマホを消音にしていると、鐘が鳴りません。</p>
-        <p>「瞑想中の音」の横にある<b>「音の設定」</b>を開いて、<b>「消音モードでも鳴らす」をオン</b>にしてください（はじめからオンになっています）。iPhone横のスイッチを消音にしたままでも、鐘と瞑想中の音が鳴るようになります。それでも鳴らない端末では、消音モードを解除してください。</p>
+        <p>「瞑想中の音」の横にある<b>「設定」</b>を開いて、<b>「消音モードでも鳴らす」をオン</b>にしてください（はじめからオンになっています）。iPhone横のスイッチを消音にしたままでも、鐘と瞑想中の音が鳴るようになります。それでも鳴らない端末では、消音モードを解除してください。</p>
         <p class="q">クラスのようす（ランキング）って何ですか？</p>
         <p>「記録」タブのいちばん上にあります。参加すると、<b>クラスのみんなで座った合計時間</b>と、ひとりずつの積み重ねが見られます。参加は自由で、あとからやめられます。送られるのは<b>ニックネーム・合計時間・回数・続けた日数・レベル</b>だけです。ひとことの中身や、いつ何をしたかは送られません。</p>
         <p class="q">3分で始めて、途中でやめたらどうなりますか？</p>
@@ -921,7 +1041,7 @@ body.bgm .stage{gap:14px}
           <li>その日の分に、続けている日数 × <b>5</b></li>
         </ul>
         <p>レベルが上がると<b>称号</b>が変わります。「見習い」から始まり、初級・中級・上級・達人・名人・師範・仙人と上がって、いちばん上は「悟りの境地」です。</p>
-        <p>レベルが上がると、まん中の<b>キャラクターの姿も変わります</b>。キャラを押すと、これまでの姿と育ち方を見られます。次にどんな姿になるかは、なってからのお楽しみです。</p>
+        <p>まん中にいるのは<b>「なぎ」</b>です。「凪」は、風がやんで水面が静かになること。レベルが上がると、<b>なぎの姿も変わります</b>。なぎを押すと、これまでの姿と育ち方を見られます。次にどんな姿になるかは、なってからのお楽しみです。</p>
         <p>レベルが上がるごとに、キャラのまわりに<b>庭がひとつずつ育っていきます</b>。石にはじまり、砂紋、苔、灯籠…と増えて、最後には月がのぼります。禅寺で修行を積み重ねるように、あなたの座った時間が庭になっていきます。そして<b>連続365日</b>つづけた人にだけ、見られるものがあります。</p>
         <p><b>数日 瞑想しないと、キャラは元気をなくします。</b>2日で静かになり、3〜4日で元気がなくなり、5日あくと しぼんで光や飾りが消えます。ただし<b>レベルは下がりません</b>。もう一度座れば、その場で元の姿に戻ります。</p>
         <p>ほかに、はじめての瞑想や、3日つづけた、合計60分こえた、などで<b>しるし（バッジ）</b>が集まります。瞑想タブの上のカードを押すと、今のレベルと集めたしるしを全部見られます。</p>
@@ -1446,7 +1566,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 'use strict';
-const VER = 55;
+const VER = 56;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1614,7 +1734,7 @@ const REV_WET = { rain:.34, creek:.3, wave:.42, wind:.36, fire:.2, insects:.3, c
 /* ───────── 録音の音 ─────────
    コツカワさんの希望で、ノイズ系の6つは本物の録音にした（BigSoundBank・CC0、sounds/CREDITS.txt）。
    風鈴・おりんは合成のほうが向いているのでそのまま。
-   合成音を好む人もいるので、「音の設定」で 録音／合成 を切りかえられる。
+   合成音を好む人もいるので、「設定」で 録音／合成 を切りかえられる。
    ファイルは1つ約0.6MB。選んだ音だけ、必要になったときに取りにいく。 */
 const REC = { rain:1, wave:1, wind:1, fire:1, creek:1, insects:1 };
 const REC_GAIN = { rain:1.4, wave:1, wind:.6, creek:.6, insects:1.5, fire:14 };   // 聞こえる大きさをそろえる。たき火と虫の声は元が小さい
@@ -2019,6 +2139,19 @@ function bgmEnd(){
 $('btnBgm').addEventListener('click', function(){ if(bgmOn) bgmEnd(); else bgmStart(); });
 $('bgmStop').addEventListener('click', bgmEnd);
 
+/* 見た目（暗い／明るい）。音と同じで、この端末だけの好みなので同期しない */
+function theme(){
+  try{ return localStorage.getItem('med.theme.v1') === 'light' ? 'light' : 'dark'; }catch(e){ return 'dark'; }
+}
+function setTheme(t){
+  const light = t === 'light';
+  if(light) document.documentElement.dataset.theme = 'light';
+  else delete document.documentElement.dataset.theme;
+  try{ localStorage.setItem('med.theme.v1', light ? 'light' : 'dark'); }catch(e){}
+  const m = document.querySelector('meta[name=theme-color]');
+  if(m) m.setAttribute('content', light ? '#eef1f5' : '#0a0e13');
+}
+
 $('btnSnd').addEventListener('click', function(e){
   e.stopPropagation();
   ensureAudio();
@@ -2029,7 +2162,11 @@ $('btnSnd').addEventListener('click', function(e){
       return '<button data-v="' + o[1] + '" aria-pressed="' + (o[1] === cur ? 'true' : 'false') + '">' + o[0] + '</button>';
     }).join('') + '</div>';
   };
-  sh.innerHTML = '<div class="box"><h3>音の設定</h3>' +
+  sh.innerHTML = '<div class="box"><h3>設定</h3>' +
+    '<div class="srow"><span class="sk">見た目' +
+      '<small>明るくすると、記録や「学ぶ」が昼間でも読みやすくなります。' +
+      'キャラクターのまわりと瞑想中の画面は、そのまま夜の色です。</small></span>' +
+      seg('segTheme', [['暗い','dark'],['明るい','light']], theme()) + '</div>' +
     '<div class="srow"><span class="sk">消音モードでも鳴らす' +
       '<small>' + (canLoud
         ? 'iPhone横のスイッチを消音にしていても、鐘と瞑想中の音が鳴ります。'
@@ -2055,8 +2192,15 @@ $('btnSnd').addEventListener('click', function(e){
     }
     const b = ev.target.closest('.seg button');
     if(b){
-      const v = parseFloat(b.dataset.v);
       const id = b.parentNode.id;
+      if(id === 'segTheme'){                       // 見た目だけ、数ではなく文字で持っている
+        setTheme(b.dataset.v);
+        b.parentNode.querySelectorAll('button').forEach(function(x){
+          x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+        });
+        return;
+      }
+      const v = parseFloat(b.dataset.v);
       if(id === 'segBell') snd.bell = v;
       else if(id === 'segAmb') snd.amb = v;
       else if(id === 'segReal'){
@@ -2398,17 +2542,17 @@ document.addEventListener('visibilitychange', function(){
 const LESSONS = [
 { id:'l1', n:'瞑想って、なんだろう', d:'まず、言葉の意味から',
   fig:`<svg viewBox="0 0 320 168" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="70" cy="40" rx="52" ry="25" fill="rgba(255,255,255,.05)" stroke="#4a5866" stroke-dasharray="5 4"/>
-    <text x="70" y="45" text-anchor="middle" fill="#b3c1cc" font-size="12.5">考えごと</text>
-    <circle cx="248" cy="106" r="34" fill="rgba(159,216,214,.10)" stroke="#9fd8d6"/>
-    <circle cx="248" cy="106" r="6" fill="#9fd8d6"/>
-    <text x="248" y="158" text-anchor="middle" fill="#9fd8d6" font-size="12">いま・ここ</text>
-    <path d="M222 88 C 186 68 152 56 124 50" fill="none" stroke="#4a5866" stroke-width="1.6" stroke-dasharray="5 4"/>
-    <polygon points="122,49 133,45 131,55" fill="#4a5866"/>
-    <text x="176" y="60" text-anchor="middle" fill="#778794" font-size="11.5">気が散る</text>
-    <path d="M78 68 C 110 104 160 118 212 116" fill="none" stroke="#9fd8d6" stroke-width="1.8"/>
-    <polygon points="214,116 203,111 204,121" fill="#9fd8d6"/>
-    <text x="140" y="140" text-anchor="middle" fill="#9fd8d6" font-size="11.5">気づいて、戻る</text>
+    <ellipse cx="70" cy="40" rx="52" ry="25" fill="rgba(var(--fgRGB),.05)" stroke="var(--fig)" stroke-dasharray="5 4"/>
+    <text x="70" y="45" text-anchor="middle" fill="var(--ink2)" font-size="12.5">考えごと</text>
+    <circle cx="248" cy="106" r="34" fill="rgba(var(--aquaRGB),.10)" stroke="var(--aqua)"/>
+    <circle cx="248" cy="106" r="6" fill="var(--aqua)"/>
+    <text x="248" y="158" text-anchor="middle" fill="var(--aqua)" font-size="12">いま・ここ</text>
+    <path d="M222 88 C 186 68 152 56 124 50" fill="none" stroke="var(--fig)" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <polygon points="122,49 133,45 131,55" fill="var(--fig)"/>
+    <text x="176" y="60" text-anchor="middle" fill="var(--dim)" font-size="11.5">気が散る</text>
+    <path d="M78 68 C 110 104 160 118 212 116" fill="none" stroke="var(--aqua)" stroke-width="1.8"/>
+    <polygon points="214,116 203,111 204,121" fill="var(--aqua)"/>
+    <text x="140" y="140" text-anchor="middle" fill="var(--aqua)" font-size="11.5">気づいて、戻る</text>
   </svg>`,
   cap:'この1往復が、練習の1回',
   body:`<p>瞑想とは、いまの自分に注意を向けて、静かに座っている時間のことです。研究の世界では「マインドフルネス瞑想」と呼ばれ、<b>いま起きていることに、良い悪いを決めずに気づいている状態</b>と説明されます。</p>
@@ -2420,16 +2564,16 @@ const LESSONS = [
 { id:'l2', n:'心は、時間の半分ちかく迷子になる', d:'2250人をスマホで追いかけた研究',
   fig:`<svg viewBox="0 0 320 208" xmlns="http://www.w3.org/2000/svg">
     <g transform="translate(160,78)">
-      <circle r="52" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="20"/>
-      <circle r="52" fill="none" stroke="#9fd8d6" stroke-width="20" stroke-dasharray="153.5 173.2" transform="rotate(-90)"/>
-      <text y="4" text-anchor="middle" fill="#e9f0f4" font-size="30">47%</text>
-      <text y="24" text-anchor="middle" fill="#778794" font-size="11">の時間</text>
+      <circle r="52" fill="none" stroke="rgba(var(--fgRGB),.10)" stroke-width="20"/>
+      <circle r="52" fill="none" stroke="var(--aqua)" stroke-width="20" stroke-dasharray="153.5 173.2" transform="rotate(-90)"/>
+      <text y="4" text-anchor="middle" fill="var(--ink)" font-size="30">47%</text>
+      <text y="24" text-anchor="middle" fill="var(--dim)" font-size="11">の時間</text>
     </g>
     <g transform="translate(0,162)">
-      <rect x="30" y="0" width="11" height="11" rx="3" fill="#9fd8d6"/>
-      <text x="48" y="10" fill="#b3c1cc" font-size="11.5">別のことを考えている</text>
-      <rect x="30" y="24" width="11" height="11" rx="3" fill="rgba(255,255,255,.16)"/>
-      <text x="48" y="34" fill="#b3c1cc" font-size="11.5">目の前のことに集中している</text>
+      <rect x="30" y="0" width="11" height="11" rx="3" fill="var(--aqua)"/>
+      <text x="48" y="10" fill="var(--ink2)" font-size="11.5">別のことを考えている</text>
+      <rect x="30" y="24" width="11" height="11" rx="3" fill="rgba(var(--fgRGB),.16)"/>
+      <text x="48" y="34" fill="var(--ink2)" font-size="11.5">目の前のことに集中している</text>
     </g>
   </svg>`,
   cap:'起きている時間のうち、心がよそへ行っている割合',
@@ -2443,16 +2587,16 @@ const LESSONS = [
 { id:'l3', n:'気が散るのは、脳のふつうの働き', d:'何もしないときに動く場所がある',
   fig:`<svg viewBox="0 0 320 178" xmlns="http://www.w3.org/2000/svg">
     <path d="M58 106 C 44 66 80 34 124 38 C 158 20 212 30 230 58 C 258 72 256 112 230 124 C 206 144 116 146 92 128 Z"
-      fill="rgba(255,255,255,.04)" stroke="#4a5866"/>
-    <g stroke="#9fd8d6" stroke-width="1.3" opacity=".85">
+      fill="rgba(var(--fgRGB),.04)" stroke="var(--fig)"/>
+    <g stroke="var(--aqua)" stroke-width="1.3" opacity=".85">
       <line x1="106" y1="94" x2="158" y2="68"/><line x1="158" y1="68" x2="208" y2="92"/>
       <line x1="106" y1="94" x2="150" y2="116"/><line x1="150" y1="116" x2="208" y2="92"/>
     </g>
-    <g fill="#9fd8d6">
+    <g fill="var(--aqua)">
       <circle cx="106" cy="94" r="6"/><circle cx="158" cy="68" r="6"/>
       <circle cx="208" cy="92" r="6"/><circle cx="150" cy="116" r="6"/>
     </g>
-    <text x="160" y="168" text-anchor="middle" fill="#9fd8d6" font-size="11.5">デフォルト・モード・ネットワーク</text>
+    <text x="160" y="168" text-anchor="middle" fill="var(--aqua)" font-size="11.5">デフォルト・モード・ネットワーク</text>
   </svg>`,
   cap:'ぼーっとしているときに活発になる場所',
   body:`<p>何もしていないとき、脳の中では「デフォルト・モード・ネットワーク」と呼ばれる場所が活発になります。過去を思い出したり、これからのことを心配したり、自分について考えたりする場所です。</p>
@@ -2465,17 +2609,17 @@ const LESSONS = [
 { id:'l4', n:'8週間で、脳のかたちが変わった', d:'MRIで前と後をくらべた',
   fig:`<svg viewBox="0 0 320 212" xmlns="http://www.w3.org/2000/svg">
     <path d="M56 100 C 42 62 78 32 122 36 C 156 18 210 28 228 56 C 256 70 254 110 228 122 C 204 142 114 144 90 126 Z"
-      fill="rgba(255,255,255,.04)" stroke="#4a5866"/>
-    <ellipse cx="118" cy="96" rx="19" ry="12" fill="rgba(159,216,214,.30)" stroke="#9fd8d6"/>
-    <text x="118" y="100" text-anchor="middle" fill="#eafaf8" font-size="10.5">海馬</text>
-    <text x="118" y="126" text-anchor="middle" fill="#9fd8d6" font-size="11">▲ ふえた</text>
-    <ellipse cx="198" cy="86" rx="18" ry="11" fill="rgba(227,199,154,.22)" stroke="#e3c79a"/>
-    <text x="198" y="90" text-anchor="middle" fill="#f4e8d2" font-size="10.5">扁桃体</text>
-    <text x="198" y="62" text-anchor="middle" fill="#e3c79a" font-size="11">▼ へった</text>
-    <rect x="34" y="172" width="252" height="9" rx="5" fill="rgba(255,255,255,.08)"/>
-    <rect x="34" y="172" width="252" height="9" rx="5" fill="rgba(159,216,214,.45)"/>
-    <text x="34" y="198" fill="#778794" font-size="11">はじめ</text>
-    <text x="286" y="198" text-anchor="end" fill="#9fd8d6" font-size="11">8週間後</text>
+      fill="rgba(var(--fgRGB),.04)" stroke="var(--fig)"/>
+    <ellipse cx="118" cy="96" rx="19" ry="12" fill="rgba(var(--aquaRGB),.30)" stroke="var(--aqua)"/>
+    <text x="118" y="100" text-anchor="middle" fill="var(--aquaHi)" font-size="10.5">海馬</text>
+    <text x="118" y="126" text-anchor="middle" fill="var(--aqua)" font-size="11">▲ ふえた</text>
+    <ellipse cx="198" cy="86" rx="18" ry="11" fill="rgba(var(--warmRGB),.22)" stroke="var(--warm)"/>
+    <text x="198" y="90" text-anchor="middle" fill="var(--warmHi)" font-size="10.5">扁桃体</text>
+    <text x="198" y="62" text-anchor="middle" fill="var(--warm)" font-size="11">▼ へった</text>
+    <rect x="34" y="172" width="252" height="9" rx="5" fill="rgba(var(--fgRGB),.08)"/>
+    <rect x="34" y="172" width="252" height="9" rx="5" fill="rgba(var(--aquaRGB),.45)"/>
+    <text x="34" y="198" fill="var(--dim)" font-size="11">はじめ</text>
+    <text x="286" y="198" text-anchor="end" fill="var(--aqua)" font-size="11">8週間後</text>
   </svg>`,
   cap:'記憶の場所はふえ、警報の場所はへった',
   body:`<p>瞑想をしたことがない16人に、8週間のマインドフルネス講座を受けてもらい、その前と後で脳を撮影した研究があります。</p>
@@ -2487,24 +2631,24 @@ const LESSONS = [
 
 { id:'l5', n:'ストレスの「警報」が小さくなる', d:'気持ちが消えるのではなく、飲み込まれにくくなる',
   fig:`<svg viewBox="0 0 320 196" xmlns="http://www.w3.org/2000/svg">
-    <rect x="8" y="16" width="78" height="34" rx="10" fill="rgba(255,255,255,.05)" stroke="#4a5866"/>
-    <text x="47" y="37" text-anchor="middle" fill="#b3c1cc" font-size="11">いやなこと</text>
-    <text x="92" y="38" fill="#778794" font-size="13">→</text>
-    <rect x="110" y="9" width="90" height="48" rx="10" fill="rgba(231,136,136,.16)" stroke="#e78888"/>
-    <text x="155" y="30" text-anchor="middle" fill="#ffd9d9" font-size="12">警報！</text>
-    <text x="155" y="46" text-anchor="middle" fill="#e78888" font-size="10">扁桃体</text>
-    <text x="206" y="38" fill="#778794" font-size="13">→</text>
-    <rect x="224" y="16" width="88" height="34" rx="10" fill="rgba(255,255,255,.05)" stroke="#4a5866"/>
-    <text x="268" y="37" text-anchor="middle" fill="#b3c1cc" font-size="11">体がこわばる</text>
-    <text x="160" y="88" text-anchor="middle" fill="#778794" font-size="11.5">練習をつづけると…</text>
-    <rect x="8" y="116" width="78" height="34" rx="10" fill="rgba(255,255,255,.05)" stroke="#4a5866"/>
-    <text x="47" y="137" text-anchor="middle" fill="#b3c1cc" font-size="11">いやなこと</text>
-    <text x="92" y="138" fill="#778794" font-size="13">→</text>
+    <rect x="8" y="16" width="78" height="34" rx="10" fill="rgba(var(--fgRGB),.05)" stroke="var(--fig)"/>
+    <text x="47" y="37" text-anchor="middle" fill="var(--ink2)" font-size="11">いやなこと</text>
+    <text x="92" y="38" fill="var(--dim)" font-size="13">→</text>
+    <rect x="110" y="9" width="90" height="48" rx="10" fill="rgba(231,136,136,.16)" stroke="var(--miss)"/>
+    <text x="155" y="30" text-anchor="middle" fill="var(--missHi)" font-size="12">警報！</text>
+    <text x="155" y="46" text-anchor="middle" fill="var(--miss)" font-size="10">扁桃体</text>
+    <text x="206" y="38" fill="var(--dim)" font-size="13">→</text>
+    <rect x="224" y="16" width="88" height="34" rx="10" fill="rgba(var(--fgRGB),.05)" stroke="var(--fig)"/>
+    <text x="268" y="37" text-anchor="middle" fill="var(--ink2)" font-size="11">体がこわばる</text>
+    <text x="160" y="88" text-anchor="middle" fill="var(--dim)" font-size="11.5">練習をつづけると…</text>
+    <rect x="8" y="116" width="78" height="34" rx="10" fill="rgba(var(--fgRGB),.05)" stroke="var(--fig)"/>
+    <text x="47" y="137" text-anchor="middle" fill="var(--ink2)" font-size="11">いやなこと</text>
+    <text x="92" y="138" fill="var(--dim)" font-size="13">→</text>
     <rect x="122" y="124" width="66" height="20" rx="8" fill="rgba(231,136,136,.10)" stroke="rgba(231,136,136,.45)"/>
-    <text x="155" y="138" text-anchor="middle" fill="#e78888" font-size="10">警報（小）</text>
-    <text x="194" y="138" fill="#778794" font-size="13">→</text>
-    <rect x="212" y="116" width="100" height="34" rx="10" fill="rgba(159,216,214,.12)" stroke="#9fd8d6"/>
-    <text x="262" y="137" text-anchor="middle" fill="#eafaf8" font-size="11">気づいて、選べる</text>
+    <text x="155" y="138" text-anchor="middle" fill="var(--miss)" font-size="10">警報（小）</text>
+    <text x="194" y="138" fill="var(--dim)" font-size="13">→</text>
+    <rect x="212" y="116" width="100" height="34" rx="10" fill="rgba(var(--aquaRGB),.12)" stroke="var(--aqua)"/>
+    <text x="262" y="137" text-anchor="middle" fill="var(--aquaHi)" font-size="11">気づいて、選べる</text>
   </svg>`,
   cap:'反応そのものは残るが、大きさが変わる',
   body:`<p>いやなことが起きると、脳の扁桃体が「危ない！」と警報を鳴らし、体は戦うか逃げるかの準備をします。心臓が速くなり、コルチゾールというストレスホルモンが出ます。</p>
@@ -2515,17 +2659,17 @@ const LESSONS = [
 
 { id:'l6', n:'集中力が上がり、テストの点も上がった', d:'2週間の訓練を受けた大学生48人',
   fig:`<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
-    <text x="14" y="16" fill="#b3c1cc" font-size="11.5">文章を読むテストの点</text>
-    <rect x="14" y="26" width="116" height="17" rx="5" fill="rgba(255,255,255,.13)"/>
-    <text x="138" y="39" fill="#778794" font-size="10.5">訓練の前</text>
-    <rect x="14" y="50" width="170" height="17" rx="5" fill="#9fd8d6"/>
-    <text x="192" y="63" fill="#9fd8d6" font-size="10.5">2週間後</text>
-    <text x="14" y="112" fill="#b3c1cc" font-size="11.5">テスト中に気が散った回数</text>
-    <rect x="14" y="122" width="170" height="17" rx="5" fill="rgba(255,255,255,.13)"/>
-    <text x="192" y="135" fill="#778794" font-size="10.5">訓練の前</text>
-    <rect x="14" y="146" width="98" height="17" rx="5" fill="#e3c79a"/>
-    <text x="120" y="159" fill="#e3c79a" font-size="10.5">2週間後</text>
-    <text x="14" y="188" fill="#778794" font-size="10.5">※ 図は結果の向きを表したもの</text>
+    <text x="14" y="16" fill="var(--ink2)" font-size="11.5">文章を読むテストの点</text>
+    <rect x="14" y="26" width="116" height="17" rx="5" fill="rgba(var(--fgRGB),.13)"/>
+    <text x="138" y="39" fill="var(--dim)" font-size="10.5">訓練の前</text>
+    <rect x="14" y="50" width="170" height="17" rx="5" fill="var(--aqua)"/>
+    <text x="192" y="63" fill="var(--aqua)" font-size="10.5">2週間後</text>
+    <text x="14" y="112" fill="var(--ink2)" font-size="11.5">テスト中に気が散った回数</text>
+    <rect x="14" y="122" width="170" height="17" rx="5" fill="rgba(var(--fgRGB),.13)"/>
+    <text x="192" y="135" fill="var(--dim)" font-size="10.5">訓練の前</text>
+    <rect x="14" y="146" width="98" height="17" rx="5" fill="var(--warm)"/>
+    <text x="120" y="159" fill="var(--warm)" font-size="10.5">2週間後</text>
+    <text x="14" y="188" fill="var(--dim)" font-size="10.5">※ 図は結果の向きを表したもの</text>
   </svg>`,
   cap:'点は上がり、気が散る回数は減った',
   body:`<p>大学生48人を2つのグループに分け、片方は2週間のマインドフルネス訓練（週4回・1回45分）、もう片方は栄養について学ぶ授業を受けました。どちらも「何かを学ぶ」時間は同じです。</p>
@@ -2537,12 +2681,12 @@ const LESSONS = [
 
 { id:'l7', n:'眠りが浅い人の、眠りがよくなった', d:'「睡眠のコツ」を学ぶ講座とくらべた',
   fig:`<svg viewBox="0 0 320 186" xmlns="http://www.w3.org/2000/svg">
-    <text x="14" y="18" fill="#b3c1cc" font-size="11.5">6週間後の 睡眠の質（よくなった度合い）</text>
-    <text x="14" y="48" fill="#9fd8d6" font-size="11">マインドフルネス講座</text>
-    <rect x="14" y="56" width="222" height="19" rx="5" fill="#9fd8d6"/>
-    <text x="14" y="106" fill="#778794" font-size="11">睡眠のコツを学ぶ講座</text>
-    <rect x="14" y="114" width="112" height="19" rx="5" fill="rgba(255,255,255,.14)"/>
-    <text x="14" y="168" fill="#778794" font-size="10.5">※ どちらもよくなったが、差がついた</text>
+    <text x="14" y="18" fill="var(--ink2)" font-size="11.5">6週間後の 睡眠の質（よくなった度合い）</text>
+    <text x="14" y="48" fill="var(--aqua)" font-size="11">マインドフルネス講座</text>
+    <rect x="14" y="56" width="222" height="19" rx="5" fill="var(--aqua)"/>
+    <text x="14" y="106" fill="var(--dim)" font-size="11">睡眠のコツを学ぶ講座</text>
+    <rect x="14" y="114" width="112" height="19" rx="5" fill="rgba(var(--fgRGB),.14)"/>
+    <text x="14" y="168" fill="var(--dim)" font-size="10.5">※ どちらもよくなったが、差がついた</text>
   </svg>`,
   cap:'49人の高齢者を2グループに分けて比較',
   body:`<p>眠りに悩みのある49人の高齢者を2つに分け、片方は6週間のマインドフルネス講座を、もう片方は「睡眠のコツ」を学ぶ講座を受けました。</p>
@@ -2554,15 +2698,15 @@ const LESSONS = [
 
 { id:'l8', n:'痛みの「いやな感じ」が減る', d:'痛みは届いているのに、受け取り方が変わる',
   fig:`<svg viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg">
-    <text x="14" y="18" fill="#b3c1cc" font-size="11.5">痛みの 強さ</text>
-    <rect x="14" y="28" width="230" height="18" rx="5" fill="rgba(255,255,255,.13)"/>
-    <rect x="14" y="28" width="138" height="18" rx="5" fill="#9fd8d6"/>
-    <text x="252" y="42" fill="#9fd8d6" font-size="11.5">−40%</text>
-    <text x="14" y="92" fill="#b3c1cc" font-size="11.5">痛みの いやな感じ</text>
-    <rect x="14" y="102" width="230" height="18" rx="5" fill="rgba(255,255,255,.13)"/>
-    <rect x="14" y="102" width="99" height="18" rx="5" fill="#e3c79a"/>
-    <text x="252" y="116" fill="#e3c79a" font-size="11.5">−57%</text>
-    <text x="14" y="164" fill="#778794" font-size="10.5">うすい部分＝瞑想の訓練を受ける前の感じ方</text>
+    <text x="14" y="18" fill="var(--ink2)" font-size="11.5">痛みの 強さ</text>
+    <rect x="14" y="28" width="230" height="18" rx="5" fill="rgba(var(--fgRGB),.13)"/>
+    <rect x="14" y="28" width="138" height="18" rx="5" fill="var(--aqua)"/>
+    <text x="252" y="42" fill="var(--aqua)" font-size="11.5">−40%</text>
+    <text x="14" y="92" fill="var(--ink2)" font-size="11.5">痛みの いやな感じ</text>
+    <rect x="14" y="102" width="230" height="18" rx="5" fill="rgba(var(--fgRGB),.13)"/>
+    <rect x="14" y="102" width="99" height="18" rx="5" fill="var(--warm)"/>
+    <text x="252" y="116" fill="var(--warm)" font-size="11.5">−57%</text>
+    <text x="14" y="164" fill="var(--dim)" font-size="10.5">うすい部分＝瞑想の訓練を受ける前の感じ方</text>
   </svg>`,
   cap:'4日間の訓練のあと、同じ熱さを感じたとき',
   body:`<p>熱による痛みを与える実験で、4日間（1日20分）だけ瞑想の訓練を受けた人たちの感じ方を調べました。</p>
@@ -2574,15 +2718,15 @@ const LESSONS = [
 
 { id:'l9', n:'ゆっくり吐くと、体にブレーキがかかる', d:'呼吸は、自分で触れるスイッチ',
   fig:`<svg viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg">
-    <path d="M16 104 C 34 52 56 52 74 104" fill="none" stroke="#e3c79a" stroke-width="2.4"/>
-    <path d="M74 104 C 104 156 152 156 174 104" fill="none" stroke="#9fd8d6" stroke-width="2.4"/>
-    <path d="M174 104 C 192 52 214 52 232 104" fill="none" stroke="#e3c79a" stroke-width="2.4"/>
-    <path d="M232 104 C 262 156 300 152 308 118" fill="none" stroke="#9fd8d6" stroke-width="2.4"/>
-    <text x="45" y="40" text-anchor="middle" fill="#e3c79a" font-size="11">吸う</text>
-    <text x="124" y="176" text-anchor="middle" fill="#9fd8d6" font-size="11">吐く（長め）</text>
-    <line x1="8" y1="104" x2="312" y2="104" stroke="rgba(255,255,255,.10)"/>
-    <text x="308" y="40" text-anchor="end" fill="#e3c79a" font-size="10.5">アクセル（交感神経）</text>
-    <text x="308" y="176" text-anchor="end" fill="#9fd8d6" font-size="10.5">ブレーキ（副交感神経）</text>
+    <path d="M16 104 C 34 52 56 52 74 104" fill="none" stroke="var(--warm)" stroke-width="2.4"/>
+    <path d="M74 104 C 104 156 152 156 174 104" fill="none" stroke="var(--aqua)" stroke-width="2.4"/>
+    <path d="M174 104 C 192 52 214 52 232 104" fill="none" stroke="var(--warm)" stroke-width="2.4"/>
+    <path d="M232 104 C 262 156 300 152 308 118" fill="none" stroke="var(--aqua)" stroke-width="2.4"/>
+    <text x="45" y="40" text-anchor="middle" fill="var(--warm)" font-size="11">吸う</text>
+    <text x="124" y="176" text-anchor="middle" fill="var(--aqua)" font-size="11">吐く（長め）</text>
+    <line x1="8" y1="104" x2="312" y2="104" stroke="rgba(var(--fgRGB),.10)"/>
+    <text x="308" y="40" text-anchor="end" fill="var(--warm)" font-size="10.5">アクセル（交感神経）</text>
+    <text x="308" y="176" text-anchor="end" fill="var(--aqua)" font-size="10.5">ブレーキ（副交感神経）</text>
   </svg>`,
   cap:'吸うとアクセル、吐くとブレーキが少し強くなる',
   body:`<p>体には、アクセル（交感神経）とブレーキ（副交感神経）があります。緊張するとアクセル、休むときはブレーキが働きます。ふだんは自分で切りかえられません。</p>
@@ -2594,17 +2738,17 @@ const LESSONS = [
 
 { id:'l10', n:'1日13分でも、8週間で変わった', d:'ただし4週間ではまだだった',
   fig:`<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
-    <line x1="40" y1="150" x2="300" y2="150" stroke="rgba(255,255,255,.14)"/>
-    <line x1="40" y1="20" x2="40" y2="150" stroke="rgba(255,255,255,.14)"/>
-    <polyline points="40,132 170,124 300,60" fill="none" stroke="#9fd8d6" stroke-width="2.4"/>
-    <circle cx="40" cy="132" r="4" fill="#9fd8d6"/><circle cx="170" cy="124" r="4" fill="#9fd8d6"/><circle cx="300" cy="60" r="4" fill="#9fd8d6"/>
-    <polyline points="40,134 170,132 300,128" fill="none" stroke="#778794" stroke-width="2" stroke-dasharray="5 4"/>
-    <text x="40" y="168" text-anchor="middle" fill="#778794" font-size="11">0週</text>
-    <text x="170" y="168" text-anchor="middle" fill="#778794" font-size="11">4週</text>
-    <text x="300" y="168" text-anchor="end" fill="#9fd8d6" font-size="11">8週</text>
-    <text x="16" y="30" fill="#778794" font-size="11">注意力・記憶</text>
-    <text x="196" y="52" fill="#9fd8d6" font-size="11">13分の瞑想</text>
-    <text x="196" y="146" fill="#778794" font-size="11">くらべたグループ</text>
+    <line x1="40" y1="150" x2="300" y2="150" stroke="rgba(var(--fgRGB),.14)"/>
+    <line x1="40" y1="20" x2="40" y2="150" stroke="rgba(var(--fgRGB),.14)"/>
+    <polyline points="40,132 170,124 300,60" fill="none" stroke="var(--aqua)" stroke-width="2.4"/>
+    <circle cx="40" cy="132" r="4" fill="var(--aqua)"/><circle cx="170" cy="124" r="4" fill="var(--aqua)"/><circle cx="300" cy="60" r="4" fill="var(--aqua)"/>
+    <polyline points="40,134 170,132 300,128" fill="none" stroke="var(--dim)" stroke-width="2" stroke-dasharray="5 4"/>
+    <text x="40" y="168" text-anchor="middle" fill="var(--dim)" font-size="11">0週</text>
+    <text x="170" y="168" text-anchor="middle" fill="var(--dim)" font-size="11">4週</text>
+    <text x="300" y="168" text-anchor="end" fill="var(--aqua)" font-size="11">8週</text>
+    <text x="16" y="30" fill="var(--dim)" font-size="11">注意力・記憶</text>
+    <text x="196" y="52" fill="var(--aqua)" font-size="11">13分の瞑想</text>
+    <text x="196" y="146" fill="var(--dim)" font-size="11">くらべたグループ</text>
   </svg>`,
   cap:'4週間では差が出ず、8週間で差がついた',
   body:`<p>瞑想をしたことがない人に、1日<b>13分</b>のガイド音声を聞いてもらう研究があります。長い時間ではありません。</p>
@@ -2615,14 +2759,14 @@ const LESSONS = [
 
 { id:'l11', n:'効果は「魔法」ではない', d:'47の試験・3515人をまとめた結果',
   fig:`<svg viewBox="0 0 320 216" xmlns="http://www.w3.org/2000/svg">
-    <text x="14" y="16" fill="#b3c1cc" font-size="11.5">効果が確かめられたもの</text>
-    <rect x="14" y="26" width="150" height="16" rx="5" fill="#9fd8d6"/><text x="172" y="39" fill="#b3c1cc" font-size="11">不安</text>
-    <rect x="14" y="50" width="146" height="16" rx="5" fill="#9fd8d6"/><text x="168" y="63" fill="#b3c1cc" font-size="11">気分の落ち込み</text>
-    <rect x="14" y="74" width="132" height="16" rx="5" fill="#9fd8d6"/><text x="154" y="87" fill="#b3c1cc" font-size="11">痛み</text>
-    <text x="14" y="124" fill="#778794" font-size="11.5">はっきりした証拠がないもの</text>
-    <rect x="14" y="134" width="60" height="16" rx="5" fill="none" stroke="#4a5866" stroke-dasharray="4 4"/><text x="82" y="147" fill="#778794" font-size="11">気分の明るさ</text>
-    <rect x="14" y="158" width="52" height="16" rx="5" fill="none" stroke="#4a5866" stroke-dasharray="4 4"/><text x="74" y="171" fill="#778794" font-size="11">体重・くせ</text>
-    <rect x="14" y="182" width="44" height="16" rx="5" fill="none" stroke="#4a5866" stroke-dasharray="4 4"/><text x="66" y="195" fill="#778794" font-size="11">睡眠（この分析では）</text>
+    <text x="14" y="16" fill="var(--ink2)" font-size="11.5">効果が確かめられたもの</text>
+    <rect x="14" y="26" width="150" height="16" rx="5" fill="var(--aqua)"/><text x="172" y="39" fill="var(--ink2)" font-size="11">不安</text>
+    <rect x="14" y="50" width="146" height="16" rx="5" fill="var(--aqua)"/><text x="168" y="63" fill="var(--ink2)" font-size="11">気分の落ち込み</text>
+    <rect x="14" y="74" width="132" height="16" rx="5" fill="var(--aqua)"/><text x="154" y="87" fill="var(--ink2)" font-size="11">痛み</text>
+    <text x="14" y="124" fill="var(--dim)" font-size="11.5">はっきりした証拠がないもの</text>
+    <rect x="14" y="134" width="60" height="16" rx="5" fill="none" stroke="var(--fig)" stroke-dasharray="4 4"/><text x="82" y="147" fill="var(--dim)" font-size="11">気分の明るさ</text>
+    <rect x="14" y="158" width="52" height="16" rx="5" fill="none" stroke="var(--fig)" stroke-dasharray="4 4"/><text x="74" y="171" fill="var(--dim)" font-size="11">体重・くせ</text>
+    <rect x="14" y="182" width="44" height="16" rx="5" fill="none" stroke="var(--fig)" stroke-dasharray="4 4"/><text x="66" y="195" fill="var(--dim)" font-size="11">睡眠（この分析では）</text>
   </svg>`,
   cap:'効くところと、そうでないところがある',
   body:`<p>ここまで良い話が続きましたが、大事なのはここからです。これまでの研究をまとめて調べ直した、大きな報告があります。</p>
@@ -2635,15 +2779,15 @@ const LESSONS = [
 
 { id:'l12', n:'続けるための、ちょっとしたしかけ', d:'意志の強さより、決め方',
   fig:`<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
-    <rect x="12" y="20" width="118" height="44" rx="12" fill="rgba(255,255,255,.05)" stroke="#4a5866"/>
-    <text x="71" y="47" text-anchor="middle" fill="#b3c1cc" font-size="11.5">歯をみがく</text>
-    <text x="140" y="48" fill="#778794" font-size="15">→</text>
-    <rect x="166" y="20" width="142" height="44" rx="12" fill="rgba(159,216,214,.12)" stroke="#9fd8d6"/>
-    <text x="237" y="47" text-anchor="middle" fill="#eafaf8" font-size="11.5">いすに座って3分</text>
-    <text x="160" y="92" text-anchor="middle" fill="#778794" font-size="11">すでにある習慣に、くっつける</text>
-    <rect x="26" y="112" width="268" height="66" rx="14" fill="rgba(227,199,154,.07)" stroke="rgba(227,199,154,.3)"/>
-    <text x="160" y="140" text-anchor="middle" fill="#e3c79a" font-size="12">もし〈　　　　　〉したら、</text>
-    <text x="160" y="162" text-anchor="middle" fill="#e3c79a" font-size="12">〈　　　　　〉で瞑想する</text>
+    <rect x="12" y="20" width="118" height="44" rx="12" fill="rgba(var(--fgRGB),.05)" stroke="var(--fig)"/>
+    <text x="71" y="47" text-anchor="middle" fill="var(--ink2)" font-size="11.5">歯をみがく</text>
+    <text x="140" y="48" fill="var(--dim)" font-size="15">→</text>
+    <rect x="166" y="20" width="142" height="44" rx="12" fill="rgba(var(--aquaRGB),.12)" stroke="var(--aqua)"/>
+    <text x="237" y="47" text-anchor="middle" fill="var(--aquaHi)" font-size="11.5">いすに座って3分</text>
+    <text x="160" y="92" text-anchor="middle" fill="var(--dim)" font-size="11">すでにある習慣に、くっつける</text>
+    <rect x="26" y="112" width="268" height="66" rx="14" fill="rgba(var(--warmRGB),.07)" stroke="rgba(var(--warmRGB),.3)"/>
+    <text x="160" y="140" text-anchor="middle" fill="var(--warm)" font-size="12">もし〈　　　　　〉したら、</text>
+    <text x="160" y="162" text-anchor="middle" fill="var(--warm)" font-size="12">〈　　　　　〉で瞑想する</text>
   </svg>`,
   cap:'「いつ・どこで」を先に決めておく',
   body:`<p>どんなに効果があっても、続かなければ意味がありません。ここは、瞑想そのものより大事かもしれません。</p>
@@ -3491,7 +3635,7 @@ function renderChar(s, hop){
   s = s || stats();
   const st = stageOf(s.lv.lv), mo = moodOf();
   $('chr').innerHTML = charSVG(st, mo, false, s.best >= 365);
-  $('chrName').textContent = TITLES[st].n;
+  $('chrName').textContent = CHR_NAME;   // 称号はレベルカードにも出ている。ここは名前
   const m = $('chrMood');
   m.textContent = MOODS[mo].n;
   m.className = 'cm' + (mo === 0 ? ' bad' : mo === 1 ? ' low' : '');
@@ -3515,8 +3659,11 @@ $('charBox').addEventListener('click', function(){
   sh.className = 'sheet';
   sh.innerHTML = '<div class="box chrsheet">' +
     '<div class="now"><div class="pic">' + charSVG(st, mo) + '</div>' +
-    '<div><div class="t1">' + TITLES[st].n + '　<span style="color:var(--aqua);font-size:.86rem">' + MOODS[mo].n + '</span></div>' +
-    '<div class="t2">' + MOODS[mo].d + '</div></div></div>' +
+    '<div><div class="t1">' + CHR_NAME + '　<span style="color:var(--aqua);font-size:.86rem">' + MOODS[mo].n + '</span></div>' +
+    '<div class="t2">いまは <b style="color:var(--ink2)">' + TITLES[st].n + '</b>。' + MOODS[mo].d + '</div></div></div>' +
+    '<h4>名前</h4>' +
+    '<div class="how"><b style="color:var(--ink)">なぎ</b>といいます。' +
+    '「凪」は、風がやんで水面が静かになることです。</div>' +
     '<h4>育ち方</h4>' +
     '<div class="how">瞑想して経験値がたまると、レベルが上がって<b style="color:var(--ink)">姿が変わります</b>。' +
     '次にどんな姿になるかは、なってからのお楽しみです。</div>' +
@@ -3531,6 +3678,13 @@ $('charBox').addEventListener('click', function(){
   const closeC = initSheet(sh);
   sh.addEventListener('click', function(e){ if(e.target.classList.contains('no')) closeC(); });
 });
+
+/* キャラクターの名前。2026-09-22 に決めた。
+   由来は「凪」＝風がやんで、水面が静かになること。
+   アンケートで「キャラクターが育つ」がいちばんの good（Q11）で、
+   そのうえで「名前はなんですか？」と聞かれたので付けた。
+   ひらがなで書く（漢字の「凪」にはしない）。 */
+const CHR_NAME = 'なぎ';
 
 /* ───────── レベル・称号・しるし ───────── */
 /* 経験値：1分=10 ／ 1回=20 ／ その日の分に「続けている日数×5」（最大100）

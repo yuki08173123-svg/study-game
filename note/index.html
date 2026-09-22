@@ -70,7 +70,7 @@ svg{display:block;flex:none}
 .tbar .side.r{justify-content:flex-end}
 .tbtn{height:36px;padding:0 8px;border-radius:9px;display:flex;align-items:center;gap:4px;
   color:var(--ink2);font-size:.9rem;font-weight:600;transition:opacity .15s}
-.tbtn:active{opacity:.5}
+.tbtn:active{opacity:.4;transform:scale(.94)}
 .tbtn.accent{color:var(--ink);font-weight:700}
 main{max-width:620px;margin:0 auto;padding:4px 18px calc(var(--tabh) + 48px + env(safe-area-inset-bottom));}
 
@@ -99,7 +99,7 @@ main{max-width:620px;margin:0 auto;padding:4px 18px calc(var(--tabh) + 48px + en
 .item{display:flex;align-items:center;gap:13px;padding:14px 15px;min-height:56px;
   width:100%;text-align:left;transition:background .12s;position:relative}
 .item + .item::before{content:'';position:absolute;left:51px;right:0;top:0;height:1px;background:var(--line)}
-.item:active{background:var(--surf2)}
+.item:active{background:var(--surf3)}
 .item .nm{flex:1;font-size:.97rem;font-weight:600;letter-spacing:.01em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item .ct{font-size:.84rem;color:var(--ink3);font-variant-numeric:tabular-nums;letter-spacing:.03em}
@@ -177,7 +177,7 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 /* ---------- ボタン ---------- */
 .btn{width:100%;border-radius:13px;padding:15px;font-size:.96rem;font-weight:700;
   letter-spacing:.04em;transition:.12s;border:1px solid transparent}
-.btn:active{transform:scale(.99);opacity:.9}
+.btn:active{transform:scale(.97);opacity:.82}
 .btn.pri{background:var(--pri);color:var(--on-pri)}
 .btn.sec{background:var(--surf);border-color:var(--line);box-shadow:var(--shadow)}
 #revnow{display:flex;align-items:center;justify-content:center;gap:8px;font-size:.9rem;padding:12px}
@@ -185,7 +185,7 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .pill{border:1px solid var(--line);background:var(--surf);border-radius:999px;
   padding:8px 14px;font-size:.83rem;font-weight:600;color:var(--ink2);
   display:inline-flex;align-items:center;gap:7px;transition:.15s;letter-spacing:.02em}
-.pill:active{opacity:.6}
+.pill:active{opacity:.55;transform:scale(.95)}
 .pill.on{background:var(--pri);border-color:var(--pri);color:var(--on-pri);font-weight:700}
 .pills{display:flex;flex-wrap:wrap;gap:7px}
 .pill .n{color:var(--ink3);font-weight:600;font-variant-numeric:tabular-nums}
@@ -321,7 +321,7 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .grades{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
 .grades button{border-radius:13px;padding:13px 8px;display:flex;flex-direction:column;
   align-items:center;gap:2px;transition:.12s}
-.grades button:active{opacity:.75;transform:scale(.98)}
+.grades button:active{opacity:.6;transform:scale(.93)}
 .grades b{font-size:1.15rem;font-weight:700;line-height:1.3}
 .grades span{font-size:.78rem;font-weight:700;letter-spacing:.03em}
 .g-fast{background:var(--ok-soft);color:var(--ok)}
@@ -336,7 +336,7 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
   border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .stat{background:var(--surf);padding:16px 6px;text-align:center;width:100%;transition:background .12s}
-button.stat:active{background:var(--surf2)}
+button.stat:active{background:var(--surf3);transform:scale(.97)}
 .stat b{display:block;font-family:var(--serif);font-size:1.5rem;font-weight:600;letter-spacing:.02em;
   line-height:1.4;font-variant-numeric:tabular-nums}
 .stat span{font-size:.67rem;color:var(--ink3);font-weight:600;letter-spacing:.06em}
@@ -345,7 +345,7 @@ button.stat:active{background:var(--surf2)}
 .warn .wtxt b{font-size:.95rem;font-weight:700;color:var(--ink)}
 .warn .wtxt div{font-size:.85rem;color:var(--ink2);line-height:1.8;margin-top:3px}
 .warn .wact{display:flex;gap:8px;margin-top:13px}
-.warn .pill{background:var(--surf)}
+.warn .pill:not(.on){background:var(--surf)}
 .empty{text-align:center;color:var(--ink3);padding:66px 24px;font-size:.89rem;line-height:2.1}
 .empty svg{margin:0 auto 14px;opacity:.35}
 .note-txt{font-size:.83rem;color:var(--ink2);line-height:2}
@@ -409,7 +409,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 29;
+const VER = 30;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -483,9 +483,9 @@ function applyGrade(n, g){
   n.upd = now();
   return ivl;
 }
-const saveNotes = () => { localStorage.setItem(K_N, JSON.stringify(notes)); syncDirty(); };
-const saveFolders = () => { localStorage.setItem(K_F, JSON.stringify(folders)); syncDirty(); };
-const saveCfg = () => { localStorage.setItem(K_C, JSON.stringify(cfg)); syncDirty(); };
+const saveNotes = () => { localStorage.setItem(K_N, JSON.stringify(notes)); syncDirty(); bkSave(); };
+const saveFolders = () => { localStorage.setItem(K_F, JSON.stringify(folders)); syncDirty(); bkSave(); };
+const saveCfg = () => { localStorage.setItem(K_C, JSON.stringify(cfg)); syncDirty(); bkSave(); };
 
 function load(){
   try{ notes = JSON.parse(localStorage.getItem(K_N) || '[]'); }catch(e){ notes = []; }
@@ -646,12 +646,56 @@ async function shrink(file, MAX){
   if(tmp) URL.revokeObjectURL(tmp);
   return blob || file;
 }
+/* ===== 端末の中の控え =====
+   掃除アプリなどで localStorage だけが消える事故から戻すための控え。写真と同じ IndexedDB に置く。
+   両方まとめて消されると戻せないので、本命は端末の外に預かるバックアップ（同期）のほう。 */
+const BKK = '__bk__';
+let bkT = 0;
+const bkSave = () => { clearTimeout(bkT); bkT = setTimeout(bkNow, 4000); };
+async function bkNow(){
+  clearTimeout(bkT);
+  try{
+    const s = JSON.stringify({ at:now(), v:VER, notes, folders, cfg });
+    await putImg(BKK, new Blob([s], { type:'application/json' }));
+  }catch(e){}
+}
+async function bkRead(){
+  try{
+    const b = await getImg(BKK);
+    if(!b || !b.text) return null;
+    const x = JSON.parse(await b.text());
+    return (x && Array.isArray(x.notes)) ? x : null;
+  }catch(e){ return null; }
+}
+/* 起動したとき、メモが消えていて控えが残っていれば戻す */
+async function bkRestore(){
+  if(notes.length || folders.length) return;
+  if(localStorage.getItem(K_N) != null) return;        // 自分で全部消した人のぶんは戻さない
+  const x = await bkRead();
+  if(!x || !x.notes.length) return;
+  notes = x.notes;
+  folders = Array.isArray(x.folders) ? x.folders : [];
+  if(x.cfg) cfg = Object.assign(cfg, x.cfg);
+  localStorage.setItem(K_N, JSON.stringify(notes));
+  localStorage.setItem(K_F, JSON.stringify(folders));
+  saveCfg();
+  render();
+  sheet(`<h3>メモを戻しました</h3>
+    <div class="note-txt" style="margin:-10px 2px 14px">この端末のメモが消えていたので、
+      アプリが持っていた控えから <b>${live().length}件</b> 戻しました（${fmtDate(x.at)}の時点のもの）。</div>
+    <div class="note-txt" style="margin:0 2px 16px">掃除アプリや、ブラウザのデータ消去で消えることがあります。
+      控えも同時に消されると、戻せません。<b>バックアップ</b>を入れておくと端末の外に預かるので、そのときも戻せます。</div>
+    <button class="btn pri" id="bkGo">バックアップを入れる</button>`, close => {
+    $('#bkGo').onclick = () => { close(); go('set'); };
+  });
+}
 async function sweepImgs(){
   try{
     const keys = await tx_('readonly', st => st.getAllKeys()) || [];
     const used = new Set();
     notes.forEach(n => (n.imgs||[]).forEach(i => used.add(i)));  // ゴミ箱の中の写真も残す
     draft.forEach(d => used.add(d.id));
+    used.add(BKK);                                   // 控えは消さない
     for(const k of keys) if(!used.has(k)) await delImg(k);
   }catch(e){}
 }
@@ -765,6 +809,10 @@ function renderHome(){
       <button class="item add" data-newfolder><span class="ic">${ICO.plus({s:20,w:2})}</span><span class="nm">新しいフォルダ</span></button>
     </div>
     ${warnBox()}
+    ${bkWarn()}
+    ${L.length || folders.length ? '' : `<div class="note-txt" style="margin:22px 4px 0;text-align:center">
+      前に使っていて、メモが消えてしまった方は
+      <button class="linkbtn" data-bk="go">バックアップから戻す</button></div>`}
     <div class="label">記録</div>
     <div class="stats">
       <button class="stat" data-jump=""><b>${L.length}</b><span>合計</span></button>
@@ -783,8 +831,26 @@ function renderHome(){
     if(b.dataset.warn === 'go') return go('list', { fid:null, q:'', view:'list', only:'unrev', sort:'rev' });
     cfg.warnHide = new Date().toDateString(); saveCfg(); render();
   });
+  $$('#main [data-bk]').forEach(b => b.onclick = () => {
+    if(b.dataset.bk === 'go') return go('set');
+    cfg.bkHide = new Date().toDateString(); saveCfg(); render();
+  });
   const ro = $('#main [data-reorder]');
   if(ro) ro.onclick = () => reorderSheet();   // ← 引数にイベントが渡ると空のシートになる
+}
+/* まだ端末の外に預けていない人に、ホームで1回だけ知らせる */
+function bkWarn(){
+  if(sy.code || live().length < 3) return '';
+  if(cfg.bkHide === new Date().toDateString()) return '';
+  return `<div class="warn">
+    <div class="wtxt"><b>このメモは、この端末の中にしかありません</b>
+      <div>掃除アプリやブラウザのデータ消去で消えると、戻せません。
+        バックアップを入れると端末の外にも預かるので、消えても同じコードで戻せます。</div></div>
+    <div class="wact">
+      <button class="pill on" data-bk="go">バックアップを入れる</button>
+      <button class="pill" data-bk="hide">今日は閉じる</button>
+    </div>
+  </div>`;
 }
 function warnBox(){
   const L = live(), never = L.filter(unseen).length;
@@ -1448,6 +1514,8 @@ function renderReview(){
           <button class="rnd" data-d="1" aria-label="増やす">＋</button>
           <button class="pill ${cfg.revN ? '' : 'on'}" data-all>全部</button>
         </div>
+        <div class="note-txt" style="margin:12px 2px 0"><b>範囲</b>＝どのフォルダから出すか。
+          <b>件数</b>＝1回で何件やるか。迷ったら、範囲は「すべてのノート」、件数は10件くらいから。</div>
         <div class="quick" id="revquick">
           ${[5,10,15,20,25,30,40,50,60,80,100].map(k =>
             `<button class="pill ${cfg.revN===k?'on':''}" data-q="${k}">${k}</button>`).join('')}
@@ -1661,8 +1729,9 @@ function renderSet(){
       ${rowItem({ ic:ICO.down({s:19}), nm:'テキスト', attr:'data-x="txt"' })}
       ${rowItem({ ic:ICO.up({s:19}),   nm:'JSONから読み込む', attr:'data-x="imp"' })}
     </div>
-    <div class="note-txt" style="margin:10px 4px 0">メモと写真は端末の中だけに保存されています。
-      機種変更や故障にそなえて、ときどきJSONで書き出して保管してください。</div>
+    <div class="note-txt" style="margin:10px 4px 0">バックアップを入れていない場合、メモと写真は
+      <b>この端末の中だけ</b>にあります。機種変更や故障にそなえて、ときどきJSONでも書き出して保管してください。
+      書き出したJSONは、上の「JSONから読み込む」でいつでも戻せます。</div>
 
     <div class="label">振り返り</div>
     <div class="group">
@@ -1770,23 +1839,23 @@ function folderSheet(f, onCreate, pid){
   let color = f ? f.color : (parent ? parent.color : COLORS[topFolders().length % COLORS.length]);
   sheet(`
     <h3>${f ? kind + 'を編集' : '新しい' + kind}</h3>
-    ${parent ? `<div class="note-txt" style="margin:-10px 2px 14px">「${esc(parent.name)}」の中に作ります。</div>` : ''}
     <input class="field" id="fname" placeholder="${parent ? '中に作るフォルダの名前' : 'フォルダ名'}" value="${f ? esc(f.name) : ''}" autocomplete="off">
-    ${f ? `<div class="label" style="margin:18px 4px 8px">場所</div>
-      <div id="fparent"></div>
-      <div class="note-txt" style="margin-top:8px">選んだフォルダの中に入ります。
-        中にフォルダを持っていても移動できます（自分の中には入れられません）。</div>` : ''}
+    <div class="label" style="margin:18px 4px 8px">場所</div>
+    <div id="fparent"></div>
+    <div class="note-txt" style="margin-top:8px">${f
+      ? '選んだフォルダの中に入ります。中にフォルダを持っていても移動できます（自分の中には入れられません）。'
+      : '<b>フォルダの中にフォルダを作れます。</b>ここで選んだフォルダの中に作ります。そのままなら、いちばん上に作ります。'}</div>
     <div class="label" style="margin:18px 4px 8px">いろ</div>
     <div class="swatch" id="sw">${COLORS.map(c =>
       `<button data-c="${c}" class="${c===color?'on':''}" style="background:${c}"></button>`).join('')}</div>
     <button class="btn pri" id="fsave" style="margin-top:22px">${f ? '保存' : '作成'}</button>
     ${f ? `<button class="btn danger" id="fdel" style="margin-top:8px">${kind}を削除</button>` : ''}
   `, close => {
-    let newPid = f ? (f.pid || '') : '';
+    let newPid = f ? (f.pid || '') : (parentId || '');
     const paintParent = () => {
       const box = $('#fparent');
       if(!box) return;
-      const banned = idsUnder(f.id);                 // 自分と、その中のフォルダには入れられない
+      const banned = f ? idsUnder(f.id) : [];        // 自分と、その中のフォルダには入れられない
       const opts = [{ id:'', name:'いちばん上', d:0 }]
         .concat(folderTree().filter(x => !banned.includes(x.id)));
       box.innerHTML = `<div class="group">${opts.map(o => `<button class="item" data-p="${o.id}"
@@ -1817,7 +1886,7 @@ function folderSheet(f, onCreate, pid){
       }
       else{
         const nf = { id:uid('f'), name, color };
-        if(parentId) nf.pid = parentId;
+        if(newPid) nf.pid = newPid;
         folders.push(nf);
         toast('作成しました');
         if(onCreate) onCreate(nf.id);
@@ -2357,7 +2426,7 @@ async function syncStart(){
   return syncConnect(code);
 }
 function syncJoin(){
-  const c = prompt('ほかの端末（または計画マップ）の同期コードを入れてください\n例: abcd-2345');
+  const c = prompt('前に使っていたコード、またはほかの端末（計画マップ）のコードを入れてください\n例: abcd-2345');
   if(c) syncConnect(c);
 }
 function syncStop(){
@@ -2370,32 +2439,39 @@ function syncPaint(){
   if(!el) return;
   el.innerHTML = syImgMsg ? esc(syImgMsg)
     : sy.err ? `<span style="color:var(--ng)">うまく同期できていません（${esc(sy.err)}）。電波のよいところで「いま同期する」を押してください。</span>`
-    : sy.at ? `さいごの同期：${fmtDate(sy.at)}` : '';
+    : sy.at ? `さいごに預けた：${fmtDate(sy.at)}` : '';
 }
 function syncCard(){
   if(!sy.code){
     const pc = planCodeHere();
     return `
-    <div class="label">同期（スマホとパソコンで同じにする）</div>
+    <div class="label">バックアップ（消えても もどせる）</div>
+    <div class="warn" style="margin:0 0 12px">
+      <div class="wtxt"><b>まだ預けていません</b>
+        <div>いまメモがあるのは、この端末の中だけです。掃除アプリやブラウザのデータ消去で消えると、戻せません。</div></div>
+    </div>
     <div class="group">
-      ${rowItem({ ic:ICO.loop({s:19}), nm: pc ? `計画マップと同じコードで同期する` : '同期をはじめる', attr:'data-x="systart"',
+      ${rowItem({ ic:ICO.loop({s:19}), nm: pc ? `計画マップと同じコードで預ける` : 'バックアップを入れる', attr:'data-x="systart"',
                   right: pc ? `<span class="ct mono">${pc}</span>` : '' })}
-      ${rowItem({ ic:ICO.up({s:19}), nm:'ほかの端末のコードを入れる', attr:'data-x="syjoin"' })}
+      ${rowItem({ ic:ICO.up({s:19}), nm:'前に使っていたコードから戻す', attr:'data-x="syjoin"' })}
     </div>
     <div class="note-txt" style="margin:10px 4px 0">
+      書いたメモと写真を、端末の外にも預かります。<b>1台しか使っていなくても入れてください。</b>
+      アプリが消えても、同じコードを入れるだけで戻せます。2台で使うときは、同じコードにすると中身がそろいます。<br>
       計画マップで同期している人は、<b>同じコード</b>がそのまま使えます。
-      2台とも同じコードにすると、書いたメモが自動でそろいます。写真もいっしょに送られます。<br>
       データはヒラのGoogleドライブに預かります。コードを知っている人は中身を見られるので、人に見せないでください。</div>`;
   }
   return `
-    <div class="label">同期</div>
+    <div class="label">バックアップと同期</div>
     <div class="group">
-      ${rowItem({ ic:ICO.check({s:19}), nm:'同期コード（押すとコピー）', attr:'data-x="sycopy"', right:`<span class="ct mono">${sy.code}</span>` })}
-      ${rowItem({ ic:ICO.loop({s:19}), nm:'いま同期する', attr:'data-x="synow"' })}
-      ${rowItem({ ic:ICO.x({s:19}), nm:'同期をやめる（この端末だけ）', attr:'data-x="systop"', col:'var(--ng)' })}
+      ${rowItem({ ic:ICO.check({s:19}), nm:'コード（押すとコピー）', attr:'data-x="sycopy"', right:`<span class="ct mono">${sy.code}</span>` })}
+      ${rowItem({ ic:ICO.loop({s:19}), nm:'いま預ける', attr:'data-x="synow"' })}
+      ${rowItem({ ic:ICO.x({s:19}), nm:'やめる（この端末だけ）', attr:'data-x="systop"', col:'var(--ng)' })}
     </div>
     <div class="note-txt" id="systat" style="margin:10px 4px 0"></div>
-    <div class="note-txt" style="margin:6px 4px 0">書くたびに自動で送られ、開くたびに自動で受け取ります。
+    <div class="note-txt" style="margin:6px 4px 0">このコードを控えておいてください。
+      アプリが消えても、入れ直して「前に使っていたコードから戻す」にこのコードを入れれば戻せます。<br>
+      書くたびに自動で送られ、開くたびに自動で受け取ります。
       同時に2台で書くと、あとから書いたほうが残ります。片方で書いたら、もう片方は開き直してから使ってください。</div>`;
 }
 
@@ -2416,6 +2492,7 @@ function boot(){
   $('#fab').onclick = startNew;
 
   addEventListener('scroll', () => $('#top').classList.toggle('scrolled', scrollY > 4), { passive:true });
+  document.addEventListener('touchstart', () => {}, { passive:true });   // これが無いと iOS で押した見た目が出ない
   document.addEventListener('click', e => {
     const t = e.target.closest('.rev .pics [data-t]');
     if(!t) return;
@@ -2425,6 +2502,9 @@ function boot(){
   });
 
   go('home');
+  setTimeout(bkRestore, 600);
+  addEventListener('pagehide', bkNow);
+  document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') bkNow(); });
   if(!cfg.seenHelp){ cfg.seenHelp = 1; saveCfg(); setTimeout(helpSheet, 500); }
   checkUpd(true);
   setTimeout(sweepImgs, 4000);

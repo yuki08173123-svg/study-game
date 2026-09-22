@@ -80,6 +80,8 @@ header.app{position:sticky; top:0; z-index:30; background:var(--bg); padding:cal
 .update .t b{display:block; font-size:15px; font-weight:900;}
 .update .t span{font-size:11px; opacity:.9; font-weight:700;}
 .update .go{background:rgba(255,255,255,.22); border-radius:999px; padding:7px 13px; font-size:13px; font-weight:900; flex:none;}
+.update.guard{background:#C24A3C;}
+.update.guard .t span{opacity:.95; line-height:1.4; display:block; margin-top:2px;}
 
 .card{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:14px;}
 .sec-label{font-size:12px; font-weight:900; color:var(--muted); letter-spacing:.06em; margin-bottom:6px; display:flex; align-items:center; gap:6px;}
@@ -505,6 +507,12 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <span class="go">更新する</span>
     </button>
 
+    <button class="update guard hidden" id="btnGuard">
+      <svg viewBox="0 0 24 24"><path d="M12 3l7.5 3v6.2c0 4.5-3.1 7.8-7.5 8.8-4.4-1-7.5-4.3-7.5-8.8V6z"/><path d="M8.8 12.2l2.3 2.3 4.2-4.6"/></svg>
+      <span class="t"><b>データを守る設定がまだです</b><span>スマホの掃除アプリやブラウザの設定で、書いた計画が消えてしまうことがあります。同期かバックアップをしておくと元にもどせます。</span></span>
+      <span class="go">見る</span>
+    </button>
+
     <div class="topcard" id="topCard">
       <button class="tc-goal hidden" id="tcGoal">
         <svg viewBox="0 0 24 24"><path d="M4.5 21V4M4.5 4.5h13l-2.4 3.8 2.4 3.7h-13"/></svg>
@@ -734,7 +742,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 53;
+const VER = 54;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -993,9 +1001,12 @@ $('#sugg').onclick = e => {
   const b = e.target.closest('button[data-t]'); if(!b) return;
   const o = (S.hist||[]).find(x=>x.t === b.dataset.t);
   $('#newText').value = b.dataset.t;
-  if(o){                                   // 前に使った時こく・かかる時間もいっしょに入れる
-    if(o.time) setTimeBtn($('#newTime'), o.time);
-    if(o.min){ S.pendMin = o.min; renderPend(); }
+  if(o){    // 前に使った時こく・かかる時間もいっしょに入れる
+            // ※自分で決めてあるものは、そのまま残す（先に時こくを入れてから文字を選ぶ人がいるため）
+    const got = [];
+    if(o.time && !$('#newTime').dataset.v){ setTimeBtn($('#newTime'), o.time); got.push(o.time); }
+    if(o.min && !pendTouched){ S.pendMin = o.min; renderPend(); got.push(fmtHM(o.min)); }
+    if(got.length) toast('まえと同じ '+got.join('・')+' も入れました');
   }
   renderSugg(); $('#newText').focus();
 };
@@ -1885,7 +1896,7 @@ function drawTimeline(light){
     days.push({ date:addDays(m,i), s:sumDay(d), timed, free });
   }
   hi = Math.min(hi, 24*60+6*60); // 深夜までは30:00で打ち切り
-  const ROW = 10;                // 10分 = 10px
+  const ROW = 14;                // 10分 = 14px（30分の箱に「やること」と「時こく」の2行が入る高さ）
   const rows = (hi-lo)/10;
   const GUT = 84, HEAD = 108, DH = 74;  // 左の時刻・見出し・曜日ヘッダ
   const maxFree = Math.max(0, ...days.map(x=>x.free.length));
@@ -1956,11 +1967,17 @@ function drawTimeline(light){
       else { g.fillStyle='#FBE4E1'; rr(x, y+1, w, h-2, 6); g.fill(); g.strokeStyle='#E0574C'; g.lineWidth=1.5; rr(x, y+1, w, h-2, 6); g.stroke(); }
       const label = (o.t.star?'★':'') + o.t.text + (o.t.note?' → '+o.t.note:'');
       g.fillStyle = light ? INK : (o.t.evt ? '#69748A' : (o.t.done ? '#fff' : INK)); g.textAlign='left';
-      if(h >= 24){
+      if(h >= 40){                       // 2行（やること／時こく）
         g.font='700 13px '+F;
         g.fillText(clip(label, w-11), x+6, y+16);
-        if(h >= 40){ g.fillStyle = (!light && o.t.done && !o.t.evt) ? 'rgba(255,255,255,.85)' : MUT; g.font='700 11px '+F;
-          g.fillText(o.t.time+'〜 '+fmtHM(o.en-o.st), x+6, y+32); }
+        g.fillStyle = (!light && o.t.done && !o.t.evt) ? 'rgba(255,255,255,.85)' : MUT; g.font='700 11px '+F;
+        g.fillText(o.t.time+'〜 '+fmtHM(o.en-o.st), x+6, y+32);
+      }else if(h >= 22){                 // 低い箱は1行に「時こく＋やること」を並べる
+        g.font='700 11px '+F;
+        const tw = g.measureText(o.t.time).width;
+        g.globalAlpha = .72; g.fillText(o.t.time, x+5, y+h/2+4); g.globalAlpha = 1;
+        g.font='700 12px '+F;
+        g.fillText(clip(label, w-13-tw), x+9+tw, y+h/2+4);
       }else if(h >= 16){
         g.font='700 11px '+F;
         g.fillText(clip(label, w-10), x+5, y+h/2+4);
@@ -2048,6 +2065,7 @@ function addTask(){
     d.tasks.sort((a,b)=> a.time&&b.time ? (a.time<b.time?-1:a.time>b.time?1:0) : a.time?-1:b.time?1:0);
   });
   $('#newText').value = ''; setTimeBtn($('#newTime'), '');
+  pendTouched = false;
   S.newKind = ''; renderKinds();
   renderDays(); renderDay(); renderTQC(); renderPast(); save();
   const kn = k === 'nostar' ? '★なし' : k === 'evt' ? '予定' : '';
@@ -2167,6 +2185,7 @@ function openDurPicker(t){
   openMinPicker(t.text, t.min, v => { t.min = v; renderDays(); renderDay(); renderTQC(); save(); });
 }
 /* 入力欄の「かかる時間」 */
+let pendTouched = false;   // 自分で「かかる時間」を決めたか（候補チップに上書きさせないため）
 function renderPend(){
   if(typeof S.pendMin !== 'number') S.pendMin = S.defMin;
   $('#pendMin').textContent = fmtHM(S.pendMin);
@@ -2174,10 +2193,10 @@ function renderPend(){
 }
 $('#durRow').onclick = e => {
   const b = e.target.closest('button'); if(!b) return;
-  if(b.id === 'pendMin'){ openMinPicker('これから入れるやること', S.pendMin, v => { S.pendMin = v; renderPend(); save(); }); return; }
+  if(b.id === 'pendMin'){ openMinPicker('これから入れるやること', S.pendMin, v => { S.pendMin = v; pendTouched = true; renderPend(); save(); }); return; }
   const d = +b.dataset.d;
   S.pendMin = d === 0 ? 0 : Math.min(539, (Number(S.pendMin)||0) + d);
-  renderPend(); save();
+  pendTouched = true; renderPend(); save();
 };
 /* ---------- Qランキングに送る ---------- */
 function qOn(){ return !!Q_GAS_URL; }
@@ -2259,7 +2278,7 @@ $('#btnSyncNew').onclick = async ()=>{
   try{
     const r = await syncCall({ action:'new' });
     if(!r || !r.ok){ toast((r && r.err) || 'つながりませんでした'); return; }
-    S.syncCode = r.code; save(); renderSync();
+    S.syncCode = r.code; save(); renderSync(); guardNote();
     await syncPush();
     toast('同期をはじめました');
   }catch(e){ toast('つながりませんでした'); }
@@ -2275,7 +2294,7 @@ $('#btnSyncJoin').onclick = async ()=>{
     if(!r || !r.ok){ toast((r && r.err) || 'つながりませんでした'); return; }
     if(!r.found){ toast('そのコードは見つかりません'); return; }
     if(hasData() && !confirm('この端末のいまのデータは、コード「'+code+'」のデータに入れかわります。よろしいですか？')) return;
-    S.syncCode = code; save();
+    S.syncCode = code; save(); guardNote();
     applyRemote(r);
     toast('同じデータになりました');
   }catch(e){ toast('つながりませんでした'); }
@@ -2538,6 +2557,23 @@ $('#setSound').onchange = e => { S.sound = !!e.target.checked; save(); if(S.soun
 $('#btnTestSound').onclick = ()=>{ S.sound = true; $('#setSound').checked = true; save(); audioUnlock(); seEnd(); setTimeout(audioOff, 4000); };
 $('#setNotifTime').oninput = e => { if(/^\d\d:\d\d$/.test(e.target.value)){ S.notifTime = e.target.value; save(); renderCd(); } };
 $('#setLimit').oninput = e => { const v = Math.round(Number(e.target.value)||0); if(v>=1 && v<=360){ S.limitMin = v; save(); renderCd(); } };
+/* 同期もバックアップもしていない人に、今週タブの上でひとこと知らせる（7日おき） */
+function guardNote(){
+  const el = $('#btnGuard'); if(!el) return;
+  let sn = 0, bk = 0;
+  try{ sn = Number(localStorage.getItem('planmap_guard')||0); bk = Number(localStorage.getItem('planmap_bk')||0); }catch(e){}
+  const safe = !!S.syncCode || bk > 0;
+  const snoozed = sn && (Date.now() - sn) < 7*86400000;
+  el.classList.toggle('hidden', safe || snoozed);
+}
+$('#btnGuard').onclick = ()=>{
+  try{ localStorage.setItem('planmap_guard', String(Date.now())); }catch(e){}
+  $('#btnGuard').classList.add('hidden');
+  document.querySelector('nav.tabs button[data-tab="Set"]').click();
+  const card = $('#syncCard');
+  const go = (card && !card.classList.contains('hidden')) ? card : $('#btnBackup');
+  if(go) setTimeout(()=>go.scrollIntoView({ behavior:'smooth', block:'center' }), 80);
+};
 function bkNote(){
   const at = Number(localStorage.getItem('planmap_bk')||0);
   const el = $('#bkNote'); if(!el) return;
@@ -2563,7 +2599,7 @@ $('#btnBackup').onclick = ()=>{
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
   localStorage.setItem('planmap_bk', String(Date.now()));
-  bkNote(); toast('バックアップを書き出しました');
+  bkNote(); guardNote(); toast('バックアップを書き出しました');
 };
 $('#btnRestore').onclick = ()=>$('#fileIn').click();
 $('#fileIn').onchange = e => {
@@ -2822,7 +2858,7 @@ function boot(){
   renderProfs();
   $('#setLimit').value = S.limitMin;
   $('#verTag').textContent = 'v'+VER; $('#verTag2').textContent = 'v'+VER;
-  bkNote(); askPersist(); renderSync();
+  bkNote(); guardNote(); askPersist(); renderSync();
   syncRep(); renderAll(); renderCd();
   // 再読みこみでカウントダウンが続いているときは、最初のタップで音を使えるようにする
   if(cdRunning()) document.addEventListener('pointerdown', ()=>audioUnlock(), { once:true });

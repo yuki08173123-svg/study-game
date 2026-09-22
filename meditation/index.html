@@ -205,6 +205,9 @@ body.tab-home:not(.bgm):not(.wc):not(.upd):not(.ambopen) .app{overflow-y:hidden}
 .acfg::before{content:'';width:11px;height:11px;border-radius:50%;
   border:1.5px solid currentColor;border-right-color:transparent;border-bottom-color:transparent;
   transform:rotate(-45deg);opacity:.85}
+.sh4{margin:20px 0 2px;font-size:.82rem;font-weight:500;color:var(--aqua);letter-spacing:.08em}
+.sk-note{font-size:.76rem;color:var(--dim);line-height:1.7;padding-bottom:6px}
+.sk-note b{color:var(--ink2)}
 .srow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;
   border-bottom:1px solid var(--line)}
 .srow:last-of-type{border-bottom:none}
@@ -786,6 +789,26 @@ body.bgm .stage{gap:14px}
 :root[data-theme="light"] .chrgrid{background:#101925;padding:10px;border-radius:16px;
   border:1px solid rgba(255,255,255,.08)}
 
+/* ───────── 出すもの・しまうもの ─────────
+   アンケート Q7「一度も使っていない機能」で、力だめし6人・復習5人・ひとこと4人…と割れた。
+   どれを消すかは人によって違うので、**こちらで決めずに、本人に選んでもらう**。
+   生徒からも「減らさないで隠すのがよい。長期休みに使うかもしれないから」という声があった。
+   しまっても記録は消えない（見えなくなるだけ）。 */
+body.hide-learn .tab[data-tab="learn"]{display:none}
+body.hide-quiz #btnTest{display:none}
+body.hide-cal #secCal{display:none}
+body.hide-rank #rankCard{display:none}
+body.hide-bgm #btnBgm{display:none}
+body.hide-badge #lvBadge,
+body.hide-badge .lvsheet .bgrid,
+body.hide-badge .lvsheet .soon,
+body.hide-badge .lvsheet h4.bh,
+body.hide-badge #newB{display:none}
+body.hide-mood #moodPick,
+body.hide-mood .memo-mood{display:none}
+body.hide-memo #btnDoneMemo,
+body.hide-memo .memo-write{display:none}
+
 /* ───────── 押した手応え ─────────
    アンケート「ボタンを押したことが少しわかりにくいので、アニメーションがあると視覚的に良い」。
    このアプリは端末まかせのタップ色（tap-highlight）を消しているので、押しても何も起きない。
@@ -920,7 +943,7 @@ body.bgm .stage{gap:14px}
       <div class="card"><div class="k">合計</div><div class="v mono"><span id="stTotal">0</span><small id="stTotalUnit">分</small></div></div>
     </div>
 
-    <div class="sec">
+    <div class="sec" id="secCal">
       <h2>カレンダー</h2>
       <div class="calhead">
         <button id="calPrev" aria-label="前の月">‹</button>
@@ -934,7 +957,7 @@ body.bgm .stage{gap:14px}
 
     <div class="sec">
       <h2>これまでの記録</h2>
-      <div class="hint2">記録をタップすると「ひとこと」を書き残せます。声でも入れられます。</div>
+      <div class="hint2" id="logHint">記録をタップすると「ひとこと」を書き残せます。声でも入れられます。</div>
       <div class="list" id="list"></div>
       <button class="more hidden" id="btnMore">もっと見る</button>
     </div>
@@ -1000,7 +1023,7 @@ body.bgm .stage{gap:14px}
           <li>「瞑想」で時間を選んで、<b>はじめる</b>を押します（1分から60分まで）。</li>
           <li>時間の下の<b>「瞑想中の音」</b>を押すと、雨・波・風・たき火・せせらぎ・虫の声・風鈴・おりん から選べます。押すと少しだけ試し聞きでき、選ぶとまたたたまれます。音が気になる人は「なし」のままで大丈夫です。</li>
           <li>瞑想せずに<b>音だけ流す</b>こともできます。「はじめる」の下の<b>「音だけ流す（勉強のおともに）」</b>を押すと、選んだ音がずっと流れます。<b>この時間は記録にもレベルにも入りません</b>。勉強や作業のおともにどうぞ。</li>
-          <li>その横の<b>「設定」</b>で、<b>見た目（暗い／明るい）</b>、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。<b>明るい</b>にすると、記録や「学ぶ」が昼間でも読みやすくなります（キャラクターのまわりと瞑想中の画面は、そのまま夜の色のままです）。雨・波・風・たき火・せせらぎ・虫の声は<b>本物の録音</b>です（アプリが作る「合成」の音にも切りかえられます）。録音は選んだ音だけ、はじめて流すときに読み込みます。</li>
+          <li>その横の<b>「設定」</b>で、<b>見た目（暗い／明るい）</b>、<b>消音モードでも鳴らす</b>かどうか、鐘や音の大きさ、終わりの鐘を3回にするか1回にするかを変えられます。<b>明るい</b>にすると、記録や「学ぶ」が昼間でも読みやすくなります（なぎのまわりと瞑想中の画面は、そのまま夜の色のままです）。<b>「出すもの」</b>では、つかわない機能をしまえます。<b>しまっても記録は消えません</b>ので、出し直せばそのまま戻ります。雨・波・風・たき火・せせらぎ・虫の声は<b>本物の録音</b>です（アプリが作る「合成」の音にも切りかえられます）。録音は選んだ音だけ、はじめて流すときに読み込みます。</li>
           <li>鐘が1回鳴ったら、目を閉じます。画面は見なくて大丈夫です。</li>
           <li>時間になると<b>鐘が3回</b>鳴ります。これが終わりの合図です。</li>
           <li><b>ボタンに無い長さ</b>にしたいときは、近い長さを押してから<b>「＋1分」「−1分」</b>で調整してください（押しっぱなしで早く進みます）。いま何分にしているかは、まん中の「◯分　はじめる」で分かります。</li>
@@ -1566,7 +1589,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 'use strict';
-const VER = 56;
+const VER = 57;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -2139,6 +2162,43 @@ function bgmEnd(){
 $('btnBgm').addEventListener('click', function(){ if(bgmOn) bgmEnd(); else bgmStart(); });
 $('bgmStop').addEventListener('click', bgmEnd);
 
+/* ───────── 出すもの・しまうもの ─────────
+   アンケート Q7 で「一度も使っていない機能」がばらけた（力だめし6・復習5・ひとこと4…）。
+   どれが要らないかは人によって違うので、こちらで削らず、本人にしまってもらう。
+   **しまっても記録は消えない。** 出し直せば、そのまま元に戻る。
+   見た目と同じで端末ごとの好みなので、同期はしない。 */
+const KEY_SHOW = 'med.show.v1';
+const SHOW_ITEMS = [
+  { k:'learn', n:'学ぶ',           d:'瞑想の科学を読む・復習する。タブごと消えます' },
+  { k:'quiz',  n:'力だめし',       d:'学んだところからランダムに出る問題。復習は残ります' },
+  { k:'cal',   n:'カレンダー',     d:'記録タブの、月ごとの表' },
+  { k:'rank',  n:'クラスのようす', d:'みんなの記録とくらべる' },
+  { k:'bgm',   n:'音だけ流す',     d:'勉強のおともに、音だけ流す' },
+  { k:'badge', n:'しるし',         d:'集めたバッジ' },
+  { k:'mood',  n:'気分の記録',     d:'終わったあとの5段階' },
+  { k:'memo',  n:'ひとこと',       d:'終わったあとに書き残すメモ' }
+];
+let show = {};
+SHOW_ITEMS.forEach(function(x){ show[x.k] = true; });     // はじめは全部 出す
+try{
+  const j = JSON.parse(localStorage.getItem(KEY_SHOW) || '{}');
+  SHOW_ITEMS.forEach(function(x){ if(j[x.k] === false) show[x.k] = false; });
+}catch(e){}
+function saveShow(){ try{ localStorage.setItem(KEY_SHOW, JSON.stringify(show)); }catch(e){} }
+function applyShow(){
+  SHOW_ITEMS.forEach(function(x){
+    document.body.classList.toggle('hide-' + x.k, !show[x.k]);
+  });
+  // しまった学ぶタブを開いたままにしない
+  if(!show.learn && tab === 'learn'){ const t = document.querySelector('.tab[data-tab="home"]'); if(t) t.click(); }
+  // 記録一覧の案内は、押して何ができるかに合わせて書きかえる
+  const h = $('logHint');
+  if(h) h.textContent = (show.memo && show.mood) ? '記録をタップすると「ひとこと」を書き残せます。声でも入れられます。'
+      : show.memo ? '記録をタップすると「ひとこと」を書き残せます。声でも入れられます。'
+      : show.mood ? '記録をタップすると、そのときの気分を残せます。'
+      : '';
+}
+
 /* 見た目（暗い／明るい）。音と同じで、この端末だけの好みなので同期しない */
 function theme(){
   try{ return localStorage.getItem('med.theme.v1') === 'light' ? 'light' : 'dark'; }catch(e){ return 'dark'; }
@@ -2167,6 +2227,14 @@ $('btnSnd').addEventListener('click', function(e){
       '<small>明るくすると、記録や「学ぶ」が昼間でも読みやすくなります。' +
       'キャラクターのまわりと瞑想中の画面は、そのまま夜の色です。</small></span>' +
       seg('segTheme', [['暗い','dark'],['明るい','light']], theme()) + '</div>' +
+    '<h4 class="sh4">出すもの</h4>' +
+    '<div class="sk-note">つかわないものは しまえます。' +
+      '<b>しまっても記録は消えません。</b>出し直せば、そのまま戻ります。</div>' +
+    SHOW_ITEMS.map(function(x){
+      return '<div class="srow"><span class="sk">' + x.n + '<small>' + x.d + '</small></span>' +
+        '<button class="tgl tglShow" data-k="' + x.k + '" aria-pressed="' + (show[x.k] ? 'true' : 'false') + '"><i></i></button></div>';
+    }).join('') +
+    '<h4 class="sh4">音</h4>' +
     '<div class="srow"><span class="sk">消音モードでも鳴らす' +
       '<small>' + (canLoud
         ? 'iPhone横のスイッチを消音にしていても、鐘と瞑想中の音が鳴ります。'
@@ -2184,6 +2252,13 @@ $('btnSnd').addEventListener('click', function(e){
   document.body.appendChild(sh);
   const close = initSheet(sh);
   sh.addEventListener('click', function(ev){
+    const sw = ev.target.closest('.tglShow');
+    if(sw){
+      const k = sw.dataset.k;
+      show[k] = !show[k]; saveShow(); applyShow();
+      sw.setAttribute('aria-pressed', show[k] ? 'true' : 'false');
+      return;
+    }
     const t = ev.target.closest('#tglLoud');
     if(t){
       snd.loud = !snd.loud; saveSnd(); applySession();
@@ -3869,20 +3944,23 @@ function endMic(btn, note){
 function openMemo(i){
   const r = log[i];
   if(!r) return;
+  if(!show.memo && !show.mood) return;      // 両方しまってあるなら、空のシートは出さない
   const s = document.createElement('div');
   s.className = 'sheet';
   s.innerHTML = '<div class="box">' +
     '<h3>この日の記録</h3>' +
     '<p>' + dateLabel(r.at) + ' ・ ' + r.min + '分 の記録</p>' +
-    '<div class="mp-q2">そのときの気分は？<span class="mp-clr">（もう一度押すと取り消し）</span></div>' +
-    '<div class="mp-row mp-in" data-mrow>' +
-      [1,2,3,4,5].map(function(k){ return '<button data-m="' + k + '"><i></i></button>'; }).join('') +
-    '</div>' +
-    '<div class="mp-lb"><span>もやもや</span><span>すっきり</span></div>' +
-    '<div class="mp-q2" style="margin-top:20px">ひとこと</div>' +
-    '<textarea class="memo-ta" rows="4" placeholder="感じたこと、気づいたこと"></textarea>' +
-    '<div class="mic-row"><button class="mic"><span class="ic">🎙</span><span class="lb">声で入れる</span></button>' +
-    '<span class="mic-note"></span></div>' +
+    '<div class="memo-mood">' +
+      '<div class="mp-q2">そのときの気分は？<span class="mp-clr">（もう一度押すと取り消し）</span></div>' +
+      '<div class="mp-row mp-in" data-mrow>' +
+        [1,2,3,4,5].map(function(k){ return '<button data-m="' + k + '"><i></i></button>'; }).join('') +
+      '</div>' +
+      '<div class="mp-lb"><span>もやもや</span><span>すっきり</span></div></div>' +
+    '<div class="memo-write">' +
+      '<div class="mp-q2" style="margin-top:20px">ひとこと</div>' +
+      '<textarea class="memo-ta" rows="4" placeholder="感じたこと、気づいたこと"></textarea>' +
+      '<div class="mic-row"><button class="mic"><span class="ic">🎙</span><span class="lb">声で入れる</span></button>' +
+      '<span class="mic-note"></span></div></div>' +
     '<div class="btns"><button class="no">やめる</button><button class="ok">保存する</button></div></div>';
   document.body.appendChild(s);
 
@@ -4308,7 +4386,7 @@ $('lvCard').addEventListener('click', function(){
     '<div class="how">レベルが1つ上がるごとに、<b style="color:var(--ink)">次に必要な経験値が60ずつ増えます</b>。</div>' +
     '<div class="ltab">' + levelRows(L.lv) + '</div>' +
     '<h4>称号</h4><div class="tlist">' + tl + '</div>' +
-    '<h4>しるし　' + got.length + ' / ' + BADGES.length + '</h4>' + soonTxt + '<div class="bgrid">' + bg + '</div>' +
+    '<h4 class="bh">しるし　' + got.length + ' / ' + BADGES.length + '</h4>' + soonTxt + '<div class="bgrid">' + bg + '</div>' +
     '<div class="btns" style="margin-top:20px"><button class="no">とじる</button></div></div>';
   document.body.appendChild(sh);
   const closeLv = initSheet(sh);
@@ -4716,6 +4794,7 @@ $('btnCheck').addEventListener('click', function(){ checkUpdate(true); });
 
 /* ───────── 起動 ───────── */
 $('verNum').textContent = VER;
+applyShow();                 // しまってあるものを、描く前に反映する
 renderPick();
 renderAmb();
 renderBgm();

@@ -177,8 +177,14 @@ body.tab-home:not(.bgm):not(.wc):not(.upd):not(.ambopen) .app{overflow-y:hidden}
 .ambtoggle[aria-expanded="true"] .cv{transform:rotate(180deg)}
 .ambwrap{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:10px;
   animation:fade .25s ease}
-.acfg{font-size:.72rem;color:var(--aqua);text-decoration:underline;
-  text-underline-offset:3px;padding:2px 0}
+/* 「音量も選べると嬉しい」という声があった。じつは最初からあるのに、
+   小さな下線の文字で見つけてもらえていなかったので、枠のある押せそうな形にした */
+.acfg{font-size:.76rem;color:var(--aqua);padding:5px 11px;border-radius:999px;
+  border:1px solid rgba(159,216,214,.3);background:rgba(159,216,214,.07);
+  display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.acfg::before{content:'';width:11px;height:11px;border-radius:50%;
+  border:1.5px solid currentColor;border-right-color:transparent;border-bottom-color:transparent;
+  transform:rotate(-45deg);opacity:.85}
 .srow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;
   border-bottom:1px solid var(--line)}
 .srow:last-of-type{border-bottom:none}
@@ -671,6 +677,35 @@ body.bgm .stage{gap:14px}
 @media (prefers-reduced-motion: reduce){
   .sky i,.orb .core{animation:none!important}
 }
+
+/* ───────── 押した手応え ─────────
+   アンケート「ボタンを押したことが少しわかりにくいので、アニメーションがあると視覚的に良い」。
+   このアプリは端末まかせのタップ色（tap-highlight）を消しているので、押しても何も起きない。
+   代わりに、押しているあいだだけ ほんの少し沈ませる。世界観をこわさない程度の小さな動き。
+   （ここは他のどの指定よりあとに書くこと。個々の transition に transform を足して回らずに済む） */
+.pick,.amb,.tab,.lrn,.gbtn,.qz-o,.qz-dk,.qtest,.go,.bgmlink,.acfg,.ambtoggle,
+.lvcard,.rank,.foot button,.seg button,.qlv button,.calhead button,
+.rd-foot button,.lrn-btns button,.sheet .btns button,.mp-row button,.dayrow{
+  transition-property:background,background-color,border-color,color,box-shadow,opacity,transform;
+  transition-duration:.22s;
+}
+.pick:active,.amb:active,.tab:active,.lrn:active,.gbtn:active,.qz-o:active,.qz-dk:active,
+.qtest:active,.go:active,.bgmlink:active,.acfg:active,.ambtoggle:active,
+.lvcard:active,.rank:active,.foot button:active,.seg button:active,.qlv button:active,
+.calhead button:active,.rd-foot button:active,.lrn-btns button:active,
+.sheet .btns button:active,.mp-row button:active,.dayrow:active{
+  transform:scale(.955);
+  transition-duration:.05s;
+}
+.pick:disabled:active,.go:disabled:active,.qtest:disabled:active,
+.lrn-btns button:disabled:active,.rd-foot button:disabled:active{transform:none}
+@media (prefers-reduced-motion: reduce){
+  .pick:active,.amb:active,.tab:active,.lrn:active,.gbtn:active,.qz-o:active,.qz-dk:active,
+  .qtest:active,.go:active,.bgmlink:active,.acfg:active,.ambtoggle:active,
+  .lvcard:active,.rank:active,.foot button:active,.seg button:active,.qlv button:active,
+  .calhead button:active,.rd-foot button:active,.lrn-btns button:active,
+  .sheet .btns button:active,.mp-row button:active,.dayrow:active{transform:none}
+}
 </style>
 </head>
 <body>
@@ -752,7 +787,7 @@ body.bgm .stage{gap:14px}
 
     <button class="start" id="btnStart">はじめる</button>
     <button class="bgmlink" id="btnBgm">音だけ流す（勉強のおともに）</button>
-    <div class="hint hidden" id="hint">はじめと終わりに鐘が鳴ります。音量をたしかめてください。</div>
+    <div class="hint hidden" id="hint">はじめと終わりに鐘が鳴ります。大きさは「音の設定」で変えられます。</div>
   </div>
 
   <!-- 記録タブ -->
@@ -1411,7 +1446,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 'use strict';
-const VER = 54;
+const VER = 55;
 const KEY = 'med.log.v1';
 const KEY_PICK = 'med.pick.v1';
 const $ = id => document.getElementById(id);
@@ -1440,8 +1475,9 @@ try{
   const j = JSON.parse(localStorage.getItem(KEY_SND) || 'null');
   if(j && typeof j === 'object'){
     if(typeof j.loud === 'boolean') snd.loud = j.loud;
-    if(typeof j.bell === 'number') snd.bell = j.bell;
-    if(typeof j.amb === 'number') snd.amb = j.amb;
+    // 「大」はリミッターを入れたぶん大きくした。前に「大」を選んでいた人は、そのまま新しい「大」へ
+    if(typeof j.bell === 'number') snd.bell = (j.bell === 1.6 ? 2.2 : j.bell);
+    if(typeof j.amb === 'number') snd.amb = (j.amb === 1.7 ? 2.4 : j.amb);
     if(typeof j.real === 'boolean') snd.real = j.real;
     if(j.ring === 1 || j.ring === 3) snd.ring = j.ring;
   }
@@ -1452,22 +1488,55 @@ function applySession(){
   try{ if(navigator.audioSession) navigator.audioSession.type = snd.loud ? 'playback' : 'ambient'; }catch(e){}
 }
 
+/* 音を出す用意。
+   iPhone は、ほかのアプリが音を出したり、電話・目ざましが入ったりすると音の土台を止める。
+   このとき state は 'suspended' ではなく 'interrupted' になるので、'suspended' だけを見ていると、
+   アプリを開いたまま2回目に始めたときに音が鳴らなくなる
+   （アンケート「連続で使用する時、時々音が鳴らない。一度閉じて開けば鳴る」）。
+   'running' でなければ必ず起こし、起きない状態のものは捨てて作り直す。
+   ensureAudio はすべて「押したとき」から呼ばれるので、作り直しても音は出せる。 */
+let master = null;
+function dropAudio(){
+  if(amb){ const a = amb; amb = null; if(a.tick) clearTimeout(a.tick); }
+  try{ if(ac && ac.state !== 'closed') ac.close(); }catch(e){}
+  ac = null; master = null; keepAlive = null; scheduled = []; revIR = null;
+  for(const k in recBuf) delete recBuf[k];   // 音のデータは古い土台のものなので、作り直す
+}
 function ensureAudio(){
+  if(ac && (ac.state === 'closed' || ac.state === 'interrupted')) dropAudio();
   if(!ac){
     const AC = window.AudioContext || window.webkitAudioContext;
     if(!AC) return null;
     ac = new AC();
+    master = null;
   }
-  if(ac.state === 'suspended') ac.resume();
+  if(ac.state !== 'running'){ try{ ac.resume(); }catch(e){} }
   applySession();
   return ac;
 }
+/* 音の出口。大きめにしても割れないよう、最後に軽く頭をおさえる */
+function dest(){
+  if(!ac) return null;
+  if(master) return master;
+  try{
+    const c = ac.createDynamicsCompressor();
+    c.threshold.value = -3; c.knee.value = 0; c.ratio.value = 20;
+    c.attack.value = 0.003; c.release.value = 0.25;
+    c.connect(ac.destination);
+    master = c;
+  }catch(e){ master = ac.destination; }
+  return master;
+}
+/* 保険。どこを押しても、止まっていたら起こしておく */
+document.addEventListener('pointerdown', function(){
+  if(ac && ac.state === 'suspended'){ try{ ac.resume(); }catch(e){} }
+}, true);
 function bell(delay, base, dur, vol){
   if(!ac) return;
   const t0 = ac.currentTime + delay;
   const out = ac.createGain();
   out.gain.value = vol * snd.bell;
-  out.connect(ac.destination);
+  out.connect(dest());
   const partials = [[1,1,1],[2.01,.42,.72],[2.77,.30,.52],[4.07,.16,.36],[5.42,.09,.26],[8.1,.05,.18]];
   partials.forEach(function(p){
     const o = ac.createOscillator();
@@ -1578,13 +1647,13 @@ function startRecAmb(){
   const extra = [];
   if(ac.createStereoPanner){                   // 合成音と同じ、ごくゆっくりの左右の揺れ
     const pan = ac.createStereoPanner();
-    out.connect(pan); pan.connect(ac.destination);
+    out.connect(pan); pan.connect(dest());
     const plfo = ac.createOscillator(); plfo.frequency.value = 1 / 27;
     const pg = ac.createGain(); pg.gain.value = 0.18;
     plfo.connect(pg); pg.connect(pan.pan); plfo.start();
     extra.push(plfo);
   }else{
-    out.connect(ac.destination);
+    out.connect(dest());
   }
   const comp = ac.createDynamicsCompressor();  // たき火のはぜる音などの飛び出しをおさえる
   comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 3;
@@ -1618,12 +1687,12 @@ function startAmb(){
 
   if(ac.createStereoPanner){            // 左右にごくゆっくり揺れると、包まれた感じになる
     const pan = ac.createStereoPanner();
-    out.connect(pan); pan.connect(ac.destination);
+    out.connect(pan); pan.connect(dest());
     const plfo = ac.createOscillator(); plfo.frequency.value = 1 / 27;
     const pg = ac.createGain(); pg.gain.value = 0.22;
     plfo.connect(pg); pg.connect(pan.pan); plfo.start();
   }else{
-    out.connect(ac.destination);
+    out.connect(dest());
   }
 
   const swell = ac.createGain();        // ゆっくりした強弱（13秒と19秒を重ねて規則的にしない）
@@ -1967,8 +2036,8 @@ $('btnSnd').addEventListener('click', function(e){
         : 'この端末では切りかえられません。鳴らないときは消音モードを解除してください。') + '</small></span>' +
       '<button class="tgl" id="tglLoud" aria-pressed="' + (snd.loud ? 'true' : 'false') + '"' +
       (canLoud ? '' : ' disabled style="opacity:.4"') + '><i></i></button></div>' +
-    '<div class="srow"><span class="sk">鐘の大きさ</span>' + seg('segBell', [['小',0.5],['中',1],['大',1.6]], snd.bell) + '</div>' +
-    '<div class="srow"><span class="sk">瞑想中の音の大きさ</span>' + seg('segAmb', [['小',0.5],['中',1],['大',1.7]], snd.amb) + '</div>' +
+    '<div class="srow"><span class="sk">鐘の大きさ</span>' + seg('segBell', [['小',0.5],['中',1],['大',2.2]], snd.bell) + '</div>' +
+    '<div class="srow"><span class="sk">瞑想中の音の大きさ</span>' + seg('segAmb', [['小',0.5],['中',1],['大',2.4]], snd.amb) + '</div>' +
     '<div class="srow"><span class="sk">瞑想中の音の種類<small>録音＝本物の自然音（雨・波・風・たき火・せせらぎ・虫の声）。合成＝アプリが作る音。風鈴とおりんはどちらでも合成です。</small></span>' +
       seg('segReal', [['録音',1],['合成',0]], snd.real ? 1 : 0) + '</div>' +
     '<div class="srow"><span class="sk">終わりの鐘<small>3回鳴らすか、1回だけにするか</small></span>' +
@@ -2317,7 +2386,8 @@ $('btnClose').addEventListener('click', function(){
 /* 画面に戻ってきたとき（裏に回っている間に終わっていたら締める） */
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
-  if(ac && ac.state === 'suspended' && sess && !sess.pausedAt) ac.resume();
+  if(ac && ac.state !== 'running' && !(sess && sess.pausedAt)){ try{ ac.resume(); }catch(e){} }
+  applySession();
   if(sess){ if(!sess.pausedAt) keepScreen(); update(); }
   if(!sess && Date.now() - lastCheck > 600000) checkUpdate(false);
 });
@@ -2832,6 +2902,30 @@ function whenText(id){
   return d <= 1 ? 'あす 復習' : 'あと' + d + '日';
 }
 
+/* 次の復習まで何日か。1日後・3日後…と間をあけていくので、
+   出ない日が続くのがふつう。だまっていると こわれたように見える。 */
+function nextDue(){
+  let t = 0;
+  LESSONS.forEach(function(L){
+    const st = learn[L.id];
+    if(!st || isMastered(L.id)) return;
+    if(!t || st.next < t) t = st.next;
+  });
+  return t;
+}
+function nextDueText(){
+  const t = nextDue();
+  if(!t) return '復習はまだありません';
+  const d = Math.ceil((t - Date.now()) / DAY);
+  return d <= 1 ? 'つぎの復習は あす' : 'つぎの復習は あと' + d + '日';
+}
+function nextDueDays(){
+  const t = nextDue();
+  if(!t) return '';
+  const d = Math.ceil((t - Date.now()) / DAY);
+  return '次の復習は' + (d <= 1 ? 'あす' : 'あと' + d + '日') + 'です。';
+}
+
 function renderLearn(){
   const due = dueList(), done = doneCount(), mst = masterCount();
   $('lrnAll').textContent = LESSONS.length;
@@ -2841,9 +2935,11 @@ function renderLearn(){
     ? '今日は ' + due.length + '本 の復習があります。問題に答えると、次に出る日が決まります。'
     : (done < LESSONS.length
         ? '瞑想について、研究で分かっていることを1つずつ読めます。1つ2〜3分。'
-        : (mst < LESSONS.length ? '新しく読むものはありません。復習の日を待ちましょう。'
+        : (mst < LESSONS.length ? '新しく読むものはありません。' + nextDueDays() + 'ちょうど忘れかけたころに出るようにしています。'
                                 : 'ぜんぶ身につきました。いつでも読み返せます。'));
-  $('btnReview').textContent = due.length ? '今日の復習（' + due.length + '問）' : '復習はありません';
+  // 復習が出ないのを「こわれた」と思われないよう、次にいつ出るかまで見せる
+  // （アンケート「学ぶの問題がしばらく表示されなかった。今はちゃんと使えてます」）
+  $('btnReview').textContent = due.length ? '今日の復習（' + due.length + '問）' : nextDueText();
   $('btnReview').disabled = due.length === 0;
   document.querySelectorAll('#qlv button[data-q]').forEach(function(b){
     b.setAttribute('aria-pressed', parseInt(b.dataset.q, 10) === qLv ? 'true' : 'false');

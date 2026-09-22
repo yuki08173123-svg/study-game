@@ -231,6 +231,13 @@ main{max-width:680px;margin:0 auto;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stage{background:#000}
 .vwrap{position:relative;width:100%;aspect-ratio:16/9;margin:0 auto;background:#000;overflow:hidden}
+/* 横向き（スマホ・タブレットを倒したとき）は、幅いっぱいのままだと 16:9 の高さが画面を超えて、
+   動画の下（スライドの文字）が切れる（生徒の指摘・2026-09-22）。画面に収まる幅まで縮める。
+   拡大モードは下の #pv.exp の指定が勝つので、そちらは変わらない。 */
+@media (orientation:landscape) and (max-height:600px){
+  .vwrap{width:min(100%, calc((100vh - 96px) * 16 / 9))}
+  .vwrap{width:min(100%, calc((100dvh - 96px) * 16 / 9))}
+}
 .vwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 /* Loom はプレーヤーを差し替えられないので、Loom自身の画面をそのまま使う。
    おすすめ動画に流されるつくりではないので、これで問題ない */
@@ -644,7 +651,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 61;
+const VER = 62;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal';
@@ -1509,6 +1516,10 @@ function vHome(){
     .sort((a,b) => (prog[b.id].last||0) - (prog[a.id].last||0))[0];
 
   const exp = totalExp(), L = levelOf(exp);
+  /* のべ回数は、くり返し見た人にだけ出す。1回ずつしか見ていない人には「見た動画」と
+     同じ数字が2つ並んで紛らわしい（生徒の指摘・2026-09-22）。
+     区分の一覧やレベル画面は、もともと tot > done のときだけ出している。それに合わせた。 */
+  const seenCnt = DATA.videos.filter(isDone).length, viewCnt = totalViews();
   /* いま集中したいこと。書いてあるときだけ、いちばん上に出す（Yuuydさんの提案・2026-09-13）
      チェックもカレンダーもなし。何のために見ているかが目に入るだけ */
   let h = focusText()
@@ -1525,8 +1536,8 @@ function vHome(){
       <div class="bar"><i style="width:${Math.round(L.cur / L.need * 100)}%"></i></div>
       <div class="exp"><span>つぎのレベルまで あと ${L.need - L.cur}</span><span>${exp}</span></div>
       <div class="st3">
-        <div><b>${DATA.videos.filter(isDone).length}</b><span>見た動画</span></div>
-        <div><b>${totalViews()}</b><span>のべ回数</span></div>
+        <div><b>${seenCnt}</b><span>見た動画</span></div>
+        ${viewCnt > seenCnt ? `<div><b>${viewCnt}</b><span>のべ回数</span></div>` : ''}
         <div><b>${totalOuts()}</b><span>アウトプット</span></div>
       </div>
       <div class="dt">${new Date().toLocaleDateString('ja-JP')} 時点 ・ 押すと上がり方がわかります</div>
@@ -1541,8 +1552,10 @@ function vHome(){
            ${tm >= gm ? `<span class="gok">達成</span>` : ''}</div>
          <div class="bar"><i style="width:${Math.min(100, gm ? Math.round(tm / gm * 100) : 0)}%"></i></div>
        </button>`
-    : `<button class="goal off" data-goal="1"><div class="gl">今日のゴール</div>
-         <div class="gv2">今日は何分見るか決める</div></button>`;
+    /* 決めていない人のホームには出さない（15人中12人が使っていないのに、
+       ホームの一等地を毎回ふさいでいた・アンケート 2026-09-22）。
+       入口は設定の「今日のゴール」に残してある。機能そのものは消さない。 */
+    : '';
 
   /* 今日までに見ると決めた動画。あとで見る予定を忘れないように、いちばん上に出す */
   const due = plannedList().filter(v => planDate(planOf(v.id)) <= todayStr());
@@ -2709,8 +2722,14 @@ function saveNow(){ saveDay();
    見終わったあとに「どんな話だったか」を思い出す練習。
    問題文はこちらでは作れないので、**ヒラさんが目次に書いた見出しをそのまま使う。**
    時間だけ先に見せて、思い出してから答え合わせ。押すとその場面へ飛べる。 */
+/* 目次には「はじめに」「休憩」「まとめ」など、話の中身を指していない見出しが混ざっている。
+   これを問いに出しても思い出す練習にならない（生徒の指摘・2026-09-22）。
+   中身のない見出しはふりかえりから外す。外して3つを切るときは、元のまま使う。 */
+const PLAIN_CHAP = /^(はじめに|はじめ|冒頭|スタート|オープニング|本編|本編開始|今回の内容|今回のテーマ|今回のお題|自己紹介|あいさつ|挨拶|休憩|質疑応答|質疑応答→最後に|ヒラのレビュー|アウトプット|まとめ|最後に|おわりに|終わりに|エンディング|告知)[。、，,・\s]*$/;
 function reviewItems(id, n){
-  const c = chapOf(id);
+  let c = chapOf(id);
+  const rich = c.filter(x => !PLAIN_CHAP.test(String(x[1] || '').trim()));
+  if(rich.length >= 3) c = rich;
   if(c.length <= n) return c.slice();
   const out = [], step = c.length / n;
   for(let i = 0; i < n; i++) out.push(c[Math.floor(i * step)]);
@@ -3256,10 +3275,36 @@ function drawCtrl(){
     if(d) try{ player.seekTo(d * seek.value / 1000, true); }catch(e){}
     seeking = false; showCtrl();
   };
-  seek.addEventListener('pointerdown', grab);
+  /* 拡大して回っている（.rot）ときは、標準のつまみが指の向きと合わず動かせない
+     （生徒の指摘・2026-09-22）。回っているあいだは、こちらで指の位置から割合を出す。
+     回すと、横長のバーが画面では縦になるので、見るのは clientY のほう。 */
+  const rotNow = () => $('#pv').classList.contains('rot');
+  const ratioAt = ev => {
+    const r = seek.getBoundingClientRect();
+    const v = rotNow() ? (ev.clientY - r.top) / r.height : (ev.clientX - r.left) / r.width;
+    return Math.max(0, Math.min(1, v));
+  };
+  const setAt = ev => {
+    const v = ratioAt(ev);
+    seek.value = Math.round(v * 1000);
+    seek.style.setProperty('--p', (v * 100) + '%');
+    move();
+  };
+  seek.addEventListener('pointerdown', ev => {
+    grab();
+    if(!rotNow()) return;
+    ev.preventDefault();
+    try{ seek.setPointerCapture(ev.pointerId); }catch(e){}
+    setAt(ev);
+  });
+  seek.addEventListener('pointermove', ev => {
+    if(!seeking || !rotNow()) return;
+    ev.preventDefault(); setAt(ev);
+  });
   seek.addEventListener('input', move);
   seek.addEventListener('change', drop);
   seek.addEventListener('pointerup', drop);
+  seek.addEventListener('pointercancel', drop);
   $('#pp').onclick  = togglePlay;
   $('#b10').onclick = () => jump(-10);
   $('#f10').onclick = () => jump(10);
@@ -3302,12 +3347,19 @@ function jump(sec){
   try{ player.seekTo(Math.max(0, (player.getCurrentTime()||0) + sec), true); }catch(e){}
   showCtrl();
 }
+/* 縦持ちのスマホだけ回す。拡大したあとに本体を倒されたら付け直す
+   （付けたままだと、回ったまま画面からはみ出す・生徒の指摘 2026-09-22） */
+const wantRot = () => innerHeight > innerWidth && innerWidth < 700;
+addEventListener('resize', () => {
+  const pv = $('#pv');
+  if(pv && pv.classList.contains('exp')) pv.classList.toggle('rot', wantRot());
+});
 function toggleExp(){
   const pv = $('#pv');
   const on = !pv.classList.contains('exp');
   pv.classList.toggle('exp', on);
   /* 縦持ちのスマホは横向きに回して大きく見せる */
-  pv.classList.toggle('rot', on && innerHeight > innerWidth && innerWidth < 700);
+  pv.classList.toggle('rot', on && wantRot());
   const eb = $('#exp'); if(eb) eb.innerHTML = on ? ICO.shr({s:19}) : ICO.exp({s:19});
   showCtrl();
 }

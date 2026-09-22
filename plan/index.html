@@ -81,6 +81,10 @@ header.app{position:sticky; top:0; z-index:30; background:var(--bg); padding:cal
 .update .t span{font-size:11px; opacity:.9; font-weight:700;}
 .update .go{background:rgba(255,255,255,.22); border-radius:999px; padding:7px 13px; font-size:13px; font-weight:900; flex:none;}
 .update.guard{background:#C24A3C;}
+.update.tidy{background:#3E5C8C;}
+.update.tidy .t span{opacity:.95; line-height:1.4; display:block; margin-top:2px;}
+.tc-score{cursor:pointer;}
+nav.tabs button.hidden{display:none;}
 .update.guard .t span{opacity:.95; line-height:1.4; display:block; margin-top:2px;}
 
 .card{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:14px;}
@@ -513,6 +517,12 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <span class="go">見る</span>
     </button>
 
+    <button class="update tidy hidden" id="btnTidy">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M7 7V5.5A1.5 1.5 0 0 1 8.5 4h7A1.5 1.5 0 0 1 17 5.5V7"/><path d="M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7"/></svg>
+      <span class="t"><b>画面をすっきりさせました</b><span>カウントダウンと記録は、つかう人だけ〔設定〕→「出すもの」で出せます。</span></span>
+      <span class="go">わかった</span>
+    </button>
+
     <div class="topcard" id="topCard">
       <button class="tc-goal hidden" id="tcGoal">
         <svg viewBox="0 0 24 24"><path d="M4.5 21V4M4.5 4.5h13l-2.4 3.8 2.4 3.7h-13"/></svg>
@@ -624,6 +634,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
   </section>
 
   <section id="tabHist" class="hidden">
+    <button class="close back hidden" id="histBack" style="margin-top:10px">‹ 今週にもどる</button>
     <div class="card" style="margin-top:10px; padding:0">
       <div class="sec-label" style="padding:13px 14px 0">TQCスコアの推移</div>
       <div class="chart" id="chart"></div>
@@ -647,6 +658,12 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <button class="subbtn" id="btnProfAdd" style="margin-top:4px">＋ 使う人をふやす</button>
       <button class="subbtn" id="btnProfDel">この人のデータを消す</button>
       <p class="note">人ごとに、やることも記録も別々に保存されます。名前を入れると、ここに出ます。</p>
+    </div>
+    <div class="field">
+      <div class="lab">出すもの</div>
+      <label class="chk"><input type="checkbox" id="swCd">カウントダウンを「今週」タブに出す</label>
+      <label class="chk"><input type="checkbox" id="swHist">「記録」を下のタブに出す</label>
+      <p class="note">つかわない機能は、しまっておけます。いつでもここから出せます。<br>記録をしまっても、「今週」タブの<b>TQCスコアのカードを押す</b>と見られます。</p>
     </div>
     <div class="field">
       <div class="lab">入力候補</div>
@@ -742,7 +759,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 54;
+const VER = 55;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1273,7 +1290,7 @@ function renderCd(){
   const over = !!S.tDone;
   const show = cdRunning() || cdPaused() || over;
   bar.classList.toggle('hidden', !show);
-  btn.classList.toggle('hidden', show);
+  btn.classList.toggle('hidden', show || !showOpt().cd);   // しまっているときは出さない
 
   if(show){
     let left = cdRunning() ? S.tEnd - Date.now() : (cdPaused() ? S.tLeft : 0);
@@ -1385,6 +1402,14 @@ $('#btnNotifPerm').onclick = async ()=>{
 };
 
 /* ---------- 1週間まとめの画像 ---------- */
+/* 未完了の色。過ぎた日は赤（やり残し）、今日とこれからの日は青（これから）。
+   そのままだと未完了が全部赤になって、いま急ぐものが分からないため。 */
+const C_LATE = '#E0574C', C_NEXT = '#2C6FE4';
+const C_LATE_BG = '#FBE4E1', C_NEXT_BG = '#E3EBFB';
+function isPastDay(d){ const t = new Date(); t.setHours(0,0,0,0); return d < t; }
+function todoCol(d){ return isPastDay(d) ? C_LATE : C_NEXT; }
+function todoBg(d){ return isPastDay(d) ? C_LATE_BG : C_NEXT_BG; }
+
 function drawWeek(light, keys, side){
   const W = 1080, PAD = 34, F = "'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif";
   const wk = (keys && keys.length ? keys.slice() : [S.cur]).sort();   // えらんだ週を、古い順に上から
@@ -1512,7 +1537,7 @@ function drawWeek(light, keys, side){
           if(light){ g.strokeStyle='#8A94A3'; g.lineWidth=2; rr(cx+2, ty-12, 14, 9, 3); g.stroke(); }
           else { g.fillStyle='#AEB9C8'; rr(cx+2, ty-12, 14, 9, 3); g.fill(); }
         }else{
-          const col = t.done ? ((t.star || t.nostar) ? DONE : HALF) : '#E0574C';
+          const col = t.done ? ((t.star || t.nostar) ? DONE : HALF) : todoCol(dd.date);
           g.beginPath(); g.arc(cx+9, ty-7, 7, 0, Math.PI*2);
           if(light){ g.strokeStyle=col; g.lineWidth=2.5; g.stroke(); }
           else { g.fillStyle=col; g.fill(); }
@@ -1537,7 +1562,7 @@ function drawWeek(light, keys, side){
   y = maxY;
 
   g.textAlign='center'; g.fillStyle=MUT; g.font='700 19px '+F;
-  g.fillText('赤＝これから　黄＝できた（★まだ）　緑＝極まった（★）', TW/2, y+34);
+  g.fillText('赤＝やり残し　青＝これから　黄＝できた（★まだ）　緑＝極まった（★）', TW/2, y+34);
   g.textAlign='right'; g.fillStyle='#AEB9C8'; g.font='700 16px '+F;
   g.fillText(stampText(), TW-PAD, y+34);
   return cv;
@@ -1646,7 +1671,7 @@ function openImageSheet(maker, title, prefix, hint, pick){
 }
 $('#btnWeekView').onclick = ()=>openImageSheet(drawWeek, '1週間のまとめ', '計画マップ', null, true);
 $('#btnTimeline').onclick = ()=>openImageSheet(drawTimeline, '時間わり（10分きざみ）', '計画マップ_時間わり',
-  '開始時こくを書いたやることが、時間の位置に出ます。緑＝できた、青＝これから。時こくが無いものは下に並びます。');
+  '開始時こくを書いたやることが、時間の位置に出ます。赤＝やり残し（過ぎた日）、青＝これから、黄＝できた（★まだ）、緑＝極まった。時こくが無いものは下に並びます。');
 
 /* ---------- 目標（長い計画） ---------- */
 function goalsOf(){ if(!Array.isArray(S.goals)) S.goals = []; return S.goals; }
@@ -1956,7 +1981,7 @@ function drawTimeline(light){
       const y = gy + (o.st-lo)/10*ROW, h = Math.max(ROW, (o.en-o.st)/10*ROW);
       const w = cw - (cols > 1 ? 2 : 0);
       const col = o.t.evt ? '#8A94A3'
-        : (o.t.done ? ((o.t.star || o.t.nostar) ? '#12A06A' : '#DFA125') : '#E0574C');
+        : (o.t.done ? ((o.t.star || o.t.nostar) ? '#12A06A' : '#DFA125') : todoCol(dd.date));
       if(light){
         g.fillStyle='#fff'; rr(x, y+1, w, h-2, 6); g.fill();
         g.strokeStyle=col; g.lineWidth=2; rr(x, y+1, w, h-2, 6); g.stroke();
@@ -1964,7 +1989,7 @@ function drawTimeline(light){
       else if(o.t.evt){ g.fillStyle='#E4E9F0'; rr(x, y+1, w, h-2, 6); g.fill(); g.strokeStyle='#B7C1CF'; g.lineWidth=1.5; rr(x, y+1, w, h-2, 6); g.stroke(); }
       else if(o.t.done && (o.t.star || o.t.nostar)){ g.fillStyle='rgba(18,160,106,.88)'; rr(x, y+1, w, h-2, 6); g.fill(); }
       else if(o.t.done){ g.fillStyle='rgba(223,161,37,.92)'; rr(x, y+1, w, h-2, 6); g.fill(); }
-      else { g.fillStyle='#FBE4E1'; rr(x, y+1, w, h-2, 6); g.fill(); g.strokeStyle='#E0574C'; g.lineWidth=1.5; rr(x, y+1, w, h-2, 6); g.stroke(); }
+      else { g.fillStyle=todoBg(dd.date); rr(x, y+1, w, h-2, 6); g.fill(); g.strokeStyle=col; g.lineWidth=1.5; rr(x, y+1, w, h-2, 6); g.stroke(); }
       const label = (o.t.star?'★':'') + o.t.text + (o.t.note?' → '+o.t.note:'');
       g.fillStyle = light ? INK : (o.t.evt ? '#69748A' : (o.t.done ? '#fff' : INK)); g.textAlign='left';
       if(h >= 40){                       // 2行（やること／時こく）
@@ -1994,18 +2019,18 @@ function drawTimeline(light){
     g.fillStyle=MUT; g.font='900 13px '+F; g.textAlign='right'; g.fillText('時こくなし', gx-10, y0+16);
     days.forEach((dd,i)=>{ const x = gx + i*colW + 3;
       dd.free.forEach((t,j)=>{ const y = y0 + j*24;
-        const c2 = t.evt ? '#8A94A3' : (t.done ? ((t.star || t.nostar) ? '#12A06A' : '#DFA125') : '#E0574C');
+        const c2 = t.evt ? '#8A94A3' : (t.done ? ((t.star || t.nostar) ? '#12A06A' : '#DFA125') : todoCol(dd.date));
         if(light){ g.fillStyle='#fff'; rr(x, y, colW-6, 21, 6); g.fill(); g.strokeStyle=c2; g.lineWidth=2; rr(x, y, colW-6, 21, 6); g.stroke(); }
         else if(t.evt){ g.fillStyle='#E4E9F0'; rr(x, y, colW-6, 21, 6); g.fill(); }
         else if(t.done && (t.star || t.nostar)){ g.fillStyle='rgba(18,160,106,.88)'; rr(x, y, colW-6, 21, 6); g.fill(); }
         else if(t.done){ g.fillStyle='rgba(223,161,37,.92)'; rr(x, y, colW-6, 21, 6); g.fill(); }
-        else { g.fillStyle='#FBE4E1'; rr(x, y, colW-6, 21, 6); g.fill(); }
+        else { g.fillStyle=todoBg(dd.date); rr(x, y, colW-6, 21, 6); g.fill(); }
         g.fillStyle = light ? INK : (t.evt ? '#69748A' : (t.done ? '#fff' : INK)); g.font='700 12px '+F; g.textAlign='left';
         g.fillText(clip((t.star?'★':'')+t.text+'（'+fmtHM(t.min)+'）', colW-14), x+6, y+15); });
     });
   }
   g.textAlign='center'; g.fillStyle=MUT; g.font='700 15px '+F;
-  g.fillText('1マス＝10分　赤＝これから　黄＝できた（★まだ）　緑＝極まった（★）　灰＝予定', W/2, H-18);
+  g.fillText('1マス＝10分　赤＝やり残し　青＝これから　黄＝できた（★まだ）　緑＝極まった（★）　灰＝予定', W/2, H-18);
   g.textAlign='right'; g.fillStyle='#AEB9C8'; g.font='700 14px '+F;
   g.fillText(stampText(), W-PAD, H-18);
   return cv;
@@ -2518,6 +2543,36 @@ $('#btnCopyPrev').onclick = ()=>{
   else toast(n+'件コピーしました'+(dup ? '（すでにあった'+dup+'件は入れていません）' : ''));
 };
 
+/* つかわない機能をしまう（消さずに、設定からいつでも出せる） */
+function showOpt(){ if(!S.show || typeof S.show !== 'object') S.show = { cd:false, hist:false }; return S.show; }
+function renderShow(){
+  const o = showOpt();
+  $('#btnCd').classList.toggle('hidden', !o.cd);
+  const hb = document.querySelector('nav.tabs button[data-tab="Hist"]');
+  hb.classList.toggle('hidden', !o.hist);
+  if(!o.hist && hb.classList.contains('on')) document.querySelector('nav.tabs button[data-tab="Plan"]').click();
+  $('#histBack').classList.toggle('hidden', !!o.hist);   // タブから消しているときだけ、戻る道を出す
+  if($('#swCd')) $('#swCd').checked = !!o.cd;
+  if($('#swHist')) $('#swHist').checked = !!o.hist;
+}
+$('#histBack').onclick = ()=>{ document.querySelector('nav.tabs button[data-tab="Plan"]').click(); window.scrollTo(0,0); };
+$('#swCd').onchange = ()=>{ showOpt().cd = $('#swCd').checked; save(); renderShow(); };
+$('#swHist').onchange = ()=>{ showOpt().hist = $('#swHist').checked; save(); renderShow(); };
+/* 記録をしまっていても、今週タブのTQCスコアを押せば見られる */
+$('.tc-score').onclick = ()=>{ openHist(); };
+function openHist(){
+  const hb = document.querySelector('nav.tabs button[data-tab="Hist"]');
+  hb.click(); window.scrollTo(0,0);
+}
+function tidyNote(){
+  let seen = 0; try{ seen = Number(localStorage.getItem('planmap_tidy')||0); }catch(e){}
+  $('#btnTidy').classList.toggle('hidden', !!seen || !hasData());   // 前を知らない人には出さない
+}
+$('#btnTidy').onclick = ()=>{
+  try{ localStorage.setItem('planmap_tidy', String(Date.now())); }catch(e){}
+  $('#btnTidy').classList.add('hidden');
+};
+
 document.querySelectorAll('nav.tabs button').forEach(b=>{
   b.onclick = ()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('on', x===b));
@@ -2776,6 +2831,7 @@ const SLIDES = [
   </div>
 </div>
 <p>日曜の決めた時間になると、上に<b>オレンジのお知らせ</b>が出ます。<br>
+カウントダウンは、はじめは<b>しまってあります</b>。つかうときは <b>設定 →「出すもの」</b>でオンにしてください。<br>
 「スタート」を押すと<b>のこり時間</b>が画面の上に出るので、それを見ながら書き切りましょう。時間になると音が鳴ります。<br>
 時間や、日曜のお知らせは<b>設定</b>で変えられます。<br>
 設定から、<b>Googleカレンダー</b>／<b>iPhoneのカレンダー</b>に毎週の予定を入れられます。</p>`
@@ -2858,7 +2914,7 @@ function boot(){
   renderProfs();
   $('#setLimit').value = S.limitMin;
   $('#verTag').textContent = 'v'+VER; $('#verTag2').textContent = 'v'+VER;
-  bkNote(); guardNote(); askPersist(); renderSync();
+  bkNote(); guardNote(); tidyNote(); renderShow(); askPersist(); renderSync();
   syncRep(); renderAll(); renderCd();
   // 再読みこみでカウントダウンが続いているときは、最初のタップで音を使えるようにする
   if(cdRunning()) document.addEventListener('pointerdown', ()=>audioUnlock(), { once:true });

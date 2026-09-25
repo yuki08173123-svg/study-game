@@ -244,6 +244,25 @@ nav.tabs button.on{color:var(--ai)}
 .lvup{text-align:center;padding:10px 0}
 .lvup .big{font-family:var(--mincho);font-weight:900;font-size:54px;color:var(--gold);line-height:1.2}
 
+/* 覚える時間のタイマー（画面のいちばん上） */
+#stBar{position:fixed;left:0;right:0;top:0;z-index:70;background:#1F2A4D;color:#fff;display:flex;align-items:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 12px 8px 16px;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+#stBar.low{background:var(--shu)}
+#stBar .sb-l{flex:1;display:flex;align-items:baseline;gap:10px;color:#fff;text-align:left;min-width:0}
+#stBar .sb-l small{font-size:12px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#stBar .sb-t{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em;order:-1}
+#stBar.paused .sb-t{opacity:.55}
+#stBar .sb-b{flex:none;background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700}
+#stBar .sb-p{position:absolute;left:0;bottom:0;height:3px;background:#E3C27A;width:0}
+body.timing{padding-top:var(--sbh,52px)}
+body.timing header{top:var(--sbh,52px);padding-top:10px}
+body.timing .ov{top:var(--sbh,52px);padding-top:8px}
+.quick{display:flex;gap:6px;margin-top:10px;position:relative;z-index:1}
+.quick button{flex:1;color:#fff;font-size:13px;padding:7px 4px;border-radius:10px;border:1px solid rgba(255,255,255,.3)}
+.minin{width:84px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:#fff;text-align:center;font-weight:700}
+/* 一覧で覚える */
+.lhead{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.lrow .mn.hide{color:transparent;background:var(--chip);border-radius:6px;min-width:110px}
+.set select{appearance:none;-webkit-appearance:none}
 .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;z-index:99;max-width:90vw;text-align:center}
 
 /* 印刷用カード */
@@ -300,7 +319,7 @@ nav.tabs button.on{color:var(--ai)}
 <script src="words.js"></script>
 <script>
 'use strict';
-const VER = 1;
+const VER = 2;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -328,11 +347,13 @@ function clock(t){ t = Math.floor(t); return Math.floor(t/60) + ':' + String(t%6
 
 /* ===================== 保存 ===================== */
 let S;
-function blank(){ return { v:1, start: today(), cfg:{ dir:'w2m', voice:true, rate:1 }, w:{}, days:{}, tests:[], lv:1 }; }
+function blank(){ return { v:1, start: today(), cfg:{ dir:'w2m', voice:true, rate:1.05, pitch:1.15, voiceName:'', studyMin:10 }, w:{}, days:{}, tests:[], study:[], timer:null, lv:1 }; }
 function load(){
   try{ S = JSON.parse(localStorage.getItem(KEY)) || blank(); }catch(e){ S = blank(); }
   const b = blank();
   S.cfg = { ...b.cfg, ...(S.cfg||{}) };
+  if(S.cfg.rate === 1) S.cfg.rate = 1.05; if(S.cfg.rate === .85) S.cfg.rate = .9;   // v1 の値から
+  S.study = S.study || []; S.timer = S.timer || null;
   S.w = S.w || {}; S.days = S.days || {}; S.tests = S.tests || []; S.start = S.start || b.start; S.lv = S.lv || 1;
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -395,17 +416,17 @@ function renderToday(){
   }else{
     const p = plan(n), lag = lagOf(n);
     const doneToday = lag < 0;   // 今日の分はもう終わっていて、次の日を表示している
-    const cardDone = S.cardDone === n;
+    const studied = S.study.some(x => x.n === n);
     hero = `<div class="hero">
       <div class="lap">第${p.lap}周 ／ 全${LAPS}周　・　${n+1}日目 / ${TOTAL}日</div>
       <div class="big">${doneToday ? '次は ' : ''}Day ${p.d}</div>
       <div class="range">No.${p.from+1} 〜 ${p.to}（${p.to - p.from}語）　予定日 ${md(p.date)}(${wd(p.date)})</div>
       <span class="st ${st.late ? 'late' : ''}">${st.t}</span>
       <div class="steps">
-        <button class="step ${cardDone ? 'done' : ''}" id="stCards"><span class="n">${cardDone ? '✓' : '1'}</span><span class="t">単語カードで覚える<small>${p.to - p.from}枚。「覚えた」になるまでくり返す</small></span></button>
-        <button class="step" id="stLessons"><span class="n">2</span><span class="t">1分解説を見る<small>覚えにくい単語だけでOK（スライド＋読み上げ）</small></span></button>
-        <button class="step main" id="stTest"><span class="n">3</span><span class="t">テスト ${p.to - p.from}問<small>時間と正答率は自動で記録されます</small></span></button>
-      </div></div>`;
+        <button class="step ${studied ? 'done' : ''}" id="stStudy"><span class="n">${studied ? '✓' : '1'}</span><span class="t">覚える時間　⏱ ${S.timer ? 'のこり時間は上に' : S.cfg.studyMin + '分'}<small>時間を自分で決めて、単語カード・一覧・1分解説で覚える</small></span></button>
+        <button class="step main" id="stTest"><span class="n">2</span><span class="t">テスト ${p.to - p.from}問<small>時間と正答率は自動で記録されます</small></span></button>
+      </div>
+      <div class="quick"><button id="stCards">単語カードだけ</button><button id="stList">一覧だけ</button><button id="stLessons">1分解説だけ</button></div></div>`;
   }
   const due = dueList();
   const remind = `<div class="card remind"><div class="num">${due.length}<small>語</small></div>
@@ -414,7 +435,9 @@ function renderToday(){
   el.innerHTML = hero + remind + `<h2>2か月の計画（1日50語 × 7日 × 8周）</h2><div class="card">${gridHTML()}</div>`;
   if(n < TOTAL){
     const p = plan(n);
-    $('#stCards').onclick = () => openCards(p.ids, `第${p.lap}周 Day${p.d} の単語カード`, () => { S.cardDone = n; save(); renderToday(); }, () => startDayTest(n));
+    $('#stStudy').onclick = () => openStudy(n);
+    $('#stCards').onclick = () => openCards(p.ids, `第${p.lap}周 Day${p.d} の単語カード`, null, () => startDayTest(n));
+    $('#stList').onclick = () => openList(p.ids, `第${p.lap}周 Day${p.d} の一覧`);
     $('#stLessons').onclick = () => openLessonPicker(p.ids, `Day${p.d} の1分解説`);
     $('#stTest').onclick = () => startDayTest(n);
   }
@@ -552,7 +575,24 @@ function yomi(s){
 }
 let L = null;
 function stopSpeech(){ try{ speechSynthesis.cancel(); }catch(e){} }
-function jaVoice(){ try{ const vs = speechSynthesis.getVoices(); return vs.find(v => /ja[-_]JP/i.test(v.lang) && /Kyoko|O-ren|Otoya|Google/i.test(v.name)) || vs.find(v => /^ja/i.test(v.lang)); }catch(e){ return null; } }
+/* 声：女性の声を優先し、高品質（拡張・プレミアム）の声があればそちらを使う。
+   端末に入っている声しか使えないので、設定から選び直せるようにしてある。 */
+const V_FEMALE = /Kyoko|O-?ren|Nanami|Ayumi|Haruka|Mizuki|Sayaka|Nana|Aoi|Shiori|Google 日本語|Google Japanese|女性|Female/i;
+const V_MALE = /Otoya|Hattori|Ichiro|Keita|Daichi|Naoki|Takumi|Kenji|男性|Male/i;
+const V_HQ = /Enhanced|Premium|拡張|高品質|プレミアム|Natural|Neural|Online/i;
+function jaVoices(){ try{ return speechSynthesis.getVoices().filter(v => /^ja/i.test(v.lang)); }catch(e){ return []; } }
+function voiceScore(v){ return (V_FEMALE.test(v.name) ? 10 : 0) - (V_MALE.test(v.name) ? 30 : 0) + (V_HQ.test(v.name) ? 6 : 0) + (/O-?ren/i.test(v.name) ? 2 : 0) + (/Kyoko/i.test(v.name) ? 1 : 0); }
+function jaVoice(){
+  const vs = jaVoices();
+  if(S.cfg.voiceName){ const v = vs.find(x => x.name === S.cfg.voiceName); if(v) return v; }
+  return vs.slice().sort((a,b) => voiceScore(b) - voiceScore(a))[0] || null;
+}
+function voiceLabel(v){ return v.name + (V_FEMALE.test(v.name) ? '・女性' : V_MALE.test(v.name) ? '・男性' : '') + (V_HQ.test(v.name) ? '・高品質' : ''); }
+function sayUtter(text){
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ja-JP'; u.rate = S.cfg.rate; u.pitch = S.cfg.pitch; const v = jaVoice(); if(v) u.voice = v;
+  return u;
+}
 function openLessonPicker(ids, title){
   const bg = sheet(`<h2>${esc(title)}</h2><p class="dim">見たい単語を押してください。1語ずつ続けて見ることもできます。</p>
     <button class="btn" data-a="all">最初から順に見る</button>
@@ -575,6 +615,7 @@ function drawLesson(){
         <div class="lbar"><div class="pbar"><i style="width:0%"></i></div><span class="lt">0:00 / 1:00</span></div></div>
       <div class="cap">${lessonParts(i).slice(0, 4).map(p => `<div>${p.show}</div>`).join('')}</div>
       <div class="nav"><button class="btn sub" data-a="prev" ${L.k ? '' : 'disabled style="opacity:.4"'}>‹ 前</button><button class="btn sub" data-a="next" ${L.k < L.ids.length-1 ? '' : 'disabled style="opacity:.4"'}>次 ›</button></div>
+      ${(() => { const v = jaVoice(); return v && !V_HQ.test(v.name) ? '<p class="dim" style="margin-top:12px">声をもっと自然にしたいときは「設定 → 1分解説の声」を見てください。</p>' : ''; })()}
       <p class="dim" style="margin-top:12px">スライド画像（ChatGPT で作った1枚）を <b>slides/${pad3(i+1)}.png</b> に置くと、この組版のかわりにその画像が出ます。読み上げは画像のときも同じです。</p>
     </div>`;
   setPlayIcon();
@@ -614,8 +655,7 @@ function lessonPlay(){
     if(k >= parts.length){ lessonStop(true); return; }
     const p = parts[k++]; mark(p.sec); const cap = $('.ov .cap'); if(cap) cap.innerHTML = p.show;
     if(hasTTS){
-      const u = new SpeechSynthesisUtterance(p.text);
-      u.lang = 'ja-JP'; u.rate = S.cfg.rate; const v = jaVoice(); if(v) u.voice = v;
+      const u = sayUtter(p.text);
       u.onend = () => setTimeout(nextPart, 350);
       u.onerror = () => setTimeout(nextPart, 350);
       speechSynthesis.speak(u);
@@ -696,6 +736,7 @@ function startRemind(){
   startTest({ ids, type:'remind', label:'リマインド' });
 }
 function startTest(o){
+  if(S.timer) endStudy(true);
   closeOv();
   const dir = S.cfg.dir === 'mix' ? null : S.cfg.dir;
   T = { ...o, order: shuffle(o.ids), k:0, ok:0, wrong:[], t0: Date.now(), dir, answered:false, timer:null, lv0: levelOf(masteredCount()) };
@@ -773,7 +814,8 @@ function finishTest(){
   save();
   const lv1 = levelOf(masteredCount()), up = lv1 > T.lv0;
   if(lv1 > S.lv){ S.lv = lv1; save(); }
-  const report = `【古文単語】${T.label} テスト ${n}問　正答率 ${Math.round(rate*100)}%（${T.ok}/${n}）　時間 ${fmtSec(secs)}`;
+  const stSec = T.type === 'day' ? S.study.filter(x => x.n === T.plan && x.d === today()).reduce((a,x) => a + x.secs, 0) : 0;
+  const report = `【古文単語】${T.label}${stSec ? `　覚える時間 ${fmtSec(stSec)}` : ''}　テスト ${n}問　正答率 ${Math.round(rate*100)}%（${T.ok}/${n}）　時間 ${fmtSec(secs)}`;
   const ov = $('.ov'), wrong = [...new Set(T.wrong)], keep = T;
   ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">${esc(T.label)}　結果</div></div>
     <div class="ovbody"><div class="res">
@@ -845,23 +887,24 @@ function renderLog(){
   const el = $('#tab-log'), ts = S.tests;
   const q = ts.reduce((a,t) => a + t.n, 0), ok = ts.reduce((a,t) => a + t.ok, 0), sec = ts.reduce((a,t) => a + t.secs, 0);
   const doneDays = Object.keys(S.days).length;
+  const rows = [...ts, ...S.study.map(x => ({ ...x, type:'study' }))].sort((a,b) => a.at < b.at ? 1 : -1);
   el.innerHTML = `<div class="stats">
       <div class="stat"><b>${doneDays}<small style="font-size:13px">/${TOTAL}</small></b><span>進んだ日数</span></div>
       <div class="stat"><b>${q ? Math.round(ok/q*100) : 0}<small style="font-size:13px">%</small></b><span>全体の正答率</span></div>
-      <div class="stat"><b>${Math.round(sec/60)}<small style="font-size:13px">分</small></b><span>合計時間</span></div>
+      <div class="stat"><b>${Math.round(S.study.reduce((a,x) => a + x.secs, 0)/60)}<small style="font-size:13px">分</small></b><span>覚えた時間</span></div>
       <div class="stat"><b>${masteredCount()}</b><span>定着した語</span></div>
       <div class="stat"><b>${dueList().length}</b><span>リマインド</span></div>
-      <div class="stat"><b>${ts.length}</b><span>テスト回数</span></div></div>
+      <div class="stat"><b>${Math.round(sec/60)}<small style="font-size:13px">分</small></b><span>テスト時間</span></div></div>
     <h2>8周の進み具合</h2><div class="card">${gridHTML()}</div>
-    <h2>テストの記録（自動）</h2>
-    <div class="card" style="padding:8px 12px">${ts.length ? `<table class="log"><tr><th>日付</th><th>内容</th><th style="text-align:right">正答率</th><th style="text-align:right">時間</th></tr>
-      ${ts.slice().reverse().slice(0, 200).map(t => { const r = t.ok/t.n; return `<tr><td>${md(t.d)}<br><span class="dim">${new Date(t.at).toTimeString().slice(0,5)}</span></td><td>${esc(t.label)}<br><span class="dim">${t.n}問・${TYPE[t.type]||''}</span></td><td class="r"><span class="rate ${r>=.9?'hi':r<.7?'lo':''}">${Math.round(r*100)}%</span><br><span class="dim">${t.ok}/${t.n}</span></td><td class="r">${fmtSec(t.secs)}<br><span class="dim">${(t.secs/t.n).toFixed(1)}秒/問</span></td></tr>`; }).join('')}</table>` : '<p class="dim">まだテストの記録はありません。テストを解くと、日付・問題数・正答率・時間が自動でここに入ります。</p>'}</div>
-    ${ts.length ? '<button class="btn line" id="logCopy">今日の記録を報告用にコピー</button>' : ''}`;
+    <h2>覚える時間・テストの記録（自動）</h2>
+    <div class="card" style="padding:8px 12px">${rows.length ? `<table class="log"><tr><th>日付</th><th>内容</th><th style="text-align:right">正答率</th><th style="text-align:right">時間</th></tr>
+      ${rows.slice(0, 250).map(t => { if(t.type === 'study') return `<tr><td>${md(t.d)}<br><span class="dim">${new Date(t.at).toTimeString().slice(0,5)}</span></td><td>覚える時間<br><span class="dim">${esc(t.label)}</span></td><td class="r dim">—</td><td class="r"><b>${fmtSec(t.secs)}</b></td></tr>`; const r = t.ok/t.n; return `<tr><td>${md(t.d)}<br><span class="dim">${new Date(t.at).toTimeString().slice(0,5)}</span></td><td>${esc(t.label)}<br><span class="dim">${t.n}問・${TYPE[t.type]||''}</span></td><td class="r"><span class="rate ${r>=.9?'hi':r<.7?'lo':''}">${Math.round(r*100)}%</span><br><span class="dim">${t.ok}/${t.n}</span></td><td class="r">${fmtSec(t.secs)}<br><span class="dim">${(t.secs/t.n).toFixed(1)}秒/問</span></td></tr>`; }).join('')}</table>` : '<p class="dim">まだテストの記録はありません。テストを解くと、日付・問題数・正答率・時間が自動でここに入ります。</p>'}</div>
+    ${rows.length ? '<button class="btn line" id="logCopy">今日の記録を報告用にコピー</button>' : ''}`;
   bindGrid(el);
   if($('#logCopy')) $('#logCopy').onclick = () => {
-    const t = today(), list = ts.filter(x => x.d === t);
-    if(!list.length){ toast('今日のテストはまだありません'); return; }
-    copyText('【古文単語 ' + md(t) + '】\n' + list.map(x => `・${x.label} ${x.n}問　${Math.round(x.ok/x.n*100)}%（${x.ok}/${x.n}）　${fmtSec(x.secs)}`).join('\n') + `\n定着 ${masteredCount()}/${N}語　Lv.${levelOf(masteredCount())}`, 'コピーしました');
+    const t = today(), list = ts.filter(x => x.d === t), sts = S.study.filter(x => x.d === t);
+    if(!list.length && !sts.length){ toast('今日の記録はまだありません'); return; }
+    copyText('【古文単語 ' + md(t) + '】\n' + (sts.length ? `・覚える時間 ${fmtSec(sts.reduce((a,x) => a + x.secs, 0))}\n` : '') + list.map(x => `・${x.label} ${x.n}問　${Math.round(x.ok/x.n*100)}%（${x.ok}/${x.n}）　${fmtSec(x.secs)}`).join('\n') + `\n定着 ${masteredCount()}/${N}語　Lv.${levelOf(masteredCount())}`, 'コピーしました');
   };
 }
 
@@ -871,10 +914,16 @@ function renderSet(){
   el.innerHTML = `<div class="card set">
       <label>開始日</label><input type="date" id="sStart" value="${S.start}">
       <p class="dim" style="margin:6px 0 0">1日50語 × 7日 = 1周。8周で <b>${TOTAL}日</b>（約2か月）。この日から始めると、完走予定は <b>${md(end)}(${wd(end)})</b> です。</p></div>
-    <div class="card set"><label>1分解説の読み上げ</label>
+    <div class="card set"><label>1分解説の声</label>
       <div class="seg" id="sVoice"><button class="${S.cfg.voice?'on':''}" data-v="1">読み上げる</button><button class="${!S.cfg.voice?'on':''}" data-v="0">読み上げない</button></div>
+      <label style="margin-top:12px">声の種類</label>
+      <select id="sVoiceName"><option value="">おまかせ（女性の声を優先）</option>${jaVoices().slice().sort((a,b) => voiceScore(b) - voiceScore(a)).map(v => `<option value="${esc(v.name)}" ${S.cfg.voiceName === v.name ? 'selected' : ''}>${esc(voiceLabel(v))}</option>`).join('')}</select>
+      <label style="margin-top:12px">声の明るさ</label>
+      <div class="seg" id="sPitch">${[[1,'ふつう'],[1.15,'明るめ'],[1.3,'もっと明るく']].map(([r,t]) => `<button class="${S.cfg.pitch===r?'on':''}" data-r="${r}">${t}</button>`).join('')}</div>
       <label style="margin-top:12px">読む速さ</label>
-      <div class="seg" id="sRate">${[[.85,'ゆっくり'],[1,'ふつう'],[1.2,'はやめ']].map(([r,t]) => `<button class="${S.cfg.rate===r?'on':''}" data-r="${r}">${t}</button>`).join('')}</div></div>
+      <div class="seg" id="sRate">${[[.9,'ゆっくり'],[1.05,'ふつう'],[1.2,'ハキハキ']].map(([r,t]) => `<button class="${S.cfg.rate===r?'on':''}" data-r="${r}">${t}</button>`).join('')}</div>
+      <button class="btn line" id="sTry" style="margin-top:12px">▶ 試しに聞く</button>
+      <div class="note" style="margin-top:12px"><b>もっと自然な声にするには（iPhone）</b><br>iPhone の「設定」→「アクセシビリティ」→「読み上げコンテンツ」→「声」→「日本語」→ <b>Kyoko</b> か <b>O-ren</b> を選び、<b>「拡張」または「プレミアム」</b>をダウンロードします。そのあとこのアプリを開き直し、上の「声の種類」で「高品質」と付いた声を選んでください。</div></div>
     <div class="card"><h3>データの控え</h3><p class="dim">機種変更のときなどに。テストの記録と単語ごとの状態を1つのファイルにします。</p>
       <div class="row"><button class="btn sub" id="sExp">控えを作る</button><button class="btn sub" id="sImp">控えを読みこむ</button></div>
       <input type="file" id="sFile" accept=".json,application/json" class="hidden"></div>
@@ -885,6 +934,9 @@ function renderSet(){
   $('#sStart').onchange = e => { if(e.target.value){ S.start = e.target.value; save(); renderAll(); renderSet(); toast('開始日を変えました'); } };
   $$('#sVoice button').forEach(b => b.onclick = () => { S.cfg.voice = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sRate button').forEach(b => b.onclick = () => { S.cfg.rate = +b.dataset.r; save(); renderSet(); });
+  $$('#sPitch button').forEach(b => b.onclick = () => { S.cfg.pitch = +b.dataset.r; save(); renderSet(); });
+  $('#sVoiceName').onchange = e => { S.cfg.voiceName = e.target.value; save(); };
+  $('#sTry').onclick = () => { if(!('speechSynthesis' in window)){ toast('この端末では読み上げが使えません'); return; } stopSpeech(); speechSynthesis.speak(sayUtter('あはれなり。いちばん大事な意味は、しみじみと趣深い。今日も50語、がんばりましょう！')); };
   $('#sExp').onclick = () => {
     const blob = new Blob([JSON.stringify({ app:'kobun350', ...S })], { type:'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'kobun350-' + today() + '.json'; a.click();
@@ -899,6 +951,158 @@ function renderSet(){
   $('#btnUpdate').onclick = doUpdate;
   $('#btnCheckUpd').onclick = () => checkUpdate(false);
   if(newVer > VER){ $('#btnUpdate').classList.remove('hidden'); $('#updVer').textContent = 'v' + VER + ' → v' + newVer; }
+}
+
+/* ===================== 覚える時間（自分で決めたタイマー。のこり時間は画面の上） ===================== */
+let tick = null, AC = null;
+function openStudy(n){
+  if(S.timer){ openTimerMenu(); return; }
+  const p = plan(n);
+  let min = S.cfg.studyMin;
+  const bg = sheet(`<h2>覚える時間</h2>
+    <p class="dim">第${p.lap}周 Day${p.d}（No.${p.from+1}〜${p.to}）を、時間を決めて覚えます。のこり時間は画面のいちばん上に出ます。</p>
+    <h3>時間</h3>
+    <div class="chips" id="smin">${[3,5,10,15,20,30].map(m => `<button class="chipb" data-m="${m}">${m}分</button>`).join('')}</div>
+    <div style="display:flex;align-items:center;gap:8px"><span class="dim">自分で決める</span><input type="number" class="minin" id="sminIn" min="1" max="180" inputmode="numeric"><span>分</span></div>
+    <h3>何で覚える？（あとから切りかえられます）</h3>
+    <button class="btn" data-go="cards">⏱ 単語カードで覚える</button>
+    <button class="btn sub" data-go="list">⏱ 一覧で覚える（意味をかくせる）</button>
+    <button class="btn sub" data-go="lesson">⏱ 1分解説で覚える</button>`);
+  const paint = keepInput => {
+    bg.querySelectorAll('#smin button').forEach(b => b.classList.toggle('on', +b.dataset.m === min));
+    if(!keepInput) bg.querySelector('#sminIn').value = min;
+  };
+  bg.querySelectorAll('#smin button').forEach(b => b.onclick = () => { min = +b.dataset.m; paint(); });
+  bg.querySelector('#sminIn').oninput = e => { const v = Math.round(+e.target.value); if(v >= 1 && v <= 180){ min = v; paint(true); } };
+  bg.querySelectorAll('[data-go]').forEach(b => b.onclick = () => {
+    S.cfg.studyMin = min; save(); bg.remove();
+    startTimer(n, min); goStudy(b.dataset.go, n);
+  });
+  paint();
+}
+function goStudy(kind, n){
+  const p = plan(n);
+  if(kind === 'cards') openCards(p.ids, `Day${p.d} の単語カード`, null, () => startDayTest(n));
+  else if(kind === 'list') openList(p.ids, `Day${p.d} の一覧`);
+  else openLessonPicker(p.ids, `Day${p.d} の1分解説`);
+}
+function openTimerMenu(){
+  const t = S.timer; if(!t) return;
+  const bg = sheet(`<h2>覚える時間　のこり ${clock(Math.ceil(leftSec()))}</h2>
+    ${t.n != null ? `<button class="btn" data-go="cards">単語カードで覚える</button><button class="btn sub" data-go="list">一覧で覚える</button><button class="btn sub" data-go="lesson">1分解説で覚える</button>` : ''}
+    <div class="row" style="margin-top:12px"><button class="btn sub" data-a="plus">＋3分</button><button class="btn shu" data-a="end">ここで終わる</button></div>
+    ${t.n != null ? '<button class="btn line" data-a="test" style="margin-top:8px">終わってテストへ</button>' : ''}`);
+  bg.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { bg.remove(); goStudy(b.dataset.go, t.n); });
+  bg.querySelector('[data-a=plus]').onclick = () => { addTime(180); bg.remove(); toast('3分ふやしました'); };
+  bg.querySelector('[data-a=end]').onclick = () => { bg.remove(); endStudy(); };
+  if(bg.querySelector('[data-a=test]')) bg.querySelector('[data-a=test]').onclick = () => { bg.remove(); const n = t.n; startDayTest(n); };
+}
+function unlockAudio(){
+  try{
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)(); AC.resume();
+    const o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + .05);
+  }catch(e){}
+}
+function chime(){
+  try{
+    if(AC){
+      AC.resume();
+      [784, 988, 1319].forEach((f, k) => {
+        const d = AC.currentTime + k * .22, o = AC.createOscillator(), g = AC.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0, d); g.gain.linearRampToValueAtTime(.3, d + .02); g.gain.exponentialRampToValueAtTime(.001, d + .7);
+        o.connect(g); g.connect(AC.destination); o.start(d); o.stop(d + .75);
+      });
+    }
+    if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  }catch(e){}
+}
+function startTimer(n, min){
+  unlockAudio();
+  S.timer = { n, total: min * 60, end: Date.now() + min * 60000, left: null };
+  save(); showBar(); renderAll();
+}
+function leftSec(){ const t = S.timer; if(!t) return 0; return t.left != null ? t.left : Math.max(0, (t.end - Date.now()) / 1000); }
+function addTime(sec){ const t = S.timer; if(!t) return; t.total += sec; if(t.left != null) t.left += sec; else t.end += sec * 1000; save(); updBar(); }
+function showBar(){
+  let b = $('#stBar');
+  clearInterval(tick);
+  if(!S.timer){ if(b) b.remove(); document.body.classList.remove('timing'); return; }
+  if(!b){
+    b = document.createElement('div'); b.id = 'stBar';
+    b.innerHTML = `<button class="sb-l" data-a="menu"><span class="sb-t"></span><small></small></button><button class="sb-b" data-a="pause"></button><button class="sb-b" data-a="end">終わる</button><i class="sb-p"></i>`;
+    document.body.appendChild(b);
+    b.querySelector('[data-a=menu]').onclick = openTimerMenu;
+    b.querySelector('[data-a=pause]').onclick = () => {
+      const t = S.timer; if(!t) return;
+      if(t.left == null){ t.left = leftSec(); } else { t.end = Date.now() + t.left * 1000; t.left = null; }
+      save(); updBar();
+    };
+    b.querySelector('[data-a=end]').onclick = () => endStudy();
+  }
+  const t = S.timer, p = t.n != null && t.n < TOTAL ? plan(t.n) : null;
+  b.querySelector('small').textContent = '覚える時間' + (p ? `　第${p.lap}周 Day${p.d}` : '') + '　（押すとメニュー）';
+  document.body.classList.add('timing');
+  document.documentElement.style.setProperty('--sbh', b.offsetHeight + 'px');
+  tick = setInterval(updBar, 250);
+  updBar();
+}
+function updBar(){
+  const b = $('#stBar'), t = S.timer; if(!b || !t) return;
+  const l = leftSec();
+  b.querySelector('.sb-t').textContent = clock(Math.ceil(l));
+  b.querySelector('.sb-p').style.width = Math.min(100, (1 - l / t.total) * 100) + '%';
+  b.classList.toggle('low', l <= 60);
+  b.classList.toggle('paused', t.left != null);
+  b.querySelector('[data-a=pause]').textContent = t.left != null ? '再開' : '一時停止';
+  if(l <= 0 && t.left == null) timeUp();
+}
+function recordStudy(secs){
+  const t = S.timer, p = t.n != null && t.n < TOTAL ? plan(t.n) : null;
+  if(secs >= 5) S.study.push({ at: new Date().toISOString(), d: today(), n: t.n, label: p ? `第${p.lap}周 Day${p.d}（${p.from+1}〜${p.to}）` : '', secs: Math.round(secs) });
+}
+function endStudy(quiet){
+  const t = S.timer; if(!t) return;
+  const used = t.total - leftSec();
+  recordStudy(used);
+  S.timer = null; save(); showBar(); renderAll();
+  if(!quiet) toast('覚える時間 ' + fmtSec(used) + ' を記録しました');
+}
+function timeUp(){
+  const t = S.timer; if(!t) return;
+  recordStudy(t.total);
+  const n = t.n, total = t.total;
+  S.timer = null; save(); showBar(); renderAll();
+  chime();
+  if(L && L.playing) lessonStop();
+  const bg = sheet(`<div class="lvup"><div class="dim">覚える時間</div><div class="big" style="color:var(--shu)">時間です</div><p>${fmtSec(total)} 覚えました（記録ずみ）。</p></div>
+    ${n != null && n < TOTAL ? '<button class="btn" data-a="test">テストへ進む</button>' : ''}
+    <button class="btn sub" data-a="more">あと3分 覚える</button>`);
+  if(bg.querySelector('[data-a=test]')) bg.querySelector('[data-a=test]').onclick = () => { bg.remove(); startDayTest(n); };
+  bg.querySelector('[data-a=more]').onclick = () => { bg.remove(); startTimer(n, 3); };
+}
+
+/* 一覧で覚える（意味をかくして、押すと見える） */
+function openList(ids, title){
+  closeOv();
+  const ov = makeOv();
+  let hide = false;
+  const draw = () => {
+    ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">${esc(title)}（${ids.length}語）</div></div>
+      <div class="ovbody">
+        <div class="lhead"><div class="seg" style="flex:1"><button class="${hide ? '' : 'on'}" data-h="0">意味を見せる</button><button class="${hide ? 'on' : ''}" data-h="1">意味をかくす</button></div></div>
+        <p class="dim" style="margin:0 2px 8px">${hide ? '意味を思い出してから、行を押して答えを見る。' : '行を押すと、覚え方と例文が見られます。'}</p>
+        <div class="wlist">${ids.map(i => `<button class="wrow lrow" data-i="${i}"><span class="no">${i+1}</span><span class="wd">${esc(W[i].w)}</span><span class="mn ${hide ? 'hide' : ''}">${esc(W[i].m)}</span></button>`).join('')}</div>
+      </div>`;
+    ov.querySelector('[data-a=x]').onclick = closeOv;
+    ov.querySelectorAll('[data-h]').forEach(b => b.onclick = () => { hide = b.dataset.h === '1'; draw(); });
+    ov.querySelectorAll('.lrow').forEach(r => r.onclick = () => {
+      const mn = r.querySelector('.mn');
+      if(mn.classList.contains('hide')) mn.classList.remove('hide');
+      else openWord(+r.dataset.i, ids);
+    });
+  };
+  draw();
 }
 
 /* ===================== 共通の部品 ===================== */
@@ -966,7 +1170,7 @@ async function doUpdate(){
   }catch(e){}
   location.replace(location.pathname + '?u=' + Date.now());
 }
-document.addEventListener('visibilitychange', () => { if(!document.hidden){ checkUpdate(true); checkDayChange(); } else { save(); if(L && L.playing) lessonStop(); } });
+document.addEventListener('visibilitychange', () => { if(!document.hidden){ checkUpdate(true); checkDayChange(); if(S.timer) updBar(); } else { save(); if(L && L.playing) lessonStop(); } });
 window.addEventListener('pagehide', save);
 
 /* 起動 */
@@ -976,7 +1180,8 @@ checkInstall();
 checkUpdate(true);
 try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
 if('serviceWorker' in navigator){ window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
-if('speechSynthesis' in window) try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; }catch(e){}
+if('speechSynthesis' in window) try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => { if(curTab() === 'set' && document.activeElement?.id !== 'sVoiceName') renderSet(); }; }catch(e){}
+if(S.timer) showBar();
 </script>
 </body>
 </html>

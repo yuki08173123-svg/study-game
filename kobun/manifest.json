@@ -1,0 +1,17 @@
+{
+  "name": "古文単語350",
+  "short_name": "古文単語",
+  "description": "重要古文単語350を、1日50語×7日で1周、2か月で8周する暗記アプリ",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4EEE2",
+  "theme_color": "#F4EEE2",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

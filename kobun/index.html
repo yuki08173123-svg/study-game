@@ -216,7 +216,7 @@ nav.tabs button.on{color:var(--ai)}
 .sl-ex{margin-top:1.8cqw;font-size:2.15cqw;line-height:1.45;color:var(--ink)}
 .sl-ex .ex{font-family:var(--mincho);font-weight:700}
 .sl-ex .tr{color:var(--muted)}
-.slide .simg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.slide .simg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#F4EEE2}
 .slide .hl{transition:box-shadow .2s, background .2s}
 .slide.speaking .hl{opacity:.45;transition:opacity .3s}
 .slide.speaking .hl.now{opacity:1}
@@ -319,7 +319,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js"></script>
 <script>
 'use strict';
-const VER = 2;
+const VER = 3;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -543,15 +543,16 @@ function openWord(i, list){
 
 /* ChatGPT（画像生成）に貼る、1枚スライド用のプロンプト */
 function slidePrompt(i){
-  const w = W[i];
-  return `【古文単語 No.${pad3(i+1)}「${w.w}」1分解説スライド】
-16:9 の横長スライドを1枚、画像で作ってください。高校生向けの「古文単語を1分で覚える」解説スライドです。
-・見出し語「${w.w}」${w.k ? `（漢字：${w.k}）` : ''}を左に大きく。品詞「${pname(w.p)}」を小さなラベルで。
-・いちばん大事な意味「${w.m}」を、朱色の枠で囲んで目立たせる。${w.s.length ? `\n・ほかの意味「${w.s.join('／')}」を小さめに。` : ''}
-・覚え方：「${w.tip}」— この内容を、ひと目でわかるイラスト（場面・人物・連想の絵）で表現する。
-${w.ex ? `・下の帯に例文「${w.ex}」と訳「${w.tr}」。\n` : ''}・デザイン：和紙のような生成りの地、墨色の文字、差し色は朱と藍。すっきり・余白多め・文字は大きく。
-・日本語の文字は上に書いたとおり正確に。誤字・余計な文字は入れない。
-・右上に小さく「No.${pad3(i+1)}」。`;
+  const w = W[i], P = pname(w.p), no = 'No.' + pad3(i+1);
+  return `【${no}「${w.w}」】
+高校生向け古文単語アプリの解説スライド画像を1枚作ってください。横長（1536×1024）。
+・背景は和紙のような生成り色（#F4EEE2）。文字は墨色、差し色は朱（#B63E2B）と藍（#2B3A67）だけ。
+・左側：左上に藍色の小さなラベル「${P}」。その下に見出し語「${w.w}」を太い明朝体でいちばん大きく。${w.k ? `その下に小さく「${w.k}」。` : ''}いちばん下に朱色の細い枠で「${w.m}」。
+・右側：意味「${w.m}」がひと目で思い出せるイラスト。平安時代の人物・くらし・自然を、やわらかい線のやさしい日本画風で。
+　イラストの参考（この文は画像に書かない）：${w.tip}${w.ex ? ` 例文「${w.ex}」（${w.tr}）` : ''}
+・右上のすみに小さく「${no}」。
+・画像に入れる文字は「${P}」「${w.w}」${w.k ? `「${w.k}」` : ''}「${w.m}」「${no}」だけ。一字一句このとおりに書き、旧かなを現代かなに直さない。ほかの文字・英語・ふりがな・ロゴは入れない。
+・上下の端から少し余白をあける。`;
 }
 
 /* ===================== 1分解説（スライド＋読み上げ＝動画のかわり） ===================== */

@@ -319,7 +319,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js"></script>
 <script>
 'use strict';
-const VER = 3;
+const VER = 4;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -1092,14 +1092,14 @@ function openList(ids, title){
     ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">${esc(title)}（${ids.length}語）</div></div>
       <div class="ovbody">
         <div class="lhead"><div class="seg" style="flex:1"><button class="${hide ? '' : 'on'}" data-h="0">意味を見せる</button><button class="${hide ? 'on' : ''}" data-h="1">意味をかくす</button></div></div>
-        <p class="dim" style="margin:0 2px 8px">${hide ? '意味を思い出してから、行を押して答えを見る。' : '行を押すと、覚え方と例文が見られます。'}</p>
+        <p class="dim" style="margin:0 2px 8px">${hide ? '意味を思い出してから、行を押して答えを見る。もう一度押すと、またかくれます。' : '行を押すと、覚え方と例文が見られます。'}</p>
         <div class="wlist">${ids.map(i => `<button class="wrow lrow" data-i="${i}"><span class="no">${i+1}</span><span class="wd">${esc(W[i].w)}</span><span class="mn ${hide ? 'hide' : ''}">${esc(W[i].m)}</span></button>`).join('')}</div>
       </div>`;
     ov.querySelector('[data-a=x]').onclick = closeOv;
     ov.querySelectorAll('[data-h]').forEach(b => b.onclick = () => { hide = b.dataset.h === '1'; draw(); });
     ov.querySelectorAll('.lrow').forEach(r => r.onclick = () => {
-      const mn = r.querySelector('.mn');
-      if(mn.classList.contains('hide')) mn.classList.remove('hide');
+      // 「意味をかくす」のときは、押すたびに 見える ⇔ かくれる。「意味を見せる」のときは詳しい画面へ。
+      if(hide) r.querySelector('.mn').classList.toggle('hide');
       else openWord(+r.dataset.i, ids);
     });
   };

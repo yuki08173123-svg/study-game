@@ -241,6 +241,67 @@ nav.tabs button.on{color:var(--ai)}
 .sheet ol{padding-left:22px;margin:6px 0}
 .sheet .close{display:block;width:100%;margin-top:14px;padding:13px;border-radius:14px;background:var(--chip);font-weight:700}
 .note{background:var(--gold-soft);border-radius:12px;padding:11px 13px;font-size:14.5px}
+.lvchip{transition:transform .2s}
+.lvchip.bump{animation:bump .5s}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+.lvchip i::after{transition:width .6s ease}
+/* +XP の小さな表示 */
+.xpop{position:fixed;right:18px;top:calc(var(--sbh0,0px) + 58px + env(safe-area-inset-top));z-index:96;background:var(--gold);color:#fff;font-weight:700;font-size:14px;padding:4px 10px;border-radius:999px;pointer-events:none;animation:xpop 1.3s ease-out forwards;box-shadow:0 2px 8px rgba(154,118,48,.35);white-space:nowrap}
+.xpop small{font-weight:400;font-size:11px;margin-left:4px;opacity:.9}
+@keyframes xpop{0%{opacity:0;transform:translateY(10px) scale(.8)}15%{opacity:1;transform:translateY(0) scale(1.05)}70%{opacity:1;transform:translateY(-14px)}100%{opacity:0;transform:translateY(-30px)}}
+body.timing .xpop{top:calc(var(--sbh,52px) + 52px)}
+/* レベルアップの演出（桜の花びら） */
+.lvfx{position:fixed;inset:0;z-index:97;background:rgba(31,26,22,.55);display:grid;place-items:center;animation:fadein .25s}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.lvfx .box{background:var(--card);border-radius:26px;padding:26px 24px 20px;width:min(86vw,360px);text-align:center;position:relative;z-index:2;animation:popin .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes popin{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.lvfx .k{font-size:14px;color:var(--gold);font-weight:700;letter-spacing:.2em}
+.lvfx .big{font-family:var(--mincho);font-weight:900;font-size:64px;line-height:1.1;color:var(--gold)}
+.lvfx .rank{font-family:var(--mincho);font-weight:900;font-size:24px;margin-top:2px}
+.lvfx .rank.new{color:var(--shu)}
+.petal{position:fixed;top:-20px;z-index:1;width:14px;height:10px;background:#F4B8C2;border-radius:10px 0 10px 0;opacity:.9;animation:fall linear forwards}
+@keyframes fall{to{transform:translate(var(--dx),110vh) rotate(var(--r));opacity:.2}}
+/* レベルのカード */
+.lvcard{display:flex;align-items:center;gap:14px;width:100%;text-align:left}
+.lvcard .lvb{width:64px;height:64px;border-radius:18px;background:var(--gold-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;color:#6B5020}
+.lvcard .lvb small{font-size:11px;font-weight:700}
+.lvcard .lvb b{font-family:var(--mincho);font-weight:900;font-size:28px;line-height:1}
+.lvcard .rk{font-family:var(--mincho);font-weight:900;font-size:18px}
+.xpbar{height:10px;border-radius:5px;background:var(--chip);overflow:hidden;margin:6px 0 4px}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,#C9A24E,var(--gold));transition:width .8s ease}
+.xprules{width:100%;border-collapse:collapse;font-size:14.5px}
+.xprules td{padding:7px 2px;border-bottom:1px solid var(--line)}
+.xprules td.r{text-align:right;font-weight:700;color:var(--gold);white-space:nowrap}
+.ranks{display:flex;flex-wrap:wrap;gap:6px}
+.ranks span{font-size:12.5px;padding:4px 9px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.ranks span.done{background:var(--gold-soft);color:#6B5020}
+.ranks span.now{background:var(--gold);color:#fff;font-weight:700}
+.resxp{margin:12px auto 0;max-width:360px;background:var(--gold-soft);border-radius:14px;padding:10px 14px;text-align:left}
+.resxp .t{display:flex;justify-content:space-between;font-weight:700;color:#6B5020}
+/* 使い方スライド */
+.guide{position:fixed;inset:0;z-index:98;background:var(--bg);display:flex;flex-direction:column;padding:calc(12px + env(safe-area-inset-top)) 0 calc(16px + env(safe-area-inset-bottom))}
+.gtrack{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.gtrack::-webkit-scrollbar{display:none}
+.gslide{flex:0 0 100%;scroll-snap-align:center;padding:10px 24px;display:flex;flex-direction:column;justify-content:center;max-width:100%}
+.gslide .num{font-size:13px;color:var(--gold);font-weight:700;letter-spacing:.1em}
+.gslide h2{font-family:var(--mincho);font-weight:900;font-size:26px;margin:4px 0 12px;line-height:1.35}
+.gslide p{margin:0 0 10px;font-size:16.5px}
+.gvis{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:16px;min-height:150px;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.gdots{display:flex;justify-content:center;gap:7px;margin:8px 0 12px}
+.gdots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.gdots i.on{background:var(--ai);width:22px;border-radius:4px}
+.gnav{display:flex;gap:10px;padding:0 20px}
+.gnav .btn{margin:0}
+.gskip{position:absolute;top:calc(10px + env(safe-area-inset-top));right:14px;color:var(--muted);font-size:14px;padding:8px}
+.minicard{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:12px;padding:8px 12px;font-size:14px}
+.minicard b{font-family:var(--mincho);font-size:18px}
+.gset{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:2px 16px 8px;scrollbar-width:none}
+.gset::-webkit-scrollbar{display:none}
+.gset button{flex:0 0 72%;scroll-snap-align:start;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.gset button .num{font-size:12px;color:var(--gold);font-weight:700}
+.gset button b{display:block;font-family:var(--mincho);font-size:17px;margin:2px 0 4px}
+.gset button span{font-size:13.5px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.helpb{width:34px;height:34px;border-radius:50%;background:var(--chip);font-weight:700;color:var(--ai);flex:none}
 .lvup{text-align:center;padding:10px 0}
 .lvup .big{font-family:var(--mincho);font-weight:900;font-size:54px;color:var(--gold);line-height:1.2}
 
@@ -289,6 +350,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 
 <header>
   <h1>古文単語350<small id="verLabel"></small></h1>
+  <button class="helpb" id="btnHelp" aria-label="使い方">？</button>
   <button class="lvchip" id="lvChip">Lv.1 <i></i></button>
 </header>
 <button class="band hidden" id="btnInstall">⚠ ホーム画面に追加してください（記録が消えないように）　やり方 ›</button>
@@ -319,7 +381,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js"></script>
 <script>
 'use strict';
-const VER = 4;
+const VER = 6;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -327,7 +389,6 @@ const DAYS = Math.ceil(N / PER);         // 1周の日数（350語なら7日）
 const LAPS = 8;                          // 周回数（2か月）
 const TOTAL = DAYS * LAPS;               // 計画の日数（56日）
 const GAPS = [1, 3, 7];                  // リマインド：まちがえた翌日 → 3日後 → 7日後 → 卒業
-const LV_STEP = 25;                      // 定着25語ごとにレベルアップ
 const KEY = 'kobun_v1';
 
 const $ = s => document.querySelector(s);
@@ -347,14 +408,18 @@ function clock(t){ t = Math.floor(t); return Math.floor(t/60) + ':' + String(t%6
 
 /* ===================== 保存 ===================== */
 let S;
-function blank(){ return { v:1, start: today(), cfg:{ dir:'w2m', voice:true, rate:1.05, pitch:1.15, voiceName:'', studyMin:10 }, w:{}, days:{}, tests:[], study:[], timer:null, lv:1 }; }
+function blank(){ return { v:1, start: today(), cfg:{ dir:'w2m', voice:true, rate:1.05, pitch:1.15, voiceName:'', voiceMode:'nanami', aRate:1, studyMin:10 }, w:{}, days:{}, tests:[], study:[], timer:null, xp:0, xpDay:{}, guideSeen:false }; }
 function load(){
   try{ S = JSON.parse(localStorage.getItem(KEY)) || blank(); }catch(e){ S = blank(); }
   const b = blank();
   S.cfg = { ...b.cfg, ...(S.cfg||{}) };
   if(S.cfg.rate === 1) S.cfg.rate = 1.05; if(S.cfg.rate === .85) S.cfg.rate = .9;   // v1 の値から
   S.study = S.study || []; S.timer = S.timer || null;
-  S.w = S.w || {}; S.days = S.days || {}; S.tests = S.tests || []; S.start = S.start || b.start; S.lv = S.lv || 1;
+  S.w = S.w || {}; S.days = S.days || {}; S.tests = S.tests || []; S.start = S.start || b.start;
+  S.xpDay = S.xpDay || {};
+  if(S.xp == null){   // v5 より前のデータ：これまでの記録から XP をさかのぼって計算
+    S.xp = S.tests.reduce((a,t) => a + t.ok * (t.type === 'remind' ? 3 : 2), 0) + Object.keys(S.days).length * 20 + S.study.reduce((a,x) => a + Math.floor(x.secs/60), 0);
+  }
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 function ws(i){ return S.w[i] || (S.w[i] = { c:0, x:0, sk:0, st:0, due:'' }); }
@@ -383,7 +448,6 @@ function statusText(){
 function isMastered(i){ const s = S.w[i]; return !!s && s.sk >= 2; }      // 2回つづけて正解＝定着
 function isWeak(i){ const s = S.w[i]; return !!s && s.x > 0 && s.sk < 2; }
 function masteredCount(){ let c = 0; for(let i=0;i<N;i++) if(isMastered(i)) c++; return c; }
-function levelOf(m){ return Math.floor(m / LV_STEP) + 1; }
 function dueList(){ const t = today(); return W.filter(w => { const s = S.w[w.i]; return s && s.due && s.due <= t; }).map(w => w.i); }
 function stateDot(i){
   const s = S.w[i];
@@ -392,17 +456,92 @@ function stateDot(i){
   if(s.sk >= 2) return 'ok';
   return 'mid';
 }
-function renderLv(){
-  const m = masteredCount(), lv = levelOf(m), p = (m % LV_STEP) / LV_STEP * 100;
-  $('#lvChip').innerHTML = 'Lv.' + lv + ' <i style="--p:' + (m >= N ? 100 : p) + '%"></i>';
+/* ===================== レベル（XP） =====================
+   覚える・解くなどの行動で XP がたまり、たまるとレベルが上がる。
+   称号は平安時代の位（無位 → … → 関白）。 */
+const XP_RULES = [
+  ['テストで1問正解', 2], ['リマインドテストで1問正解', 3], ['単語が「定着」した（2回つづけて正解）', 5],
+  ['単語カードで「覚えた」を押す', 1], ['1分解説を最後まで聞く', 3], ['覚える時間 1分ごと', 1],
+  ['その日のテストをはじめてクリア', 20], ['テストで全問正解（10問以上）', 10],
+];
+const RANKS = [[1,'無位'],[2,'初位'],[4,'八位'],[6,'七位'],[8,'六位'],[11,'五位'],[14,'四位'],[17,'三位'],[20,'参議'],[23,'中納言'],[26,'大納言'],[29,'大臣'],[32,'関白']];
+function needXP(lv){ return 100 + 20 * (lv - 1); }
+function lvInfo(xp){ let lv = 1, rest = xp; while(rest >= needXP(lv)){ rest -= needXP(lv); lv++; } return { lv, cur: rest, need: needXP(lv) }; }
+function rankOf(lv){ let r = RANKS[0][1]; for(const [m, t] of RANKS) if(lv >= m) r = t; return r; }
+function nextRank(lv){ const r = RANKS.find(([m]) => m > lv); return r ? { lv: r[0], t: r[1] } : null; }
+function todayXP(){ return S.xpDay[today()] || 0; }
+let lvQueue = null;
+function gainXP(n, why){
+  if(!n) return;
+  const before = lvInfo(S.xp).lv;
+  S.xp += n; S.xpDay[today()] = todayXP() + n;
+  if(T) T.xp = (T.xp || 0) + n;
+  save();
+  popXP(n, why); renderLv(true);
+  const after = lvInfo(S.xp).lv;
+  if(after > before){
+    if(T) lvQueue = { from: lvQueue ? lvQueue.from : before, to: after };   // テスト中はじゃましない。結果画面で出す
+    else celebrate(before, after);
+  }
 }
-$('#lvChip').onclick = () => {
-  const m = masteredCount(), lv = levelOf(m);
-  sheet(`<h2>レベル</h2>
-    <div class="lvup"><div class="big">Lv.${lv}</div><div>定着した単語 <b>${m}</b> / ${N}語</div></div>
-    <div class="note">テストで<b>2回つづけて正解</b>した単語が「定着」。定着が <b>${LV_STEP}語</b> ふえるごとにレベルが上がります（350語ぜんぶで Lv.${levelOf(N)}）。<br>まちがえると、その単語は定着から外れます。</div>
-    <p class="dim">次のレベルまで あと ${m >= N ? 0 : LV_STEP - m % LV_STEP}語</p>`);
-};
+function popXP(n, why){
+  const el = document.createElement('div'); el.className = 'xpop';
+  el.innerHTML = '+' + n + ' XP' + (why ? '<small>' + esc(why) + '</small>' : '');
+  el.style.marginTop = ($$('.xpop').length % 3) * 30 + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+function renderLv(anim){
+  const x = lvInfo(S.xp), chip = $('#lvChip');
+  chip.innerHTML = 'Lv.' + x.lv + ' <i style="--p:' + (x.cur / x.need * 100) + '%"></i>';
+  if(anim){ chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); }
+}
+function celebrate(from, to){
+  const x = lvInfo(S.xp), newRank = rankOf(to) !== rankOf(from);
+  const fx = document.createElement('div'); fx.className = 'lvfx';
+  fx.innerHTML = `<div class="box"><div class="k">LEVEL UP</div><div class="big">Lv.${to}</div>
+    <div class="rank ${newRank ? 'new' : ''}">${newRank ? '<small style="display:block;font-size:14px;font-family:\'BIZ UDPGothic\';font-weight:700">昇進しました</small>' : ''}${rankOf(to)}</div>
+    <div class="xpbar" style="margin-top:14px"><i style="width:0%"></i></div>
+    <div class="dim">次のレベルまで あと ${x.need - x.cur} XP</div>
+    <button class="btn" style="margin-top:14px">つづける</button></div>`;
+  for(let k = 0; k < 26; k++){
+    const p = document.createElement('i'); p.className = 'petal';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px');
+    p.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg');
+    p.style.animationDuration = (2.2 + Math.random() * 2) + 's';
+    p.style.animationDelay = (Math.random() * .8) + 's';
+    fx.appendChild(p);
+  }
+  document.body.appendChild(fx);
+  setTimeout(() => { const b = fx.querySelector('.xpbar i'); if(b) b.style.width = (x.cur / x.need * 100) + '%'; }, 80);
+  const close = () => fx.remove();
+  fx.querySelector('.btn').onclick = close;
+  fx.addEventListener('click', e => { if(e.target === fx) close(); });
+}
+function lvCardHTML(){
+  const x = lvInfo(S.xp), nr = nextRank(x.lv);
+  return `<button class="card lvcard" id="lvCard"><div class="lvb"><small>Lv.</small><b>${x.lv}</b></div>
+    <div style="flex:1;min-width:0"><div class="rk">${rankOf(x.lv)}<span class="dim" style="font-family:'BIZ UDPGothic';font-weight:400;font-size:13px">　今日 +${todayXP()} XP</span></div>
+      <div class="xpbar"><i style="width:${x.cur / x.need * 100}%"></i></div>
+      <div class="dim" style="font-size:13px">次のレベルまで あと <b>${x.need - x.cur} XP</b>${nr ? `　・　Lv.${nr.lv}で「${nr.t}」` : ''}</div></div></button>`;
+}
+function openLevel(){
+  const x = lvInfo(S.xp);
+  sheet(`<h2>レベルと XP</h2>
+    <div style="text-align:center;margin:4px 0 10px"><div class="lvup" style="padding:0"><div class="big">Lv.${x.lv}</div></div>
+      <div style="font-family:var(--mincho);font-weight:900;font-size:22px">${rankOf(x.lv)}</div>
+      <div class="xpbar" style="margin:10px 0 4px"><i style="width:${x.cur / x.need * 100}%"></i></div>
+      <div class="dim">${x.cur} / ${x.need} XP　・　次のレベルまで あと <b>${x.need - x.cur} XP</b></div></div>
+    <h3>XP のもらい方</h3>
+    <table class="xprules">${XP_RULES.map(([t, n]) => `<tr><td>${t}</td><td class="r">+${n} XP</td></tr>`).join('')}</table>
+    <p class="dim" style="margin:8px 0 0">例：覚える時間10分＋テスト50問（45問正解）＋その日のクリア → 10 + 90 + 20 = <b>120 XP</b></p>
+    <h3>位（くらい）</h3>
+    <p class="dim" style="margin:0 0 8px">レベルが上がると、平安時代の位が上がっていきます。めざせ関白！</p>
+    <div class="ranks">${RANKS.map(([m, t], k) => { const nx = RANKS[k+1]; const now = x.lv >= m && (!nx || x.lv < nx[0]); return `<span class="${now ? 'now' : x.lv >= m ? 'done' : ''}">Lv.${m} ${t}</span>`; }).join('')}</div>
+    <p class="dim" style="margin-top:12px">定着した単語：${masteredCount()} / ${N}語（2回つづけて正解した単語）</p>`);
+}
+$('#lvChip').onclick = openLevel;
 
 /* ===================== 今日 ===================== */
 function renderToday(){
@@ -432,7 +571,7 @@ function renderToday(){
   const remind = `<div class="card remind"><div class="num">${due.length}<small>語</small></div>
     <div style="flex:1"><h3>リマインドテスト</h3><div class="dim">${due.length ? 'まちがえた単語が、今日もどってきています' : '今日のリマインドはありません'}<br>まちがえた翌日 → 3日後 → 1週間後</div></div>
     ${due.length ? '<button class="btn shu" style="width:auto;padding:12px 16px" id="goRemind">解く</button>' : ''}</div>`;
-  el.innerHTML = hero + remind + `<h2>2か月の計画（1日50語 × 7日 × 8周）</h2><div class="card">${gridHTML()}</div>`;
+  el.innerHTML = hero + lvCardHTML() + remind + `<h2>2か月の計画（1日50語 × 7日 × 8周）</h2><div class="card">${gridHTML()}</div>`;
   if(n < TOTAL){
     const p = plan(n);
     $('#stStudy').onclick = () => openStudy(n);
@@ -442,6 +581,7 @@ function renderToday(){
     $('#stTest').onclick = () => startDayTest(n);
   }
   if($('#goRemind')) $('#goRemind').onclick = startRemind;
+  $('#lvCard').onclick = openLevel;
   bindGrid(el);
 }
 function rateColor(r){ return r >= .9 ? '#2E7A57' : r >= .7 ? '#6E9A5C' : r >= .5 ? '#C9953A' : '#B63E2B'; }
@@ -616,7 +756,7 @@ function drawLesson(){
         <div class="lbar"><div class="pbar"><i style="width:0%"></i></div><span class="lt">0:00 / 1:00</span></div></div>
       <div class="cap">${lessonParts(i).slice(0, 4).map(p => `<div>${p.show}</div>`).join('')}</div>
       <div class="nav"><button class="btn sub" data-a="prev" ${L.k ? '' : 'disabled style="opacity:.4"'}>‹ 前</button><button class="btn sub" data-a="next" ${L.k < L.ids.length-1 ? '' : 'disabled style="opacity:.4"'}>次 ›</button></div>
-      ${(() => { const v = jaVoice(); return v && !V_HQ.test(v.name) ? '<p class="dim" style="margin-top:12px">声をもっと自然にしたいときは「設定 → 1分解説の声」を見てください。</p>' : ''; })()}
+      ${(() => { const v = jaVoice(); return S.cfg.voiceMode === 'device' && v && !V_HQ.test(v.name) ? '<p class="dim" style="margin-top:12px">声をもっと自然にしたいときは「設定 → 1分解説の声」を見てください。</p>' : ''; })()}
       <p class="dim" style="margin-top:12px">スライド画像（ChatGPT で作った1枚）を <b>slides/${pad3(i+1)}.png</b> に置くと、この組版のかわりにその画像が出ます。読み上げは画像のときも同じです。</p>
     </div>`;
   setPlayIcon();
@@ -633,28 +773,57 @@ function lessonParts(i){
   const w = W[i];
   const say = w.y || yomi(w.w.replace(/（.*?）/g, ''));
   const parts = [
-    { sec:'w', text: say + '。' + (w.k ? '漢字で書くと、' + w.k + '。' : '') + pname(w.p) + 'です。', show: `<b class="cw">${esc(w.w)}</b>${w.k ? '　' + esc(w.k) : ''}　<span class="dim">${esc(pname(w.p))}</span>` },
+    { sec:'w', text: say + '。' + pname(w.p) + 'です。', show: `<b class="cw">${esc(w.w)}</b>${w.k ? '　' + esc(w.k) : ''}　<span class="dim">${esc(pname(w.p))}</span>` },
     { sec:'m', text: 'いちばん大事な意味は、' + w.m + '。' + (w.s.length ? 'ほかに、' + w.s.join('、') + '、という意味もあります。' : ''), show: `<b style="color:var(--shu)">${esc(w.m)}</b>${w.s.length ? '<br><span class="dim">ほかに：' + w.s.map(esc).join('／') + '</span>' : ''}` },
-    { sec:'tip', text: '覚え方。' + w.tip, show: '<b style="color:var(--gold)">覚え方</b>　' + esc(w.tip) },
+    { sec:'tip', text: '覚え方。' + (w.ty || w.tip), show: '<b style="color:var(--gold)">覚え方</b>　' + esc(w.tip) },
   ];
-  if(w.ex) parts.push({ sec:'ex', text: '例文。' + yomi(w.ex).replace(/…/g, '、') + '。訳は、' + w.tr + '。', show: `<span class="cw" style="font-size:17px">${esc(w.ex)}</span><br><span class="dim">→ ${esc(w.tr)}</span>` });
+  if(w.ex) parts.push({ sec:'ex', text: '例文。' + (w.ey || yomi(w.ex)).replace(/…/g, '、') + '。訳は、' + w.tr + '。', show: `<span class="cw" style="font-size:17px">${esc(w.ex)}</span><br><span class="dim">→ ${esc(w.tr)}</span>` });
   parts.push({ sec:'w', text: 'もう一度。' + say + '、' + w.m + '。', show: `<b class="cw">${esc(w.w)}</b>　＝　<b style="color:var(--shu)">${esc(w.m)}</b>` });
   return parts;
 }
+/* 1分解説の音声は、論文ラジオと同じ Nanami の声で録った audio/NNN.mp3（tools/kobun-audio.py で作る）。
+   audio/index.json に区切りごとの開始秒が入っていて、それでスライドの光る所と字幕を切りかえる。
+   ファイルがない・再生できないときだけ、端末の読み上げ（speechSynthesis）にする。 */
+let AIDX = null;
+fetch('audio/index.json').then(r => r.ok ? r.json() : null).then(j => { AIDX = j; }).catch(() => {});
 function lessonPlay(){
-  const i = L.ids[L.k], parts = lessonParts(i), seq = ++L.seq, slide = $('.ov .slide');
+  const i = L.ids[L.k], parts = lessonParts(i), seq = ++L.seq, slide = $('.ov .slide'), no = pad3(i+1);
   L.playing = true; setPlayIcon(); slide.classList.add('speaking');
-  L.t0 = Date.now();
   const bar = $('.ov .pbar i'), lt = $('.ov .lt');
-  clearInterval(L.timer);
-  L.timer = setInterval(() => { const t = (Date.now() - L.t0) / 1000; bar.style.width = Math.min(100, t / 60 * 100) + '%'; lt.textContent = clock(t) + ' / 1:00'; }, 250);
-  const mark = sec => slide.querySelectorAll('.hl').forEach(h => h.classList.toggle('now', h.dataset.sec === sec));
+  const show = k => { const p = parts[Math.min(k, parts.length-1)]; slide.querySelectorAll('.hl').forEach(h => h.classList.toggle('now', h.dataset.sec === p.sec)); const cap = $('.ov .cap'); if(cap) cap.innerHTML = p.show; };
+  stopSpeech(); clearInterval(L.timer);
+  const rec = AIDX && AIDX[no];
+  if(S.cfg.voice && S.cfg.voiceMode !== 'device' && rec){
+    const a = L.audio = new Audio('audio/' + no + '.mp3');
+    a.playbackRate = S.cfg.aRate; a.preservesPitch = true;
+    let cur = -1;
+    const total = rec.d / S.cfg.aRate;
+    L.timer = setInterval(() => {
+      if(seq !== L.seq) return;
+      const t = a.currentTime; let k = 0;
+      while(k + 1 < rec.t.length && t >= rec.t[k+1]) k++;
+      if(k !== cur){ cur = k; show(k); }
+      bar.style.width = Math.min(100, t / rec.d * 100) + '%';
+      lt.textContent = clock(t / S.cfg.aRate) + ' / ' + clock(total);
+    }, 150);
+    a.onended = () => { if(seq === L.seq) lessonStop(true); };
+    const fallback = () => { if(seq !== L.seq || !L.audio) return; L.audio = null; clearInterval(L.timer); ttsPlay(parts, seq, show, bar, lt); };
+    a.onerror = fallback;
+    show(0);
+    const pr = a.play(); if(pr && pr.catch) pr.catch(fallback);
+    return;
+  }
+  ttsPlay(parts, seq, show, bar, lt);
+}
+function ttsPlay(parts, seq, show, bar, lt){
+  const t0 = Date.now();
+  L.timer = setInterval(() => { const t = (Date.now() - t0) / 1000; bar.style.width = Math.min(100, t / 60 * 100) + '%'; lt.textContent = clock(t) + ' / 1:00'; }, 250);
   const hasTTS = 'speechSynthesis' in window && S.cfg.voice;
   let k = 0;
   const nextPart = () => {
     if(seq !== L.seq) return;
     if(k >= parts.length){ lessonStop(true); return; }
-    const p = parts[k++]; mark(p.sec); const cap = $('.ov .cap'); if(cap) cap.innerHTML = p.show;
+    const p = parts[k]; show(k); k++;
     if(hasTTS){
       const u = sayUtter(p.text);
       u.onend = () => setTimeout(nextPart, 350);
@@ -662,12 +831,13 @@ function lessonPlay(){
       speechSynthesis.speak(u);
     }else setTimeout(nextPart, Math.max(2500, p.text.length * 180));
   };
-  stopSpeech();
   nextPart();
 }
 function lessonStop(ended){
   if(!L) return;
+  if(ended && L.playing) gainXP(3, '1分解説');
   L.seq++; L.playing = false; stopSpeech(); clearInterval(L.timer);
+  if(L.audio){ try{ L.audio.pause(); }catch(e){} L.audio = null; }
   const slide = $('.ov .slide'); if(slide){ slide.classList.remove('speaking'); slide.querySelectorAll('.hl').forEach(h => h.classList.remove('now')); }
   setPlayIcon();
   if(ended && L.k < L.ids.length - 1) toast('次の単語へ ›（右下のボタン）');
@@ -709,7 +879,7 @@ function drawCard(){
   ov.querySelector('[data-a=x]').onclick = closeOv;
   ov.querySelector('[data-a=flip]').onclick = () => { C.flip = !C.flip; ov.querySelector('.fc-in').classList.toggle('flip', C.flip); };
   ov.querySelector('[data-a=no]').onclick = () => { C.q.push(C.q.shift()); C.flip = false; drawCard(); };
-  ov.querySelector('[data-a=yes]').onclick = () => { C.q.shift(); C.flip = false; drawCard(); };
+  ov.querySelector('[data-a=yes]').onclick = () => { C.q.shift(); C.flip = false; gainXP(1, '覚えた'); drawCard(); };
   ov.querySelector('[data-a=lesson]').onclick = () => {
     const keep = C; openLesson([i], 0);
     // 解説を閉じたらカードにもどる
@@ -740,7 +910,7 @@ function startTest(o){
   if(S.timer) endStudy(true);
   closeOv();
   const dir = S.cfg.dir === 'mix' ? null : S.cfg.dir;
-  T = { ...o, order: shuffle(o.ids), k:0, ok:0, wrong:[], t0: Date.now(), dir, answered:false, timer:null, lv0: levelOf(masteredCount()) };
+  T = { ...o, order: shuffle(o.ids), k:0, ok:0, wrong:[], t0: Date.now(), dir, answered:false, timer:null, xp:0, xp0: S.xp };
   makeOv();
   T.timer = setInterval(() => { const e = $('.ov .tm'); if(e && T) e.textContent = clock((Date.now() - T.t0) / 1000); }, 500);
   drawQ();
@@ -773,6 +943,7 @@ function drawQ(){
   ov.querySelector('[data-a=x]').onclick = () => {
     if(!confirm('テストを中断しますか？（ここまでの結果は記録されません）')) return;
     clearInterval(T.timer); T = null; closeOv();
+    if(lvQueue){ const q = lvQueue; lvQueue = null; celebrate(q.from, q.to); }
   };
   ov.querySelectorAll('.choice').forEach(b => b.onclick = () => answer(+b.dataset.c));
   ov.querySelector('[data-a=idk]').onclick = () => answer(-1);
@@ -785,6 +956,8 @@ function answer(c){
   $('.ov [data-a=idk]').classList.add('hidden');
   if(ok){
     T.ok++; s.c++; s.sk++;
+    gainXP(T.type === 'remind' ? 3 : 2, '正解');
+    if(s.sk === 2) gainXP(5, '定着');
     if(T.type === 'remind' && s.due){ s.st++; if(s.st >= GAPS.length){ s.st = 0; s.due = ''; } else s.due = addDays(t, GAPS[s.st]); }
     save();
     setTimeout(next, 450);
@@ -807,14 +980,16 @@ function finishTest(){
   const secs = Math.round((Date.now() - T.t0) / 1000), n = T.order.length, rate = T.ok / n;
   const rec = { at: new Date().toISOString(), d: today(), type: T.type, label: T.label, n, ok: T.ok, secs };
   S.tests.push(rec);
+  let bonus = [];
   if(T.type === 'day'){
     const r = S.days[T.plan];
-    if(!r) S.days[T.plan] = { d: today(), n, ok: T.ok, secs, best: T.ok };
+    if(!r){ S.days[T.plan] = { d: today(), n, ok: T.ok, secs, best: T.ok }; bonus.push(['Dayクリア', 20]); }
     else r.best = Math.max(r.best ?? r.ok, T.ok);
   }
+  if(n >= 10 && T.ok === n) bonus.push(['全問正解', 10]);
   save();
-  const lv1 = levelOf(masteredCount()), up = lv1 > T.lv0;
-  if(lv1 > S.lv){ S.lv = lv1; save(); }
+  bonus.forEach(([t, v]) => gainXP(v, t));
+  const got = S.xp - T.xp0, xi = lvInfo(S.xp);
   const stSec = T.type === 'day' ? S.study.filter(x => x.n === T.plan && x.d === today()).reduce((a,x) => a + x.secs, 0) : 0;
   const report = `【古文単語】${T.label}${stSec ? `　覚える時間 ${fmtSec(stSec)}` : ''}　テスト ${n}問　正答率 ${Math.round(rate*100)}%（${T.ok}/${n}）　時間 ${fmtSec(secs)}`;
   const ov = $('.ov'), wrong = [...new Set(T.wrong)], keep = T;
@@ -822,7 +997,11 @@ function finishTest(){
     <div class="ovbody"><div class="res">
       <div class="pct" style="color:${rateColor(rate)}">${Math.round(rate*100)}<small>%</small></div>
       <div class="meta"><span>${n}問中 <b>${T.ok}問</b> 正解</span><span>時間 <b>${fmtSec(secs)}</b></span><span>1問 ${(secs/n).toFixed(1)}秒</span></div>
-      <span class="saved">✓ 記録に自動で書きこみました</span></div>
+      <span class="saved">✓ 記録に自動で書きこみました</span>
+      <div class="resxp"><div class="t"><span>このテストで</span><span>+${got} XP</span></div>
+        <div class="dim" style="font-size:13px">正解 ${T.ok}問${bonus.map(([t, v]) => `・${t} +${v}`).join('')}</div>
+        <div class="xpbar"><i style="width:0%" id="resBar"></i></div>
+        <div class="dim" style="font-size:13px">Lv.${xi.lv}「${rankOf(xi.lv)}」　次のレベルまで あと ${xi.need - xi.cur} XP</div></div></div>
       ${wrong.length ? `<button class="btn shu" data-a="retry">まちがえた ${wrong.length}語だけ もう一度</button>
         <button class="btn sub" data-a="cards">まちがえた単語をカードで覚える</button>
         <div class="dim" style="margin-top:12px">まちがえた単語は、<b>明日のリマインドテスト</b>に出ます。</div>
@@ -842,7 +1021,8 @@ function finishTest(){
     ov.querySelectorAll('.wrongs .wrow').forEach(r => r.onclick = () => openWord(+r.dataset.i, wrong));
   }
   renderAll();
-  if(up) setTimeout(() => sheet(`<div class="lvup"><div class="dim">レベルアップ</div><div class="big">Lv.${lv1}</div><p>定着した単語が <b>${masteredCount()}語</b> になりました。</p></div>`), 400);
+  setTimeout(() => { const b = $('#resBar'); if(b) b.style.width = (xi.cur / xi.need * 100) + '%'; }, 120);
+  if(lvQueue){ const q = lvQueue; lvQueue = null; setTimeout(() => celebrate(q.from, q.to), 700); }
 }
 
 /* テストタブ */
@@ -905,26 +1085,34 @@ function renderLog(){
   if($('#logCopy')) $('#logCopy').onclick = () => {
     const t = today(), list = ts.filter(x => x.d === t), sts = S.study.filter(x => x.d === t);
     if(!list.length && !sts.length){ toast('今日の記録はまだありません'); return; }
-    copyText('【古文単語 ' + md(t) + '】\n' + (sts.length ? `・覚える時間 ${fmtSec(sts.reduce((a,x) => a + x.secs, 0))}\n` : '') + list.map(x => `・${x.label} ${x.n}問　${Math.round(x.ok/x.n*100)}%（${x.ok}/${x.n}）　${fmtSec(x.secs)}`).join('\n') + `\n定着 ${masteredCount()}/${N}語　Lv.${levelOf(masteredCount())}`, 'コピーしました');
+    copyText('【古文単語 ' + md(t) + '】\n' + (sts.length ? `・覚える時間 ${fmtSec(sts.reduce((a,x) => a + x.secs, 0))}\n` : '') + list.map(x => `・${x.label} ${x.n}問　${Math.round(x.ok/x.n*100)}%（${x.ok}/${x.n}）　${fmtSec(x.secs)}`).join('\n') + `\n定着 ${masteredCount()}/${N}語　Lv.${lvInfo(S.xp).lv}（${rankOf(lvInfo(S.xp).lv)}）　今日 +${todayXP()} XP`, 'コピーしました');
   };
 }
 
 /* ===================== 設定 ===================== */
 function renderSet(){
   const el = $('#tab-set'), end = addDays(S.start, TOTAL - 1);
-  el.innerHTML = `<div class="card set">
+  el.innerHTML = `<div class="card"><h3>使い方</h3>
+      <div class="gset">${guideSlides().map((g, k) => `<button data-g="${k}"><div class="num">${k+1}</div><b>${g.t}</b><span>${g.p[0].replace(/<[^>]+>/g, '')}</span></button>`).join('')}</div>
+      <button class="btn line" id="sGuide" style="margin-top:6px">使い方をはじめから見る</button></div>
+    <div class="card set">
       <label>開始日</label><input type="date" id="sStart" value="${S.start}">
       <p class="dim" style="margin:6px 0 0">1日50語 × 7日 = 1周。8周で <b>${TOTAL}日</b>（約2か月）。この日から始めると、完走予定は <b>${md(end)}(${wd(end)})</b> です。</p></div>
     <div class="card set"><label>1分解説の声</label>
       <div class="seg" id="sVoice"><button class="${S.cfg.voice?'on':''}" data-v="1">読み上げる</button><button class="${!S.cfg.voice?'on':''}" data-v="0">読み上げない</button></div>
+      <label style="margin-top:12px">声</label>
+      <div class="seg" id="sMode"><button class="${S.cfg.voiceMode!=='device'?'on':''}" data-m="nanami">Nanami</button><button class="${S.cfg.voiceMode==='device'?'on':''}" data-m="device">iPhone の声</button></div>
+      ${S.cfg.voiceMode !== 'device' ? `
+      <label style="margin-top:12px">速さ</label>
+      <div class="seg" id="sARate">${[[.85,'ゆっくり'],[1,'ふつう'],[1.15,'はやめ']].map(([r,t]) => `<button class="${S.cfg.aRate===r?'on':''}" data-r="${r}">${t}</button>`).join('')}</div>
+      <p class="dim" style="margin:8px 0 0">女性のハキハキした声です。</p>` : `
       <label style="margin-top:12px">声の種類</label>
       <select id="sVoiceName"><option value="">おまかせ（女性の声を優先）</option>${jaVoices().slice().sort((a,b) => voiceScore(b) - voiceScore(a)).map(v => `<option value="${esc(v.name)}" ${S.cfg.voiceName === v.name ? 'selected' : ''}>${esc(voiceLabel(v))}</option>`).join('')}</select>
       <label style="margin-top:12px">声の明るさ</label>
       <div class="seg" id="sPitch">${[[1,'ふつう'],[1.15,'明るめ'],[1.3,'もっと明るく']].map(([r,t]) => `<button class="${S.cfg.pitch===r?'on':''}" data-r="${r}">${t}</button>`).join('')}</div>
       <label style="margin-top:12px">読む速さ</label>
-      <div class="seg" id="sRate">${[[.9,'ゆっくり'],[1.05,'ふつう'],[1.2,'ハキハキ']].map(([r,t]) => `<button class="${S.cfg.rate===r?'on':''}" data-r="${r}">${t}</button>`).join('')}</div>
-      <button class="btn line" id="sTry" style="margin-top:12px">▶ 試しに聞く</button>
-      <div class="note" style="margin-top:12px"><b>もっと自然な声にするには（iPhone）</b><br>iPhone の「設定」→「アクセシビリティ」→「読み上げコンテンツ」→「声」→「日本語」→ <b>Kyoko</b> か <b>O-ren</b> を選び、<b>「拡張」または「プレミアム」</b>をダウンロードします。そのあとこのアプリを開き直し、上の「声の種類」で「高品質」と付いた声を選んでください。</div></div>
+      <div class="seg" id="sRate">${[[.9,'ゆっくり'],[1.05,'ふつう'],[1.2,'ハキハキ']].map(([r,t]) => `<button class="${S.cfg.rate===r?'on':''}" data-r="${r}">${t}</button>`).join('')}</div>`}
+      <button class="btn line" id="sTry" style="margin-top:12px">▶ 試しに聞く</button></div>
     <div class="card"><h3>データの控え</h3><p class="dim">機種変更のときなどに。テストの記録と単語ごとの状態を1つのファイルにします。</p>
       <div class="row"><button class="btn sub" id="sExp">控えを作る</button><button class="btn sub" id="sImp">控えを読みこむ</button></div>
       <input type="file" id="sFile" accept=".json,application/json" class="hidden"></div>
@@ -932,12 +1120,27 @@ function renderSet(){
       <button class="btn hidden" id="btnUpdate">更新する <span id="updVer" class="dim" style="color:#fff"></span></button>
       <button class="btn sub" id="btnCheckUpd">更新があるか調べる</button></div>
     <div class="card"><h3>最初からやり直す</h3><p class="dim">記録をすべて消します（元に戻せません）。</p><button class="btn shu" id="sReset">記録を消す</button></div>`;
+  $$('.gset button').forEach(b => b.onclick = () => openGuide(+b.dataset.g));
+  $('#sGuide').onclick = () => openGuide(0);
   $('#sStart').onchange = e => { if(e.target.value){ S.start = e.target.value; save(); renderAll(); renderSet(); toast('開始日を変えました'); } };
   $$('#sVoice button').forEach(b => b.onclick = () => { S.cfg.voice = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sRate button').forEach(b => b.onclick = () => { S.cfg.rate = +b.dataset.r; save(); renderSet(); });
   $$('#sPitch button').forEach(b => b.onclick = () => { S.cfg.pitch = +b.dataset.r; save(); renderSet(); });
-  $('#sVoiceName').onchange = e => { S.cfg.voiceName = e.target.value; save(); };
-  $('#sTry').onclick = () => { if(!('speechSynthesis' in window)){ toast('この端末では読み上げが使えません'); return; } stopSpeech(); speechSynthesis.speak(sayUtter('あはれなり。いちばん大事な意味は、しみじみと趣深い。今日も50語、がんばりましょう！')); };
+  $$('#sMode button').forEach(b => b.onclick = () => { S.cfg.voiceMode = b.dataset.m; save(); renderSet(); });
+  $$('#sARate button').forEach(b => b.onclick = () => { S.cfg.aRate = +b.dataset.r; save(); renderSet(); });
+  if($('#sVoiceName')) $('#sVoiceName').onchange = e => { S.cfg.voiceName = e.target.value; save(); };
+  let tryA = null;
+  $('#sTry').onclick = () => {
+    stopSpeech(); if(tryA){ tryA.pause(); tryA = null; }
+    if(S.cfg.voiceMode !== 'device'){
+      tryA = new Audio('audio/001.mp3'); tryA.playbackRate = S.cfg.aRate;
+      tryA.play().catch(() => toast('音声を読みこめませんでした'));
+      const a = tryA; setTimeout(() => { if(tryA === a){ a.pause(); tryA = null; } }, 9000);
+      return;
+    }
+    if(!('speechSynthesis' in window)){ toast('この端末では読み上げが使えません'); return; }
+    speechSynthesis.speak(sayUtter('あはれなり。いちばん大事な意味は、しみじみと趣深い。今日も50語、がんばりましょう！'));
+  };
   $('#sExp').onclick = () => {
     const blob = new Blob([JSON.stringify({ app:'kobun350', ...S })], { type:'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'kobun350-' + today() + '.json'; a.click();
@@ -1060,6 +1263,7 @@ function updBar(){
 }
 function recordStudy(secs){
   const t = S.timer, p = t.n != null && t.n < TOTAL ? plan(t.n) : null;
+  if(secs >= 60) gainXP(Math.floor(secs / 60), '覚える時間');
   if(secs >= 5) S.study.push({ at: new Date().toISOString(), d: today(), n: t.n, label: p ? `第${p.lap}周 Day${p.d}（${p.from+1}〜${p.to}）` : '', secs: Math.round(secs) });
 }
 function endStudy(quiet){
@@ -1106,9 +1310,56 @@ function openList(ids, title){
   draw();
 }
 
+/* ===================== 使い方スライド（はじめて開いたとき・？ボタン・設定） ===================== */
+function guideSlides(){
+  return [
+    { t:'古文単語350へ ようこそ', p:['入試によく出る古文単語350語を、<b>2か月で8周</b>して、ぜんぶ覚えきるアプリです。','やることは毎日かんたん。<b>覚える → テスト</b> の2つだけ。'],
+      v:`<div class="minicard"><b>あはれなり</b><span class="dim">→</span><span style="color:var(--shu);font-weight:700">しみじみと趣深い</span></div><div class="minicard"><b>をかし</b><span class="dim">→</span><span style="color:var(--shu);font-weight:700">趣がある</span></div><div class="dim" style="text-align:center">…ほか348語</div>` },
+    { t:'1日50語 × 7日で1周', p:['350語を7日で1周。これを<b>8周（56日・約2か月）</b>くり返します。','その日にやる範囲は「今日」タブに出ます。遅れても大丈夫。次にやる日から続きが出ます。'],
+      v:`<div class="grid" style="grid-template-columns:34px repeat(7,minmax(0,1fr))"><div></div>${[1,2,3,4,5,6,7].map(d => `<div class="h">Day${d}</div>`).join('')}${[1,2,3].map(l => `<div class="l">${l}周</div>` + [0,1,2,3,4,5,6].map(d => `<span class="cell ${l===1&&d<3?'d':''} ${l===1&&d===3?'cur':''}" style="${l===1&&d<3?'background:#2E7A57':''}">${l===1&&d<3?[96,88,92][d]:''}</span>`).join('')).join('')}</div><div class="dim" style="text-align:center">…8周まで</div>` },
+    { t:'① 覚える時間', p:['「今日」の①を押して、<b>覚える時間を自分で決めます</b>（3分〜、自由に入力も）。','のこり時間は<b>画面のいちばん上</b>に出ます。単語カード・一覧・1分解説から、好きな方法で覚えましょう。'],
+      v:`<div style="background:#1F2A4D;color:#fff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px"><b style="font-size:24px">9:42</b><small style="opacity:.8">覚える時間</small><span style="margin-left:auto;font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:99px">一時停止</span></div><div class="minicard">単語カード　／　一覧（意味をかくせる）　／　1分解説</div>` },
+    { t:'1分解説', p:['スライドと音声で、1語を約1分で解説します。<b>読んでいる所が光り</b>、下に字幕が出ます。','覚えにくい単語だけ見ればOK。単語タブから、どの単語でも見られます。'],
+      v:`<div class="minicard" style="flex-direction:column;align-items:flex-start"><b style="font-size:22px">こころもとなし</b><span style="color:var(--shu);font-weight:700;border:1.5px solid var(--shu);border-radius:8px;padding:2px 8px">じれったい</span><span class="dim" style="font-size:12.5px">覚え方：心が「もと（本来の位置）」になく落ち着かない…</span></div>` },
+    { t:'② テスト', p:['50問の4択テスト。<b>時間と正答率は自動で記録</b>されます。','まちがえた単語だけ、すぐにもう一度。「報告用にコピー」で、勉強報告にそのまま貼れます。'],
+      v:`<div style="text-align:center"><div style="font-family:var(--mincho);font-weight:900;font-size:44px;color:#2E7A57;line-height:1.1">92<small style="font-size:18px">%</small></div><div class="dim">50問中 46問 正解　・　時間 6分12秒</div></div>` },
+    { t:'リマインドテスト', p:['まちがえた単語は、<b>翌日 → 3日後 → 1週間後</b>にもどってきます。','3回つづけて正解したら卒業。苦手な単語ほど何度も出るので、自然に覚えきれます。'],
+      v:`<div class="minicard"><b style="color:var(--shu)">✕</b> まちがえた</div><div class="minicard">翌日 → 3日後 → 1週間後 にもう一度</div><div class="minicard"><b style="color:#2E7A57">◯◯◯</b> 3回つづけて正解で卒業</div>` },
+    { t:'レベルアップ', p:['覚える・解くたびに <b>XP</b> がたまり、たまると<b>レベルが上がります</b>。','レベルが上がると、平安時代の位（くらい）が上がっていきます。無位からはじめて、めざせ関白！'],
+      v:`<table class="xprules">${XP_RULES.slice(0, 6).map(([t, n]) => `<tr><td style="font-size:13.5px">${t}</td><td class="r">+${n}</td></tr>`).join('')}</table>` },
+    { t:'さいごに：ホーム画面に追加', p:['iPhone は、ホーム画面に追加していないサイトの記録を消すことがあります。2か月つづけるアプリなので、<b>必ずホーム画面に追加</b>してください。','使い方は、右上の <b>？</b> と「設定」からいつでも見られます。'],
+      v:`<div class="minicard">Safari で開く → 共有ボタン → <b style="font-size:15px">ホーム画面に追加</b></div>` },
+  ];
+}
+function openGuide(start){
+  const G = guideSlides();
+  const el = document.createElement('div'); el.className = 'guide';
+  el.innerHTML = `<button class="gskip" data-a="skip">スキップ</button>
+    <div class="gtrack">${G.map((g, k) => `<section class="gslide"><div class="num">${k+1} / ${G.length}</div><h2>${g.t}</h2><div class="gvis">${g.v}</div>${g.p.map(x => `<p>${x}</p>`).join('')}</section>`).join('')}</div>
+    <div class="gdots">${G.map(() => '<i></i>').join('')}</div>
+    <div class="gnav"><button class="btn sub" data-a="prev" style="flex:1">もどる</button><button class="btn" data-a="next" style="flex:2">次へ</button></div>`;
+  document.body.appendChild(el);
+  const tr = el.querySelector('.gtrack'), dots = el.querySelectorAll('.gdots i');
+  const cur = () => Math.round(tr.scrollLeft / tr.clientWidth);
+  const paint = () => {
+    const k = cur();
+    dots.forEach((d, j) => d.classList.toggle('on', j === k));
+    el.querySelector('[data-a=prev]').style.visibility = k ? 'visible' : 'hidden';
+    el.querySelector('[data-a=next]').textContent = k === G.length - 1 ? 'はじめる' : '次へ';
+  };
+  const close = () => { S.guideSeen = true; save(); el.remove(); };
+  tr.addEventListener('scroll', () => requestAnimationFrame(paint));
+  el.querySelector('[data-a=next]').onclick = () => { const k = cur(); if(k >= G.length - 1) close(); else tr.scrollTo({ left: (k + 1) * tr.clientWidth, behavior:'smooth' }); };
+  el.querySelector('[data-a=prev]').onclick = () => tr.scrollTo({ left: Math.max(0, cur() - 1) * tr.clientWidth, behavior:'smooth' });
+  el.querySelector('[data-a=skip]').onclick = close;
+  if(start) requestAnimationFrame(() => { tr.scrollLeft = start * tr.clientWidth; paint(); });
+  paint();
+}
+$('#btnHelp').onclick = () => openGuide(0);
+
 /* ===================== 共通の部品 ===================== */
 function makeOv(){ closeOv(true); const ov = document.createElement('div'); ov.className = 'ov'; document.body.appendChild(ov); document.body.style.overflow = 'hidden'; return ov; }
-function closeOv(silent){ $$('.ov').forEach(o => o.remove()); document.body.style.overflow = ''; if(L){ L.seq++; stopSpeech(); clearInterval(L.timer); } if(!silent){ L = null; C = null; if(T){ clearInterval(T.timer); T = null; } } }
+function closeOv(silent){ $$('.ov').forEach(o => o.remove()); document.body.style.overflow = ''; if(L){ L.seq++; stopSpeech(); clearInterval(L.timer); if(L.audio){ try{ L.audio.pause(); }catch(e){} L.audio = null; } } if(!silent){ L = null; C = null; if(T){ clearInterval(T.timer); T = null; } } }
 function sheet(html){
   const bg = document.createElement('div'); bg.className = 'sheet-bg';
   bg.innerHTML = `<div class="sheet"><div class="grab"></div>${html}<button class="close">閉じる</button></div>`;
@@ -1183,6 +1434,7 @@ try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persis
 if('serviceWorker' in navigator){ window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
 if('speechSynthesis' in window) try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => { if(curTab() === 'set' && document.activeElement?.id !== 'sVoiceName') renderSet(); }; }catch(e){}
 if(S.timer) showBar();
+if(!S.guideSeen) setTimeout(() => openGuide(0), 300);
 </script>
 </body>
 </html>

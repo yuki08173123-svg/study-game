@@ -389,7 +389,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
     <div class="card">
       <h3><svg viewBox="0 0 24 24"><path d="M4 7h4l3 5-3 5H4"/><path d="M13 7h7"/><path d="M13 17h7"/><path d="m17 4 3 3-3 3"/><path d="m17 14 3 3-3 3"/></svg>ランダムに解く</h3>
       <div class="sw"><span>極まった問題も混ぜる</span><button class="tg" id="tgRandMast" aria-label="切りかえ"></button></div>
-      <div class="dim">ランダムで解いたときは、「言えなかった」だけが記録されて翌日からやり直しになります。「言えた」は予定を進めません（間隔をあけて覚えるため）。</div>
+      <div class="dim">ランダムで解いたときは、「解けなかった」だけが記録されて翌日からやり直しになります。「解けた」は予定を進めません（間隔をあけて覚えるため）。</div>
     </div>
 
     <div class="card">
@@ -402,7 +402,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
         <li>右上の ＋ →「時刻」を選ぶ</li>
         <li>時刻を朝の勉強前（例 7:00）、繰り返しを「毎日」にして「次へ」</li>
         <li>「Appを開く」を探して選ぶ</li>
-        <li>App のところをタップして「ミスマップ」を選ぶ</li>
+        <li>App のところをタップして「<span class="appname">ミスマップ</span>」を選ぶ</li>
         <li>「すぐに実行」をオンにして完了</li>
       </ol>
     </div>
@@ -461,7 +461,9 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 16;
+const VER = 17;
+/* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
+const APP_NAME = 'ミスマップ';
 const KEY = 'miss_v1', BK = 'miss_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -469,7 +471,9 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const SUBJ = ['英語','数学','国語','理科','社会','その他'];
 const SUBJC = { '英語':'#7FA6FF', '数学':'#5ED3A2', '国語':'#FF8C7E', '理科':'#5FD0DC', '社会':'#FFA45C', 'その他':'#A9B4C8' };
 /* ミスの種類（ミスパターン分析用）。Discordでヒラが挙げた例をもとにした */
-const TAGS = ['計算ミス','スペルミス','漢字ミス','時制ミス','条件の読み飛ばし','見落とし','解答欄のズレ','書き方が雑','その他'];
+const SOLVE_TAG = '解法が分からなかった';
+const isSolve = t => t === SOLVE_TAG;
+const TAGS = [SOLVE_TAG, '計算ミス','スペルミス','漢字ミス','時制ミス','条件の読み飛ばし','見落とし','解答欄のズレ','書き方が雑','その他'];
 const DEF_GAPS = [1,3,7,14,30];
 const GAP_MIN = 2, GAP_MAX = 8;   // くり返す回数は 2〜8回
 const PRESETS = [
@@ -480,6 +484,12 @@ const PRESETS = [
 /* ミスの種類ごとの「よくある改善点」。押すと いつ・何を・どうする が入る。
    中身は Discord #ミスマップ でヒラが出していた指導（指さし・バックスキャン・条件に丸・数値化）にそろえてある。 */
 const FIXES = {
+  [SOLVE_TAG]: [
+    { when:'解く前', what:'問題文の数量', how:'図や表にかき出してから解きはじめる' },
+    { when:'解いている途中', what:'解説', how:'1行目だけ読んで、そこから先は自力で解く' },
+    { when:'解き終わったら', what:'解き方', how:'自分の言葉で3行にまとめてノートに書く' },
+    { when:'丸付けのとき', what:'同じ型の問題', how:'もう1問、何も見ずに解く' },
+  ],
   '計算ミス': [
     { when:'解き終わったら', what:'答え', how:'元の式に入れて合うか確かめる' },
     { when:'解き終わったら', what:'解いた式', how:'バックスキャンして確かめる' },
@@ -558,7 +568,7 @@ function gapLabel(d){
 
 /* ===================== データ ===================== */
 /* item = { id, subj, text, imgs:[id], tag, why(間違えた理由), fix(改善点), created, stage, due, done, doneAt, log:[{d, ok, r}] }
-   stage = 連続で「言えた」回数。due = 次に届く日。r=1 はランダム練習での記録。 */
+   stage = 連続で「解けた」回数。due = 次に届く日。r=1 はランダム練習での記録。 */
 let S = load();
 function norm(j){
   j.items = Array.isArray(j.items) ? j.items : [];
@@ -741,7 +751,7 @@ function renderToday(){
   }else{
     const over = tl.filter(i => i.due < today()).length;
     h += `<div class="hero ${tl.length?'':'zero'}"><div class="n num">${tl.length}<small>問</small></div>
-      <div class="t"><b>今日の問題</b><span>${tl.length ? (over ? `うち ${over} 問は前の日からの繰り越し。` : '') + '問題だけを見て「間違えた理由」と「改善点」を言えるか、試してください。' : '今日の分は終わりました。下の「ランダムに解く」で練習もできます。'}</span></div>
+      <div class="t"><b>今日の問題</b><span>${tl.length ? (over ? `うち ${over} 問は前の日からの繰り越し。` : '') + '問題だけを見て、改善点をやりながら、ノートにもう一度解いてください。' : '今日の分は終わりました。下の「ランダムに解く」で練習もできます。'}</span></div>
       ${tl.length ? `<button class="big" id="goSeq">${ICO.check}今日の問題を解く（${tl.length}問）</button>` : ''}</div>`;
     h += sendCard();
     if(tl.length) h += `<div class="items">${tl.map(i => cardHtml(i, 'today')).join('')}</div>`;
@@ -776,10 +786,10 @@ function renderToday(){
 }
 function randPool(){ return S.cfg.randMast ? S.items.slice() : active(); }
 function flowCard(){
-  return `<div class="card" style="margin-top:10px"><h3>${ICO.redo}ミスマップの使い方（紙と同じ）</h3>
+  return `<div class="card" style="margin-top:10px"><h3>${ICO.redo}${APP_NAME}の使い方（紙と同じ）</h3>
     <p>紙のミスマップは「日付・ミス内容・間違えた理由・改善点・解き直し」の表でした。<br>
-    このアプリでは、<b>問題だけ</b>を見て「なぜ間違えたか」「次はどうするか」を自分の口で言えるかを練習します。<br>
-    ${gaps().length}回つづけて言えたら「極まった」。言えなかったら翌日からやり直しです。</p></div>`;
+    このアプリでは、丸付けで✕がついた問題を全部入れて、<b>改善点をやりながら、もう一度解きます</b>。<br>
+    ${gaps().length}回つづけて解けたら「極まった」。解けなかったら翌日からやり直しです。</p></div>`;
 }
 
 /* ===================== 解く（1問の画面） ===================== */
@@ -803,7 +813,7 @@ function openSolve(id, opt){
   const it = byId(id); if(!it) return;
   const practice = opt.mode === 'random';
   const host = $('#host');
-  const logs = it.log.slice().reverse().slice(0, 8).map(l => `<span class="${l.ok?'ok':'ng'}"><b>${md(l.d)}</b> ${l.ok ? '言えた' : '言えなかった'}${l.r ? '（ランダム）' : ''}</span>`).join('　');
+  const logs = it.log.slice().reverse().slice(0, 8).map(l => `<span class="${l.ok?'ok':'ng'}"><b>${md(l.d)}</b> ${l.ok ? '解けた' : '解けなかった'}${l.r ? '（ランダム）' : ''}</span>`).join('　');
   const early = !it.done && !practice && it.due > today();
   const prog = opt.inSession && sess ? `<div class="prog num">${sess.i+1} / ${sess.ids.length}${practice ? '　ランダム練習' : ''}</div>` : '';
   host.innerHTML = `<div class="page" id="pgSolve"><div class="pin">
@@ -813,17 +823,14 @@ function openSolve(id, opt){
     <div class="photos" id="svPhotos">${it.imgs.map((im, i) => `<div class="ph" data-g="${i}"><img data-img="${im}" alt=""><span class="no">${i+1}/${it.imgs.length}</span><span class="zm">${ICO.zoom}拡大</span></div>`).join('')}</div>
     ${it.text ? `<div class="qtext">${esc(it.text)}</div>` : ''}
 
-    <div class="ask" id="ask">
-      <div class="q"><span class="k">1</span><div><b>間違えた理由は？</b><span>この問題を、なぜ間違えたのか。声に出すか、頭の中で言ってください。</span></div></div>
-      <div class="q"><span class="k">2</span><div><b>改善点は？</b><span>次に同じ問題を解くとき、何をどう変えるか。</span></div></div>
-    </div>
+    <div class="ask" id="ask">${askHtml(it)}</div>
     <div class="card" style="padding:12px 14px">
       <div class="stage">${stageDots(it)}<b>${it.done ? '極まった' : stageText(it)}</b><span>${it.done ? md(it.doneAt)+' に極まりました' : (early ? '予定は '+mdw(it.due) : (it.due ? '次の予定 '+mdw(it.due) : ''))}</span></div>
       ${logs ? `<div class="log">${logs}</div>` : ''}
     </div>
   </div>
   <div class="judge"><div class="inner" id="judge">
-    <button class="reveal" id="svReveal">${ICO.eye}答え合わせ（理由と改善点を見る）</button>
+    <button class="reveal" id="svReveal">${ICO.eye}解き終わった（答え合わせへ）</button>
     ${opt.inSession ? `<button class="skip" id="svSkip">この問題はとばす</button>` : ''}
   </div></div></div>`;
   fillImgs(host);
@@ -833,21 +840,21 @@ function openSolve(id, opt){
   host.querySelectorAll('[data-g]').forEach(el => el.onclick = () => openGallery(it.imgs, Number(el.dataset.g)));
   $('#svReveal').onclick = () => {
     $('#ask').innerHTML = `
-      <div class="q ans"><span class="k">1</span><div><b>間違えた理由</b><div class="a">${esc(it.why) || '<span class="dim">（未記入）</span>'}</div></div></div>
-      <div class="q ans"><span class="k">2</span><div><b>改善点</b><div class="a">${esc(it.fix) || '<span class="dim">（未記入）</span>'}</div></div></div>
-      <div class="dim" style="margin-top:8px">自分の言ったことと合っていましたか？ 合っていれば「言えた」、ずれていたり出てこなかったら「言えなかった」。</div>`;
+      <div class="q ans"><span class="k">1</span><div><b>${isSolve(it.tag) ? 'どこで止まったか' : '間違えた理由'}</b><div class="a">${esc(it.why) || '<span class="dim">（未記入）</span>'}</div></div></div>
+      <div class="q ans"><span class="k">2</span><div><b>${isSolve(it.tag) ? '解き方のポイント' : '改善点'}</b><div class="a">${esc(it.fix) || '<span class="dim">（未記入）</span>'}</div></div></div>
+      <div class="dim" style="margin-top:8px">もう一度解いた答えは、合っていましたか？ 正解できたら「解けた」、まちがえた・途中で止まったら「解けなかった」。</div>`;
     const j = $('#judge');
     if(it.done && !practice){
       j.innerHTML = `<button class="mast" id="svReopen">${ICO.redo}もう一度、届くようにする</button>`;
       $('#svReopen').onclick = () => { reopen(it); closePage(); renderAll(); toast(gapLabel(gaps()[0])+'に届きます'); };
     }else{
-      j.innerHTML = `<button class="ng" id="svNg">${ICO.x}言えなかった</button><button class="ok" id="svOk">${ICO.check}言えた</button>
-        ${practice ? `<div class="hint">ランダム練習：「言えなかった」だけ記録して翌日からやり直し。「言えた」は予定を変えません。</div>` : (early ? `<div class="hint">予定より早い挑戦です（押しても構いません）</div>` : '')}`;
+      j.innerHTML = `<button class="ng" id="svNg">${ICO.x}解けなかった</button><button class="ok" id="svOk">${ICO.check}解けた</button>
+        ${practice ? `<div class="hint">ランダム練習：「解けなかった」だけ記録して翌日からやり直し。「解けた」は予定を変えません。</div>` : (early ? `<div class="hint">予定より早い挑戦です（押しても構いません）</div>` : '')}`;
       $('#svOk').onclick = () => {
         markOk(it, practice);
-        if(practice) toast('言えた（練習なので予定はそのまま）');
-        else if(it.done) toast('極まった！ '+gaps().length+'回つづけて言えました');
-        else toast('言えた。次は '+gapLabel(gaps()[it.stage])+'（'+md(it.due)+'）');
+        if(practice) toast('解けた（練習なので予定はそのまま）');
+        else if(it.done) toast('極まった！ '+gaps().length+'回つづけて解けました');
+        else toast('解けた。次は '+gapLabel(gaps()[it.stage])+'（'+md(it.due)+'）');
         after();
       };
       $('#svNg').onclick = () => { markMiss(it, practice); toast('記録しました。'+gapLabel(gaps()[0])+'にもう一度'); after(); };
@@ -857,6 +864,13 @@ function openSolve(id, opt){
   function after(){ if(opt.inSession && sess) nextInSession(); else { closePage(); renderAll(); } }
 }
 function closePage(){ $('#host').innerHTML = ''; }
+/* 解く画面の手順。どの種類の問題も「思い出す → もう一度解く → 答え合わせ」 */
+function askHtml(it){
+  const sv = isSolve(it.tag);
+  return `<div class="q"><span class="k">1</span><div><b>${sv ? 'どこで止まった？ 解き方のポイントは？' : '間違えた理由は？ 改善点は？'}</b><span>${sv ? '前にどこで手が止まったか、次はどう解くかを、頭の中で言ってください。' : 'なぜ間違えたか、次はどうするかを、頭の中で言ってください。'}</span></div></div>
+    <div class="q"><span class="k">2</span><div><b>ノートに、もう一度解く</b><span>${sv ? '言ったポイントどおりに、最後まで自力で解いてください。' : '改善点をやりながら、最後まで解いてください。'}</span></div></div>
+    <div class="q"><span class="k">3</span><div><b>解き終わったら、答え合わせ</b><span>下のボタンを押すと、登録した内容が出ます。答えは教材で確かめてください。</span></div></div>`;
+}
 
 /* ===================== 理由・改善点の形と判定 ===================== */
 /* 改善点は「いつ・何を・どうする」に分けて書く（案C）。明らかに行動になっていないものだけ弾く（案A）。
@@ -877,10 +891,15 @@ const composeFix = d => {
   const j = /[をにへとがはも]$/.test(w) ? '' : (/を/.test(h) ? 'に' : 'を');
   return (d.when ? d.when+'、' : '') + w + j + h;
 };
-function checkWhy(d){
+function checkWhy(d, tag){
   const a = d.did.trim(), t = a + d.then.trim();
+  if(isSolve(tag)){
+    if(a.length < 4) return { t:'どこで止まったかを書いてください', ex:'例：速さの式を立てるところで止まった' };
+    return null;
+  }
   if(a.length < 4) return { t:'何をした（しなかった）かを書いてください', ex:'例：問題文の「合計」を読み飛ばした' };
-  if(KNOW.test(t) && t.replace(KNOW, '').replace(PARTS, '').length < 4) return { t:'「覚えていなかった」「わからなかった」だけの理由は、知識不足なのでミスマップに入れません（それは暗記で解決）。', ex:'知っていたのに間違えたなら、そのとき何をしてしまったかを書いてください。例：公式は知っていたが、代入する数を取り違えた' };
+  KNOW.lastIndex = 0;
+  if(KNOW.test(t) && t.replace(KNOW, '').replace(PARTS, '').length < 4) return { t:`解き方や知識が分からなかった問題なら、ミスの種類で「${SOLVE_TAG}」を選んでください。`, ex:'知っていたのに間違えたなら、そのとき何をしてしまったかを書いてください。例：公式は知っていたが、代入する数を取り違えた' };
   return null;
 }
 function checkFix(d){
@@ -893,11 +912,32 @@ function checkFix(d){
   if(COUNTY.test(h) && !/[0-9０-９一二三四五六七八九十]/.test(h)) return { t:'「たくさん」「早く」は、数にしてください。', ex:'例：3回解く／10分で解く／1日5問' };
   return null;
 }
-function whyFields(p, d){
-  return `<div class="sub-in"><label>何をした／しなかった</label><input type="text" id="${p}Did" value="${esc(d.did)}" placeholder="例：問題文の「合計」を読み飛ばした" autocomplete="off"></div>
-    <div class="sub-in"><label>そのとき何が起きた（任意）</label><input type="text" id="${p}Then" value="${esc(d.then)}" placeholder="例：片方だけ計算して答えた" autocomplete="off"></div>
-    <div class="hint">「〜を覚えていなかった」だけの知識不足はミスマップに入れません（それは暗記で解決）。ここに入れるのは、知っていたのに間違えた問題です。</div>
+const WHY_TXT = {
+  miss:  { did:'何をした／しなかった', didPh:'例：問題文の「合計」を読み飛ばした', then:'そのとき何が起きた（任意）', thenPh:'例：片方だけ計算して答えた',
+           hint:'ケアレスミスは「何をしてしまったか」を書きます。解き方が分からなかった問題なら、上のミスの種類で「解法が分からなかった」を選んでください。' },
+  solve: { did:'どこで止まったか', didPh:'例：速さの式を立てるところで止まった', then:'解説を見て分かったこと（任意）', thenPh:'例：図をかくと、距離の関係が見えた',
+           hint:'解法が分からなかった問題は、どこで手が止まったかを書きます。' },
+};
+const FIX_HINT = {
+  miss:  '「気をつける」ではなく、手・目・口で何をするかを書きます。解き直しのときに、この改善点をやりながら解きます。',
+  solve: '次に同じ問題を解くとき、どう考えて解くかのポイントを書きます。解き直しのときは、このポイントどおりに解きます。',
+};
+function whyFields(p, d, tag){
+  const w = WHY_TXT[isSolve(tag) ? 'solve' : 'miss'];
+  return `<div class="sub-in"><label id="${p}DidL">${w.did}</label><input type="text" id="${p}Did" value="${esc(d.did)}" placeholder="${w.didPh}" autocomplete="off"></div>
+    <div class="sub-in"><label id="${p}ThenL">${w.then}</label><input type="text" id="${p}Then" value="${esc(d.then)}" placeholder="${w.thenPh}" autocomplete="off"></div>
+    <div class="hint" id="${p}WhyHint">${w.hint}</div>
     <div class="err hidden" id="${p}WhyErr"></div>`;
+}
+/* 種類を選び直したら、入力中の文字は消さずに、見出し・例・案内だけ変える */
+function refreshWhy(root, p, tag){
+  const k = isSolve(tag) ? 'solve' : 'miss', w = WHY_TXT[k], q = sel => root.querySelector(sel);
+  if(!q('#'+p+'DidL')) return;
+  q('#'+p+'DidL').textContent = w.did; q('#'+p+'Did').placeholder = w.didPh;
+  q('#'+p+'ThenL').textContent = w.then; q('#'+p+'Then').placeholder = w.thenPh;
+  q('#'+p+'WhyHint').textContent = w.hint;
+  const fh = q('#'+p+'FixHint'); if(fh) fh.textContent = FIX_HINT[k];
+  hideErr(root, p+'WhyErr');
 }
 function suggHtml(p, tag){
   const list = FIXES[tag];
@@ -911,7 +951,7 @@ function fixFields(p, d, tag){
     <div class="sub-in"><label>何を</label><input type="text" id="${p}What" value="${esc(d.what)}" placeholder="例：代入した式の符号／問題文の条件" autocomplete="off"></div>
     <div class="sub-in"><label>どうする</label><input type="text" id="${p}How" value="${esc(d.how)}" placeholder="例：指でさして、元の式と1つずつ見くらべる" autocomplete="off"></div>
     <div class="pv off" id="${p}FixPv"></div>
-    <div class="hint">「気をつける」ではなく、手・目・口で何をするかを書きます。解き直しのときに、この改善点を実際にやります。</div>
+    <div class="hint" id="${p}FixHint">${FIX_HINT[isSolve(tag) ? 'solve' : 'miss']}</div>
     <div class="err hidden" id="${p}FixErr"></div>`;
 }
 /* root: 探す範囲（document か シート）。d を書き換えつつ、プレビューを更新する */
@@ -958,8 +998,8 @@ function showErr(root, id, e){
 }
 function hideErr(root, id){ const el = root.querySelector('#'+id); if(!el) return; el.classList.add('hidden'); const f = el.closest('.field'); if(f) f.classList.remove('bad'); }
 /* 登録前の判定。ダメなら表示して false */
-function validateWhyFix(root, p, why, fix){
-  const e1 = checkWhy(why), e2 = checkFix(fix);
+function validateWhyFix(root, p, why, fix, tag){
+  const e1 = checkWhy(why, tag), e2 = checkFix(fix);
   if(e1) showErr(root, p+'WhyErr', e1); else hideErr(root, p+'WhyErr');
   if(e2) showErr(root, p+'FixErr', e2); else hideErr(root, p+'FixErr');
   if(e1){ const el = root.querySelector('#'+p+'WhyErr'); el.scrollIntoView({ behavior:'smooth', block:'center' }); }
@@ -1000,11 +1040,11 @@ function renderAdd(){
 
     <div class="field req"><label>教科<b>必須</b></label><div class="chips" id="addSubj">${SUBJ.map(s => `<button class="chip sub ${draft.subj===s?'on':''}" data-s="${s}" style="--c:${SUBJC[s]}">${s}</button>`).join('')}</div></div>
 
-    <div class="field req"><label>間違えた理由<b>必須</b></label>${whyFields('add', draft.whyP)}</div>
-
     <div class="field req"><label>ミスの種類<b>必須</b></label><div class="chips" id="addTag">${TAGS.map(t => `<button class="chip sm ${draft.tag===t?'on':''}" data-t="${t}">${t}</button>`).join('')}</div>
-      <div class="hint">同じ種類のミスが集まると、それがあなたのクセです。ミスマップのタブで見られます。</div>
+      <div class="hint">丸付けで✕がついた問題は、全部入れてOKです。同じ種類が集まると、それがあなたのクセです（ミスマップのタブで見られます）。</div>
       <div class="err hidden" id="addTagErr"></div></div>
+
+    <div class="field req"><label>間違えた理由<b>必須</b></label>${whyFields('add', draft.whyP, draft.tag)}</div>
 
     <div class="field req"><label>改善点（いつ・何を・どうする）<b>必須</b></label>${fixFields('add', draft.fixP, draft.tag)}</div>
 
@@ -1024,6 +1064,7 @@ function renderAdd(){
     $('#addTag').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.t === draft.tag));
     hideErr(document, 'addTagErr');
     refreshSugg(document, 'add', draft.tag, draft.fixP, saveDraft);
+    refreshWhy(document, 'add', draft.tag);
     saveDraft();
   });
   bindSugg(document, 'add', draft.fixP, saveDraft);
@@ -1032,7 +1073,7 @@ function renderAdd(){
     if(!draft.imgs.length && !draft.text.trim()) return toast('問題を、写真か文字で入れてください');
     if(!draft.subj) return toast('教科を選んでください');
     if(!draft.tag){ showErr(document, 'addTagErr', { t:'ミスの種類をひとつ選んでください', ex:'選ぶと、その種類でよく効く改善点が候補で出ます。' }); return toast('赤い所を直してください'); }
-    if(!validateWhyFix(document, 'add', draft.whyP, draft.fixP)) return toast('赤い所を直してください');
+    if(!validateWhyFix(document, 'add', draft.whyP, draft.fixP, draft.tag)) return toast('赤い所を直してください');
     const keepSubj = draft.subj;
     addItem({ ...draft, why:composeWhy(draft.whyP), fix:composeFix(draft.fixP), whyP:{ ...draft.whyP }, fixP:{ ...draft.fixP } });
     draft = { ...blankDraft(), subj:keepSubj };
@@ -1079,8 +1120,8 @@ function openEdit(id, opt){
       <input type="file" id="edFCam" accept="image/*" capture="environment" class="hidden"><input type="file" id="edFPick" accept="image/*" multiple class="hidden"></div>
     <div class="field"><label>問題（文字）</label><textarea id="edText" rows="2">${esc(d.text)}</textarea></div>
     <div class="field"><label>教科</label><div class="chips" id="edSubj">${SUBJ.map(s => `<button class="chip sub ${s===d.subj?'on':''}" data-s="${s}" style="--c:${SUBJC[s]}">${s}</button>`).join('')}</div></div>
-    <div class="field"><label>間違えた理由</label>${whyFields('ed', d.whyP)}</div>
     <div class="field"><label>ミスの種類</label><div class="chips" id="edTag">${TAGS.map(t => `<button class="chip sm ${t===d.tag?'on':''}" data-t="${t}">${t}</button>`).join('')}</div><div class="err hidden" id="edTagErr"></div></div>
+    <div class="field"><label>間違えた理由</label>${whyFields('ed', d.whyP, d.tag)}</div>
     <div class="field"><label>改善点（いつ・何を・どうする）</label>${fixFields('ed', d.fixP, d.tag)}</div>
     <button class="btn-primary" id="edSave">保存する</button>
     <button class="btn-line danger" id="edDel">この問題を消す</button>
@@ -1109,6 +1150,7 @@ function openEdit(id, opt){
     bg.querySelectorAll('#edTag .chip').forEach(x => x.classList.toggle('on', x.dataset.t === d.tag));
     hideErr(bg, 'edTagErr');
     refreshSugg(bg, 'ed', d.tag, d.fixP);
+    refreshWhy(bg, 'ed', d.tag);
   });
   bindWhyFix(bg, 'ed', d.whyP, d.fixP);
   bindSugg(bg, 'ed', d.fixP);
@@ -1117,7 +1159,7 @@ function openEdit(id, opt){
   bg.addEventListener('click', e => { if(e.target === bg) close(); });
   bg.querySelector('#edSave').onclick = async () => {
     if(!d.tag){ showErr(bg, 'edTagErr', { t:'ミスの種類をひとつ選んでください', ex:'ミスマップの分析に使います。' }); return toast('赤い所を直してください'); }
-    if(!validateWhyFix(bg, 'ed', d.whyP, d.fixP)) return toast('赤い所を直してください');
+    if(!validateWhyFix(bg, 'ed', d.whyP, d.fixP, d.tag)) return toast('赤い所を直してください');
     it.subj = d.subj; it.text = bg.querySelector('#edText').value.trim(); it.tag = d.tag; it.imgs = d.imgs;
     it.whyP = { ...d.whyP }; it.fixP = { ...d.fixP }; it.why = composeWhy(d.whyP); it.fix = composeFix(d.fixP);
     save(); bg.remove(); await sweepImgs(); openSolve(it.id, opt); renderAll(); toast('直しました');
@@ -1204,8 +1246,8 @@ function renderMap(){
   h += list.length ? `<div class="mlist">${list.map(rowHtml).join('')}</div>` : `<div class="empty"><b>この教科の問題はありません</b></div>`;
   h += `<div class="sec-label" style="margin-top:18px">極まった問題<span class="cnt num">${mas.length}</span><span class="spacer"></span>${mas.length ? `<button class="lnk" id="tglMast">${showMast ? 'たたむ' : '見る ›'}</button>` : ''}</div>`;
   if(showMast && mas.length) h += `<div class="mlist">${mas.map(rowHtml).join('')}</div>`;
-  else if(mas.length) h += `<div class="dim">${gaps().length}回つづけて言えた問題です。消えずにここに残ります。</div>`;
-  else h += `<div class="dim">${gaps().length}回「言えた」がそろうと、ここに移ります。</div>`;
+  else if(mas.length) h += `<div class="dim">${gaps().length}回つづけて解けた問題です。消えずにここに残ります。</div>`;
+  else h += `<div class="dim">${gaps().length}回「解けた」がそろうと、ここに移ります。</div>`;
   root.innerHTML = h;
   root.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { mapFilter = (mapFilter === b.dataset.f && b.classList.contains('bar')) ? 'all' : b.dataset.f; renderMap(); });
   const tg = root.querySelector('#tglMast'); if(tg) tg.onclick = () => { showMast = !showMast; renderMap(); };
@@ -1299,8 +1341,8 @@ async function drawSend(items, no, dateStr){
 
   // 見出し
   const ds = items.map(i => i.created).sort();
-  g.fillStyle = C.gold; g.font = '700 50px '+FF; g.textAlign = 'left'; g.fillText('ミスマップ', PAD, 78);
-  const tw = g.measureText('ミスマップ').width;
+  g.fillStyle = C.gold; g.font = '700 50px '+FF; g.textAlign = 'left'; g.fillText(APP_NAME, PAD, 78);
+  const tw = g.measureText(APP_NAME).width;
   g.fillStyle = C.ink; g.font = '700 34px '+FF; g.fillText(`第${no}回　${items.length}問`, PAD + tw + 22, 76);
   g.fillStyle = C.mut; g.font = '400 25px '+FF;
   g.fillText(`${md(ds[0])}〜${md(ds[ds.length-1])} に作った問題`, PAD, 122);
@@ -1343,7 +1385,7 @@ async function drawSend(items, no, dateStr){
     };
     pill(it.subj, SUBJC[it.subj] || SUBJC['その他']);
     if(it.tag) pill(it.tag, C.ink);
-    // 解き直し（●＝言えた回数）
+    // 解き直し（●＝解けた回数）
     const n = gaps().length, dr = 8, dx0 = RX + RW - n*22 + 6;
     for(let i = 0; i < n; i++){
       g.beginPath(); g.arc(dx0 + i*22, cy - 9, dr, 0, Math.PI*2);
@@ -1388,7 +1430,7 @@ function openSendSheet(o){
     <h2>ミスマップの部屋に出す（第${o.no}回）</h2>
     <p class="dim" id="sdMsg">画像を作っています…</p>
     <div id="sdBody" class="hidden">
-      <img class="shot" id="sdImg" alt="ミスマップ 第${o.no}回">
+      <img class="shot" id="sdImg" alt="${APP_NAME} 第${o.no}回">
       <ol class="steps3">
         <li>下の「部屋に出す」を押す</li>
         <li>出てきた画面で <b>Discord</b> を選ぶ（出てこないときは「画像を保存」してから、Discord で画像を選ぶ）</li>
@@ -1402,7 +1444,7 @@ function openSendSheet(o){
   const close = () => { bg.remove(); if(url) URL.revokeObjectURL(url); };
   bg.querySelector('#sdClose').onclick = close;
   bg.addEventListener('click', e => { if(e.target === bg) close(); });
-  const name = `ミスマップ_第${o.no}回_${dateStr}.jpg`;
+  const name = `${APP_NAME}_第${o.no}回_${dateStr}.jpg`;
   let blob = null;
   const done = () => {
     if(o.again) return;
@@ -1467,7 +1509,7 @@ function gapPreviewHtml(g){
   let c = 0; const days = g.map(x => (c += x));
   return `<div class="gp-pv"><b>届き方：</b>${gapsText(g)}<br>
     毎回その日に解くと、登録から <b class="num">${days.join('・')}</b> 日目に届きます。<br>
-    <b class="num">${g.length}回</b>つづけて言えたら「極まった」。</div>`;
+    <b class="num">${g.length}回</b>つづけて解けたら「極まった」。</div>`;
 }
 function renderGaps(){
   if(!gapEdit) gapEdit = gaps().slice();
@@ -1514,7 +1556,7 @@ function commitGaps(g, replanAll){
   }
   save(); gapEdit = null;
   renderGaps(); renderSlides(); renderAdd(); renderAll();
-  toast(replanAll ? (n ? `間隔を変えて、${n}問の予定を計算しなおしました` : '間隔を変えました。今ある問題の予定は変わりません') : '間隔を変えました。次に「言えた」を押したときから使われます');
+  toast(replanAll ? (n ? `間隔を変えて、${n}問の予定を計算しなおしました` : '間隔を変えました。今ある問題の予定は変わりません') : '間隔を変えました。次に「解けた」を押したときから使われます');
 }
 function askApplyGaps(g){
   const act = active();
@@ -1533,7 +1575,7 @@ function askApplyGaps(g){
     <button class="btn-primary" id="gpRe" style="margin-top:12px">新しい間隔で計算しなおす</button>
     <div class="dim" style="margin:6px 2px 0">${parts}。テスト前に間隔を短くしたときなどは、こちらにしてください。</div>
     <button class="btn-line" id="gpKeep" style="margin-top:14px">いまの予定のままにする</button>
-    <div class="dim" style="margin:6px 2px 0">次に「言えた」を押したときから、新しい間隔になります。</div>
+    <div class="dim" style="margin:6px 2px 0">次に「解けた」を押したときから、新しい間隔になります。</div>
     <button class="close">やめる</button></div>`;
   document.body.appendChild(bg);
   const close = () => bg.remove();
@@ -1638,7 +1680,7 @@ async function importText(text, quiet){
     return { imgs:n };
   }
   const d = j && (j.data || j);
-  if(!d || !Array.isArray(d.items)){ toast('ミスマップの控えではないようです'); return null; }
+  if(!d || !Array.isArray(d.items)){ toast(APP_NAME+'の控えではないようです'); return null; }
   let added = 0, updated = 0;
   for(const it of d.items){
     if(!it || !it.id) continue;
@@ -1682,13 +1724,13 @@ $('#btnWipe').onclick = async () => {
    ルール: 機能を変えたら、ここ（slides()）を必ず同じ更新で直す。
    ※ 設定の「更新の履歴」は v16 で廃止（生徒には不要というユーザー判断）。CHANGES 配列も消した。 */
 function slides(){ return [
-  { ico:'doc', t:'ミスマップとは', p:'同じミスを<b>二度としない</b>ための道具です。紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）を、そのままアプリにしました。', ex:'ここに入れるのは「知っていたのに間違えた問題」。覚えていなかっただけの問題は、暗記で解決します。' },
-  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、ミスした問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科を選びます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。' },
-  { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。「そのとき何が起きた」は任意です。', ex:'例：問題文の「合計」を読み飛ばした → 片方だけ計算して答えた' },
-  { ico:'fix', t:'3. 改善点は3つに分けて', p:'「<b>いつ</b>・<b>何を</b>・<b>どうする</b>」で書くと、1文に組み上がります。「気をつける」「見直す」のように行動になっていないと、登録できません。', ex:'例：解き終わったら、代入した式の符号を、指でさして元の式と見くらべる' },
+  { ico:'doc', t:`${APP_NAME}とは`, p:'丸付けで✕がついた問題を、<b>全部まとめて解き直す</b>ための道具です。ケアレスミスも、解法が分からなかった問題も、ここに入れます。', ex:'紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）と同じ流れを、アプリにしました。' },
+  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。' },
+  { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。解法が分からなかった問題は、「<b>どこで止まったか</b>」を書きます。', ex:'例：問題文の「合計」を読み飛ばした／速さの式を立てるところで止まった' },
+  { ico:'fix', t:'3. 改善点は3つに分けて', p:'「<b>いつ</b>・<b>何を</b>・<b>どうする</b>」で書くと、1文に組み上がります。「気をつける」「見直す」のように行動になっていないと、登録できません。', ex:'例：解き終わったら、代入した式の符号を指でさして元の式と見くらべる。解法が分からなかった問題は、次にどう解くかのポイントを書きます。' },
   { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます。' },
-  { ico:'eye', t:'5. 問題だけを見て言う', p:'問題だけを見て、「なぜ間違えたか」「次はどうするか」を<b>自分の口で言って</b>から、「答え合わせ」で登録した内容と比べます。', ex:`言えた → 次の間隔へ。${gaps().length}回つづけて言えたら「極まった」。言えなかった → 翌日からやり直し。` },
-  { ico:'shuffle', t:'6. ランダムに解く', p:'予定に関係なく、3・5・10問を練習できます。ランダムのときは「言えなかった」だけ記録され、「言えた」は予定を変えません。', ex:'間隔をあけて覚える仕組みを崩さないためです。' },
+  { ico:'eye', t:'5. もう一度解く', p:'問題だけが出ます。理由と改善点を思い出してから、<b>改善点をやりながらノートにもう一度解きます</b>。解き終わったら「答え合わせ」で、登録した内容を見ます。', ex:`解けた → 次の間隔へ。${gaps().length}回つづけて解けたら「極まった」。解けなかった → 翌日からやり直し。` },
+  { ico:'shuffle', t:'6. ランダムに解く', p:'予定に関係なく、3・5・10問を練習できます。ランダムのときは「解けなかった」だけ記録され、「解けた」は予定を変えません。', ex:'間隔をあけて覚える仕組みを崩さないためです。' },
   { ico:'chart', t:'7. ミスマップを見る', p:'教科別の件数と、ミスの種類別の件数（<b>ミスパターン分析</b>）が自動でたまります。いちばん多い種類が、あなたのミスのクセです。', ex:'そのクセの改善点を、ほかの問題にも使ってみてください。' },
   { ico:'send', t:'8. ミスマップの部屋に出す', p:`問題を <b>${SEND_N}問</b> 作るごとに、紙のミスマップと同じ形の <b>1枚の画像</b> にして、Discord の <b>#ミスマップ</b> に出します。ひとりで進めずに、フィードバックをもらうためです。`, ex:'「解く」タブの「ミスマップの部屋に出す」から。共有の画面で Discord を選び、#ミスマップ に送ります。出した回は「ミスマップ」タブにたまり、あとから出し直せます。' },
   { ico:'install', t:'9. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、登録した問題と写真が消えてしまうことがあります。', ex:'Safari の共有ボタン →「ホーム画面に追加」→「追加」。やり方は、上の赤い帯の「やり方」からも見られます。' },
@@ -1722,7 +1764,7 @@ function bindSlides(root){
 function renderSlides(){ const box = $('#setSlides'); box.innerHTML = slidesHtml(); bindSlides(box); }
 function openHelp(){
   const bg = document.createElement('div'); bg.className = 'sheet-bg';
-  bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>ミスマップの使い方</h2>${slidesHtml()}<button class="close">閉じる</button></div>`;
+  bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>${APP_NAME}の使い方</h2>${slidesHtml()}<button class="close">閉じる</button></div>`;
   document.body.appendChild(bg);
   bindSlides(bg);
   bg.querySelector('.close').onclick = () => bg.remove();
@@ -1810,6 +1852,8 @@ window.addEventListener('pagehide', () => save());
 window.addEventListener('beforeunload', () => save());
 
 /* 起動 */
+document.title = APP_NAME; const _h1 = document.querySelector('header.app h1'); if(_h1) _h1.textContent = APP_NAME;
+document.querySelectorAll('.appname').forEach(e => { e.textContent = APP_NAME; });
 renderToday();
 checkInstall();
 renderAdd();

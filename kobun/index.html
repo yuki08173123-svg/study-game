@@ -303,6 +303,13 @@ body.timing .xpop{top:calc(var(--sbh,52px) + 52px)}
 .gset button span{font-size:13.5px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .helpb{width:34px;height:34px;border-radius:50%;background:var(--chip);font-weight:700;color:var(--ai);flex:none}
 .hw{color:var(--shu);font-weight:700}
+.ftw{display:inline-block;cursor:pointer;margin-top:4px}
+.ftw .ft-body{display:none;color:var(--muted)}
+.ftw.open .ft-body{display:inline}
+.ftw.open .ft-hide{display:none}
+.ft-hide{display:inline-flex;align-items:center;gap:4px;background:var(--ai-soft);color:var(--ai);border:1.5px dashed #9AA6C8;border-radius:999px;padding:3px 12px;font-size:13px;font-weight:700;font-family:'BIZ UDPGothic',sans-serif}
+.ftw.sm{margin-top:0}
+.ftw.sm .ft-hide{font-size:1.7cqw;padding:.1cqw 1.2cqw;border-width:.2cqw}
 .ex .hw,.cw .hw,.sl-ex .ex .hw{font-weight:900}
 .goro{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(154,118,48,.35);font-weight:700;color:#5A3E12}
 .goro b{display:inline-block;background:var(--gold);color:#fff;font-size:11.5px;padding:1px 8px;border-radius:999px;margin-right:8px;vertical-align:1px}
@@ -390,7 +397,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js?v=10"></script>
 <script>
 'use strict';
-const VER = 10;
+const VER = 11;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -688,7 +695,7 @@ function slideHTML(i){
     <div class="sl-main"><div class="sl-l hl" data-sec="w"><div class="sl-w" style="font-size:${Math.min(8.4, 40 / [...w.w].length).toFixed(2)}cqw">${esc(w.w)}</div>${w.k ? `<div class="sl-k">${esc(w.k)}</div>` : ''}</div>
       <div class="sl-r hl" data-sec="m"><div class="sl-m">${esc(w.m)}</div>${w.s.length ? `<div class="sl-s">${w.s.map(esc).join('／')}</div>` : ''}</div></div>
     <div class="sl-tip hl" data-sec="tip"${slideTipSize(w)}><b>覚え方</b>${esc(w.tip)}${w.g ? `<div class="sl-g"><b>語呂</b>${esc(w.g)}</div>` : ''}</div>
-    ${w.ex ? `<div class="sl-ex hl" data-sec="ex">例）<span class="ex">${exHTML(w)}</span>　<span class="tr">→ ${ftHTML(w)}</span></div>` : ''}
+    ${w.ex ? `<div class="sl-ex hl" data-sec="ex">例）<span class="ex">${exHTML(w)}</span>　${ftBox(w, true)}</div>` : ''}
   </div><img class="simg" src="slides/${pad3(i+1)}.png" alt="" onerror="this.remove()"></div>`;
 }
 /* 例文：words.js の exr（{漢字|よみ}）があれば、ふりがな（ruby）をつけて出す。設定で消せる */
@@ -705,6 +712,17 @@ function exHTML(w){
 }
 /* 例文の全訳（ft）。[ ] は見出し語の訳（赤くする）。ft がなければ単語の訳だけ */
 function ftHTML(w){ return w.ft ? esc(w.ft).replace(/\[/g, '<span class="hw">').replace(/\]/g, '</span>') : esc(w.tr); }
+/* 全訳は、はじめはかくしておき、ワンタップで見せる（もう一度押すとかくれる） */
+function ftBox(w, small){
+  return `<span class="ftw${small ? ' sm' : ''}" role="button" aria-label="タップで全訳を見る"><span class="ft-hide">▼ タップで全訳を見る</span><span class="ft-body">→ ${ftHTML(w)}</span></span>`;
+}
+document.addEventListener('click', e => {
+  const f = e.target.closest && e.target.closest('.ftw');
+  if(!f) return;
+  e.stopPropagation(); e.preventDefault();   // 単語カードがうら返らないように
+  f.classList.toggle('open');
+  const sl = f.closest('.slide'); if(sl) fitSlide(sl.parentNode);
+}, true);
 function ftText(w){ return w.ft ? w.ft.replace(/[\[\]]/g, '') : w.tr; }
 /* 語呂合わせ（words.js の g）。覚え方の下に1行だけ */
 function goroHTML(w){ return w.g ? `<div class="goro"><b>語呂</b>${esc(w.g)}</div>` : ''; }
@@ -716,7 +734,7 @@ function openWord(i, list){
     <div style="color:var(--shu);font-weight:700;font-size:19px">${esc(w.m)}</div>
     ${w.s.length ? `<div class="dim">ほかの意味：${w.s.map(esc).join('／')}</div>` : ''}</div>
     <div class="note" style="margin-top:10px"><b>覚え方</b>　${esc(w.tip)}${goroHTML(w)}</div>
-    ${w.ex ? `<p style="margin:10px 0 0"><span style="font-family:var(--mincho);font-weight:700">${exHTML(w)}</span><br><span class="dim">→ ${ftHTML(w)}</span></p>` : ''}
+    ${w.ex ? `<p style="margin:10px 0 0"><span style="font-family:var(--mincho);font-weight:700">${exHTML(w)}</span><br>${ftBox(w)}</p>` : ''}
     <p class="dim">テスト：正解 ${s.c}回・まちがい ${s.x}回${s.due ? `・<b style="color:var(--shu)">リマインド ${md(s.due)}</b>` : ''}${isMastered(i) ? '・<b style="color:var(--ok)">定着</b>' : ''}</p>
     <button class="btn" data-a="play">▶ 1分解説（読み上げ）</button>
     <button class="btn sub" data-a="prompt">スライド画像用のプロンプトをコピー</button>`);
@@ -821,7 +839,7 @@ function lessonParts(i){
     { sec:'m', text: 'いちばん大事な意味は、' + w.m + '。' + (w.s.length ? 'ほかに、' + w.s.join('、') + '、という意味もあります。' : ''), show: `<b style="color:var(--shu)">${esc(w.m)}</b>${w.s.length ? '<br><span class="dim">ほかに：' + w.s.map(esc).join('／') + '</span>' : ''}` },
     { sec:'tip', text: '覚え方。' + (w.ty || w.tip), show: '<b style="color:var(--gold)">覚え方</b>　' + esc(w.tip) + goroHTML(w) },
   ];
-  if(w.ex) parts.push({ sec:'ex', text: '例文。' + (w.ey || yomi(w.ex)).replace(/…/g, '、') + '。訳は、' + ftText(w) + '。', show: `<span class="cw" style="font-size:17px">${exHTML(w)}</span><br><span class="dim">→ ${ftHTML(w)}</span>` });
+  if(w.ex) parts.push({ sec:'ex', text: '例文。' + (w.ey || yomi(w.ex)).replace(/…/g, '、') + '。訳は、' + ftText(w) + '。', show: `<span class="cw" style="font-size:17px">${exHTML(w)}</span><br>${ftBox(w)}` });
   parts.push({ sec:'w', text: 'もう一度。' + say + '、' + w.m + '。', show: `<b class="cw">${esc(w.w)}</b>　＝　<b style="color:var(--shu)">${esc(w.m)}</b>` });
   return parts;
 }
@@ -834,7 +852,7 @@ function lessonPlay(){
   const i = L.ids[L.k], parts = lessonParts(i), seq = ++L.seq, slide = $('.ov .slide'), no = pad3(i+1);
   L.playing = true; setPlayIcon(); slide.classList.add('speaking');
   const bar = $('.ov .pbar i'), lt = $('.ov .lt');
-  const show = k => { const p = parts[Math.min(k, parts.length-1)]; slide.querySelectorAll('.hl').forEach(h => h.classList.toggle('now', h.dataset.sec === p.sec)); const cap = $('.ov .cap'); if(cap) cap.innerHTML = p.show; };
+  const show = k => { const p = parts[Math.min(k, parts.length-1)]; if(p.sec === 'ex') setTimeout(() => { $$('.ov .ftw').forEach(f => f.classList.add('open')); fitSlide($('.ov')); }, 0); slide.querySelectorAll('.hl').forEach(h => h.classList.toggle('now', h.dataset.sec === p.sec)); const cap = $('.ov .cap'); if(cap) cap.innerHTML = p.show; };
   stopSpeech(); clearInterval(L.timer);
   const rec = AIDX && AIDX[no];
   if(S.cfg.voice && S.cfg.voiceMode !== 'device' && rec){
@@ -914,7 +932,7 @@ function drawCard(){
         <div class="fc-face front"><span class="no">No.${i+1}　${esc(pname(w.p))}</span><div class="w">${esc(w.w)}</div><div class="k">${esc(w.k)}</div><div class="hint">タップでうら返す</div></div>
         <div class="fc-face back"><div class="bw">${esc(w.w)} <span class="dim" style="font-size:14px;font-family:'BIZ UDPGothic'">${esc(w.k)}</span></div>
           <div class="bm">${esc(w.m)}</div>${w.s.length ? `<div class="bs">ほかに：${w.s.map(esc).join('／')}</div>` : ''}
-          ${w.ex ? `<div class="bx"><span class="ex">${exHTML(w)}</span><br><span class="dim">→ ${ftHTML(w)}</span></div>` : ''}
+          ${w.ex ? `<div class="bx"><span class="ex">${exHTML(w)}</span><br>${ftBox(w)}</div>` : ''}
           <div class="bt"><b>覚え方</b>　${esc(w.tip)}${goroHTML(w)}</div></div>
       </div></div>
       <div class="row"><button class="btn shu" data-a="no">まだ</button><button class="btn" data-a="yes">覚えた</button></div>

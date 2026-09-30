@@ -3,28 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ミスマップ</title>
+<title>Essence</title>
+<meta name="apple-mobile-web-app-title" content="Essence">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#0F1830">
+<meta name="theme-color" content="#0B0B0C">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Bodoni+Moda:wght@500;700&display=swap">
 <style>
 /* 単一テーマ: 深い紺の地に金の差し色（白い面は使わない）。ライト/ダークの切りかえはしない。 */
 :root{
   color-scheme:dark;
-  --bg:#0F1830; --card:#172342; --ink:#EEF1F8; --muted:#B6C0D6; --line:#2A3A62;
-  --accent:#D8BB6E; --accent-soft:#2B3044; --accent-ink:#141B2D; --accent-line:rgba(216,187,110,.55);
-  --done:#3FBF95; --done-soft:#1B3A34;
-  --star:#D8BB6E; --star-soft:#3A3320;
-  --miss:#E08B7F; --miss-soft:#40262B; --miss-ink:#1A0F0E;
-  --blue:#4664BE; --blue-soft:#22305A;
-  --chip:#1F2C4E; --shadow:0 1px 2px rgba(0,0,0,.35), 0 6px 20px rgba(0,0,0,.28); --shadow-lg:0 12px 32px rgba(0,0,0,.45);
-  --new:#F0A05A; --navy1:#16264F; --navy2:#273D84; --gold:#D8BB6E;
+  /* v18〜 Essence: アイコン（黒い板に金の E）にそろえた黒と金。値はすべてコントラスト比 4.5 以上を確認ずみ */
+  --bg:#0B0B0C; --card:#151412; --ink:#F2EDE3; --muted:#B9AF9E; --line:#2E2A22;
+  --accent:#E0C06A; --accent-soft:#2A2416; --accent-ink:#16120A; --accent-line:rgba(224,192,106,.45);
+  --done:#7CB99A; --done-soft:#17231D;
+  --star:#E0C06A; --star-soft:#2A2416;
+  --miss:#E08B7F; --miss-soft:#2A1716; --miss-ink:#1A0E0C;
+  --blue:#A9B0BC; --blue-soft:#1C1D20;
+  --chip:#1F1C17; --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.45); --shadow-lg:0 14px 36px rgba(0,0,0,.6);
+  --new:#E0C06A; --navy1:#17140E; --navy2:#0D0D0E; --gold:#E0C06A;
+  --metal:linear-gradient(180deg,#F3DC95 0%,#E0C06A 42%,#B08A36 100%);
+  --hair:rgba(224,192,106,.14);
 }
 *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
 html{-webkit-text-size-adjust:100%;}
@@ -346,13 +350,72 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 .srow span{flex:1; color:var(--muted);}
 .srow svg{width:18px; height:18px; stroke:var(--muted); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
 .steps3{margin:4px 0 10px 20px; font-size:14px; line-height:1.85;}
+
+/* ===================== Essence の見た目（v18〜） =====================
+   アイコン（黒い板に金の「E」）にそろえた。色は :root の変数、部品の形はここ。
+   上のほうにある同じ部品の規則より後ろにあるので、ここが優先される。見た目を直すときはまずここを見る。 */
+body{background:radial-gradient(90% 38% at 50% -8%, rgba(224,192,106,.08), rgba(224,192,106,0) 70%), var(--bg);}
+header.app{background:linear-gradient(180deg, var(--bg) 72%, rgba(11,11,12,0));}
+.wm{display:flex; align-items:center; gap:10px; margin:0;}
+.wm .logo{width:32px; height:32px; border-radius:8px; box-shadow:0 0 0 1px rgba(224,192,106,.35), 0 4px 14px rgba(0,0,0,.6);}
+.wm .t{font-family:'Bodoni Moda','Times New Roman',serif; font-weight:700; font-size:28px; letter-spacing:.03em; line-height:1.1;
+  background:linear-gradient(180deg,#F7E6AE 0%,#E0C06A 48%,#B08A36 100%); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.title-row .ver{font-family:'Bodoni Moda','Times New Roman',serif; letter-spacing:.08em;}
+.icon-btn{background:transparent; border:1px solid var(--accent-line);}
+.icon-btn svg{stroke:var(--accent);}
+
+/* 金の面（主なボタン・選んだ札） */
+.btn-primary, .hero .big, .judge .ok, .judge .reveal, .chip.on, .postnote .go, .update, nav.tabs .badge{
+  background:var(--metal); color:var(--accent-ink); border-color:transparent;
+  box-shadow:inset 0 1px 0 rgba(255,244,210,.5), 0 8px 22px rgba(176,138,54,.22);}
+.btn-primary:disabled{filter:saturate(.3) brightness(.55);}
+.hero .big svg, .judge .ok svg, .judge .reveal svg, .update svg{stroke:var(--accent-ink);}
+.update .t b{color:var(--accent-ink);} .update .t span{color:rgba(22,18,10,.78); opacity:1;} .update .go{background:rgba(22,18,10,.14); color:var(--accent-ink);}
+.chip.sub.on{background:var(--c); color:#141210; box-shadow:none;}
+
+/* 線だけのボタン */
+.btn-line{background:transparent; border:1px solid rgba(224,192,106,.3); color:var(--ink);}
+.btn-line.danger{border-color:rgba(224,139,127,.4); color:var(--miss);}
+.rand .go{background:transparent; border:1px solid var(--accent-line); color:var(--accent); box-shadow:none;}
+.rand .go svg{stroke:var(--accent);}
+.judge .ng{background:transparent; border:1px solid rgba(224,139,127,.55); color:var(--miss); box-shadow:none;}
+.judge .ng svg{stroke:var(--miss);}
+
+/* カードと札: 細い金の線で縁どる */
+.card, .rand, .item, .mrow, .field, .stat, .ask, .qtext, .gp-row, .bt, .srow{border-color:var(--hair);}
+.card{border-radius:18px;}
+.chip{border:1px solid var(--hair);}
+.stat b{font-family:'Bodoni Moda','Times New Roman',serif;}
+
+/* 今日の問題（いちばん上） */
+.hero{background:radial-gradient(120% 90% at 0% 0%, rgba(224,192,106,.16), rgba(224,192,106,0) 55%), linear-gradient(160deg,#17140E 0%,#0D0D0E 100%);
+  border:1px solid rgba(224,192,106,.42); color:var(--ink); box-shadow:0 18px 40px rgba(0,0,0,.55);}
+.hero .n{font-family:'Bodoni Moda','Times New Roman',serif; font-weight:700; font-size:54px; color:var(--gold);}
+.hero .n small{color:var(--muted); font-family:'BIZ UDPGothic',sans-serif;}
+.hero.zero .n{color:var(--muted);}
+.hero .t b{color:var(--ink);} .hero .t span{color:var(--muted); opacity:1;}
+
+/* 使い方スライド */
+.sl{background:radial-gradient(120% 80% at 0% 0%, rgba(224,192,106,.14), rgba(224,192,106,0) 55%), linear-gradient(160deg,#17140E,#0D0D0E);
+  border:1px solid rgba(224,192,106,.4); color:var(--ink);}
+.sl .no{font-family:'Bodoni Moda','Times New Roman',serif; font-size:14px; letter-spacing:.22em;}
+.sl .pic{background:rgba(224,192,106,.07); border:1px solid rgba(224,192,106,.25);}
+.sl .ex{color:var(--muted); border-top-color:rgba(224,192,106,.22);}
+
+/* 下のタブと、解く画面の下の帯 */
+nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.18);}
+.judge{background:rgba(11,11,12,.94); border-top:1px solid rgba(224,192,106,.18);}
+.sheet{border-top:1px solid rgba(224,192,106,.25);}
+.thumb .x, .thumb .no, .photos .ph .no, .photos .ph .zm{background:rgba(11,11,12,.82);}
+/* 種類の名前「解法が分からなかった」が切れないように、棒グラフの名前の欄を広げる */
+.bar{grid-template-columns:136px 1fr 34px;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="app">
     <div class="title-row">
-      <h1>ミスマップ</h1><span class="ver" id="verLabel"></span>
+      <h1 class="wm"><img class="logo" src="icon-192.png" alt=""><span class="t" id="appTitle">Essence</span></h1><span class="ver" id="verLabel"></span>
       <span class="spacer"></span>
       <span class="saved" id="savedMark">保存済み</span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
@@ -461,15 +524,15 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 17;
+const VER = 18;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
-const APP_NAME = 'ミスマップ';
+const APP_NAME = 'Essence';
 const KEY = 'miss_v1', BK = 'miss_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const SUBJ = ['英語','数学','国語','理科','社会','その他'];
-const SUBJC = { '英語':'#7FA6FF', '数学':'#5ED3A2', '国語':'#FF8C7E', '理科':'#5FD0DC', '社会':'#FFA45C', 'その他':'#A9B4C8' };
+const SUBJC = { '英語':'#8FA8E8', '数学':'#7CC3A0', '国語':'#E3928A', '理科':'#7FC4CC', '社会':'#E0A86A', 'その他':'#B8B0A2' };
 /* ミスの種類（ミスパターン分析用）。Discordでヒラが挙げた例をもとにした */
 const SOLVE_TAG = '解法が分からなかった';
 const isSolve = t => t === SOLVE_TAG;
@@ -1300,9 +1363,9 @@ function markSent(ids, no){
 /* 画像を作る（幅1080px。iPhone の canvas の上限 約1,600万px をこえないように縮める） */
 async function drawSend(items, no, dateStr){
   const FF = "'BIZ UDPGothic','Hiragino Sans','Hiragino Kaku Gothic ProN',sans-serif";
-  try{ await Promise.all([document.fonts.load('700 30px "BIZ UDPGothic"'), document.fonts.load('400 30px "BIZ UDPGothic"')]); }catch(e){}
+  try{ await Promise.all([document.fonts.load('700 30px "BIZ UDPGothic"'), document.fonts.load('400 30px "BIZ UDPGothic"'), document.fonts.load('700 54px "Bodoni Moda"', APP_NAME)]); }catch(e){}
   const W = 1080, PAD = 40, CW = W - PAD*2, TH = 210, IN = 22, RX = PAD + IN + TH + 26, RW = W - PAD - IN - RX;
-  const C = { bg:'#0F1830', card:'#172342', line:'#2A3A62', ink:'#EEF1F8', mut:'#B6C0D6', gold:'#D8BB6E', done:'#3FBF95', chip:'#1F2C4E' };
+  const C = { bg:'#0B0B0C', card:'#151412', line:'#2E2A22', ink:'#F2EDE3', mut:'#B9AF9E', gold:'#E0C06A', done:'#7CB99A', chip:'#1F1C17' };
   const mc = document.createElement('canvas').getContext('2d');
   const wrap = (g, text, font, width, max) => {
     g.font = font; const out = [];
@@ -1341,7 +1404,7 @@ async function drawSend(items, no, dateStr){
 
   // 見出し
   const ds = items.map(i => i.created).sort();
-  g.fillStyle = C.gold; g.font = '700 50px '+FF; g.textAlign = 'left'; g.fillText(APP_NAME, PAD, 78);
+  g.fillStyle = C.gold; g.font = "700 54px 'Bodoni Moda','Times New Roman',serif"; g.textAlign = 'left'; g.fillText(APP_NAME, PAD, 78);
   const tw = g.measureText(APP_NAME).width;
   g.fillStyle = C.ink; g.font = '700 34px '+FF; g.fillText(`第${no}回　${items.length}問`, PAD + tw + 22, 76);
   g.fillStyle = C.mut; g.font = '400 25px '+FF;
@@ -1370,7 +1433,7 @@ async function drawSend(items, no, dateStr){
     }
     g.restore();
     if(r.hasImg && it.imgs.length > 1){
-      g.fillStyle = 'rgba(15,24,48,.85)'; rr(tx + TH - 74, ty + TH - 40, 66, 32, 16); g.fill();
+      g.fillStyle = 'rgba(11,11,12,.85)'; rr(tx + TH - 74, ty + TH - 40, 66, 32, 16); g.fill();
       g.fillStyle = C.ink; g.font = '700 20px '+FF; g.textAlign = 'center'; g.fillText(`${it.imgs.length}枚`, tx + TH - 41, ty + TH - 17); g.textAlign = 'left';
     }
     // 右: 1行目（番号・日付・教科・種類・解き直し）
@@ -1409,7 +1472,7 @@ async function drawSend(items, no, dateStr){
   g.fillStyle = C.gold; g.font = '700 32px '+FF; g.fillText('ミスパターン分析', PAD, y + 34);
   if(tags[0]){ g.fillStyle = C.ink; g.font = '400 25px '+FF; g.textAlign = 'right'; g.fillText(`いちばん多いのは「${tags[0][0]}」`, W - PAD, y + 32); g.textAlign = 'left'; }
   y += 62;
-  const mx = Math.max(1, ...tags.map(t => t[1])), BX = PAD + 230, BW = CW - 230 - 70;
+  const mx = Math.max(1, ...tags.map(t => t[1])), BX = PAD + 280, BW = CW - 280 - 70;
   tags.forEach(([t, c]) => {
     g.fillStyle = C.ink; g.font = '400 25px '+FF; g.fillText(t, PAD, y + 28);
     g.fillStyle = C.chip; rr(BX, y + 8, BW, 24, 12); g.fill();
@@ -1852,7 +1915,7 @@ window.addEventListener('pagehide', () => save());
 window.addEventListener('beforeunload', () => save());
 
 /* 起動 */
-document.title = APP_NAME; const _h1 = document.querySelector('header.app h1'); if(_h1) _h1.textContent = APP_NAME;
+document.title = APP_NAME; const _t = document.querySelector('#appTitle'); if(_t) _t.textContent = APP_NAME;
 document.querySelectorAll('.appname').forEach(e => { e.textContent = APP_NAME; });
 renderToday();
 checkInstall();

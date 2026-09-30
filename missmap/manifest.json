@@ -1,14 +1,14 @@
 {
-  "name": "ミスマップ",
-  "short_name": "ミスマップ",
-  "description": "ミスした問題を登録して、問題だけを見て「間違えた理由」と「改善点」を言えるか練習するアプリ",
+  "name": "Essence",
+  "short_name": "Essence",
+  "description": "丸付けで✕がついた問題を、改善点をやりながら、日をあけてもう一度解くアプリ",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0F1830",
-  "theme_color": "#0F1830",
+  "background_color": "#0B0B0C",
+  "theme_color": "#0B0B0C",
   "icons": [
     {
       "src": "icon-192.png",

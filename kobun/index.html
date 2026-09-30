@@ -302,6 +302,8 @@ body.timing .xpop{top:calc(var(--sbh,52px) + 52px)}
 .gset button b{display:block;font-family:var(--mincho);font-size:17px;margin:2px 0 4px}
 .gset button span{font-size:13.5px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .helpb{width:34px;height:34px;border-radius:50%;background:var(--chip);font-weight:700;color:var(--ai);flex:none}
+ruby rt{font-size:.5em;font-weight:500;font-family:'BIZ UDPGothic',sans-serif;color:var(--muted);letter-spacing:0}
+.fc .bx,.sl-ex{line-height:2}
 .lvup{text-align:center;padding:10px 0}
 .lvup .big{font-family:var(--mincho);font-weight:900;font-size:54px;color:var(--gold);line-height:1.2}
 
@@ -378,10 +380,10 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 
 <div id="print"></div>
 
-<script src="words.js"></script>
+<script src="words.js?v=7"></script>
 <script>
 'use strict';
-const VER = 6;
+const VER = 7;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -408,7 +410,7 @@ function clock(t){ t = Math.floor(t); return Math.floor(t/60) + ':' + String(t%6
 
 /* ===================== 保存 ===================== */
 let S;
-function blank(){ return { v:1, start: today(), cfg:{ dir:'w2m', voice:true, rate:1.05, pitch:1.15, voiceName:'', voiceMode:'nanami', aRate:1, studyMin:10 }, w:{}, days:{}, tests:[], study:[], timer:null, xp:0, xpDay:{}, guideSeen:false }; }
+function blank(){ return { v:1, start: today(), cfg:{ dir:'w2m', voice:true, rate:1.05, pitch:1.15, voiceName:'', voiceMode:'nanami', aRate:1, studyMin:10, ruby:true }, w:{}, days:{}, tests:[], study:[], timer:null, xp:0, xpDay:{}, guideSeen:false }; }
 function load(){
   try{ S = JSON.parse(localStorage.getItem(KEY)) || blank(); }catch(e){ S = blank(); }
   const b = blank();
@@ -662,8 +664,13 @@ function slideHTML(i){
     <div class="sl-main"><div class="sl-l hl" data-sec="w"><div class="sl-w" style="font-size:${Math.min(8.4, 40 / [...w.w].length).toFixed(2)}cqw">${esc(w.w)}</div>${w.k ? `<div class="sl-k">${esc(w.k)}</div>` : ''}</div>
       <div class="sl-r hl" data-sec="m"><div class="sl-m">${esc(w.m)}</div>${w.s.length ? `<div class="sl-s">${w.s.map(esc).join('／')}</div>` : ''}</div></div>
     <div class="sl-tip hl" data-sec="tip"><b>覚え方</b>${esc(w.tip)}</div>
-    ${w.ex ? `<div class="sl-ex hl" data-sec="ex">例）<span class="ex">${esc(w.ex)}</span>　<span class="tr">→ ${esc(w.tr)}</span></div>` : ''}
+    ${w.ex ? `<div class="sl-ex hl" data-sec="ex">例）<span class="ex">${exHTML(w)}</span>　<span class="tr">→ ${esc(w.tr)}</span></div>` : ''}
   </div><img class="simg" src="slides/${pad3(i+1)}.png" alt="" onerror="this.remove()"></div>`;
+}
+/* 例文：words.js の exr（{漢字|よみ}）があれば、ふりがな（ruby）をつけて出す。設定で消せる */
+function exHTML(w){
+  if(!w.exr || S.cfg.ruby === false) return esc(w.ex);
+  return w.exr.split(/(\{[^|}]+\|[^}]+\})/).map(t => { const m = t.match(/^\{([^|}]+)\|([^}]+)\}$/); return m ? `<ruby>${esc(m[1])}<rt>${esc(m[2])}</rt></ruby>` : esc(t); }).join('');
 }
 function pname(p){ return ({'名':'名詞','動':'動詞','形':'形容詞','形動':'形容動詞','副':'副詞','連体':'連体詞','接':'接続詞','感':'感動詞','連語':'連語'})[p] || p || ''; }
 function openWord(i, list){
@@ -673,7 +680,7 @@ function openWord(i, list){
     <div style="color:var(--shu);font-weight:700;font-size:19px">${esc(w.m)}</div>
     ${w.s.length ? `<div class="dim">ほかの意味：${w.s.map(esc).join('／')}</div>` : ''}</div>
     <div class="note" style="margin-top:10px"><b>覚え方</b>　${esc(w.tip)}</div>
-    ${w.ex ? `<p style="margin:10px 0 0"><span style="font-family:var(--mincho);font-weight:700">${esc(w.ex)}</span><br><span class="dim">→ ${esc(w.tr)}</span></p>` : ''}
+    ${w.ex ? `<p style="margin:10px 0 0"><span style="font-family:var(--mincho);font-weight:700">${exHTML(w)}</span><br><span class="dim">→ ${esc(w.tr)}</span></p>` : ''}
     <p class="dim">テスト：正解 ${s.c}回・まちがい ${s.x}回${s.due ? `・<b style="color:var(--shu)">リマインド ${md(s.due)}</b>` : ''}${isMastered(i) ? '・<b style="color:var(--ok)">定着</b>' : ''}</p>
     <button class="btn" data-a="play">▶ 1分解説（読み上げ）</button>
     <button class="btn sub" data-a="prompt">スライド画像用のプロンプトをコピー</button>`);
@@ -777,7 +784,7 @@ function lessonParts(i){
     { sec:'m', text: 'いちばん大事な意味は、' + w.m + '。' + (w.s.length ? 'ほかに、' + w.s.join('、') + '、という意味もあります。' : ''), show: `<b style="color:var(--shu)">${esc(w.m)}</b>${w.s.length ? '<br><span class="dim">ほかに：' + w.s.map(esc).join('／') + '</span>' : ''}` },
     { sec:'tip', text: '覚え方。' + (w.ty || w.tip), show: '<b style="color:var(--gold)">覚え方</b>　' + esc(w.tip) },
   ];
-  if(w.ex) parts.push({ sec:'ex', text: '例文。' + (w.ey || yomi(w.ex)).replace(/…/g, '、') + '。訳は、' + w.tr + '。', show: `<span class="cw" style="font-size:17px">${esc(w.ex)}</span><br><span class="dim">→ ${esc(w.tr)}</span>` });
+  if(w.ex) parts.push({ sec:'ex', text: '例文。' + (w.ey || yomi(w.ex)).replace(/…/g, '、') + '。訳は、' + w.tr + '。', show: `<span class="cw" style="font-size:17px">${exHTML(w)}</span><br><span class="dim">→ ${esc(w.tr)}</span>` });
   parts.push({ sec:'w', text: 'もう一度。' + say + '、' + w.m + '。', show: `<b class="cw">${esc(w.w)}</b>　＝　<b style="color:var(--shu)">${esc(w.m)}</b>` });
   return parts;
 }
@@ -785,7 +792,7 @@ function lessonParts(i){
    audio/index.json に区切りごとの開始秒が入っていて、それでスライドの光る所と字幕を切りかえる。
    ファイルがない・再生できないときだけ、端末の読み上げ（speechSynthesis）にする。 */
 let AIDX = null;
-fetch('audio/index.json').then(r => r.ok ? r.json() : null).then(j => { AIDX = j; }).catch(() => {});
+fetch('audio/index.json?v=' + VER).then(r => r.ok ? r.json() : null).then(j => { AIDX = j; }).catch(() => {});
 function lessonPlay(){
   const i = L.ids[L.k], parts = lessonParts(i), seq = ++L.seq, slide = $('.ov .slide'), no = pad3(i+1);
   L.playing = true; setPlayIcon(); slide.classList.add('speaking');
@@ -870,7 +877,7 @@ function drawCard(){
         <div class="fc-face front"><span class="no">No.${i+1}　${esc(pname(w.p))}</span><div class="w">${esc(w.w)}</div><div class="k">${esc(w.k)}</div><div class="hint">タップでうら返す</div></div>
         <div class="fc-face back"><div class="bw">${esc(w.w)} <span class="dim" style="font-size:14px;font-family:'BIZ UDPGothic'">${esc(w.k)}</span></div>
           <div class="bm">${esc(w.m)}</div>${w.s.length ? `<div class="bs">ほかに：${w.s.map(esc).join('／')}</div>` : ''}
-          ${w.ex ? `<div class="bx"><span class="ex">${esc(w.ex)}</span><br><span class="dim">→ ${esc(w.tr)}</span></div>` : ''}
+          ${w.ex ? `<div class="bx"><span class="ex">${exHTML(w)}</span><br><span class="dim">→ ${esc(w.tr)}</span></div>` : ''}
           <div class="bt"><b>覚え方</b>　${esc(w.tip)}</div></div>
       </div></div>
       <div class="row"><button class="btn shu" data-a="no">まだ</button><button class="btn" data-a="yes">覚えた</button></div>
@@ -1098,6 +1105,9 @@ function renderSet(){
     <div class="card set">
       <label>開始日</label><input type="date" id="sStart" value="${S.start}">
       <p class="dim" style="margin:6px 0 0">1日50語 × 7日 = 1周。8周で <b>${TOTAL}日</b>（約2か月）。この日から始めると、完走予定は <b>${md(end)}(${wd(end)})</b> です。</p></div>
+    <div class="card set"><label>例文のふりがな</label>
+      <div class="seg" id="sRuby"><button class="${S.cfg.ruby!==false?'on':''}" data-v="1">つける</button><button class="${S.cfg.ruby===false?'on':''}" data-v="0">つけない</button></div>
+      <p class="dim" style="margin:8px 0 0">単語カード・1分解説・単語の詳しい画面の例文に、ふりがなをつけます。</p></div>
     <div class="card set"><label>1分解説の声</label>
       <div class="seg" id="sVoice"><button class="${S.cfg.voice?'on':''}" data-v="1">読み上げる</button><button class="${!S.cfg.voice?'on':''}" data-v="0">読み上げない</button></div>
       <label style="margin-top:12px">声</label>
@@ -1126,6 +1136,7 @@ function renderSet(){
   $$('#sVoice button').forEach(b => b.onclick = () => { S.cfg.voice = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sRate button').forEach(b => b.onclick = () => { S.cfg.rate = +b.dataset.r; save(); renderSet(); });
   $$('#sPitch button').forEach(b => b.onclick = () => { S.cfg.pitch = +b.dataset.r; save(); renderSet(); });
+  $$('#sRuby button').forEach(b => b.onclick = () => { S.cfg.ruby = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sMode button').forEach(b => b.onclick = () => { S.cfg.voiceMode = b.dataset.m; save(); renderSet(); });
   $$('#sARate button').forEach(b => b.onclick = () => { S.cfg.aRate = +b.dataset.r; save(); renderSet(); });
   if($('#sVoiceName')) $('#sVoiceName').onchange = e => { S.cfg.voiceName = e.target.value; save(); };

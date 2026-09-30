@@ -26,7 +26,7 @@ def load_words():
     src = open(os.path.join(APP, 'words.js'), encoding='utf-8').read()
     body = src[src.index('['):src.rindex(']') + 1]
     body = '\n'.join(l for l in body.split('\n') if not l.strip().startswith('//'))
-    body = re.sub(r'([{,])\s*(w|k|p|m|s|ex|tr|tip|y|ey|ty):', r'\1"\2":', body)
+    body = re.sub(r'([{,])\s*(w|k|p|m|s|ex|tr|tip|y|ey|ty|exr):', r'\1"\2":', body)
     body = re.sub(r',\s*\]$', ']', body.strip())
     return json.loads(body)
 

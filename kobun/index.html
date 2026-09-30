@@ -317,6 +317,16 @@ body.timing .xpop{top:calc(var(--sbh,52px) + 52px)}
 .lrow.opened .mn{color:var(--shu);font-weight:700}
 .lcount{display:flex;align-items:center;gap:8px;margin:0 2px 8px;font-size:14px}
 .minib{margin-left:auto;white-space:nowrap;background:var(--chip);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:700;color:var(--ai)}
+.q.qt{min-height:150px}
+.clz{font-family:var(--mincho);font-weight:700;font-size:22px;line-height:2;text-align:left;width:100%}
+.clzt{font-size:15px;color:var(--muted);text-align:left;width:100%;margin-top:6px}
+.blank{display:inline-block;color:var(--ai);background:var(--ai-soft);border-radius:6px;padding:0 4px;font-family:'BIZ UDPGothic',sans-serif}
+.tform{display:flex;gap:8px}
+.tin{flex:1;min-width:0;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:#fff;font-size:20px;font-family:var(--mincho);font-weight:700}
+.tin:focus{outline:none;border-color:var(--ai)}
+.tin.ng{border-color:var(--shu);background:var(--shu-soft)}
+.tform .btn{width:auto;padding:14px 18px;flex:none}
+.okflash{background:var(--ok-soft);color:#154B33;border-radius:12px;padding:8px 12px;font-size:14px;margin-top:4px}
 .goro{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(154,118,48,.35);font-weight:700;color:#5A3E12}
 .goro b{display:inline-block;background:var(--gold);color:#fff;font-size:11.5px;padding:1px 8px;border-radius:999px;margin-right:8px;vertical-align:1px}
 .fb .goro{border-top-color:var(--line)}
@@ -403,7 +413,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js?v=10"></script>
 <script>
 'use strict';
-const VER = 12;
+const VER = 13;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -1015,20 +1025,50 @@ function choicesFor(i, dir){
   for(const x of pool){ const key = dir === 'm2w' ? x.w : x.m; if(seen.has(key)) continue; seen.add(key); picked.push(x.i); if(picked.length === 3) break; }
   return shuffle([i, ...picked]);
 }
+/* ---- 書いて答える（意味→古語）・例文の穴埋め ---- */
+function normKana(v){ return (v || '').normalize('NFKC').replace(/[\s　・、。，．「」『』（）()〜~]/g, '').replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)); }
+function blankParts(w, useRuby){ return [...(w.exr || '').matchAll(/\[([^\]]+)\]/g)].map(m => m[1].replace(/\{([^|}]+)\|([^}]+)\}/g, useRuby ? '$2' : '$1')); }
+function answersFor(i, mode){
+  const w = W[i], head = w.w.replace(/（.*?）/g, '');
+  const ok = new Set([head, w.y, w.k].filter(Boolean).map(normKana));
+  if(mode === 'cloze' && w.exr){
+    const kana = blankParts(w, true).join(''), raw = blankParts(w, false).join('');
+    [kana, raw, yomi(kana)].forEach(x => x && ok.add(normKana(x)));
+  }
+  return ok;
+}
+function perfectFor(i, mode){ const w = W[i]; return mode === 'cloze' && w.exr ? blankParts(w, true).join('') : w.w.replace(/（.*?）/g, ''); }
+function clozeHTML(w){
+  const src = w.exr.replace(/\[[^\]]*\]/g, '\u0001');
+  return src.split(/(\{[^|}]+\|[^}]+\})/).map(t => {
+    const m = t.match(/^\{([^|}]+)\|([^}]+)\}$/);
+    if(!m) return esc(t);
+    return S.cfg.ruby !== false ? `<ruby>${esc(m[1])}<rt>${esc(m[2])}</rt></ruby>` : esc(m[1]);
+  }).join('').replace(/\u0001/g, '<span class="blank">（　　　）</span>');
+}
 function drawQ(){
   const ov = $('.ov');
   const i = T.order[T.k], w = W[i];
-  const dir = T.dir || (Math.random() < .5 ? 'w2m' : 'm2w');
+  let dir = T.dir || (Math.random() < .5 ? 'w2m' : 'm2w');
+  if(dir === 'cloze' && !w.exr) dir = 'type';
   T.curDir = dir;
-  const ch = choicesFor(i, dir);
   T.answered = false;
+  const typed = dir === 'type' || dir === 'cloze';
+  const ch = typed ? [] : choicesFor(i, dir);
+  const flash = T.lastOK ? `<div class="okflash">${T.lastOK}</div>` : '';
+  T.lastOK = '';
+  let qh;
+  if(dir === 'w2m') qh = `<span class="p">${esc(pname(w.p))}</span><div class="w">${esc(w.w)}</div><div class="k"></div>`;
+  else if(dir === 'm2w') qh = `<span class="p">この意味の古語は？</span><div class="w mean">${esc(w.m)}</div><div class="k"></div>`;
+  else if(dir === 'type') qh = `<span class="p">この意味の古語を書こう（${esc(pname(w.p))}）</span><div class="w mean">${esc(w.m)}</div><div class="k"></div>`;
+  else qh = `<span class="p">（　）に入る古語を書こう</span><div class="clz">${clozeHTML(w)}</div><div class="clzt">→ ${ftHTML(w)}</div>`;
   ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">${esc(T.label)}　${T.k+1} / ${T.order.length}</div><div class="tm">${clock((Date.now()-T.t0)/1000)}</div></div>
     <div class="pbar"><i style="width:${T.k / T.order.length * 100}%"></i></div>
-    <div class="ovbody">
-      <div class="q">${dir === 'w2m'
-        ? `<span class="p">${esc(pname(w.p))}</span><div class="w">${esc(w.w)}</div><div class="k"></div>`
-        : `<span class="p">この意味の古語は？</span><div class="w mean">${esc(w.m)}</div><div class="k"></div>`}</div>
-      <div class="choices">${ch.map(c => `<button class="choice ${dir === 'm2w' ? 'mi' : ''}" data-c="${c}">${esc(dir === 'm2w' ? W[c].w : W[c].m)}</button>`).join('')}</div>
+    <div class="ovbody">${flash}
+      <div class="q ${typed ? 'qt' : ''}">${qh}</div>
+      ${typed ? `<form class="tform" id="tform" autocomplete="off"><input id="tin" class="tin" type="text" inputmode="text" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="ひらがなで入力"><button class="btn" type="submit">答える</button></form>
+        <p class="dim" style="margin:6px 2px 0;font-size:13px">旧かな（例：をかし）で書けたら完璧。現代の読み（おかし）でも正解にします。</p>`
+      : `<div class="choices">${ch.map(c => `<button class="choice ${dir === 'm2w' ? 'mi' : ''}" data-c="${c}">${esc(dir === 'm2w' ? W[c].w : W[c].m)}</button>`).join('')}</div>`}
       <button class="idk" data-a="idk">わからない</button>
       <div id="fb"></div>
     </div>`;
@@ -1037,30 +1077,68 @@ function drawQ(){
     clearInterval(T.timer); T = null; closeOv();
     if(lvQueue){ const q = lvQueue; lvQueue = null; celebrate(q.from, q.to); }
   };
-  ov.querySelectorAll('.choice').forEach(b => b.onclick = () => answer(+b.dataset.c));
-  ov.querySelector('[data-a=idk]').onclick = () => answer(-1);
+  if(typed){
+    const f = $('#tform'), inp = $('#tin');
+    f.onsubmit = e => { e.preventDefault(); if(normKana(inp.value)) answerTyped(inp.value); };
+    ov.querySelector('[data-a=idk]').onclick = () => answerTyped(null);
+    try{ inp.focus(); }catch(e){}
+  }else{
+    ov.querySelectorAll('.choice').forEach(b => b.onclick = () => answer(+b.dataset.c));
+    ov.querySelector('[data-a=idk]').onclick = () => answer(-1);
+  }
 }
-function answer(c){
-  if(T.answered) return;
-  T.answered = true;
-  const i = T.order[T.k], ok = c === i, s = ws(i), t = today();
-  $$('.ov .choice').forEach(b => { b.disabled = true; const v = +b.dataset.c; if(v === i) b.classList.add('ok'); else if(v === c) b.classList.add('ng'); });
-  $('.ov [data-a=idk]').classList.add('hidden');
+/* 正解・不正解の記録（4択も書く問題も共通） */
+function recordAnswer(ok, i){
+  const s = ws(i), t = today();
   if(ok){
     T.ok++; s.c++; s.sk++;
     gainXP(T.type === 'remind' ? 3 : 2, '正解');
     if(s.sk === 2) gainXP(5, '定着');
     if(T.type === 'remind' && s.due){ s.st++; if(s.st >= GAPS.length){ s.st = 0; s.due = ''; } else s.due = addDays(t, GAPS[s.st]); }
-    save();
-    setTimeout(next, 450);
   }else{
     s.x++; s.sk = 0; s.st = 0; s.due = addDays(t, GAPS[0]);
-    T.wrong.push(i); save();
-    const w = W[i];
-    $('#fb').innerHTML = `<div class="fb"><span class="fw">${esc(w.w)}</span>${w.k ? `<span class="dim">（${esc(w.k)}）</span>` : ''}　<span class="fm">${esc(w.m)}</span>${w.s.length ? `<div class="dim">ほかに：${w.s.map(esc).join('／')}</div>` : ''}<div style="margin-top:6px">${esc(w.tip)}</div>${goroHTML(w)}</div>
-      <button class="btn" style="margin-top:10px" id="btnNext">次へ</button>`;
-    $('#btnNext').onclick = next;
+    T.wrong.push(i);
   }
+  save();
+}
+function wrongFB(w, pre){
+  return `<div class="fb">${pre || ''}<span class="fw">${esc(w.w)}</span>${w.k ? `<span class="dim">（${esc(w.k)}）</span>` : ''}　<span class="fm">${esc(w.m)}</span>${w.s.length ? `<div class="dim">ほかに：${w.s.map(esc).join('／')}</div>` : ''}<div style="margin-top:6px">${esc(w.tip)}</div>${goroHTML(w)}</div>
+      <button class="btn" style="margin-top:10px" id="btnNext">次へ</button>`;
+}
+function answer(c){
+  if(T.answered) return;
+  T.answered = true;
+  const i = T.order[T.k], ok = c === i;
+  $$('.ov .choice').forEach(b => { b.disabled = true; const v = +b.dataset.c; if(v === i) b.classList.add('ok'); else if(v === c) b.classList.add('ng'); });
+  $('.ov [data-a=idk]').classList.add('hidden');
+  recordAnswer(ok, i);
+  if(ok) setTimeout(next, 450);
+  else { $('#fb').innerHTML = wrongFB(W[i]); $('#btnNext').onclick = next; }
+}
+function answerTyped(val){
+  if(T.answered) return;
+  const i = T.order[T.k], w = W[i], mode = T.curDir;
+  const v = val == null ? '' : normKana(val);
+  const ok = !!v && answersFor(i, mode).has(v);
+  const perfect = perfectFor(i, mode);
+  T.answered = true;
+  recordAnswer(ok, i);
+  if(ok){
+    const head = w.w.replace(/（.*?）/g, '');
+    const exact = [perfect, w.k, mode === 'cloze' ? blankParts(w, false).join('') : ''].filter(Boolean).map(normKana);
+    let note = '';
+    if(exact.includes(v)) note = '';
+    else if(mode === 'cloze' && v === normKana(head)) note = `（例文では「${esc(perfect)}」の形）`;
+    else note = `（旧かなでは「${esc(perfect)}」）`;
+    T.lastOK = `○ 正解　<b>${esc(perfect)}</b>${mode === 'cloze' && perfect !== head ? `（${esc(head)}）` : ''}${note}`;
+    next();   // すぐ次へ（iPhone でキーボードを閉じないように、押した流れのまま次の問題を出す）
+    return;
+  }
+  const inp = $('#tin'); if(inp){ inp.disabled = true; inp.classList.add('ng'); }
+  $('.ov [data-a=idk]').classList.add('hidden');
+  const pre = `<div class="dim" style="margin-bottom:4px">${val == null ? 'わからない' : 'あなたの答え：' + esc(val)}　→　正解は <b style="color:var(--ink)">${esc(perfect)}</b></div>`;
+  $('#fb').innerHTML = wrongFB(w, pre);
+  $('#btnNext').onclick = () => next();
 }
 function next(){
   if(!T) return;
@@ -1134,8 +1212,9 @@ function renderTest(){
       <label class="dim" style="display:block">問題数</label>
       <div class="chips" id="tCnt">${[20,50,100,0].map(c => `<button class="chipb ${tf.cnt===c?'on':''}" data-c="${c}">${c ? c+'問' : 'ぜんぶ'}</button>`).join('')}</div>
       <button class="btn" id="tShuf" style="margin-top:6px">シャッフルテスト はじめる</button></div>
-    <div class="card"><h3>出題の向き</h3>
-      <div class="seg" id="tDir">${[['w2m','古語 → 意味'],['m2w','意味 → 古語'],['mix','まぜる']].map(([k,t]) => `<button class="${S.cfg.dir===k?'on':''}" data-k="${k}">${t}</button>`).join('')}</div></div>`;
+    <div class="card"><h3>出題の形式</h3><div class="dim" style="margin-bottom:8px">今日のテスト・リマインド・シャッフル、すべてこの形式で出ます。</div>
+      <div class="chips" id="tDir" style="flex-wrap:wrap">${[['w2m','古語→意味（4択）'],['m2w','意味→古語（4択）'],['mix','4択をまぜる'],['type','意味→古語（書く）'],['cloze','例文の穴埋め（書く）']].map(([k,t]) => `<button class="chipb ${S.cfg.dir===k?'on':''}" data-k="${k}">${t}</button>`).join('')}</div>
+      ${S.cfg.dir === 'type' || S.cfg.dir === 'cloze' ? '<p class="dim" style="margin:6px 0 0">ひらがなで書いて答えます。旧かな（をかし）で書けたら完璧、現代の読み（おかし）でも正解です。4択より勘が効かないので、しっかり覚えたか確かめられます。</p>' : ''}</div>`;
   if($('#tDay')) $('#tDay').onclick = () => testOrStudy(cur);
   $('#tRem').onclick = startRemind;
   $$('#tScope button').forEach(b => b.onclick = () => { tf.scope = b.dataset.k; renderTest(); });
@@ -1454,7 +1533,7 @@ function guideSlides(){
       v:`<div style="background:#1F2A4D;color:#fff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px"><b style="font-size:24px">9:42</b><small style="opacity:.8">覚える時間</small><span style="margin-left:auto;font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:99px">一時停止</span></div><div class="minicard">単語カード　／　一覧（意味をかくせる）　／　1分解説</div>` },
     { t:'1分解説', p:['スライドと音声で、1語を約1分で解説します。<b>読んでいる所が光り</b>、下に字幕が出ます。','覚えにくい単語だけ見ればOK。単語タブから、どの単語でも見られます。'],
       v:`<div class="minicard" style="flex-direction:column;align-items:flex-start"><b style="font-size:22px">こころもとなし</b><span style="color:var(--shu);font-weight:700;border:1.5px solid var(--shu);border-radius:8px;padding:2px 8px">じれったい</span><span class="dim" style="font-size:12.5px">覚え方：心が「もと（本来の位置）」になく落ち着かない…</span></div>` },
-    { t:'② テスト', p:['50問の4択テスト。<b>時間と正答率は自動で記録</b>されます。','まちがえた単語だけ、すぐにもう一度。「報告用にコピー」で、勉強報告にそのまま貼れます。'],
+    { t:'② テスト', p:['50問の4択テスト。<b>時間と正答率は自動で記録</b>されます。','まちがえた単語だけ、すぐにもう一度。「報告用にコピー」で、勉強報告にそのまま貼れます。','慣れてきたら、テストタブの「出題の形式」で<b>書いて答える</b>・<b>例文の穴埋め</b>にも変えられます。'],
       v:`<div style="text-align:center"><div style="font-family:var(--mincho);font-weight:900;font-size:44px;color:#2E7A57;line-height:1.1">92<small style="font-size:18px">%</small></div><div class="dim">50問中 46問 正解　・　時間 6分12秒</div></div>` },
     { t:'リマインドテスト', p:['まちがえた単語は、<b>翌日 → 3日後 → 1週間後</b>にもどってきます。','3回つづけて正解したら卒業。苦手な単語ほど何度も出るので、自然に覚えきれます。'],
       v:`<div class="minicard"><b style="color:var(--shu)">✕</b> まちがえた</div><div class="minicard">翌日 → 3日後 → 1週間後 にもう一度</div><div class="minicard"><b style="color:#2E7A57">◯◯◯</b> 3回つづけて正解で卒業</div>` },

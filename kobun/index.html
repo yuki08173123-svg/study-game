@@ -383,7 +383,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js?v=7"></script>
 <script>
 'use strict';
-const VER = 7;
+const VER = 8;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -580,7 +580,7 @@ function renderToday(){
     $('#stCards').onclick = () => openCards(p.ids, `第${p.lap}周 Day${p.d} の単語カード`, null, () => startDayTest(n));
     $('#stList').onclick = () => openList(p.ids, `第${p.lap}周 Day${p.d} の一覧`);
     $('#stLessons').onclick = () => openLessonPicker(p.ids, `Day${p.d} の1分解説`);
-    $('#stTest').onclick = () => startDayTest(n);
+    $('#stTest').onclick = () => testOrStudy(n);
   }
   if($('#goRemind')) $('#goRemind').onclick = startRemind;
   $('#lvCard').onclick = openLevel;
@@ -613,7 +613,7 @@ function openDaySheet(n){
     <div style="margin-top:12px"><button class="btn" data-a="test">この日のテストをする</button>
     <button class="btn sub" data-a="cards">単語カードで覚える</button>
     <button class="btn sub" data-a="print">印刷用の単語カードを作る</button></div>`);
-  bg.querySelector('[data-a=test]').onclick = () => { bg.remove(); startDayTest(n); };
+  bg.querySelector('[data-a=test]').onclick = () => { bg.remove(); testOrStudy(n); };
   bg.querySelector('[data-a=cards]').onclick = () => { bg.remove(); openCards(p.ids, `Day${p.d} の単語カード`, null, () => startDayTest(n)); };
   bg.querySelector('[data-a=print]').onclick = () => { bg.remove(); printCards(p.ids, `Day${p.d}（No.${p.from+1}〜${p.to}）`); };
 }
@@ -904,6 +904,19 @@ function printCards(ids, title){
 /* ===================== テスト ===================== */
 let T = null;
 function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+/* その日のテストを、まだ覚えていないうちに始めようとしたら、先に「覚える時間」をすすめる。
+   その日の記録に残るのは1回目の正答率なので、覚える前に解くと低いまま残ってしまう（塾生の声から）。 */
+function testOrStudy(n){
+  const studied = S.study.some(x => x.n === n) || S.timer;
+  if(studied || S.days[n]){ startDayTest(n); return; }
+  const bg = sheet(`<h2>先に覚えましょう</h2>
+    <p>このアプリは <b>① 覚える → ② テスト</b> の順番です。</p>
+    <div class="note">その日の表に残るのは <b>1回目のテストの正答率</b>です。覚える前に解くと、低いまま残ってしまいます。</div>
+    <div style="margin-top:14px"><button class="btn" data-a="study">① 覚える時間へ</button>
+    <button class="btn sub" data-a="test">覚えたので、テストする</button></div>`);
+  bg.querySelector('[data-a=study]').onclick = () => { bg.remove(); openStudy(n); };
+  bg.querySelector('[data-a=test]').onclick = () => { bg.remove(); startDayTest(n); };
+}
 function startDayTest(n){
   const p = plan(n);
   startTest({ ids: p.ids, type:'day', plan:n, label:`第${p.lap}周 Day${p.d}（${p.from+1}〜${p.to}）` });
@@ -1051,7 +1064,7 @@ function renderTest(){
       <button class="btn" id="tShuf" style="margin-top:6px">シャッフルテスト はじめる</button></div>
     <div class="card"><h3>出題の向き</h3>
       <div class="seg" id="tDir">${[['w2m','古語 → 意味'],['m2w','意味 → 古語'],['mix','まぜる']].map(([k,t]) => `<button class="${S.cfg.dir===k?'on':''}" data-k="${k}">${t}</button>`).join('')}</div></div>`;
-  if($('#tDay')) $('#tDay').onclick = () => startDayTest(cur);
+  if($('#tDay')) $('#tDay').onclick = () => testOrStudy(cur);
   $('#tRem').onclick = startRemind;
   $$('#tScope button').forEach(b => b.onclick = () => { tf.scope = b.dataset.k; renderTest(); });
   $$('#tDayPick button').forEach(b => b.onclick = () => { tf.day = +b.dataset.d; renderTest(); });

@@ -26,7 +26,7 @@ def load_words():
     src = open(os.path.join(APP, 'words.js'), encoding='utf-8').read()
     body = src[src.index('['):src.rindex(']') + 1]
     body = '\n'.join(l for l in body.split('\n') if not l.strip().startswith('//'))
-    body = re.sub(r'([{,])\s*(w|k|p|m|s|ex|tr|tip|y|ey|ty|exr|g):', r'\1"\2":', body)
+    body = re.sub(r'([{,])\s*(w|k|p|m|s|ex|tr|tip|y|ey|ty|exr|g|ft):', r'\1"\2":', body)
     body = re.sub(r',\s*\]$', ']', body.strip())
     return json.loads(body)
 
@@ -60,7 +60,7 @@ def parts(w):
         '覚え方。' + (w.get('ty') or w['tip']),
     ]
     if w.get('ex'):
-        out.append('例文。' + (w.get('ey') or yomi(w['ex'])).replace('…', '、') + '。訳は、' + w['tr'] + '。')
+        out.append('例文。' + (w.get('ey') or yomi(w['ex'])).replace('…', '、') + '。訳は、' + (w.get('ft') or w['tr']).replace('[', '').replace(']', '') + '。')
     out.append('もう一度。' + say + '、' + w['m'] + '。')
     return out
 

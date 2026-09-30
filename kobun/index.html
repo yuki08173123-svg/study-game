@@ -302,6 +302,8 @@ body.timing .xpop{top:calc(var(--sbh,52px) + 52px)}
 .gset button b{display:block;font-family:var(--mincho);font-size:17px;margin:2px 0 4px}
 .gset button span{font-size:13.5px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .helpb{width:34px;height:34px;border-radius:50%;background:var(--chip);font-weight:700;color:var(--ai);flex:none}
+.hw{color:var(--shu);font-weight:700}
+.ex .hw,.cw .hw,.sl-ex .ex .hw{font-weight:900}
 .goro{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(154,118,48,.35);font-weight:700;color:#5A3E12}
 .goro b{display:inline-block;background:var(--gold);color:#fff;font-size:11.5px;padding:1px 8px;border-radius:999px;margin-right:8px;vertical-align:1px}
 .fb .goro{border-top-color:var(--line)}
@@ -385,10 +387,10 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 
 <div id="print"></div>
 
-<script src="words.js?v=9"></script>
+<script src="words.js?v=10"></script>
 <script>
 'use strict';
-const VER = 9;
+const VER = 10;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -662,21 +664,48 @@ function drawWordList(){
 }
 
 /* ===================== 単語の詳細（スライド＋意味＋記録） ===================== */
+/* スライドの「覚え方」の字の大きさ：覚え方・語呂・例文・全訳が長いときだけ小さく（はみ出さないように） */
+function slideTipSize(w){
+  const t = w.tip.length + (w.g || '').length, e = (w.ex || '').length + (w.ft || w.tr || '').length;
+  const fs = (t > 100 || e > 50) ? (t + e > 170 ? 1.9 : 2.05) : 0;
+  return fs ? ` style="font-size:${fs}cqw"` : '';
+}
+/* 表示したあとで、はみ出していれば「覚え方」の字を少しずつ小さくする */
+function fitSlide(root){
+  (root || document).querySelectorAll('.slide').forEach(sl => {
+    const tip = sl.querySelector('.sl-tip'), box = sl.querySelector('.sl');
+    if(!tip) return;
+    let fs = parseFloat((tip.getAttribute('style') || '').match(/font-size:([\d.]+)cqw/)?.[1] || 2.3);
+    while((tip.scrollHeight > tip.clientHeight + 1 || box.scrollHeight > box.clientHeight + 1) && fs > 1.5){
+      fs -= .1; tip.style.fontSize = fs.toFixed(2) + 'cqw';
+    }
+  });
+}
 function slideHTML(i){
   const w = W[i];
   return `<div class="slide" data-i="${i}"><div class="sl">
     <div class="sl-top"><span>No.${pad3(i+1)}</span><span>Day${Math.floor(i/PER)+1}</span><span class="p">${esc(pname(w.p))}</span><span class="one">1分で覚える</span></div>
     <div class="sl-main"><div class="sl-l hl" data-sec="w"><div class="sl-w" style="font-size:${Math.min(8.4, 40 / [...w.w].length).toFixed(2)}cqw">${esc(w.w)}</div>${w.k ? `<div class="sl-k">${esc(w.k)}</div>` : ''}</div>
       <div class="sl-r hl" data-sec="m"><div class="sl-m">${esc(w.m)}</div>${w.s.length ? `<div class="sl-s">${w.s.map(esc).join('／')}</div>` : ''}</div></div>
-    <div class="sl-tip hl" data-sec="tip"${(w.tip.length + (w.g || '').length) > 100 ? ' style="font-size:2.1cqw"' : ''}><b>覚え方</b>${esc(w.tip)}${w.g ? `<div class="sl-g"><b>語呂</b>${esc(w.g)}</div>` : ''}</div>
-    ${w.ex ? `<div class="sl-ex hl" data-sec="ex">例）<span class="ex">${exHTML(w)}</span>　<span class="tr">→ ${esc(w.tr)}</span></div>` : ''}
+    <div class="sl-tip hl" data-sec="tip"${slideTipSize(w)}><b>覚え方</b>${esc(w.tip)}${w.g ? `<div class="sl-g"><b>語呂</b>${esc(w.g)}</div>` : ''}</div>
+    ${w.ex ? `<div class="sl-ex hl" data-sec="ex">例）<span class="ex">${exHTML(w)}</span>　<span class="tr">→ ${ftHTML(w)}</span></div>` : ''}
   </div><img class="simg" src="slides/${pad3(i+1)}.png" alt="" onerror="this.remove()"></div>`;
 }
 /* 例文：words.js の exr（{漢字|よみ}）があれば、ふりがな（ruby）をつけて出す。設定で消せる */
 function exHTML(w){
-  if(!w.exr || S.cfg.ruby === false) return esc(w.ex);
-  return w.exr.split(/(\{[^|}]+\|[^}]+\})/).map(t => { const m = t.match(/^\{([^|}]+)\|([^}]+)\}$/); return m ? `<ruby>${esc(m[1])}<rt>${esc(m[2])}</rt></ruby>` : esc(t); }).join('');
+  // exr：{漢字|よみ} がふりがな、[ ] が見出し語（赤くする）
+  if(!w.exr) return esc(w.ex);
+  const src = w.exr.replace(/\[/g, '\u0001').replace(/\]/g, '\u0002');
+  const ruby = S.cfg.ruby !== false;
+  return src.split(/(\{[^|}]+\|[^}]+\})/).map(t => {
+    const m = t.match(/^\{([^|}]+)\|([^}]+)\}$/);
+    if(!m) return esc(t);
+    return ruby ? `<ruby>${esc(m[1])}<rt>${esc(m[2])}</rt></ruby>` : esc(m[1]);
+  }).join('').replace(/\u0001/g, '<span class="hw">').replace(/\u0002/g, '</span>');
 }
+/* 例文の全訳（ft）。[ ] は見出し語の訳（赤くする）。ft がなければ単語の訳だけ */
+function ftHTML(w){ return w.ft ? esc(w.ft).replace(/\[/g, '<span class="hw">').replace(/\]/g, '</span>') : esc(w.tr); }
+function ftText(w){ return w.ft ? w.ft.replace(/[\[\]]/g, '') : w.tr; }
 /* 語呂合わせ（words.js の g）。覚え方の下に1行だけ */
 function goroHTML(w){ return w.g ? `<div class="goro"><b>語呂</b>${esc(w.g)}</div>` : ''; }
 function pname(p){ return ({'名':'名詞','動':'動詞','形':'形容詞','形動':'形容動詞','副':'副詞','連体':'連体詞','接':'接続詞','感':'感動詞','連語':'連語'})[p] || p || ''; }
@@ -687,10 +716,11 @@ function openWord(i, list){
     <div style="color:var(--shu);font-weight:700;font-size:19px">${esc(w.m)}</div>
     ${w.s.length ? `<div class="dim">ほかの意味：${w.s.map(esc).join('／')}</div>` : ''}</div>
     <div class="note" style="margin-top:10px"><b>覚え方</b>　${esc(w.tip)}${goroHTML(w)}</div>
-    ${w.ex ? `<p style="margin:10px 0 0"><span style="font-family:var(--mincho);font-weight:700">${exHTML(w)}</span><br><span class="dim">→ ${esc(w.tr)}</span></p>` : ''}
+    ${w.ex ? `<p style="margin:10px 0 0"><span style="font-family:var(--mincho);font-weight:700">${exHTML(w)}</span><br><span class="dim">→ ${ftHTML(w)}</span></p>` : ''}
     <p class="dim">テスト：正解 ${s.c}回・まちがい ${s.x}回${s.due ? `・<b style="color:var(--shu)">リマインド ${md(s.due)}</b>` : ''}${isMastered(i) ? '・<b style="color:var(--ok)">定着</b>' : ''}</p>
     <button class="btn" data-a="play">▶ 1分解説（読み上げ）</button>
     <button class="btn sub" data-a="prompt">スライド画像用のプロンプトをコピー</button>`);
+  fitSlide(bg);
   bg.querySelector('[data-a=play]').onclick = () => { bg.remove(); openLesson(list || [i], (list || [i]).indexOf(i)); };
   bg.querySelector('[data-a=prompt]').onclick = () => copyText(slidePrompt(i), 'コピーしました。ChatGPT に貼って画像を作れます');
 }
@@ -773,7 +803,7 @@ function drawLesson(){
       ${(() => { const v = jaVoice(); return S.cfg.voiceMode === 'device' && v && !V_HQ.test(v.name) ? '<p class="dim" style="margin-top:12px">声をもっと自然にしたいときは「設定 → 1分解説の声」を見てください。</p>' : ''; })()}
       <p class="dim" style="margin-top:12px">スライド画像（ChatGPT で作った1枚）を <b>slides/${pad3(i+1)}.png</b> に置くと、この組版のかわりにその画像が出ます。読み上げは画像のときも同じです。</p>
     </div>`;
-  setPlayIcon();
+  setPlayIcon(); fitSlide(ov);
   ov.querySelector('[data-a=x]').onclick = () => { lessonStop(); closeOv(); };
   ov.querySelector('[data-a=play]').onclick = () => L.playing ? lessonStop() : lessonPlay();
   ov.querySelector('[data-a=prev]').onclick = () => { if(L.k){ lessonStop(); L.k--; drawLesson(); } };
@@ -791,7 +821,7 @@ function lessonParts(i){
     { sec:'m', text: 'いちばん大事な意味は、' + w.m + '。' + (w.s.length ? 'ほかに、' + w.s.join('、') + '、という意味もあります。' : ''), show: `<b style="color:var(--shu)">${esc(w.m)}</b>${w.s.length ? '<br><span class="dim">ほかに：' + w.s.map(esc).join('／') + '</span>' : ''}` },
     { sec:'tip', text: '覚え方。' + (w.ty || w.tip), show: '<b style="color:var(--gold)">覚え方</b>　' + esc(w.tip) + goroHTML(w) },
   ];
-  if(w.ex) parts.push({ sec:'ex', text: '例文。' + (w.ey || yomi(w.ex)).replace(/…/g, '、') + '。訳は、' + w.tr + '。', show: `<span class="cw" style="font-size:17px">${exHTML(w)}</span><br><span class="dim">→ ${esc(w.tr)}</span>` });
+  if(w.ex) parts.push({ sec:'ex', text: '例文。' + (w.ey || yomi(w.ex)).replace(/…/g, '、') + '。訳は、' + ftText(w) + '。', show: `<span class="cw" style="font-size:17px">${exHTML(w)}</span><br><span class="dim">→ ${ftHTML(w)}</span>` });
   parts.push({ sec:'w', text: 'もう一度。' + say + '、' + w.m + '。', show: `<b class="cw">${esc(w.w)}</b>　＝　<b style="color:var(--shu)">${esc(w.m)}</b>` });
   return parts;
 }
@@ -808,7 +838,7 @@ function lessonPlay(){
   stopSpeech(); clearInterval(L.timer);
   const rec = AIDX && AIDX[no];
   if(S.cfg.voice && S.cfg.voiceMode !== 'device' && rec){
-    const a = L.audio = new Audio('audio/' + no + '.mp3');
+    const a = L.audio = new Audio('audio/' + no + '.mp3?h=' + (rec.h || VER));
     a.playbackRate = S.cfg.aRate; a.preservesPitch = true;
     let cur = -1;
     const total = rec.d / S.cfg.aRate;
@@ -884,7 +914,7 @@ function drawCard(){
         <div class="fc-face front"><span class="no">No.${i+1}　${esc(pname(w.p))}</span><div class="w">${esc(w.w)}</div><div class="k">${esc(w.k)}</div><div class="hint">タップでうら返す</div></div>
         <div class="fc-face back"><div class="bw">${esc(w.w)} <span class="dim" style="font-size:14px;font-family:'BIZ UDPGothic'">${esc(w.k)}</span></div>
           <div class="bm">${esc(w.m)}</div>${w.s.length ? `<div class="bs">ほかに：${w.s.map(esc).join('／')}</div>` : ''}
-          ${w.ex ? `<div class="bx"><span class="ex">${exHTML(w)}</span><br><span class="dim">→ ${esc(w.tr)}</span></div>` : ''}
+          ${w.ex ? `<div class="bx"><span class="ex">${exHTML(w)}</span><br><span class="dim">→ ${ftHTML(w)}</span></div>` : ''}
           <div class="bt"><b>覚え方</b>　${esc(w.tip)}${goroHTML(w)}</div></div>
       </div></div>
       <div class="row"><button class="btn shu" data-a="no">まだ</button><button class="btn" data-a="yes">覚えた</button></div>

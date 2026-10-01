@@ -524,7 +524,7 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 18;
+const VER = 19;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 const KEY = 'miss_v1', BK = 'miss_backup';
@@ -1796,7 +1796,7 @@ function slides(){ return [
   { ico:'shuffle', t:'6. ランダムに解く', p:'予定に関係なく、3・5・10問を練習できます。ランダムのときは「解けなかった」だけ記録され、「解けた」は予定を変えません。', ex:'間隔をあけて覚える仕組みを崩さないためです。' },
   { ico:'chart', t:'7. ミスマップを見る', p:'教科別の件数と、ミスの種類別の件数（<b>ミスパターン分析</b>）が自動でたまります。いちばん多い種類が、あなたのミスのクセです。', ex:'そのクセの改善点を、ほかの問題にも使ってみてください。' },
   { ico:'send', t:'8. ミスマップの部屋に出す', p:`問題を <b>${SEND_N}問</b> 作るごとに、紙のミスマップと同じ形の <b>1枚の画像</b> にして、Discord の <b>#ミスマップ</b> に出します。ひとりで進めずに、フィードバックをもらうためです。`, ex:'「解く」タブの「ミスマップの部屋に出す」から。共有の画面で Discord を選び、#ミスマップ に送ります。出した回は「ミスマップ」タブにたまり、あとから出し直せます。' },
-  { ico:'install', t:'9. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、登録した問題と写真が消えてしまうことがあります。', ex:'Safari の共有ボタン →「ホーム画面に追加」→「追加」。やり方は、上の赤い帯の「やり方」からも見られます。' },
+  { ico:'install', t:'9. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、登録した問題と写真が消えてしまうことがあります。', ex:'Safari の共有ボタン（iPhone は画面の下、iPad は右上。見当たらないときは「…」の中）→「ホーム画面に追加」→「追加」。やり方は、上の赤い帯の「やり方」からも見られます。' },
   { ico:'save', t:'10. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の <b>「記録の控えをとる」</b> を、ときどき押してください。軽いのですぐ終わります。', ex:'写真も残したいときは「写真もとる」。重いので何回かに分けて保存します。機種変更のときだけで十分です。' },
 ]; }
 const SICO = {
@@ -1842,21 +1842,44 @@ $('#btnHelp').onclick = openHelp;
 function isInstalled(){
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
-function openInstall(){
-  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+/* 端末の見分け。iPad の Safari は「Mac」と名乗るので、さわれる画面（maxTouchPoints）かどうかで iPad とみなす */
+function deviceKind(ua, touch){
+  ua = ua || navigator.userAgent;
+  touch = touch == null ? (navigator.maxTouchPoints || 0) : touch;
+  if(/iPhone|iPod/.test(ua)) return 'iphone';
+  if(/iPad/.test(ua) || (/Macintosh/.test(ua) && touch > 1)) return 'ipad';
+  if(/Android/.test(ua)) return 'android';
+  return 'pc';
+}
+const INSTALL_STEPS = {
+  iphone: { h:'iPhone の場合', li:[
+    'この画面を <b>Safari</b> で開く（LINE や Instagram の中で開いていたら、「Safari で開く」を押してください）',
+    '画面の<b>下</b>にある <b>共有ボタン</b>（四角から矢印が出ている印）を押す<br><span class="dim">見当たらないときは、下の「…」を押すと、中に「共有」があります</span>',
+    '少し下にスクロールして <b>「ホーム画面に追加」</b> を押す',
+    '右上の <b>「追加」</b> を押す',
+    'ホーム画面にできた黒と金の「E」のアイコンから、これからは開く' ] },
+  ipad: { h:'iPad の場合', li:[
+    'この画面を <b>Safari</b> で開く',
+    '画面の<b>右上</b>にある <b>共有ボタン</b>（四角から矢印が出ている印）を押す<br><span class="dim">見当たらないときは、アドレス欄の横の「…」を押すと、中に「共有」があります</span>',
+    '少し下にスクロールして <b>「ホーム画面に追加」</b> を押す',
+    '右上の <b>「追加」</b> を押す',
+    'ホーム画面にできた黒と金の「E」のアイコンから、これからは開く' ] },
+  android: { h:'Android の場合', li:[
+    'この画面を <b>Chrome</b> で開く',
+    '右上の <b>⋮</b>（点が3つ）を押す',
+    '<b>「ホーム画面に追加」</b>（または「アプリをインストール」）を押す' ] },
+};
+const stepsHtml = k => `<h3>${INSTALL_STEPS[k].h}</h3><ol>${INSTALL_STEPS[k].li.map(x => `<li>${x}</li>`).join('')}</ol>`;
+function openInstall(kind){
+  if(typeof kind !== 'string') kind = deviceKind();      // ボタンから呼ばれたときは、イベントが入ってくるので見分け直す
+  const main = INSTALL_STEPS[kind] ? kind : null;
+  const others = ['iphone','ipad','android'].filter(k => k !== main);
   const bg = document.createElement('div'); bg.className = 'sheet-bg';
   bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>ホーム画面に追加する</h2>
-    <div class="note"><b>なぜ必要か：</b>ホーム画面に追加していないと、iPhone が「しばらく使っていないサイト」と判断して、登録した問題と写真を消してしまうことがあります。追加すれば消えません。ふつうのアプリと同じように開けるようにもなります。</div>
-    ${ios ? `<h3>iPhone・iPad の場合</h3>
-    <ol><li>この画面を <b>Safari</b> で開く（LINE や Instagram の中で開いていたら、右下などの「Safari で開く」を押してください）</li>
-      <li>画面の下にある <b>共有ボタン</b>（四角から矢印が出ている印）を押す</li>
-      <li>少し下にスクロールして <b>「ホーム画面に追加」</b> を押す</li>
-      <li>右上の <b>「追加」</b> を押す</li>
-      <li>ホーム画面にできたアイコンから、これからは開く</li></ol>
-    <p class="dim" style="margin-top:10px">追加したあとは、この帯は出なくなります。</p>`
-    : `<h3>Android の場合</h3>
-    <ol><li>この画面を <b>Chrome</b> で開く</li><li>右上の <b>⋮</b> を押す</li><li><b>「ホーム画面に追加」</b>（または「アプリをインストール」）を押す</li></ol>
-    <p class="dim" style="margin-top:10px">パソコンで見ている場合は、そのままでも構いません。</p>`}
+    <div class="note"><b>なぜ必要か：</b>ホーム画面に追加していないと、iPhone や iPad が「しばらく使っていないサイト」と判断して、登録した問題と写真を消してしまうことがあります。追加すれば消えません。ふつうのアプリと同じように開けるようにもなります。</div>
+    ${main ? stepsHtml(main) + '<p class="dim" style="margin-top:10px">追加したあとは、この帯は出なくなります。</p>'
+           : '<p class="dim" style="margin-top:6px">パソコンで見ている場合は、そのままでも構いません。スマホやタブレットでは、下の手順で追加してください。</p>'}
+    <details style="margin-top:12px"${main ? '' : ' open'}><summary class="dim" style="cursor:pointer">${main ? 'ほかの端末の場合' : '端末ごとの手順'}</summary>${others.map(stepsHtml).join('')}</details>
     <button class="close">閉じる</button></div>`;
   document.body.appendChild(bg);
   bg.querySelector('.close').onclick = () => bg.remove();

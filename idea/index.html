@@ -70,6 +70,13 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
 .compose .hint{flex:1; font-size:12px; color:var(--muted);}
 .btnAdd{background:var(--accent); color:var(--accent-ink); font-weight:900; font-size:16px; border-radius:999px; padding:11px 22px; display:flex; align-items:center; gap:6px; box-shadow:var(--shadow);}
 
+/* 予測変換（これまでのメモの言葉から続きを出す） */
+.sg{display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin:6px -2px 0; padding:2px;}
+.sg::-webkit-scrollbar{display:none;}
+.sg:empty{display:none;}
+.sg button{flex:none; font-size:14px; font-weight:700; background:var(--accent-soft); color:var(--ink); border-radius:999px; padding:5px 12px; white-space:nowrap; max-width:78vw; overflow:hidden; text-overflow:ellipsis;}
+.sg button .m{color:var(--muted); font-weight:500;}
+
 /* タブ */
 .tabs{display:flex; gap:6px; margin:22px 0 12px; background:var(--chip); border-radius:999px; padding:4px;}
 .tabs button{flex:1; padding:9px 0; border-radius:999px; font-size:13px; white-space:nowrap; font-weight:700; color:var(--muted);}
@@ -123,6 +130,7 @@ body.nowDragging{-webkit-user-select:none; user-select:none; overscroll-behavior
 .sheet .box{background:var(--card); width:100%; max-width:560px; border-radius:22px 22px 0 0; padding:18px 16px calc(18px + env(safe-area-inset-bottom));}
 .sheet h2{font-size:16px; font-weight:900; margin-bottom:10px;}
 .sheet textarea{width:100%; min-height:140px; border:1px solid var(--line); border-radius:14px; padding:12px; font-size:16px; background:var(--bg); outline:none; resize:vertical;}
+.sheet .sg{margin:0 0 8px;}
 .sheet .row{display:flex; gap:8px; margin-top:12px;}
 .sheet .row button{flex:1; padding:12px; border-radius:999px; font-weight:900; font-size:15px; background:var(--chip);}
 .sheet .row .ok{background:var(--accent); color:var(--accent-ink);}
@@ -149,7 +157,8 @@ body.nowDragging{-webkit-user-select:none; user-select:none; overscroll-behavior
       <button class="on" data-mode="idea"><svg class="i" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>ひらめき</button>
       <button data-mode="keep"><svg class="i" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>残すメモ</button>
     </div>
-    <textarea id="inp" placeholder="ひらめいたことを、そのまま書く" rows="3"></textarea>
+    <textarea id="inp" placeholder="ひらめいたことを、そのまま書く" rows="3" autocomplete="on" autocorrect="on" spellcheck="true"></textarea>
+    <div class="sg" id="sgInp"></div>
     <div class="row">
       <span class="hint" id="hint">済んだら「消す」で片づけるメモ</span>
       <button class="btnAdd" id="btnAdd" disabled><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>メモ</button>
@@ -186,7 +195,8 @@ body.nowDragging{-webkit-user-select:none; user-select:none; overscroll-behavior
 <div class="sheet hidden" id="editSheet">
   <div class="box">
     <h2>メモを直す</h2>
-    <textarea id="editInp"></textarea>
+    <div class="sg" id="sgEdit"></div>
+    <textarea id="editInp" autocomplete="on" autocorrect="on" spellcheck="true"></textarea>
     <div class="row">
       <button id="editCancel">やめる</button>
       <button class="ok" id="editOk">保存</button>
@@ -197,7 +207,7 @@ body.nowDragging{-webkit-user-select:none; user-select:none; overscroll-behavior
 <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastBtn" class="hidden">元に戻す</button></div>
 
 <script>
-const VER = 4;
+const VER = 5;
 const KEY = 'idea_v1', BAK = 'idea_backup';
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -207,10 +217,11 @@ const ICON_CHECK = '<svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L
 let S = { items:[] };
 function load(){
   for(const k of [KEY, BAK]){
-    try{ const j = JSON.parse(localStorage.getItem(k)); if(j && Array.isArray(j.items)){ S = j; return; } }catch(e){}
+    try{ const j = JSON.parse(localStorage.getItem(k)); if(j && Array.isArray(j.items)){ S = j; dict = null; return; } }catch(e){}
   }
 }
 function save(){
+  dict = null;
   const s = JSON.stringify(S);
   try{ localStorage.setItem(KEY, s); localStorage.setItem(BAK, s); }catch(e){ toast('保存できませんでした（容量がいっぱいかもしれません）'); }
 }
@@ -303,7 +314,7 @@ function addMemo(){
   if(mode === 'keep') S.items.push({ id:uid(), kind:'keep', text, created:Date.now(), cleared:null, pos:top });
   else S.items.push({ id:uid(), text, created:Date.now(), cleared:null, pos:top });
   save();
-  inp.value = ''; syncBtn();
+  inp.value = ''; syncBtn(); hideSgInp();
   showTab(mode === 'keep' ? 'keep' : 'memo');
   render();
   toast(mode === 'keep' ? '残すメモに入れました' : 'メモしました');
@@ -462,7 +473,7 @@ function openEdit(id){
   $('#editSheet').classList.remove('hidden');
   setTimeout(() => $('#editInp').focus(), 50);
 }
-function closeEdit(){ editId = null; $('#editSheet').classList.add('hidden'); }
+function closeEdit(){ editId = null; hideSgEdit(); $('#editSheet').classList.add('hidden'); }
 $('#editCancel').onclick = closeEdit;
 $('#editSheet').addEventListener('click', e => { if(e.target.id === 'editSheet') closeEdit(); });
 $('#editOk').onclick = () => {
@@ -470,6 +481,94 @@ $('#editOk').onclick = () => {
   if(x && t){ x.text = t; save(); render(); toast('直しました'); }
   closeEdit();
 };
+
+/* ===== 予測変換（これまでのメモの言葉から、続きを出す） ===== */
+const SEG = (window.Intl && Intl.Segmenter) ? new Intl.Segmenter('ja', { granularity:'word' }) : null;
+const splitWords = s => SEG ? [...SEG.segment(s)].map(x => x.segment)
+  : (s.match(/[一-鿿々〆ヵヶ]+|[ぁ-ゟ]+|[ァ-ヿー]+|[A-Za-z0-9]+|[\s\S]/gu) || []);
+const SEP = /[\s、。，．,.!?！？「」『』（）()・…]/, SEPS = new RegExp(SEP.source + '+');
+/* dict = { keys:[言葉（並べたもの）], info:言葉 → {n:書いた回数, t:最後に書いた時刻} }。メモが変わったら作り直す */
+let dict = null;
+function buildDict(){
+  const info = new Map();
+  for(const x of S.items){
+    for(const part of String(x.text || '').split(SEPS)){
+      if(!part) continue;
+      const w = splitWords(part);
+      for(let i = 0; i < w.length; i++){
+        let p = '';
+        for(let j = i; j < w.length && j < i + 8; j++){
+          p += w[j];
+          if(p.length > 24) break;
+          if(p.length < 2) continue;
+          const o = info.get(p), t = x.created || 0;
+          if(o){ o.n++; if(t > o.t) o.t = t; } else info.set(p, { n:1, t });
+        }
+      }
+    }
+  }
+  dict = { keys:[...info.keys()].sort(), info };
+}
+function lowerBound(a, s){ let lo = 0, hi = a.length; while(lo < hi){ const m = (lo + hi) >> 1; if(a[m] < s) lo = m + 1; else hi = m; } return lo; }
+/* カーソルの手前の文字に続く言葉を探す。長く一致したものほど先に、同じなら よく書く・最近書いた順 */
+function suggest(before){
+  if(!before || SEP.test(before.slice(-1))) return [];
+  if(!dict) buildDict();
+  let tail = before.slice(-12);
+  for(let k = tail.length - 1; k >= 0; k--) if(SEP.test(tail[k])){ tail = tail.slice(k + 1); break; }
+  const out = [], seen = new Set();
+  for(let L = tail.length; L >= 1 && out.length < 6; L--){
+    const head = tail.slice(-L);
+    if(L === 1 && (out.length || /[ぁ-ゟ]/.test(head))) break;   // ひらがな1文字（「の」「を」など）だけでは出さない
+    const hits = [];
+    for(let i = lowerBound(dict.keys, head); i < dict.keys.length && dict.keys[i].startsWith(head) && hits.length < 2000; i++){
+      if(dict.keys[i].length > L) hits.push(dict.keys[i]);
+    }
+    hits.sort((a, b) => { const A = dict.info.get(a), B = dict.info.get(b); return B.n - A.n || B.t - A.t; });
+    /* 「英単語は」「英単語は朝」…のような途中までの候補は、同じくらい書いている長い候補があれば出さない */
+    const top = hits.slice(0, 500), n = p => dict.info.get(p).n;
+    const keep = top.filter(p => !top.some(q => q.length > p.length && q.startsWith(p) && n(q) >= n(p)));
+    for(const p of keep){
+      const rest = p.slice(L);
+      if(seen.has(rest)) continue;
+      seen.add(rest); out.push({ head, rest });
+      if(out.length >= 6) break;
+    }
+  }
+  return out;
+}
+/* 入力欄に予測の列をつなぐ。変換中（下線の出ている間）は出さず、確定したら出す */
+function attachSuggest(ta, bar, onInsert){
+  let composing = false, pressing = false, at = 0;
+  const hide = () => { bar.innerHTML = ''; };
+  const update = () => {
+    if(composing || ta.selectionStart !== ta.selectionEnd){ hide(); return; }
+    at = ta.selectionStart;
+    const list = suggest(ta.value.slice(0, at));
+    bar.innerHTML = list.map(s => `<button type="button" data-rest="${esc(s.rest)}"><span class="m">${esc(s.head.slice(-4))}</span>${esc(s.rest)}</button>`).join('');
+    bar.scrollLeft = 0;
+  };
+  ta.addEventListener('compositionstart', () => { composing = true; hide(); });
+  ta.addEventListener('compositionend', () => { composing = false; setTimeout(update, 0); });
+  ta.addEventListener('input', e => { composing = !!e.isComposing; update(); });
+  ta.addEventListener('click', update);
+  ta.addEventListener('keyup', e => { if(/^(Arrow|Home|End)/.test(e.key || '')) update(); });
+  ta.addEventListener('blur', () => setTimeout(() => { if(!pressing && document.activeElement !== ta) hide(); }, 200));
+  bar.addEventListener('pointerdown', () => { pressing = true; });
+  bar.addEventListener('pointercancel', () => { pressing = false; });
+  bar.addEventListener('mousedown', e => e.preventDefault());   // 押してもキーボードが閉じないように
+  bar.addEventListener('click', e => {
+    pressing = false;
+    const b = e.target.closest('button[data-rest]'); if(!b) return;
+    ta.focus();
+    ta.setRangeText(b.dataset.rest, at, at, 'end');
+    if(onInsert) onInsert();
+    update();
+  });
+  return hide;
+}
+const hideSgInp = attachSuggest(inp, $('#sgInp'), syncBtn);
+const hideSgEdit = attachSuggest($('#editInp'), $('#sgEdit'));
 
 /* ===== タブ ===== */
 function showTab(t){

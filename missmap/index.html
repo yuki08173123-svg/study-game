@@ -159,6 +159,9 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 .field.bad{border-color:var(--miss); box-shadow:0 0 0 3px var(--miss-soft);}
 .dayrow{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
 .dayrow input[type=date]{background:var(--chip); border:1px solid var(--line); border-radius:10px; padding:8px 10px; font-size:16px; min-height:42px; outline:none;}
+.title-row .who{font-size:12.5px; font-weight:700; color:var(--accent); background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:999px; padding:3px 10px; flex-shrink:0; max-width:6.5em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.profname{width:100%; background:var(--chip); border:1px solid var(--line); border-radius:10px; padding:9px 12px; font-size:16px; outline:none;}
+.profname:focus{border-color:var(--accent-line);}
 .field .dnote{font-size:13px; color:var(--muted); margin-top:8px;}
 .field .dnote b{color:var(--accent);}
 .field .hint{font-size:13px; color:var(--muted); line-height:1.6; margin-top:6px; padding-top:6px; border-top:1px dashed var(--line);}
@@ -420,6 +423,7 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
   <header class="app">
     <div class="title-row">
       <h1 class="wm"><img class="logo" src="icon-192.png" alt=""><span class="t" id="appTitle">Essence</span></h1><span class="ver" id="verLabel"></span>
+      <button class="who hidden" id="whoTag"></button>
       <span class="spacer"></span>
       <span class="saved" id="savedMark">保存済み</span>
       <button class="icon-btn" id="btnHelp" aria-label="使い方"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
@@ -445,6 +449,16 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
       <h3><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2.5"/><path d="M8 21h8"/><path d="m10 9 5 2.5-5 2.5z"/></svg>使い方</h3>
       <div class="dim" style="margin-bottom:10px">横にめくって読めます。最初に一度、全部見てください。</div>
       <div id="setSlides"></div>
+    </div>
+
+    <div class="card" id="profCard">
+      <h3><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.3c.5-.2 1-.3 1.5-.3 2.8 0 5 2.2 5 5"/></svg>使う人（兄弟で1台を使うとき）</h3>
+      <div class="dim" style="margin-bottom:10px">人ごとに、問題・写真・記録・間隔の設定が別々に保存されます。名前を押すと、その人に切りかわります。</div>
+      <div class="chips profs" id="profs"></div>
+      <label class="dim" for="profName" style="display:block; margin:12px 0 4px">いまの人の名前（短く。上の札に出ます）</label>
+      <input type="text" id="profName" class="profname" maxlength="12" placeholder="例）はるき">
+      <button class="btn-chip" id="btnProfAdd" style="width:100%; margin-top:10px">＋ 使う人をふやす</button>
+      <button class="btn-line danger hidden" id="btnProfDel">この人を消す</button>
     </div>
 
     <div class="card">
@@ -528,10 +542,26 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 22;
+const VER = 23;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
-const KEY = 'miss_v1', BK = 'miss_backup';
+/* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
+   1人目は今までどおり miss_v1。2人目からは miss_p<id>。切りかえは読みこみ直し。
+   写真は全員で1つの入れ物（IndexedDB）に入る。id は重ならないが、消すときは他の人の写真を消さないこと */
+const PROF_KEY = 'miss_profiles', CUR_KEY = 'miss_cur', PROF_MAX = 6;
+function profiles(){
+  try{ const a = JSON.parse(localStorage.getItem(PROF_KEY) || '[]'); if(Array.isArray(a) && a.length) return a; }catch(e){}
+  return [{ id:'0', name:'' }];
+}
+function saveProfiles(a){ try{ localStorage.setItem(PROF_KEY, JSON.stringify(a)); }catch(e){} }
+const keysOf = id => id === '0' ? { data:'miss_v1', bk:'miss_backup', draft:'miss_draft' } : { data:'miss_p'+id, bk:'miss_p'+id+'_bk', draft:'miss_p'+id+'_draft' };
+const profName = (pr, i) => (pr && pr.name) || ('使う人'+(i+1));
+let PID = '0';
+try{ PID = localStorage.getItem(CUR_KEY) || '0'; }catch(e){}
+if(!profiles().some(x => x.id === PID)) PID = profiles()[0].id;
+const KEY = keysOf(PID).data, BK = keysOf(PID).bk;
+const multi = () => profiles().length > 1;
+const curName = () => { const a = profiles(), i = a.findIndex(x => x.id === PID); return profName(a[i], Math.max(0, i)); };
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -666,7 +696,9 @@ function load(){
   return norm({ items:[], cfg:{} });
 }
 let savedT = null;
+let noSave = false;   // 人を消したあと、ページを出るときの保存でデータを戻さないため
 function save(show){
+  if(noSave) return;
   const s = JSON.stringify(S);
   try{ localStorage.setItem(KEY, s); localStorage.setItem(BK, s); }catch(e){ toast('保存できませんでした（容量不足の可能性）'); return; }
   const m = $('#savedMark'); m.classList.add('on'); clearTimeout(savedT); savedT = setTimeout(()=>m.classList.remove('on'), 1500);
@@ -777,16 +809,32 @@ async function shrink(file){
   if(tmp) URL.revokeObjectURL(tmp);
   return blob || file;
 }
+/* ほかの人（使う人）が使っている写真の id */
+function otherImgIds(){
+  const set = new Set();
+  for(const pr of profiles()){
+    if(pr.id === PID) continue;
+    const k = keysOf(pr.id);
+    for(const key of [k.data, k.bk, k.draft]){
+      try{
+        const j = JSON.parse(localStorage.getItem(key) || 'null'); if(!j) continue;
+        (j.items || []).forEach(n => (n.imgs || []).forEach(i => set.add(i)));
+        (Array.isArray(j.imgs) ? j.imgs : []).forEach(i => set.add(i));
+      }catch(e){}
+    }
+  }
+  return set;
+}
 async function sweepImgs(){
   try{
     const keys = await allImgKeys() || [];
-    const used = new Set();
+    const used = otherImgIds();
     S.items.forEach(n => (n.imgs||[]).forEach(i => used.add(i)));
     draft.imgs.forEach(i => used.add(i));
     for(const k of keys) if(!used.has(k)) await delImg(k);
   }catch(e){}
 }
-async function countImgs(){ try{ return (await allImgKeys() || []).length; }catch(e){ return 0; } }
+async function countImgs(){ try{ const mine = new Set(photoIds()); return (await allImgKeys() || []).filter(k => mine.has(k)).length; }catch(e){ return 0; } }
 
 /* ===================== 共通の部品 ===================== */
 let toastT = null;
@@ -1099,7 +1147,7 @@ function validateWhyFix(root, p, why, fix, tag){
 }
 
 /* ===================== 作る（登録） ===================== */
-const DKEY = 'miss_draft';
+const DKEY = keysOf(PID).draft;
 const blankDraft = () => ({ imgs:[], subj:'', text:'', due:'', tag:'', whyP:emptyWhy(), fixP:emptyFix() });
 function loadDraft(){
   try{
@@ -1701,6 +1749,7 @@ function askApplyGaps(g){
 /* ===================== 設定 ===================== */
 function renderSet(){
   renderGaps();
+  renderProfs();
   $('#tgRandMast').classList.toggle('on', S.cfg.randMast);
   const lb = S.cfg.lastBackup, days = lb ? diffDays(lb, today()) : 9999;
   $('#bkNote').innerHTML = (S.items.length >= 5 && days >= 30)
@@ -1711,6 +1760,50 @@ function renderSet(){
   $('#cntAll').textContent = S.items.length+'問（極まった '+mastered().length+'）';
   countImgs().then(n => { $('#cntImg').textContent = n+'枚'; });
 }
+/* 使う人 */
+function renderProfs(){
+  const a = profiles();
+  $('#profs').innerHTML = a.map((pr, i) => `<button class="chip ${pr.id === PID ? 'on' : ''}" data-id="${esc(pr.id)}">${esc(profName(pr, i))}</button>`).join('');
+  const inp = $('#profName'); if(document.activeElement !== inp) inp.value = (a.find(x => x.id === PID) || {}).name || '';
+  $('#btnProfDel').classList.toggle('hidden', a.length < 2);
+  $('#btnProfDel').textContent = `「${curName()}」を消す`;
+  $('#whoTag').textContent = curName();
+  $('#whoTag').classList.toggle('hidden', a.length < 2);
+}
+function switchProfile(id){
+  save();
+  try{ localStorage.setItem(CUR_KEY, id); sessionStorage.setItem('miss_switched', '1'); }catch(e){}
+  location.replace(location.pathname + '?p=' + Date.now());
+}
+$('#profs').onclick = e => { const b = e.target.closest('button[data-id]'); if(b && b.dataset.id !== PID) switchProfile(b.dataset.id); };
+$('#profName').oninput = e => {
+  const a = profiles(); let pr = a.find(x => x.id === PID);
+  if(!pr){ pr = { id:PID, name:'' }; a.push(pr); }
+  pr.name = e.target.value.trim().slice(0, 12); saveProfiles(a); renderProfs();
+};
+$('#btnProfAdd').onclick = () => {
+  const a = profiles(); if(a.length >= PROF_MAX) return toast(`${PROF_MAX}人までです`);
+  if(!a.some(x => x.id === PID)) a.push({ id:PID, name:'' });
+  const id = Date.now().toString(36); a.push({ id, name:'' }); saveProfiles(a);
+  toast('新しい人に切りかえます'); setTimeout(() => switchProfile(id), 500);
+};
+$('#btnProfDel').onclick = async () => {
+  const a = profiles(); if(a.length < 2) return;
+  const nm = curName();
+  if(!confirm(`「${nm}」の問題・写真・記録をぜんぶ消します。よろしいですか？`)) return;
+  if(!confirm('本当に消しますか？（控えを取っていなければ戻せません）')) return;
+  noSave = true;
+  const ids = photoIds().concat(draft.imgs || []);
+  const rest = a.filter(x => x.id !== PID); saveProfiles(rest);
+  const keep = otherImgIds();
+  for(const id of ids){ if(!keep.has(id)){ try{ await delImg(id); }catch(e){} } }
+  clearTimeout(dT);
+  const k = keysOf(PID); [k.data, k.bk, k.draft].forEach(x => { try{ localStorage.removeItem(x); }catch(e){} });
+  try{ localStorage.setItem(CUR_KEY, rest[0].id); }catch(e){}
+  location.replace(location.pathname + '?p=' + Date.now());
+};
+$('#whoTag').onclick = () => { goTab('Set'); setTimeout(() => $('#profCard').scrollIntoView({ behavior:'smooth', block:'start' }), 60); };
+
 $('#tgRandMast').onclick = () => { S.cfg.randMast = !S.cfg.randMast; save(); renderSet(); renderToday(); };
 
 /* 控え */
@@ -1740,11 +1833,12 @@ function shareText(text, name, onDone){
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
   if(onDone) onDone();
 }
+const fileWho = () => multi() ? curName().replace(/[\\/:*?"<>|\s]/g, '') + '-' : '';
 function exportRecord(){
   if(!S.items.length) return toast('まだ問題がありません');
   const text = JSON.stringify({ app:'missmap', v:VER, kind:'data', exported:new Date().toISOString(), data:S });
   S.cfg.lastBackup = today(); save(); renderSet();
-  shareText(text, 'missmap-kiroku-'+today()+'.json', () => toast('記録の控えをとりました'));
+  shareText(text, 'missmap-kiroku-'+fileWho()+today()+'.json', () => toast('記録の控えをとりました'));
 }
 async function buildPhotoPart(ids, part, total){
   const imgs = {};
@@ -1771,7 +1865,7 @@ function openPhotoBackup(){
       ? `<button class="btn-primary" id="pbGo">${part} / ${total} 個目を保存する</button>`
       : `<div class="dim" style="text-align:center; padding:14px">${part} / ${total} 個目を用意しています…</div>`;
     const go = body.querySelector('#pbGo');
-    if(go) go.onclick = () => shareText(text, `missmap-shashin-${part}of${total}-${today()}.json`, () => {
+    if(go) go.onclick = () => shareText(text, `missmap-shashin-${fileWho()}${part}of${total}-${today()}.json`, () => {
       if(part < total){ part++; text = ''; draw(); prep(); }
       else { S.cfg.lastBackup = today(); save(); renderSet(); bg.remove(); toast('写真の控えがそろいました'); }
     });
@@ -1826,10 +1920,13 @@ $('#impFile').onchange = async e => {
 };
 $('#btnImportText').onclick = async () => { const t = $('#impText').value.trim(); if(!t) return toast('貼りつけてから押してください'); await importText(t); $('#impText').value = ''; };
 $('#btnWipe').onclick = async () => {
-  if(!confirm('登録した問題と写真をすべて消します。よろしいですか？')) return;
+  const who = multi() ? `「${curName()}」の` : '';
+  if(!confirm(`${who}登録した問題と写真をすべて消します。よろしいですか？`)) return;
   if(!confirm('本当に消しますか？（控えを取っていなければ戻せません）')) return;
+  const ids = photoIds();
   S = norm({ items:[], cfg:{}, sends:[] }); save();
-  try{ await tx_('readwrite', st => st.clear()); }catch(e){}
+  const keep = otherImgIds();
+  for(const id of ids){ if(!keep.has(id)){ try{ await delImg(id); }catch(e){} } }
   urlCache.clear(); renderAll(); renderSet(); toast('すべて消しました');
 };
 
@@ -1848,6 +1945,7 @@ function slides(){ return [
   { ico:'send', t:'8. ミスマップの部屋に出す', p:`問題を <b>${SEND_N}問</b> 作るごとに、紙のミスマップと同じ形の <b>1枚の画像</b> にして、Discord の <b>#ミスマップ</b> に出します。ひとりで進めずに、フィードバックをもらうためです。`, ex:'「解く」タブの「ミスマップの部屋に出す」から。共有の画面で Discord を選び、#ミスマップ に送ります。出した回は「ミスマップ」タブにたまり、あとから出し直せます。' },
   { ico:'install', t:'9. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、登録した問題と写真が消えてしまうことがあります。', ex:'Safari の共有ボタン（iPhone は画面の下、iPad は右上。見当たらないときは「…」の中）→「ホーム画面に追加」→「追加」。やり方は、上の赤い帯の「やり方」からも見られます。' },
   { ico:'save', t:'10. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の <b>「記録の控えをとる」</b> を、ときどき押してください。軽いのですぐ終わります。', ex:'写真も残したいときは「写真もとる」。重いので何回かに分けて保存します。機種変更のときだけで十分です。' },
+  { ico:'people', t:'11. 兄弟で使う', p:'1台を兄弟で使うときは、設定の <b>「使う人」</b> で人をふやします。名前を押すと切りかわり、問題・写真・記録は<b>人ごとに別々</b>に保存されます。', ex:'いまだれの画面かは、上の名前の札で分かります。札を押すと、切りかえの所に飛びます。' },
 ]; }
 const SICO = {
   doc: ICO.doc, camera: ICO.camera, redo: ICO.redo, eye: ICO.eye, shuffle: ICO.shuffle,
@@ -1856,6 +1954,7 @@ const SICO = {
   chart: '<svg viewBox="0 0 24 24"><path d="M3 20h18"/><rect x="5" y="11" width="3.5" height="9"/><rect x="10.25" y="6" width="3.5" height="14"/><rect x="15.5" y="14" width="3.5" height="6"/></svg>',
   save: '<svg viewBox="0 0 24 24"><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/></svg>',
   send: '<svg viewBox="0 0 24 24"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="m10 13 5-5"/></svg>',
+  people: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.3c.5-.2 1-.3 1.5-.3 2.8 0 5 2.2 5 5"/></svg>',
   install: '<svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M12 7v7"/><path d="m9 11.5 3 3 3-3"/></svg>',
 };
 function slidesHtml(){
@@ -1993,6 +2092,8 @@ document.querySelectorAll('.appname').forEach(e => { e.textContent = APP_NAME; }
 renderToday();
 checkInstall();
 renderAdd();
+renderProfs();
+try{ if(sessionStorage.getItem('miss_switched')){ sessionStorage.removeItem('miss_switched'); setTimeout(() => toast(`「${curName()}」に切りかえました`), 300); } }catch(e){}
 checkUpdate(true);
 try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
 if('serviceWorker' in navigator){ window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }

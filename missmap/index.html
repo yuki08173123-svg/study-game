@@ -524,7 +524,7 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 19;
+const VER = 20;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 const KEY = 'miss_v1', BK = 'miss_backup';
@@ -536,7 +536,9 @@ const SUBJC = { '英語':'#8FA8E8', '数学':'#7CC3A0', '国語':'#E3928A', '理
 /* ミスの種類（ミスパターン分析用）。Discordでヒラが挙げた例をもとにした */
 const SOLVE_TAG = '解法が分からなかった';
 const isSolve = t => t === SOLVE_TAG;
-const TAGS = [SOLVE_TAG, '計算ミス','スペルミス','漢字ミス','時制ミス','条件の読み飛ばし','見落とし','解答欄のズレ','書き方が雑','その他'];
+const METHOD_TAG = '解説とちがう解き方';   // 生徒めい（10/1）の要望「解答解説通りの解き方ではない」。グラフと画像で切れないよう短くした
+const kindOf = t => t === SOLVE_TAG ? 'solve' : t === METHOD_TAG ? 'method' : 'miss';
+const TAGS = [SOLVE_TAG, METHOD_TAG, '計算ミス','スペルミス','漢字ミス','時制ミス','条件の読み飛ばし','見落とし','解答欄のズレ','書き方が雑','その他'];
 const DEF_GAPS = [1,3,7,14,30];
 const GAP_MIN = 2, GAP_MAX = 8;   // くり返す回数は 2〜8回
 const PRESETS = [
@@ -547,6 +549,11 @@ const PRESETS = [
 /* ミスの種類ごとの「よくある改善点」。押すと いつ・何を・どうする が入る。
    中身は Discord #ミスマップ でヒラが出していた指導（指さし・バックスキャン・条件に丸・数値化）にそろえてある。 */
 const FIXES = {
+  [METHOD_TAG]: [
+    { when:'丸付け後', what:'解説の解き方', how:'ノートに写して、その方法でもう一度解く' },
+    { when:'丸付け後', what:'解説の解き方と自分の解き方', how:'2列にならべて書いて見くらべる' },
+    { when:'解く前', what:'解説で使っていた考え方', how:'1行で書き出してから解きはじめる' },
+  ],
   [SOLVE_TAG]: [
     { when:'解く前', what:'問題文の数量', how:'図や表にかき出してから解きはじめる' },
     { when:'解いている途中', what:'解説', how:'1行目だけ読んで、そこから先は自力で解く' },
@@ -903,8 +910,8 @@ function openSolve(id, opt){
   host.querySelectorAll('[data-g]').forEach(el => el.onclick = () => openGallery(it.imgs, Number(el.dataset.g)));
   $('#svReveal').onclick = () => {
     $('#ask').innerHTML = `
-      <div class="q ans"><span class="k">1</span><div><b>${isSolve(it.tag) ? 'どこで止まったか' : '間違えた理由'}</b><div class="a">${esc(it.why) || '<span class="dim">（未記入）</span>'}</div></div></div>
-      <div class="q ans"><span class="k">2</span><div><b>${isSolve(it.tag) ? '解き方のポイント' : '改善点'}</b><div class="a">${esc(it.fix) || '<span class="dim">（未記入）</span>'}</div></div></div>
+      <div class="q ans"><span class="k">1</span><div><b>${ANS[kindOf(it.tag)][0]}</b><div class="a">${esc(it.why) || '<span class="dim">（未記入）</span>'}</div></div></div>
+      <div class="q ans"><span class="k">2</span><div><b>${ANS[kindOf(it.tag)][1]}</b><div class="a">${esc(it.fix) || '<span class="dim">（未記入）</span>'}</div></div></div>
       <div class="dim" style="margin-top:8px">もう一度解いた答えは、合っていましたか？ 正解できたら「解けた」、まちがえた・途中で止まったら「解けなかった」。</div>`;
     const j = $('#judge');
     if(it.done && !practice){
@@ -928,17 +935,24 @@ function openSolve(id, opt){
 }
 function closePage(){ $('#host').innerHTML = ''; }
 /* 解く画面の手順。どの種類の問題も「思い出す → もう一度解く → 答え合わせ」 */
+const ASK = {
+  miss:   ['間違えた理由は？ 改善点は？', 'なぜ間違えたか、次はどうするかを、頭の中で言ってください。', '改善点をやりながら、最後まで解いてください。'],
+  solve:  ['どこで止まった？ 解き方のポイントは？', '前にどこで手が止まったか、次はどう解くかを、頭の中で言ってください。', '言ったポイントどおりに、最後まで自力で解いてください。'],
+  method: ['解説の解き方は？ ポイントは？', '自分の解き方と、解説の解き方のちがいを、頭の中で言ってください。', '解説の解き方で、最後まで解いてください。'],
+};
+const ANS = { miss:['間違えた理由','改善点'], solve:['どこで止まったか','解き方のポイント'], method:['自分の解き方','解き方のポイント'] };
+/* 解く画面の手順。どの種類の問題も「思い出す → もう一度解く → 答え合わせ」 */
 function askHtml(it){
-  const sv = isSolve(it.tag);
-  return `<div class="q"><span class="k">1</span><div><b>${sv ? 'どこで止まった？ 解き方のポイントは？' : '間違えた理由は？ 改善点は？'}</b><span>${sv ? '前にどこで手が止まったか、次はどう解くかを、頭の中で言ってください。' : 'なぜ間違えたか、次はどうするかを、頭の中で言ってください。'}</span></div></div>
-    <div class="q"><span class="k">2</span><div><b>ノートに、もう一度解く</b><span>${sv ? '言ったポイントどおりに、最後まで自力で解いてください。' : '改善点をやりながら、最後まで解いてください。'}</span></div></div>
+  const a = ASK[kindOf(it.tag)];
+  return `<div class="q"><span class="k">1</span><div><b>${a[0]}</b><span>${a[1]}</span></div></div>
+    <div class="q"><span class="k">2</span><div><b>ノートに、もう一度解く</b><span>${a[2]}</span></div></div>
     <div class="q"><span class="k">3</span><div><b>解き終わったら、答え合わせ</b><span>下のボタンを押すと、登録した内容が出ます。答えは教材で確かめてください。</span></div></div>`;
 }
 
 /* ===================== 理由・改善点の形と判定 ===================== */
 /* 改善点は「いつ・何を・どうする」に分けて書く（案C）。明らかに行動になっていないものだけ弾く（案A）。
    基準は Discord #ミスマップ でのヒラの指摘: 行動になっているか／数値化できるか／知識不足でないか。 */
-const WHEN = ['解く前','解いている途中','解き終わったら','丸付けのとき','見直しのとき'];
+const WHEN = ['解く前','解いている途中','解き終わったら','丸付けのとき','丸付け後','見直しのとき'];
 /* 「〜し忘れた」（書き忘れた・つけ忘れた）はケアレスミスなので、忘れ は入れない */
 const KNOW = /(覚えて(い)?な(かった|い)|知らな(かった|い)|習って(い)?な(い|かった)|わから(なかった|ない)|分から(なかった|ない)|未習|初めて見た|覚えてなかった)/g;
 const VAGUE = /(気を?つけ|注意|頑張|がんば|意識|ちゃんと|しっかり|きちんと|見直|確認|復習|練習|集中|落ち着|慎重|丁寧|ていねい|忘れない|ミスしない|間違えない|しないように|ようにする|徹底|大事に|大切に)/g;
@@ -960,6 +974,7 @@ function checkWhy(d, tag){
     if(a.length < 4) return { t:'どこで止まったかを書いてください', ex:'例：速さの式を立てるところで止まった' };
     return null;
   }
+  if(kindOf(tag) === 'method' && a.length < 4) return { t:'自分がどう解いたかを書いてください', ex:'例：方程式で遠回りして解いた' };
   if(a.length < 4) return { t:'何をした（しなかった）かを書いてください', ex:'例：問題文の「合計」を読み飛ばした' };
   KNOW.lastIndex = 0;
   if(KNOW.test(t) && t.replace(KNOW, '').replace(PARTS, '').length < 4) return { t:`解き方や知識が分からなかった問題なら、ミスの種類で「${SOLVE_TAG}」を選んでください。`, ex:'知っていたのに間違えたなら、そのとき何をしてしまったかを書いてください。例：公式は知っていたが、代入する数を取り違えた' };
@@ -978,15 +993,18 @@ function checkFix(d){
 const WHY_TXT = {
   miss:  { did:'何をした／しなかった', didPh:'例：問題文の「合計」を読み飛ばした', then:'そのとき何が起きた（任意）', thenPh:'例：片方だけ計算して答えた',
            hint:'ケアレスミスは「何をしてしまったか」を書きます。解き方が分からなかった問題なら、上のミスの種類で「解法が分からなかった」を選んでください。' },
+  method:{ did:'自分はどう解いたか', didPh:'例：方程式で遠回りして解いた', then:'解説の解き方（任意）', thenPh:'例：比を使うと1行で解けた',
+           hint:'解説とちがう解き方をした問題は、自分がどう解いたかと、解説の解き方を書きます。' },
   solve: { did:'どこで止まったか', didPh:'例：速さの式を立てるところで止まった', then:'解説を見て分かったこと（任意）', thenPh:'例：図をかくと、距離の関係が見えた',
            hint:'解法が分からなかった問題は、どこで手が止まったかを書きます。' },
 };
 const FIX_HINT = {
   miss:  '「気をつける」ではなく、手・目・口で何をするかを書きます。解き直しのときに、この改善点をやりながら解きます。',
   solve: '次に同じ問題を解くとき、どう考えて解くかのポイントを書きます。解き直しのときは、このポイントどおりに解きます。',
+  method:'解説の解き方で解くためのポイントを書きます。解き直しのときは、解説の解き方で解きます。',
 };
 function whyFields(p, d, tag){
-  const w = WHY_TXT[isSolve(tag) ? 'solve' : 'miss'];
+  const w = WHY_TXT[kindOf(tag)];
   return `<div class="sub-in"><label id="${p}DidL">${w.did}</label><input type="text" id="${p}Did" value="${esc(d.did)}" placeholder="${w.didPh}" autocomplete="off"></div>
     <div class="sub-in"><label id="${p}ThenL">${w.then}</label><input type="text" id="${p}Then" value="${esc(d.then)}" placeholder="${w.thenPh}" autocomplete="off"></div>
     <div class="hint" id="${p}WhyHint">${w.hint}</div>
@@ -994,7 +1012,7 @@ function whyFields(p, d, tag){
 }
 /* 種類を選び直したら、入力中の文字は消さずに、見出し・例・案内だけ変える */
 function refreshWhy(root, p, tag){
-  const k = isSolve(tag) ? 'solve' : 'miss', w = WHY_TXT[k], q = sel => root.querySelector(sel);
+  const k = kindOf(tag), w = WHY_TXT[k], q = sel => root.querySelector(sel);
   if(!q('#'+p+'DidL')) return;
   q('#'+p+'DidL').textContent = w.did; q('#'+p+'Did').placeholder = w.didPh;
   q('#'+p+'ThenL').textContent = w.then; q('#'+p+'Then').placeholder = w.thenPh;
@@ -1014,7 +1032,7 @@ function fixFields(p, d, tag){
     <div class="sub-in"><label>何を</label><input type="text" id="${p}What" value="${esc(d.what)}" placeholder="例：代入した式の符号／問題文の条件" autocomplete="off"></div>
     <div class="sub-in"><label>どうする</label><input type="text" id="${p}How" value="${esc(d.how)}" placeholder="例：指でさして、元の式と1つずつ見くらべる" autocomplete="off"></div>
     <div class="pv off" id="${p}FixPv"></div>
-    <div class="hint" id="${p}FixHint">${FIX_HINT[isSolve(tag) ? 'solve' : 'miss']}</div>
+    <div class="hint" id="${p}FixHint">${FIX_HINT[kindOf(tag)]}</div>
     <div class="err hidden" id="${p}FixErr"></div>`;
 }
 /* root: 探す範囲（document か シート）。d を書き換えつつ、プレビューを更新する */
@@ -1787,9 +1805,9 @@ $('#btnWipe').onclick = async () => {
    ルール: 機能を変えたら、ここ（slides()）を必ず同じ更新で直す。
    ※ 設定の「更新の履歴」は v16 で廃止（生徒には不要というユーザー判断）。CHANGES 配列も消した。 */
 function slides(){ return [
-  { ico:'doc', t:`${APP_NAME}とは`, p:'丸付けで✕がついた問題を、<b>全部まとめて解き直す</b>ための道具です。ケアレスミスも、解法が分からなかった問題も、ここに入れます。', ex:'紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）と同じ流れを、アプリにしました。' },
+  { ico:'doc', t:`${APP_NAME}とは`, p:'丸付けで✕がついた問題を、<b>全部まとめて解き直す</b>ための道具です。ケアレスミスも、解法が分からなかった問題も、解説とちがう解き方をした問題も、ここに入れます。', ex:'紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）と同じ流れを、アプリにしました。' },
   { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。' },
-  { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。解法が分からなかった問題は、「<b>どこで止まったか</b>」を書きます。', ex:'例：問題文の「合計」を読み飛ばした／速さの式を立てるところで止まった' },
+  { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。解法が分からなかった問題は「<b>どこで止まったか</b>」、解説とちがう解き方をした問題は「<b>自分はどう解いたか</b>」を書きます。', ex:'例：問題文の「合計」を読み飛ばした／速さの式を立てるところで止まった' },
   { ico:'fix', t:'3. 改善点は3つに分けて', p:'「<b>いつ</b>・<b>何を</b>・<b>どうする</b>」で書くと、1文に組み上がります。「気をつける」「見直す」のように行動になっていないと、登録できません。', ex:'例：解き終わったら、代入した式の符号を指でさして元の式と見くらべる。解法が分からなかった問題は、次にどう解くかのポイントを書きます。' },
   { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます。' },
   { ico:'eye', t:'5. もう一度解く', p:'問題だけが出ます。理由と改善点を思い出してから、<b>改善点をやりながらノートにもう一度解きます</b>。解き終わったら「答え合わせ」で、登録した内容を見ます。', ex:`解けた → 次の間隔へ。${gaps().length}回つづけて解けたら「極まった」。解けなかった → 翌日からやり直し。` },

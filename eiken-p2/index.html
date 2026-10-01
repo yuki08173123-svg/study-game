@@ -91,7 +91,8 @@ section > h2{font-family:var(--mincho);font-size:19px;margin:22px 2px 10px;font-
 .grid{display:grid;grid-template-columns:34px repeat(7,minmax(0,1fr));gap:4px;font-size:12px}
 .grid .h{color:var(--muted);text-align:center;font-size:11px}
 .grid .l{color:var(--muted);display:flex;align-items:center;font-size:12px}
-.grid:not(.wide) .cell{font-size:9.5px;letter-spacing:-.04em}
+.grid.few .cell{aspect-ratio:auto;height:36px}
+.grid.tight .cell{font-size:9.5px;letter-spacing:-.04em}
 .cell{aspect-ratio:1;min-width:0;padding:0;letter-spacing:-.02em;border-radius:7px;background:var(--chip);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--muted);position:relative}
 .cell.cur{outline:2px solid var(--ai);outline-offset:1px;background:var(--ai-soft);color:var(--ai)}
 .cell.d{color:#fff}
@@ -435,7 +436,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="idioms.js?v=1"></script>
 <script>
 'use strict';
-const VER = 1;
+const VER = 2;
 /* 単語（1400語）と熟語（400個）は、べつべつの記録で進める。右上の「単語／熟語」で切りかえ（ページを読みなおす）。
    レベル（XP）と使い方を見たかどうかは、2つで共通。 */
 const BOOKKEY = 'eikenp2_book';
@@ -445,11 +446,11 @@ const IDIOM = BOOK === 'i';
 const BNAME = IDIOM ? '熟語' : '単語';
 const W = ((IDIOM ? window.EIKEN_IDIOMS : window.EIKEN_WORDS) || []).map((x, i) => ({ ...x, i, s: x.s || [], d: x.d || [] }));
 const N = W.length;
-const PER = 50;                          // 1日の語数
-const DAYS = Math.ceil(N / PER);         // 1周の日数（単語1400語なら28日・熟語400個なら8日）
+const PER = IDIOM ? 100 : 200;           // 1日の数（単語200語・熟語100個）
+const DAYS = Math.ceil(N / PER);         // 1周の日数（単語1400語なら7日・熟語400個なら4日）
 let LAPS = 4, TOTAL = DAYS * 4;          // 周回数は設定で変えられる（setLaps）
 const GAPS = [1, 3, 7];                  // リマインド：まちがえた翌日 → 3日後 → 7日後 → 卒業
-const KEY = 'eikenp2_' + BOOK + '_v1';
+const KEY = 'eikenp2_' + BOOK + '_v2';   // v2：1日の数を変えたので記録を分けた
 const COMMON = 'eikenp2_common';
 const NO_W = IDIOM ? 3 : 4;              // 音声ファイルの番号の桁数
 const AUD = 'audio/' + BOOK + '/';
@@ -471,7 +472,7 @@ function clock(t){ t = Math.floor(t); return Math.floor(t/60) + ':' + String(t%6
 
 /* ===================== 保存 ===================== */
 let S;
-function blank(){ return { v:1, start: today(), cfg:{ dir:'w2m', voice:true, rate:1, pitch:1.1, voiceName:'', voiceMode:'ai', aRate:1, studyMin:10, laps: IDIOM ? 8 : 4, autoSpk:true }, w:{}, days:{}, tests:[], study:[], timer:null, xp:0, xpDay:{}, guideSeen:false }; }
+function blank(){ return { v:1, start: today(), cfg:{ dir:'w2m', voice:true, rate:1, pitch:1.1, voiceName:'', voiceMode:'ai', aRate:1, studyMin: IDIOM ? 20 : 30, laps: 8, autoSpk:true }, w:{}, days:{}, tests:[], study:[], timer:null, xp:0, xpDay:{}, guideSeen:false }; }
 function load(){
   try{ S = JSON.parse(localStorage.getItem(KEY)) || blank(); }catch(e){ S = blank(); }
   const b = blank();
@@ -482,14 +483,25 @@ function load(){
   let c = null; try{ c = JSON.parse(localStorage.getItem(COMMON)); }catch(e){}
   if(c){ S.xp = c.xp || 0; S.xpDay = c.xpDay || {}; S.guideSeen = !!c.guideSeen; }
   if(S.xp == null) S.xp = 0;
+  // まだ何も始めていないうちは、開始日を「今日」に合わせる（熟語は単語のあとに始めるので、はじめて取り組んだ日からの計画にする）
+  if(!S.startSet && !S.tests.length && !S.study.length && !Object.keys(S.days).length) S.start = today();
   setLaps(S.cfg.laps);
+}
+/* 単語の進み具合（熟語の「今日」で、単語を完走したかを見る） */
+function wordsProgress(){
+  try{
+    const w = JSON.parse(localStorage.getItem('eikenp2_w_v2')) || {};
+    const total = 7 * ((w.cfg && w.cfg.laps) || 8);
+    return { done: Object.keys(w.days || {}).length, total };
+  }catch(e){ return { done:0, total:56 }; }
 }
 function setLaps(n){ LAPS = Math.max(1, Math.min(10, +n || 4)); TOTAL = DAYS * LAPS; }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); localStorage.setItem(COMMON, JSON.stringify({ xp:S.xp, xpDay:S.xpDay, guideSeen:S.guideSeen })); }catch(e){} }
 function ws(i){ return S.w[i] || (S.w[i] = { c:0, x:0, sk:0, st:0, due:'' }); }
 load();
 
-/* ===================== 計画（1日50語。単語は28日・熟語は8日で1周。周回数は設定で） ===================== */
+/* ===================== 計画（単語は1日200語×7日、熟語は1日100個×4日で1周。8周＝単語は56日・熟語は32日）
+   単語を完走してから熟語に進む流れ。熟語の開始日は、はじめて熟語を開いた日（設定で変えられる）。 ===================== */
 function plan(n){
   const lap = Math.floor(n / DAYS) + 1, d = n % DAYS + 1;
   const from = (d-1) * PER, to = Math.min(N, d * PER);
@@ -599,7 +611,7 @@ function openLevel(){
       <div class="dim">${x.cur} / ${x.need} XP　・　次のレベルまで あと <b>${x.need - x.cur} XP</b></div></div>
     <h3>XP のもらい方</h3>
     <table class="xprules">${XP_RULES.map(([t, n]) => `<tr><td>${t}</td><td class="r">+${n} XP</td></tr>`).join('')}</table>
-    <p class="dim" style="margin:8px 0 0">例：覚える時間10分＋テスト50問（45問正解）＋その日のクリア → 10 + 90 + 20 = <b>120 XP</b></p>
+    <p class="dim" style="margin:8px 0 0">例：覚える時間30分＋テスト200問（180問正解）＋その日のクリア → 30 + 360 + 20 = <b>410 XP</b></p>
     <h3>ランク</h3>
     <p class="dim" style="margin:0 0 8px">レベルが上がると、ランクが英検の級で上がっていきます。単語と熟語の XP は合計です。</p>
     <div class="ranks">${RANKS.map(([m, t], k) => { const nx = RANKS[k+1]; const now = x.lv >= m && (!nx || x.lv < nx[0]); return `<span class="${now ? 'now' : x.lv >= m ? 'done' : ''}">Lv.${m} ${t}</span>`; }).join('')}</div>
@@ -615,7 +627,8 @@ function renderToday(){
   let hero;
   if(n >= TOTAL){
     hero = `<div class="hero"><div class="lap">${LAPS}周</div><div class="big">完走しました</div>
-      <div class="range">${N}${IDIOM ? '個' : '語'} × ${LAPS}周、おつかれさまでした。シャッフルテストで仕上げましょう。</div></div>`;
+      <div class="range">${N}${IDIOM ? '個' : '語'} × ${LAPS}周、おつかれさまでした。${IDIOM ? 'シャッフルテストで仕上げましょう。' : '次は熟語です。'}</div>
+      ${IDIOM ? '' : '<div class="steps"><button class="step main" id="goIdiom"><span class="n">→</span><span class="t">熟語400に進む<small>1日100個 × 4日で1周</small></span></button></div>'}</div>`;
   }else{
     const p = plan(n), lag = lagOf(n);
     const doneToday = lag < 0;   // 今日の分はもう終わっていて、次の日を表示している
@@ -635,7 +648,11 @@ function renderToday(){
   const remind = `<div class="card remind"><div class="num">${due.length}<small>語</small></div>
     <div style="flex:1"><h3>リマインドテスト</h3><div class="dim">${due.length ? 'まちがえた' + BNAME + 'が、今日もどってきています' : '今日のリマインドはありません'}<br>まちがえた翌日 → 3日後 → 1週間後</div></div>
     ${due.length ? '<button class="btn shu" style="width:auto;padding:12px 16px" id="goRemind">解く</button>' : ''}</div>`;
-  el.innerHTML = hero + lvCardHTML() + remind + `<h2>計画（1日${PER}${IDIOM ? '個' : '語'} × ${DAYS}日 × ${LAPS}周 ＝ ${TOTAL}日）</h2><div class="card">${gridHTML()}</div>`;
+  const wp = IDIOM ? wordsProgress() : null;
+  const order = wp && wp.done < wp.total && !S.tests.length ? `<div class="card" style="border-color:var(--gold);background:var(--gold-soft)"><h3>おすすめの順番：単語 → 熟語</h3>
+    <div class="dim">単語を完璧に覚えてから熟語に進むと、熟語の例文もすっと読めます。いまの単語は <b>${wp.done} / ${wp.total}日</b>。</div>
+    <button class="btn sub" id="backWords" style="margin-top:10px">単語にもどる</button></div>` : '';
+  el.innerHTML = order + hero + lvCardHTML() + remind + `<h2>計画（1日${PER}${IDIOM ? '個' : '語'} × ${DAYS}日 × ${LAPS}周 ＝ ${TOTAL}日）</h2><div class="card">${gridHTML()}</div>`;
   if(n < TOTAL){
     const p = plan(n);
     $('#stStudy').onclick = () => openStudy(n);
@@ -645,6 +662,8 @@ function renderToday(){
     $('#stTest').onclick = () => testOrStudy(n);
   }
   if($('#goRemind')) $('#goRemind').onclick = startRemind;
+  if($('#goIdiom')) $('#goIdiom').onclick = () => switchBook('i');
+  if($('#backWords')) $('#backWords').onclick = () => switchBook('w');
   $('#lvCard').onclick = openLevel;
   bindGrid(el);
 }
@@ -657,11 +676,11 @@ function gridHTML(){
     return `<button class="cell ${n === cur ? 'cur' : ''} ${p.date < t ? 'late' : ''}" data-n="${n}">${md(p.date)}</button>`;
   };
   let h;
-  if(DAYS <= 8){   // 熟語（8日で1周）：横に Day、縦に周
-    h = `<div class="grid" style="grid-template-columns:30px repeat(${DAYS},minmax(0,1fr));gap:3px"><div></div>`;
+  if(DAYS <= 8){   // 横に Day、縦に周（単語は7日・熟語は4日で1周）
+    h = `<div class="grid ${DAYS > 7 ? 'tight' : DAYS < 6 ? 'few' : ''}" style="grid-template-columns:30px repeat(${DAYS},minmax(0,1fr));gap:3px"><div></div>`;
     for(let d=1; d<=DAYS; d++) h += `<div class="h">Day${d}</div>`;
     for(let l=0; l<LAPS; l++){ h += `<div class="l">${l+1}周</div>`; for(let d=0; d<DAYS; d++) h += cell(l*DAYS + d); }
-  }else{           // 単語（28日で1周）：周ごとに 7列 × 4段
+  }else{           // 1周が長いとき：周ごとに 7列で折り返す
     h = '<div class="grid wide">';
     for(let l=0; l<LAPS; l++){ h += `<div class="lapt">第${l+1}周（Day1〜${DAYS}）</div>`; for(let d=0; d<DAYS; d++) h += cell(l*DAYS + d); }
   }
@@ -1309,8 +1328,8 @@ function renderSet(){
     <div class="card set">
       <label>${BNAME}の開始日</label><input type="date" id="sStart" value="${S.start}">
       <label style="margin-top:12px">何周する？</label>
-      <div class="seg" id="sLaps">${(IDIOM ? [4,6,8] : [2,3,4,6]).map(n => `<button class="${LAPS===n?'on':''}" data-n="${n}">${n}周</button>`).join('')}</div>
-      <p class="dim" style="margin:8px 0 0">1日${PER}${IDIOM ? '個' : '語'} × ${DAYS}日 = 1周。${LAPS}周で <b>${TOTAL}日</b>。この日から始めると、完走予定は <b>${md(end)}(${wd(end)})</b> です。英検の日から逆算して決めましょう。</p></div>
+      <div class="seg" id="sLaps">${[4,6,8,10].map(n => `<button class="${LAPS===n?'on':''}" data-n="${n}">${n}周</button>`).join('')}</div>
+      <p class="dim" style="margin:8px 0 0">1日${PER}${IDIOM ? '個' : '語'} × ${DAYS}日 = 1周。${LAPS}周で <b>${TOTAL}日</b>。この日から始めると、完走予定は <b>${md(end)}(${wd(end)})</b> です。${IDIOM ? '熟語は、単語を完走してから始めるのがおすすめです。' : '8周で約2か月です。'}</p></div>
     <div class="card set"><label>発音</label>
       <div class="seg" id="sAuto"><button class="${S.cfg.autoSpk?'on':''}" data-v="1">自動で鳴らす</button><button class="${!S.cfg.autoSpk?'on':''}" data-v="0">押したときだけ</button></div>
       <p class="dim" style="margin:8px 0 0">カードを出したとき・「英語→意味」の問題で、英語の発音を自動で鳴らします。</p></div>
@@ -1338,7 +1357,7 @@ function renderSet(){
   $$('.gset button').forEach(b => b.onclick = () => openGuide(+b.dataset.g));
   $('#sGuide').onclick = () => openGuide(0);
   $$('#sBook button').forEach(b => b.onclick = () => switchBook(b.dataset.b));
-  $('#sStart').onchange = e => { if(e.target.value){ S.start = e.target.value; save(); renderAll(); renderSet(); toast('開始日を変えました'); } };
+  $('#sStart').onchange = e => { if(e.target.value){ S.start = e.target.value; S.startSet = true; save(); renderAll(); renderSet(); toast('開始日を変えました'); } };
   $$('#sLaps button').forEach(b => b.onclick = () => { S.cfg.laps = +b.dataset.n; setLaps(S.cfg.laps); save(); renderAll(); renderSet(); });
   $$('#sAuto button').forEach(b => b.onclick = () => { S.cfg.autoSpk = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sVoice button').forEach(b => b.onclick = () => { S.cfg.voice = b.dataset.v === '1'; save(); renderSet(); });
@@ -1358,7 +1377,7 @@ function renderSet(){
     }
     if(!('speechSynthesis' in window)){ toast('この端末では読み上げが使えません'); return; }
     speechSynthesis.speak(sayUtter(enHead(W[0]), 'en'));
-    speechSynthesis.speak(sayUtter('いちばん大事な意味は、' + W[0].m.replace(/[〜～~]/g, 'なになに') + '。今日も50' + (IDIOM ? '個' : '語') + '、がんばりましょう！', 'ja'));
+    speechSynthesis.speak(sayUtter('いちばん大事な意味は、' + W[0].m.replace(/[〜～~]/g, 'なになに') + '。今日も' + PER + (IDIOM ? '個' : '語') + '、がんばりましょう！', 'ja'));
   };
   const APPID = 'eikenp2-' + BOOK;
   $('#sExp').onclick = () => {
@@ -1581,14 +1600,14 @@ function guideSlides(){
   return [
     { t:'ようこそ', p:['英検準2級に出る<b>英単語1400語</b>と<b>英熟語400個</b>を、何周もして覚えきるアプリです。','やることは毎日かんたん。<b>覚える → テスト</b> の2つだけ。右上の「単語／熟語」で切りかえます。'],
       v:`<div class="minicard"><b>decide</b><span class="dim">→</span><span style="color:var(--shu);font-weight:700">〜を決める</span></div><div class="minicard"><b>look forward to ~</b><span class="dim">→</span><span style="color:var(--shu);font-weight:700">〜を楽しみに待つ</span></div><div class="dim" style="text-align:center">英検の過去問で確かめて選んだ単語・熟語</div>` },
-    { t:'1日50語ずつ、何周も', p:['単語は<b>28日で1周</b>、熟語は<b>8日で1周</b>。これを何周もくり返します（何周するかは設定で決められます）。','その日にやる範囲は「今日」タブに出ます。遅れても大丈夫。次にやる日から続きが出ます。'],
-      v:`<div class="grid wide">${[0,1,2,3,4,5,6,7,8,9,10,11,12,13].map(d => `<span class="cell ${d<3?'d':''} ${d===3?'cur':''}" style="${d<3?'background:#2E7A57':''}">${d<3?[96,88,92][d]:''}</span>`).join('')}</div><div class="dim" style="text-align:center">…28日で1周</div>` },
+    { t:'単語は2か月で8周', p:['単語は<b>1日200語 × 7日で1周</b>。これを<b>8周（56日・約2か月）</b>くり返します。','単語を完璧に覚えたら、<b>熟語</b>へ。熟語は<b>1日100個 × 4日で1周</b>です。','その日にやる範囲は「今日」タブに出ます。遅れても大丈夫。次にやる日から続きが出ます。'],
+      v:`<div class="grid" style="grid-template-columns:34px repeat(7,minmax(0,1fr))"><div></div>${[1,2,3,4,5,6,7].map(d => `<div class="h">Day${d}</div>`).join('')}${[1,2,3].map(l => `<div class="l">${l}周</div>` + [0,1,2,3,4,5,6].map(d => `<span class="cell ${l===1&&d<3?'d':''} ${l===1&&d===3?'cur':''}" style="${l===1&&d<3?'background:#2E7A57':''}">${l===1&&d<3?[96,88,92][d]:''}</span>`).join('')).join('')}</div><div class="dim" style="text-align:center">…8周まで</div>` },
     { t:'① 覚える時間', p:['「今日」の①を押して、<b>覚える時間を自分で決めます</b>（3分〜、自由に入力も）。','のこり時間は<b>画面のいちばん上</b>に出ます。カード・一覧・1分解説から、好きな方法で覚えましょう。'],
       v:`<div style="background:#1F2A4D;color:#fff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px"><b style="font-size:24px">9:42</b><small style="opacity:.8">覚える時間</small><span style="margin-left:auto;font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:99px">一時停止</span></div><div class="minicard">カード　／　一覧（意味をかくせる）　／　1分解説</div>` },
     { t:'発音と1分解説', p:['<b>スピーカーのボタン</b>で、ネイティブの発音が聞けます。カードを出すと自動で鳴ります。','1分解説は、スライドと音声で1つを約30秒で解説。英語はネイティブの声、意味や覚え方は日本語の声です。'],
       v:`<div class="minicard" style="flex-direction:column;align-items:flex-start"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:22px">decide</b><span class="ph">/dɪˈsaɪd/</span><span class="spk">${SPK_SVG}</span></div><span style="color:var(--shu);font-weight:700;border:1.5px solid var(--shu);border-radius:8px;padding:2px 8px">〜を決める</span><span class="dim" style="font-size:12.5px">仲間の語：decision（名）決定</span></div>` },
-    { t:'② テスト', p:['50問の4択テスト。<b>時間と正答率は自動で記録</b>されます。','まちがえたものだけ、すぐにもう一度。「報告用にコピー」で、勉強報告にそのまま貼れます。','慣れてきたら、テストタブの「出題の形式」で<b>聞いて答える</b>・<b>書いて答える</b>・<b>例文の穴埋め</b>にも変えられます。'],
-      v:`<div style="text-align:center"><div style="font-family:var(--mincho);font-weight:700;font-size:44px;color:#2E7A57;line-height:1.1">92<small style="font-size:18px">%</small></div><div class="dim">50問中 46問 正解　・　時間 6分12秒</div></div>` },
+    { t:'② テスト', p:['その日の分の4択テスト（単語200問・熟語100問）。<b>時間と正答率は自動で記録</b>されます。','まちがえたものだけ、すぐにもう一度。「報告用にコピー」で、勉強報告にそのまま貼れます。','慣れてきたら、テストタブの「出題の形式」で<b>聞いて答える</b>・<b>書いて答える</b>・<b>例文の穴埋め</b>にも変えられます。'],
+      v:`<div style="text-align:center"><div style="font-family:var(--mincho);font-weight:700;font-size:44px;color:#2E7A57;line-height:1.1">92<small style="font-size:18px">%</small></div><div class="dim">200問中 184問 正解　・　時間 21分40秒</div></div>` },
     { t:'リマインドテスト', p:['まちがえたものは、<b>翌日 → 3日後 → 1週間後</b>にもどってきます。','3回つづけて正解したら卒業。苦手なものほど何度も出るので、自然に覚えきれます。'],
       v:`<div class="minicard"><b style="color:var(--shu)">✕</b> まちがえた</div><div class="minicard">翌日 → 3日後 → 1週間後 にもう一度</div><div class="minicard"><b style="color:#2E7A57">◯◯◯</b> 3回つづけて正解で卒業</div>` },
     { t:'レベルアップ', p:['覚える・解くたびに <b>XP</b> がたまり、たまると<b>レベルが上がります</b>（単語と熟語の合計）。','ランクは英検の級で上がっていきます。Starter からはじめて、めざせ Master！'],

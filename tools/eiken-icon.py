@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """英検準2級 単熟語 のアイコンを作る（PIL だけ）。
-青の地に、白の「英」を太いゴシックで大きく。右下に金の札「準2」。
+青の地に、白の「英」を太いゴシックで大きく（左右のまん中）。下のまん中に金の札「準2」。
 python3 tools/eiken-icon.py → eiken-p2/ にアイコン4枚と /tmp/eiken-icon-preview.png
 """
 import os
@@ -28,13 +28,16 @@ def draw(size=S, safe=1.0):
     d = ImageDraw.Draw(im)
     k = size / S * safe
     cx, cy = size / 2, size / 2
-    f = ImageFont.truetype(GOTH, int(600 * k))
-    d.text((cx - 50 * k, cy - 50 * k), '英', font=f, fill=WHITE, anchor='mm')
-    w, h = 330 * k, 200 * k
-    x0, y0 = cx + 120 * k, cy + 190 * k
-    d.rounded_rectangle([x0 - w / 2 + 40 * k, y0, x0 + w / 2 + 40 * k, y0 + h], radius=int(40 * k), fill=GOLD)
-    sf = ImageFont.truetype(GOTH6, int(130 * k))
-    d.text((x0 + 40 * k, y0 + h / 2), '準2', font=sf, fill=NAVY, anchor='mm')
+    # 「英」は左右のまん中。字の形（インクの範囲）で中心を合わせる
+    f = ImageFont.truetype(GOTH, int(540 * k))
+    l, t, r, b = d.textbbox((0, 0), '英', font=f, anchor='lt')
+    d.text((cx - (l + r) / 2, cy - 70 * k - (t + b) / 2), '英', font=f, fill=WHITE, anchor='lt')
+    # 金の札「準2」は下のまん中
+    w, h = 300 * k, 170 * k
+    y0 = cy + 255 * k
+    d.rounded_rectangle([cx - w / 2, y0, cx + w / 2, y0 + h], radius=int(36 * k), fill=GOLD)
+    sf = ImageFont.truetype(GOTH6, int(118 * k))
+    d.text((cx, y0 + h / 2), '準2', font=sf, fill=NAVY, anchor='mm')
     return im
 
 

@@ -159,8 +159,8 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 .field.bad{border-color:var(--miss); box-shadow:0 0 0 3px var(--miss-soft);}
 .dayrow{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
 .dayrow input[type=date]{background:var(--chip); border:1px solid var(--line); border-radius:10px; padding:8px 10px; font-size:16px; min-height:42px; outline:none;}
-.dayrow .dnote{font-size:13px; color:var(--muted);}
-.dayrow .dnote b{color:var(--accent);}
+.field .dnote{font-size:13px; color:var(--muted); margin-top:8px;}
+.field .dnote b{color:var(--accent);}
 .field .hint{font-size:13px; color:var(--muted); line-height:1.6; margin-top:6px; padding-top:6px; border-top:1px dashed var(--line);}
 .chips{display:flex; flex-wrap:wrap; gap:7px;}
 .chip{background:var(--chip); border:1.5px solid transparent; border-radius:999px; padding:7px 14px; font-size:14px; font-weight:700; color:var(--ink);}
@@ -528,7 +528,7 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 21;
+const VER = 22;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 const KEY = 'miss_v1', BK = 'miss_backup';
@@ -677,14 +677,17 @@ const gapsText = g => (g || gaps()).map(gapLabel).join('・');
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const byId = id => S.items.find(x => x.id === id);
 
-/* 解いた日。前に解いた問題はさかのぼって入れられる（未来の日・おかしな値は今日にする） */
-const pickDay = d => (/^\d{4}-\d{2}-\d{2}$/.test(d||'') && d < today()) ? d : today();
-/* 最初に届く日 = 解いた日＋1回目の間隔。さかのぼって過ぎていたら今日 */
-function firstDue(day){ const t = today(), d = addDays(pickDay(day), gaps()[0]); return d < t ? t : d; }
+/* 最初に届く日。ふつうは 登録日＋1回目の間隔。カレンダーで好きな日を選べる（過ぎた日は今日、おかしな値はふつうの日にする） */
+function pickDue(d){
+  const t = today();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d||'')) return addDays(t, gaps()[0]);
+  return d < t ? t : d;
+}
 function addItem(o){
-  const t = pickDay(o.day);
+  const t = today(), due = pickDue(o.due);
   const it = { id:newId(), subj:o.subj, text:(o.text||'').trim(), imgs:o.imgs||[], tag:o.tag||'', why:(o.why||'').trim(), fix:(o.fix||'').trim(), whyP:o.whyP||null, fixP:o.fixP||null,
-    created:t, stage:0, due:firstDue(t), done:false, doneAt:'', log:[] };
+    created:t, stage:0, due, done:false, doneAt:'', log:[] };
+  if(o.due) it.pin = due;  // 自分で選んだ日。間隔を変えても、1回目はこの日のまま
   S.items.unshift(it);
   save(); return it;
 }
@@ -1097,7 +1100,7 @@ function validateWhyFix(root, p, why, fix, tag){
 
 /* ===================== 作る（登録） ===================== */
 const DKEY = 'miss_draft';
-const blankDraft = () => ({ imgs:[], subj:'', text:'', day:'', tag:'', whyP:emptyWhy(), fixP:emptyFix() });
+const blankDraft = () => ({ imgs:[], subj:'', text:'', due:'', tag:'', whyP:emptyWhy(), fixP:emptyFix() });
 function loadDraft(){
   try{
     const d = JSON.parse(localStorage.getItem(DKEY) || 'null');
@@ -1129,9 +1132,10 @@ function renderAdd(){
 
     <div class="field req"><label>教科<b>必須</b></label><div class="chips" id="addSubj">${SUBJ.map(s => `<button class="chip sub ${draft.subj===s?'on':''}" data-s="${s}" style="--c:${SUBJC[s]}">${s}</button>`).join('')}</div></div>
 
-    <div class="field"><label>解いた日</label>
-      <div class="dayrow"><input type="date" id="addDay" value="${pickDay(draft.day)}" max="${today()}"><span class="dnote" id="addDayNote"></span></div>
-      <div class="hint">前に解いた問題は、カレンダーでその日を選んで入れられます。</div></div>
+    <div class="field"><label>届く日（「今日の問題」に入る日）</label>
+      <div class="dayrow"><input type="date" id="addDay" min="${today()}"><button class="chip sm" id="addDayToday">今日</button><button class="chip sm" id="addDayStd">${gapLabel(gaps()[0])}</button></div>
+      <div class="dnote" id="addDayNote"></div>
+      <div class="hint">前に解いた問題も、カレンダーで日を選ぶと、その日の「今日の問題」に入ります。直前期までに極めたい問題を、好きな日に入れておけます。</div></div>
 
     <div class="field req"><label>ミスの種類<b>必須</b></label><div class="chips" id="addTag">${TAGS.map(t => `<button class="chip sm ${draft.tag===t?'on':''}" data-t="${t}">${t}</button>`).join('')}</div>
       <div class="hint">丸付けで✕がついた問題は、全部入れてOKです。◯でも解説より遠回りだった問題は「${METHOD_TAG}」で入れられます。同じ種類が集まると、それがあなたのクセです（ミスマップのタブで見られます）。</div>
@@ -1149,13 +1153,20 @@ function renderAdd(){
   $('#fCam').onchange = e => takeFiles(e.target.files);
   $('#fPick').onchange = e => takeFiles(e.target.files);
   $('#addText').oninput = e => { draft.text = e.target.value; saveDraft(); };
+  const stdDue = () => addDays(today(), gaps()[0]);
+  const setDue = d => { d = pickDue(d); draft.due = d === stdDue() ? '' : d; showDay(); saveDraft(); };
   const showDay = () => {
-    const d = pickDay(draft.day), f = firstDue(d), back = d < today();
-    $('#addDay').value = d;
-    $('#addDayNote').innerHTML = back ? `<b>${relDay(d)}</b>にさかのぼっています` : '今日';
+    const f = pickDue(draft.due);
+    if(draft.due && draft.due !== f) draft.due = f;  // 書きかけの日が過ぎていたら今日にする
+    $('#addDay').value = f;
+    $('#addDayToday').classList.toggle('on', f === today());
+    $('#addDayStd').classList.toggle('on', f === stdDue());
+    $('#addDayNote').innerHTML = `<b>${mdw(f)}</b>（${relDay(f)}）の「今日の問題」に入ります`;
     $('#addWhen').textContent = f === today() ? '登録すると、すぐ「今日の問題」に入ります。' : `登録すると ${mdw(f)}に「今日の問題」として届きます。`;
   };
-  $('#addDay').onchange = e => { draft.day = pickDay(e.target.value) === today() ? '' : pickDay(e.target.value); showDay(); saveDraft(); };
+  $('#addDay').onchange = e => setDue(e.target.value || '');
+  $('#addDayToday').onclick = () => setDue(today());
+  $('#addDayStd').onclick = () => setDue('');
   showDay();
   bindWhyFix(document, 'add', draft.whyP, draft.fixP, saveDraft);
   $('#addSubj').querySelectorAll('.chip').forEach(b => b.onclick = () => { draft.subj = b.dataset.s; $('#addSubj').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); saveDraft(); });
@@ -1181,7 +1192,7 @@ function renderAdd(){
     clearDraft();
     renderAdd(); renderAll();
     window.scrollTo({ top:0, behavior:'smooth' });
-    toast(it.due === today() ? '登録しました。今日の問題に入りました' : `登録しました。${gapLabel(diffDays(today(), it.due))}に届きます`);
+    toast(it.due === today() ? '登録しました。今日の問題に入りました' : `登録しました。${mdw(it.due)}に届きます`);
   };
   const ac = $('#addClear');
   if(ac) ac.onclick = async () => {
@@ -1602,6 +1613,7 @@ function baseDay(it){
 }
 function replan(it, g){
   if(it.stage >= g.length) return { done:true };
+  if(it.pin && it.stage === 0 && !it.log.some(l => !l.r)) return { done:false, due:it.pin };
   return { done:false, due:addDays(baseDay(it), g[it.stage]) };
 }
 function gapPreviewHtml(g){
@@ -1826,7 +1838,7 @@ $('#btnWipe').onclick = async () => {
    ※ 設定の「更新の履歴」は v16 で廃止（生徒には不要というユーザー判断）。CHANGES 配列も消した。 */
 function slides(){ return [
   { ico:'doc', t:`${APP_NAME}とは`, p:'丸付けで✕がついた問題を、<b>全部まとめて解き直す</b>ための道具です。ケアレスミスも、解法が分からなかった問題も、解説とちがう解き方をした問題も、ここに入れます。', ex:'紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）と同じ流れを、アプリにしました。' },
-  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。前に解いた問題は「解いた日」をカレンダーでさかのぼって入れられます（すぐ今日の問題に入ります）。' },
+  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。「届く日」をカレンダーで選ぶと、その日の「今日の問題」に入ります。前に解いた問題を、直前期までに極めたい日に入れておけます。' },
   { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。解法が分からなかった問題は「<b>どこで止まったか</b>」、解説とちがう解き方をした問題は「<b>自分はどう解いたか</b>」を書きます。', ex:'例：問題文の「合計」を読み飛ばした／速さの式を立てるところで止まった' },
   { ico:'fix', t:'3. 改善点は3つに分けて', p:'「<b>いつ</b>・<b>何を</b>・<b>どうする</b>」で書くと、1文に組み上がります。「気をつける」「見直す」のように行動になっていないと、登録できません。', ex:'例：解き終わったら、代入した式の符号を指でさして元の式と見くらべる。解法が分からなかった問題は、次にどう解くかのポイントを書きます。' },
   { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます。' },

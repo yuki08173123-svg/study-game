@@ -1,0 +1,17 @@
+{
+  "name": "現代文の語彙1300",
+  "short_name": "語彙1300",
+  "description": "中学生が覚えておきたい現代文の語彙1300語を、仕分け＋カード（A〜D）で覚えきるアプリ",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5EFE3",
+  "theme_color": "#F5EFE3",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

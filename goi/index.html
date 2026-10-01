@@ -1,0 +1,1190 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>現代文の語彙1300</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F5EFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Old+Mincho:wght@500;700;900&display=swap">
+<style>
+:root{
+  --bg:#F5EFE3;        /* 生成り */
+  --card:#FFFCF5;
+  --paper:#FBF4E6;     /* カードの紙 */
+  --chip:#EAE2D2;
+  --line:#DCD2BF;
+  --ink:#1F1A16;       /* 墨 */
+  --muted:#5A5046;
+  --ai:#2D5A4C;        /* 常磐（ときわ）：主ボタン */
+  --ai-soft:#E0ECE6;
+  --shu:#B63E2B;       /* 朱：意味の枠・D */
+  --shu-soft:#F7E3DE;
+  --ok:#2E7A57;
+  --ok-soft:#DDF0E5;
+  --blue:#3B5B9A;
+  --blue-soft:#E2E8F4;
+  --orange:#C47A1F;
+  --orange-soft:#F8E9D2;
+  --gold:#9A7630;
+  --gold-soft:#F3E9CF;
+  --mincho:'Zen Old Mincho','Hiragino Mincho ProN',serif;
+  --r:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:'BIZ UDPGothic',system-ui,sans-serif;font-size:17px;line-height:1.6;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,select{font:inherit;color:inherit}
+.hidden{display:none!important}
+.dim{color:var(--muted);font-size:14px}
+b{font-weight:700}
+
+/* ヘッダ */
+header{position:sticky;top:0;z-index:20;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+header h1{margin:0;font-family:var(--mincho);font-weight:900;font-size:20px;letter-spacing:.03em;flex:1;white-space:nowrap}
+header h1 small{font-size:12px;color:var(--muted);font-family:'BIZ UDPGothic';font-weight:400;margin-left:6px}
+.lvchip{display:flex;align-items:center;gap:6px;background:var(--gold-soft);color:#6B5020;border-radius:999px;padding:4px 10px 4px 8px;font-weight:700;font-size:14px;transition:transform .2s}
+.lvchip i{display:block;width:44px;height:6px;border-radius:3px;background:#E2D2A6;overflow:hidden;font-style:normal}
+.lvchip i::after{content:'';display:block;height:100%;width:var(--p,0%);background:var(--gold);transition:width .6s ease}
+.lvchip.bump{animation:bump .5s}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+.helpb{width:34px;height:34px;border-radius:50%;background:var(--chip);font-weight:700;color:var(--ai);flex:none}
+.band{display:block;width:100%;background:var(--shu);color:#fff;text-align:left;padding:9px 16px;font-size:14px;font-weight:700}
+
+main{padding:14px 16px;max-width:680px;margin:0 auto}
+section > h2{font-family:var(--mincho);font-size:19px;margin:22px 2px 10px;font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.card h3{margin:0 0 6px;font-size:16px}
+
+/* 今日 */
+.hero{background:var(--ai);color:#fff;border-radius:20px;padding:18px 18px 16px;margin-bottom:12px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;right:-30px;top:-30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.06)}
+.hero .lap{font-size:14px;opacity:.9}
+.hero .big{font-family:var(--mincho);font-size:30px;font-weight:900;line-height:1.3;margin:2px 0}
+.hero .range{font-size:15px;opacity:.95}
+.steps{display:grid;gap:8px;margin-top:14px;position:relative;z-index:1}
+.step{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.1);border-radius:14px;padding:11px 14px;text-align:left;color:#fff;width:100%}
+.step .n{width:28px;height:28px;border-radius:50%;background:#fff;color:var(--ai);display:grid;place-items:center;font-weight:700;flex:none}
+.step .t{flex:1;font-weight:700}
+.step .t small{display:block;font-weight:400;font-size:13px;opacity:.85}
+.step.main{background:#fff;color:var(--ai)}
+.step.main .n{background:var(--ai);color:#fff}
+.step.done .n{background:#7FC3A2;color:#fff}
+.quick{display:flex;gap:6px;margin-top:10px;position:relative;z-index:1}
+.quick button{flex:1;color:#fff;font-size:13px;padding:7px 4px;border-radius:10px;border:1px solid rgba(255,255,255,.3)}
+
+.btn{display:block;width:100%;padding:14px;border-radius:14px;font-weight:700;text-align:center;background:var(--ai);color:#fff}
+.btn.sub{background:var(--chip);color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.shu{background:var(--shu);color:#fff}
+.btn.line{background:transparent;border:1.5px solid var(--ai);color:var(--ai)}
+.btn + .btn{margin-top:8px}
+.row{display:flex;gap:8px}
+.row > *{flex:1}
+.row .btn + .btn{margin-top:0}
+
+/* 進みぐあいの帯 */
+.prog{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--chip);margin:8px 0 6px}
+.prog i{display:block;height:100%}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.c-x{background:#B9AE98} .c-g{background:var(--ok)} .c-l{background:#7FB8A0} .c-w{background:var(--shu)} .c-n{background:var(--chip)}
+
+/* セットの表 */
+.sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.setb{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;text-align:left}
+.setb .t{font-weight:700;line-height:1.3}
+.setb .t small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.setb .prog{height:8px;margin:6px 0 4px}
+.setb .s{font-size:12px;color:var(--muted)}
+.setb.cur{border:2px solid var(--ai)}
+
+/* 一覧 */
+.search{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);margin-bottom:10px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chipb{flex:none;padding:7px 13px;border-radius:999px;background:var(--chip);font-size:14px;font-weight:700;color:var(--muted)}
+.chipb.on{background:var(--ai);color:#fff}
+.wlist{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.wrow{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.wrow:last-child{border-bottom:0}
+.wrow .no{font-size:12px;color:var(--muted);width:34px;flex:none}
+.wrow .wd{font-family:var(--mincho);font-weight:700;font-size:18px;min-width:0;line-height:1.3;flex:none;max-width:52%}
+.wrow .wd small{display:block;font-size:11px;color:var(--muted);font-weight:500;font-family:'BIZ UDPGothic'}
+.wrow .mn{flex:1;text-align:right;font-size:13.5px;color:var(--muted);overflow:hidden;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.4}
+.wrow .mn.hide{color:transparent;background:var(--chip);border-radius:6px;min-height:1.4em}
+.lrow.opened .mn{color:var(--shu);font-weight:700}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--line)}
+.dot.x{background:#B9AE98} .dot.g{background:var(--ok)} .dot.l{background:#7FB8A0} .dot.w{background:var(--shu)}
+.lcount{display:flex;align-items:center;gap:8px;margin:0 2px 8px;font-size:14px}
+.minib{margin-left:auto;white-space:nowrap;background:var(--chip);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:700;color:var(--ai)}
+
+/* 記録 */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.stat b{display:block;font-family:var(--mincho);font-size:24px;font-weight:900;line-height:1.3}
+.stat span{font-size:12px;color:var(--muted)}
+table.log{width:100%;border-collapse:collapse;font-size:13.5px}
+table.log th{font-size:12px;color:var(--muted);font-weight:400;text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
+table.log td{padding:8px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+table.log td.r{text-align:right;white-space:nowrap}
+.abcd{display:inline-flex;gap:3px;font-size:12px;font-weight:700}
+.abcd span{padding:0 5px;border-radius:5px}
+.ka{background:var(--ok-soft);color:#154B33} .kb{background:var(--blue-soft);color:#24396A} .kc{background:var(--orange-soft);color:#7A4A10} .kd{background:var(--shu-soft);color:#7A2213}
+
+/* 設定 */
+.set label{display:block;font-weight:700;margin:4px 0 6px}
+.seg{display:flex;background:var(--chip);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;padding:9px 4px;border-radius:10px;font-size:14px;font-weight:700;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--ai);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+/* 下のタブ */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--line);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+nav.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;font-size:11px;color:var(--muted);font-weight:700;position:relative}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button.on{color:var(--ai)}
+#tabDot{position:absolute;top:2px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--shu)}
+
+/* 全画面（カード・仕分け・一覧） */
+.ov{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;padding:calc(8px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));overflow-y:auto}
+.ovbar{display:flex;align-items:center;gap:8px;min-height:44px}
+.ovbar .x{width:40px;height:40px;border-radius:50%;background:var(--chip);font-size:20px;display:grid;place-items:center;flex:none}
+.ovbar .ttl{flex:1;font-weight:700;font-size:15px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ovbar .tm{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ai);background:var(--ai-soft);padding:4px 10px;border-radius:999px;font-size:14px;white-space:nowrap}
+.undo{background:var(--chip);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;color:var(--ai);flex:none}
+.undo:disabled{opacity:.35}
+.pbar{height:6px;border-radius:3px;background:var(--chip);overflow:hidden;margin:6px 0 10px}
+.pbar i{display:block;height:100%;background:var(--ai);transition:width .25s}
+.ovbody{flex:1;display:flex;flex-direction:column;max-width:640px;width:100%;margin:0 auto}
+
+/* 語彙カード（紙のカード） */
+.fc{flex:1;display:flex;flex-direction:column;justify-content:center;perspective:1400px;min-height:330px;margin:4px 0 12px}
+.fc-in{position:relative;width:100%;min-height:330px;transition:transform .45s;transform-style:preserve-3d}
+.fc-in.flip{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:30px 20px 20px;display:flex;flex-direction:column;box-shadow:0 6px 20px rgba(60,40,10,.08);overflow-y:auto;
+  background-image:radial-gradient(circle at 92% 8%, rgba(182,62,43,.06) 0 70px, transparent 71px)}
+.fc-face.front{align-items:center;justify-content:center;text-align:center}
+.fc-face.back{transform:rotateY(180deg)}
+.fc .no{position:absolute;top:12px;right:16px;font-size:12px;color:var(--muted);font-family:var(--mincho)}
+.fc .cat{position:absolute;top:12px;left:16px;font-size:11.5px;color:var(--muted);background:rgba(0,0,0,.05);border-radius:999px;padding:1px 9px}
+.fc .yomi{font-size:16px;color:var(--muted);letter-spacing:.12em;font-family:var(--mincho);font-weight:500;min-height:1.4em}
+.fc .w{font-family:var(--mincho);font-weight:900;font-size:52px;line-height:1.2;word-break:keep-all;overflow-wrap:anywhere}
+.fc .w.long{font-size:36px}
+.fc .w.xlong{font-size:28px}
+.fc .tap{position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:12.5px;color:var(--muted)}
+.hintbox{margin-top:18px;width:100%;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px 14px;font-family:var(--mincho);font-weight:700;font-size:17px;text-align:left;line-height:1.7;animation:fadein .25s}
+.hintbox b.lb{display:inline-block;font-family:'BIZ UDPGothic';font-size:11.5px;background:var(--blue);color:#fff;border-radius:999px;padding:0 9px;margin-right:6px;vertical-align:2px}
+.fc .bw{font-family:var(--mincho);font-weight:900;font-size:26px;line-height:1.3}
+.fc .bw small{font-size:13px;color:var(--muted);font-weight:500;margin-left:6px;letter-spacing:.08em}
+.mbox{margin:10px 0 4px;background:#fff;border:2px solid var(--shu);border-radius:12px;padding:10px 14px;font-size:19px;font-weight:700;color:var(--shu);line-height:1.5}
+.exbox{margin-top:10px;border:1px solid var(--line);background:rgba(255,255,255,.7);border-radius:12px;padding:8px 12px;font-family:var(--mincho);font-weight:700;font-size:15.5px;line-height:1.7}
+.rel{margin-top:8px;font-size:14px;display:flex;flex-wrap:wrap;gap:6px 12px}
+.rel b{display:inline-block;font-size:11.5px;color:#fff;border-radius:999px;padding:0 8px;margin-right:4px;vertical-align:1px}
+.rel .ru b{background:var(--ai)} .rel .an b{background:var(--gold)}
+.ntbox{margin-top:8px;font-size:13.5px;background:var(--gold-soft);border-radius:10px;padding:7px 11px;color:#5A3E12}
+.hw{color:var(--shu);font-weight:900}
+
+/* A〜D のボタン */
+.rate{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rb{border-radius:14px;padding:10px 8px;text-align:center;font-weight:700;border:2px solid transparent;line-height:1.25;position:relative}
+.rb .k{display:block;font-family:var(--mincho);font-size:24px;font-weight:900}
+.rb small{display:block;font-size:12px;font-weight:700;opacity:.85}
+.rb.a{background:var(--ok-soft);color:#154B33;border-color:#9FD0B6}
+.rb.b{background:var(--blue-soft);color:#24396A;border-color:#AFC0E2}
+.rb.c{background:var(--orange-soft);color:#7A4A10;border-color:#E6C28E}
+.rb.d{background:var(--shu-soft);color:#7A2213;border-color:#E5ADA3}
+.rb.rec::after{content:'おすすめ';position:absolute;top:-8px;right:8px;background:var(--blue);color:#fff;font-size:10.5px;padding:1px 7px;border-radius:999px}
+.fbtns{display:flex;gap:8px}
+.fbtns .btn{margin:0}
+.btn.hint{background:var(--blue-soft);color:var(--blue);flex:1}
+.btn.hint:disabled{opacity:.5}
+.btn.flipb{flex:2}
+.exclude{display:block;margin:10px auto 0;color:var(--muted);font-size:13.5px;text-decoration:underline;padding:6px}
+
+/* 仕分け */
+.srtb{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.srtb .btn{margin:0;padding:16px 8px;line-height:1.3}
+.srtb .btn small{display:block;font-size:12px;font-weight:400;opacity:.9}
+.btn.keep{background:var(--ai);color:#fff}
+.btn.know{background:#fff;border:2px solid #B9AE98;color:var(--ink)}
+.btn.out{background:#8C7F66;color:#fff}
+
+/* 結果 */
+.res{text-align:center;padding:16px 0}
+.res .pct{font-family:var(--mincho);font-weight:900;font-size:60px;line-height:1.1;color:var(--ai)}
+.res .meta{display:flex;justify-content:center;gap:16px;color:var(--muted);font-size:14px;margin-top:6px}
+.resabcd{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0}
+.resabcd div{border-radius:12px;padding:8px 4px;text-align:center}
+.resabcd b{display:block;font-family:var(--mincho);font-size:26px;font-weight:900;line-height:1.2}
+.resabcd small{font-size:11.5px;font-weight:700}
+.wrongs{margin:10px 0}
+
+/* 下から出るシート */
+.sheet-bg{position:fixed;inset:0;z-index:80;background:rgba(30,22,12,.4);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:640px;border-radius:22px 22px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow-y:auto}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.sheet h2{font-family:var(--mincho);font-size:20px;margin:4px 0 10px}
+.sheet h3{font-size:15px;margin:14px 0 4px}
+.sheet ol{padding-left:22px;margin:6px 0}
+.sheet .close{display:block;width:100%;margin-top:14px;padding:13px;border-radius:14px;background:var(--chip);font-weight:700}
+.note{background:var(--gold-soft);border-radius:12px;padding:11px 13px;font-size:14.5px}
+.minin{width:84px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:#fff;text-align:center;font-weight:700}
+
+/* XP・レベル */
+.xpop{position:fixed;right:18px;top:calc(58px + env(safe-area-inset-top));z-index:96;background:var(--gold);color:#fff;font-weight:700;font-size:14px;padding:4px 10px;border-radius:999px;pointer-events:none;animation:xpop 1.3s ease-out forwards;box-shadow:0 2px 8px rgba(154,118,48,.35);white-space:nowrap}
+.xpop small{font-weight:400;font-size:11px;margin-left:4px;opacity:.9}
+@keyframes xpop{0%{opacity:0;transform:translateY(10px) scale(.8)}15%{opacity:1;transform:translateY(0) scale(1.05)}70%{opacity:1;transform:translateY(-14px)}100%{opacity:0;transform:translateY(-30px)}}
+body.timing .xpop{top:calc(var(--sbh,52px) + 52px)}
+.lvfx{position:fixed;inset:0;z-index:97;background:rgba(31,26,22,.55);display:grid;place-items:center;animation:fadein .25s}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.lvfx .box{background:var(--card);border-radius:26px;padding:26px 24px 20px;width:min(86vw,360px);text-align:center;position:relative;z-index:2;animation:popin .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes popin{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.lvfx .k{font-size:14px;color:var(--gold);font-weight:700;letter-spacing:.2em}
+.lvfx .big{font-family:var(--mincho);font-weight:900;font-size:64px;line-height:1.1;color:var(--gold)}
+.lvfx .rank{font-family:var(--mincho);font-weight:900;font-size:24px;margin-top:2px}
+.lvfx .rank.new{color:var(--shu)}
+.petal{position:fixed;top:-20px;z-index:1;width:12px;height:16px;border-radius:2px;opacity:.9;animation:fall linear forwards}
+@keyframes fall{to{transform:translate(var(--dx),110vh) rotate(var(--r));opacity:.2}}
+.lvcard{display:flex;align-items:center;gap:14px;width:100%;text-align:left}
+.lvcard .lvb{width:64px;height:64px;border-radius:18px;background:var(--gold-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;color:#6B5020}
+.lvcard .lvb small{font-size:11px;font-weight:700}
+.lvcard .lvb b{font-family:var(--mincho);font-weight:900;font-size:28px;line-height:1}
+.lvcard .rk{font-family:var(--mincho);font-weight:900;font-size:18px}
+.xpbar{height:10px;border-radius:5px;background:var(--chip);overflow:hidden;margin:6px 0 4px}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,#C9A24E,var(--gold));transition:width .8s ease}
+.xprules{width:100%;border-collapse:collapse;font-size:14.5px}
+.xprules td{padding:7px 2px;border-bottom:1px solid var(--line)}
+.xprules td.r{text-align:right;font-weight:700;color:var(--gold);white-space:nowrap}
+.ranks{display:flex;flex-wrap:wrap;gap:6px}
+.ranks span{font-size:12.5px;padding:4px 9px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.ranks span.done{background:var(--gold-soft);color:#6B5020}
+.ranks span.now{background:var(--gold);color:#fff;font-weight:700}
+.lvup{text-align:center;padding:10px 0}
+.lvup .big{font-family:var(--mincho);font-weight:900;font-size:54px;color:var(--gold);line-height:1.2}
+.resxp{margin:12px auto 0;max-width:360px;background:var(--gold-soft);border-radius:14px;padding:10px 14px;text-align:left}
+.resxp .t{display:flex;justify-content:space-between;font-weight:700;color:#6B5020}
+
+/* 覚える時間のタイマー（画面のいちばん上） */
+#stBar{position:fixed;left:0;right:0;top:0;z-index:70;background:#1E3D34;color:#fff;display:flex;align-items:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 12px 8px 16px;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+#stBar.low{background:var(--shu)}
+#stBar .sb-l{flex:1;display:flex;align-items:baseline;gap:10px;color:#fff;text-align:left;min-width:0}
+#stBar .sb-l small{font-size:12px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#stBar .sb-t{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em;order:-1}
+#stBar.paused .sb-t{opacity:.55}
+#stBar .sb-b{flex:none;background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700}
+#stBar .sb-p{position:absolute;left:0;bottom:0;height:3px;background:#E3C27A;width:0}
+body.timing{padding-top:var(--sbh,52px)}
+body.timing header{top:var(--sbh,52px);padding-top:10px}
+body.timing .ov{top:var(--sbh,52px);padding-top:8px}
+
+/* 使い方スライド */
+.guide{position:fixed;inset:0;z-index:98;background:var(--bg);display:flex;flex-direction:column;padding:calc(12px + env(safe-area-inset-top)) 0 calc(16px + env(safe-area-inset-bottom))}
+.gtrack{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.gtrack::-webkit-scrollbar{display:none}
+.gslide{flex:0 0 100%;scroll-snap-align:center;padding:10px 24px;display:flex;flex-direction:column;justify-content:center;max-width:100%}
+.gslide .num{font-size:13px;color:var(--gold);font-weight:700;letter-spacing:.1em}
+.gslide h2{font-family:var(--mincho);font-weight:900;font-size:26px;margin:4px 0 12px;line-height:1.35}
+.gslide p{margin:0 0 10px;font-size:16.5px}
+.gvis{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:16px;min-height:150px;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.gdots{display:flex;justify-content:center;gap:7px;margin:8px 0 12px}
+.gdots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.gdots i.on{background:var(--ai);width:22px;border-radius:4px}
+.gnav{display:flex;gap:10px;padding:0 20px}
+.gnav .btn{margin:0}
+.gskip{position:absolute;top:calc(10px + env(safe-area-inset-top));right:14px;color:var(--muted);font-size:14px;padding:8px}
+.minicard{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:12px;padding:8px 12px;font-size:14px}
+.minicard b{font-family:var(--mincho);font-size:18px}
+.gset{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:2px 16px 8px;scrollbar-width:none}
+.gset::-webkit-scrollbar{display:none}
+.gset button{flex:0 0 72%;scroll-snap-align:start;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.gset button .num{font-size:12px;color:var(--gold);font-weight:700}
+.gset button b{display:block;font-family:var(--mincho);font-size:17px;margin:2px 0 4px}
+.gset button span{font-size:13.5px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;z-index:99;max-width:90vw;text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>語彙1300<small id="verLabel"></small></h1>
+  <button class="helpb" id="btnHelp" aria-label="使い方">？</button>
+  <button class="lvchip" id="lvChip">Lv.1 <i></i></button>
+</header>
+<button class="band hidden" id="btnInstall">⚠ ホーム画面に追加してください（記録が消えないように）　やり方 ›</button>
+
+<main>
+  <section id="tab-today"></section>
+  <section id="tab-sets" class="hidden"></section>
+  <section id="tab-words" class="hidden"></section>
+  <section id="tab-log" class="hidden"></section>
+  <section id="tab-set" class="hidden"></section>
+</main>
+
+<nav class="tabs">
+  <button data-tab="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="M9 15l2 2 4-4"/></svg>今日</button>
+  <button data-tab="sets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>セット</button>
+  <button data-tab="words"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M9 7h6M9 11h6"/></svg>一覧</button>
+  <button data-tab="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>記録</button>
+  <button data-tab="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>設定<span id="tabDot" class="hidden"></span></button>
+</nav>
+
+<script src="words.js?v=1"></script>
+<script>
+'use strict';
+const VER = 1;
+const W = (window.GOI_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [], a: x.a || [] }));
+const N = W.length;
+const SET = 100;                          // 1セット＝100語
+const SETS = Math.ceil(N / SET);
+const GAP = [1, 1, 3, 7, 14, 30];         // 箱の番号 → 次に出るまでの日数。箱5で A なら「覚えた」
+const KEY = 'goi_v1';
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad4 = n => String(n).padStart(4, '0');
+
+/* ===================== 日付 ===================== */
+function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function today(){ return ymd(new Date()); }
+function addDays(s, n){ const [y,m,d] = s.split('-').map(Number); return ymd(new Date(y, m-1, d+n)); }
+function md(s){ const [,m,d] = s.split('-').map(Number); return m + '/' + d; }
+function fmtSec(t){ t = Math.round(t); const m = Math.floor(t/60), s = t%60; return m ? m + '分' + String(s).padStart(2,'0') + '秒' : s + '秒'; }
+function clock(t){ t = Math.floor(t); return Math.floor(t/60) + ':' + String(t%60).padStart(2,'0'); }
+function range(a, b){ const r = []; for(let i=a;i<b;i++) r.push(i); return r; }
+function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+
+/* ===================== 保存 =====================
+   S.w[i] = { s:'L'(覚える)|'X'(外した), b:箱0〜5, due:'次に出る日', f:'はじめてカードをした日', g:'覚えた日', A,B,C,D:回数, h:'最後の答え' } */
+let S;
+function blank(){ return { v:1, cfg:{ per:30, studyMin:10, order:'num', listHide:false }, w:{}, log:[], timer:null, xp:0, xpDay:{}, clear:{}, listOpen:{}, guideSeen:false }; }
+function load(){
+  try{ S = JSON.parse(localStorage.getItem(KEY)) || blank(); }catch(e){ S = blank(); }
+  const b = blank();
+  S.cfg = { ...b.cfg, ...(S.cfg||{}) };
+  for(const k of ['w','xpDay','clear','listOpen']) S[k] = S[k] || {};
+  S.log = S.log || []; S.xp = S.xp || 0; S.timer = S.timer || null;
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function ws(i){ return S.w[i] || (S.w[i] = {}); }
+load();
+
+/* ===================== 語の状態 ===================== */
+const isSorted = i => !!(S.w[i] && S.w[i].s);
+const isEx = i => !!(S.w[i] && S.w[i].s === 'X');
+const isGrad = i => !!(S.w[i] && S.w[i].g);
+const started = i => !!(S.w[i] && S.w[i].f);
+const isWeak = i => { const s = S.w[i]; return !!s && s.s === 'L' && !s.g && (s.lr === 'C' || s.lr === 'D'); };   // lr＝その回の1回目の答え
+const isDue = i => { const s = S.w[i]; return !!s && s.s === 'L' && !s.g && !!s.due && s.due <= today(); };
+function stOf(i){                 // 一覧の点の色
+  if(isEx(i)) return 'x';
+  if(isGrad(i)) return 'g';
+  if(isWeak(i)) return 'w';
+  if(started(i)) return 'l';
+  return '';
+}
+const ST_NAME = { x:'外した（完璧）', g:'覚えた', w:'苦手', l:'覚えている途中', '':'まだ' };
+function counts(ids){
+  const c = { x:0, g:0, w:0, l:0, n:0, u:0 };
+  for(const i of ids){ const k = stOf(i); if(k === 'x') c.x++; else if(k === 'g') c.g++; else if(k === 'w') c.w++; else if(k === 'l') c.l++; else c.n++; if(!isSorted(i)) c.u++; }
+  return c;
+}
+function progHTML(c, total){
+  const p = v => (v / total * 100) + '%';
+  return `<div class="prog"><i class="c-x" style="width:${p(c.x)}"></i><i class="c-g" style="width:${p(c.g)}"></i><i class="c-l" style="width:${p(c.l)}"></i><i class="c-w" style="width:${p(c.w)}"></i></div>`;
+}
+const LEGEND = '<div class="legend"><span><i class="c-x"></i>外した（完璧）</span><span><i class="c-g"></i>覚えた</span><span><i class="c-l"></i>覚えている途中</span><span><i class="c-w"></i>苦手（C・D）</span><span><i class="c-n"></i>まだ</span></div>';
+
+/* 今日のカード：復習（出る日が来た語）＋ 新しい語（1日 cfg.per 語。仕分けで「覚える」にした語を番号順に） */
+function newToday(){ return W.filter(w => S.w[w.i] && S.w[w.i].f === today() && S.w[w.i].fn).map(w => w.i); }
+function newCands(){ return W.filter(w => { const s = S.w[w.i]; return s && s.s === 'L' && !s.f; }).map(w => w.i); }
+function todayPlan(){
+  const done = newToday().length;
+  const want = Math.max(0, S.cfg.per - done);
+  const fresh = newCands().slice(0, want);
+  const due = W.filter(w => isDue(w.i)).map(w => w.i);
+  const unsorted = W.filter(w => !isSorted(w.i)).length;
+  return { due, fresh, done, want, unsorted, needSort: fresh.length < want && unsorted > 0 };
+}
+function nextUnsorted(n){ return W.filter(w => !isSorted(w.i)).slice(0, n).map(w => w.i); }
+
+/* ===================== レベル（XP） ===================== */
+const XP_RULES = [
+  ['カードで A（即答）', 2], ['カードで B（ヒントで分かった）', 1], ['語を「覚えた」（A を重ねて1か月後も即答）', 5],
+  ['仕分け 10語ごと', 2], ['覚えた時間 1分ごと', 1], ['今日のカードをぜんぶ終える', 20],
+];
+const RANKS = [[1,'ことばの芽'],[3,'ことばの若葉'],[5,'読書の見習い'],[8,'読書家'],[11,'ことば職人'],[14,'名文家'],[17,'編集者'],[20,'校閲者'],[23,'作家'],[26,'文豪'],[30,'歩く辞書']];
+function needXP(lv){ return 100 + 20 * (lv - 1); }
+function lvInfo(xp){ let lv = 1, rest = xp; while(rest >= needXP(lv)){ rest -= needXP(lv); lv++; } return { lv, cur: rest, need: needXP(lv) }; }
+function rankOf(lv){ let r = RANKS[0][1]; for(const [m, t] of RANKS) if(lv >= m) r = t; return r; }
+function nextRank(lv){ const r = RANKS.find(([m]) => m > lv); return r ? { lv: r[0], t: r[1] } : null; }
+function todayXP(){ return S.xpDay[today()] || 0; }
+let lvQueue = null, busy = false;    // busy＝カード中。レベルアップの演出は終わってから
+function gainXP(n, why){
+  if(!n) return;
+  const before = lvInfo(S.xp).lv;
+  S.xp = Math.max(0, S.xp + n); S.xpDay[today()] = Math.max(0, todayXP() + n);
+  if(C) C.xp += n;
+  save();
+  if(n < 0){ renderLv(); return; }
+  popXP(n, why); renderLv(true);
+  const after = lvInfo(S.xp).lv;
+  if(after > before){
+    if(busy) lvQueue = { from: lvQueue ? lvQueue.from : before, to: after };
+    else celebrate(before, after);
+  }
+}
+function flushLv(){ if(lvQueue){ const q = lvQueue; lvQueue = null; setTimeout(() => celebrate(q.from, q.to), 350); } }
+function popXP(n, why){
+  const el = document.createElement('div'); el.className = 'xpop';
+  el.innerHTML = '+' + n + ' XP' + (why ? '<small>' + esc(why) + '</small>' : '');
+  el.style.marginTop = ($$('.xpop').length % 3) * 30 + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+function renderLv(anim){
+  const x = lvInfo(S.xp), chip = $('#lvChip');
+  chip.innerHTML = 'Lv.' + x.lv + ' <i style="--p:' + (x.cur / x.need * 100) + '%"></i>';
+  if(anim){ chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); }
+}
+function celebrate(from, to){
+  const x = lvInfo(S.xp), newRank = rankOf(to) !== rankOf(from);
+  const fx = document.createElement('div'); fx.className = 'lvfx';
+  fx.innerHTML = `<div class="box"><div class="k">LEVEL UP</div><div class="big">Lv.${to}</div>
+    <div class="rank ${newRank ? 'new' : ''}">${newRank ? '<small style="display:block;font-size:14px;font-family:\'BIZ UDPGothic\';font-weight:700">称号が変わりました</small>' : ''}${rankOf(to)}</div>
+    <div class="xpbar" style="margin-top:14px"><i style="width:0%"></i></div>
+    <div class="dim">次のレベルまで あと ${x.need - x.cur} XP</div>
+    <button class="btn" style="margin-top:14px">つづける</button></div>`;
+  const cols = ['#B63E2B','#2D5A4C','#C9A24E','#3B5B9A','#E9DCC0'];
+  for(let k = 0; k < 28; k++){
+    const p = document.createElement('i'); p.className = 'petal';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = cols[k % cols.length];
+    p.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px');
+    p.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg');
+    p.style.animationDuration = (2.2 + Math.random() * 2) + 's';
+    p.style.animationDelay = (Math.random() * .8) + 's';
+    fx.appendChild(p);
+  }
+  document.body.appendChild(fx);
+  setTimeout(() => { const b = fx.querySelector('.xpbar i'); if(b) b.style.width = (x.cur / x.need * 100) + '%'; }, 80);
+  const close = () => fx.remove();
+  fx.querySelector('.btn').onclick = close;
+  fx.addEventListener('click', e => { if(e.target === fx) close(); });
+}
+function lvCardHTML(){
+  const x = lvInfo(S.xp), nr = nextRank(x.lv);
+  return `<button class="card lvcard" id="lvCard"><div class="lvb"><small>Lv.</small><b>${x.lv}</b></div>
+    <div style="flex:1;min-width:0"><div class="rk">${rankOf(x.lv)}<span class="dim" style="font-family:'BIZ UDPGothic';font-weight:400;font-size:13px">　今日 +${todayXP()} XP</span></div>
+      <div class="xpbar"><i style="width:${x.cur / x.need * 100}%"></i></div>
+      <div class="dim" style="font-size:13px">次のレベルまで あと <b>${x.need - x.cur} XP</b>${nr ? `　・　Lv.${nr.lv}で「${nr.t}」` : ''}</div></div></button>`;
+}
+function openLevel(){
+  const x = lvInfo(S.xp);
+  sheet(`<h2>レベルと XP</h2>
+    <div style="text-align:center;margin:4px 0 10px"><div class="lvup" style="padding:0"><div class="big">Lv.${x.lv}</div></div>
+      <div style="font-family:var(--mincho);font-weight:900;font-size:22px">${rankOf(x.lv)}</div>
+      <div class="xpbar" style="margin:10px 0 4px"><i style="width:${x.cur / x.need * 100}%"></i></div>
+      <div class="dim">${x.cur} / ${x.need} XP　・　次のレベルまで あと <b>${x.need - x.cur} XP</b></div></div>
+    <h3>XP のもらい方</h3>
+    <table class="xprules">${XP_RULES.map(([t, n]) => `<tr><td>${t}</td><td class="r">+${n} XP</td></tr>`).join('')}</table>
+    <p class="dim" style="margin:8px 0 0">例：10分でカード60枚（A 30・B 15）＋今日の分をぜんぶ → 10 + 60 + 15 + 20 = <b>105 XP</b></p>
+    <h3>称号</h3>
+    <p class="dim" style="margin:0 0 8px">レベルが上がると称号が変わります。めざせ「歩く辞書」！</p>
+    <div class="ranks">${RANKS.map(([m, t], k) => { const nx = RANKS[k+1]; const now = x.lv >= m && (!nx || x.lv < nx[0]); return `<span class="${now ? 'now' : x.lv >= m ? 'done' : ''}">Lv.${m} ${t}</span>`; }).join('')}</div>`);
+}
+$('#lvChip').onclick = openLevel;
+
+/* ===================== 今日 ===================== */
+function renderToday(){
+  const el = $('#tab-today');
+  if(!N){ el.innerHTML = '<div class="card">語彙データ（words.js）が読みこめませんでした。</div>'; return; }
+  const p = todayPlan(), cnt = p.due.length + p.fresh.length;
+  const all = counts(range(0, N));
+  const sortedN = N - all.u;
+  const cleared = !!S.clear[today()];
+  let hero;
+  if(sortedN === 0){
+    hero = `<div class="hero"><div class="lap">はじめに</div><div class="big">まず仕分けから</div>
+      <div class="range">1300語を順番に見て、<b>完璧に知っている語は外します</b>。残った語だけを、カードで覚えていきます。</div>
+      <div class="steps"><button class="step main" id="stSort"><span class="n">1</span><span class="t">仕分けをはじめる（100語）<small>知っている → 意味を確かめて外す／あやしい → 覚える</small></span></button></div></div>`;
+  }else{
+    const doneAll = !cnt && !p.needSort;
+    hero = `<div class="hero">
+      <div class="lap">今日のカード　・　新しい語は1日 ${S.cfg.per}語</div>
+      <div class="big">${doneAll ? (cleared ? '今日の分は完了！' : 'カードはありません') : cnt + '枚'}</div>
+      <div class="range">${doneAll ? '明日また、出る日が来た語がもどってきます。' : `復習 ${p.due.length}語 ＋ 新しい語 ${p.fresh.length}語`}${p.done ? `（新しい語は今日 ${p.done}語 済み）` : ''}</div>
+      <div class="steps">
+        ${p.needSort || all.u ? `<button class="step ${p.needSort ? 'main' : ''}" id="stSort"><span class="n">1</span><span class="t">仕分け　のこり ${all.u}語<small>${p.needSort ? '新しい語が足りません。次の語を仕分けしましょう' : '先に進めておくと、新しい語がとぎれません'}</small></span></button>` : ''}
+        <button class="step ${p.needSort ? '' : 'main'} ${doneAll ? 'done' : ''}" id="stCards" ${cnt ? '' : 'disabled'}><span class="n">${doneAll ? '✓' : (all.u ? '2' : '1')}</span><span class="t">カードで覚える　⏱ ${S.timer ? 'のこり時間は上に' : S.cfg.studyMin + '分'}<small>時間を決めて、A〜Dで答える</small></span></button>
+      </div>
+      <div class="quick"><button id="qWeak">苦手だけ（${all.w}）</button><button id="qMore">先取り</button><button id="qList">一覧で</button></div></div>`;
+  }
+  el.innerHTML = hero + lvCardHTML() +
+    `<h2>全体の進みぐあい</h2><div class="card"><div style="display:flex;justify-content:space-between;font-weight:700"><span>${N}語</span><span>外した ${all.x}・覚えた ${all.g}</span></div>${progHTML(all, N)}${LEGEND}
+     <p class="dim" style="margin:8px 0 0">仕分けずみ ${sortedN} / ${N}語。のこりの「覚える語」は ${N - all.x - all.g}語です。</p></div>`;
+  if($('#stSort')) $('#stSort').onclick = () => startSort(nextUnsorted(100), '仕分け');
+  if($('#stCards')) $('#stCards').onclick = () => { if(cnt) openStudy(); };
+  if($('#qWeak')) $('#qWeak').onclick = () => { const ids = W.filter(w => isWeak(w.i)).map(w => w.i); if(!ids.length){ toast('苦手（C・D）の語はまだありません'); return; } openCards(ids, '苦手だけ'); };
+  if($('#qMore')) $('#qMore').onclick = () => { const ids = newCands().slice(0, 20); if(!ids.length){ toast('先取りできる語がありません。先に仕分けをしましょう'); return; } openCards(ids, '先取り（新しい語 ' + ids.length + '語）', { fresh:true }); };
+  if($('#qList')) $('#qList').onclick = () => { const ids = [...p.due, ...p.fresh]; if(!ids.length){ toast('今日のカードはありません'); return; } openList(ids, '今日の語'); };
+  $('#lvCard').onclick = openLevel;
+}
+
+/* ===================== セット（100語ずつ） ===================== */
+function setIds(k){ return range(k * SET, Math.min(N, (k + 1) * SET)); }
+function renderSets(){
+  const el = $('#tab-sets');
+  el.innerHTML = `<p class="dim" style="margin:0 2px 10px">1300語を100語ずつ、13のセットに分けています。セットを押すと、仕分け・カード・一覧ができます。</p>
+    <div class="sets">${range(0, SETS).map(k => { const ids = setIds(k), c = counts(ids); return `<button class="setb ${c.u && c.u < ids.length ? 'cur' : ''}" data-k="${k}"><div class="t">セット${k+1}<small>${ids[0]+1}〜${ids[ids.length-1]+1}</small></div>${progHTML(c, ids.length)}<div class="s">${c.u === ids.length ? '未仕分け' : `外した ${c.x}・覚えた ${c.g}${c.w ? `・<b style="color:var(--shu)">苦手 ${c.w}</b>` : ''}${c.u ? `・未仕分け ${c.u}` : ''}`}</div></button>`; }).join('')}</div>
+    <div style="margin-top:10px">${LEGEND}</div>`;
+  $$('.setb').forEach(b => b.onclick = () => openSetSheet(+b.dataset.k));
+}
+function openSetSheet(k){
+  const ids = setIds(k), c = counts(ids);
+  const learn = ids.filter(i => !isEx(i) && isSorted(i)), weak = ids.filter(isWeak), uns = ids.filter(i => !isSorted(i));
+  const bg = sheet(`<h2>セット${k+1}（No.${ids[0]+1}〜${ids[ids.length-1]+1}）</h2>
+    ${progHTML(c, ids.length)}<p class="dim" style="margin:0 0 10px">外した ${c.x}・覚えた ${c.g}・途中 ${c.l}・苦手 ${c.w}・まだ ${c.n}${c.u ? `（未仕分け ${c.u}）` : ''}</p>
+    ${uns.length ? `<button class="btn" data-a="sort">仕分けする（${uns.length}語）</button>` : ''}
+    <button class="btn ${uns.length ? 'sub' : ''}" data-a="cards" ${learn.length ? '' : 'disabled'}>カードで覚える（外した語をのぞく ${learn.length}語）</button>
+    <button class="btn sub" data-a="weak" ${weak.length ? '' : 'disabled'}>苦手だけ（${weak.length}語）</button>
+    <button class="btn sub" data-a="list">一覧で見る</button>
+    <button class="btn line" data-a="resort">仕分けをやり直す（このセットの100語）</button>`);
+  const go = (a, f) => { const b = bg.querySelector(`[data-a=${a}]`); if(b) b.onclick = () => { bg.remove(); f(); }; };
+  go('sort', () => startSort(uns, `セット${k+1} の仕分け`));
+  go('cards', () => openCards(learn, `セット${k+1}`));
+  go('weak', () => openCards(weak, `セット${k+1} の苦手`));
+  go('list', () => openList(ids, `セット${k+1}`));
+  go('resort', () => startSort(ids, `セット${k+1} の仕分け（やり直し）`));
+}
+
+/* ===================== 一覧 ===================== */
+let wf = { q:'', k:-1, st:'all' };
+function renderWords(){
+  const el = $('#tab-words');
+  el.innerHTML = `<input class="search" id="wq" placeholder="言葉・意味・よみで検索（例：束縛／そくばく）" value="${esc(wf.q)}">
+    <div class="chips" id="wset"><button class="chipb ${wf.k===-1?'on':''}" data-k="-1">ぜんぶ</button>${range(0, SETS).map(k => `<button class="chipb ${wf.k===k?'on':''}" data-k="${k}">セット${k+1}</button>`).join('')}</div>
+    <div class="chips" id="wst">${[['all','すべて'],['w','苦手'],['l','途中'],['g','覚えた'],['x','外した'],['n','まだ']].map(([k,t]) => `<button class="chipb ${wf.st===k?'on':''}" data-s="${k}">${t}</button>`).join('')}</div>
+    <div class="row" style="margin-bottom:10px"><button class="btn sub" id="wCards">この一覧でカード</button><button class="btn sub" id="wHide">意味をかくす</button></div>
+    <div class="dim" id="wcount" style="margin:0 2px 6px"></div>
+    <div class="wlist" id="wlist"></div>`;
+  $('#wq').oninput = e => { wf.q = e.target.value; drawWordList(); };
+  $$('#wset button').forEach(b => b.onclick = () => { wf.k = +b.dataset.k; renderWords(); });
+  $$('#wst button').forEach(b => b.onclick = () => { wf.st = b.dataset.s; renderWords(); });
+  $('#wCards').onclick = () => { const ids = filteredIds().filter(i => !isEx(i)); if(!ids.length){ toast('カードにする語がありません'); return; } openCards(ids, '一覧から（' + ids.length + '語）'); };
+  $('#wHide').onclick = () => { const ids = filteredIds(); if(!ids.length) return; S.cfg.listHide = true; save(); openList(ids, '一覧（' + ids.length + '語）'); };
+  drawWordList();
+}
+function kata2hira(s){ return (s || '').replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)); }
+function filteredIds(){
+  const q = kata2hira(wf.q.trim());
+  return W.filter(w => {
+    if(wf.k >= 0 && Math.floor(w.i / SET) !== wf.k) return false;
+    if(wf.st !== 'all'){ const k = stOf(w.i) || 'n'; if(k !== wf.st) return false; }
+    if(q && !(w.w.includes(q) || kata2hira(w.w).includes(q) || (w.r || '').includes(q) || w.m.includes(q))) return false;
+    return true;
+  }).map(w => w.i);
+}
+function drawWordList(){
+  const ids = filteredIds();
+  $('#wcount').textContent = ids.length + '語';
+  $('#wlist').innerHTML = ids.length ? ids.slice(0, 1300).map(i => rowHTML(i)).join('') : '<div style="padding:14px" class="dim">見つかりません</div>';
+  $$('#wlist .wrow').forEach(r => r.onclick = () => openWord(+r.dataset.i));
+}
+function rowHTML(i, hide, opened){
+  const w = W[i];
+  return `<button class="wrow ${hide !== undefined ? 'lrow' : ''} ${opened ? 'opened' : ''}" data-i="${i}"><span class="dot ${stOf(i)}"></span><span class="no">${i+1}</span><span class="wd">${w.r && w.r !== w.w ? `<small>${esc(w.r)}</small>` : ''}${esc(w.w)}</span><span class="mn ${hide && !opened ? 'hide' : ''}">${esc(w.m)}</span></button>`;
+}
+function exHTML(w){ return esc(w.ex || '').replace(/\[/g, '<span class="hw">').replace(/\]/g, '</span>'); }
+function relHTML(w){
+  const r = [];
+  if(w.s.length) r.push(`<span class="ru"><b>類</b>${w.s.map(esc).join('・')}</span>`);
+  if(w.a.length) r.push(`<span class="an"><b>対</b>${w.a.map(esc).join('・')}</span>`);
+  return r.length ? `<div class="rel">${r.join('')}</div>` : '';
+}
+function openWord(i){
+  const w = W[i], s = S.w[i] || {}, k = stOf(i);
+  const bg = sheet(`<div class="dim">No.${i+1}　${esc(w.c || '')}　<span class="dot ${k}" style="display:inline-block;vertical-align:0"></span> ${ST_NAME[k]}</div>
+    <div style="font-family:var(--mincho);color:var(--muted);letter-spacing:.1em;margin-top:6px">${w.r && w.r !== w.w ? esc(w.r) : ''}</div>
+    <div style="font-family:var(--mincho);font-weight:900;font-size:34px;line-height:1.25">${esc(w.w)}</div>
+    <div class="mbox">${esc(w.m)}</div>
+    <div class="exbox">${exHTML(w)}</div>${relHTML(w)}${w.nt ? `<div class="ntbox">⚠ ${esc(w.nt)}</div>` : ''}
+    <p class="dim" style="margin:10px 0">カード：<span class="abcd"><span class="ka">A ${s.A||0}</span><span class="kb">B ${s.B||0}</span><span class="kc">C ${s.C||0}</span><span class="kd">D ${s.D||0}</span></span>${s.due && !s.g && s.s === 'L' ? `　次に出る日 <b>${md(s.due)}</b>` : ''}${s.g ? `　<b style="color:var(--ok)">${md(s.g)} に覚えた</b>` : ''}</p>
+    <button class="btn" data-a="card">この語をカードで</button>
+    ${isEx(i) ? '<button class="btn sub" data-a="back">「覚える語」にもどす</button>' : '<button class="btn sub" data-a="out">完璧なので外す</button>'}
+    ${isGrad(i) ? '<button class="btn sub" data-a="ungrad">もう一度覚え直す（復習にもどす）</button>' : ''}`);
+  const re = () => { bg.remove(); renderAll(); };
+  bg.querySelector('[data-a=card]').onclick = () => { bg.remove(); openCards([i], w.w); };
+  if(bg.querySelector('[data-a=out]')) bg.querySelector('[data-a=out]').onclick = () => { const x = ws(i); x.s = 'X'; save(); toast('「' + w.w + '」を外しました'); re(); };
+  if(bg.querySelector('[data-a=back]')) bg.querySelector('[data-a=back]').onclick = () => { const x = ws(i); x.s = 'L'; if(x.f && !x.g){ x.b = 0; x.due = today(); } save(); toast('覚える語にもどしました'); re(); };
+  if(bg.querySelector('[data-a=ungrad]')) bg.querySelector('[data-a=ungrad]').onclick = () => { const x = ws(i); x.g = ''; x.b = 1; x.due = today(); save(); toast('今日の復習に入れました'); re(); };
+}
+
+/* 一覧で覚える（意味をかくして、押すと見える） */
+function openList(ids, title){
+  closeOv();
+  const ov = makeOv();
+  let hide = !!S.cfg.listHide;
+  const t0 = Date.now();
+  ov._end = () => { const secs = Math.min(1800, (Date.now() - t0) / 1000); if(secs >= 20) addLog({ kind:'list', label: title, n: ids.length, secs }); };
+  const draw = () => {
+    const st = ov.scrollTop, opened = ids.filter(i => S.listOpen[i]).length;
+    ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">${esc(title)}（${ids.length}語）</div></div>
+      <div class="ovbody">
+        <div class="seg" style="margin-bottom:10px"><button class="${hide ? '' : 'on'}" data-h="0">意味を見せる</button><button class="${hide ? 'on' : ''}" data-h="1">意味をかくす</button></div>
+        <p class="dim" style="margin:0 2px 8px">${hide ? '意味を思い出してから、行を押して答えを見る。もう一度押すと、またかくれます。' : '行を押すと、例文などが見られます。'}</p>
+        ${hide ? `<div class="lcount"><span>思い出せなかった語 <b style="color:var(--shu)">${opened}</b> / ${ids.length}</span>${opened ? '<button class="minib" data-a="reset">かくし直す</button>' : ''}</div>` : ''}
+        <div class="wlist">${ids.map(i => rowHTML(i, hide, hide && S.listOpen[i])).join('')}</div>
+        <button class="btn" data-a="cards" style="margin-top:12px">この語をカードで覚える</button>
+      </div>`;
+    ov.scrollTop = st;
+    ov.querySelector('[data-a=x]').onclick = closeOv;
+    ov.querySelector('[data-a=cards]').onclick = () => { const l = ids.filter(i => !isEx(i)); if(l.length) openCards(l, title); };
+    ov.querySelectorAll('[data-h]').forEach(b => b.onclick = () => { hide = b.dataset.h === '1'; S.cfg.listHide = hide; save(); draw(); });
+    if(ov.querySelector('[data-a=reset]')) ov.querySelector('[data-a=reset]').onclick = () => { ids.forEach(i => delete S.listOpen[i]); save(); draw(); };
+    ov.querySelectorAll('.lrow').forEach(r => r.onclick = () => {
+      const i = +r.dataset.i;
+      if(hide){ if(S.listOpen[i]) delete S.listOpen[i]; else S.listOpen[i] = true; save(); draw(); }
+      else openWord(i);
+    });
+  };
+  draw();
+}
+
+/* ===================== 仕分け =====================
+   完璧に知っている語は外す。「知ってる」を押したら意味を見せて、合っていたかを確かめる（思いこみで外さないように）。 */
+let Q = null;
+function startSort(ids, title){
+  if(!ids.length){ toast('仕分けする語がありません'); return; }
+  closeOv();
+  makeOv(); busy = true;
+  Q = { ids: ids.slice(), k: 0, title, out: 0, keep: 0, check: false, hist: [], t0: Date.now(), secs: 0, xpN: 0 };
+  drawSort();
+}
+function drawSort(){
+  const ov = $('.ov');
+  if(Q.k >= Q.ids.length){ finishSort(); return; }
+  const i = Q.ids[Q.k], w = W[i];
+  ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">${esc(Q.title)}</div><button class="undo" data-a="undo" ${Q.hist.length ? '' : 'disabled'}>↶ 戻る</button><div class="tm">${Q.k+1} / ${Q.ids.length}</div></div>
+    <div class="pbar"><i style="width:${Q.k / Q.ids.length * 100}%"></i></div>
+    <div class="dim" style="text-align:center">外した <b>${Q.out}</b>　・　覚える <b>${Q.keep}</b></div>
+    <div class="ovbody">
+      <div class="fc"><div class="fc-in ${Q.check ? 'flip' : ''}">
+        ${frontHTML(i, false)}
+        ${backHTML(i)}
+      </div></div>
+      ${Q.check ? `<p style="text-align:center;margin:0 0 8px;font-weight:700">思っていた意味と、合っていた？</p>
+        <div class="srtb"><button class="btn keep" data-a="keep">ちがった<small>覚える語にする</small></button><button class="btn out" data-a="out">合っていた<small>完璧なので外す</small></button></div>`
+      : `<div class="srtb"><button class="btn keep" data-a="keep">あやしい・知らない<small>覚える語にする</small></button><button class="btn know" data-a="know">完璧に知ってる<small>意味を確かめて外す</small></button></div>`}
+    </div>`;
+  ov.querySelector('[data-a=x]').onclick = closeOv;
+  ov.querySelector('[data-a=undo]').onclick = () => {
+    if(Q.check){ Q.check = false; drawSort(); return; }
+    const h = Q.hist.pop(); if(!h) return;
+    Q.k = h.k; Q.out = h.out; Q.keep = h.keep;
+    if(h.prev) S.w[h.i] = h.prev; else delete S.w[h.i];
+    save(); drawSort();
+  };
+  const decide = v => {
+    Q.hist.push({ k: Q.k, out: Q.out, keep: Q.keep, i, prev: S.w[i] ? JSON.parse(JSON.stringify(S.w[i])) : null });
+    const s = ws(i); s.s = v;
+    if(v === 'X') Q.out++; else Q.keep++;
+    Q.k++; Q.check = false; save();
+    if(Q.k % 10 === 0){ gainXP(2, '仕分け'); Q.xpN += 2; }
+    drawSort();
+  };
+  ov.querySelector('[data-a=keep]').onclick = () => decide('L');
+  if(ov.querySelector('[data-a=out]')) ov.querySelector('[data-a=out]').onclick = () => decide('X');
+  if(ov.querySelector('[data-a=know]')) ov.querySelector('[data-a=know]').onclick = () => { Q.check = true; drawSort(); };
+}
+function finishSort(){
+  const ov = $('.ov'), q = Q;
+  q.secs += (Date.now() - q.t0) / 1000; q.t0 = 0;
+  addLog({ kind:'sort', label: q.title, n: q.ids.length, x: q.out, secs: q.secs });
+  busy = false;
+  const p = todayPlan();
+  ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">${esc(q.title)}</div></div>
+    <div class="ovbody"><div class="res"><div class="pct">✓</div><p><b>${q.ids.length}語の仕分けが終わりました</b></p>
+      <div class="meta"><span>外した ${q.out}語</span><span>覚える ${q.keep}語</span><span>${fmtSec(q.secs)}</span></div></div>
+      ${p.due.length + p.fresh.length ? `<button class="btn" data-a="go">今日のカードへ（${p.due.length + p.fresh.length}枚）</button>` : ''}
+      ${nextUnsorted(1).length ? '<button class="btn sub" data-a="more">つづけて次の100語を仕分け</button>' : ''}
+      <button class="btn sub" data-a="x2">閉じる</button></div>`;
+  ov._end = null; Q = null;
+  ov.querySelector('[data-a=x]').onclick = closeOv; ov.querySelector('[data-a=x2]').onclick = closeOv;
+  if(ov.querySelector('[data-a=go]')) ov.querySelector('[data-a=go]').onclick = () => { closeOv(); openStudy(); };
+  if(ov.querySelector('[data-a=more]')) ov.querySelector('[data-a=more]').onclick = () => startSort(nextUnsorted(100), '仕分け');
+  renderAll(); flushLv();
+}
+
+/* ===================== カード（A 即答／B ヒントで分かった／C まちがえた／D 分からない） ===================== */
+function frontHTML(i, withHint, hintOpen){
+  const w = W[i], len = [...w.w].length;
+  return `<div class="fc-face front"><span class="cat">${esc(w.c || '')}</span><span class="no">No.${pad4(i+1)}</span>
+    <div class="yomi">${w.r && w.r !== w.w ? esc(w.r) : ''}</div>
+    <div class="w ${len > 7 ? 'xlong' : len > 4 ? 'long' : ''}">${esc(w.w)}</div>
+    ${withHint && hintOpen ? `<div class="hintbox"><b class="lb">例文</b>${exHTML(w)}</div>` : ''}
+    ${withHint ? '<div class="tap">タップでめくる</div>' : ''}</div>`;
+}
+function backHTML(i){
+  const w = W[i];
+  return `<div class="fc-face back"><span class="no">No.${pad4(i+1)}</span>
+    <div class="bw">${esc(w.w)}${w.r && w.r !== w.w ? `<small>${esc(w.r)}</small>` : ''}</div>
+    <div class="mbox">${esc(w.m)}</div>
+    <div class="exbox">${exHTML(w)}</div>${relHTML(w)}${w.nt ? `<div class="ntbox">⚠ ${esc(w.nt)}</div>` : ''}</div>`;
+}
+let C = null;
+/* opt.today＝今日のカード（終わったら「今日の分 完了」） */
+function openCards(ids, title, opt){
+  if(!ids.length){ toast('カードがありません'); return; }
+  closeOv();
+  opt = opt || {};
+  const q = S.cfg.order === 'shuffle' && !opt.keepOrder ? shuffle(ids) : ids.slice();
+  makeOv(); busy = true;
+  C = { q, total: ids.length, title, opt, flip:false, hint:false, first: new Set(), cnt:{A:0,B:0,C:0,D:0}, rated:{}, hist:[], xp:0, out:0, grad:0, t0: Date.now(), secs: 0 };
+  drawCard();
+}
+function cardSecs(){ return C ? C.secs + (C.t0 ? Math.min(1800, (Date.now() - C.t0) / 1000) : 0) : 0; }
+function drawCard(){
+  const ov = $('.ov');
+  if(!C.q.length){ finishCards(); return; }
+  const i = C.q[0];
+  const doneN = C.total - new Set(C.q).size;
+  ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">${esc(C.title)}</div><button class="undo" data-a="undo" ${C.hist.length ? '' : 'disabled'}>↶ 戻る</button><div class="tm">のこり ${C.q.length}</div></div>
+    <div class="pbar"><i style="width:${doneN / C.total * 100}%"></i></div>
+    <div class="ovbody">
+      <div class="fc" data-a="flip"><div class="fc-in ${C.flip ? 'flip' : ''}">${frontHTML(i, true, C.hint)}${backHTML(i)}</div></div>
+      ${C.flip ? `<div class="rate">
+          <button class="rb a" data-r="A"><span class="k">A</span>即答<small>すぐ言えた</small></button>
+          <button class="rb b ${C.hint ? 'rec' : ''}" data-r="B"><span class="k">B</span>分かった<small>ヒント・少し考えて</small></button>
+          <button class="rb c" data-r="C"><span class="k">C</span>まちがえた<small>ちがう意味だと思った</small></button>
+          <button class="rb d" data-r="D"><span class="k">D</span>分からない<small>思い出せなかった</small></button></div>
+        <button class="exclude" data-a="out">完璧に知っているので、この語を外す</button>`
+      : `<div class="fbtns"><button class="btn hint" data-a="hint" ${C.hint ? 'disabled' : ''}>💡 ヒント</button><button class="btn flipb" data-a="flipb">めくって意味を見る</button></div>`}
+    </div>`;
+  ov.querySelector('[data-a=x]').onclick = closeOv;
+  ov.querySelector('[data-a=undo]').onclick = undoCard;
+  const doFlip = () => { if(C.flip) return; C.flip = true; drawCard(); };
+  ov.querySelector('[data-a=flip]').onclick = () => { if(C.flip){ C.flip = false; drawCard(); } else doFlip(); };
+  if(ov.querySelector('[data-a=flipb]')) ov.querySelector('[data-a=flipb]').onclick = doFlip;
+  if(ov.querySelector('[data-a=hint]')) ov.querySelector('[data-a=hint]').onclick = () => { C.hint = true; drawCard(); };
+  ov.querySelectorAll('[data-r]').forEach(b => b.onclick = () => rateCard(b.dataset.r));
+  if(ov.querySelector('[data-a=out]')) ov.querySelector('[data-a=out]').onclick = () => rateCard('X');
+}
+/* 答えで、次に出る日を決める。同じ回で2回目以降に出たときは、予定は動かさない（1回目の答えが大事） */
+function rateCard(r){
+  const i = C.q[0], s = ws(i), t = today();
+  C.hist.push({ q: C.q.slice(), i, prev: JSON.parse(JSON.stringify(s)), first: C.first.has(i), cnt: { ...C.cnt }, xp: C.xp, out: C.out, grad: C.grad, rated: C.rated[i] });
+  const isFirst = !C.first.has(i);
+  C.first.add(i);
+  C.q.shift(); C.flip = false; C.hint = false;
+  if(r === 'X'){
+    s.s = 'X'; C.out++; save();
+    C.q = C.q.filter(x => x !== i);
+    toast('「' + W[i].w + '」を外しました');
+    drawCard(); return;
+  }
+  C.cnt[r]++; C.rated[i] = C.rated[i] || r;
+  s[r] = (s[r] || 0) + 1; s.h = r;
+  if(!s.s) s.s = 'L';
+  if(isFirst){
+    s.lr = r;
+    const brandNew = !s.f;
+    if(brandNew){ s.f = t; s.fn = 1; s.b = 0; }
+    const notYet = !brandNew && s.due && s.due > t;   // まだ出る日ではない語（練習）
+    if(r === 'A'){
+      if(!notYet){
+        if(s.b >= 5){ s.g = t; s.due = ''; C.grad++; gainXP(5, '覚えた！'); }
+        else { s.b = brandNew ? 2 : s.b + 1; s.due = addDays(t, GAP[s.b]); }
+      }
+    }else if(r === 'B'){ s.b = 1; s.due = addDays(t, 1); s.g = ''; }
+    else { s.b = 0; s.due = addDays(t, 1); s.g = ''; }
+  }
+  if(isFirst){ if(r === 'A') gainXP(2, '即答'); else if(r === 'B') gainXP(1, 'ヒントで'); }
+  // まちがえた・分からない語は4枚あとにもう一度、ヒントで分かった語はさいごにもう一度
+  if(r === 'C' || r === 'D') C.q.splice(Math.min(C.q.length, 4), 0, i);
+  else if(r === 'B' && isFirst) C.q.push(i);
+  save();
+  drawCard();
+}
+function undoCard(){
+  const h = C.hist.pop(); if(!h) return;
+  C.q = h.q; S.w[h.i] = h.prev; if(!h.first) C.first.delete(h.i);
+  if(h.rated) C.rated[h.i] = h.rated; else delete C.rated[h.i];
+  const dx = C.xp - h.xp;
+  C.cnt = h.cnt; C.out = h.out; C.grad = h.grad;
+  if(dx) gainXP(-dx);
+  C.xp = h.xp; C.flip = false; C.hint = false;
+  save(); drawCard();
+}
+function finishCards(){
+  const ov = $('.ov'), c = C;
+  c.secs = cardSecs(); c.t0 = 0;
+  const f = firstCnt(c), firstA = f.A, firstN = Object.keys(c.rated).length;
+  if(firstN) addLog({ kind:'cards', label: c.title, n: firstN, ...f, fa: firstA, x: c.out, secs: c.secs });
+  let bonus = 0;
+  const p = todayPlan();
+  if(c.opt.today && !p.due.length && !p.fresh.length && !S.clear[today()]){ S.clear[today()] = 1; save(); bonus = 20; gainXP(20, '今日の分 完了'); }
+  busy = false;
+  const weak = Object.keys(c.rated).map(Number).filter(i => c.rated[i] === 'C' || c.rated[i] === 'D');
+  const rest = p.due.length + p.fresh.length;
+  ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">${esc(c.title)}</div></div>
+    <div class="ovbody"><div class="res">
+      ${S.clear[today()] && c.opt.today ? '<div class="dim">今日のカード</div><div class="pct" style="font-size:44px">完了！</div>' : ''}
+      <div class="dim" style="margin-top:6px">1回目の答えで即答できた語</div>
+      <div class="pct">${firstN ? Math.round(firstA / firstN * 100) : 0}<small style="font-size:22px">%</small></div>
+      <div class="meta"><span>${firstN}語中 ${firstA}語</span><span>${fmtSec(c.secs)}</span>${c.out ? `<span>外した ${c.out}語</span>` : ''}${c.grad ? `<span style="color:var(--ok);font-weight:700">覚えた ${c.grad}語</span>` : ''}</div></div>
+      <div class="dim" style="text-align:center">1回目の答え</div>
+      <div class="resabcd" style="margin-top:4px"><div class="ka"><b>${f.A}</b><small>A 即答</small></div><div class="kb"><b>${f.B}</b><small>B 分かった</small></div><div class="kc"><b>${f.C}</b><small>C まちがえた</small></div><div class="kd"><b>${f.D}</b><small>D 分からない</small></div></div>
+      <div class="resxp"><div class="t"><span>この回の XP</span><span>+${c.xp} XP</span></div>${bonus ? '<div class="dim">今日の分をぜんぶ終えたボーナス +20 をふくむ</div>' : ''}</div>
+      ${weak.length ? `<h3 style="margin:16px 2px 6px;font-size:15px">C・D だった語（明日もう一度出ます）</h3><div class="wlist wrongs">${weak.map(i => rowHTML(i)).join('')}</div>
+        <button class="btn" data-a="weak">この${weak.length}語だけ、もう一度</button>` : ''}
+      ${!c.opt.today && rest ? `<button class="btn ${weak.length ? 'sub' : ''}" data-a="today">今日のカードへ（${rest}枚）</button>` : ''}
+      <button class="btn line" data-a="copy" style="margin-top:8px">報告用にコピー</button>
+      ${S.timer ? `<button class="btn sub" data-a="tend">覚える時間を終わる（のこり ${clock(Math.ceil(leftSec()))}）</button>` : ''}
+      <button class="btn sub" data-a="x2">閉じる</button></div>`;
+  ov._end = null; C = null;
+  if(ov.querySelector('[data-a=tend]')) ov.querySelector('[data-a=tend]').onclick = () => { endStudy(); closeOv(); };
+  ov.querySelector('[data-a=x]').onclick = closeOv; ov.querySelector('[data-a=x2]').onclick = closeOv;
+  ov.querySelectorAll('.wrongs .wrow').forEach(r => r.onclick = () => openWord(+r.dataset.i));
+  if(ov.querySelector('[data-a=weak]')) ov.querySelector('[data-a=weak]').onclick = () => openCards(weak, 'C・D だった語をもう一度', { keepOrder:true });
+  if(ov.querySelector('[data-a=today]')) ov.querySelector('[data-a=today]').onclick = () => startToday();
+  ov.querySelector('[data-a=copy]').onclick = copyReport;
+  renderAll(); flushLv();
+}
+function firstCnt(c){ const f = { A:0, B:0, C:0, D:0 }; for(const r of Object.values(c.rated)) f[r]++; return f; }
+function startToday(){
+  const p = todayPlan(), ids = [...p.due, ...p.fresh];
+  if(!ids.length){ toast(p.needSort ? '先に仕分けをしましょう' : '今日のカードはありません'); return; }
+  openCards(ids, '今日のカード', { today:true });
+}
+
+/* ===================== 記録 ===================== */
+function addLog(o){ S.log.push({ at: new Date().toISOString(), d: today(), ...o, secs: Math.round(o.secs || 0) }); save(); if(o.secs >= 60) gainXP(Math.floor(o.secs / 60), '覚えた時間'); }
+const KIND = { cards:'カード', sort:'仕分け', list:'一覧' };
+function renderLog(){
+  const el = $('#tab-log'), all = counts(range(0, N)), L = S.log;
+  const cards = L.filter(x => x.kind === 'cards');
+  const fn = cards.reduce((a,x) => a + x.n, 0), fa = cards.reduce((a,x) => a + (x.fa || 0), 0);
+  const days = new Set(L.map(x => x.d)).size;
+  el.innerHTML = `<div class="stats">
+      <div class="stat"><b>${all.g}</b><span>覚えた語</span></div>
+      <div class="stat"><b>${all.x}</b><span>外した語</span></div>
+      <div class="stat"><b>${all.w}</b><span>苦手（C・D）</span></div>
+      <div class="stat"><b>${Math.round(L.reduce((a,x) => a + x.secs, 0)/60)}<small style="font-size:13px">分</small></b><span>覚えた時間</span></div>
+      <div class="stat"><b>${fn ? Math.round(fa/fn*100) : 0}<small style="font-size:13px">%</small></b><span>即答（A）の割合</span></div>
+      <div class="stat"><b>${days}</b><span>勉強した日</span></div></div>
+    <h2>記録（自動）</h2>
+    <div class="card" style="padding:8px 12px">${L.length ? `<table class="log"><tr><th>日付</th><th>内容</th><th style="text-align:right">結果</th><th style="text-align:right">時間</th></tr>
+      ${L.slice().reverse().slice(0, 250).map(t => `<tr><td>${md(t.d)}<br><span class="dim">${new Date(t.at).toTimeString().slice(0,5)}</span></td><td>${KIND[t.kind]}<br><span class="dim">${esc(t.label)}</span></td><td class="r">${t.kind === 'cards' ? `<span class="abcd"><span class="ka">A${t.A}</span><span class="kb">B${t.B}</span></span><br><span class="abcd"><span class="kc">C${t.C}</span><span class="kd">D${t.D}</span></span>` : t.kind === 'sort' ? `${t.n}語<br><span class="dim">外した ${t.x}</span>` : `${t.n}語`}</td><td class="r">${fmtSec(t.secs)}</td></tr>`).join('')}</table>` : '<p class="dim">まだ記録はありません。仕分けやカードをすると、日付・枚数・A〜D・時間が自動でここに入ります。</p>'}</div>
+    ${L.length ? '<button class="btn line" id="logCopy">今日の記録を報告用にコピー</button>' : ''}`;
+  if($('#logCopy')) $('#logCopy').onclick = copyReport;
+}
+function copyReport(){
+  const t = today(), list = S.log.filter(x => x.d === t);
+  if(!list.length){ toast('今日の記録はまだありません'); return; }
+  const cards = list.filter(x => x.kind === 'cards'), sorts = list.filter(x => x.kind === 'sort');
+  const sum = k => cards.reduce((a,x) => a + (x[k] || 0), 0);
+  const all = counts(range(0, N)), lv = lvInfo(S.xp).lv;
+  const lines = [`【現代文の語彙 ${md(t)}】`, `・覚えた時間 ${fmtSec(list.reduce((a,x) => a + x.secs, 0))}`];
+  if(sorts.length) lines.push(`・仕分け ${sorts.reduce((a,x) => a + x.n, 0)}語（外した ${sorts.reduce((a,x) => a + x.x, 0)}語）`);
+  if(cards.length) lines.push(`・カード ${sum('n')}語　A ${sum('A')}／B ${sum('B')}／C ${sum('C')}／D ${sum('D')}（即答 ${sum('n') ? Math.round(sum('fa') / sum('n') * 100) : 0}%）`);
+  if(S.clear[t]) lines.push('・今日のカード 完了');
+  lines.push(`覚えた ${all.g}語・外した ${all.x}語 / ${N}語　Lv.${lv}（${rankOf(lv)}）　今日 +${todayXP()} XP`);
+  copyText(lines.join('\n'), 'コピーしました');
+}
+
+/* ===================== 設定 ===================== */
+function renderSet(){
+  const el = $('#tab-set');
+  const left = W.filter(w => !isEx(w.i) && !started(w.i)).length;
+  el.innerHTML = `<div class="card"><h3>使い方</h3>
+      <div class="gset">${guideSlides().map((g, k) => `<button data-g="${k}"><div class="num">${k+1}</div><b>${g.t}</b><span>${g.p[0].replace(/<[^>]+>/g, '')}</span></button>`).join('')}</div>
+      <button class="btn line" id="sGuide" style="margin-top:6px">使い方をはじめから見る</button></div>
+    <div class="card set"><label>1日の新しい語</label>
+      <div class="seg" id="sPer">${[10,20,30,50,100].map(v => `<button class="${S.cfg.per===v?'on':''}" data-v="${v}">${v}語</button>`).join('')}</div>
+      <p class="dim" style="margin:8px 0 0">まだカードをしていない語は ${left}語（外した語をのぞく）。1日${S.cfg.per}語なら、新しい語は約 <b>${Math.ceil(left / S.cfg.per)}日</b> で一通り出ます。そのあとは復習だけ。</p></div>
+    <div class="card set"><label>カードの順番</label>
+      <div class="seg" id="sOrder"><button class="${S.cfg.order!=='shuffle'?'on':''}" data-v="num">番号順</button><button class="${S.cfg.order==='shuffle'?'on':''}" data-v="shuffle">シャッフル</button></div></div>
+    <div class="card"><h3>データの控え</h3><p class="dim">機種変更のときなどに。記録と語ごとの状態を1つのファイルにします。</p>
+      <div class="row"><button class="btn sub" id="sExp">控えを作る</button><button class="btn sub" id="sImp">控えを読みこむ</button></div>
+      <input type="file" id="sFile" accept=".json,application/json" class="hidden"></div>
+    <div class="card"><h3>更新</h3><p class="dim">いまのバージョン：v${VER}</p>
+      <button class="btn hidden" id="btnUpdate">更新する <span id="updVer" class="dim" style="color:#fff"></span></button>
+      <button class="btn sub" id="btnCheckUpd">更新があるか調べる</button></div>
+    <div class="card"><h3>最初からやり直す</h3><p class="dim">仕分け・記録をすべて消します（元に戻せません）。</p><button class="btn shu" id="sReset">記録を消す</button></div>`;
+  $$('.gset button').forEach(b => b.onclick = () => openGuide(+b.dataset.g));
+  $('#sGuide').onclick = () => openGuide(0);
+  $$('#sPer button').forEach(b => b.onclick = () => { S.cfg.per = +b.dataset.v; save(); renderSet(); });
+  $$('#sOrder button').forEach(b => b.onclick = () => { S.cfg.order = b.dataset.v; save(); renderSet(); });
+  $('#sExp').onclick = () => {
+    const blob = new Blob([JSON.stringify({ app:'goi1300', ...S })], { type:'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'goi1300-' + today() + '.json'; a.click();
+  };
+  $('#sImp').onclick = () => $('#sFile').click();
+  $('#sFile').onchange = async e => {
+    const f = e.target.files[0]; if(!f) return;
+    try{ const j = JSON.parse(await f.text()); if(j.app !== 'goi1300') throw 0; delete j.app; localStorage.setItem(KEY, JSON.stringify(j)); load(); renderAll(); toast('読みこみました'); }
+    catch(err){ toast('このファイルは読みこめませんでした'); }
+  };
+  $('#sReset').onclick = () => { if(confirm('仕分けと記録をすべて消します。よろしいですか？')){ S = blank(); S.guideSeen = true; save(); showBar(); renderAll(); renderSet(); toast('消しました'); } };
+  $('#btnUpdate').onclick = doUpdate;
+  $('#btnCheckUpd').onclick = () => checkUpdate(false);
+  if(newVer > VER){ $('#btnUpdate').classList.remove('hidden'); $('#updVer').textContent = 'v' + VER + ' → v' + newVer; }
+}
+
+/* ===================== 覚える時間（カウントダウン。のこり時間は画面のいちばん上） ===================== */
+let tick = null, AC = null;
+function openStudy(){
+  const p = todayPlan(), cnt = p.due.length + p.fresh.length;
+  if(S.timer){ startToday(); return; }
+  let min = S.cfg.studyMin;
+  const bg = sheet(`<h2>覚える時間</h2>
+    <p class="dim">今日のカード ${cnt}枚（復習 ${p.due.length}＋新しい語 ${p.fresh.length}）。時間を決めて覚えます。のこり時間は画面のいちばん上に出ます。</p>
+    <h3>時間</h3>
+    <div class="chips" id="smin">${[3,5,10,15,20,30].map(m => `<button class="chipb" data-m="${m}">${m}分</button>`).join('')}</div>
+    <div style="display:flex;align-items:center;gap:8px"><span class="dim">自分で決める</span><input type="number" class="minin" id="sminIn" min="1" max="180" inputmode="numeric"><span>分</span></div>
+    <button class="btn" data-a="go" style="margin-top:14px">⏱ スタート</button>
+    <button class="btn sub" data-a="free">時間を決めずにはじめる</button>`);
+  const paint = keepInput => {
+    bg.querySelectorAll('#smin button').forEach(b => b.classList.toggle('on', +b.dataset.m === min));
+    if(!keepInput) bg.querySelector('#sminIn').value = min;
+  };
+  bg.querySelectorAll('#smin button').forEach(b => b.onclick = () => { min = +b.dataset.m; paint(); });
+  bg.querySelector('#sminIn').oninput = e => { const v = Math.round(+e.target.value); if(v >= 1 && v <= 180){ min = v; paint(true); } };
+  bg.querySelector('[data-a=go]').onclick = () => { S.cfg.studyMin = min; save(); bg.remove(); startTimer(min); startToday(); };
+  bg.querySelector('[data-a=free]').onclick = () => { bg.remove(); startToday(); };
+  paint();
+}
+function openTimerMenu(){
+  const t = S.timer; if(!t) return;
+  const bg = sheet(`<h2>覚える時間　のこり ${clock(Math.ceil(leftSec()))}</h2>
+    ${$('.ov') ? '' : '<button class="btn" data-a="cards">今日のカードにもどる</button>'}
+    <div class="row" style="margin-top:12px"><button class="btn sub" data-a="plus">＋3分</button><button class="btn shu" data-a="end">ここで終わる</button></div>`);
+  if(bg.querySelector('[data-a=cards]')) bg.querySelector('[data-a=cards]').onclick = () => { bg.remove(); startToday(); };
+  bg.querySelector('[data-a=plus]').onclick = () => { addTime(180); bg.remove(); toast('3分ふやしました'); };
+  bg.querySelector('[data-a=end]').onclick = () => { bg.remove(); endStudy(); };
+}
+function unlockAudio(){
+  try{
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)(); AC.resume();
+    const o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + .05);
+  }catch(e){}
+}
+function chime(){
+  try{
+    if(AC){
+      AC.resume();
+      [784, 988, 1319].forEach((f, k) => {
+        const d = AC.currentTime + k * .22, o = AC.createOscillator(), g = AC.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0, d); g.gain.linearRampToValueAtTime(.3, d + .02); g.gain.exponentialRampToValueAtTime(.001, d + .7);
+        o.connect(g); g.connect(AC.destination); o.start(d); o.stop(d + .75);
+      });
+    }
+    if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  }catch(e){}
+}
+function startTimer(min){
+  unlockAudio();
+  S.timer = { total: min * 60, end: Date.now() + min * 60000, left: null };
+  save(); showBar(); renderAll();
+}
+function leftSec(){ const t = S.timer; if(!t) return 0; return t.left != null ? t.left : Math.max(0, (t.end - Date.now()) / 1000); }
+function addTime(sec){ const t = S.timer; if(!t) return; t.total += sec; if(t.left != null) t.left += sec; else t.end += sec * 1000; save(); updBar(); }
+function showBar(){
+  let b = $('#stBar');
+  clearInterval(tick);
+  if(!S.timer){ if(b) b.remove(); document.body.classList.remove('timing'); return; }
+  if(!b){
+    b = document.createElement('div'); b.id = 'stBar';
+    b.innerHTML = `<button class="sb-l" data-a="menu"><span class="sb-t"></span><small>覚える時間　（押すとメニュー）</small></button><button class="sb-b" data-a="pause"></button><button class="sb-b" data-a="end">終わる</button><i class="sb-p"></i>`;
+    document.body.appendChild(b);
+    b.querySelector('[data-a=menu]').onclick = openTimerMenu;
+    b.querySelector('[data-a=pause]').onclick = () => {
+      const t = S.timer; if(!t) return;
+      if(t.left == null){ t.left = leftSec(); } else { t.end = Date.now() + t.left * 1000; t.left = null; }
+      save(); updBar();
+    };
+    b.querySelector('[data-a=end]').onclick = () => endStudy();
+  }
+  document.body.classList.add('timing');
+  document.documentElement.style.setProperty('--sbh', b.offsetHeight + 'px');
+  tick = setInterval(updBar, 250);
+  updBar();
+}
+function updBar(){
+  const b = $('#stBar'), t = S.timer; if(!b || !t) return;
+  const l = leftSec();
+  b.querySelector('.sb-t').textContent = clock(Math.ceil(l));
+  b.querySelector('.sb-p').style.width = Math.min(100, (1 - l / t.total) * 100) + '%';
+  b.classList.toggle('low', l <= 60);
+  b.classList.toggle('paused', t.left != null);
+  b.querySelector('[data-a=pause]').textContent = t.left != null ? '再開' : '一時停止';
+  if(l <= 0 && t.left == null) timeUp();
+}
+function endStudy(quiet){
+  const t = S.timer; if(!t) return;
+  const used = t.total - leftSec();
+  S.timer = null; save(); showBar(); renderAll();
+  if(!quiet) toast('覚える時間 ' + fmtSec(used) + '　おつかれさまでした');
+}
+function timeUp(){
+  const t = S.timer; if(!t) return;
+  const total = t.total;
+  S.timer = null; save(); showBar();
+  chime();
+  const bg = sheet(`<div class="lvup"><div class="dim">覚える時間</div><div class="big" style="color:var(--shu)">時間です</div><p>${fmtSec(total)} 覚えました。</p></div>
+    <button class="btn" data-a="more">あと3分 覚える</button>
+    <button class="btn sub" data-a="end">ここで終わる</button>`);
+  bg.querySelector('[data-a=more]').onclick = () => { bg.remove(); startTimer(3); if(!$('.ov')) startToday(); };
+  bg.querySelector('[data-a=end]').onclick = () => { bg.remove(); if(C && Object.keys(C.rated).length) finishCards(); else closeOv(); renderAll(); };
+}
+
+/* ===================== 使い方スライド ===================== */
+function guideSlides(){
+  const mc = (w, r, m) => `<div class="minicard" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="dim" style="font-size:12px;letter-spacing:.1em">${r}</span><b style="font-size:24px">${w}</b><span style="color:var(--shu);font-weight:700;border:1.5px solid var(--shu);border-radius:8px;padding:1px 8px;background:#fff">${m}</span></div>`;
+  return [
+    { t:'語彙1300へ ようこそ', p:['中学生が覚えておきたい<b>現代文の語彙1300語</b>を、カードで覚えるアプリです（高校生にも）。','現代文は、語彙が多いほど正確に読めます。<b>意味を即答できる</b>まで、くり返しましょう。'],
+      v: mc('束縛', 'そくばく', '行動を制限して、自由をうばうこと') },
+    { t:'① まず仕分け', p:['はじめに、語を順番に見て<b>完璧に知っている語は外します</b>。','「完璧に知ってる」を押すと意味が出るので、<b>合っていたら外す</b>。ちがったら覚える語に。思いこみで外さないためです。'],
+      v:`<div class="srtb"><span class="btn keep" style="font-size:14px">あやしい・知らない<small>覚える語にする</small></span><span class="btn know" style="font-size:14px">完璧に知ってる<small>意味を確かめて外す</small></span></div>` },
+    { t:'② カードで覚える', p:['おもては<b>言葉とふりがな</b>。意味を思い浮かべてから、めくります。','思い出せないときは <b>💡ヒント</b> で例文が出ます。'],
+      v:`<div class="minicard" style="justify-content:center;flex-direction:column;padding:14px"><span class="dim" style="letter-spacing:.1em">だせい</span><b style="font-size:30px">惰性</b></div><div class="fbtns"><span class="btn hint" style="font-size:14px">💡 ヒント（例文）</span><span class="btn flipb" style="font-size:14px">めくって意味を見る</span></div>` },
+    { t:'A〜D で答える', p:['めくったら、自分で4つから選びます。<b>A 即答／B 分かった（ヒントあり）／C まちがえた／D 分からない</b>','C・D の語は、その場で少しあとにもう一度出ます。'],
+      v:`<div class="rate"><span class="rb a"><span class="k">A</span>即答</span><span class="rb b"><span class="k">B</span>分かった</span><span class="rb c"><span class="k">C</span>まちがえた</span><span class="rb d"><span class="k">D</span>分からない</span></div>` },
+    { t:'次に出る日は自動', p:['A なら次は<b>3日後 → 1週間後 → 2週間後 → 1か月後</b>と、間があいていきます。1か月後も即答できたら「覚えた」。','B・C・D の語は<b>明日また</b>出ます。毎日「今日」タブのカードをやるだけでOK。'],
+      v:`<div class="minicard"><b style="color:var(--ok)">A</b> 3日後 → 1週間 → 2週間 → 1か月 → 覚えた！</div><div class="minicard"><b style="color:var(--shu)">B・C・D</b> 明日もう一度</div>` },
+    { t:'覚える時間（カウントダウン）', p:['カードをはじめる前に<b>時間を決めます</b>（3分〜、自由に入力も）。のこり時間は画面のいちばん上。','時間になったらチャイム。まだやりたいときは「<b>あと3分</b>」。'],
+      v:`<div style="background:#1E3D34;color:#fff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px"><b style="font-size:24px">9:42</b><small style="opacity:.8">覚える時間</small><span style="margin-left:auto;font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:99px">一時停止</span></div>` },
+    { t:'レベルアップ', p:['即答・仕分け・覚えた時間で <b>XP</b> がたまり、レベルが上がります。','称号は「ことばの芽」から。めざせ「歩く辞書」！記録は「記録」タブから<b>報告用にコピー</b>できます。'],
+      v:`<table class="xprules">${XP_RULES.map(([t, n]) => `<tr><td style="font-size:13.5px">${t}</td><td class="r">+${n}</td></tr>`).join('')}</table>` },
+    { t:'さいごに：ホーム画面に追加', p:['iPhone は、ホーム画面に追加していないサイトの記録を消すことがあります。<b>必ずホーム画面に追加</b>してください。','使い方は、右上の <b>？</b> と「設定」からいつでも見られます。'],
+      v:`<div class="minicard">Safari で開く → 共有ボタン → <b style="font-size:15px">ホーム画面に追加</b></div>` },
+  ];
+}
+function openGuide(start){
+  const G = guideSlides();
+  const el = document.createElement('div'); el.className = 'guide';
+  el.innerHTML = `<button class="gskip" data-a="skip">スキップ</button>
+    <div class="gtrack">${G.map((g, k) => `<section class="gslide"><div class="num">${k+1} / ${G.length}</div><h2>${g.t}</h2><div class="gvis">${g.v}</div>${g.p.map(x => `<p>${x}</p>`).join('')}</section>`).join('')}</div>
+    <div class="gdots">${G.map(() => '<i></i>').join('')}</div>
+    <div class="gnav"><button class="btn sub" data-a="prev" style="flex:1">もどる</button><button class="btn" data-a="next" style="flex:2">次へ</button></div>`;
+  document.body.appendChild(el);
+  const tr = el.querySelector('.gtrack'), dots = el.querySelectorAll('.gdots i');
+  const cur = () => Math.round(tr.scrollLeft / tr.clientWidth);
+  const paint = () => {
+    const k = cur();
+    dots.forEach((d, j) => d.classList.toggle('on', j === k));
+    el.querySelector('[data-a=prev]').style.visibility = k ? 'visible' : 'hidden';
+    el.querySelector('[data-a=next]').textContent = k === G.length - 1 ? 'はじめる' : '次へ';
+  };
+  const close = () => { S.guideSeen = true; save(); el.remove(); };
+  tr.addEventListener('scroll', () => requestAnimationFrame(paint));
+  el.querySelector('[data-a=next]').onclick = () => { const k = cur(); if(k >= G.length - 1) close(); else tr.scrollTo({ left: (k + 1) * tr.clientWidth, behavior:'smooth' }); };
+  el.querySelector('[data-a=prev]').onclick = () => tr.scrollTo({ left: Math.max(0, cur() - 1) * tr.clientWidth, behavior:'smooth' });
+  el.querySelector('[data-a=skip]').onclick = close;
+  if(start) requestAnimationFrame(() => { tr.scrollLeft = start * tr.clientWidth; paint(); });
+  paint();
+}
+$('#btnHelp').onclick = () => openGuide(0);
+
+/* ===================== 共通の部品 ===================== */
+function makeOv(){ closeOv(true); const ov = document.createElement('div'); ov.className = 'ov'; document.body.appendChild(ov); document.body.style.overflow = 'hidden'; return ov; }
+function closeOv(silent){
+  // とちゅうで閉じても、そこまでの記録は残す
+  if(C && $('.ov')){ const c = C; C = null; c.secs = c.secs + (c.t0 ? Math.min(1800, (Date.now() - c.t0) / 1000) : 0); const n = Object.keys(c.rated).length, f = firstCnt(c); if(n) addLog({ kind:'cards', label: c.title + '（とちゅうまで）', n, ...f, fa: f.A, x: c.out, secs: c.secs }); }
+  if(Q && $('.ov')){ const q = Q; Q = null; const secs = q.secs + (q.t0 ? (Date.now() - q.t0) / 1000 : 0); if(q.k) addLog({ kind:'sort', label: q.title + '（とちゅうまで）', n: q.k, x: q.out, secs }); }
+  $$('.ov').forEach(o => { if(o._end) o._end(); o.remove(); });
+  document.body.style.overflow = '';
+  C = null; Q = null;
+  if(busy){ busy = false; flushLv(); }
+  if(!silent) renderAll();
+}
+function sheet(html){
+  const bg = document.createElement('div'); bg.className = 'sheet-bg';
+  bg.innerHTML = `<div class="sheet"><div class="grab"></div>${html}<button class="close">閉じる</button></div>`;
+  document.body.appendChild(bg);
+  bg.querySelector('.close').onclick = () => bg.remove();
+  bg.addEventListener('click', e => { if(e.target === bg) bg.remove(); });
+  return bg;
+}
+let toastT;
+function toast(msg){ $$('.toast').forEach(t => t.remove()); const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); clearTimeout(toastT); toastT = setTimeout(() => t.remove(), 2200); }
+async function copyText(s, msg){
+  try{ await navigator.clipboard.writeText(s); toast(msg || 'コピーしました'); }
+  catch(e){ const ta = document.createElement('textarea'); ta.value = s; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast(msg || 'コピーしました'); }catch(e2){ toast('コピーできませんでした'); } ta.remove(); }
+}
+
+/* ===================== ホーム画面に追加 ===================== */
+function isInstalled(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
+$('#btnInstall').onclick = () => {
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  sheet(`<h2>ホーム画面に追加する</h2>
+    <div class="note"><b>なぜ必要か：</b>ホーム画面に追加していないと、iPhone が「しばらく使っていないサイト」と判断して、仕分けや記録を消してしまうことがあります。必ず追加してください。</div>
+    ${ios ? `<h3>iPhone・iPad の場合</h3><ol><li>この画面を <b>Safari</b> で開く</li><li>画面の下の <b>共有ボタン</b>（四角から矢印）を押す</li><li><b>「ホーム画面に追加」</b> を押す</li><li>右上の <b>「追加」</b> を押す</li></ol>`
+    : `<h3>Android の場合</h3><ol><li>この画面を <b>Chrome</b> で開く</li><li>右上の <b>⋮</b> を押す</li><li><b>「ホーム画面に追加」</b> を押す</li></ol>`}`);
+};
+function checkInstall(){ $('#btnInstall').classList.toggle('hidden', isInstalled()); }
+
+/* ===================== タブ ===================== */
+const TABS = ['today','sets','words','log','set'];
+$$('nav.tabs button').forEach(b => b.onclick = () => {
+  $$('nav.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  TABS.forEach(t => $('#tab-' + t).classList.toggle('hidden', t !== b.dataset.tab));
+  renderTab(b.dataset.tab);
+  window.scrollTo(0, 0);
+});
+function curTab(){ return TABS.find(t => !$('#tab-' + t).classList.contains('hidden')); }
+function renderTab(t){ ({ today:renderToday, sets:renderSets, words:renderWords, log:renderLog, set:renderSet })[t](); }
+function renderAll(){ renderLv(); renderTab(curTab()); }
+$('#verLabel').textContent = 'v' + VER;
+
+let lastDay = today();
+function checkDayChange(){ const t = today(); if(t !== lastDay){ lastDay = t; renderAll(); } }
+setInterval(checkDayChange, 60000);
+
+/* ===================== 更新の確認（他のアプリと同じ仕組み） ===================== */
+let newVer = 0;
+async function checkUpdate(silent){
+  try{
+    const res = await fetch('version.json?t=' + Date.now(), { cache:'no-store' });
+    if(!res.ok) throw 0;
+    const j = await res.json(), v = Number(j.v) || 0;
+    if(v > VER){ newVer = v; $('#tabDot').classList.remove('hidden'); if(curTab() === 'set') renderSet(); }
+    else{ $('#tabDot').classList.add('hidden'); if(!silent) toast('いまが最新です（v' + VER + '）'); }
+  }catch(e){ if(!silent) toast('調べられませんでした'); }
+}
+async function doUpdate(){
+  save(); toast('更新しています…');
+  try{
+    if('serviceWorker' in navigator){ const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.unregister())); }
+    if(window.caches){ const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
+  }catch(e){}
+  location.replace(location.pathname + '?u=' + Date.now());
+}
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden){ checkUpdate(true); checkDayChange(); if(S.timer) updBar(); if(C && !C.t0) C.t0 = Date.now(); if(Q && !Q.t0) Q.t0 = Date.now(); }
+  else { if(C && C.t0){ C.secs += Math.min(1800, (Date.now() - C.t0) / 1000); C.t0 = 0; } if(Q && Q.t0){ Q.secs += (Date.now() - Q.t0) / 1000; Q.t0 = 0; } save(); }
+});
+window.addEventListener('pagehide', save);
+
+/* 起動 */
+renderLv();
+renderToday();
+checkInstall();
+checkUpdate(true);
+try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
+if('serviceWorker' in navigator){ window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
+if(S.timer) showBar();
+if(!S.guideSeen) setTimeout(() => openGuide(0), 300);
+</script>
+</body>
+</html>

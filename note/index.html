@@ -145,7 +145,7 @@ main{max-width:620px;margin:0 auto;padding:4px 18px calc(var(--tabh) + 48px + en
 /* ---------- 本文表示 ---------- */
 .doc{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
   padding:22px 20px;box-shadow:var(--shadow)}
-.doc .body{white-space:pre-wrap;word-break:break-word;font-size:.99rem;line-height:2.05;color:var(--ink2)}
+.doc .body{white-space:pre-wrap;word-break:break-word;font-size:.99rem;line-height:1.75;color:var(--ink2)}
 .doc .body .lead{font-family:var(--serif);font-weight:600;font-size:1.24rem;letter-spacing:.02em;
   color:var(--ink);line-height:1.7}
 
@@ -154,10 +154,10 @@ main{max-width:620px;margin:0 auto;padding:4px 18px calc(var(--tabh) + 48px + en
   padding:13px 14px;outline:none;transition:.15s;box-shadow:var(--shadow)}
 .field:focus{border-color:var(--ink3)}
 .field::placeholder{color:var(--ink3)}
-textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;padding:18px}
+textarea.field{min-height:44vh;resize:none;line-height:1.9;font-size:1rem;padding:18px}
 /* 書く画面：1行目だけ太字に見せる（下に同じ文字を描き、入力欄の文字は透明にする） */
 .edwrap{position:relative}
-.edwrap .edmirror,.edwrap textarea.field{line-height:2.05;font-size:1rem;padding:18px;letter-spacing:normal;
+.edwrap .edmirror,.edwrap textarea.field{line-height:1.9;font-size:1rem;padding:18px;letter-spacing:normal;
   white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;tab-size:4;
   font-feature-settings:inherit;font-kerning:inherit;font-variant:inherit;text-rendering:inherit}
 .edwrap .edmirror{position:absolute;inset:0;overflow:hidden;pointer-events:none;color:var(--ink)}
@@ -301,7 +301,7 @@ textarea.field{min-height:44vh;resize:none;line-height:2.05;font-size:1rem;paddi
 .rev .lead{font-family:var(--serif);font-size:1.34rem;font-weight:600;line-height:1.78;
   white-space:pre-wrap;word-break:break-word;letter-spacing:.03em}
 .rev .rest{white-space:pre-wrap;word-break:break-word;font-size:.97rem;color:var(--ink2);
-  line-height:2.1;margin-top:16px;flex:1}
+  line-height:1.85;margin-top:16px;flex:1}
 .veil{filter:blur(9px);opacity:.36;user-select:none;transition:filter .3s,opacity .3s}
 .pictap{margin-top:12px;align-self:flex-start;font-size:.8rem;font-weight:700;color:var(--ink2);
   background:var(--surf2);border-radius:999px;padding:8px 15px;letter-spacing:.03em}
@@ -409,7 +409,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 30;
+const VER = 31;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];

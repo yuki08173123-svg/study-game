@@ -194,6 +194,9 @@ nav.tabs button.on{color:var(--ai)}
 .fc .bs{font-size:15px;color:var(--muted)}
 .fc .bx{margin-top:12px;font-size:15px;border-top:1px dashed var(--line);padding-top:10px}
 .fc .bx .ex{font-family:var(--mincho);font-weight:700}
+.fc .bg{margin-top:10px;font-weight:700;color:#5A3E12;font-size:15px}
+.fc .bg b{display:inline-block;background:var(--gold);color:#fff;font-size:11.5px;padding:1px 8px;border-radius:999px;margin-right:8px;vertical-align:1px}
+.fc-act{position:sticky;bottom:calc(-16px - env(safe-area-inset-bottom));background:var(--bg);padding:8px 0 calc(16px + env(safe-area-inset-bottom));margin-top:auto;z-index:2}
 .fc .bt{margin-top:10px;font-size:14.5px;background:var(--gold-soft);border-radius:10px;padding:10px 12px}
 
 /* 1分解説スライド（画像がないときは、この組版で代わりに見せる） */
@@ -413,7 +416,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js?v=10"></script>
 <script>
 'use strict';
-const VER = 13;
+const VER = 14;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -738,6 +741,7 @@ document.addEventListener('click', e => {
   e.stopPropagation(); e.preventDefault();   // 単語カードがうら返らないように
   f.classList.toggle('open');
   const sl = f.closest('.slide'); if(sl) fitSlide(sl.parentNode);
+  const fin = f.closest('.fc-in'); if(fin){ const back = fin.querySelector('.fc-face.back'); fin.style.minHeight = '0px'; fin.style.minHeight = Math.max(340, back.scrollHeight + 2) + 'px'; }
 }, true);
 function ftText(w){ return w.ft ? w.ft.replace(/[\[\]]/g, '') : w.tr; }
 /* 語呂合わせ（words.js の g）。覚え方の下に1行だけ */
@@ -958,12 +962,16 @@ function drawCard(){
         <div class="fc-face front"><span class="no">No.${i+1}　${esc(pname(w.p))}</span><div class="w">${esc(w.w)}</div><div class="k">${esc(w.k)}</div><div class="hint">タップでうら返す</div></div>
         <div class="fc-face back"><div class="bw">${esc(w.w)} <span class="dim" style="font-size:14px;font-family:'BIZ UDPGothic'">${esc(w.k)}</span></div>
           <div class="bm">${esc(w.m)}</div>${w.s.length ? `<div class="bs">ほかに：${w.s.map(esc).join('／')}</div>` : ''}
-          ${w.ex ? `<div class="bx"><span class="ex">${exHTML(w)}</span><br>${ftBox(w)}</div>` : ''}
-          <div class="bt"><b>覚え方</b>　${esc(w.tip)}${goroHTML(w)}</div></div>
+          ${w.g ? `<div class="bg"><b>語呂</b>${esc(w.g)}</div>` : ''}
+          <div class="bt"><b>覚え方</b>　${esc(w.tip)}</div>
+          ${w.ex ? `<div class="bx"><span class="ex">${exHTML(w)}</span><br>${ftBox(w)}</div>` : ''}</div>
       </div></div>
-      <div class="row"><button class="btn shu" data-a="no">まだ</button><button class="btn" data-a="yes">覚えた</button></div>
-      <button class="btn line" data-a="lesson" style="margin-top:8px">▶ この単語の1分解説</button>
+      <div class="fc-act"><div class="row"><button class="btn shu" data-a="no">まだ</button><button class="btn" data-a="yes">覚えた</button></div>
+      <button class="btn line" data-a="lesson" style="margin-top:8px">▶ この単語の1分解説</button></div>
     </div>`;
+  // うらの中身が長いときは、カードを中身の高さまでのばす（覚え方が下にかくれないように）
+  const fin = ov.querySelector('.fc-in'), back = ov.querySelector('.fc-face.back');
+  if(fin && back) fin.style.minHeight = Math.max(340, back.scrollHeight + 2) + 'px';
   ov.querySelector('[data-a=x]').onclick = closeOv;
   ov.querySelector('[data-a=flip]').onclick = () => { C.flip = !C.flip; ov.querySelector('.fc-in').classList.toggle('flip', C.flip); };
   ov.querySelector('[data-a=undo]').onclick = undoCard;

@@ -185,13 +185,13 @@ details[open] summary::after{content:"－"}
 </div>
 
 <script>
-const VER = 1;
+const VER = 2;
 const API = (location.hostname === 'localhost' && new URLSearchParams(location.search).get('api')) || 'https://hira-reply.yuki08173123.workers.dev';
 const KEY = 'hirareply-v1';
 const ROOMS = ['分析マップ', 'テストマップ', '計画マップ', 'その他'];
 const FIXES = ['もっと短く', 'もっと詳しく', 'もっとやさしく', 'もっと厳しく', '褒めを増やす'];
 const MAX_PHOTOS = 4;
-const LENS = [['short','短め'], ['normal','ふつう'], ['long','くわしく']];
+const LENS = [['short','いつもの（短め）'], ['normal','ふつう'], ['long','くわしく（Loomの中身）']];
 
 const $ = id => document.getElementById(id);
 function el(tag, attrs, ...kids){
@@ -202,7 +202,7 @@ function el(tag, attrs, ...kids){
 }
 
 /* ── 保存 ───────────────────────────── */
-let S = { length: 'normal', room: '分析マップ', text: '', memo: '', out: '', pass: '', hist: [] };
+let S = { length: 'short', room: '分析マップ', text: '', memo: '', out: '', pass: '', hist: [] };
 try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
 let photos = [];   // {type, data(base64), url}  ※写真は保存しない（重いので）
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }

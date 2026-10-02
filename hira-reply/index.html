@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ヒラ返信</title>
+<meta name="theme-color" content="#F6F3EE">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon-v1.png">
+<link rel="icon" href="icon-192-v1.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ヒラ返信">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+:root{
+  --bg:#F6F3EE; --card:#FFFFFF; --ink:#1B1F27; --muted:#5D6573; --line:#E3DED5;
+  --accent:#1F3A5F; --accent-soft:#E7EDF5; --accent-ink:#FFFFFF;
+  --red:#C0392B; --red-soft:#FBE7E4; --ok:#1E8A5A; --ok-soft:#E2F3EA;
+  --chip:#EFEBE4; --shadow:0 1px 3px rgba(30,30,40,.08); --shadow-lg:0 8px 24px rgba(30,30,40,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161B; --card:#1D2027; --ink:#ECEEF2; --muted:#9AA2AF; --line:#2E323B;
+    --accent:#8DB3E8; --accent-soft:#243246; --accent-ink:#0F141B;
+    --red:#F08A7E; --red-soft:#40231F; --ok:#5BCB97; --ok-soft:#183427;
+    --chip:#272B33; --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 8px 24px rgba(0,0,0,.6);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",system-ui,sans-serif;font-size:16px;line-height:1.6;font-weight:500}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+.wrap{max-width:640px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 8px) 16px calc(env(safe-area-inset-bottom) + 120px)}
+header{display:flex;align-items:center;gap:8px;padding:6px 0 12px}
+header h1{font-size:1.25rem;margin:0;flex:1;letter-spacing:.04em;font-weight:800}
+header h1 small{font-size:.72rem;color:var(--muted);font-weight:500;margin-left:6px}
+.ib{position:relative;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:1.25rem;background:var(--card);box-shadow:var(--shadow)}
+.dot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:var(--red)}
+.banner{background:var(--accent);color:var(--accent-ink);border-radius:14px;padding:12px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:center;font-size:.92rem}
+.banner b{flex:1}
+.banner button{background:var(--accent-ink);color:var(--accent);border-radius:10px;padding:8px 12px;font-weight:700}
+.card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card h2{font-size:1rem;margin:0 0 10px;display:flex;align-items:center;gap:8px;font-weight:800}
+.card h2 .opt{font-size:.75rem;color:var(--muted);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border-radius:999px;padding:8px 14px;background:var(--chip);font-size:.92rem;min-height:40px}
+.chip.on{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.photos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ph{position:relative;aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:var(--chip)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .x{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:1rem;line-height:28px;text-align:center}
+.add{aspect-ratio:3/4;border-radius:12px;border:2px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);font-size:.8rem}
+.add span{font-size:1.6rem;line-height:1}
+textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px;background:var(--bg);resize:vertical;min-height:120px;line-height:1.7;font-size:16px}
+textarea:focus{outline:none;border-color:var(--accent)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.btn{border-radius:12px;padding:10px 14px;background:var(--chip);font-weight:700;min-height:44px;font-size:.92rem}
+.btn.pri{background:var(--accent);color:var(--accent-ink)}
+.btn.ok{background:var(--ok);color:#fff}
+.note{font-size:.8rem;color:var(--muted);margin-top:6px}
+.go{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.go .in{max-width:640px;margin:0 auto;display:flex;gap:8px}
+.go button{flex:1;border-radius:16px;min-height:56px;font-size:1.08rem;font-weight:800;background:var(--accent);color:var(--accent-ink);box-shadow:var(--shadow-lg)}
+.go button.sub{flex:0 0 auto;padding:0 16px;background:var(--card);color:var(--ink);font-size:.9rem}
+.go button:disabled{opacity:.55}
+#outCard{border:2px solid var(--accent)}
+#out{min-height:220px;background:var(--card);font-size:16px}
+.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.9rem;margin-bottom:8px}
+.spin{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--accent);animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.err{background:var(--red-soft);color:var(--red);border-radius:12px;padding:10px 12px;font-size:.9rem;white-space:pre-wrap;margin-bottom:8px}
+.fixrow{display:flex;gap:8px;margin-top:8px}
+.fixrow input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg);font-size:16px}
+details summary{cursor:pointer;list-style:none;font-weight:800}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"＋";float:right;color:var(--muted)}
+details[open] summary::after{content:"－"}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:88vh;overflow:auto;background:var(--bg);border-radius:20px 20px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom) + 20px);z-index:51}
+.sheet .in{max-width:640px;margin:0 auto}
+.sheet h3{margin:0 0 12px;font-size:1.1rem;display:flex;align-items:center}
+.sheet h3 span{flex:1}
+.field{display:block;margin-bottom:12px}
+.field input{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px;background:var(--card);font-size:16px}
+.hist{background:var(--card);border-radius:14px;padding:12px;margin-bottom:10px}
+.hist .d{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.hist .d b{flex:1;font-weight:500}
+.hist pre{white-space:pre-wrap;margin:0;font-family:inherit;font-size:.92rem;max-height:9.5em;overflow:hidden}
+.hist.open pre{max-height:none}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 92px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.92rem;z-index:60;box-shadow:var(--shadow-lg)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ヒラ返信<small id="ver"></small></h1>
+    <button class="ib" id="btnHist" aria-label="これまでの返信">🗂</button>
+    <button class="ib" id="btnSet" aria-label="設定">⚙️<i class="dot" id="setDot" hidden></i></button>
+  </header>
+
+  <div class="banner" id="updBanner" hidden><b id="updVer"></b><button id="btnUpdate">更新する</button></div>
+  <div class="banner" id="passBanner" hidden><b>はじめに ⚙️ で合言葉を入れてください</b><button id="btnPassGo">入れる</button></div>
+
+  <section class="card">
+    <h2>どの部屋の返信？</h2>
+    <div class="chips" id="rooms"></div>
+  </section>
+
+  <section class="card">
+    <h2>生徒の写真 <span class="opt">4枚まで</span></h2>
+    <div class="photos" id="photos"></div>
+    <input type="file" id="file" accept="image/*" multiple hidden>
+  </section>
+
+  <section class="card">
+    <h2>生徒の文章 <span class="opt">投稿の本文をそのまま</span></h2>
+    <textarea id="text" placeholder="例）全教科返ってきたので報告します"></textarea>
+    <div class="row"><button class="btn" id="btnPaste">📋 貼りつける</button><button class="btn" id="btnClearText">消す</button></div>
+  </section>
+
+  <section class="card">
+    <h2>返信の長さ</h2>
+    <div class="chips" id="lens"></div>
+  </section>
+
+  <section class="card">
+    <details id="memoBox">
+      <summary>ひとことメモ <span class="opt" style="font-weight:500;color:var(--muted);font-size:.75rem">入れなくてもOK</span></summary>
+      <div style="margin-top:10px">
+        <textarea id="memo" style="min-height:80px" placeholder="例）英語の取れた失点の原因をもっと深く／前回より伸びたことを褒めたい"></textarea>
+        <div class="note">返信に必ず入れてほしいことを書くと、そこを中心に書きます。</div>
+      </div>
+    </details>
+  </section>
+
+  <section class="card" id="outCard" hidden>
+    <h2>返信文</h2>
+    <div class="status" id="status" hidden><i class="spin"></i><span id="statusTxt">考えています…</span></div>
+    <div class="err" id="err" hidden></div>
+    <textarea id="out" placeholder="ここに返信文が出ます"></textarea>
+    <div class="row">
+      <button class="btn ok" id="btnCopy">コピーする</button>
+      <button class="btn" id="btnRedo">別の書き方で</button>
+    </div>
+    <div class="chips" style="margin-top:12px" id="fixChips"></div>
+    <div class="fixrow"><input id="fix" placeholder="直してほしいこと（例：数字の話を先に）"><button class="btn pri" id="btnFix">直す</button></div>
+  </section>
+</div>
+
+<div class="go"><div class="in">
+  <button class="sub" id="btnNew">新しい生徒</button>
+  <button id="btnGo">返信を作る</button>
+</div></div>
+
+<div id="setSheet" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet"><div class="in">
+    <h3><span>設定</span><button class="btn" data-close>閉じる</button></h3>
+    <div class="card">
+      <h2>アプリの更新</h2>
+      <div class="row" style="margin-top:0"><button class="btn pri" id="btnCheckUpd">更新を確認する</button></div>
+      <div class="note" id="updMsg"></div>
+    </div>
+    <div class="card">
+      <h2>合言葉</h2>
+      <label class="field"><input id="pass" type="password" autocomplete="off" placeholder="合言葉"></label>
+      <div class="row" style="margin-top:0"><button class="btn pri" id="btnPassSave">保存してためす</button></div>
+      <div class="note" id="passMsg">AIを使うための合言葉です。この端末の中にだけ保存します。</div>
+    </div>
+    <div class="card">
+      <h2>このアプリについて</h2>
+      <div class="note" style="margin-top:0">分析マップの部屋の過去の返信211件（Loomの音声レビュー121本の文字起こしを含む）をもとに、ヒラの返信の仕方で文章を作ります。写真と文章はAIに送るだけで、どこにも保存しません。作った返信文はこの端末の 🗂 に50件まで残ります。</div>
+      <div class="note" id="verNo"></div>
+    </div>
+  </div></div>
+</div>
+
+<div id="histSheet" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet"><div class="in">
+    <h3><span>これまでの返信</span><button class="btn" data-close>閉じる</button></h3>
+    <div id="histList"></div>
+  </div></div>
+</div>
+
+<script>
+const VER = 1;
+const API = (location.hostname === 'localhost' && new URLSearchParams(location.search).get('api')) || 'https://hira-reply.yuki08173123.workers.dev';
+const KEY = 'hirareply-v1';
+const ROOMS = ['分析マップ', 'テストマップ', '計画マップ', 'その他'];
+const FIXES = ['もっと短く', 'もっと詳しく', 'もっとやさしく', 'もっと厳しく', '褒めを増やす'];
+const MAX_PHOTOS = 4;
+const LENS = [['short','短め'], ['normal','ふつう'], ['long','くわしく']];
+
+const $ = id => document.getElementById(id);
+function el(tag, attrs, ...kids){
+  const e = document.createElement(tag);
+  for (const k in (attrs || {})) { if (k.startsWith('on')) e[k] = attrs[k]; else e.setAttribute(k, attrs[k]); }
+  kids.flat().forEach(c => c != null && e.append(c));
+  return e;
+}
+
+/* ── 保存 ───────────────────────────── */
+let S = { length: 'normal', room: '分析マップ', text: '', memo: '', out: '', pass: '', hist: [] };
+try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+let photos = [];   // {type, data(base64), url}  ※写真は保存しない（重いので）
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+function toast(msg){
+  const t = el('div', {class:'toast'}, msg); document.body.append(t);
+  setTimeout(() => t.remove(), 1800);
+}
+async function copy(txt, msg){
+  try { await navigator.clipboard.writeText(txt); toast(msg || 'コピーしました'); }
+  catch (e) {
+    const ta = el('textarea', {style:'position:fixed;top:-100px'}); ta.value = txt; document.body.append(ta);
+    ta.select(); try { document.execCommand('copy'); toast(msg || 'コピーしました'); } catch (e2) { toast('コピーできませんでした'); }
+    ta.remove();
+  }
+}
+
+/* ── 部屋 ───────────────────────────── */
+function drawRooms(){
+  const box = $('rooms'); box.innerHTML = '';
+  ROOMS.forEach(r => box.append(el('button', {class:'chip' + (S.room === r ? ' on' : ''), onclick:() => { S.room = r; save(); drawRooms(); }}, r)));
+}
+
+function drawLens(){
+  const box = $('lens'); box.innerHTML = '';
+  LENS.forEach(([k, t]) => box.append(el('button', {class:'chip' + (S.length === k ? ' on' : ''), onclick:() => { S.length = k; save(); drawLens(); }}, t)));
+}
+
+/* ── 写真 ───────────────────────────── */
+function drawPhotos(){
+  const box = $('photos'); box.innerHTML = '';
+  photos.forEach((p, i) => box.append(el('div', {class:'ph'},
+    el('img', {src:p.url, alt:'写真' + (i + 1)}),
+    el('button', {class:'x', 'aria-label':'この写真を外す', onclick:() => { photos.splice(i, 1); drawPhotos(); }}, '×'))));
+  if (photos.length < MAX_PHOTOS) box.append(el('button', {class:'add', onclick:() => $('file').click()}, el('span', {}, '＋'), '写真'));
+}
+// 手書きの字が読めるように、長い辺 2000px まで縮めて JPEG にする
+function shrink(file){
+  return new Promise((ok, ng) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const M = 2000, k = Math.min(1, M / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.round(img.naturalWidth * k), h = Math.round(img.naturalHeight * k);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      const d = c.toDataURL('image/jpeg', 0.86);
+      ok({ type:'image/jpeg', data:d.split(',')[1], url:d });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); ng(new Error('img')); };
+    img.src = url;
+  });
+}
+async function addFiles(files){
+  const list = [...files].filter(f => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name));
+  for (const f of list) {
+    if (photos.length >= MAX_PHOTOS) { toast('写真は' + MAX_PHOTOS + '枚までです'); break; }
+    try { photos.push(await shrink(f)); } catch (e) { toast('読みこめない写真がありました'); }
+  }
+  drawPhotos();
+}
+$('file').onchange = e => { addFiles(e.target.files); e.target.value = ''; };
+document.addEventListener('paste', e => {
+  const fs = [...(e.clipboardData ? e.clipboardData.files : [])];
+  if (fs.length) { e.preventDefault(); addFiles(fs); }
+});
+
+/* ── 文章・メモ ─────────────────────── */
+$('text').value = S.text; $('memo').value = S.memo; $('out').value = S.out;
+if (S.memo) $('memoBox').open = true;
+$('text').oninput = () => { S.text = $('text').value; save(); };
+$('memo').oninput = () => { S.memo = $('memo').value; save(); };
+$('out').oninput = () => { S.out = $('out').value; save(); fit(); };
+$('btnPaste').onclick = async () => {
+  try { const t = await navigator.clipboard.readText(); if (t) { $('text').value = t; S.text = t; save(); toast('貼りつけました'); } else toast('コピーされた文章がありません'); }
+  catch (e) { $('text').focus(); toast('欄を長押し→「ペースト」で貼りつけてください'); }
+};
+$('btnClearText').onclick = () => { $('text').value = ''; S.text = ''; save(); };
+$('btnNew').onclick = () => {
+  photos = []; S.text = ''; S.memo = ''; S.out = ''; save();
+  $('text').value = ''; $('memo').value = ''; $('out').value = ''; $('memoBox').open = false;
+  $('outCard').hidden = true; $('err').hidden = true; drawPhotos();
+  window.scrollTo({top:0, behavior:'smooth'}); toast('入力を消しました');
+};
+
+/* ── 返信を作る ─────────────────────── */
+let busy = false;
+function setBusy(on, msg){
+  busy = on;
+  ['btnGo','btnRedo','btnFix'].forEach(id => $(id).disabled = on);
+  $('status').hidden = !on; if (msg) $('statusTxt').textContent = msg;
+  $('btnGo').textContent = on ? '作っています…' : '返信を作る';
+}
+function fit(){ const o = $('out'); o.style.height = 'auto'; o.style.height = Math.max(220, o.scrollHeight + 4) + 'px'; }
+function showErr(m){ $('err').textContent = m; $('err').hidden = false; }
+
+async function run(opts){
+  if (busy) return;
+  if (!S.pass) { openSheet('setSheet'); $('pass').focus(); toast('先に合言葉を入れてください'); return; }
+  const text = $('text').value.trim();
+  if (!text && !photos.length) { toast('写真か文章を入れてください'); return; }
+  const body = { pass:S.pass, room:S.room, length:S.length, text, memo:$('memo').value.trim(), images:photos.map(p => ({type:p.type, data:p.data})) };
+  if (opts && opts.prev) { body.prev = opts.prev; body.fix = opts.fix || ''; }
+
+  $('outCard').hidden = false; $('err').hidden = true;
+  const keep = $('out').value;
+  $('out').value = '';
+  setBusy(true, photos.length ? '写真を読んでいます…（30秒ほど）' : '考えています…');
+  $('outCard').scrollIntoView({behavior:'smooth', block:'start'});
+
+  let got = '';
+  try {
+    const res = await fetch(API, { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(body) });
+    if (!res.ok) {
+      let m = '返信を作れませんでした（' + res.status + '）。';
+      try { const j = await res.json(); if (j.error && j.error.message) m = j.error.message; } catch (e) {}
+      throw new Error(m);
+    }
+    const reader = res.body.getReader(), dec = new TextDecoder();
+    let buf = '', stop = '';
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream:true });
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+        const line = chunk.split('\n').find(l => l.startsWith('data:'));
+        if (!line) continue;
+        let ev; try { ev = JSON.parse(line.slice(5)); } catch (e) { continue; }
+        if (ev.type === 'content_block_delta' && ev.delta && ev.delta.type === 'text_delta') {
+          if (!got) $('statusTxt').textContent = '書いています…';
+          got += ev.delta.text; $('out').value = got; fit();
+        } else if (ev.type === 'message_delta' && ev.delta && ev.delta.stop_reason) {
+          stop = ev.delta.stop_reason;
+        } else if (ev.type === 'error') {
+          throw new Error('とちゅうで止まりました。もう一度ためしてください。');
+        }
+      }
+    }
+    if (stop === 'refusal') throw new Error('この内容では返信文を作れませんでした。');
+    got = got.trim();
+    if (!got) throw new Error('返信文が空でした。もう一度ためしてください。');
+    $('out').value = got; fit(); S.out = got; save();
+    S.hist.unshift({ at:Date.now(), room:S.room, text:text.slice(0, 120), photos:photos.length, out:got });
+    S.hist = S.hist.slice(0, 50); save();
+  } catch (e) {
+    const m = (e && e.message && !/Load failed|Failed to fetch|NetworkError/i.test(e.message)) ? e.message : 'つながりませんでした。電波のよい所でもう一度ためしてください。';
+    showErr(m);
+    if (!got) $('out').value = keep;
+  } finally { setBusy(false); }
+}
+$('btnGo').onclick = () => run();
+$('btnRedo').onclick = () => run({ prev:$('out').value.trim(), fix:'言っている中身はそのままで、別の書き方でもう一度' });
+$('btnFix').onclick = () => {
+  const f = $('fix').value.trim();
+  if (!f) { $('fix').focus(); return; }
+  run({ prev:$('out').value.trim(), fix:f }); $('fix').value = '';
+};
+FIXES.forEach(f => $('fixChips').append(el('button', {class:'chip', onclick:() => run({ prev:$('out').value.trim(), fix:f })}, f)));
+$('btnCopy').onclick = () => { const t = $('out').value.trim(); if (t) copy(t, 'コピーしました。Discord に貼りつけてください'); };
+
+/* ── シート ─────────────────────────── */
+function openSheet(id){ $(id).hidden = false; }
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('[id$=Sheet]').hidden = true);
+$('btnSet').onclick = () => openSheet('setSheet');
+$('btnPassGo').onclick = () => { openSheet('setSheet'); $('pass').focus(); };
+$('pass').value = S.pass;
+$('btnPassSave').onclick = async () => {
+  S.pass = $('pass').value.trim(); save(); drawPass();
+  if (!S.pass) { $('passMsg').textContent = '合言葉を消しました。'; return; }
+  $('passMsg').textContent = 'ためしています…';
+  try {
+    const r = await fetch(API, { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({ pass:S.pass, ping:1 }) });
+    const j = await r.json().catch(() => ({}));
+    $('passMsg').textContent = r.ok ? '✅ 合言葉OKです。使えます。' : ((j.error && j.error.message) || ('うまくいきませんでした（' + r.status + '）'));
+  } catch (e) { $('passMsg').textContent = 'サーバーにつながりませんでした。電波を確かめてください。'; }
+};
+function drawPass(){ $('passBanner').hidden = !!S.pass; }
+
+$('btnHist').onclick = () => {
+  const b = $('histList'); b.innerHTML = '';
+  if (!S.hist.length) b.append(el('div', {class:'note'}, 'まだありません。作った返信文がここに残ります。'));
+  S.hist.forEach(h => {
+    const d = new Date(h.at);
+    const box = el('div', {class:'hist'},
+      el('div', {class:'d'}, el('b', {}, `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}　#${h.room}${h.photos ? '　写真' + h.photos : ''}`),
+        el('button', {class:'btn', style:'min-height:36px;padding:6px 12px', onclick:() => copy(h.out)}, 'コピー')),
+      el('pre', {}, h.out));
+    box.querySelector('pre').onclick = () => box.classList.toggle('open');
+    b.append(box);
+  });
+  openSheet('histSheet');
+};
+
+/* ── 更新（新しいバージョンが出たら知らせて、押したら入れ直す） ── */
+async function checkUpdate(silent){
+  const msg = t => { if (!silent) $('updMsg').textContent = t; };
+  try {
+    const res = await fetch('version.json?t=' + Date.now(), {cache:'no-store'});
+    if (!res.ok) throw 0;
+    const j = await res.json(), v = Number(j.v) || 0;
+    if (v > VER) {
+      $('updVer').textContent = '新しいバージョンがあります v' + VER + ' → v' + v + (j.note ? '　' + j.note : '');
+      $('updBanner').hidden = false; $('setDot').hidden = false;
+      msg('新しいバージョン v' + v + ' があります。');
+    } else {
+      $('updBanner').hidden = true; $('setDot').hidden = true;
+      msg('いまが最新です（v' + VER + '）。');
+    }
+  } catch (e) { msg('いまは調べられませんでした。電波のよい所でもう一度ためしてください。'); }
+}
+async function doUpdate(){
+  save(); toast('更新しています…');
+  try {
+    if ('serviceWorker' in navigator) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.unregister())); }
+    if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
+  } catch (e) {}
+  location.replace(location.pathname + '?u=' + Date.now());
+}
+$('btnUpdate').onclick = doUpdate;
+$('btnCheckUpd').onclick = () => { $('updMsg').textContent = '調べています…'; checkUpdate(false); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(true); });
+
+$('ver').textContent = 'v' + VER;
+$('verNo').textContent = 'ヒラ返信 v' + VER;
+if (S.out) { $('outCard').hidden = false; fit(); }
+drawRooms(); drawLens(); drawPhotos(); drawPass();
+checkUpdate(true);
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+</body>
+</html>

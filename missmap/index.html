@@ -162,6 +162,12 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 .title-row .who{font-size:12.5px; font-weight:700; color:var(--accent); background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:999px; padding:3px 10px; flex-shrink:0; max-width:6.5em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .profname{width:100%; background:var(--chip); border:1px solid var(--line); border-radius:10px; padding:9px 12px; font-size:16px; outline:none;}
 .profname:focus{border-color:var(--accent-line);}
+.more{margin-top:10px; padding:10px 10px 8px; border:1px dashed var(--accent-line); border-radius:12px;}
+.more .lbl{display:block; font-size:12.5px; font-weight:700; color:var(--muted); margin-bottom:7px;}
+.chips.hscroll{flex-wrap:nowrap; overflow-x:auto; padding-bottom:6px; -webkit-overflow-scrolling:touch; scrollbar-width:thin;}
+.chips.hscroll .chip{flex:none; white-space:nowrap;}
+input.own{width:100%; margin-top:8px; background:var(--chip); border:1px solid var(--line); border-radius:10px; padding:9px 12px; font-size:16px; outline:none;}
+input.own:focus{border-color:var(--accent-line);}
 .field .dnote{font-size:13px; color:var(--muted); margin-top:8px;}
 .field .dnote b{color:var(--accent);}
 .field .hint{font-size:13px; color:var(--muted); line-height:1.6; margin-top:6px; padding-top:6px; border-top:1px dashed var(--line);}
@@ -542,7 +548,7 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 23;
+const VER = 24;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -565,14 +571,19 @@ const curName = () => { const a = profiles(), i = a.findIndex(x => x.id === PID)
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const SUBJ = ['英語','数学','国語','理科','社会','その他'];
-const SUBJC = { '英語':'#8FA8E8', '数学':'#7CC3A0', '国語':'#E3928A', '理科':'#7FC4CC', '社会':'#E0A86A', 'その他':'#B8B0A2' };
+const SUBJ = ['英語','数学','算数','国語','理科','社会','その他'];
+const SUBJC = { '英語':'#8FA8E8', '数学':'#7CC3A0', '算数':'#C9A3E6', '国語':'#E3928A', '理科':'#7FC4CC', '社会':'#E0A86A', 'その他':'#B8B0A2' };
+/* 「その他」を押すと出る、ほかの選択肢（横にスクロール）。ないときは自分で入れられる（10/2 ユウキ・ハルネコの要望）。
+   選んだ・入れた名前は it.subj / it.tag にそのまま入る（「その他」のままでもよい） */
+const SUBJ_MORE = ['英検','漢検','数検','情報','プログラミング','技術・家庭','保健体育','音楽','美術','小論文'];
+const OWN_MAX = 10;   // 自分で入れる名前の長さ（グラフと部屋に出す画像で切れないように）
 /* ミスの種類（ミスパターン分析用）。Discordでヒラが挙げた例をもとにした */
 const SOLVE_TAG = '解法が分からなかった';
 const isSolve = t => t === SOLVE_TAG;
 const METHOD_TAG = '解説とちがう解き方';   // 生徒めい（10/1）の要望「解答解説通りの解き方ではない」。グラフと画像で切れないよう短くした
 const kindOf = t => t === SOLVE_TAG ? 'solve' : t === METHOD_TAG ? 'method' : 'miss';
 const TAGS = [SOLVE_TAG, METHOD_TAG, '計算ミス','スペルミス','漢字ミス','時制ミス','条件の読み飛ばし','見落とし','解答欄のズレ','書き方が雑','その他'];
+const TAG_MORE = ['符号ミス','写し間違い','単位のつけ忘れ','問題の読み間違い','記号の選び間違い','グラフの読み間違い','途中式の書き忘れ','聞き取りミス','時間切れ'];
 const DEF_GAPS = [1,3,7,14,30];
 const GAP_MIN = 2, GAP_MAX = 8;   // くり返す回数は 2〜8回
 const PRESETS = [
@@ -632,7 +643,172 @@ const FIXES = {
     { when:'解き終わったら', what:'答え', how:'問題文に戻って合うか確かめる' },
     { when:'解く前', what:'問題文の大事なところ', how:'丸をつける' },
   ],
+  '符号ミス': [
+    { when:'解いている途中', what:'かっこを外したところの符号', how:'指でさして元の式と見くらべる' },
+    { when:'解き終わったら', what:'答え', how:'元の式に入れて符号まで合うか確かめる' },
+  ],
+  '写し間違い': [
+    { when:'解く前', what:'ノートに写した式', how:'問題文と1文字ずつ指でさして見くらべる' },
+    { when:'解いている途中', what:'次の行に写した式', how:'前の行と指でさして見くらべる' },
+  ],
+  '単位のつけ忘れ': [
+    { when:'解く前', what:'問題文の単位', how:'丸をつける' },
+    { when:'解き終わったら', what:'答えの単位', how:'問題文の丸と見くらべる' },
+  ],
+  '問題の読み間違い': [
+    { when:'解く前', what:'問題文', how:'指でなぞりながら読む' },
+    { when:'解き終わったら', what:'問題文の最後の1文', how:'もう一度読んで、答えと見くらべる' },
+  ],
+  '記号の選び間違い': [
+    { when:'解き終わったら', what:'選んだ記号', how:'選択肢の文と指でさして見くらべる' },
+  ],
+  'グラフの読み間違い': [
+    { when:'解く前', what:'グラフの目もりの数', how:'いくつか書きこんでから読む' },
+    { when:'解く前', what:'たて軸と横軸の単位', how:'丸をつける' },
+  ],
+  '途中式の書き忘れ': [
+    { when:'解いている途中', what:'途中式', how:'1行に1つずつ全部書く' },
+  ],
+  '聞き取りミス': [
+    { when:'解く前', what:'選択肢', how:'放送の前に読んでおく' },
+    { when:'解いている途中', what:'聞こえた数字や名前', how:'余白にメモする' },
+  ],
+  '時間切れ': [
+    { when:'解く前', what:'大問ごとの時間', how:'問題用紙の余白に書き出す' },
+    { when:'解いている途中', what:'3分考えて分からない問題', how:'印をつけて次に進む' },
+  ],
 };
+/* 自分で入れた種類には、「その他」の候補を出す */
+const fixesFor = tag => tag ? (FIXES[tag] || FIXES['その他']) : null;
+/* ミスの種類ごとの「間違えた理由」の例。押すと入る。抽象的になりがちな人が、まず真似して書けるように（10/2 ユウキ・ハルネコの要望） */
+const WHYS = {
+  [SOLVE_TAG]: [
+    { did:'式を立てるところで止まった', then:'何をxにするか決められなかった' },
+    { did:'図をかかずに、頭の中だけで考えた', then:'数の関係が分からなくなった' },
+    { did:'1行目から手が止まった', then:'どの公式を使えばいいか思いつかなかった' },
+  ],
+  [METHOD_TAG]: [
+    { did:'方程式を立てて、遠回りして解いた', then:'解説は比を使って1行で解いていた' },
+    { did:'1つずつ全部数えて解いた', then:'解説はきまりを見つけて計算していた' },
+  ],
+  '計算ミス': [
+    { did:'移項するときに符号を変えずに書いた', then:'答えのプラスとマイナスが逆になった' },
+    { did:'途中式を省いて暗算した', then:'かけ算の答えがずれた' },
+    { did:'くり上がりの数を書かなかった', then:'たし算の答えが1つずれた' },
+  ],
+  'スペルミス': [
+    { did:'つづりを音だけで書いた', then:'receive を recieve と書いた' },
+    { did:'書いた単語を読み返さなかった', then:'1文字ぬけていた' },
+  ],
+  '漢字ミス': [
+    { did:'形の似た漢字を書いた', then:'「積」を「績」と書いた' },
+    { did:'送りがなを確かめずに書いた', then:'「少ない」を「少い」と書いた' },
+  ],
+  '時制ミス': [
+    { did:'文の最後の last week を見落とした', then:'現在形のまま答えた' },
+    { did:'yesterday に丸をつけずに動詞を書いた', then:'過去形にしなかった' },
+  ],
+  '条件の読み飛ばし': [
+    { did:'問題文の「すべて選べ」を読み飛ばした', then:'1つだけ答えた' },
+    { did:'「正しくないもの」を「正しいもの」と読んだ', then:'逆の答えを選んだ' },
+    { did:'「小数第1位まで」を読まずに答えた', then:'答えの形がちがった' },
+  ],
+  '見落とし': [
+    { did:'グラフの単位を見なかった', then:'10倍ずれた答えになった' },
+    { did:'裏のページの問題を見落とした', then:'1問まるごと空らんになった' },
+  ],
+  '解答欄のズレ': [
+    { did:'問題をとばしたのに、解答欄をつめて書いた', then:'そこから下が全部1つずれた' },
+  ],
+  '書き方が雑': [
+    { did:'0と6を同じような形で書いた', then:'自分で読みまちがえて計算した' },
+    { did:'解答欄に字を小さく書いた', then:'読めない字で×になった' },
+  ],
+  '符号ミス': [
+    { did:'マイナスのついたかっこを外すとき、符号を変えなかった', then:'答えの符号が逆になった' },
+  ],
+  '写し間違い': [
+    { did:'問題の数字をノートに写すとき、3を8と書いた', then:'最初からちがう問題を解いていた' },
+  ],
+  '単位のつけ忘れ': [
+    { did:'答えの数だけ書いて、単位を書かなかった', then:'cm² がなくて×になった' },
+  ],
+  '問題の読み間違い': [
+    { did:'「何分後」を「何時間後」と読んだ', then:'ちがう単位で答えた' },
+  ],
+  '記号の選び間違い': [
+    { did:'答えはアなのに、解答欄にイと書いた', then:'考えは合っていたのに×になった' },
+  ],
+  'グラフの読み間違い': [
+    { did:'グラフの1目もりを1だと思って読んだ', then:'本当は1目もり2で、答えが半分になった' },
+  ],
+  '途中式の書き忘れ': [
+    { did:'途中式を書かずに答えだけ書いた', then:'記述の部分点がもらえなかった' },
+  ],
+  '聞き取りミス': [
+    { did:'メモをとらずに聞いた', then:'15と50を聞き分けられなかった' },
+  ],
+  '時間切れ': [
+    { did:'1問目に20分使った', then:'最後の大問を解く時間がなくなった' },
+  ],
+  'その他': [
+    { did:'問題文を最後まで読まずに解きはじめた', then:'聞かれていることとちがう答えを書いた' },
+    { did:'答えを問題文に戻して確かめなかった', then:'おかしな答えのまま出した' },
+  ],
+};
+const whysFor = tag => tag ? (WHYS[tag] || WHYS['その他']) : null;
+
+/* 教科・ミスの種類の選び方。「その他」を押すと、ほかの選択肢（横にスクロール）と自由入力が出る */
+const PICK = {
+  subj: { main:SUBJ, more:SUBJ_MORE, field:'subj', what:'教科', ph:'ないときは、ここに自分で入れる', toggle:false },
+  tag:  { main:TAGS, more:TAG_MORE, field:'tag', what:'種類', ph:'ないときは、ここに自分で入れる', toggle:true },
+};
+const isOtherV = (kind, v) => !!v && (v === 'その他' || !PICK[kind].main.includes(v));
+/* 前に自分で入れた名前（次からは選ぶだけでよい） */
+function usedOwn(kind){
+  const c = PICK[kind];
+  return [...new Set(S.items.map(i => i[c.field]).filter(v => v && !c.main.includes(v) && !c.more.includes(v)))];
+}
+function pickerHtml(kind, v){
+  const c = PICK[kind], other = isOtherV(kind, v);
+  const chip = (x, on) => kind === 'subj'
+    ? `<button class="chip sub ${on ? 'on' : ''}" data-v="${esc(x)}" style="--c:${SUBJC[x] || SUBJC['その他']}">${esc(x)}</button>`
+    : `<button class="chip sm ${on ? 'on' : ''}" data-v="${esc(x)}">${esc(x)}</button>`;
+  const extra = [...c.more, ...usedOwn(kind)];
+  const own = other && v !== 'その他' && !extra.includes(v) ? v : '';
+  return `<div class="chips">${c.main.map(x => chip(x, x === 'その他' ? other : x === v)).join('')}</div>
+    ${other ? `<div class="more"><span class="lbl">ほかの${c.what}（横にスクロールできます）</span>
+      <div class="chips hscroll">${extra.map(x => chip(x, x === v)).join('')}</div>
+      <input type="text" class="own" maxlength="${OWN_MAX}" placeholder="${c.ph}" value="${esc(own)}" autocomplete="off"></div>` : ''}`;
+}
+/* box に選ぶ部品を出す。get/set で値を読み書きする */
+function mountPicker(box, kind, get, set){
+  const c = PICK[kind];
+  const draw = () => {
+    box.innerHTML = pickerHtml(kind, get());
+    box.querySelectorAll('[data-v]').forEach(b => b.onclick = () => {
+      const x = b.dataset.v, cur = get(), inMore = !!b.closest('.more');
+      let nv;
+      if(inMore) nv = cur === x ? 'その他' : x;
+      else if(x === 'その他') nv = isOtherV(kind, cur) ? (c.toggle ? '' : cur) : 'その他';
+      else nv = (c.toggle && cur === x) ? '' : x;
+      set(nv); draw();
+      const m = box.querySelector('.more'); if(m && x === 'その他') m.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    });
+    const own = box.querySelector('.own');
+    if(own) own.oninput = () => {
+      set(own.value.trim().slice(0, OWN_MAX) || 'その他');
+      box.querySelectorAll('.more [data-v]').forEach(x => x.classList.toggle('on', x.dataset.v === get()));
+    };
+  };
+  draw();
+}
+/* 一覧に出す順：決まった教科（種類）→ 自分で入れたもの → その他 */
+function listWithOwn(kind, items){
+  const c = PICK[kind], base = c.main.filter(x => x !== 'その他');
+  const own = [...new Set(items.map(i => i[c.field]).filter(v => v && v !== 'その他' && !c.main.includes(v)))];
+  return [...base, ...own, 'その他'];
+}
 const ICO = {
   x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   back: '<svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg>',
@@ -1062,9 +1238,27 @@ const FIX_HINT = {
   solve: '次に同じ問題を解くとき、どう考えて解くかのポイントを書きます。解き直しのときは、このポイントどおりに解きます。',
   method:'解説の解き方で解くためのポイントを書きます。解き直しのときは、解説の解き方で解きます。',
 };
+function whyExHtml(tag){
+  const list = whysFor(tag);
+  if(!list) return `<div class="sugg"><div class="none">先に「ミスの種類」を選ぶと、理由の書き方の例が出ます。</div></div>`;
+  return `<div class="sugg"><span class="lbl">書き方の例（押すと入ります。自分の問題に合わせて直してください）</span>
+    ${list.map((x, i) => `<button class="s" data-wx="${i}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>${esc(composeWhy(x))}</span></button>`).join('')}</div>`;
+}
+function bindWhyEx(root, p){
+  root.querySelectorAll('#'+p+'WhyEx [data-wx]').forEach(b => b.onclick = () => {
+    const tag = root.__tag ? root.__tag() : '', x = (whysFor(tag) || [])[Number(b.dataset.wx)], why = root.__why;
+    if(!x || !why) return;
+    why.did = x.did; why.then = x.then;
+    root.querySelector('#'+p+'Did').value = x.did; root.querySelector('#'+p+'Then').value = x.then;
+    hideErr(root, p+'WhyErr');
+    if(root.__onch) root.__onch();
+    toast('入りました。自分の問題に合わせて直してください');
+  });
+}
 function whyFields(p, d, tag){
   const w = WHY_TXT[kindOf(tag)];
-  return `<div class="sub-in"><label id="${p}DidL">${w.did}</label><input type="text" id="${p}Did" value="${esc(d.did)}" placeholder="${w.didPh}" autocomplete="off"></div>
+  return `<div id="${p}WhyEx">${whyExHtml(tag)}</div>
+    <div class="sub-in"><label id="${p}DidL">${w.did}</label><input type="text" id="${p}Did" value="${esc(d.did)}" placeholder="${w.didPh}" autocomplete="off"></div>
     <div class="sub-in"><label id="${p}ThenL">${w.then}</label><input type="text" id="${p}Then" value="${esc(d.then)}" placeholder="${w.thenPh}" autocomplete="off"></div>
     <div class="hint" id="${p}WhyHint">${w.hint}</div>
     <div class="err hidden" id="${p}WhyErr"></div>`;
@@ -1076,18 +1270,20 @@ function refreshWhy(root, p, tag){
   q('#'+p+'DidL').textContent = w.did; q('#'+p+'Did').placeholder = w.didPh;
   q('#'+p+'ThenL').textContent = w.then; q('#'+p+'Then').placeholder = w.thenPh;
   q('#'+p+'WhyHint').textContent = w.hint;
+  const ex = q('#'+p+'WhyEx'); if(ex){ ex.innerHTML = whyExHtml(tag); bindWhyEx(root, p); }
   const fh = q('#'+p+'FixHint'); if(fh) fh.textContent = FIX_HINT[k];
   hideErr(root, p+'WhyErr');
 }
 function suggHtml(p, tag){
-  const list = FIXES[tag];
+  const list = fixesFor(tag);
   if(!list) return `<div class="sugg"><div class="none">先に「ミスの種類」を選ぶと、その種類でよく効く改善点が候補で出ます。</div></div>`;
-  return `<div class="sugg"><span class="lbl">${esc(tag)}によく効く改善点（押すと入ります）</span>
+  return `<div class="sugg"><span class="lbl">${esc(FIXES[tag] ? tag : 'その他')}によく効く改善点（押すと入ります。自分の言葉に直してOK）</span>
     ${list.map((f, i) => `<button class="s" data-sg="${i}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>${esc(composeFix(f))}</span></button>`).join('')}</div>`;
 }
 function fixFields(p, d, tag){
   return `<div id="${p}Sugg">${suggHtml(p, tag)}</div>
-    <div class="sub-in"><label>いつ</label><div class="chips" id="${p}When">${WHEN.map(w => `<button class="chip sm ${d.when===w?'on':''}" data-w="${w}">${w}</button>`).join('')}</div></div>
+    <div class="sub-in"><label>いつ</label><div class="chips" id="${p}When">${WHEN.map(w => `<button class="chip sm ${d.when===w?'on':''}" data-w="${w}">${w}</button>`).join('')}<button class="chip sm ${d.when && !WHEN.includes(d.when) ? 'on' : ''}" data-w="__own">自分で書く</button></div>
+      <input type="text" class="own ${d.when && !WHEN.includes(d.when) ? '' : 'hidden'}" id="${p}WhenOwn" maxlength="14" placeholder="例：テストが配られたら" value="${esc(d.when && !WHEN.includes(d.when) ? d.when : '')}" autocomplete="off"></div>
     <div class="sub-in"><label>何を</label><input type="text" id="${p}What" value="${esc(d.what)}" placeholder="例：代入した式の符号／問題文の条件" autocomplete="off"></div>
     <div class="sub-in"><label>どうする</label><input type="text" id="${p}How" value="${esc(d.how)}" placeholder="例：指でさして、元の式と1つずつ見くらべる" autocomplete="off"></div>
     <div class="pv off" id="${p}FixPv"></div>
@@ -1098,11 +1294,10 @@ function fixFields(p, d, tag){
 function bindSugg(root, p, fix, onch){
   root.querySelectorAll('#'+p+'Sugg [data-sg]').forEach(b => b.onclick = () => {
     const tag = root.__tag ? root.__tag() : '';
-    const f = (FIXES[tag] || [])[Number(b.dataset.sg)];
+    const f = (fixesFor(tag) || [])[Number(b.dataset.sg)];
     if(!f) return;
     Object.assign(fix, f);
-    const box = root.querySelector('#'+p+'When');
-    box.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.w === fix.when));
+    syncWhen(root, p, fix, false);
     root.querySelector('#'+p+'What').value = fix.what;
     root.querySelector('#'+p+'How').value = fix.how;
     if(root.__pv) root.__pv();
@@ -1118,16 +1313,33 @@ function refreshSugg(root, p, tag, fix, onch){
   box.innerHTML = suggHtml(p, tag);
   bindSugg(root, p, fix, onch);
 }
+/* いつ のチップと「自分で書く」欄を、fix.when にそろえる */
+function syncWhen(root, p, fix, ownOpen){
+  const own = !!fix.when && !WHEN.includes(fix.when);
+  root.querySelectorAll('#'+p+'When .chip').forEach(x => x.classList.toggle('on', x.dataset.w === '__own' ? (own || ownOpen) : x.dataset.w === fix.when));
+  const inp = root.querySelector('#'+p+'WhenOwn');
+  if(inp){ inp.classList.toggle('hidden', !(own || ownOpen)); if(document.activeElement !== inp) inp.value = own ? fix.when : ''; }
+}
 function bindWhyFix(root, p, why, fix, onch){
   const q = sel => root.querySelector(sel);
   const ch = () => { if(onch) onch(); };
+  root.__why = why; root.__onch = onch;
+  bindWhyEx(root, p);
   const pv = () => { const el = q('#'+p+'FixPv'); const ok = fix.when || fix.what.trim() || fix.how.trim(); el.textContent = ok ? composeFix(fix) : 'ここに改善点が1文で組み上がります'; el.classList.toggle('off', !ok); };
   root.__pv = pv;
   q('#'+p+'Did').oninput = e => { why.did = e.target.value; hideErr(root, p+'WhyErr'); ch(); };
   q('#'+p+'Then').oninput = e => { why.then = e.target.value; hideErr(root, p+'WhyErr'); ch(); };
   q('#'+p+'What').oninput = e => { fix.what = e.target.value; pv(); hideErr(root, p+'FixErr'); ch(); };
   q('#'+p+'How').oninput = e => { fix.how = e.target.value; pv(); hideErr(root, p+'FixErr'); ch(); };
-  q('#'+p+'When').querySelectorAll('.chip').forEach(b => b.onclick = () => { fix.when = fix.when === b.dataset.w ? '' : b.dataset.w; q('#'+p+'When').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.w === fix.when)); pv(); hideErr(root, p+'FixErr'); ch(); });
+  q('#'+p+'When').querySelectorAll('.chip').forEach(b => b.onclick = () => {
+    if(b.dataset.w === '__own'){
+      const open = !q('#'+p+'WhenOwn').classList.contains('hidden');
+      if(open){ if(!WHEN.includes(fix.when)) fix.when = ''; syncWhen(root, p, fix, false); }
+      else { if(WHEN.includes(fix.when)) fix.when = ''; syncWhen(root, p, fix, true); q('#'+p+'WhenOwn').focus(); }
+    }else{ fix.when = fix.when === b.dataset.w ? '' : b.dataset.w; syncWhen(root, p, fix, false); }
+    pv(); hideErr(root, p+'FixErr'); ch();
+  });
+  q('#'+p+'WhenOwn').oninput = e => { fix.when = e.target.value.trim(); syncWhen(root, p, fix, true); pv(); hideErr(root, p+'FixErr'); ch(); };
   pv();
 }
 function showErr(root, id, e){
@@ -1178,14 +1390,14 @@ function renderAdd(){
       <textarea id="addText" rows="2" placeholder="例：体系数学 p.42 問3　連立方程式の代入で符号を間違えた問題">${esc(draft.text)}</textarea>
     </div>
 
-    <div class="field req"><label>教科<b>必須</b></label><div class="chips" id="addSubj">${SUBJ.map(s => `<button class="chip sub ${draft.subj===s?'on':''}" data-s="${s}" style="--c:${SUBJC[s]}">${s}</button>`).join('')}</div></div>
+    <div class="field req"><label>教科<b>必須</b></label><div id="addSubj"></div></div>
 
     <div class="field"><label>届く日（「今日の問題」に入る日）</label>
       <div class="dayrow"><input type="date" id="addDay" min="${today()}"><button class="chip sm" id="addDayToday">今日</button><button class="chip sm" id="addDayStd">${gapLabel(gaps()[0])}</button></div>
       <div class="dnote" id="addDayNote"></div>
       <div class="hint">前に解いた問題も、カレンダーで日を選ぶと、その日の「今日の問題」に入ります。直前期までに極めたい問題を、好きな日に入れておけます。</div></div>
 
-    <div class="field req"><label>ミスの種類<b>必須</b></label><div class="chips" id="addTag">${TAGS.map(t => `<button class="chip sm ${draft.tag===t?'on':''}" data-t="${t}">${t}</button>`).join('')}</div>
+    <div class="field req"><label>ミスの種類<b>必須</b></label><div id="addTag"></div>
       <div class="hint">丸付けで✕がついた問題は、全部入れてOKです。◯でも解説より遠回りだった問題は「${METHOD_TAG}」で入れられます。同じ種類が集まると、それがあなたのクセです（ミスマップのタブで見られます）。</div>
       <div class="err hidden" id="addTagErr"></div></div>
 
@@ -1194,7 +1406,7 @@ function renderAdd(){
     <div class="field req"><label>改善点（いつ・何を・どうする）<b>必須</b></label>${fixFields('add', draft.fixP, draft.tag)}</div>
 
     <button class="btn-primary" id="addGo">この問題を登録する</button>
-    <div class="dim" style="text-align:center; margin-top:8px"><span id="addWhen"></span><br>書きかけは自動で残るので、とちゅうで閉じても大丈夫です。</div>
+    <div class="dim" style="text-align:center; margin-top:8px"><span id="addDueMsg"></span><br>書きかけは自動で残るので、とちゅうで閉じても大丈夫です。</div>
     ${draftFilled() ? `<button class="btn-line" id="addClear">書きかけを消す</button>` : ''}`;
   $('#btnCam').onclick = () => $('#fCam').click();
   $('#btnPick').onclick = () => $('#fPick').click();
@@ -1210,18 +1422,17 @@ function renderAdd(){
     $('#addDayToday').classList.toggle('on', f === today());
     $('#addDayStd').classList.toggle('on', f === stdDue());
     $('#addDayNote').innerHTML = `<b>${mdw(f)}</b>（${relDay(f)}）の「今日の問題」に入ります`;
-    $('#addWhen').textContent = f === today() ? '登録すると、すぐ「今日の問題」に入ります。' : `登録すると ${mdw(f)}に「今日の問題」として届きます。`;
+    $("#addDueMsg").textContent = f === today() ? '登録すると、すぐ「今日の問題」に入ります。' : `登録すると ${mdw(f)}に「今日の問題」として届きます。`;
   };
   $('#addDay').onchange = e => setDue(e.target.value || '');
   $('#addDayToday').onclick = () => setDue(today());
   $('#addDayStd').onclick = () => setDue('');
   showDay();
   bindWhyFix(document, 'add', draft.whyP, draft.fixP, saveDraft);
-  $('#addSubj').querySelectorAll('.chip').forEach(b => b.onclick = () => { draft.subj = b.dataset.s; $('#addSubj').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); saveDraft(); });
+  mountPicker($('#addSubj'), 'subj', () => draft.subj, v => { draft.subj = v; saveDraft(); });
   document.__tag = () => draft.tag;
-  $('#addTag').querySelectorAll('.chip').forEach(b => b.onclick = () => {
-    draft.tag = draft.tag === b.dataset.t ? '' : b.dataset.t;
-    $('#addTag').querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.t === draft.tag));
+  mountPicker($('#addTag'), 'tag', () => draft.tag, v => {
+    draft.tag = v;
     hideErr(document, 'addTagErr');
     refreshSugg(document, 'add', draft.tag, draft.fixP, saveDraft);
     refreshWhy(document, 'add', draft.tag);
@@ -1279,8 +1490,8 @@ function openEdit(id, opt){
       <div class="photo-btns"><button class="photo-btn" id="edCam">${ICO.camera}カメラで撮る</button><button class="photo-btn" id="edPick">${ICO.image}写真から選ぶ</button></div>
       <input type="file" id="edFCam" accept="image/*" capture="environment" class="hidden"><input type="file" id="edFPick" accept="image/*" multiple class="hidden"></div>
     <div class="field"><label>問題（文字）</label><textarea id="edText" rows="2">${esc(d.text)}</textarea></div>
-    <div class="field"><label>教科</label><div class="chips" id="edSubj">${SUBJ.map(s => `<button class="chip sub ${s===d.subj?'on':''}" data-s="${s}" style="--c:${SUBJC[s]}">${s}</button>`).join('')}</div></div>
-    <div class="field"><label>ミスの種類</label><div class="chips" id="edTag">${TAGS.map(t => `<button class="chip sm ${t===d.tag?'on':''}" data-t="${t}">${t}</button>`).join('')}</div><div class="err hidden" id="edTagErr"></div></div>
+    <div class="field"><label>教科</label><div id="edSubj"></div></div>
+    <div class="field"><label>ミスの種類</label><div id="edTag"></div><div class="err hidden" id="edTagErr"></div></div>
     <div class="field"><label>間違えた理由</label>${whyFields('ed', d.whyP, d.tag)}</div>
     <div class="field"><label>改善点（いつ・何を・どうする）</label>${fixFields('ed', d.fixP, d.tag)}</div>
     <button class="btn-primary" id="edSave">保存する</button>
@@ -1303,11 +1514,10 @@ function openEdit(id, opt){
   bg.querySelector('#edPick').onclick = () => bg.querySelector('#edFPick').click();
   bg.querySelector('#edFCam').onchange = e => take(e.target.files);
   bg.querySelector('#edFPick').onchange = e => take(e.target.files);
-  bg.querySelectorAll('#edSubj .chip').forEach(b => b.onclick = () => { d.subj = b.dataset.s; bg.querySelectorAll('#edSubj .chip').forEach(x => x.classList.toggle('on', x === b)); });
+  mountPicker(bg.querySelector('#edSubj'), 'subj', () => d.subj, v => { d.subj = v; });
   bg.__tag = () => d.tag;
-  bg.querySelectorAll('#edTag .chip').forEach(b => b.onclick = () => {
-    d.tag = d.tag === b.dataset.t ? '' : b.dataset.t;
-    bg.querySelectorAll('#edTag .chip').forEach(x => x.classList.toggle('on', x.dataset.t === d.tag));
+  mountPicker(bg.querySelector('#edTag'), 'tag', () => d.tag, v => {
+    d.tag = v;
     hideErr(bg, 'edTagErr');
     refreshSugg(bg, 'ed', d.tag, d.fixP);
     refreshWhy(bg, 'ed', d.tag);
@@ -1382,9 +1592,10 @@ function renderMap(){
   const act = active(), mas = mastered();
   const ws = weekStart(today());
   const thisWeek = S.items.reduce((n, it) => n + it.log.filter(l => l.d >= ws).length, 0);
-  const bySubj = SUBJ.map(s => ({ s, n:act.filter(i => i.subj === s).length }));
-  const tags = [...TAGS, '未設定'];
-  const byTag = tags.map(t => ({ t, n:S.items.filter(i => (i.tag || '未設定') === t).length })).filter(x => x.n || x.t !== '未設定');
+  const subjs = listWithOwn('subj', act);
+  const bySubj = subjs.map(s => ({ s, n:act.filter(i => i.subj === s).length })).filter(x => x.n || SUBJ.includes(x.s));
+  const tags = [...listWithOwn('tag', S.items), '未設定'];
+  const byTag = tags.map(t => ({ t, n:S.items.filter(i => (i.tag || '未設定') === t).length })).filter(x => x.n || TAGS.includes(x.t));
   const maxS = Math.max(1, ...bySubj.map(x => x.n)), maxT = Math.max(1, ...byTag.map(x => x.n));
   let list = mapFilter === 'all' ? act : act.filter(i => i.subj === mapFilter);
   list = list.slice().sort((a,b) => a.created < b.created ? 1 : a.created > b.created ? -1 : 0);
@@ -1397,12 +1608,12 @@ function renderMap(){
     root.innerHTML = h; return;
   }
   h += sendHistoryCard();
-  h += `<div class="card"><h3>教科別（まだ極まっていない問題）</h3><div class="bars">${bySubj.map(x => `<button class="bar ${x.n?'':'zero'} ${mapFilter===x.s?'sel':''}" data-f="${x.s}"><span class="nm">${x.s}</span><span class="tr"><i style="--c:${SUBJC[x.s]}; width:${x.n/maxS*100}%"></i></span><span class="v num">${x.n}</span></button>`).join('')}</div>
+  h += `<div class="card"><h3>教科別（まだ極まっていない問題）</h3><div class="bars">${bySubj.map(x => `<button class="bar ${x.n?'':'zero'} ${mapFilter===x.s?'sel':''}" data-f="${esc(x.s)}"><span class="nm">${esc(x.s)}</span><span class="tr"><i style="--c:${SUBJC[x.s] || SUBJC['その他']}; width:${x.n/maxS*100}%"></i></span><span class="v num">${x.n}</span></button>`).join('')}</div>
     <div class="dim" style="margin-top:6px">教科をタップすると、下の一覧をしぼりこめます。</div></div>`;
-  h += `<div class="card"><h3>ミスパターン分析（種類別・すべての問題）</h3><div class="bars">${byTag.map(x => `<div class="bar ${x.n?'':'zero'}"><span class="nm">${x.t}</span><span class="tr"><i style="width:${x.n/maxT*100}%"></i></span><span class="v num">${x.n}</span></div>`).join('')}</div>
+  h += `<div class="card"><h3>ミスパターン分析（種類別・すべての問題）</h3><div class="bars">${byTag.map(x => `<div class="bar ${x.n?'':'zero'}"><span class="nm">${esc(x.t)}</span><span class="tr"><i style="width:${x.n/maxT*100}%"></i></span><span class="v num">${x.n}</span></div>`).join('')}</div>
     <div class="dim" style="margin-top:6px">いちばん多い種類が、あなたのミスのクセです。その改善点を、全部の問題に使ってみてください。</div></div>`;
   h += `<div class="sec-label">まだ極まっていない問題<span class="cnt num">${list.length}</span></div>
-    <div class="filter"><button class="chip ${mapFilter==='all'?'on':''}" data-f="all">すべて</button>${SUBJ.filter(s => act.some(i => i.subj === s)).map(s => `<button class="chip sub ${mapFilter===s?'on':''}" data-f="${s}" style="--c:${SUBJC[s]}">${s}</button>`).join('')}</div>`;
+    <div class="filter"><button class="chip ${mapFilter==='all'?'on':''}" data-f="all">すべて</button>${subjs.filter(s => act.some(i => i.subj === s)).map(s => `<button class="chip sub ${mapFilter===s?'on':''}" data-f="${esc(s)}" style="--c:${SUBJC[s] || SUBJC['その他']}">${esc(s)}</button>`).join('')}</div>`;
   h += list.length ? `<div class="mlist">${list.map(rowHtml).join('')}</div>` : `<div class="empty"><b>この教科の問題はありません</b></div>`;
   h += `<div class="sec-label" style="margin-top:18px">極まった問題<span class="cnt num">${mas.length}</span><span class="spacer"></span>${mas.length ? `<button class="lnk" id="tglMast">${showMast ? 'たたむ' : '見る ›'}</button>` : ''}</div>`;
   if(showMast && mas.length) h += `<div class="mlist">${mas.map(rowHtml).join('')}</div>`;
@@ -1571,7 +1782,9 @@ async function drawSend(items, no, dateStr){
   y += 62;
   const mx = Math.max(1, ...tags.map(t => t[1])), BX = PAD + 280, BW = CW - 280 - 70;
   tags.forEach(([t, c]) => {
-    g.fillStyle = C.ink; g.font = '400 25px '+FF; g.fillText(t, PAD, y + 28);
+    g.fillStyle = C.ink; g.font = '400 25px '+FF;
+    let tt = t; while(tt.length > 1 && g.measureText(tt).width > 262) tt = tt.slice(0, -1);
+    g.fillText(tt === t ? t : tt.slice(0, -1) + '…', PAD, y + 28);
     g.fillStyle = C.chip; rr(BX, y + 8, BW, 24, 12); g.fill();
     g.fillStyle = C.gold; rr(BX, y + 8, Math.max(24, BW * c / mx), 24, 12); g.fill();
     g.fillStyle = C.ink; g.font = '700 26px '+FF; g.textAlign = 'right'; g.fillText(`${c}問`, W - PAD, y + 30); g.textAlign = 'left';
@@ -1935,8 +2148,8 @@ $('#btnWipe').onclick = async () => {
    ※ 設定の「更新の履歴」は v16 で廃止（生徒には不要というユーザー判断）。CHANGES 配列も消した。 */
 function slides(){ return [
   { ico:'doc', t:`${APP_NAME}とは`, p:'丸付けで✕がついた問題を、<b>全部まとめて解き直す</b>ための道具です。ケアレスミスも、解法が分からなかった問題も、解説とちがう解き方をした問題も、ここに入れます。', ex:'紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）と同じ流れを、アプリにしました。' },
-  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。「届く日」をカレンダーで選ぶと、その日の「今日の問題」に入ります。前に解いた問題を、直前期までに極めたい日に入れておけます。' },
-  { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。解法が分からなかった問題は「<b>どこで止まったか</b>」、解説とちがう解き方をした問題は「<b>自分はどう解いたか</b>」を書きます。', ex:'例：問題文の「合計」を読み飛ばした／速さの式を立てるところで止まった' },
+  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます。合うものがないときは「その他」を押すと、ほかの選択肢と、自分で入れる欄が出ます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。「届く日」をカレンダーで選ぶと、その日の「今日の問題」に入ります。前に解いた問題を、直前期までに極めたい日に入れておけます。' },
+  { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。解法が分からなかった問題は「<b>どこで止まったか</b>」、解説とちがう解き方をした問題は「<b>自分はどう解いたか</b>」を書きます。', ex:'書き方が分からないときは、種類を選ぶと出る「書き方の例」を押してください。入った文を、自分の問題に合わせて直します。例：問題文の「合計」を読み飛ばした' },
   { ico:'fix', t:'3. 改善点は3つに分けて', p:'「<b>いつ</b>・<b>何を</b>・<b>どうする</b>」で書くと、1文に組み上がります。「気をつける」「見直す」のように行動になっていないと、登録できません。', ex:'例：解き終わったら、代入した式の符号を指でさして元の式と見くらべる。解法が分からなかった問題は、次にどう解くかのポイントを書きます。' },
   { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます。' },
   { ico:'eye', t:'5. もう一度解く', p:'問題だけが出ます。理由と改善点を思い出してから、<b>改善点をやりながらノートにもう一度解きます</b>。解き終わったら「答え合わせ」で、登録した内容を見ます。', ex:`解けた → 次の間隔へ。${gaps().length}回つづけて解けたら「極まった」。解けなかった → 翌日からやり直し。` },

@@ -1,0 +1,14 @@
+{
+  "name": "マップ返信",
+  "short_name": "マップ返信",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F3F1EC",
+  "theme_color": "#F3F1EC",
+  "icons": [
+    {"src": "icon-192-v1.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512-v1.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-maskable-v1.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

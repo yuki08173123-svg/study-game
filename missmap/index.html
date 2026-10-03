@@ -651,7 +651,7 @@ html[data-theme="light"] .tg::after{background:#fff;}
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 27;
+const VER = 28;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -1298,12 +1298,74 @@ function closePage(){ $('#host').innerHTML = ''; letSleep(); }
    算数・理科などで、条件に丸をつけたり、線を引いたり、図に書きこんだりしながら解けるように、
    えらんだ問題をまとめて紙に印刷する（v27・保護者ユウキ・ハルネコの要望）。
    紙は白・字は黒（インク節約。画面の色が黒でも白で印刷）。画面のプレビューと印刷は同じ中身（.paper）。 */
-let prSel = new Set(), prWhy = false;
+let prSel = new Set(), prWhy = false, prClean = true;
+/* 写真を「スキャンしたような白黒」にする（v28・印刷すると紙の色や影で全体が暗くなる、という声から）。
+   ① 明るさだけにする ② 小さな区画ごとに「いちばん明るいところ＝紙の色」を取り、なめらかにつなぐ
+   ③ 1点ずつ「紙の色にくらべてどれだけ暗いか」で割る（影・紙の色・明るさのむらが消える）④ 紙は白、字は黒に寄せる */
+const cleanCache = new Map();
+async function cleanUrl(id){
+  if(cleanCache.has(id)) return cleanCache.get(id);
+  const src = await imgUrl(id); if(!src) return '';
+  let im;
+  try{ im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }catch(e){ return src; }
+  const W = im.naturalWidth, H = im.naturalHeight;
+  if(!W || !H) return src;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d', { willReadFrequently:true }); g.drawImage(im, 0, 0);
+  const d = g.getImageData(0, 0, W, H), px = d.data, n = W * H;
+  const L = new Float32Array(n);
+  for(let i = 0, j = 0; i < n; i++, j += 4) L[i] = 0.299*px[j] + 0.587*px[j+1] + 0.114*px[j+2];
+  /* ② 紙の色（区画の中の明るいほうから20%のところ。光った点や細い白い線に引っぱられないように。字は区画の2割もないので紙の色が取れる） */
+  const B = Math.max(12, Math.round(Math.max(W, H) / 80)), gw = Math.ceil(W / B), gh = Math.ceil(H / B);
+  let bg = new Float32Array(gw * gh);
+  const buf = [];
+  for(let by = 0; by < gh; by++) for(let bx = 0; bx < gw; bx++){
+    buf.length = 0;
+    const x1 = Math.min(W, (bx+1)*B), y1 = Math.min(H, (by+1)*B);
+    for(let y = by*B; y < y1; y += 2) for(let x = bx*B; x < x1; x += 2) buf.push(L[y*W + x]);
+    buf.sort((a, b) => b - a);
+    bg[by*gw + bx] = buf[Math.floor(buf.length * 0.2)] || 255;
+  }
+  for(let pass = 0; pass < 1; pass++){   // となりの区画となめらかにつなぐ
+    const nb = new Float32Array(gw * gh);
+    for(let y = 0; y < gh; y++) for(let x = 0; x < gw; x++){
+      let s = 0, k = 0;
+      for(let dy = -1; dy <= 1; dy++) for(let dx = -1; dx <= 1; dx++){ const xx = x+dx, yy = y+dy; if(xx >= 0 && yy >= 0 && xx < gw && yy < gh){ s += bg[yy*gw + xx]; k++; } }
+      nb[y*gw + x] = s / k;
+    }
+    bg = nb;
+  }
+  /* ③④ 紙の色で割って、白と黒に寄せる */
+  const LO = 0.5, HI = 0.86;
+  for(let y = 0; y < H; y++){
+    const fy = Math.min(gh - 1, Math.max(0, y / B - 0.5)), y0 = Math.floor(fy), y1 = Math.min(gh - 1, y0 + 1), ty = fy - y0;
+    for(let x = 0; x < W; x++){
+      const fx = Math.min(gw - 1, Math.max(0, x / B - 0.5)), x0 = Math.floor(fx), x1 = Math.min(gw - 1, x0 + 1), tx = fx - x0;
+      const b = (bg[y0*gw+x0]*(1-tx) + bg[y0*gw+x1]*tx)*(1-ty) + (bg[y1*gw+x0]*(1-tx) + bg[y1*gw+x1]*tx)*ty;
+      const r = L[y*W + x] / Math.max(b, 1);
+      let t = (r - LO) / (HI - LO); t = t < 0 ? 0 : t > 1 ? 1 : t;
+      const v = Math.round(255 * Math.pow(t, 1.4)), j = (y*W + x) * 4;
+      px[j] = px[j+1] = px[j+2] = v;
+    }
+  }
+  g.putImageData(d, 0, 0);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
+  const u = blob ? URL.createObjectURL(blob) : src;
+  cleanCache.set(id, u);
+  return u;
+}
+/* 印刷用の写真を入れる（くっきりがオンなら白黒に直したもの） */
+async function fillPrintImgs(root){
+  for(const el of root.querySelectorAll('img[data-pimg]:not([src])')){
+    const u = prClean ? await cleanUrl(el.dataset.pimg) : await imgUrl(el.dataset.pimg);
+    if(u) el.src = u;
+  }
+}
 function printHtml(items){
   const head = `<div class="pr-head"><b>${esc(APP_NAME)}</b><span>解き直し ${items.length}問　${mdw(today())}${multi() ? '　' + esc(curName()) : ''}</span></div>`;
   return head + items.map((it, k) => `<section class="pr-q">
-    <div class="pr-meta"><b>${k+1}</b><span>${esc(it.subj)}</span>${it.tag ? `<span>${esc(it.tag)}</span>` : ''}<i>${md(it.created)} 登録</i></div>
-    ${it.imgs.map(im => `<img data-img="${im}" alt="">`).join('')}
+    <div class="pr-meta"><b>${k+1}</b>${it.subj && it.subj !== 'その他' ? `<span>${esc(it.subj)}</span>` : ''}${it.tag && it.tag !== 'その他' ? `<span>${esc(it.tag)}</span>` : ''}<i>${md(it.created)} 登録</i></div>
+    ${it.imgs.map(im => `<img data-pimg="${im}" alt="">`).join('')}
     ${it.text ? `<div class="pr-text">${esc(it.text)}</div>` : ''}
     ${prWhy ? `<div class="pr-why"><div><b>${ANS[kindOf(it.tag)][0]}</b>${esc(it.why)}</div><div><b>${ANS[kindOf(it.tag)][1]}</b>${esc(it.fix)}</div></div>` : ''}
   </section>`).join('');
@@ -1331,7 +1393,9 @@ function openPrint(){
       ${it.imgs[0] ? `<img data-img="${it.imgs[0]}" alt="">` : `<span class="noimg">${ICO.doc}</span>`}
       <span class="tx"><b>${esc(it.text || '写真の問題')}</b><small><span class="sj" style="--c:${SUBJC[it.subj] || SUBJC['その他']}">${esc(it.subj)}</span>${it.tag ? ' ' + esc(it.tag) : ''}</small></span>
       <span class="when">${it.due <= today() ? '今日' : md(it.due)}</span></label>`).join('')}</div>
-    <div class="sw" style="margin-top:14px"><span>理由と改善点も印刷する</span><button class="tg" id="prWhy" aria-label="切りかえ"></button></div>
+    <div class="sw" style="margin-top:14px"><span>写真を白黒でくっきりにする（おすすめ）</span><button class="tg" id="prClean" aria-label="切りかえ"></button></div>
+    <div class="dim">紙の色や影を消して、背景を白・字を黒にします。暗く写った写真も読みやすく印刷できます。</div>
+    <div class="sw" style="margin-top:10px"><span>理由と改善点も印刷する</span><button class="tg" id="prWhy" aria-label="切りかえ"></button></div>
     <div class="dim">ふつうは問題だけ。解いてから答え合わせをするときに、アプリで理由と改善点を見ます。</div>
     <div class="sec-label" style="margin-top:16px">印刷のイメージ</div>
     <div class="pr-paper paper" id="prPrev"></div>
@@ -1345,9 +1409,10 @@ function openPrint(){
       b.dataset.q === 'today' ? (tIds.length > 0 && sel.length === tIds.length && tIds.every(id => prSel.has(id))) :
       b.dataset.q === 'all' ? sel.length === act.length : false));
     $('#prWhy').classList.toggle('on', prWhy);
+    $('#prClean').classList.toggle('on', prClean);
     const html = sel.length ? printHtml(sel) : '<div class="pr-none">問題をえらぶと、ここに印刷のイメージが出ます。</div>';
     $('#prPrev').innerHTML = html; printArea().innerHTML = sel.length ? html : '';
-    fillImgs($('#prPrev')); fillImgs(printArea());
+    fillPrintImgs($('#prPrev')); fillPrintImgs(printArea());
     const go = $('#prGo'); go.disabled = !sel.length; go.innerHTML = `${ICO.print}印刷する（${sel.length}問）`;
   };
   $('#prList').onchange = e => { const c = e.target.closest('input[data-id]'); if(!c) return; if(c.checked) prSel.add(c.dataset.id); else prSel.delete(c.dataset.id); update(); };
@@ -1357,6 +1422,7 @@ function openPrint(){
     update();
   };
   $('#prWhy').onclick = () => { prWhy = !prWhy; update(); };
+  $('#prClean').onclick = () => { prClean = !prClean; update(); };
   $('#prBack').onclick = () => { printArea().innerHTML = ''; closePage(); };
   /* print はボタンを押した直後に呼ぶ（写真がまだ読みこみ中なら、ひとこと出してもう一度押してもらう） */
   $('#prGo').onclick = () => {
@@ -2383,7 +2449,7 @@ function slides(){ return [
   { ico:'people', t:'11. 兄弟で使う', p:'1台を兄弟で使うときは、設定の <b>「使う人」</b> で人をふやします。名前を押すと切りかわり、問題・写真・記録は<b>人ごとに別々</b>に保存されます。', ex:'いまだれの画面かは、上の名前の札で分かります。札を押すと、切りかえの所に飛びます。' },
   { ico:'sun', t:'12. 画面を白くする', p:'黒い画面が見にくいときは、設定の <b>「画面の色」</b> で <b>「白」</b> を選んでください。すぐに切りかわります。', ex:'この端末だけの設定です。部屋に出す画像は、いつもの黒のままです。' },
   { ico:'shield', t:'13. かんたんモード', p:'小学生が使うときは、設定の <b>「かんたんモード」</b> をオンにします。字が大きくなり、言葉がやさしくなって、使う機能がしぼられます。', ex:'使う人ごとの設定です。兄弟で「兄はいつもの、弟はかんたん」にできます。理由と改善点は、書き方の例を押して自分の問題に直します。' },
-  { ico:'print', t:'14. 問題を印刷する', p:'「解く」タブの <b>「問題を印刷する」</b> で、問題にチェックを入れてまとめて印刷できます。条件に丸をつけたり、図に書きこんだりしながら解きたいときに。', ex:'白い紙に黒い字で印刷されます（画面が黒でも、インクはへりません）。ふつうは問題だけ。「理由と改善点も印刷する」をオンにすると、いっしょに入ります。' },
+  { ico:'print', t:'14. 問題を印刷する', p:'「解く」タブの <b>「問題を印刷する」</b> で、問題にチェックを入れてまとめて印刷できます。条件に丸をつけたり、図に書きこんだりしながら解きたいときに。', ex:'白い紙に黒い字で印刷されます（画面が黒でも、インクはへりません）。写真は「白黒でくっきり」にすると、紙の色や影が消えて読みやすくなります。ふつうは問題だけ。「理由と改善点も印刷する」をオンにすると、いっしょに入ります。' },
 ]; }
 const SICO = {
   doc: ICO.doc, camera: ICO.camera, redo: ICO.redo, eye: ICO.eye, shuffle: ICO.shuffle,

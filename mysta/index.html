@@ -137,7 +137,7 @@ header.app{position:sticky; top:0; z-index:30; background:linear-gradient(var(--
 .msrow .n b{display:block; font-size:18px; color:var(--gold-hi); font-weight:600;}
 .msrow .n span{font-size:9px; color:var(--gold);}
 .msrow .t{flex:1; min-width:0;}
-.msrow .t b{display:block; font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.msrow .t b{display:block; font-size:15px; font-weight:700; line-height:1.4; word-break:break-word; overflow-wrap:anywhere;}
 .msrow .t span{font-size:12px; color:var(--muted);}
 
 .btn-gold{width:100%; display:flex; align-items:center; justify-content:center; gap:10px; background:linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-dp)); color:#1A0F3A; font-weight:700; font-size:17px; border-radius:16px; padding:16px; box-shadow:0 6px 20px rgba(152,120,224,.35), inset 0 1px 0 rgba(255,255,255,.35); letter-spacing:.04em;}
@@ -164,7 +164,7 @@ header.app{position:sticky; top:0; z-index:30; background:linear-gradient(var(--
 .rec .key{font-size:13px; color:var(--gold-hi); margin-top:6px; line-height:1.5;}
 .rec .key::before{content:'◆ '; font-size:9px; color:var(--gold); vertical-align:2px;}
 .tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
-.tag{font-size:12px; padding:3px 9px; border-radius:999px; background:var(--gold-soft); color:var(--gold-hi); border:1px solid var(--gold-line); line-height:1.5;}
+.tag{font-size:12px; padding:3px 9px; border-radius:999px; background:var(--gold-soft); color:var(--gold-hi); border:1px solid var(--gold-line); line-height:1.5; max-width:100%; word-break:break-word; overflow-wrap:anywhere;}
 .tag.plain{background:var(--card2); color:var(--muted); border-color:var(--line2);}
 .subj{display:inline-block; font-size:11px; font-weight:700; padding:1px 8px; border-radius:6px; background:var(--card2); border:1px solid var(--line2); color:var(--muted);}
 
@@ -180,7 +180,7 @@ header.app{position:sticky; top:0; z-index:30; background:linear-gradient(var(--
 .mrow:last-child{border-bottom:none;}
 .mrow .rank{width:22px; font-size:12px; color:var(--faint); text-align:center; flex:none;}
 .mrow .name{flex:1; min-width:0;}
-.mrow .name b{display:block; font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.mrow .name b{display:block; font-size:15px; font-weight:700; line-height:1.45; word-break:break-word; overflow-wrap:anywhere;}
 .mrow .bar{height:5px; border-radius:3px; background:var(--card2); margin-top:5px; overflow:hidden;}
 .mrow .bar i{display:block; height:100%; background:linear-gradient(90deg, var(--gold-dp), var(--gold-hi)); border-radius:3px;}
 .mrow .cnt{flex:none; text-align:right; line-height:1.1;}
@@ -242,7 +242,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 .field::placeholder{color:var(--faint);}
 textarea.field{min-height:120px;}
 .chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
-.chip{padding:9px 14px; border-radius:999px; border:1px solid var(--line2); background:var(--card); font-size:15px; font-weight:500; color:var(--ink); line-height:1.4;}
+.chip{padding:9px 14px; border-radius:999px; border:1px solid var(--line2); background:var(--card); font-size:15px; font-weight:500; color:var(--ink); line-height:1.4; max-width:100%; text-align:left; word-break:break-word; overflow-wrap:anywhere;}
 .chip.on{background:var(--gold-soft); border-color:var(--gold); color:var(--gold-hi); font-weight:700;}
 .chip.add{color:var(--muted); border-style:dashed;}
 .lab2{font-size:12px; color:var(--muted); margin:14px 0 6px; letter-spacing:.04em;}
@@ -310,7 +310,7 @@ textarea.field{min-height:120px;}
 .trow span{font-size:12px; color:var(--muted); flex:none;}
 .trow button{flex:none; width:32px; height:32px; border-radius:10px; border:1px solid var(--line2); background:var(--card2); display:grid; place-items:center;}
 .trow button svg{width:16px; height:16px; stroke:var(--danger); fill:none; stroke-width:2.2; stroke-linecap:round;}
-.toast{position:fixed; left:50%; bottom:calc(92px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(10px); background:var(--gold-hi); color:#1A0F3A; padding:10px 18px; border-radius:999px; font-size:14px; font-weight:700; opacity:0; transition:all .25s; z-index:90; pointer-events:none; white-space:nowrap; box-shadow:var(--shadow-lg);}
+.toast{position:fixed; left:50%; bottom:calc(92px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(10px); background:var(--gold-hi); color:#1A0F3A; padding:10px 18px; border-radius:18px; font-size:14px; font-weight:700; opacity:0; transition:all .25s; z-index:90; pointer-events:none; width:max-content; max-width:calc(100vw - 28px); text-align:center; line-height:1.6; box-shadow:var(--shadow-lg);}
 .toast.on{opacity:1; transform:translateX(-50%) translateY(0);}
 </style>
 </head>
@@ -454,7 +454,7 @@ textarea.field{min-height:120px;}
 <div class="toast" id="toast"></div>
 
 <script>
-const VER = 8;
+const VER = 9;
 const KEY = 'mysta_v1', BK = 'mysta_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -463,6 +463,7 @@ $('#verNo').textContent = VER; $('#verNo2').textContent = VER;
 
 const SUBJ = ['英語','数学','国語','理科','社会','その他'];
 const PROOFS = ['テストで満点だった','何も見ずに全部言える・書ける','人に説明できた','制限時間内に全部解けた','その他'];
+const TAG_MAX = 40;   /* 自分の方法の長さ。短く切るのではなく、切ったことを知らせる */
 const DEF_TAGS = ['繰り返し解く','音読する','書いて覚える','人に説明する','暗記カード','間違えノート','小分けにする','毎日少しずつ','寝る前に見る','朝に復習','タイマーで区切る','声に出す','図にする','まとめ直す'];
 const DURS = ['1日','2〜3日','1週間','2週間','1か月','それ以上'];
 
@@ -717,8 +718,10 @@ function renderStep(){
   $$('#ivBody [data-tag]').forEach(b => b.onclick = () => { const t = b.dataset.tag; if(a.tags.includes(t)) a.tags = a.tags.filter(x => x !== t); else a.tags.push(t); b.classList.toggle('on', a.tags.includes(t)); });
   const tagAdd = $('#tagAdd');
   if(tagAdd) tagAdd.onclick = () => {
-    const t = (prompt('自分の方法を短く（例：先生に質問する）') || '').trim().slice(0, 20);
-    if(!t) return;
+    const raw = (prompt('自分の方法（例：先生に質問する）\n長い説明は、次の「いちばん効いたこと」に書いてください。') || '').trim();
+    if(!raw) return;
+    const t = raw.slice(0, TAG_MAX);
+    if(raw.length > TAG_MAX) toast('長かったので'+TAG_MAX+'文字までにしました');
     if(!a.tags.includes(t)) a.tags.push(t);
     rememberTags([t]); save(); renderStep();
   };
@@ -832,6 +835,13 @@ async function drawMs(m){
   const W = 1080, PAD = 44, CW = W - PAD*2, IN = 22;
   const C = { bg:'#150C2E', card:'#1E1440', card2:'#271B4E', line:'#43346E', ink:'#F1ECFF', mut:'#A79DC9', g:'#C9B4F5', gh:'#EDE5FF', gd:'#9878E0' };
   const mc = document.createElement('canvas').getContext('2d');
+  /* 長い方法は、はみ出す前に「…」で収める */
+  const clip = (g, text, font, width) => {
+    g.font = font; let t = String(text || '');
+    if(g.measureText(t).width <= width) return t;
+    while(t && g.measureText(t + '…').width > width) t = t.slice(0, -1);
+    return t + '…';
+  };
   const wrap = (g, text, font, width, max) => {
     g.font = font; const out = [];
     for(const para of String(text || '').split('\n')){
@@ -876,13 +886,14 @@ async function drawMs(m){
   y += 50; label('いまのあなたの勉強法');
   const top = m.tags[0];
   if(top){
-    y += 40; g.fillStyle = C.gh; g.font = '700 42px '+GO; g.fillText(top.name, PAD, y);
-    const tw = g.measureText(top.name).width;
+    y += 40; g.fillStyle = C.gh; const topName = clip(g, top.name, '700 42px '+GO, CW - 140);
+    g.font = '700 42px '+GO; g.fillText(topName, PAD, y);
+    const tw = g.measureText(topName).width;
     g.fillStyle = C.mut; g.font = '400 24px '+GO; g.fillText(top.n+'回', PAD + tw + 14, y);
     y += 16;
     const mx = top.n;
     m.tags.forEach(t => {
-      y += 40; g.fillStyle = C.ink; g.font = '400 26px '+GO; g.fillText(t.name, PAD, y);
+      y += 40; g.fillStyle = C.ink; g.fillText(clip(g, t.name, '400 26px '+GO, 280), PAD, y);
       const bx = PAD + 300, bw = CW - 300 - 80;
       g.fillStyle = C.card2; rr(bx, y - 20, bw, 20, 10); g.fill();
       g.fillStyle = C.gd; rr(bx, y - 20, Math.max(20, bw*t.n/mx), 20, 10); g.fill();
@@ -915,9 +926,11 @@ async function drawMs(m){
     if(r.tags.length){
       cy += 30; let tx = nx;
       g.font = '400 22px '+GO;
-      r.tags.slice(0, 4).forEach(t => {
+      r.tags.slice(0, 4).forEach(t0 => {
+        const t = clip(g, t0, '400 22px '+GO, RW - 20);
+        g.font = '400 22px '+GO;
         const w = g.measureText(t).width + 20;
-        if(tx + w > W - PAD - IN) return;
+        if(tx > nx && tx + w > W - PAD - IN) return;   /* 2つ目からは、入らなければ出さない */
         g.fillStyle = C.card2; rr(tx, cy - 22, w, 32, 16); g.fill();
         g.fillStyle = C.g; g.fillText(t, tx + 10, cy); tx += w + 8;
       });

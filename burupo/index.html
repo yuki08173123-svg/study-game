@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ブルポ帳</title>
+<meta name="description" content="まちがえた漢字を、手書きか写真のブルポにしてためて、ちょうどいい日にれんしゅうするノート">
+<meta name="theme-color" content="#F4EEE2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ブルポ帳">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Klee+One:wght@400;600&display=swap">
+<style>
+/* ブルポ帳：小学生が ひとりで つかえる「ノートの紙」の見た目。
+   色はノートの紙（クリーム）＋ブルポの青。ライトだけ（紙に書く感覚に合わせる）。 */
+:root{
+  --bg:#F4EEE2; --paper:#FFFDF7; --line:#E7DECB; --grid:#DCE5F3;
+  --ink:#1F2A44; --muted:#545E72; --faint:#666E80;
+  --blue:#1F56C8; --blue-d:#143F9A; --blue-soft:#E6EEFB; --blue-ink:#FFFFFF;
+  --red:#C8392D; --red-soft:#FBE9E6;
+  --ok:#1F56C8; --gold:#E2A23B;
+  --sh:0 1px 0 rgba(60,45,20,.06), 0 6px 18px -10px rgba(60,45,20,.28);
+  --r:18px;
+  --kl:'Klee One', 'BIZ UDPGothic', serif;
+  --go:'BIZ UDPGothic', 'Hiragino Sans', sans-serif;
+  --safe-b:env(safe-area-inset-bottom, 0px);
+  --safe-t:env(safe-area-inset-top, 0px);
+  color-scheme:light;
+}
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--go); font-size:17px; line-height:1.6; letter-spacing:.02em; }
+body{ min-height:100vh; padding-bottom:calc(96px + var(--safe-b)); }
+button{ font:inherit; color:inherit; border:0; background:none; cursor:pointer; padding:0; }
+input,textarea{ font:inherit; color:inherit; }
+svg{ width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.hidden{ display:none !important; }
+.dim{ color:var(--muted); }
+.kl{ font-family:var(--kl); font-weight:600; }
+
+/* ヘッダ */
+header{ position:sticky; top:0; z-index:20; background:var(--bg); padding:calc(10px + var(--safe-t)) 16px 8px; }
+.hrow{ max-width:760px; margin:0 auto; display:flex; align-items:center; gap:10px; }
+.logo{ width:36px; height:36px; border-radius:9px; box-shadow:var(--sh); }
+.appname{ font-family:var(--kl); font-weight:600; font-size:23px; letter-spacing:.06em; }
+.hrow .sp{ flex:1; }
+.icobtn{ width:42px; height:42px; border-radius:50%; display:grid; place-items:center; background:var(--paper); box-shadow:var(--sh); }
+.band{ max-width:760px; margin:8px auto 0; display:flex; align-items:center; gap:10px; background:var(--red-soft); color:#8E2219; border:1.5px solid #EDB7AF; border-radius:14px; padding:9px 12px; font-size:14.5px; font-weight:700; }
+.band span{ flex:1; }
+.band button{ background:var(--red); color:#fff; border-radius:999px; padding:6px 14px; font-size:14px; }
+.upd{ max-width:760px; margin:8px auto 0; display:flex; align-items:center; gap:10px; background:var(--blue-soft); border:1.5px solid #BFD0F0; border-radius:14px; padding:9px 12px; font-size:14.5px; }
+.upd span{ flex:1; }
+.upd button{ background:var(--blue); color:#fff; border-radius:999px; padding:6px 14px; font-size:14px; font-weight:700; }
+
+main{ max-width:760px; margin:0 auto; padding:6px 16px 20px; }
+.card{ background:var(--paper); border-radius:var(--r); box-shadow:var(--sh); padding:18px; margin-top:14px; border:1px solid var(--line); }
+.card h2{ margin:0 0 8px; font-family:var(--kl); font-weight:600; font-size:20px; }
+.card h3{ margin:16px 0 6px; font-size:16px; }
+.card p{ margin:6px 0; }
+
+/* ボタン */
+.btn{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border-radius:16px; padding:15px 16px; font-weight:700; font-size:18px; }
+.btn-blue{ background:var(--blue); color:var(--blue-ink); box-shadow:0 4px 0 var(--blue-d); }
+.btn-blue:active{ transform:translateY(3px); box-shadow:0 1px 0 var(--blue-d); }
+.btn-line{ background:var(--paper); border:2px solid var(--line); color:var(--ink); }
+.btn-red{ background:var(--paper); border:2px solid var(--red); color:var(--red); }
+.btn-small{ display:inline-flex; width:auto; padding:9px 16px; font-size:15px; border-radius:12px; }
+.btns{ display:grid; gap:10px; margin-top:12px; }
+
+/* きょう */
+.hero{ background:var(--paper); border-radius:24px; border:1px solid var(--line); box-shadow:var(--sh); padding:22px 20px 20px; margin-top:12px; position:relative; overflow:hidden;
+  background-image:linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size:26px 26px; background-position:-1px -1px; }
+.hero .lab{ font-family:var(--kl); font-weight:600; font-size:19px; }
+.hero .big{ display:flex; align-items:baseline; gap:6px; margin:4px 0 14px; }
+.hero .big b{ font-family:var(--kl); font-size:72px; line-height:1; color:var(--blue); }
+.hero .big span{ font-family:var(--kl); font-weight:600; font-size:24px; }
+.hero .msg{ font-size:16px; color:var(--muted); margin:2px 0 14px; }
+.hanamaru{ width:92px; height:92px; color:var(--red); }
+.stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
+.stat{ background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:10px 6px; text-align:center; box-shadow:var(--sh); }
+.stat b{ display:block; font-family:var(--kl); font-size:30px; line-height:1.2; }
+.stat span{ font-size:13px; color:var(--muted); font-weight:700; }
+.steps{ margin:10px 0 4px; padding:0; list-style:none; display:grid; gap:10px; }
+.steps li{ display:flex; gap:12px; align-items:flex-start; }
+.steps .n{ flex:none; width:30px; height:30px; border-radius:50%; background:var(--blue); color:#fff; display:grid; place-items:center; font-weight:700; }
+.upc{ display:grid; grid-template-columns:repeat(auto-fill, minmax(96px,1fr)); gap:10px; margin-top:10px; }
+.upc button{ text-align:left; }
+.upc .th{ aspect-ratio:1; border-radius:12px; overflow:hidden; background:#fff; border:1px solid var(--line); }
+.upc .th img{ width:100%; height:100%; object-fit:cover; display:block; }
+.upc .d{ font-size:13px; font-weight:700; margin-top:3px; }
+
+/* ブルポ帳（一覧） */
+.seg{ display:flex; background:var(--paper); border:1px solid var(--line); border-radius:999px; padding:4px; gap:4px; margin-top:12px; box-shadow:var(--sh); }
+.seg button{ flex:1; border-radius:999px; padding:9px 4px; font-weight:700; font-size:15px; color:var(--muted); white-space:nowrap; }
+.seg button.on{ background:var(--blue); color:#fff; }
+.grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:14px; }
+@media (min-width:600px){ .grid{ grid-template-columns:repeat(3,1fr); } }
+.pg{ background:var(--paper); border:1px solid var(--line); border-radius:16px; box-shadow:var(--sh); overflow:hidden; text-align:left; display:flex; flex-direction:column; position:relative; }
+.pg .th{ aspect-ratio:1; background:#fff; border-bottom:1px solid var(--line); }
+.pg .th img{ width:100%; height:100%; object-fit:contain; display:block; }
+.pg .meta{ padding:8px 10px 10px; }
+.pg .q{ font-family:var(--kl); font-weight:600; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-height:1.4em; }
+.pg .no{ font-size:12.5px; color:var(--muted); font-weight:700; display:flex; justify-content:space-between; align-items:center; gap:6px; }
+.dots{ display:inline-flex; gap:3px; }
+.dots i{ width:9px; height:9px; border-radius:50%; border:1.5px solid var(--blue); }
+.dots i.on{ background:var(--blue); }
+.stamp{ position:absolute; top:8px; right:8px; background:var(--red); color:#fff; font-family:var(--kl); font-weight:600; font-size:14px; padding:3px 10px; border-radius:999px; transform:rotate(-6deg); box-shadow:0 2px 6px rgba(0,0,0,.18); }
+.empty{ text-align:center; padding:30px 12px; color:var(--muted); }
+
+/* 下のタブ */
+nav.tabs{ position:fixed; left:0; right:0; bottom:0; z-index:30; background:rgba(255,253,247,.96); border-top:1px solid var(--line); padding:6px 8px calc(6px + var(--safe-b)); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+nav.tabs .in{ max-width:760px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr 1.25fr 1fr; gap:4px; align-items:center; }
+nav.tabs button{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 0; font-size:12.5px; font-weight:700; color:var(--faint); border-radius:12px; position:relative; }
+nav.tabs button.on{ color:var(--blue); }
+nav.tabs button.make{ background:var(--blue); color:#fff; border-radius:16px; padding:9px 0; font-size:14px; box-shadow:0 3px 0 var(--blue-d); }
+nav.tabs button.make svg{ width:26px; height:26px; stroke-width:2.6; }
+.tdot{ position:absolute; top:4px; right:calc(50% - 18px); width:9px; height:9px; border-radius:50%; background:var(--red); }
+
+/* シート */
+.sheet-bg{ position:fixed; inset:0; z-index:60; background:rgba(25,30,45,.42); display:flex; align-items:flex-end; justify-content:center; animation:fade .18s; }
+.sheet{ background:var(--paper); width:100%; max-width:640px; max-height:92vh; overflow:auto; border-radius:24px 24px 0 0; padding:10px 18px calc(18px + var(--safe-b)); animation:up .22s; }
+@media (min-width:700px){ .sheet-bg{ align-items:center; } .sheet{ border-radius:24px; } }
+.sheet .grab{ width:44px; height:5px; border-radius:3px; background:var(--line); margin:4px auto 12px; }
+.sheet h2{ margin:0 0 10px; font-family:var(--kl); font-weight:600; font-size:21px; }
+.sheet h3{ margin:14px 0 4px; font-size:16px; }
+.sheet ol{ padding-left:22px; margin:6px 0; }
+.sheet ol li{ margin:5px 0; }
+.sheet .close{ display:block; width:100%; margin-top:16px; padding:13px; border-radius:14px; background:var(--bg); font-weight:700; }
+.note{ background:var(--blue-soft); border-radius:12px; padding:10px 12px; font-size:15px; }
+@keyframes fade{ from{ opacity:0 } }
+@keyframes up{ from{ transform:translateY(30px); opacity:.6 } }
+
+/* つくる：はじめの えらぶ */
+.pick{ display:grid; gap:12px; }
+.pick button{ display:flex; align-items:center; gap:16px; background:var(--paper); border:2px solid var(--line); border-radius:18px; padding:16px; text-align:left; }
+.pick button:active{ border-color:var(--blue); }
+.pick .ic{ width:58px; height:58px; border-radius:16px; display:grid; place-items:center; background:var(--blue-soft); color:var(--blue); flex:none; }
+.pick .ic svg{ width:32px; height:32px; }
+.pick b{ display:block; font-family:var(--kl); font-weight:600; font-size:21px; }
+.pick span{ font-size:14.5px; color:var(--muted); }
+
+/* 全画面のページ（かく・きりとる・れんしゅう・みる） */
+.page{ position:fixed; inset:0; z-index:50; background:var(--bg); display:flex; flex-direction:column; animation:fade .15s; }
+.ptop{ display:flex; align-items:center; gap:8px; padding:calc(8px + var(--safe-t)) 12px 8px; }
+.ptop .t{ flex:1; text-align:center; font-family:var(--kl); font-weight:600; font-size:18px; }
+.ptop .go{ background:var(--blue); color:#fff; border-radius:999px; padding:9px 18px; font-weight:700; box-shadow:0 3px 0 var(--blue-d); }
+.ptop .go:disabled{ opacity:.45; }
+.pbody{ flex:1; overflow:auto; padding:0 16px calc(16px + var(--safe-b)); }
+.pbody .in{ max-width:760px; margin:0 auto; }
+
+/* かく */
+.stage{ flex:1; display:flex; align-items:center; justify-content:center; padding:4px 12px; min-height:0; }
+.cv{ position:relative; background:#fff; border-radius:6px; box-shadow:0 6px 24px -8px rgba(40,30,10,.35); touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+.cv canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; border-radius:6px; touch-action:none; }
+.tools{ padding:8px 10px calc(10px + var(--safe-b)); }
+.tools .in{ max-width:760px; margin:0 auto; background:var(--paper); border:1px solid var(--line); border-radius:20px; box-shadow:var(--sh); padding:10px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; }
+.tool{ height:48px; min-width:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; gap:6px; padding:0 10px; font-size:14px; font-weight:700; border:2px solid transparent; }
+.tool.on{ border-color:var(--ink); background:var(--bg); }
+.pen-dot{ width:26px; height:26px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 1.5px rgba(0,0,0,.25); }
+.sz i{ display:block; border-radius:50%; background:var(--ink); }
+.tsep{ width:1px; height:30px; background:var(--line); }
+.hint{ text-align:center; font-size:14.5px; color:var(--muted); padding:0 16px 4px; }
+
+/* きりとる */
+.crop{ position:relative; touch-action:none; -webkit-user-select:none; user-select:none; }
+.crop img{ display:block; width:100%; height:100%; pointer-events:none; border-radius:4px; }
+.crop .shade{ position:absolute; inset:0; overflow:hidden; border-radius:4px; }
+.crop .box{ position:absolute; border:3px solid var(--blue); box-shadow:0 0 0 9999px rgba(20,25,40,.5); border-radius:4px; }
+.crop .h{ position:absolute; width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; background:#fff; border:4px solid var(--blue); }
+
+/* れんしゅう */
+.prog{ height:8px; background:var(--line); border-radius:4px; overflow:hidden; margin:0 auto; max-width:760px; }
+.prog i{ display:block; height:100%; background:var(--blue); border-radius:4px; transition:width .25s; }
+.qcard{ background:var(--paper); border:1px solid var(--line); border-radius:24px; box-shadow:var(--sh); padding:22px 18px; margin-top:14px; text-align:center; }
+.qcard .qtext{ font-family:var(--kl); font-weight:600; font-size:40px; line-height:1.35; margin:8px 0 6px; word-break:break-all; }
+.qcard .qsub{ font-family:var(--kl); font-weight:600; font-size:20px; margin:4px 0 0; }
+.qcard .guide{ font-size:16px; color:var(--muted); margin:10px 0 16px; }
+.qimg{ width:100%; max-height:56vh; object-fit:contain; background:#fff; border-radius:12px; border:1px solid var(--line); display:block; }
+.cover{ height:min(56vh, 420px); border-radius:12px; border:2.5px dashed #BFCBE0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--blue); font-family:var(--kl); font-weight:600; font-size:22px;
+  background-image:linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size:26px 26px; }
+.cover svg{ width:54px; height:54px; }
+.judge{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }
+.judge button{ border-radius:20px; padding:16px 6px 12px; font-family:var(--kl); font-weight:600; font-size:20px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.judge svg{ width:46px; height:46px; stroke-width:2.6; }
+.judge .ng{ background:var(--paper); border:2.5px solid var(--red); color:var(--red); }
+.judge .ok{ background:var(--blue); color:#fff; box-shadow:0 4px 0 var(--blue-d); }
+.retry{ display:inline-block; background:var(--red-soft); color:#8E2219; border-radius:999px; padding:3px 12px; font-size:14px; font-weight:700; }
+
+/* みる（1まいずつ） */
+.view .vimg{ width:100%; max-height:62vh; object-fit:contain; background:#fff; border-radius:12px; border:1px solid var(--line); display:block; }
+.view .vq{ font-family:var(--kl); font-weight:600; font-size:26px; text-align:center; margin:12px 0 2px; word-break:break-all; }
+.view .vinfo{ text-align:center; font-size:14.5px; color:var(--muted); display:flex; justify-content:center; gap:10px; align-items:center; flex-wrap:wrap; }
+.vnav{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; }
+.vnav button{ width:54px; height:54px; border-radius:50%; background:var(--paper); border:1px solid var(--line); box-shadow:var(--sh); display:grid; place-items:center; }
+.vnav button:disabled{ opacity:.3; }
+.vnav span{ font-weight:700; color:var(--muted); }
+.vacts{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+.vacts .btn{ white-space:nowrap; padding:12px 6px; }
+
+/* つくる：さいご */
+.fin img{ width:100%; max-height:40vh; object-fit:contain; background:#fff; border-radius:12px; border:1px solid var(--line); display:block; }
+.fin label{ display:block; font-family:var(--kl); font-weight:600; font-size:19px; margin:16px 0 4px; }
+.fin input{ width:100%; font-size:22px; padding:12px 14px; border-radius:14px; border:2px solid var(--line); background:#fff; font-family:var(--kl); font-weight:600; }
+.fin input:focus{ outline:none; border-color:var(--blue); }
+
+/* 使い方スライド */
+.slides{ margin-top:4px; }
+.sl-track{ display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; padding-bottom:4px; }
+.sl-track::-webkit-scrollbar{ display:none; }
+.sl{ flex:0 0 100%; scroll-snap-align:start; background:var(--bg); border-radius:16px; padding:16px; }
+.sl .no{ font-size:13px; color:var(--muted); font-weight:700; }
+.sl .pic{ width:52px; height:52px; border-radius:14px; background:var(--blue-soft); color:var(--blue); display:grid; place-items:center; margin:6px 0 8px; }
+.sl .pic svg{ width:30px; height:30px; }
+.sl h4{ margin:0 0 6px; font-family:var(--kl); font-weight:600; font-size:19px; }
+.sl p{ margin:0; }
+.sl .ex{ margin-top:8px; font-size:14.5px; color:var(--muted); }
+.sl-nav{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+.sl-nav button{ width:40px; height:40px; border-radius:50%; background:var(--bg); display:grid; place-items:center; }
+.sl-nav .dots i{ border-color:var(--faint); width:8px; height:8px; }
+.sl-nav .dots i.on{ background:var(--blue); border-color:var(--blue); }
+
+.row{ display:flex; align-items:center; gap:10px; }
+.row .sp{ flex:1; }
+textarea{ width:100%; min-height:80px; border-radius:12px; border:1.5px solid var(--line); padding:10px; font-size:14px; background:#fff; }
+#toast{ position:fixed; left:50%; bottom:calc(110px + var(--safe-b)); transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:11px 20px; border-radius:999px; font-weight:700; font-size:15.5px; opacity:0; pointer-events:none; transition:.22s; z-index:90; white-space:nowrap; max-width:92vw; overflow:hidden; text-overflow:ellipsis; }
+#toast.on{ opacity:1; transform:translateX(-50%); }
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <img class="logo" src="icon-192.png" alt="">
+    <div class="appname">ブルポ帳</div>
+    <div class="sp"></div>
+    <button class="icobtn" id="btnHelp" aria-label="つかいかた"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
+  </div>
+  <div class="band hidden" id="btnInstallBand"><span>ホーム画面に ついかしてね</span><button id="btnInstall">やりかた</button></div>
+  <div class="upd hidden" id="updBand"><span id="updVer"></span><button id="btnUpdate">こうしん</button></div>
+</header>
+
+<main>
+  <section id="tab-Today"></section>
+  <section id="tab-Book" class="hidden"></section>
+  <section id="tab-Set" class="hidden">
+    <div class="card">
+      <h2>つかいかた</h2>
+      <div id="setSlides"></div>
+    </div>
+    <div class="card">
+      <h2>おうちの方へ</h2>
+      <p class="dim" style="font-size:15px">ブルポは、この端末の中だけに保存されます（どこにも送られません）。</p>
+      <h3>ホーム画面に追加</h3>
+      <p id="instState" style="font-size:15px"></p>
+      <button class="btn btn-line btn-small" id="btnInstall2">やり方を見る</button>
+      <h3>控え（バックアップ）</h3>
+      <p style="font-size:15px">機種変更のときや、念のために。ブルポは写真なので、枚数が多いと何回かに分けて保存します。</p>
+      <p class="dim" style="font-size:14px" id="bkState"></p>
+      <div class="btns">
+        <button class="btn btn-line" id="btnExport">控えをとる</button>
+        <button class="btn btn-line" id="btnImport">控えから戻す</button>
+      </div>
+      <input type="file" id="impFile" accept=".json,application/json" multiple class="hidden">
+    </div>
+    <div class="card">
+      <h2>こうしん</h2>
+      <div class="row"><span>いまのバージョン <b id="verLabel"></b></span><span class="sp"></span><button class="btn btn-line btn-small" id="btnCheckUpd">しらべる</button></div>
+    </div>
+    <div class="card">
+      <h2>ぜんぶ けす</h2>
+      <p class="dim" style="font-size:15px">ブルポと れんしゅうの きろくを、すべて けします。もとに もどせません。</p>
+      <button class="btn btn-red btn-small" id="btnWipe">すべて けす</button>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs"><div class="in">
+  <button data-tab="Today" class="on"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg>きょう<i class="tdot hidden" id="todayDot"></i></button>
+  <button data-tab="Book"><svg viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></svg>ブルポ帳</button>
+  <button class="make" id="btnMake"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>つくる</button>
+  <button data-tab="Set"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>せってい<i class="tdot hidden" id="setDot"></i></button>
+</div></nav>
+
+<input type="file" id="fileCam" accept="image/*" capture="environment" class="hidden">
+<input type="file" id="filePick" accept="image/*" class="hidden">
+<div id="host"></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+const VER = 1;
+const APP_NAME = 'ブルポ帳';
+const KEY = 'burupo_v1', BK = 'burupo_backup';
+/* 出てくる間隔は決め打ち（小学生がひとりで使えるように、設定はつくらない）。
+   前に れんしゅうした日から数える。5回つづけて かけたら「おぼえた」。 */
+const GAPS = [1, 3, 7, 14, 30];
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const ICO = {
+  pen: '<svg viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>',
+  camera: '<svg viewBox="0 0 24 24"><path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  image: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="9.5" r="1.8"/><path d="m21 16-5-5-9 9"/></svg>',
+  back: '<svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>',
+  next: '<svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>',
+  close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  maru: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>',
+  batsu: '<svg viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>',
+  undo: '<svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
+  eraser: '<svg viewBox="0 0 24 24"><path d="m7 21-4.3-4.3a1 1 0 0 1 0-1.4l10-10a1 1 0 0 1 1.4 0l5.6 5.6a1 1 0 0 1 0 1.4L11 21z"/><path d="M22 21H7M5 11l9 9"/></svg>',
+  trash: '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M5.5 7l1 12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',
+  hide: '<svg viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-2.6 3.5M6.6 6.6C3.9 8.4 2.5 12 2.5 12S6 19 12 19a9.6 9.6 0 0 0 4.4-1.1"/></svg>',
+  eye: '<svg viewBox="0 0 24 24"><path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+  text: '<svg viewBox="0 0 24 24"><path d="M5 6h14M12 6v13M8.5 19h7"/></svg>',
+  redo: '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>',
+  book: '<svg viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></svg>',
+  play: '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg>',
+  crop: '<svg viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>',
+  install: '<svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M12 7v7"/><path d="m9 11.5 3 3 3-3"/></svg>',
+  save: '<svg viewBox="0 0 24 24"><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/></svg>',
+};
+/* はなまる：まん中の うずまき＋まわりに 小さな わっか（花びら）。線は計算で作る */
+const HANAMARU = (() => {
+  const P = [];
+  for(let i = 0; i <= 120; i++){ const t = i / 120 * Math.PI * 4.2 - 1.2, r = 6 + 15 * i / 120; P.push([50 + r * Math.cos(t), 50 + r * Math.sin(t)]); }
+  const Q = [];
+  for(let i = 0; i <= 360; i++){ const t = i / 360 * Math.PI * 2 - 1.4; Q.push([50 + 30 * Math.cos(t) + 10 * Math.cos(10 * t), 50 + 30 * Math.sin(t) + 10 * Math.sin(10 * t)]); }
+  const d = a => 'M' + a.map(([x, y]) => x.toFixed(1) + ' ' + y.toFixed(1)).join('L');
+  return `<svg class="hanamaru" viewBox="0 0 100 100"><path d="${d(P)}" stroke-width="3.6" fill="none"/><path d="${d(Q)}" stroke-width="3" fill="none"/></svg>`;
+})();
+
+/* ===================== 日づけ ===================== */
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseD = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const today = () => ymd(new Date());
+const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate() + n); return ymd(d); };
+const diffDays = (a, b) => Math.round((parseD(b) - parseD(a)) / 86400000);
+const WD = ['日','月','火','水','木','金','土'];
+const mdw = s => { const d = parseD(s); return (d.getMonth()+1)+'/'+d.getDate()+'（'+WD[d.getDay()]+'）'; };
+function whenText(s){
+  const n = diffDays(today(), s);
+  if(n <= 0) return 'きょう';
+  if(n === 1) return 'あした';
+  if(n === 2) return 'あさって';
+  return mdw(s);
+}
+
+/* ===================== データ ===================== */
+function norm(j){
+  j = j && typeof j === 'object' ? j : {};
+  j.items = Array.isArray(j.items) ? j.items.filter(x => x && x.id && x.img) : [];
+  j.items.forEach(it => {
+    it.q = typeof it.q === 'string' ? it.q : '';
+    it.stage = Number(it.stage) || 0;
+    it.created = it.created || today();
+    it.due = it.due || addDays(it.created, GAPS[0]);
+    it.done = !!it.done; it.doneAt = it.doneAt || '';
+    it.log = Array.isArray(it.log) ? it.log : [];
+  });
+  j.nextNo = Math.max(Number(j.nextNo) || 1, ...j.items.map(i => (Number(i.no) || 0) + 1), 1);
+  j.items.forEach(it => { if(!it.no) it.no = j.nextNo++; });
+  j.lastBackup = j.lastBackup || '';
+  return j;
+}
+function load(){
+  for(const k of [KEY, BK]){
+    try{ const t = localStorage.getItem(k); if(t) return norm(JSON.parse(t)); }catch(e){}
+  }
+  return norm({});
+}
+let S = load();
+function save(){
+  try{ const t = JSON.stringify(S); localStorage.setItem(KEY, t); localStorage.setItem(BK, t); }
+  catch(e){ toast('ほぞんできませんでした（ようりょうが いっぱい かも）'); }
+}
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const byId = id => S.items.find(x => x.id === id);
+const active = () => S.items.filter(i => !i.done);
+const cmpDue = (a,b) => a.due < b.due ? -1 : a.due > b.due ? 1 : a.no - b.no;
+const todayList = () => active().filter(i => i.due <= today()).sort(cmpDue);
+const upcoming = () => active().filter(i => i.due > today()).sort(cmpDue);
+const mastered = () => S.items.filter(i => i.done);
+function addItem(img, q){
+  const it = { id:newId(), no:S.nextNo++, img, q:(q||'').trim(), created:today(), stage:0, due:addDays(today(), GAPS[0]), done:false, doneAt:'', log:[] };
+  S.items.unshift(it); save(); return it;
+}
+/* かけた: 次の間隔へ。GAPS の数だけ つづけて かけたら おぼえた */
+function markOk(it){
+  it.log.push({ d:today(), ok:1 });
+  it.stage++;
+  if(it.stage >= GAPS.length){ it.done = true; it.doneAt = today(); it.due = ''; }
+  else it.due = addDays(today(), GAPS[it.stage]);
+  save();
+}
+/* まちがえた: あしたから やりなおし */
+function markMiss(it){
+  it.log.push({ d:today(), ok:0 });
+  it.stage = 0; it.done = false; it.doneAt = ''; it.due = addDays(today(), GAPS[0]);
+  save();
+}
+function reopen(it){ it.stage = 0; it.done = false; it.doneAt = ''; it.due = addDays(today(), GAPS[0]); save(); }
+const dotsHtml = it => `<span class="dots">${GAPS.map((_, k) => `<i class="${k < it.stage || it.done ? 'on' : ''}"></i>`).join('')}</span>`;
+
+/* ===================== 写真の保存（IndexedDB） ===================== */
+const DB = 'burupo', STORE = 'imgs';
+let _db = null;
+const urlCache = new Map();
+function idb(){
+  if(_db) return Promise.resolve(_db);
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB, 1);
+    r.onupgradeneeded = () => { if(!r.result.objectStoreNames.contains(STORE)) r.result.createObjectStore(STORE); };
+    r.onsuccess = () => { _db = r.result; res(_db); };
+    r.onerror = () => rej(r.error);
+  });
+}
+async function tx_(mode, fn){
+  const d = await idb();
+  return new Promise((res, rej) => {
+    const t = d.transaction(STORE, mode);
+    const req = fn(t.objectStore(STORE));
+    t.oncomplete = () => res(req && req.result);
+    t.onerror = () => rej(t.error);
+  });
+}
+const putImg = (id, b) => tx_('readwrite', st => st.put(b, id));
+const getImg = id => tx_('readonly', st => st.get(id));
+const delImg = id => { const u = urlCache.get(id); if(u) URL.revokeObjectURL(u); urlCache.delete(id); return tx_('readwrite', st => st.delete(id)); };
+const allImgKeys = () => tx_('readonly', st => st.getAllKeys());
+async function imgUrl(id){
+  if(urlCache.has(id)) return urlCache.get(id);
+  let b = null; try{ b = await getImg(id); }catch(e){}
+  if(!b) return '';
+  const u = URL.createObjectURL(b); urlCache.set(id, u); return u;
+}
+async function fillImgs(root){
+  for(const el of (root || document).querySelectorAll('img[data-img]:not([src])')){
+    const u = await imgUrl(el.dataset.img);
+    if(u) el.src = u;
+  }
+}
+/* 起動の少しあとに、どのブルポにも使われていない画像を消す */
+async function sweepImgs(){
+  try{
+    const used = new Set(S.items.map(i => i.img));
+    for(const k of (await allImgKeys() || [])) if(!used.has(k)) await delImg(k);
+  }catch(e){}
+}
+async function bitmapOf(blob){
+  try{ return await createImageBitmap(blob, { imageOrientation:'from-image' }); }catch(e){}
+  try{ return await createImageBitmap(blob); }catch(e){}
+  const u = URL.createObjectURL(blob);
+  try{ return await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; }); }
+  finally{ setTimeout(() => URL.revokeObjectURL(u), 1000); }
+}
+const imW = im => im.naturalWidth || im.width, imH = im => im.naturalHeight || im.height;
+
+/* ===================== 共通の部品 ===================== */
+let toastT = null;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200); }
+function openSheet(html){
+  const bg = document.createElement('div'); bg.className = 'sheet-bg';
+  bg.innerHTML = `<div class="sheet"><div class="grab"></div>${html}<button class="close">とじる</button></div>`;
+  document.body.appendChild(bg);
+  bg.querySelector('.close').onclick = () => bg.remove();
+  bg.addEventListener('click', e => { if(e.target === bg) bg.remove(); });
+  return bg;
+}
+function openPage(cls){
+  const p = document.createElement('div'); p.className = 'page' + (cls ? ' '+cls : '');
+  $('#host').appendChild(p);
+  document.body.style.overflow = 'hidden';
+  return p;
+}
+function closePage(p){
+  if(p) p.remove(); else $('#host').innerHTML = '';
+  if(!$('#host').children.length){ document.body.style.overflow = ''; letSleep(); }
+}
+/* かいている・れんしゅう している あいだは 画面を くらくしない */
+let wakeLock = null;
+async function keepAwake(){
+  try{ if(!wakeLock && navigator.wakeLock && !document.hidden){ wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } }catch(e){ wakeLock = null; }
+}
+function letSleep(){ try{ if(wakeLock) wakeLock.release(); }catch(e){} wakeLock = null; }
+
+/* ===================== きょう ===================== */
+function renderToday(){
+  const box = $('#tab-Today');
+  const tl = todayList(), up = upcoming();
+  $('#todayDot').classList.toggle('hidden', !tl.length);
+  let hero = '';
+  if(!S.items.length){
+    hero = `<div class="hero">
+      <div class="lab">ブルポ帳へ ようこそ</div>
+      <ul class="steps" style="margin-top:12px">
+        <li><span class="n">1</span><div>まちがえた かんじを、<b>てがき</b>か<b>しゃしん</b>で ブルポに する</div></li>
+        <li><span class="n">2</span><div>ちょうど いい 日に、ブルポが でてくる</div></li>
+        <li><span class="n">3</span><div>ノートに かいてみて、${GAPS.length}かい つづけて かけたら <b>おぼえた！</b></div></li>
+      </ul>
+      <div class="btns" style="margin-top:16px"><button class="btn btn-blue" data-act="make">${ICO.pen} はじめての ブルポを つくる</button></div>
+    </div>`;
+  }else if(tl.length){
+    hero = `<div class="hero">
+      <div class="lab">きょうの ブルポ</div>
+      <div class="big"><b>${tl.length}</b><span>まい</span></div>
+      <button class="btn btn-blue" data-act="start">${ICO.play} れんしゅう する</button>
+    </div>`;
+  }else{
+    const nx = up[0];
+    const nxN = nx ? up.filter(i => i.due === nx.due).length : 0;
+    hero = `<div class="hero" style="text-align:center">
+      ${HANAMARU}
+      <div class="lab" style="font-size:22px">きょうの ブルポは おわり！</div>
+      <p class="msg">${nx ? `つぎは <b>${whenText(nx.due)}</b>に ${nxN}まい でてくるよ` : 'ぜんぶ おぼえたよ。あたらしい ブルポを つくろう'}</p>
+      <div class="btns"><button class="btn btn-line" data-act="look">${ICO.book} ブルポ帳を ながめる</button></div>
+    </div>`;
+  }
+  const stats = S.items.length ? `<div class="stats">
+    <div class="stat"><b>${S.items.length}</b><span>ぜんぶ</span></div>
+    <div class="stat"><b>${active().length}</b><span>れんしゅうちゅう</span></div>
+    <div class="stat"><b style="color:var(--red)">${mastered().length}</b><span>おぼえた</span></div>
+  </div>` : '';
+  const upc = up.length ? `<div class="card"><h2>これから でてくる ブルポ</h2>
+    <div class="upc">${up.slice(0, 8).map(it => `<button data-view="${it.id}"><div class="th"><img data-img="${it.img}" alt=""></div><div class="d">${whenText(it.due)}</div></button>`).join('')}</div>
+    ${up.length > 8 ? `<p class="dim" style="font-size:14px; margin-top:8px">ほかに ${up.length - 8}まい</p>` : ''}</div>` : '';
+  box.innerHTML = hero + stats + upc;
+  box.querySelectorAll('[data-act="make"]').forEach(b => b.onclick = openMake);
+  box.querySelectorAll('[data-act="start"]').forEach(b => b.onclick = () => startSession(todayList().map(i => i.id)));
+  box.querySelectorAll('[data-act="look"]').forEach(b => b.onclick = () => { const l = bookList('all'); if(l.length) openView(l.map(i => i.id), 0); });
+  box.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { const ids = up.map(i => i.id); openView(ids, ids.indexOf(b.dataset.view)); });
+  fillImgs(box);
+}
+
+/* ===================== ブルポ帳（一覧） ===================== */
+let bookFilter = 'all';
+function bookList(f){
+  const l = [...S.items].sort((a,b) => b.no - a.no);
+  if(f === 'active') return l.filter(i => !i.done);
+  if(f === 'done') return l.filter(i => i.done);
+  return l;
+}
+function renderBook(){
+  const box = $('#tab-Book');
+  const list = bookList(bookFilter);
+  const segs = [['all','ぜんぶ', S.items.length], ['active','れんしゅう', active().length], ['done','おぼえた', mastered().length]];
+  box.innerHTML = `<div class="seg">${segs.map(([k, t, n]) => `<button data-f="${k}" class="${bookFilter === k ? 'on' : ''}">${t} ${n}</button>`).join('')}</div>
+    ${list.length ? `<div class="grid">${list.map(it => `<button class="pg" data-view="${it.id}">
+        <div class="th"><img data-img="${it.img}" alt=""></div>
+        ${it.done ? '<span class="stamp">おぼえた</span>' : ''}
+        <div class="meta"><div class="q">${esc(it.q) || '<span class="dim">　</span>'}</div>
+        <div class="no"><span>${it.no}ページ</span>${dotsHtml(it)}</div></div>
+      </button>`).join('')}</div>`
+    : `<div class="empty">${S.items.length ? 'ここには まだ ないよ' : 'まだ ブルポが ないよ。<br>下の「つくる」から はじめよう'}</div>`}`;
+  box.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { bookFilter = b.dataset.f; renderBook(); });
+  box.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { const ids = list.map(i => i.id); openView(ids, ids.indexOf(b.dataset.view)); });
+  fillImgs(box);
+}
+
+/* ===================== つくる ===================== */
+function openMake(){
+  const bg = openSheet(`<h2>ブルポを つくる</h2>
+    <div class="pick">
+      <button data-k="draw"><span class="ic">${ICO.pen}</span><div><b>てがきで かく</b><span>タブレットに ペンや ゆびで かく</span></div></button>
+      <button data-k="cam"><span class="ic">${ICO.camera}</span><div><b>しゃしんを とる</b><span>ノートの ブルポを カメラで とる</span></div></button>
+      <button data-k="pick"><span class="ic">${ICO.image}</span><div><b>しゃしんを えらぶ</b><span>まえに とった しゃしんから えらぶ</span></div></button>
+    </div>`);
+  bg.querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
+    const k = b.dataset.k; bg.remove();
+    if(k === 'draw') openEditor(null, blob => openFinish(blob));
+    else (k === 'cam' ? $('#fileCam') : $('#filePick')).click();
+  });
+}
+['#fileCam', '#filePick'].forEach(sel => $(sel).onchange = async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = '';
+  if(!f) return;
+  let im;
+  try{ im = await bitmapOf(f); }catch(err){ return toast('しゃしんを ひらけませんでした'); }
+  openCrop(im, cv => openEditor(cv, blob => openFinish(blob), 'photo'));
+});
+
+/* ---- きりとる ----
+   しゃしんの 中の、つかう ところを わくで かこむ。わくの 中を うごかすと いどう、かどの まるで 大きさ。 */
+function openCrop(im, onDone){
+  const W = imW(im), H = imH(im);
+  const p = openPage();
+  p.innerHTML = `<div class="ptop"><button class="icobtn" data-x>${ICO.close}</button><div class="t">つかう ところを かこむ</div><button class="go" data-ok>つぎへ</button></div>
+    <div class="hint">わくの かどの ○を うごかしてね</div>
+    <div class="stage"><div class="crop"><img alt=""><div class="shade"><div class="box"></div></div>${'<div class="h"></div>'.repeat(4)}</div></div>
+    <div class="tools"><div class="in"><button class="tool" data-all>${ICO.image} ぜんぶ つかう</button></div></div>`;
+  const wrap = p.querySelector('.crop'), img = p.querySelector('img'), box = p.querySelector('.box'), hs = p.querySelectorAll('.h');
+  const c0 = document.createElement('canvas'); c0.width = W; c0.height = H; c0.getContext('2d').drawImage(im, 0, 0);
+  img.src = c0.toDataURL('image/jpeg', 0.85);
+  const m = 0.08;
+  let r = { x:W*m, y:H*m, w:W*(1-2*m), h:H*(1-2*m) };
+  let sc = 1;
+  const fit = () => {
+    const st = p.querySelector('.stage');
+    const aw = st.clientWidth - 48, ah = st.clientHeight - 24;   // clientWidth は padding こみ・○が はみ出さないように
+    sc = Math.min(aw / W, ah / H);
+    wrap.style.width = Math.round(W*sc)+'px'; wrap.style.height = Math.round(H*sc)+'px';
+    draw();
+  };
+  const draw = () => {
+    box.style.left = r.x*sc+'px'; box.style.top = r.y*sc+'px'; box.style.width = r.w*sc+'px'; box.style.height = r.h*sc+'px';
+    [[r.x, r.y], [r.x+r.w, r.y], [r.x, r.y+r.h], [r.x+r.w, r.y+r.h]].forEach(([x, y], k) => { hs[k].style.left = x*sc+'px'; hs[k].style.top = y*sc+'px'; });
+  };
+  let drag = null;
+  const pt = e => { const b = wrap.getBoundingClientRect(); return { x:(e.clientX - b.left)/sc, y:(e.clientY - b.top)/sc }; };
+  wrap.addEventListener('pointerdown', e => {
+    const q = pt(e), tol = 30 / sc;
+    const cs = [[r.x, r.y], [r.x+r.w, r.y], [r.x, r.y+r.h], [r.x+r.w, r.y+r.h]];
+    let k = cs.findIndex(([x, y]) => Math.hypot(q.x - x, q.y - y) < tol);
+    if(k >= 0) drag = { k, r0:{...r}, q0:q };
+    else if(q.x > r.x && q.x < r.x+r.w && q.y > r.y && q.y < r.y+r.h) drag = { k:'move', r0:{...r}, q0:q };
+    else return;
+    try{ wrap.setPointerCapture(e.pointerId); }catch(err){} e.preventDefault();
+  });
+  wrap.addEventListener('pointermove', e => {
+    if(!drag) return;
+    const q = pt(e), dx = q.x - drag.q0.x, dy = q.y - drag.q0.y, a = drag.r0, MIN = Math.min(W, H) * 0.12;
+    if(drag.k === 'move'){ r.x = Math.max(0, Math.min(W - a.w, a.x + dx)); r.y = Math.max(0, Math.min(H - a.h, a.y + dy)); }
+    else{
+      let x1 = a.x, y1 = a.y, x2 = a.x + a.w, y2 = a.y + a.h;
+      if(drag.k === 0 || drag.k === 2) x1 = Math.max(0, Math.min(x2 - MIN, a.x + dx)); else x2 = Math.min(W, Math.max(x1 + MIN, a.x + a.w + dx));
+      if(drag.k === 0 || drag.k === 1) y1 = Math.max(0, Math.min(y2 - MIN, a.y + dy)); else y2 = Math.min(H, Math.max(y1 + MIN, a.y + a.h + dy));
+      r = { x:x1, y:y1, w:x2 - x1, h:y2 - y1 };
+    }
+    draw();
+  });
+  const up = () => { drag = null; };
+  wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
+  const finish = rr => {
+    const MAX = 1600, k = Math.min(1, MAX / Math.max(rr.w, rr.h));
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(rr.w*k)); c.height = Math.max(1, Math.round(rr.h*k));
+    c.getContext('2d').drawImage(im, rr.x, rr.y, rr.w, rr.h, 0, 0, c.width, c.height);
+    if(im.close) im.close();
+    window.removeEventListener('resize', fit);
+    closePage(p); onDone(c);
+  };
+  p.querySelector('[data-x]').onclick = () => { window.removeEventListener('resize', fit); closePage(p); };
+  p.querySelector('[data-ok]').onclick = () => finish(r);
+  p.querySelector('[data-all]').onclick = () => finish({ x:0, y:0, w:W, h:H });
+  window.addEventListener('resize', fit);
+  fit(); requestAnimationFrame(fit);
+}
+
+/* ---- かく ----
+   下に「紙（方眼）か しゃしん」、上に「インク」の2まい。けしゴムは インクだけ けすので、しゃしんは きえない。
+   線は 出来あがりの大きさの座標で もっておき、画面の大きさが かわっても ずれない。
+   ペン（Apple Pencil など）を 一度でも つかったら、ゆびの タッチでは かかない（手のひらで 線が でないように）。 */
+const PENS = [ { c:'#1D1D1F', n:'くろ' }, { c:'#1F56C8', n:'あお' }, { c:'#D33A2F', n:'あか' } ];
+const SIZES = [3, 6, 11];
+let penPref = { c:1, s:1 };   // はじめは あおペン・ふつうの太さ（ブルポなので）
+function paper(ctx, W, H){
+  ctx.fillStyle = '#FFFEFA'; ctx.fillRect(0, 0, W, H);
+  const step = W / 12;
+  ctx.strokeStyle = '#DCE5F3'; ctx.lineWidth = Math.max(1, W / 700);
+  ctx.beginPath();
+  for(let x = step; x < W - 1; x += step){ ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+  for(let y = step; y < H - 1; y += step){ ctx.moveTo(0, y); ctx.lineTo(W, y); }
+  ctx.stroke();
+}
+function openEditor(bgSrc, onDone, kind){
+  const W = bgSrc ? imW(bgSrc) : 1200, H = bgSrc ? imH(bgSrc) : 1200;
+  const p = openPage();
+  keepAwake();
+  const title = kind === 'photo' ? 'あおペンで かきこもう' : kind === 'edit' ? 'かきたす' : 'ブルポを かこう';
+  p.innerHTML = `<div class="ptop"><button class="icobtn" data-x>${ICO.close}</button><div class="t">${title}</div><button class="go" data-ok>できた</button></div>
+    ${kind === 'photo' ? '<div class="hint">かきこまなくても だいじょうぶ。そのまま「できた」でも OK</div>' : ''}
+    <div class="stage"><div class="cv"><canvas class="bgc"></canvas><canvas class="ink"></canvas></div></div>
+    <div class="tools"><div class="in">
+      ${PENS.map((pn, k) => `<button class="tool" data-pen="${k}" aria-label="${pn.n}"><span class="pen-dot" style="background:${pn.c}"></span></button>`).join('')}
+      <span class="tsep"></span>
+      ${SIZES.map((s, k) => `<button class="tool sz" data-sz="${k}" aria-label="ふとさ${k+1}"><i style="width:${s+3}px;height:${s+3}px"></i></button>`).join('')}
+      <span class="tsep"></span>
+      <button class="tool" data-er>${ICO.eraser}けす</button>
+      <button class="tool" data-undo>${ICO.undo}もどす</button>
+      <button class="tool" data-clear>${ICO.trash}</button>
+    </div></div>`;
+  const cv = p.querySelector('.cv'), bgc = p.querySelector('.bgc'), ink = p.querySelector('.ink');
+  bgc.width = ink.width = W; bgc.height = ink.height = H;
+  const bx = bgc.getContext('2d'), ix = ink.getContext('2d');
+  if(bgSrc) bx.drawImage(bgSrc, 0, 0, W, H); else paper(bx, W, H);
+  let tool = 'pen', strokes = [], cleared = null, cur = null, penSeen = false, dirty = false;
+  let cssW = 1;
+  const fit = () => {
+    const st = p.querySelector('.stage');
+    const aw = Math.min(st.clientWidth - 32, 1000), ah = st.clientHeight - 16;   // clientWidth は padding こみ
+    cssW = Math.max(100, Math.min(aw, ah * W / H));
+    cv.style.width = Math.round(cssW)+'px'; cv.style.height = Math.round(cssW * H / W)+'px';
+  };
+  const mark = () => {
+    p.querySelectorAll('[data-pen]').forEach(b => b.classList.toggle('on', tool === 'pen' && +b.dataset.pen === penPref.c));
+    p.querySelectorAll('[data-sz]').forEach(b => b.classList.toggle('on', +b.dataset.sz === penPref.s));
+    p.querySelector('[data-er]').classList.toggle('on', tool === 'er');
+  };
+  /* 1本の線の、ひとつの区切りを かく（中点を つないで なめらかに） */
+  const seg = (ctx, s, i) => {
+    const P = s.pts, a = P[i-1], b = P[i], z = P[i-2] || a;
+    const m1 = [(z[0]+a[0])/2, (z[1]+a[1])/2], m2 = [(a[0]+b[0])/2, (a[1]+b[1])/2];
+    ctx.globalCompositeOperation = s.er ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = s.c; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.lineWidth = s.w * (s.pr ? (0.45 + 0.9 * ((a[2] + b[2]) / 2)) : 1);
+    ctx.beginPath(); ctx.moveTo(m1[0], m1[1]); ctx.quadraticCurveTo(a[0], a[1], m2[0], m2[1]); ctx.stroke();
+  };
+  const dot = (ctx, s) => {
+    const a = s.pts[0];
+    ctx.globalCompositeOperation = s.er ? 'destination-out' : 'source-over';
+    ctx.fillStyle = s.c; ctx.beginPath(); ctx.arc(a[0], a[1], s.w * (s.pr ? (0.45 + 0.9*a[2]) : 1) / 2, 0, Math.PI*2); ctx.fill();
+  };
+  const redraw = () => {
+    ix.clearRect(0, 0, W, H);
+    for(const s of strokes){ dot(ix, s); for(let i = 1; i < s.pts.length; i++) seg(ix, s, i); }
+    ix.globalCompositeOperation = 'source-over';
+  };
+  const toPt = e => { const b = ink.getBoundingClientRect(); return [(e.clientX - b.left) * W / b.width, (e.clientY - b.top) * H / b.height, e.pointerType === 'pen' ? (e.pressure || 0.5) : 0.5]; };
+  ink.addEventListener('pointerdown', e => {
+    if(e.pointerType === 'pen') penSeen = true;
+    if(penSeen && e.pointerType === 'touch') return;
+    if(cur) return;
+    e.preventDefault();
+    try{ ink.setPointerCapture(e.pointerId); }catch(err){}
+    const k = W / cssW;   // 画面の 1px が 出来あがりで 何px か
+    cur = { id:e.pointerId, er:tool === 'er', c:tool === 'er' ? '#000' : PENS[penPref.c].c, w:(tool === 'er' ? 26 : SIZES[penPref.s]) * k, pr:e.pointerType === 'pen' && tool !== 'er', pts:[toPt(e)] };
+    strokes.push(cur); cleared = null; dirty = true;
+    dot(ix, cur); ix.globalCompositeOperation = 'source-over';
+  });
+  ink.addEventListener('pointermove', e => {
+    if(!cur || e.pointerId !== cur.id) return;
+    e.preventDefault();
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for(const ev of (evs.length ? evs : [e])){ cur.pts.push(toPt(ev)); seg(ix, cur, cur.pts.length - 1); }
+    ix.globalCompositeOperation = 'source-over';
+  });
+  const end = e => { if(cur && e.pointerId === cur.id) cur = null; };
+  ink.addEventListener('pointerup', end); ink.addEventListener('pointercancel', end);
+  /* iPad の Safari で、ペンの長押しが「えらぶ」や「虫めがね」にならないように */
+  ['touchstart','touchmove','gesturestart'].forEach(t => cv.addEventListener(t, e => e.preventDefault(), { passive:false }));
+  p.querySelectorAll('[data-pen]').forEach(b => b.onclick = () => { tool = 'pen'; penPref.c = +b.dataset.pen; mark(); });
+  p.querySelectorAll('[data-sz]').forEach(b => b.onclick = () => { penPref.s = +b.dataset.sz; if(tool === 'er') tool = 'pen'; mark(); });
+  p.querySelector('[data-er]').onclick = () => { tool = tool === 'er' ? 'pen' : 'er'; mark(); };
+  p.querySelector('[data-undo]').onclick = () => {
+    if(strokes.length){ strokes.pop(); redraw(); }
+    else if(cleared){ strokes = cleared; cleared = null; redraw(); }
+  };
+  p.querySelector('[data-clear]').onclick = () => {
+    if(!strokes.length) return;
+    cleared = strokes; strokes = []; redraw(); toast('ぜんぶ けしたよ（もどす で もとに もどる）');
+  };
+  const leave = () => { window.removeEventListener('resize', fit); closePage(p); };
+  p.querySelector('[data-x]').onclick = () => {
+    if(dirty && strokes.length && !confirm('かいた ものが きえるよ。やめる？')) return;
+    leave();
+  };
+  p.querySelector('[data-ok]').onclick = () => {
+    if(!bgSrc && !strokes.length) return toast('なにか かいてから「できた」を おしてね');
+    const out = document.createElement('canvas'); out.width = W; out.height = H;
+    const o = out.getContext('2d'); o.drawImage(bgc, 0, 0); o.drawImage(ink, 0, 0);
+    out.toBlob(b => { if(!b) return toast('ほぞんできませんでした'); leave(); onDone(b); }, 'image/jpeg', 0.88);
+  };
+  window.addEventListener('resize', fit);
+  mark(); fit(); requestAnimationFrame(fit);
+}
+
+/* ---- さいご：ことばを いれて ブルポ帳に いれる ---- */
+function openFinish(blob){
+  const p = openPage('fin');
+  const u = URL.createObjectURL(blob);
+  p.innerHTML = `<div class="ptop"><button class="icobtn" data-x>${ICO.back}</button><div class="t">さいごに</div><span style="width:42px"></span></div>
+    <div class="pbody"><div class="in">
+      <img src="${u}" alt="">
+      <label for="finQ">なんの ブルポ？</label>
+      <input id="finQ" maxlength="40" placeholder="れい：せかいの「かい」" autocomplete="off" enterkeyhint="done">
+      <p class="dim" style="font-size:15px; margin:8px 2px 0">よみかたや ことばを いれると、れんしゅうの とき <b>もんだい</b>に なるよ。なくても だいじょうぶ。</p>
+      <div class="btns" style="margin-top:18px"><button class="btn btn-blue" data-ok>${ICO.book} ブルポ帳に いれる</button></div>
+    </div></div>`;
+  const go = async () => {
+    const id = newId();
+    try{ await putImg(id, blob); }catch(e){ return toast('ほぞんできませんでした'); }
+    addItem(id, p.querySelector('#finQ').value);
+    URL.revokeObjectURL(u); closePage(p);
+    renderAll();
+    toast(`ブルポ帳に いれたよ！ ${whenText(addDays(today(), GAPS[0]))}から でてくるよ`);
+  };
+  p.querySelector('[data-ok]').onclick = go;
+  p.querySelector('#finQ').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing){ e.preventDefault(); e.target.blur(); } });
+  p.querySelector('[data-x]').onclick = () => { if(confirm('この ブルポを いれずに やめる？')){ URL.revokeObjectURL(u); closePage(p); } };
+}
+
+/* ===================== れんしゅう =====================
+   ことばが ある ブルポ → ことばだけ 見せて、ノートに かいてから こたえを 見る。
+   ことばが ない ブルポ → まず よく見る → かくして かく → こたえを 見る。
+   まちがえた ブルポは、その日の さいごに もう一回 でてくる（2回目は よていを うごかさない）。 */
+let ses = null;
+function startSession(ids){
+  if(!ids.length) return;
+  ses = { ids:[...ids], i:0, phase:'', ok:0, ng:0, missed:new Set(), master:0, total:ids.length };
+  ses.page = openPage();
+  keepAwake();
+  renderSes();
+}
+function renderSes(){
+  const p = ses.page;
+  if(ses.i >= ses.ids.length) return renderSesEnd();
+  const it = byId(ses.ids[ses.i]);
+  if(!it){ ses.i++; return renderSes(); }
+  const hasQ = !!it.q;
+  if(!ses.phase) ses.phase = hasQ ? 'q' : 'look';
+  const retry = ses.missed.has(it.id);
+  const done = Math.min(ses.i, ses.ids.length);
+  let body = '';
+  if(ses.phase === 'q'){
+    body = `<div class="qcard">${retry ? '<span class="retry">もう いちど</span>' : ''}
+      <div class="qtext">${esc(it.q)}</div>
+      <p class="guide">ブルポを おもいだして、<b>ノートに かいてみよう</b></p>
+      <button class="btn btn-blue" data-a="show">${ICO.eye} こたえを みる</button></div>`;
+  }else if(ses.phase === 'look'){
+    body = `<div class="qcard">${retry ? '<span class="retry">もう いちど</span>' : ''}
+      <p class="guide" style="margin-top:0">よく みて、おぼえよう</p>
+      <img class="qimg" data-img="${it.img}" alt="">
+      <div class="btns"><button class="btn btn-blue" data-a="hide">${ICO.hide} かくして かいてみる</button></div></div>`;
+  }else if(ses.phase === 'hide'){
+    body = `<div class="qcard">
+      <div class="cover">${ICO.pen}ノートに かいてみよう</div>
+      <div class="btns"><button class="btn btn-blue" data-a="show">${ICO.eye} こたえを みる</button></div></div>`;
+  }else{
+    body = `<div class="qcard">
+      ${hasQ ? `<div class="qsub">${esc(it.q)}</div>` : ''}
+      <img class="qimg" data-img="${it.img}" alt="" style="margin-top:${hasQ ? 10 : 0}px">
+      <p class="guide" style="margin:12px 0 0">ノートと くらべて みよう</p>
+      <div class="judge">
+        <button class="ng" data-a="ng">${ICO.batsu}まちがえた</button>
+        <button class="ok" data-a="ok">${ICO.maru}かけた！</button>
+      </div></div>`;
+  }
+  p.innerHTML = `<div class="ptop"><button class="icobtn" data-x>${ICO.close}</button><div class="t">${done + 1} / ${ses.ids.length}</div><span style="width:42px"></span></div>
+    <div style="padding:0 16px"><div class="prog"><i style="width:${Math.round(done / ses.ids.length * 100)}%"></i></div></div>
+    <div class="pbody"><div class="in">${body}</div></div>`;
+  fillImgs(p);
+  p.querySelector('[data-x]').onclick = () => { closePage(p); ses = null; renderAll(); };
+  p.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
+    const a = b.dataset.a;
+    if(a === 'show'){ ses.phase = 'a'; return renderSes(); }
+    if(a === 'hide'){ ses.phase = 'hide'; return renderSes(); }
+    const ok = a === 'ok';
+    if(!retry){
+      if(ok){ markOk(it); ses.ok++; if(it.done) ses.master++; }
+      else{ markMiss(it); ses.ng++; ses.missed.add(it.id); ses.ids.push(it.id); }
+    }else if(!ok){
+      /* 2回目も まちがえたら、もう一回だけ さいごに（3回目からは あしたに） */
+      if(!ses.again) ses.again = new Set();
+      if(!ses.again.has(it.id)){ ses.again.add(it.id); ses.ids.push(it.id); }
+    }
+    ses.i++; ses.phase = ''; renderSes();
+    p.querySelector('.pbody').scrollTop = 0;
+  });
+}
+function renderSesEnd(){
+  const p = ses.page;
+  const all = ses.ng === 0 && ses.ok > 0;
+  p.innerHTML = `<div class="ptop"><span style="width:42px"></span><div class="t">おわり</div><span style="width:42px"></span></div>
+    <div class="pbody"><div class="in"><div class="qcard">
+      ${all ? HANAMARU : ''}
+      <div class="qtext" style="font-size:32px">${all ? 'ぜんぶ かけたね！' : 'よく がんばったね！'}</div>
+      <div class="stats" style="margin:14px 0 6px">
+        <div class="stat"><b style="color:var(--blue)">${ses.ok}</b><span>かけた</span></div>
+        <div class="stat"><b style="color:var(--red)">${ses.ng}</b><span>まちがえた</span></div>
+        <div class="stat"><b style="color:var(--red)">${ses.master}</b><span>おぼえた</span></div>
+      </div>
+      ${ses.ng ? `<p class="guide">まちがえた ブルポは、あしたも でてくるよ</p>` : ''}
+      ${ses.master ? `<p class="guide"><b>${ses.master}まい</b> おぼえた！ ブルポ帳の「おぼえた」に はいったよ</p>` : ''}
+      <button class="btn btn-blue" data-x>もどる</button>
+    </div></div></div>`;
+  p.querySelector('[data-x]').onclick = () => { closePage(p); ses = null; renderAll(); };
+}
+
+/* ===================== みる（1まいずつ めくる） ===================== */
+function openView(ids, start){
+  if(!ids.length) return;
+  let i = Math.max(0, start);
+  const p = openPage('view');
+  const draw = () => {
+    ids = ids.filter(id => byId(id));
+    if(!ids.length) return closePage(p);
+    i = Math.min(i, ids.length - 1);
+    const it = byId(ids[i]);
+    const state = it.done ? `<span class="stamp" style="position:static; display:inline-block">おぼえた</span>` : `<span>つぎは <b>${whenText(it.due)}</b></span>`;
+    p.innerHTML = `<div class="ptop"><button class="icobtn" data-x>${ICO.close}</button><div class="t">${it.no}ページ</div><span style="width:42px"></span></div>
+      <div class="pbody"><div class="in">
+        <img class="vimg" data-img="${it.img}" alt="">
+        <div class="vq">${esc(it.q)}</div>
+        <div class="vinfo">${dotsHtml(it)}${state}</div>
+        <div class="vnav"><button data-p ${i ? '' : 'disabled'}>${ICO.back}</button><span>${i + 1} / ${ids.length}</span><button data-n ${i < ids.length - 1 ? '' : 'disabled'}>${ICO.next}</button></div>
+        <div class="vacts">
+          <button class="btn btn-blue btn-small" style="width:100%" data-practice>${ICO.play} れんしゅう</button>
+          <button class="btn btn-line btn-small" style="width:100%" data-draw>${ICO.pen} かきたす</button>
+          <button class="btn btn-line btn-small" style="width:100%" data-q>${ICO.text} ことばを なおす</button>
+          ${it.done ? `<button class="btn btn-line btn-small" style="width:100%" data-reopen>${ICO.redo} もう一度 れんしゅうに</button>` : `<button class="btn btn-line btn-small" style="width:100%; color:var(--red)" data-del>${ICO.trash} けす</button>`}
+          ${it.done ? `<button class="btn btn-line btn-small" style="width:100%; color:var(--red); grid-column:1 / -1" data-del>${ICO.trash} けす</button>` : ''}
+        </div>
+      </div></div>`;
+    fillImgs(p);
+    p.querySelector('[data-x]').onclick = () => { closePage(p); renderAll(); };
+    const prev = p.querySelector('[data-p]'), nxt = p.querySelector('[data-n]');
+    prev.onclick = () => { if(i > 0){ i--; draw(); } };
+    nxt.onclick = () => { if(i < ids.length - 1){ i++; draw(); } };
+    p.querySelector('[data-practice]').onclick = () => { closePage(p); startSession([it.id]); };
+    p.querySelector('[data-q]').onclick = () => {
+      const v = prompt('なんの ブルポ？（よみかたや ことば）', it.q);
+      if(v === null) return;
+      it.q = v.trim().slice(0, 40); save(); draw(); toast('なおしたよ');
+    };
+    p.querySelector('[data-draw]').onclick = async () => {
+      let b = null; try{ b = await getImg(it.img); }catch(e){}
+      if(!b) return toast('ブルポを ひらけませんでした');
+      const im = await bitmapOf(b);
+      openEditor(im, async blob => {
+        const nid = newId();
+        try{ await putImg(nid, blob); }catch(e){ return toast('ほぞんできませんでした'); }
+        const old = it.img; it.img = nid; save();
+        try{ await delImg(old); }catch(e){}
+        draw(); toast('かきたしたよ');
+      }, 'edit');
+    };
+    const ro = p.querySelector('[data-reopen]');
+    if(ro) ro.onclick = () => { reopen(it); draw(); toast('あしたから また でてくるよ'); };
+    p.querySelector('[data-del]').onclick = async () => {
+      if(!confirm('この ブルポを けす？（もとに もどせません）')) return;
+      S.items = S.items.filter(x => x !== it); save();
+      try{ await delImg(it.img); }catch(e){}
+      toast('けしたよ'); draw();
+    };
+  };
+  /* よこに スワイプで めくる */
+  let sx = null, sy = null;
+  p.addEventListener('touchstart', e => { if(e.touches.length === 1){ sx = e.touches[0].clientX; sy = e.touches[0].clientY; } }, { passive:true });
+  p.addEventListener('touchend', e => {
+    if(sx == null) return;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5){
+      if(dx < 0 && i < ids.length - 1){ i++; draw(); }
+      else if(dx > 0 && i > 0){ i--; draw(); }
+    }
+  }, { passive:true });
+  draw();
+}
+
+/* ===================== せってい ===================== */
+function renderSet(){
+  renderSlides();
+  $('#instState').innerHTML = isInstalled() ? '✓ ホーム画面から開いています。' : '<b style="color:var(--red)">まだホーム画面に追加されていません。</b>追加しないと、しばらく開かない間にブルポが消えることがあります。';
+  $('#bkState').textContent = S.lastBackup ? `最後に控えをとった日：${mdw(S.lastBackup)}` : (S.items.length ? 'まだ控えをとっていません。' : '');
+  $('#verLabel').textContent = 'v' + VER;
+}
+const blobToDataUrl = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
+function dataUrlToBlob(u){
+  const m = /^data:([^;]+);base64,(.*)$/.exec(u || ''); if(!m) return null;
+  const bin = atob(m[2]); const a = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return new Blob([a], { type:m[1] });
+}
+/* share は おした直後でないと iPhone で はじかれるので、かならず同期で よぶ */
+function shareText(text, name, onDone){
+  const file = new File([text], name, { type:'application/json' });
+  if(navigator.canShare && navigator.canShare({ files:[file] })){
+    navigator.share({ files:[file], title:name })
+      .then(() => { if(onDone) onDone(); })
+      .catch(e => { if(!(e && e.name === 'AbortError')) toast('保存できませんでした'); });
+    return;
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  if(onDone) onDone();
+}
+/* 控え：ブルポは かならず画像つきなので、記録と画像を いっしょに、BK_N まいずつ ファイルに わける。
+   1つ目のファイルに 記録（ぜんぶ）が入る。 */
+const BK_N = 15;
+async function buildPart(ids, part, total){
+  const imgs = {};
+  for(const id of ids){ try{ const b = await getImg(id); if(b) imgs[id] = await blobToDataUrl(b); }catch(e){} }
+  const o = { app:'burupo', v:VER, part, total, exported:new Date().toISOString(), imgs };
+  if(part === 1) o.data = S;
+  return JSON.stringify(o);
+}
+function openBackup(){
+  if(!S.items.length) return toast('まだ ブルポが ありません');
+  const all = S.items.map(i => i.img);
+  const total = Math.ceil(all.length / BK_N);
+  let part = 1, text = '';
+  const bg = openSheet(`<h2>控えをとる</h2>
+    <p>ブルポが <b>${all.length}</b> 枚あります。${total > 1 ? `<b>${total}</b> 個のファイルに分けて保存します。` : '1つのファイルに保存します。'}</p>
+    <div class="note" style="margin-top:10px">下のボタンを押すと共有の画面が出ます。「ファイルに保存」などを選んでください。${total > 1 ? `保存し終わると次の番号に変わります。${total} 個ぜんぶ保存してください。` : ''}</div>
+    <div id="pbBody" style="margin-top:12px"></div>`);
+  const body = bg.querySelector('#pbBody');
+  const draw = () => {
+    body.innerHTML = text
+      ? `<button class="btn btn-blue" id="pbGo">${ICO.save} ${total > 1 ? `${part} / ${total} 個目を保存する` : '保存する'}</button>`
+      : `<div class="dim" style="text-align:center; padding:14px">${part} / ${total} 個目を用意しています…</div>`;
+    const go = body.querySelector('#pbGo');
+    if(go) go.onclick = () => shareText(text, `burupo-${today()}${total > 1 ? `-${part}of${total}` : ''}.json`, () => {
+      if(part < total){ part++; text = ''; draw(); prep(); }
+      else{ S.lastBackup = today(); save(); renderSet(); bg.remove(); toast('控えをとりました'); }
+    });
+  };
+  const prep = async () => { text = await buildPart(all.slice((part-1)*BK_N, part*BK_N), part, total); draw(); };
+  draw(); prep();
+}
+async function importText(text){
+  let j; try{ j = JSON.parse(text); }catch(e){ return null; }
+  if(!j || j.app !== 'burupo') return null;
+  let added = 0, nImg = 0;
+  if(j.imgs && typeof j.imgs === 'object'){
+    for(const [id, u] of Object.entries(j.imgs)){ try{ const b = dataUrlToBlob(u); if(b){ await putImg(id, b); nImg++; } }catch(e){} }
+  }
+  if(j.data && Array.isArray(j.data.items)){
+    for(const it of j.data.items){
+      if(!it || !it.id || !it.img) continue;
+      const cur = byId(it.id);
+      if(cur) Object.assign(cur, it); else { S.items.push(it); added++; }
+    }
+    S.nextNo = Math.max(S.nextNo, Number(j.data.nextNo) || 1);
+    S = norm(S); save();
+  }
+  return { added, imgs:nImg };
+}
+$('#btnExport').onclick = openBackup;
+$('#btnImport').onclick = () => $('#impFile').click();
+$('#impFile').onchange = async e => {
+  const fs = Array.from(e.target.files || []); e.target.value = '';
+  if(!fs.length) return;
+  let a = 0, im = 0, ng = 0;
+  for(const f of fs){
+    try{ const r = await importText(await f.text()); if(r){ a += r.added; im += r.imgs; } else ng++; }catch(err){ ng++; }
+  }
+  renderAll(); renderSet();
+  toast(ng && !a && !im ? 'ブルポ帳の控えではないようです' : `戻しました（ブルポ ${a}・画像 ${im}${ng ? '・読めず '+ng : ''}）`);
+};
+$('#btnWipe').onclick = async () => {
+  if(!confirm('ブルポと きろくを すべて けします。いいですか？')) return;
+  if(!confirm('ほんとうに けしますか？（控えが なければ もどせません）')) return;
+  const ids = S.items.map(i => i.img);
+  S = norm({}); save();
+  for(const id of ids){ try{ await delImg(id); }catch(e){} }
+  renderAll(); renderSet(); toast('すべて けしました');
+};
+
+/* ===================== 使い方（スライド） =====================
+   ルール: 機能を変えたら、ここ（slides()）も同じ更新で直す。 */
+const GAP_WORDS = ['あした', '3日ご', '1しゅうかんご', '2しゅうかんご', '1かげつご'];
+function slides(){ return [
+  { ico:'book', t:'ブルポ帳って？', p:'まちがえた かんじを、<b>ブルポ</b>（あおペンで かいた ポイント）ごと おぼえる ための ノートだよ。', ex:'ことばで おぼえる 人も、かたちで おぼえる 人も、じぶんの ブルポを ためていこう。' },
+  { ico:'pen', t:'1. つくる', p:'下の <b>「つくる」</b> を おして、<b>てがきで かく</b> か、ノートの ブルポを <b>しゃしんに とる</b> よ。', ex:'しゃしんは、つかう ところを わくで かこめるよ。しゃしんの 上に あおペンで かきこむことも できるよ。' },
+  { ico:'text', t:'2. なんの ブルポ？', p:'さいごに <b>よみかたや ことば</b>（れい：せかいの「かい」）を いれると、れんしゅうの とき もんだいに なるよ。', ex:'いれなくても だいじょうぶ。そのときは、ブルポを よく見てから かくして かく れんしゅうに なるよ。' },
+  { ico:'play', t:'3. れんしゅう', p:`ブルポは <b>${GAP_WORDS.join('・')}</b> に「きょう」に でてくるよ。<b>ノートに かいてから</b> こたえを 見て、<b>◯ かけた</b> か <b>✕ まちがえた</b> を おそう。`, ex:'まちがえた ブルポは、さいごに もう一回 でてくるよ。そして あしたから やりなおし。' },
+  { ico:'maru', t:'4. おぼえた！', p:`<b>${GAPS.length}かい つづけて</b> かけたら「おぼえた」に なるよ。ブルポ帳の「おぼえた」で 見かえせるよ。`, ex:'ブルポ帳の ページを おすと、めくって ながめたり、かきたしたり、いつでも れんしゅう できるよ。' },
+  { ico:'install', t:'おうちの方へ：ホーム画面に追加', p:'<b>最初に必ず</b> ホーム画面に追加してください。追加していないと、しばらく開かない間にブルポが消えることがあります。', ex:'Safari の共有ボタン（iPad は右上、iPhone は下。見当たらないときは「…」の中）→「ホーム画面に追加」。上の赤い帯の「やりかた」からも見られます。' },
+  { ico:'save', t:'おうちの方へ：控え', p:'ブルポはこの端末の中だけに保存されます。機種変更のときは、せっていの <b>「控えをとる」</b> で保存し、新しい端末で <b>「控えから戻す」</b> を押してください。', ex:'ホーム画面のアイコンを消すと、中のブルポも一緒に消えます。消す前に控えをとってください。' },
+]; }
+function slidesHtml(){
+  const SL = slides();
+  return `<div class="slides"><div class="sl-track">${SL.map((sl, i) => `<div class="sl"><div class="no">${i+1} / ${SL.length}</div><div class="pic">${ICO[sl.ico]||''}</div><h4>${sl.t}</h4><p>${sl.p}</p>${sl.ex ? `<div class="ex">${sl.ex}</div>` : ''}</div>`).join('')}</div>
+    <div class="sl-nav"><button class="prev">${ICO.back}</button><span class="dots">${SL.map((_, i) => `<i class="${i?'':'on'}"></i>`).join('')}</span><button class="next">${ICO.next}</button></div></div>`;
+}
+function bindSlides(root){
+  const track = root.querySelector('.sl-track'), dots = root.querySelectorAll('.sl-nav .dots i');
+  let idx = 0;
+  const step = () => track.children[0].offsetWidth + 10;
+  const mark = () => dots.forEach((d, k) => d.classList.toggle('on', k === idx));
+  const go = i => { idx = Math.max(0, Math.min(track.children.length-1, i)); mark(); track.scrollTo({ left:idx * step(), behavior:'smooth' }); };
+  let st = null;
+  track.addEventListener('scroll', () => { clearTimeout(st); st = setTimeout(() => { idx = Math.round(track.scrollLeft / step()); mark(); }, 80); }, { passive:true });
+  root.querySelector('.sl-nav .prev').onclick = () => go(idx-1);
+  root.querySelector('.sl-nav .next').onclick = () => go(idx+1);
+}
+function renderSlides(){ const box = $('#setSlides'); box.innerHTML = slidesHtml(); bindSlides(box); }
+$('#btnHelp').onclick = () => { const bg = openSheet(`<h2>ブルポ帳の つかいかた</h2>${slidesHtml()}`); bindSlides(bg); };
+
+/* ===================== ホーム画面に追加（データを守る） =====================
+   iPhone・iPad の Safari は、ホーム画面に追加していないサイトの保存データを、
+   しばらく開かないと消すことがある。追加するまで帯を出し続ける。 */
+function isInstalled(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+/* iPad の Safari は「Mac」と名乗るので、さわれる画面（maxTouchPoints）かどうかで iPad とみなす */
+function deviceKind(ua, touch){
+  ua = ua || navigator.userAgent;
+  touch = touch == null ? (navigator.maxTouchPoints || 0) : touch;
+  if(/iPhone|iPod/.test(ua)) return 'iphone';
+  if(/iPad/.test(ua) || (/Macintosh/.test(ua) && touch > 1)) return 'ipad';
+  if(/Android/.test(ua)) return 'android';
+  return 'pc';
+}
+const INSTALL_STEPS = {
+  ipad: { h:'iPad の場合', li:[
+    'この画面を <b>Safari</b> で開く',
+    '画面の<b>右上</b>にある <b>共有ボタン</b>（四角から矢印が出ている印）を押す<br><span class="dim">見当たらないときは、アドレス欄の横の「…」を押すと、中に「共有」があります</span>',
+    '少し下にスクロールして <b>「ホーム画面に追加」</b> を押す',
+    '右上の <b>「追加」</b> を押す',
+    'ホーム画面にできた「ブルポ帳」のアイコンから、これからは開く' ] },
+  iphone: { h:'iPhone の場合', li:[
+    'この画面を <b>Safari</b> で開く（LINE などの中で開いていたら、「Safari で開く」を押してください）',
+    '画面の<b>下</b>にある <b>共有ボタン</b>（四角から矢印が出ている印）を押す<br><span class="dim">見当たらないときは、下の「…」を押すと、中に「共有」があります</span>',
+    '少し下にスクロールして <b>「ホーム画面に追加」</b> を押す',
+    '右上の <b>「追加」</b> を押す',
+    'ホーム画面にできた「ブルポ帳」のアイコンから、これからは開く' ] },
+  android: { h:'Android の場合', li:[
+    'この画面を <b>Chrome</b> で開く',
+    '右上の <b>⋮</b>（点が3つ）を押す',
+    '<b>「ホーム画面に追加」</b>（または「アプリをインストール」）を押す' ] },
+};
+const stepsHtml = k => `<h3>${INSTALL_STEPS[k].h}</h3><ol>${INSTALL_STEPS[k].li.map(x => `<li>${x}</li>`).join('')}</ol>`;
+function openInstall(kind){
+  if(typeof kind !== 'string') kind = deviceKind();
+  const main = INSTALL_STEPS[kind] ? kind : null;
+  const others = ['ipad','iphone','android'].filter(k => k !== main);
+  openSheet(`<h2>ホーム画面に追加する（おうちの方へ）</h2>
+    <div class="note"><b>なぜ必要か：</b>ホーム画面に追加していないと、iPad や iPhone が「しばらく使っていないサイト」と判断して、ブルポを消してしまうことがあります。追加すれば消えません。</div>
+    ${main ? stepsHtml(main) : '<p class="dim" style="margin-top:6px">パソコンで見ている場合は、そのままでも構いません。タブレットやスマホでは、下の手順で追加してください。</p>'}
+    <details style="margin-top:12px"${main ? '' : ' open'}><summary class="dim" style="cursor:pointer">${main ? 'ほかの端末の場合' : '端末ごとの手順'}</summary>${others.map(stepsHtml).join('')}</details>`);
+}
+$('#btnInstall').onclick = openInstall;
+$('#btnInstall2').onclick = openInstall;
+function checkInstall(){ $('#btnInstallBand').classList.toggle('hidden', isInstalled()); }
+
+/* ===================== タブ・全体 ===================== */
+$$('nav.tabs button[data-tab]').forEach(b => b.onclick = () => {
+  $$('nav.tabs button[data-tab]').forEach(x => x.classList.toggle('on', x === b));
+  ['Today','Book','Set'].forEach(t => $('#tab-'+t).classList.toggle('hidden', t !== b.dataset.tab));
+  if(b.dataset.tab === 'Today') renderToday();
+  if(b.dataset.tab === 'Book') renderBook();
+  if(b.dataset.tab === 'Set') renderSet();
+  window.scrollTo(0, 0);
+});
+$('#btnMake').onclick = openMake;
+function renderAll(){
+  renderToday();
+  if(!$('#tab-Book').classList.contains('hidden')) renderBook();
+}
+let lastDay = today();
+function checkDayChange(){ const t = today(); if(t !== lastDay){ lastDay = t; renderAll(); } }
+setInterval(checkDayChange, 60000);
+
+/* ===================== 更新の確認（ほかのアプリと同じ仕組み） ===================== */
+async function checkUpdate(silent){
+  try{
+    const res = await fetch('version.json?t='+Date.now(), { cache:'no-store' });
+    if(!res.ok) throw 0;
+    const j = await res.json(), v = Number(j.v) || 0;
+    if(v > VER){
+      $('#updVer').textContent = 'あたらしい ブルポ帳が あるよ（v'+v+'）' + (j.note ? '　'+j.note : '');
+      $('#updBand').classList.remove('hidden'); $('#setDot').classList.remove('hidden');
+    }else{
+      $('#updBand').classList.add('hidden'); $('#setDot').classList.add('hidden');
+      if(!silent) toast('いまが さいしんだよ（v'+VER+'）');
+    }
+  }catch(e){ if(!silent) toast('しらべられませんでした'); }
+}
+async function doUpdate(){
+  save();
+  toast('こうしん しています…');
+  try{
+    if('serviceWorker' in navigator){ const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.unregister())); }
+    if(window.caches){ const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
+  }catch(e){}
+  location.replace(location.pathname + '?u=' + Date.now());
+}
+$('#btnUpdate').onclick = doUpdate;
+$('#btnCheckUpd').onclick = () => checkUpdate(false);
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden){ checkUpdate(true); checkDayChange(); if($('#host').children.length) keepAwake(); }
+  else save();
+});
+window.addEventListener('focus', checkDayChange);
+window.addEventListener('pagehide', () => save());
+
+/* 起動 */
+renderToday();
+checkInstall();
+checkUpdate(true);
+try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); }catch(e){}
+if('serviceWorker' in navigator){ window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); }); }
+setTimeout(sweepImgs, 4000);
+</script>
+</body>
+</html>

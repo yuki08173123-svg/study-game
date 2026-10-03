@@ -424,6 +424,42 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 /* 種類の名前「解法が分からなかった」が切れないように、棒グラフの名前の欄を広げる */
 .bar{grid-template-columns:136px 1fr 34px;}
 
+/* ===================== 印刷（v27〜） ===================== */
+.btn-line.prt{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px;}
+.btn-line.prt svg, .judge .reveal svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;}
+.pr-list{display:flex; flex-direction:column; gap:6px; margin-top:12px;}
+.pr-row{display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--hair); border-radius:12px; padding:8px 10px; cursor:pointer;}
+.pr-row input{width:22px; height:22px; accent-color:var(--accent); flex:none;}
+.pr-row img, .pr-row .noimg{width:44px; height:44px; object-fit:cover; border-radius:8px; flex:none; background:var(--chip); display:grid; place-items:center;}
+.pr-row .noimg svg{width:20px; height:20px; stroke:var(--muted); fill:none; stroke-width:2;}
+.pr-row .tx{flex:1; min-width:0;}
+.pr-row .tx b{display:block; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.pr-row .tx small{font-size:12.5px; color:var(--muted);}
+.pr-row .when{font-size:12.5px; font-weight:700; color:var(--accent); flex:none;}
+.pr-paper{background:#fff; color:#111; border-radius:6px; padding:16px; box-shadow:var(--shadow); margin-bottom:110px;}
+.pr-none{color:#555; font-size:14px; text-align:center; padding:20px 0;}
+#printArea{display:none;}
+.paper{font-family:'BIZ UDPGothic','Hiragino Sans',sans-serif; font-size:14px; line-height:1.6; color:#111;}
+.paper .pr-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; border-bottom:2px solid #111; padding-bottom:4px; margin-bottom:10px;}
+.paper .pr-head b{font-family:'Bodoni Moda','Times New Roman',serif; font-size:20px;}
+.paper .pr-head span{font-size:12px; color:#333;}
+.paper .pr-q{border-bottom:1px dashed #999; padding:6px 0 14px; margin-bottom:8px; break-inside:avoid; page-break-inside:avoid;}
+.paper .pr-meta{display:flex; flex-wrap:wrap; gap:6px 8px; align-items:baseline; font-size:12.5px; color:#333; margin-bottom:6px;}
+.paper .pr-meta b{font-size:18px; color:#111; margin-right:2px;}
+.paper .pr-meta span{border:1px solid #777; border-radius:999px; padding:0 8px;}
+.paper .pr-meta i{font-style:normal;}
+.paper img{display:block; max-width:100%; max-height:110mm; margin:4px 0;}
+.paper .pr-text{font-size:15px; white-space:pre-wrap; word-break:break-word; margin-top:4px;}
+.paper .pr-why{margin-top:8px; font-size:12.5px; border:1px solid #bbb; border-radius:4px; padding:6px 8px;}
+.paper .pr-why b{margin-right:6px;}
+@media print{
+  @page{margin:12mm;}
+  html, body{background:#fff !important; min-height:0;}
+  body > *:not(#printArea){display:none !important;}
+  #printArea{display:block !important; font-size:11pt;}
+  .paper img{max-height:120mm;}
+}
+
 /* ===================== かんたんモード（v26〜・小学生向け。使う人ごとに設定でオン） =====================
    保護者ユウキ・ハルネコ（10/3）「小学生が自分で使えるシンプルな版と、いまの版を選べると」。
    言葉は .t-full／.t-simple を出しわけ。隠すものは .s-hide と下の一覧。理由と改善点（いつ・何を・どうする）は残す。 */
@@ -615,7 +651,7 @@ html[data-theme="light"] .tg::after{background:#fff;}
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 26;
+const VER = 27;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -896,6 +932,7 @@ const ICO = {
   zoom: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.3-4.3M11 8.5v5M8.5 11h5"/></svg>',
   redo: '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>',
   shuffle: '<svg viewBox="0 0 24 24"><path d="M4 7h4l3 5-3 5H4"/><path d="M13 7h7"/><path d="M13 17h7"/><path d="m17 4 3 3-3 3"/><path d="m17 14 3 3-3 3"/></svg>',
+  print: '<svg viewBox="0 0 24 24"><path d="M7 8V3.5h10V8"/><rect x="3.5" y="8" width="17" height="8.5" rx="2"/><path d="M7 14h10v6.5H7z"/></svg>',
   empty: '<svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="m9.5 13 5 5M14.5 13l-5 5"/></svg>',
 };
 
@@ -1134,6 +1171,7 @@ function renderToday(){
     h += `<div class="hero ${tl.length?'':'zero'}"><div class="n num">${tl.length}<small>問</small></div>
       <div class="t"><b>今日の問題</b><span>${tl.length ? (over ? `うち ${over} 問は前の日からの繰り越し。` : '') + '問題だけを見て、改善点をやりながら、ノートにもう一度解いてください。' : '今日の分は終わりました。下の「ランダムに解く」で練習もできます。'}</span></div>
       ${tl.length ? `<button class="big" id="goSeq">${ICO.check}今日の問題を解く（${tl.length}問）</button>` : ''}</div>`;
+    h += `<button class="btn-line prt" id="goPrint">${ICO.print}問題を印刷する</button>`;
     h += sendCard();
     if(tl.length) h += `<div class="items">${tl.map(i => cardHtml(i, 'today')).join('')}</div>`;
     const pool = randPool();
@@ -1158,6 +1196,7 @@ function renderToday(){
   const gh = root.querySelector('#goHelp'); if(gh) gh.onclick = openHelp;
   root.querySelectorAll('[data-rn]').forEach(b => b.onclick = () => { S.cfg.randN = Number(b.dataset.rn); save(); renderToday(); });
   bindSend(root);
+  const gp = root.querySelector('#goPrint'); if(gp) gp.onclick = openPrint;
   const gs = root.querySelector('#goSeq'); if(gs) gs.onclick = () => startSession(todayList().map(i => i.id), 'due');
   const gr = root.querySelector('#goRand'); if(gr) gr.onclick = () => {
     const p = randPool().map(i => i.id);
@@ -1254,6 +1293,81 @@ async function keepAwake(){
 function letSleep(){ try{ if(wakeLock) wakeLock.release(); }catch(e){} wakeLock = null; }
 document.addEventListener('visibilitychange', () => { if(!document.hidden && $('#pgSolve')) keepAwake(); });
 function closePage(){ $('#host').innerHTML = ''; letSleep(); }
+
+/* ===================== 印刷 =====================
+   算数・理科などで、条件に丸をつけたり、線を引いたり、図に書きこんだりしながら解けるように、
+   えらんだ問題をまとめて紙に印刷する（v27・保護者ユウキ・ハルネコの要望）。
+   紙は白・字は黒（インク節約。画面の色が黒でも白で印刷）。画面のプレビューと印刷は同じ中身（.paper）。 */
+let prSel = new Set(), prWhy = false;
+function printHtml(items){
+  const head = `<div class="pr-head"><b>${esc(APP_NAME)}</b><span>解き直し ${items.length}問　${mdw(today())}${multi() ? '　' + esc(curName()) : ''}</span></div>`;
+  return head + items.map((it, k) => `<section class="pr-q">
+    <div class="pr-meta"><b>${k+1}</b><span>${esc(it.subj)}</span>${it.tag ? `<span>${esc(it.tag)}</span>` : ''}<i>${md(it.created)} 登録</i></div>
+    ${it.imgs.map(im => `<img data-img="${im}" alt="">`).join('')}
+    ${it.text ? `<div class="pr-text">${esc(it.text)}</div>` : ''}
+    ${prWhy ? `<div class="pr-why"><div><b>${ANS[kindOf(it.tag)][0]}</b>${esc(it.why)}</div><div><b>${ANS[kindOf(it.tag)][1]}</b>${esc(it.fix)}</div></div>` : ''}
+  </section>`).join('');
+}
+function printArea(){
+  let pa = $('#printArea');
+  if(!pa){ pa = document.createElement('div'); pa.id = 'printArea'; pa.className = 'paper'; document.body.appendChild(pa); }
+  return pa;
+}
+function openPrint(){
+  const act = active().slice().sort(cmpDue);
+  if(!act.length) return toast('印刷できる問題がありません');
+  const tIds = todayList().map(i => i.id);
+  prSel = new Set(tIds);
+  const host = $('#host');
+  host.innerHTML = `<div class="page" id="pgPrint"><div class="pin">
+    <div class="topbar"><button class="back" id="prBack">${ICO.back}もどる</button><h2>問題を印刷する</h2><span class="r"></span></div>
+    <div class="dim" style="margin:2px 0 10px">印刷したい問題にチェックを入れて、下の「印刷する」を押します。白い紙に黒い字で印刷されます。</div>
+    <div class="chips" id="prQuick">
+      <button class="chip sm" data-q="today">今日の問題（${tIds.length}）</button>
+      <button class="chip sm" data-q="all">すべて（${act.length}）</button>
+      <button class="chip sm" data-q="none">ぜんぶはずす</button></div>
+    <div class="pr-list" id="prList">${act.map(it => `<label class="pr-row">
+      <input type="checkbox" data-id="${it.id}">
+      ${it.imgs[0] ? `<img data-img="${it.imgs[0]}" alt="">` : `<span class="noimg">${ICO.doc}</span>`}
+      <span class="tx"><b>${esc(it.text || '写真の問題')}</b><small><span class="sj" style="--c:${SUBJC[it.subj] || SUBJC['その他']}">${esc(it.subj)}</span>${it.tag ? ' ' + esc(it.tag) : ''}</small></span>
+      <span class="when">${it.due <= today() ? '今日' : md(it.due)}</span></label>`).join('')}</div>
+    <div class="sw" style="margin-top:14px"><span>理由と改善点も印刷する</span><button class="tg" id="prWhy" aria-label="切りかえ"></button></div>
+    <div class="dim">ふつうは問題だけ。解いてから答え合わせをするときに、アプリで理由と改善点を見ます。</div>
+    <div class="sec-label" style="margin-top:16px">印刷のイメージ</div>
+    <div class="pr-paper paper" id="prPrev"></div>
+  </div>
+  <div class="judge"><div class="inner"><button class="reveal" id="prGo">${ICO.print}印刷する</button></div></div></div>`;
+  fillImgs($('#prList'));
+  const update = () => {
+    $$('#prList input[data-id]').forEach(c => { c.checked = prSel.has(c.dataset.id); });
+    const sel = act.filter(it => prSel.has(it.id));
+    $$('#prQuick [data-q]').forEach(b => b.classList.toggle('on',
+      b.dataset.q === 'today' ? (tIds.length > 0 && sel.length === tIds.length && tIds.every(id => prSel.has(id))) :
+      b.dataset.q === 'all' ? sel.length === act.length : false));
+    $('#prWhy').classList.toggle('on', prWhy);
+    const html = sel.length ? printHtml(sel) : '<div class="pr-none">問題をえらぶと、ここに印刷のイメージが出ます。</div>';
+    $('#prPrev').innerHTML = html; printArea().innerHTML = sel.length ? html : '';
+    fillImgs($('#prPrev')); fillImgs(printArea());
+    const go = $('#prGo'); go.disabled = !sel.length; go.innerHTML = `${ICO.print}印刷する（${sel.length}問）`;
+  };
+  $('#prList').onchange = e => { const c = e.target.closest('input[data-id]'); if(!c) return; if(c.checked) prSel.add(c.dataset.id); else prSel.delete(c.dataset.id); update(); };
+  $('#prQuick').onclick = e => {
+    const b = e.target.closest('[data-q]'); if(!b) return;
+    prSel = new Set(b.dataset.q === 'today' ? tIds : b.dataset.q === 'all' ? act.map(i => i.id) : []);
+    update();
+  };
+  $('#prWhy').onclick = () => { prWhy = !prWhy; update(); };
+  $('#prBack').onclick = () => { printArea().innerHTML = ''; closePage(); };
+  /* print はボタンを押した直後に呼ぶ（写真がまだ読みこみ中なら、ひとこと出してもう一度押してもらう） */
+  $('#prGo').onclick = () => {
+    if(!prSel.size) return toast('印刷する問題をえらんでください');
+    const imgs = [...printArea().querySelectorAll('img')];
+    if(imgs.some(i => !i.getAttribute('src') || !i.complete)) return toast('写真を用意しています。もう一度押してください');
+    if(typeof window.print !== 'function') return toast('この端末では印刷できません');
+    window.print();
+  };
+  update();
+}
 /* 解く画面の手順。どの種類の問題も「思い出す → もう一度解く → 答え合わせ」 */
 const ASK = {
   miss:   ['間違えた理由は？ 改善点は？', 'なぜ間違えたか、次はどうするかを、頭の中で言ってください。', '改善点をやりながら、最後まで解いてください。'],
@@ -2269,6 +2383,7 @@ function slides(){ return [
   { ico:'people', t:'11. 兄弟で使う', p:'1台を兄弟で使うときは、設定の <b>「使う人」</b> で人をふやします。名前を押すと切りかわり、問題・写真・記録は<b>人ごとに別々</b>に保存されます。', ex:'いまだれの画面かは、上の名前の札で分かります。札を押すと、切りかえの所に飛びます。' },
   { ico:'sun', t:'12. 画面を白くする', p:'黒い画面が見にくいときは、設定の <b>「画面の色」</b> で <b>「白」</b> を選んでください。すぐに切りかわります。', ex:'この端末だけの設定です。部屋に出す画像は、いつもの黒のままです。' },
   { ico:'shield', t:'13. かんたんモード', p:'小学生が使うときは、設定の <b>「かんたんモード」</b> をオンにします。字が大きくなり、言葉がやさしくなって、使う機能がしぼられます。', ex:'使う人ごとの設定です。兄弟で「兄はいつもの、弟はかんたん」にできます。理由と改善点は、書き方の例を押して自分の問題に直します。' },
+  { ico:'print', t:'14. 問題を印刷する', p:'「解く」タブの <b>「問題を印刷する」</b> で、問題にチェックを入れてまとめて印刷できます。条件に丸をつけたり、図に書きこんだりしながら解きたいときに。', ex:'白い紙に黒い字で印刷されます（画面が黒でも、インクはへりません）。ふつうは問題だけ。「理由と改善点も印刷する」をオンにすると、いっしょに入ります。' },
 ]; }
 const SICO = {
   doc: ICO.doc, camera: ICO.camera, redo: ICO.redo, eye: ICO.eye, shuffle: ICO.shuffle,
@@ -2277,6 +2392,7 @@ const SICO = {
   chart: '<svg viewBox="0 0 24 24"><path d="M3 20h18"/><rect x="5" y="11" width="3.5" height="9"/><rect x="10.25" y="6" width="3.5" height="14"/><rect x="15.5" y="14" width="3.5" height="6"/></svg>',
   save: '<svg viewBox="0 0 24 24"><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/></svg>',
   send: '<svg viewBox="0 0 24 24"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="m10 13 5-5"/></svg>',
+  print: ICO.print,
   shield: '<svg viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V7z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>',
   sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>',
   people: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.3c.5-.2 1-.3 1.5-.3 2.8 0 5 2.2 5 5"/></svg>',

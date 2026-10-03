@@ -424,6 +424,23 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 /* 種類の名前「解法が分からなかった」が切れないように、棒グラフの名前の欄を広げる */
 .bar{grid-template-columns:136px 1fr 34px;}
 
+/* ===================== かんたんモード（v26〜・小学生向け。使う人ごとに設定でオン） =====================
+   保護者ユウキ・ハルネコ（10/3）「小学生が自分で使えるシンプルな版と、いまの版を選べると」。
+   言葉は .t-full／.t-simple を出しわけ。隠すものは .s-hide と下の一覧。理由と改善点（いつ・何を・どうする）は残す。 */
+.t-simple{display:none;}
+html.simple .t-simple{display:inline;} html.simple div.t-simple{display:block;} html.simple .t-full{display:none;}
+html.simple .s-hide, html.simple .rand, html.simple .card.send, html.simple .f-due, html.simple .why-then{display:none !important;}
+html.simple body{font-size:19px;}
+html.simple .field label{font-size:15.5px;}
+html.simple .chip{font-size:16px; padding:9px 16px;}
+html.simple .chip.sm{font-size:15px; padding:8px 14px;}
+html.simple .sub-in label, html.simple .field .hint, html.simple .sugg .lbl{font-size:14.5px;}
+html.simple .sub-in input[type=text], html.simple input.own{font-size:18px;}
+html.simple .sugg .s{font-size:16px;}
+html.simple .item .ttl{font-size:18px;}
+html.simple .qtext{font-size:21px;}
+html.simple .ask .q > div > b{font-size:18px;} html.simple .ask .q > div > span{font-size:16px;}
+
 /* ===================== 白い画面（v25〜・設定の「画面の色」で選んだ人だけ） =====================
    生徒めい（10/2）「黒だと見にくい。計画マップのように白が見やすい」。既定は黒と金のまま。
    文字の色はすべて白地でコントラスト比 4.5 以上。部屋に出す画像と写真の拡大は黒のまま。 */
@@ -501,6 +518,12 @@ html[data-theme="light"] .tg::after{background:#fff;}
       <div class="chips" id="themeSeg"><button class="chip" data-th="dark">黒（いつもの）</button><button class="chip" data-th="light">白</button></div>
     </div>
 
+    <div class="card" id="simpleCard">
+      <h3><svg viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V7z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>かんたんモード（小学生向け）</h3>
+      <div class="sw"><span>かんたんモードにする</span><button class="tg" id="tgSimple" aria-label="切りかえ"></button></div>
+      <div class="dim">字を大きく、言葉をやさしくして、使う機能をしぼります（ランダム・間隔の設定・届く日・部屋に出す をかくします）。ミスの種類は6つから選びます。いまの使う人だけに効くので、兄弟で「兄はいつもの、弟はかんたん」にできます。</div>
+    </div>
+
     <div class="card" id="profCard">
       <h3><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.3c.5-.2 1-.3 1.5-.3 2.8 0 5 2.2 5 5"/></svg>使う人（兄弟で1台を使うとき）</h3>
       <div class="dim" style="margin-bottom:10px">人ごとに、問題・写真・記録・間隔の設定が別々に保存されます。名前を押すと、その人に切りかわります。</div>
@@ -511,19 +534,19 @@ html[data-theme="light"] .tg::after{background:#fff;}
       <button class="btn-line danger hidden" id="btnProfDel">この人を消す</button>
     </div>
 
-    <div class="card">
+    <div class="card s-hide">
       <h3><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 8v4l2.5 2.5"/></svg>問題が届く間隔</h3>
       <div class="dim" style="margin-bottom:10px">何日あけて、何回くり返すかを自分で決められます。日数は、前にその問題を解いた日から数えます。</div>
       <div id="gapBox"></div>
     </div>
 
-    <div class="card">
+    <div class="card s-hide">
       <h3><svg viewBox="0 0 24 24"><path d="M4 7h4l3 5-3 5H4"/><path d="M13 7h7"/><path d="M13 17h7"/><path d="m17 4 3 3-3 3"/><path d="m17 14 3 3-3 3"/></svg>ランダムに解く</h3>
       <div class="sw"><span>極まった問題も混ぜる</span><button class="tg" id="tgRandMast" aria-label="切りかえ"></button></div>
       <div class="dim">ランダムで解いたときは、「解けなかった」だけが記録されて翌日からやり直しになります。「解けた」は予定を進めません（間隔をあけて覚えるため）。</div>
     </div>
 
-    <div class="card">
+    <div class="card s-hide">
       <h3><svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M10 18h4"/></svg>毎朝、自動で開く</h3>
       <div class="dim" style="margin-bottom:8px">Webアプリは通知を出せません。代わりに iPhone 標準の「ショートカット」アプリで、決まった時刻に<span class="appname">Essence</span>が自動で開くようにできます。一度だけの設定です。</div>
       <ol class="steps">
@@ -592,7 +615,7 @@ html[data-theme="light"] .tg::after{background:#fff;}
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 25;
+const VER = 26;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -807,14 +830,22 @@ const PICK = {
   subj: { main:SUBJ, more:SUBJ_MORE, field:'subj', what:'教科', ph:'ないときは、ここに自分で入れる', toggle:false },
   tag:  { main:TAGS, more:TAG_MORE, field:'tag', what:'種類', ph:'ないときは、ここに自分で入れる', toggle:true },
 };
-const isOtherV = (kind, v) => !!v && (v === 'その他' || !PICK[kind].main.includes(v));
+/* かんたんモード（小学生向け）のミスの種類。ほかは「その他」の中から選べる。分析（記録タブ）はいつもの全部の種類で数える */
+const TAGS_SIMPLE = [SOLVE_TAG, '計算ミス', '写し間違い', '問題の読み間違い', '漢字ミス', 'その他'];
+const isSimple = () => !!(S && S.cfg && S.cfg.simple);
+function pk(kind){
+  if(kind !== 'tag' || !isSimple()) return PICK[kind];
+  const all = [...TAGS, ...TAG_MORE].filter(t => t !== 'その他' && !TAGS_SIMPLE.includes(t));
+  return { ...PICK.tag, main:TAGS_SIMPLE, more:all };
+}
+const isOtherV = (kind, v) => !!v && (v === 'その他' || !pk(kind).main.includes(v));
 /* 前に自分で入れた名前（次からは選ぶだけでよい） */
 function usedOwn(kind){
-  const c = PICK[kind];
+  const c = pk(kind);
   return [...new Set(S.items.map(i => i[c.field]).filter(v => v && !c.main.includes(v) && !c.more.includes(v)))];
 }
 function pickerHtml(kind, v){
-  const c = PICK[kind], other = isOtherV(kind, v);
+  const c = pk(kind), other = isOtherV(kind, v);
   const chip = (x, on) => kind === 'subj'
     ? `<button class="chip sub ${on ? 'on' : ''}" data-v="${esc(x)}" style="--c:${SUBJC[x] || SUBJC['その他']}">${esc(x)}</button>`
     : `<button class="chip sm ${on ? 'on' : ''}" data-v="${esc(x)}">${esc(x)}</button>`;
@@ -827,7 +858,7 @@ function pickerHtml(kind, v){
 }
 /* box に選ぶ部品を出す。get/set で値を読み書きする */
 function mountPicker(box, kind, get, set){
-  const c = PICK[kind];
+  const c = pk(kind);
   const draw = () => {
     box.innerHTML = pickerHtml(kind, get());
     box.querySelectorAll('[data-v]').forEach(b => b.onclick = () => {
@@ -849,7 +880,7 @@ function mountPicker(box, kind, get, set){
 }
 /* 一覧に出す順：決まった教科（種類）→ 自分で入れたもの → その他 */
 function listWithOwn(kind, items){
-  const c = PICK[kind], base = c.main.filter(x => x !== 'その他');
+  const c = { ...PICK[kind], main: kind === 'tag' ? [...TAGS.filter(t => t !== 'その他'), ...TAG_MORE.filter(t => items.some(i => i.tag === t)), 'その他'] : PICK[kind].main }, base = c.main.filter(x => x !== 'その他');
   const own = [...new Set(items.map(i => i[c.field]).filter(v => v && v !== 'その他' && !c.main.includes(v)))];
   return [...base, ...own, 'その他'];
 }
@@ -904,6 +935,7 @@ function norm(j){
   j.cfg.gaps = g;
   j.cfg.randN = [3,5,10].includes(j.cfg.randN) ? j.cfg.randN : 5;
   j.cfg.randMast = !!j.cfg.randMast;
+  j.cfg.simple = !!j.cfg.simple;   // かんたんモード（使う人ごと）
   j.cfg.lastBackup = typeof j.cfg.lastBackup === 'string' ? j.cfg.lastBackup : '';
   j.sends = Array.isArray(j.sends) ? j.sends.filter(x => x && Array.isArray(x.ids)) : [];   // 部屋に出した記録 [{id, no, d, ids}]
   j.items.forEach(it => { it.imgs = it.imgs || []; it.log = it.log || []; it.stage = Number(it.stage)||0; it.text = it.text || ''; it.why = it.why || ''; it.fix = it.fix || ''; it.tag = it.tag || ''; it.whyP = it.whyP || null; it.fixP = it.fixP || null; it.sent = typeof it.sent === 'string' ? it.sent : ''; });
@@ -1295,14 +1327,15 @@ function whyExHtml(tag){
   const list = whysFor(tag);
   if(!list) return `<div class="sugg"><div class="none">先に「ミスの種類」を選ぶと、理由の書き方の例が出ます。</div></div>`;
   return `<div class="sugg"><span class="lbl">書き方の例（押すと入ります。自分の問題に合わせて直してください）</span>
-    ${list.map((x, i) => `<button class="s" data-wx="${i}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>${esc(composeWhy(x))}</span></button>`).join('')}</div>`;
+    ${list.map((x, i) => `<button class="s" data-wx="${i}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>${esc(isSimple() ? x.did : composeWhy(x))}</span></button>`).join('')}</div>`;
 }
 function bindWhyEx(root, p){
   root.querySelectorAll('#'+p+'WhyEx [data-wx]').forEach(b => b.onclick = () => {
     const tag = root.__tag ? root.__tag() : '', x = (whysFor(tag) || [])[Number(b.dataset.wx)], why = root.__why;
     if(!x || !why) return;
-    why.did = x.did; why.then = x.then;
-    root.querySelector('#'+p+'Did').value = x.did; root.querySelector('#'+p+'Then').value = x.then;
+    /* かんたんモードは「そのとき何が起きた」をかくしているので、見えている欄だけに入れる */
+    why.did = x.did; why.then = isSimple() ? '' : x.then;
+    root.querySelector('#'+p+'Did').value = x.did; root.querySelector('#'+p+'Then').value = why.then;
     hideErr(root, p+'WhyErr');
     if(root.__onch) root.__onch();
     toast('入りました。自分の問題に合わせて直してください');
@@ -1312,7 +1345,7 @@ function whyFields(p, d, tag){
   const w = WHY_TXT[kindOf(tag)];
   return `<div id="${p}WhyEx">${whyExHtml(tag)}</div>
     <div class="sub-in"><label id="${p}DidL">${w.did}</label><input type="text" id="${p}Did" value="${esc(d.did)}" placeholder="${w.didPh}" autocomplete="off"></div>
-    <div class="sub-in"><label id="${p}ThenL">${w.then}</label><input type="text" id="${p}Then" value="${esc(d.then)}" placeholder="${w.thenPh}" autocomplete="off"></div>
+    <div class="sub-in why-then"><label id="${p}ThenL">${w.then}</label><input type="text" id="${p}Then" value="${esc(d.then)}" placeholder="${w.thenPh}" autocomplete="off"></div>
     <div class="hint" id="${p}WhyHint">${w.hint}</div>
     <div class="err hidden" id="${p}WhyErr"></div>`;
 }
@@ -1445,18 +1478,19 @@ function renderAdd(){
 
     <div class="field req"><label>教科<b>必須</b></label><div id="addSubj"></div></div>
 
-    <div class="field"><label>届く日（「今日の問題」に入る日）</label>
+    <div class="field f-due"><label>届く日（「今日の問題」に入る日）</label>
       <div class="dayrow"><input type="date" id="addDay" min="${today()}"><button class="chip sm" id="addDayToday">今日</button><button class="chip sm" id="addDayStd">${gapLabel(gaps()[0])}</button></div>
       <div class="dnote" id="addDayNote"></div>
       <div class="hint">前に解いた問題も、カレンダーで日を選ぶと、その日の「今日の問題」に入ります。直前期までに極めたい問題を、好きな日に入れておけます。</div></div>
 
     <div class="field req"><label>ミスの種類<b>必須</b></label><div id="addTag"></div>
-      <div class="hint">丸付けで✕がついた問題は、全部入れてOKです。◯でも解説より遠回りだった問題は「${METHOD_TAG}」で入れられます。同じ種類が集まると、それがあなたのクセです（下の「記録」タブで見られます）。</div>
+      <div class="hint t-simple">丸つけで✕がついた問題を、ぜんぶ入れます。同じ種類が多いと、それがあなたのクセです。</div>
+      <div class="hint t-full">丸付けで✕がついた問題は、全部入れてOKです。◯でも解説より遠回りだった問題は「${METHOD_TAG}」で入れられます。同じ種類が集まると、それがあなたのクセです（下の「記録」タブで見られます）。</div>
       <div class="err hidden" id="addTagErr"></div></div>
 
-    <div class="field req"><label>間違えた理由<b>必須</b></label>${whyFields('add', draft.whyP, draft.tag)}</div>
+    <div class="field req"><label><span class="t-full">間違えた理由</span><span class="t-simple">なんで まちがえた？</span><b>必須</b></label>${whyFields('add', draft.whyP, draft.tag)}</div>
 
-    <div class="field req"><label>改善点（いつ・何を・どうする）<b>必須</b></label>${fixFields('add', draft.fixP, draft.tag)}</div>
+    <div class="field req"><label><span class="t-full">改善点（いつ・何を・どうする）</span><span class="t-simple">つぎは どうする？（いつ・何を・どうする）</span><b>必須</b></label>${fixFields('add', draft.fixP, draft.tag)}</div>
 
     <button class="btn-primary" id="addGo">この問題を登録する</button>
     <div class="dim" style="text-align:center; margin-top:8px"><span id="addDueMsg"></span><br>書きかけは自動で残るので、とちゅうで閉じても大丈夫です。</div>
@@ -1545,8 +1579,8 @@ function openEdit(id, opt){
     <div class="field"><label>問題（文字）</label><textarea id="edText" rows="2">${esc(d.text)}</textarea></div>
     <div class="field"><label>教科</label><div id="edSubj"></div></div>
     <div class="field"><label>ミスの種類</label><div id="edTag"></div><div class="err hidden" id="edTagErr"></div></div>
-    <div class="field"><label>間違えた理由</label>${whyFields('ed', d.whyP, d.tag)}</div>
-    <div class="field"><label>改善点（いつ・何を・どうする）</label>${fixFields('ed', d.fixP, d.tag)}</div>
+    <div class="field"><label><span class="t-full">間違えた理由</span><span class="t-simple">なんで まちがえた？</span></label>${whyFields('ed', d.whyP, d.tag)}</div>
+    <div class="field"><label><span class="t-full">改善点（いつ・何を・どうする）</span><span class="t-simple">つぎは どうする？（いつ・何を・どうする）</span></label>${fixFields('ed', d.fixP, d.tag)}</div>
     <button class="btn-primary" id="edSave">保存する</button>
     <button class="btn-line danger" id="edDel">この問題を消す</button>
     <button class="close" id="edClose">閉じる</button></div>`;
@@ -2016,6 +2050,7 @@ function askApplyGaps(g){
 function renderSet(){
   renderGaps();
   renderTheme();
+  applySimple();
   renderProfs();
   $('#tgRandMast').classList.toggle('on', S.cfg.randMast);
   const lb = S.cfg.lastBackup, days = lb ? diffDays(lb, today()) : 9999;
@@ -2083,6 +2118,13 @@ $('#btnProfDel').onclick = async () => {
 };
 $('#whoTag').onclick = () => { goTab('Set'); setTimeout(() => $('#profCard').scrollIntoView({ behavior:'smooth', block:'start' }), 60); };
 
+/* かんたんモード */
+function applySimple(){ document.documentElement.classList.toggle('simple', isSimple()); const t = $('#tgSimple'); if(t) t.classList.toggle('on', isSimple()); }
+$('#tgSimple').onclick = () => {
+  S.cfg.simple = !S.cfg.simple; save(); applySimple();
+  renderAdd(); renderAll(); renderSet();
+  toast(S.cfg.simple ? 'かんたんモードにしました' : 'いつもの画面にもどしました');
+};
 $('#tgRandMast').onclick = () => { S.cfg.randMast = !S.cfg.randMast; save(); renderSet(); renderToday(); };
 
 /* 控え */
@@ -2226,6 +2268,7 @@ function slides(){ return [
   { ico:'save', t:'10. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の <b>「記録の控えをとる」</b> を、ときどき押してください。軽いのですぐ終わります。', ex:'写真も残したいときは「写真もとる」。重いので何回かに分けて保存します。機種変更のときだけで十分です。' },
   { ico:'people', t:'11. 兄弟で使う', p:'1台を兄弟で使うときは、設定の <b>「使う人」</b> で人をふやします。名前を押すと切りかわり、問題・写真・記録は<b>人ごとに別々</b>に保存されます。', ex:'いまだれの画面かは、上の名前の札で分かります。札を押すと、切りかえの所に飛びます。' },
   { ico:'sun', t:'12. 画面を白くする', p:'黒い画面が見にくいときは、設定の <b>「画面の色」</b> で <b>「白」</b> を選んでください。すぐに切りかわります。', ex:'この端末だけの設定です。部屋に出す画像は、いつもの黒のままです。' },
+  { ico:'shield', t:'13. かんたんモード', p:'小学生が使うときは、設定の <b>「かんたんモード」</b> をオンにします。字が大きくなり、言葉がやさしくなって、使う機能がしぼられます。', ex:'使う人ごとの設定です。兄弟で「兄はいつもの、弟はかんたん」にできます。理由と改善点は、書き方の例を押して自分の問題に直します。' },
 ]; }
 const SICO = {
   doc: ICO.doc, camera: ICO.camera, redo: ICO.redo, eye: ICO.eye, shuffle: ICO.shuffle,
@@ -2234,6 +2277,7 @@ const SICO = {
   chart: '<svg viewBox="0 0 24 24"><path d="M3 20h18"/><rect x="5" y="11" width="3.5" height="9"/><rect x="10.25" y="6" width="3.5" height="14"/><rect x="15.5" y="14" width="3.5" height="6"/></svg>',
   save: '<svg viewBox="0 0 24 24"><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/></svg>',
   send: '<svg viewBox="0 0 24 24"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="m10 13 5-5"/></svg>',
+  shield: '<svg viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V7z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>',
   sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>',
   people: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.3c.5-.2 1-.3 1.5-.3 2.8 0 5 2.2 5 5"/></svg>',
   install: '<svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M12 7v7"/><path d="m9 11.5 3 3 3-3"/></svg>',
@@ -2370,6 +2414,7 @@ window.addEventListener('beforeunload', () => save());
 /* 起動 */
 document.title = APP_NAME; const _t = document.querySelector('#appTitle'); if(_t) _t.textContent = APP_NAME;
 document.querySelectorAll('.appname').forEach(e => { e.textContent = APP_NAME; });
+applySimple();
 renderToday();
 checkInstall();
 renderAdd();

@@ -207,13 +207,13 @@ nav.tabs button.on{color:var(--ai)}
 .sl-top{display:flex;gap:1.4cqw;align-items:center;font-size:1.9cqw;color:var(--muted)}
 .sl-top .p{background:var(--ai);color:#fff;border-radius:99px;padding:.2cqw 1.6cqw;font-weight:700}
 .sl-top .one{margin-left:auto;color:var(--shu);font-weight:700;border:.2cqw solid var(--shu);border-radius:.8cqw;padding:.1cqw 1.2cqw}
-.sl-main{display:flex;gap:4cqw;align-items:center;margin-top:2.2cqw}
+.sl-main{display:flex;gap:4cqw;align-items:center;flex:1}
 .sl-l{flex:1.15;min-width:0}
 .sl-w{font-family:var(--mincho);font-weight:900;font-size:8.4cqw;line-height:1.15;white-space:nowrap}
 .sl-k{font-family:var(--mincho);font-size:2.6cqw;color:var(--muted);margin-top:.6cqw}
 .sl-r{flex:1;background:#fff;border:.35cqw solid var(--shu);border-radius:1.6cqw;padding:1.8cqw 2.2cqw}
-.sl-m{font-size:3.5cqw;font-weight:700;color:var(--shu);line-height:1.3}
-.sl-s{font-size:2.1cqw;color:var(--muted);margin-top:.6cqw;line-height:1.4}
+.sl-m{font-size:4.6cqw;font-weight:700;color:var(--shu);line-height:1.3}
+.sl-s{font-size:2.6cqw;color:var(--muted);margin-top:1cqw;line-height:1.4}
 .sl-tip{margin-top:2.2cqw;font-size:2.3cqw;line-height:1.55;background:rgba(154,118,48,.1);border-radius:1.4cqw;padding:1.6cqw 2.2cqw;flex:1;min-height:0;overflow:hidden}
 .sl-tip b{color:var(--gold);margin-right:1cqw}
 .sl-ex{margin-top:1.8cqw;font-size:2.15cqw;line-height:1.45;color:var(--ink)}
@@ -232,6 +232,10 @@ nav.tabs button.on{color:var(--ai)}
 .lesson .lbar span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .lesson .cap{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:17px;line-height:1.7;min-height:120px}
 .lesson .cap > div + div{margin-top:8px}
+.lesson .cap .cp{transition:opacity .3s;border-radius:10px}
+.lesson .cap.speaking .cp{opacity:.4}
+.lesson .cap.speaking .cp.now{opacity:1}
+.lesson .cap .cp + .cp{margin-top:12px}
 .lesson .cap .cw{font-family:var(--mincho);font-weight:900;font-size:22px}
 .lesson .nav{display:flex;gap:8px;margin-top:14px}
 
@@ -416,7 +420,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js?v=10"></script>
 <script>
 'use strict';
-const VER = 14;
+const VER = 15;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -711,10 +715,8 @@ function slideHTML(i){
   const w = W[i];
   return `<div class="slide" data-i="${i}"><div class="sl">
     <div class="sl-top"><span>No.${pad3(i+1)}</span><span>Day${Math.floor(i/PER)+1}</span><span class="p">${esc(pname(w.p))}</span><span class="one">1分で覚える</span></div>
-    <div class="sl-main"><div class="sl-l hl" data-sec="w"><div class="sl-w" style="font-size:${Math.min(8.4, 40 / [...w.w].length).toFixed(2)}cqw">${esc(w.w)}</div>${w.k ? `<div class="sl-k">${esc(w.k)}</div>` : ''}</div>
-      <div class="sl-r hl" data-sec="m"><div class="sl-m">${esc(w.m)}</div>${w.s.length ? `<div class="sl-s">${w.s.map(esc).join('／')}</div>` : ''}</div></div>
-    <div class="sl-tip hl" data-sec="tip"${slideTipSize(w)}><b>覚え方</b>${esc(w.tip)}${w.g ? `<div class="sl-g"><b>語呂</b>${esc(w.g)}</div>` : ''}</div>
-    ${w.ex ? `<div class="sl-ex hl" data-sec="ex">例）<span class="ex">${exHTML(w)}</span>　${ftBox(w, true)}</div>` : ''}
+    <div class="sl-main"><div class="sl-l hl" data-sec="w"><div class="sl-w" style="font-size:${Math.min(10, 40 / [...w.w].length).toFixed(2)}cqw">${esc(w.w)}</div>${w.k ? `<div class="sl-k">${esc(w.k)}</div>` : ''}</div>
+      <div class="sl-r hl" data-sec="m"><div class="sl-m">${esc(w.m)}</div>${w.s.length ? `<div class="sl-s">ほかに：${w.s.map(esc).join('／')}</div>` : ''}</div></div>
   </div><img class="simg" src="slides/${pad3(i+1)}.png" alt="" onerror="this.remove()"></div>`;
 }
 /* 例文：words.js の exr（{漢字|よみ}）があれば、ふりがな（ruby）をつけて出す。設定で消せる */
@@ -837,10 +839,9 @@ function drawLesson(){
     <div class="ovbody">${slideHTML(i)}
       <div class="ctrl"><button class="playb" data-a="play"></button>
         <div class="lbar"><div class="pbar"><i style="width:0%"></i></div><span class="lt">0:00 / 1:00</span></div></div>
-      <div class="cap">${lessonParts(i).slice(0, 4).map(p => `<div>${p.show}</div>`).join('')}</div>
+      <div class="cap">${lessonParts(i).filter(p => p.sec === 'tip' || p.sec === 'ex').map(p => `<div class="cp" data-sec="${p.sec}">${p.show}</div>`).join('')}</div>
       <div class="nav"><button class="btn sub" data-a="prev" ${L.k ? '' : 'disabled style="opacity:.4"'}>‹ 前</button><button class="btn sub" data-a="next" ${L.k < L.ids.length-1 ? '' : 'disabled style="opacity:.4"'}>次 ›</button></div>
       ${(() => { const v = jaVoice(); return S.cfg.voiceMode === 'device' && v && !V_HQ.test(v.name) ? '<p class="dim" style="margin-top:12px">声をもっと自然にしたいときは「設定 → 1分解説の声」を見てください。</p>' : ''; })()}
-      <p class="dim" style="margin-top:12px">スライド画像（ChatGPT で作った1枚）を <b>slides/${pad3(i+1)}.png</b> に置くと、この組版のかわりにその画像が出ます。読み上げは画像のときも同じです。</p>
     </div>`;
   setPlayIcon(); fitSlide(ov);
   ov.querySelector('[data-a=x]').onclick = () => { lessonStop(); const f = L && L.onClose; closeOv(); if(f) f(); };
@@ -873,7 +874,7 @@ function lessonPlay(){
   const i = L.ids[L.k], parts = lessonParts(i), seq = ++L.seq, slide = $('.ov .slide'), no = pad3(i+1);
   L.playing = true; setPlayIcon(); slide.classList.add('speaking');
   const bar = $('.ov .pbar i'), lt = $('.ov .lt');
-  const show = k => { const p = parts[Math.min(k, parts.length-1)]; if(p.sec === 'ex') setTimeout(() => { $$('.ov .ftw').forEach(f => f.classList.add('open')); fitSlide($('.ov')); }, 0); slide.querySelectorAll('.hl').forEach(h => h.classList.toggle('now', h.dataset.sec === p.sec)); const cap = $('.ov .cap'); if(cap) cap.innerHTML = p.show; };
+  const show = k => { const p = parts[Math.min(k, parts.length-1)]; if(p.sec === 'ex') setTimeout(() => { $$('.ov .ftw').forEach(f => f.classList.add('open')); fitSlide($('.ov')); }, 0); slide.querySelectorAll('.hl').forEach(h => h.classList.toggle('now', h.dataset.sec === p.sec)); const cap = $('.ov .cap'); if(cap){ cap.classList.add('speaking'); cap.querySelectorAll('.cp').forEach(c => c.classList.toggle('now', c.dataset.sec === p.sec)); } };
   stopSpeech(); clearInterval(L.timer);
   const rec = AIDX && AIDX[no];
   if(S.cfg.voice && S.cfg.voiceMode !== 'device' && rec){
@@ -922,6 +923,7 @@ function lessonStop(ended){
   L.seq++; L.playing = false; stopSpeech(); clearInterval(L.timer);
   if(L.audio){ try{ L.audio.pause(); }catch(e){} L.audio = null; }
   const slide = $('.ov .slide'); if(slide){ slide.classList.remove('speaking'); slide.querySelectorAll('.hl').forEach(h => h.classList.remove('now')); }
+  const cap = $('.ov .cap'); if(cap){ cap.classList.remove('speaking'); cap.querySelectorAll('.cp').forEach(c => c.classList.remove('now')); }
   setPlayIcon();
   if(ended && L.k < L.ids.length - 1) toast('次の単語へ ›（右下のボタン）');
 }
@@ -1539,7 +1541,7 @@ function guideSlides(){
       v:`<div class="grid" style="grid-template-columns:34px repeat(7,minmax(0,1fr))"><div></div>${[1,2,3,4,5,6,7].map(d => `<div class="h">Day${d}</div>`).join('')}${[1,2,3].map(l => `<div class="l">${l}周</div>` + [0,1,2,3,4,5,6].map(d => `<span class="cell ${l===1&&d<3?'d':''} ${l===1&&d===3?'cur':''}" style="${l===1&&d<3?'background:#2E7A57':''}">${l===1&&d<3?[96,88,92][d]:''}</span>`).join('')).join('')}</div><div class="dim" style="text-align:center">…8周まで</div>` },
     { t:'① 覚える時間', p:['「今日」の①を押して、<b>覚える時間を自分で決めます</b>（3分〜、自由に入力も）。','のこり時間は<b>画面のいちばん上</b>に出ます。単語カード・一覧・1分解説から、好きな方法で覚えましょう。'],
       v:`<div style="background:#1F2A4D;color:#fff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px"><b style="font-size:24px">9:42</b><small style="opacity:.8">覚える時間</small><span style="margin-left:auto;font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:99px">一時停止</span></div><div class="minicard">単語カード　／　一覧（意味をかくせる）　／　1分解説</div>` },
-    { t:'1分解説', p:['スライドと音声で、1語を約1分で解説します。<b>読んでいる所が光り</b>、下に字幕が出ます。','覚えにくい単語だけ見ればOK。単語タブから、どの単語でも見られます。'],
+    { t:'1分解説', p:['音声で、1語を約1分で解説します。上のスライドに見出し語と意味、下に覚え方・語呂・例文。<b>読んでいる所が光ります</b>。','覚えにくい単語だけ見ればOK。単語タブから、どの単語でも見られます。'],
       v:`<div class="minicard" style="flex-direction:column;align-items:flex-start"><b style="font-size:22px">こころもとなし</b><span style="color:var(--shu);font-weight:700;border:1.5px solid var(--shu);border-radius:8px;padding:2px 8px">じれったい</span><span class="dim" style="font-size:12.5px">覚え方：心が「もと（本来の位置）」になく落ち着かない…</span></div>` },
     { t:'② テスト', p:['50問の4択テスト。<b>時間と正答率は自動で記録</b>されます。','まちがえた単語だけ、すぐにもう一度。「報告用にコピー」で、勉強報告にそのまま貼れます。','慣れてきたら、テストタブの「出題の形式」で<b>書いて答える</b>・<b>例文の穴埋め</b>にも変えられます。'],
       v:`<div style="text-align:center"><div style="font-family:var(--mincho);font-weight:900;font-size:44px;color:#2E7A57;line-height:1.1">92<small style="font-size:18px">%</small></div><div class="dim">50問中 46問 正解　・　時間 6分12秒</div></div>` },

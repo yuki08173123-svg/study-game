@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """英検準1級 単熟語 のアイコンを作る（PIL だけ）。
-紫の地に、白の「英」を太いゴシックで大きく（左右のまん中）。下のまん中に金の札「準1」。
+黒の地（いちばん難しい級なので黒×金）に、白の「英」を太いゴシックで大きく（左右のまん中）。下のまん中に金の札「準1」。
 python3 tools/eikenp1-icon.py → eiken-p1/ にアイコン4枚と /tmp/eikenp1-icon-preview.png
 """
 import os
@@ -11,7 +11,7 @@ OUT = os.path.join(HERE, '..', 'eiken-p1')
 GOTH = '/System/Library/Fonts/ヒラギノ角ゴシック W8.ttc'
 GOTH6 = '/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc'
 S = 1024
-TOP, BOT = (88, 52, 150), (56, 30, 104)
+TOP, BOT = (52, 52, 58), (12, 12, 14)
 WHITE = (255, 255, 255)
 GOLD = (236, 178, 58)
 NAVY = (22, 40, 74)
@@ -27,6 +27,9 @@ def draw(size=S, safe=1.0):
             px[x, y] = c
     d = ImageDraw.Draw(im)
     k = size / S * safe
+    # 金の細い枠（いちばん上の級らしく）。iOS の角丸に合わせて内側に置く
+    m = 58 * size / S
+    d.rounded_rectangle([m, m, size - m, size - m], radius=int(170 * size / S), outline=GOLD, width=max(2, int(14 * size / S)))
     cx, cy = size / 2, size / 2
     # 「英」は左右のまん中。字の形（インクの範囲）で中心を合わせる
     f = ImageFont.truetype(GOTH, int(540 * k))

@@ -230,6 +230,13 @@ nav.tabs button.on{color:var(--ai)}
 .lesson .lbar{flex:1}
 .lesson .lbar .pbar{margin:0 0 4px}
 .lesson .lbar span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+/* 1分解説：スライド（見出し語・意味）と 覚え方・語呂・例文 を1枚のカードにまとめ、音声プレーヤーはその下（塾生の声） */
+.lcard{background:#FBF6EA;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(60,40,10,.08)}
+.lcard .slide{border:0;border-radius:0;box-shadow:none;aspect-ratio:16/6}
+.lcard .slide.hasimg{aspect-ratio:3/2}
+.lcard .slide .sl{padding:3.4cqw 5cqw 2.4cqw}
+.lesson .lcard .cap{margin:0;border:0;border-radius:0;background:transparent;padding:4px 18px 18px;min-height:0}
+.lesson .lcard .cap::before{content:'';display:block;border-top:1px solid rgba(154,118,48,.25);margin:0 0 14px}
 .lesson .cap{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:17px;line-height:1.7;min-height:120px}
 .lesson .cap > div + div{margin-top:8px}
 .lesson .cap .cp{transition:opacity .3s;border-radius:10px}
@@ -420,7 +427,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js?v=10"></script>
 <script>
 'use strict';
-const VER = 16;
+const VER = 17;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -728,7 +735,7 @@ function slideHTML(i){
     <div class="sl-top"><span>No.${pad3(i+1)}</span><span>Day${Math.floor(i/PER)+1}</span><span class="p">${esc(pname(w.p))}</span><span class="one">1分で覚える</span></div>
     <div class="sl-main"><div class="sl-l hl" data-sec="w"><div class="sl-w" style="font-size:${Math.min(10, 40 / [...w.w].length).toFixed(2)}cqw">${esc(w.w)}</div>${w.k ? `<div class="sl-k">${esc(w.k)}</div>` : ''}</div>
       <div class="sl-r hl" data-sec="m"><div class="sl-m">${esc(w.m)}</div>${w.s.length ? `<div class="sl-s">ほかに：${w.s.map(esc).join('／')}</div>` : ''}</div></div>
-  </div><img class="simg" src="slides/${pad3(i+1)}.png" alt="" onerror="this.remove()"></div>`;
+  </div><img class="simg" src="slides/${pad3(i+1)}.png" alt="" onload="this.parentNode.classList.add('hasimg')" onerror="this.remove()"></div>`;
 }
 /* 例文：words.js の exr（{漢字|よみ}）があれば、ふりがな（ruby）をつけて出す。設定で消せる */
 function exHTML(w){
@@ -847,10 +854,10 @@ function openLesson(ids, k, onClose){
 function drawLesson(){
   const ov = $('.ov'), i = L.ids[L.k];
   ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">1分解説　${L.k+1} / ${L.ids.length}</div></div>
-    <div class="ovbody">${slideHTML(i)}
+    <div class="ovbody"><div class="lcard">${slideHTML(i)}
+      <div class="cap">${lessonParts(i).filter(p => p.sec === 'tip' || p.sec === 'ex').map(p => `<div class="cp" data-sec="${p.sec}">${p.show}</div>`).join('')}</div></div>
       <div class="ctrl"><button class="playb" data-a="play"></button>
         <div class="lbar"><div class="pbar"><i style="width:0%"></i></div><span class="lt">0:00 / 1:00</span></div></div>
-      <div class="cap">${lessonParts(i).filter(p => p.sec === 'tip' || p.sec === 'ex').map(p => `<div class="cp" data-sec="${p.sec}">${p.show}</div>`).join('')}</div>
       <div class="nav"><button class="btn sub" data-a="prev" ${L.k ? '' : 'disabled style="opacity:.4"'}>‹ 前</button><button class="btn sub" data-a="next" ${L.k < L.ids.length-1 ? '' : 'disabled style="opacity:.4"'}>次 ›</button></div>
       ${(() => { const v = jaVoice(); return S.cfg.voiceMode === 'device' && v && !V_HQ.test(v.name) ? '<p class="dim" style="margin-top:12px">声をもっと自然にしたいときは「設定 → 1分解説の声」を見てください。</p>' : ''; })()}
     </div>`;

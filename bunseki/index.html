@@ -204,6 +204,70 @@ table.sum thead tr > :first-child{background:var(--bg)}
 .steplist button span{color:var(--muted);font-weight:500;font-size:13px;margin-left:auto}
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:700;z-index:100;width:max-content;max-width:calc(100vw - 28px);text-align:center;box-shadow:var(--shadow-lg)}
 .ver{text-align:center;font-size:12px;color:var(--muted);margin:24px 0}
+
+/* 下のタブ（つくる／学ぶ） */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--card);border-top:1px solid var(--line);display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+.tabbar button{flex:1;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:700;color:var(--muted);padding:4px 0;min-height:50px}
+.tabbar button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button.on{color:var(--accent)}
+/* 学ぶ */
+.lhero{background:linear-gradient(135deg,var(--accent),#14444A);color:#fff;border-radius:20px;padding:20px;margin:12px 0}
+.lhero h2{margin:0 0 4px;font-size:21px;color:#fff}
+.lhero p{margin:0 0 14px;font-size:14px;opacity:.9}
+.lhero .btn{background:#fff;color:#0E5E66;width:100%;font-size:17px;min-height:54px}
+.lhero .pbar{background:rgba(255,255,255,.25)}
+.lhero .pbar i{background:#fff}
+.vcard{display:flex;gap:12px;align-items:flex-start;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px;margin:10px 0;text-decoration:none;color:var(--ink)}
+.vcard .ic{flex:none;width:44px;height:44px;border-radius:12px;background:var(--shu-soft);color:var(--shu);display:grid;place-items:center;font-size:18px}
+.vcard .ic.loom{background:var(--accent-soft);color:var(--accent)}
+.vcard .m{flex:1;min-width:0}
+.vcard .k{font-size:12px;font-weight:700;color:var(--muted)}
+.vcard .t{font-weight:900;font-size:16px;line-height:1.4;overflow-wrap:anywhere}
+.vcard .d{font-size:13px;color:var(--muted);margin-top:2px}
+.vcard .chips{margin-top:8px}
+.vcard .chip{text-decoration:none;color:var(--ink)}
+.vlink{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--shu);text-decoration:none;background:var(--shu-soft);border-radius:999px;padding:6px 12px;margin-top:8px}
+/* スライド */
+.sv{position:fixed;inset:0;z-index:90;background:var(--bg);display:flex;flex-direction:column}
+.sv .top{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 8px}
+.sv .top .c{flex:1;font-size:13px;font-weight:700;color:var(--muted);text-align:center}
+.sv .prog{margin:0 16px}
+.sv .stage{flex:1;overflow-y:auto;padding:14px 16px 16px;-webkit-overflow-scrolling:touch}
+.sl{max-width:640px;margin:0 auto;background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:22px 20px;min-height:100%;display:flex;flex-direction:column}
+.sl .sec{font-size:12px;font-weight:900;color:var(--accent);letter-spacing:.08em}
+.sl h2{font-size:23px;margin:6px 0 14px;line-height:1.4}
+.sl .body{flex:1;font-size:16px;line-height:1.75}
+.sl .body p{margin:0 0 12px}
+.sl .body ul,.sl .body ol{margin:0 0 12px;padding-left:22px}
+.sl .body li{margin:4px 0}
+.sl .big{font-size:24px;font-weight:900;line-height:1.5;color:var(--accent);margin:8px 0 14px}
+.sl .quote{border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:6px 0 14px;font-weight:900;font-size:19px;line-height:1.55}
+.sl .box{background:var(--chip);border-radius:12px;padding:12px 14px;margin:0 0 12px}
+.sl .box b{color:var(--accent)}
+.sl .ng{background:var(--shu-soft);color:var(--shu);border-radius:12px;padding:10px 14px;margin:0 0 12px;font-weight:700}
+.sl .flow{display:flex;flex-direction:column;gap:6px;margin:4px 0 14px}
+.sl .flow > div{background:var(--accent-soft);border-radius:12px;padding:10px 14px;font-weight:700}
+.sl .flow > div small{display:block;font-weight:500;color:var(--muted);font-size:13px}
+.sl .flow > i{text-align:center;font-style:normal;color:var(--muted);line-height:1}
+.sl .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 14px}
+.sl .grid3 > div{background:var(--chip);border-radius:12px;padding:10px 8px;text-align:center;font-size:13px;line-height:1.5}
+.sl .grid3 > div b{display:block;font-size:26px;color:var(--accent);line-height:1.2}
+.sl .num3{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:4px;margin:4px 0 14px;text-align:center}
+.sl .num3 > div{background:var(--chip);border-radius:12px;padding:10px 4px;font-size:12px;line-height:1.4}
+.sl .num3 > div b{display:block;font-size:24px;color:var(--accent)}
+.sl .num3 > i{font-style:normal;color:var(--muted)}
+.sl .bar{display:flex;height:38px;border-radius:10px;overflow:hidden;margin:6px 0 6px;font-size:13px;font-weight:900}
+.sl .bar > div{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden}
+.sl details{background:var(--chip);border-radius:12px;margin:0 0 10px}
+.sl details summary{padding:12px 14px;font-weight:700;cursor:pointer;list-style:none}
+.sl details summary::-webkit-details-marker{display:none}
+.sl details summary::after{content:"　▸ 答えを見る";color:var(--accent);font-size:13px}
+.sl details[open] summary::after{content:""}
+.sl details > div{padding:0 14px 12px;color:var(--accent);font-weight:700}
+.sl .src{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px}
+.sv .nav{display:flex;gap:10px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--bg)}
+.sv .nav .btn{flex:1}
+.sv .nav .btn.pri{flex:2}
 </style>
 </head>
 <body>
@@ -240,6 +304,19 @@ table.sum thead tr > :first-child{background:var(--bg)}
     <p class="ver" id="ver"></p>
   </div>
 </section>
+
+<!-- 学ぶ -->
+<section id="learn" hidden>
+  <header class="top">
+    <h1><img src="icon-192-v1.png" alt="">分析を学ぶ</h1>
+  </header>
+  <div class="wrap" id="learnBody"></div>
+</section>
+
+<nav class="tabbar" id="tabbar">
+  <button data-tab="home" class="on"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9h17M9 9v11M8 14.5h0"/></svg>つくる</button>
+  <button data-tab="learn"><svg viewBox="0 0 24 24"><path d="M3 6.5c3-1.5 6-1.5 9 .5 3-2 6-2 9-.5V19c-3-1.5-6-1.5-9 .5-3-2-6-2-9-.5z"/><path d="M12 7v12.5"/></svg>学ぶ</button>
+</nav>
 
 <!-- 入力（質問に答えていく） -->
 <section id="wiz" hidden>
@@ -334,7 +411,7 @@ table.sum thead tr > :first-child{background:var(--bg)}
 </div>
 
 <script>
-const VER = 2;
+const VER = 3;
 const KEY = 'bunseki-v1';
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -428,7 +505,9 @@ function reasonWarn(t) {
 let cur = null;      // いま開いている分析マップ
 let stepI = 0;
 function show(id) {
-  for (const s of ['home', 'wiz', 'view']) $(s).hidden = s !== id;
+  for (const s of ['home', 'learn', 'wiz', 'view']) $(s).hidden = s !== id;
+  $('tabbar').hidden = !(id === 'home' || id === 'learn');
+  document.querySelectorAll('#tabbar [data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
   window.scrollTo(0, 0);
 }
 function findMap(id) { return S.maps.find(m => m.id === id); }
@@ -623,6 +702,7 @@ function stNum(b, s) {
     </div>
     <div class="split">
       <h3 style="margin:0">KK率（経験率）を出します</h3>
+      <a class="vlink" href="https://youtu.be/U1NFZE84Yq8?t=182" target="_blank" rel="noopener">▶ 動画で見る：KK率の出し方</a>
       <p class="mini" style="margin:4px 0 10px">KK＝これまでやった問題の解き方を使えること（解法の活用）。問題用紙と答案を見ながら、3つ数えます。分からなければ空でOK。</p>
       <p class="bigq" style="margin-top:0">① テストの問題は全部で何問？</p>
       <div class="num"><input class="inp" id="fKkAll" inputmode="numeric" value="${esc(s.kkAll)}" placeholder="—"><span class="u">問</span></div>
@@ -723,6 +803,7 @@ function stWhy(b, s) {
       <span class="flabel" style="font-size:13px;color:var(--muted)">よくある理由から書きはじめる</span>
       <div class="chips">${['覚えていなかった：', '別の意味・用法を知らなかった：', '問題文の読み落とし：', '計算・書きまちがい：', '時間が足りなかった：', 'ワークの周回が足りなかった：', '理解があいまいだった：'].map(t => `<button class="chip sm" data-p="${t}">${t.replace('：', '')}</button>`).join('')}</div>
     </div>
+    <a class="vlink" href="https://youtu.be/xKcVUAVAkkQ?t=396" target="_blank" rel="noopener">▶ 動画で見る：「なぜ？」の書き方</a>
     <details class="ex"><summary>書き方の例</summary><ul>
       <li>知らない単語があった。単語自体は知っていたが、別の意味があってそれを知らなかった。</li>
       <li>1次関数で、切片が分数のときのグラフの書き方が分からなかった。</li>
@@ -776,6 +857,7 @@ function stHow(b, s) {
     <div class="tip">考え方：<b>KKできなかった分を補う</b>＋<b>次に出そうなところを、KKできるように演習する</b>。</div>
     <div id="aList"></div>
     <button class="add" id="aAdd">＋ 行動を足す</button>
+    <a class="vlink" href="https://youtu.be/xKcVUAVAkkQ?t=565" target="_blank" rel="noopener">▶ 動画で見る：「どうする？」の書き方</a>
     <details class="ex"><summary>書き方の例</summary><ul>
       <li>模試の解き直しをする（1周・10月末まで）</li>
       <li>Stock4500 を極める（正答率100%・12/31まで）</li>
@@ -1154,5 +1236,6 @@ renderHome();
 checkUpdate(true);
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 </script>
+<script src="learn.js?v=3"></script>
 </body>
 </html>

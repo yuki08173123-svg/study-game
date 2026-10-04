@@ -424,6 +424,18 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 /* 種類の名前「解法が分からなかった」が切れないように、棒グラフの名前の欄を広げる */
 .bar{grid-template-columns:136px 1fr 34px;}
 
+/* ===================== 写真の見え方（v29〜） ===================== */
+.phbar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:2px 0 8px;}
+.phbar > span{font-size:13px; font-weight:700; color:var(--muted);}
+.gopts{display:flex; justify-content:center; gap:10px; padding:8px 12px 0; flex:none;}
+.gopts button{font-size:14px; font-weight:700; color:#fff; border:1px solid rgba(255,255,255,.45); border-radius:999px; padding:8px 14px; background:rgba(255,255,255,.08);}
+.gopts button.on{background:#E0C06A; color:#16120A; border-color:#E0C06A;}
+.gal.white{background:#fff; color:#111;}
+.gal.white .gbar button{color:#111;} .gal.white .gbar button svg{stroke:#111;}
+.gal.white .gopts button{color:#111; border-color:rgba(0,0,0,.35); background:rgba(0,0,0,.04);}
+.gal.white .gopts button.on{background:#86661A; color:#fff; border-color:#86661A;}
+.gal.white .ghint{color:#333; opacity:1;}
+
 /* ===================== 印刷（v27〜） ===================== */
 .btn-line.prt{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px;}
 .btn-line.prt svg, .judge .reveal svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;}
@@ -651,7 +663,7 @@ html[data-theme="light"] .tg::after{background:#fff;}
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 28;
+const VER = 29;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -1240,7 +1252,8 @@ function openSolve(id, opt){
     <div class="topbar"><button class="back" id="svBack">${ICO.back}${opt.inSession ? 'やめる' : 'もどる'}</button><h2>問題を解く</h2><button class="r" id="svEdit">直す</button></div>
     ${prog}
     <div class="meta"><span class="sj" style="--c:${SUBJC[it.subj]||SUBJC['その他']}">${esc(it.subj)}</span><span class="cs">${md(it.created)} 登録</span></div>
-    <div class="photos" id="svPhotos">${it.imgs.map((im, i) => `<div class="ph" data-g="${i}"><img data-img="${im}" alt=""><span class="no">${i+1}/${it.imgs.length}</span><span class="zm">${ICO.zoom}拡大</span></div>`).join('')}</div>
+    ${it.imgs.length ? `<div class="phbar"><span>写真</span><div class="chips" id="svClean"><button class="chip sm" data-pc="0">元の色</button><button class="chip sm" data-pc="1">白黒くっきり</button></div></div>` : ''}
+    <div class="photos" id="svPhotos">${it.imgs.map((im, i) => `<div class="ph" data-g="${i}"><img data-vimg="${im}" alt=""><span class="no">${i+1}/${it.imgs.length}</span><span class="zm">${ICO.zoom}拡大</span></div>`).join('')}</div>
     ${it.text ? `<div class="qtext">${esc(it.text)}</div>` : ''}
 
     <div class="ask" id="ask">${askHtml(it)}</div>
@@ -1253,7 +1266,11 @@ function openSolve(id, opt){
     <button class="reveal" id="svReveal">${ICO.eye}解き終わった（答え合わせへ）</button>
     ${opt.inSession ? `<button class="skip" id="svSkip">この問題はとばす</button>` : ''}
   </div></div></div>`;
-  fillImgs(host);
+  fillImgs(host); fillViewImgs(host);
+  const syncClean = () => host.querySelectorAll('#svClean [data-pc]').forEach(b => b.classList.toggle('on', (b.dataset.pc === '1') === viewClean));
+  syncClean();
+  const scb = host.querySelector('#svClean');
+  if(scb) scb.onclick = e => { const b = e.target.closest('[data-pc]'); if(!b) return; const v = b.dataset.pc === '1'; if(v === viewClean) return; setViewClean(v); syncClean(); refillViewImgs($('#svPhotos')); toast(v ? '写真を白黒でくっきりにしました' : '写真を元の色にもどしました'); };
   keepAwake();
   $('#svBack').onclick = () => { sess = null; closePage(); renderAll(); };
   $('#svEdit').onclick = () => openEdit(it.id, opt);
@@ -1354,6 +1371,22 @@ async function cleanUrl(id){
   cleanCache.set(id, u);
   return u;
 }
+/* 画面で見る写真も「白黒でくっきり」にできる（v29・ユウキ・ハルネコ「暗く写った写真を、解く画面でも見やすく」）。
+   拡大の背景は黒か白か。どちらも端末ごとに覚える */
+const PREF = { clean:'miss_photo_clean', galbg:'miss_gal_bg' };
+const prefGet = (k, d) => { try{ const v = localStorage.getItem(k); return v === null ? d : v; }catch(e){ return d; } };
+const prefSet = (k, v) => { try{ localStorage.setItem(k, v); }catch(e){} };
+let viewClean = prefGet(PREF.clean, '0') === '1';
+let galWhite = prefGet(PREF.galbg, 'black') === 'white';
+async function fillViewImgs(root){
+  for(const el of root.querySelectorAll('img[data-vimg]:not([src])')){
+    const u = viewClean ? await cleanUrl(el.dataset.vimg) : await imgUrl(el.dataset.vimg);
+    if(u) el.src = u;
+  }
+}
+/* 切りかえたら、その画面の写真を入れなおす */
+function refillViewImgs(root){ root.querySelectorAll('img[data-vimg]').forEach(el => el.removeAttribute('src')); fillViewImgs(root); }
+function setViewClean(v){ viewClean = v; prefSet(PREF.clean, v ? '1' : '0'); }
 /* 印刷用の写真を入れる（くっきりがオンなら白黒に直したもの） */
 async function fillPrintImgs(root){
   for(const el of root.querySelectorAll('img[data-pimg]:not([src])')){
@@ -1814,12 +1847,25 @@ function openEdit(id, opt){
 function openGallery(ids, start){
   if(!ids.length) return;
   let i = Math.max(0, Math.min(ids.length-1, start||0));
-  const g = document.createElement('div'); g.className = 'gal';
+  const g = document.createElement('div'); g.className = 'gal' + (galWhite ? ' white' : '');
   g.innerHTML = `<div class="gbar"><button id="gClose">${ICO.x}</button><span class="gct num" id="gct">${i+1} / ${ids.length}</span><span style="width:42px"></span></div>
-    <div class="gtrack" id="gtrack">${ids.map(id => `<div class="gfr"><img data-img="${id}" alt=""></div>`).join('')}</div>
+    <div class="gtrack" id="gtrack">${ids.map(id => `<div class="gfr"><img data-vimg="${id}" alt=""></div>`).join('')}</div>
+    <div class="gopts"><button id="gClean"></button><button id="gBg"></button></div>
     <div class="ghint">横にスワイプで次の写真・ピンチで拡大・ダブルタップで切りかえ</div>`;
   document.body.appendChild(g);
-  fillImgs(g);
+  fillViewImgs(g);
+  const drawOpts = () => {
+    g.querySelector('#gClean').textContent = '白黒くっきり：' + (viewClean ? 'オン' : 'オフ');
+    g.querySelector('#gClean').classList.toggle('on', viewClean);
+    g.querySelector('#gBg').textContent = '背景：' + (galWhite ? '白' : '黒');
+    g.classList.toggle('white', galWhite);
+  };
+  drawOpts();
+  g.querySelector('#gClean').onclick = () => {
+    setViewClean(!viewClean); drawOpts(); refillViewImgs(g);
+    const sp = $('#svPhotos'); if(sp){ refillViewImgs(sp); $$('#svClean [data-pc]').forEach(b => b.classList.toggle('on', (b.dataset.pc === '1') === viewClean)); }
+  };
+  g.querySelector('#gBg').onclick = () => { galWhite = !galWhite; prefSet(PREF.galbg, galWhite ? 'white' : 'black'); drawOpts(); };
   const track = g.querySelector('#gtrack');
   requestAnimationFrame(() => { track.scrollLeft = track.clientWidth * i; });
   track.addEventListener('scroll', () => { const n = Math.round(track.scrollLeft / track.clientWidth); if(n !== i){ i = n; g.querySelector('#gct').textContent = (i+1)+' / '+ids.length; } });
@@ -2440,7 +2486,7 @@ function slides(){ return [
   { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。解法が分からなかった問題は「<b>どこで止まったか</b>」、解説とちがう解き方をした問題は「<b>自分はどう解いたか</b>」を書きます。', ex:'書き方が分からないときは、種類を選ぶと出る「書き方の例」を押してください。入った文を、自分の問題に合わせて直します。例：問題文の「合計」を読み飛ばした' },
   { ico:'fix', t:'3. 改善点は3つに分けて', p:'「<b>いつ</b>・<b>何を</b>・<b>どうする</b>」で書くと、1文に組み上がります。「気をつける」「見直す」のように行動になっていないと、登録できません。', ex:'例：解き終わったら、代入した式の符号を指でさして元の式と見くらべる。解法が分からなかった問題は、次にどう解くかのポイントを書きます。' },
   { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます。' },
-  { ico:'eye', t:'5. もう一度解く', p:'問題だけが出ます。理由と改善点を思い出してから、<b>改善点をやりながらノートにもう一度解きます</b>。解き終わったら「答え合わせ」で、登録した内容を見ます。', ex:`解けた → 次の間隔へ。${gaps().length}回つづけて解けたら「極まった」。解けなかった → 翌日からやり直し。写真は押すと大きくなります。解いているあいだは、画面が暗くならないようにしてあります。` },
+  { ico:'eye', t:'5. もう一度解く', p:'問題だけが出ます。理由と改善点を思い出してから、<b>改善点をやりながらノートにもう一度解きます</b>。解き終わったら「答え合わせ」で、登録した内容を見ます。', ex:`解けた → 次の間隔へ。${gaps().length}回つづけて解けたら「極まった」。解けなかった → 翌日からやり直し。写真は押すと大きくなります。暗く写った写真は、写真の上の「白黒くっきり」で見やすくできます（大きくしたときは、背景の黒・白も選べます）。解いているあいだは、画面が暗くならないようにしてあります。` },
   { ico:'shuffle', t:'6. ランダムに解く', p:'予定に関係なく、3・5・10問を練習できます。ランダムのときは「解けなかった」だけ記録され、「解けた」は予定を変えません。', ex:'間隔をあけて覚える仕組みを崩さないためです。' },
   { ico:'chart', t:'7. 記録を見る', p:'下の<b>「記録」</b>タブに、教科別の件数と、ミスの種類別の件数（<b>ミスパターン分析</b>）、まだ極まっていない問題の一覧が自動でたまります。いちばん多い種類が、あなたのミスのクセです。', ex:'そのクセの改善点を、ほかの問題にも使ってみてください。' },
   { ico:'send', t:'8. ミスマップの部屋に出す', p:`問題を <b>${SEND_N}問</b> 作るごとに、紙のミスマップと同じ形の <b>1枚の画像</b> にして、Discord の <b>#ミスマップ</b> に出します。ひとりで進めずに、フィードバックをもらうためです。`, ex:'「解く」タブの「ミスマップの部屋に出す」から。共有の画面で Discord を選び、#ミスマップ に送ります。出した回は「ミスマップ」タブにたまり、あとから出し直せます。' },

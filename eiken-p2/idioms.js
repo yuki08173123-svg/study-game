@@ -1,7 +1,7 @@
 // 英検準2級 英熟語 400（叩き台）
-// 並び順＝学習順（50個ずつ 1〜8日目）。ex/ft の [ ] が熟語とその訳
+// 並び順＝学習順（1日100個・4日で1周）。ex/ft の [ ] が熟語とその訳
 window.EIKEN_IDIOMS = [
-// ---- 1日目 ----
+// ---- Day1 ----
 {"w": "look forward to ~", "m": "〜を楽しみに待つ", "s": ["〜を期待する"], "ex": "I am [looking forward to] seeing you at the festival.", "ft": "お祭りであなたに会えるのを[楽しみにしている]。", "tip": "toは前置詞なので後ろは名詞か動名詞（~ing）。look forward to see は誤りで、seeingにするのが頻出ポイント。メールの結びにもよく出る。"},
 {"w": "take part in ~", "m": "〜に参加する", "s": ["〜に加わる"], "ex": "Many students [took part in] the volunteer event last Sunday.", "ft": "多くの生徒が先週の日曜日にボランティア活動に[参加した]。", "tip": "partは「役割・一部」。「〜の一部(part)を引き受ける(take)」から「参加する」。= participate in。joinとの言いかえ問題でも出る。"},
 {"w": "take care of ~", "m": "〜の世話をする", "s": ["〜を大事にする", "〜を処理する"], "ex": "My sister [takes care of] our dog when we travel.", "ft": "私たちが旅行するときは姉が犬の[世話をする]。", "tip": "careは「注意・世話」。= look after。Take care of yourself.「体に気をつけて」は会話の別れ際によく出る形。"},
@@ -32,7 +32,7 @@ window.EIKEN_IDIOMS = [
 {"w": "at the front of ~", "m": "〜の前方に", "s": ["〜の最前部に"], "ex": "Please sit [at the front of] the classroom today.", "ft": "今日は教室の[前の方に]座ってください。", "tip": "frontは「前部」。at the front of ~は「〜の中の前の方」、in front of ~は「〜の外の前」。バスの前の席か、バスの前に立つかの違い。"},
 {"w": "be based on ~", "m": "〜に基づいている", "s": [], "ex": "This movie [is based on] a true story.", "ft": "この映画は実話[に基づいている]。", "tip": "baseは「土台」。onは「土台の上に乗る」イメージ。事実・データ・研究に基づくときに使う。based onだけで名詞を後ろから説明することも多い。"},
 {"w": "be about to do", "m": "まさに〜しようとしている", "s": [], "ex": "The train [was about to] leave when I got on.", "ft": "私が乗ったとき、電車は[まさに出発するところだった]。", "tip": "aboutは「〜のあたり」。行動の直前にいるイメージ。be going toより「すぐに」の感じが強い。whenとセットで出やすい。"},
-{"w": "be likely to do", "m": "〜しそうである", "s": ["たぶん〜するだろう"], "ex": "It [is likely to] rain this afternoon, so take an umbrella.", "ft": "今日の午後は雨が[降りそうな]ので、傘を持っていきなさい。", "tip": "likelyは形容詞「ありそうな」（-lyでも副詞ではない）。反対はbe unlikely to do。It is likely that ...の形もある。"},
+{"w": "be likely to do", "m": "〜しそうである", "s": ["たぶん〜するだろう"], "ex": "It [is likely to] rain this afternoon, so take an umbrella.", "ft": "今日の午後は雨が[降りそうな]ので、傘を持っていきなさい。", "tip": "likelyは-lyで終わるが、ここでは形容詞「ありそうな」。反対はbe unlikely to do。It is likely that ...の形もある。= will probably。"},
 {"w": "by all means", "m": "ぜひどうぞ", "s": ["必ず", "何としても"], "ex": "\"May I use your computer for a minute?\" \"[By all means].\"", "ft": "「少しの間コンピューターを使ってもいい？」「[ぜひどうぞ]。」", "tip": "meansは「手段」。「あらゆる手段で（許可する）」から、頼みに快く応じる返事。by no means「決して〜ない」は反対の意味になるので注意。"},
 {"w": "be supposed to do", "m": "〜することになっている", "s": ["〜するはずだ"], "ex": "We [are supposed to] meet at the station at nine.", "ft": "私たちは9時に駅で会う[ことになっている]。", "tip": "supposeは「思う・想定する」。予定・規則・義務を表す。You are not supposed to ...は「〜してはいけない」という意味になる。"},
 {"w": "learn ~ by heart", "m": "〜を暗記する", "s": [], "ex": "I [learned] the poem [by heart] for the English contest.", "ft": "英語のコンテストのためにその詩を[暗記した]。", "tip": "heartは「心」。「心で覚える」＝そらで言えるほど暗記する。= memorize。目的語が長いとlearn by heart ~の語順にもなる。"},
@@ -52,7 +52,6 @@ window.EIKEN_IDIOMS = [
 {"w": "be short of ~", "m": "〜が不足している", "s": [], "ex": "We [are short of] time, so let's hurry.", "ft": "時間が[足りない]ので急ごう。", "tip": "shortは「短い」から「足りない」。お金・時間・人手によく使う。run short of（〜が不足してくる）、= lack。"},
 {"w": "be capable of ~", "m": "〜する能力がある", "s": ["〜ができる"], "ex": "She [is capable of] speaking three languages very well.", "ft": "彼女は3か国語をとても上手に話す[能力がある]。", "tip": "ofの後ろは名詞か~ing（to doは不可）。be able to doと書きかえられる。名詞はcapability、反対はincapable。"},
 {"w": "be aware of ~", "m": "〜に気づいている", "s": ["〜を知っている"], "ex": "Many people [are aware of] the problem of plastic waste.", "ft": "多くの人がプラスチックごみの問題[に気づいている]。", "tip": "awareは「気づいている・意識している」。名詞はawareness。be aware that ...の形もある。= know about / realize。"},
-// ---- 2日目 ----
 {"w": "be fond of ~", "m": "〜が好きである", "s": [], "ex": "My grandmother [is fond of] growing vegetables in her garden.", "ft": "祖母は庭で野菜を育てるの[が好きだ]。", "tip": "= like。likeより気持ちのこもった言い方。ofの後ろは名詞か~ing。fondは形容詞で「好きな」。be fond of ~ingの形が多い。"},
 {"w": "be jealous of ~", "m": "〜をねたんでいる", "s": ["〜をうらやましく思う"], "ex": "He [was jealous of] his friend's new smartphone.", "ft": "彼は友だちの新しいスマホを[うらやましがった]。", "tip": "jealousは「ねたましい・うらやましい」、名詞はjealousy。= envy（動詞）。発音は/ˈdʒeləs/で「ジェラス」。つづりのouに注意。"},
 {"w": "be ashamed of ~", "m": "〜を恥じている", "s": [], "ex": "I [was ashamed of] my rude words to my mother.", "ft": "母への失礼な言葉を[恥ずかしく思った]。", "tip": "shame（恥）の形容詞がashamed。自分の行動を恥じる気持ち。embarrassed（気まずい・照れる）とは違い、良心が痛む感じ。"},
@@ -78,7 +77,7 @@ window.EIKEN_IDIOMS = [
 {"w": "laugh at ~", "m": "〜を笑う", "s": ["〜をばかにする"], "ex": "Please don't [laugh at] me when I make mistakes.", "ft": "私がまちがえても[笑わ]ないでください。", "tip": "atは「一点に向けて」。笑いを相手に向ける→「〜を笑う、あざける」。smile at ~「〜にほほえみかける」とは気持ちが違う。"},
 {"w": "be up to ~", "m": "〜次第である", "s": ["〜をたくらんでいる", "（最大）〜まで"], "ex": "It [is up to] you to decide where we eat.", "ft": "どこで食べるかを決めるのはあなた[次第だ]。", "tip": "It's up to you.「あなたに任せる」は会話の定番表現。What are you up to?は「何してるの？」。up to 10 people（最大10人）の意味もある。"},
 {"w": "break down", "m": "故障する", "s": ["（交渉などが）失敗する", "泣き崩れる"], "ex": "Our car [broke down] on the way to the beach.", "ft": "海に行く途中で車が[故障した]。", "tip": "downは「機能が落ちる」イメージ。車や機械が動かなくなるときに使う。名詞breakdownは「故障」。be out of order（故障中）は状態を表す。"},
-{"w": "break into ~", "m": "〜に押し入る", "s": ["急に〜し出す"], "ex": "Someone [broke into] the shop last night and stole money.", "ft": "昨夜、誰かがその店[に押し入り]お金を盗んだ。", "tip": "壊して(break)中に(into)入るイメージ。泥棒の話題でよく出る。break into tears（急に泣き出す）のように「急に〜し始める」意味もある。"},
+{"w": "break into ~", "m": "〜に押し入る", "s": ["急に〜し出す"], "ex": "Someone [broke into] the shop last night and stole money.", "ft": "昨夜、誰かがその店[に押し入り]お金を盗んだ。", "tip": "壊して(break)中に(into)入るイメージ。泥棒の話題で頻出。break into laughter（急に笑い出す）など「急に〜し出す」意味もある。泣き出すはburst into tears。"},
 {"w": "break out", "m": "（火事などが）起こる", "s": ["（戦争・病気が）発生する"], "ex": "A big fire [broke out] near the station last night.", "ft": "昨夜、駅の近くで大きな火事が[起こった]。", "tip": "中から外へ(out)破って出てくるイメージ。戦争・火事・病気など悪いことが突然起こるときに使う。名詞outbreakは「発生」。"},
 {"w": "break up", "m": "解散する", "s": ["（恋人と）別れる", "〜をばらばらにする"], "ex": "The band [broke up] after ten years together.", "ft": "そのバンドは10年活動した後に[解散した]。", "tip": "upは「完全に」。完全にばらばらに壊れるイメージから、グループの解散や恋人との別れ（break up with+人）に使う。"},
 {"w": "bring about ~", "m": "〜を引き起こす", "s": ["〜をもたらす"], "ex": "The Internet has [brought about] big changes in our lives.", "ft": "インターネットは私たちの生活に大きな変化を[もたらした]。", "tip": "= cause。変化・問題・結果などを生み出すときに使う。長文の因果関係で頻出。result in / lead toと同じ仲間で覚える。"},
@@ -103,7 +102,7 @@ window.EIKEN_IDIOMS = [
 {"w": "do without ~", "m": "〜なしで済ませる", "s": [], "ex": "I can't [do without] my smartphone even for a day.", "ft": "1日でもスマホ[なしでは過ごせ]ない。", "tip": "withoutは「〜なしで」。canと一緒に「〜なしでやっていけるか」を言うことが多い。= go without。なくて困る物を目的語にする。"},
 {"w": "drop by", "m": "立ち寄る", "s": ["（〜に）ちょっと寄る"], "ex": "Please [drop by] my house on your way home.", "ft": "帰りに私の家に[寄って]ください。", "tip": "dropは「ちょっと落ちる」から「ふらっと寄る」。= stop by / drop in。予定なしで気軽に訪ねる感じ。drop by+場所でも使う。"},
 {"w": "drop in", "m": "ちょっと立ち寄る", "s": [], "ex": "My aunt [dropped in] to see us yesterday.", "ft": "昨日、おばが私たちに会いに[ちょっと立ち寄った]。", "tip": "= drop by / stop by。人を訪ねるときはdrop in on+人、場所はdrop in at+場所。前置詞の使い分けも問われる。"},
-// ---- 3日目 ----
+// ---- Day2 ----
 {"w": "drop out of ~", "m": "〜を中退する", "s": ["〜から脱落する"], "ex": "He [dropped out of] college to start his own company.", "ft": "彼は自分の会社を始めるために大学を[中退した]。", "tip": "outは「外へ」、ofは「〜から」。学校や競技から抜け落ちるイメージ。名詞dropoutは「中退者」。drop out of the raceは「レースから脱落する」。"},
 {"w": "end up ~ing", "m": "結局〜することになる", "s": [], "ex": "We [ended up] staying at home because of the rain.", "ft": "雨のせいで、私たちは[結局家で過ごすことになった]。", "tip": "endは「終わる」。いろいろあって最後にそうなる、という流れ。予定外の結果に使う。end up in+場所（最後に〜に行き着く）の形もある。"},
 {"w": "fall asleep", "m": "眠り込む", "s": ["寝入る"], "ex": "I [fell asleep] while I was watching TV last night.", "ft": "昨夜テレビを見ている間に[眠ってしまった]。", "tip": "fallは「〜の状態になる」、asleepは「眠っている」。go to bed（寝床に入る）と違い、意識がなくなる瞬間。fall ill（病気になる）と同じ形。"},
@@ -154,7 +153,6 @@ window.EIKEN_IDIOMS = [
 {"w": "out of the question", "m": "問題外で", "s": ["不可能で"], "ex": "Going camping in this storm is [out of the question].", "ft": "この嵐の中でキャンプに行くのは[問題外だ]。", "tip": "「検討の対象(question)の外」→「ありえない、不可能」。= impossible。theを忘れずに。without question「疑いなく」と区別。"},
 {"w": "take action", "m": "行動を起こす", "s": ["対策をとる"], "ex": "We must [take action] to protect the environment.", "ft": "環境を守るために私たちは[行動を起こさ]なければならない。", "tip": "actionは「行動」。take action against ~「〜に対して対策をとる」。環境問題の長文・ライティングで頻出。= act / take measures。"},
 {"w": "up in the air", "m": "未定で", "s": ["宙に浮いて"], "ex": "Our plans for summer vacation are still [up in the air].", "ft": "夏休みの計画はまだ[決まっていない]。", "tip": "「空中に浮いたまま」→決まっていない。= undecided / uncertain。still up in the airの形が多い。計画・予定の話で出る。"},
-// ---- 4日目 ----
 {"w": "make an effort", "m": "努力する", "s": [], "ex": "She [made an effort] to talk to her new classmates.", "ft": "彼女は新しいクラスメートに話しかけようと[努力した]。", "tip": "effortは「努力」。make an effort to do（〜しようと努力する）の形が多い。make every effort（あらゆる努力をする）も出る。= try hard。"},
 {"w": "make fun of ~", "m": "〜をからかう", "s": ["〜をばかにする"], "ex": "Don't [make fun of] people who are different from you.", "ft": "自分と違う人[をからかって]はいけない。", "tip": "funは「面白いこと」。人を笑いの種にするイメージ。= laugh at, tease。have fun（楽しむ）と混同しないように注意。"},
 {"w": "make sense", "m": "意味が通じる", "s": ["筋が通る", "理にかなう"], "ex": "Your explanation finally [makes sense] to me now.", "ft": "やっとあなたの説明の[意味が分かった]。", "tip": "senseは「意味・道理」。That makes sense.（なるほど）は会話の定番。make sense of ~は「〜を理解する」の意味で使う。"},
@@ -177,7 +175,7 @@ window.EIKEN_IDIOMS = [
 {"w": "put together ~", "m": "〜を組み立てる", "s": ["〜をまとめる"], "ex": "It took me two hours to [put together] the new desk.", "ft": "新しい机を[組み立てる]のに2時間かかった。", "tip": "一緒に(together)置く(put)。部品を組み立てる、考えや情報をまとめる。= assemble。put together a team（チームを作る）にも使う。"},
 {"w": "put ~ into practice", "m": "〜を実行に移す", "s": ["〜を実践する"], "ex": "It's time to [put] your plan [into practice].", "ft": "あなたの計画を[実行に移す]ときだ。", "tip": "practiceは「実行・実践」。考えを実際の行動の中へ(into)置く。目的語はidea, plan, theoryなど。carry out（実行する）と近い意味。"},
 {"w": "rely on ~", "m": "〜に頼る", "s": ["〜を信頼する"], "ex": "Many students [rely on] the Internet to do their homework.", "ft": "多くの生徒が宿題をするのにインターネット[に頼っている]。", "tip": "onは「寄りかかる」。= depend on, count on。形容詞はreliable（信頼できる）。rely on 人 to do（人が〜するのを当てにする）の形も出る。"},
-{"w": "result in ~", "m": "〜という結果になる", "s": ["〜を引き起こす"], "ex": "The heavy rain [resulted in] a flood in the town.", "ft": "大雨の結果、町で洪水が[起きた]。", "tip": "原因 result in 結果。= lead to, cause。result from（〜から生じる）と矢印の向きが逆なので、因果を図にして覚える。"},
+{"w": "result in ~", "m": "〜という結果になる", "s": ["〜を引き起こす"], "ex": "The heavy rain [resulted in] a flood in the town.", "ft": "大雨が町に洪水[を引き起こした]。", "tip": "原因 result in 結果。= lead to, cause。result from（〜から生じる）と矢印の向きが逆なので、因果を図にして覚える。"},
 {"w": "result from ~", "m": "〜から生じる", "s": ["〜が原因である"], "ex": "Many traffic accidents [result from] driving too fast.", "ft": "多くの交通事故はスピードの出しすぎ[から生じる]。", "tip": "結果 result from 原因。fromは「出どころ」。result in（〜という結果になる）とは主語と目的語が逆になる点が問われる。"},
 {"w": "run away", "m": "逃げる", "s": ["家出する"], "ex": "The cat [ran away] when it saw the big dog.", "ft": "大きな犬を見て、猫は[逃げた]。", "tip": "走って(run)離れる(away)。= escape。run away from home（家出する）の形も出る。get away（逃れる）と似ている。"},
 {"w": "run into ~", "m": "〜に偶然出会う", "s": ["〜にぶつかる", "（困難）にあう"], "ex": "I [ran into] my old teacher at the station.", "ft": "駅で昔の先生に[偶然会った]。", "tip": "走っていて中に(into)ぶつかるイメージ。= come across, bump into。車が壁にぶつかる、トラブルにあう（run into trouble）にも使う。"},
@@ -205,7 +203,7 @@ window.EIKEN_IDIOMS = [
 {"w": "take place", "m": "行われる", "s": ["起こる"], "ex": "The school festival will [take place] next Saturday.", "ft": "文化祭は次の土曜日に[行われる]。", "tip": "placeは「場所」。場所を取る＝ある所で行われる。= be held。予定された行事に使い、受け身にはしない。偶然の出来事ならhappenを使う。"},
 {"w": "take ~ for granted", "m": "〜を当然と思う", "s": [], "ex": "We often [take] clean water [for granted] in Japan.", "ft": "日本では、私たちはきれいな水があるのを[当然だと思い]がちだ。", "tip": "grantは「認める」。認められたものとして受け取る＝当たり前と思う。目的語が長いとtake it for granted that ...の形になる。"},
 {"w": "take turns", "m": "交代でする", "s": ["順番に〜する"], "ex": "My brother and I [take turns] washing the dishes.", "ft": "弟と私は[交代で]皿を洗う。", "tip": "turnは「順番」。順番を取り合うイメージ。take turns ~ing（交代で〜する）の形が多い。It's your turn.（あなたの番だ）もよく出る。"},
-// ---- 5日目 ----
+// ---- Day3 ----
 {"w": "take a break", "m": "休憩する", "s": ["ひと休みする"], "ex": "Let's [take a break] after we finish this math problem.", "ft": "この数学の問題を終えたら[休憩しよう]。", "tip": "breakは「中断・休み」。have a break も同じ意味。take a rest「休息をとる」と並んで、部活や勉強の会話文によく出る。"},
 {"w": "take a look at ~", "m": "〜をちょっと見る", "s": ["〜に目を通す"], "ex": "Could you [take a look at] my report before class?", "ft": "授業の前に私のレポートを[ちょっと見て]くれますか。", "tip": "lookは名詞で「ひと目」。have a look at ~ も同じ意味。take a close look at ~「〜をよく見る」の形でも出る。"},
 {"w": "take ~ into account", "m": "〜を考慮に入れる", "s": ["〜を計算に入れる"], "ex": "We should [take] the weather [into account] when we plan the trip.", "ft": "旅行を計画するときは天気を[考慮に入れる]べきだ。", "tip": "accountは「計算・勘定」。計算の中に取り入れる＝考慮する。= consider。目的語が長いと take into account ~ の語順にもなる。"},
@@ -234,13 +232,13 @@ window.EIKEN_IDIOMS = [
 {"w": "cope with ~", "m": "〜にうまく対処する", "s": ["〜を乗り切る"], "ex": "Exercise helps students [cope with] stress before exams.", "ft": "運動は生徒が試験前のストレスに[うまく対処する]助けになる。", "tip": "= deal with, handle。困難・ストレス・問題などとセットで出る。withは「〜と向き合って」のイメージ。健康の長文で頻出。"},
 {"w": "count on ~", "m": "〜を頼りにする", "s": ["〜を当てにする"], "ex": "You can always [count on] me when you need help.", "ft": "助けが必要なときは、いつでも私を[頼りにして]いい。", "tip": "countは「数に入れる」、onは「〜に寄りかかる」。= depend on, rely on。言いかえ問題でよく出る。"},
 {"w": "by nature", "m": "生まれつき", "s": ["本来"], "ex": "My father is a quiet person [by nature].", "ft": "父は[生まれつき]物静かな人だ。", "tip": "natureは「自然」のほか「性質」。「性質として」→生まれつき・本来。= naturally。in nature「本質的に」も近い。"},
-{"w": "insist on ~", "m": "〜を強く主張する", "s": ["〜を言い張る"], "ex": "My mother [insists on] eating breakfast together every morning.", "ft": "母は毎朝一緒に朝食を食べることを[強く求める]。", "tip": "in（上に）＋sist（立つ）で、自分の立場に立ち続ける。onの後は名詞・動名詞。insist that ~ の形も出る。"},
+{"w": "insist on ~", "m": "〜を強く主張する", "s": ["〜を言い張る", "〜を強く求める"], "ex": "My mother [insists on] eating breakfast together every morning.", "ft": "母は毎朝一緒に朝食を食べることを[強く求める]。", "tip": "in（上に）＋sist（立つ）で、自分の立場に立ち続ける。onの後は名詞・動名詞。insist that ~ の形も出る。"},
 {"w": "participate in ~", "m": "〜に参加する", "s": [], "ex": "Over fifty students [participated in] the school's English speech contest.", "ft": "50人を超える生徒が学校の英語スピーチコンテストに[参加した]。", "tip": "= take part in, join。part（部分）を持つ人になる、と覚える。participant 名「参加者」、participation 名「参加」。"},
 {"w": "call on ~", "m": "（人）を訪ねる", "s": ["〜に頼む", "〜を指名する"], "ex": "I'll [call on] my aunt in Osaka next weekend.", "ft": "来週末、大阪のおば[を訪ねる]つもりだ。", "tip": "人ならcall on、場所ならcall at ~を使う。= visit。call on 人 to do「人に〜するよう頼む」、授業で「指名する」の意味も出る。"},
 {"w": "prevent A from ~ing", "m": "Aが〜するのを防ぐ", "s": ["Aが〜するのを妨げる"], "ex": "The heavy rain [prevented] us [from] going on a picnic.", "ft": "大雨のせいで私たちはピクニックに[行けなかった]。", "tip": "fromは「〜から離して」。Aを行動から引き離す＝妨げる。keep / stop A from ~ing も同じ形。無生物主語の訳し方に注意。"},
 {"w": "protect A from B", "m": "AをBから守る", "s": [], "ex": "Wearing a hat [protects] your face [from] strong sunlight.", "ft": "帽子をかぶると強い日差しから顔を[守れる]。", "tip": "fromは「〜から離して」。危険からAを引き離して守る。protection 名「保護」。protect A against B も同じ意味。"},
 {"w": "provide A with B", "m": "AにBを与える", "s": ["AにBを提供する"], "ex": "The school [provides] every student [with] a tablet computer.", "ft": "その学校は生徒全員にタブレットを[提供している]。", "tip": "provide B for A と同じ意味。withは「〜を持たせて」。supply A with B と同じ型。前置詞の入れかえ問題に注意。"},
-{"w": "remind A of B", "m": "AにBを思い出させる", "s": [], "ex": "This song always [reminds] me [of] my junior high school days.", "ft": "この歌を聞くといつも中学時代を[思い出す]。", "tip": "re（再び）＋mind（心）。ofは「〜について」。無生物主語で「〜でAはBを思い出す」と訳す。remind A to do「Aに〜するのを気づかせる」。"},
+{"w": "remind A of B", "m": "AにBを思い出させる", "s": [], "ex": "This song always [reminds] me [of] my junior high school days.", "ft": "この歌を聞くといつも中学時代を[思い出す]。", "tip": "re（再び）＋mind（心）。ofは「〜について」。無生物主語で「〜でAはBを思い出す」と訳す。remind A to do「Aに〜することを思い出させる」。"},
 {"w": "replace A with B", "m": "AをBと取り替える", "s": ["AをBに置きかえる"], "ex": "We [replaced] the old lights [with] new LED ones.", "ft": "私たちは古い電灯を新しいLEDのものに[取り替えた]。", "tip": "re（再び）＋place（置く）。古いAの場所にBを置き直す。replacement 名「交換」。substitute B for A は語順が逆なので注意。"},
 {"w": "catch a cold", "m": "かぜをひく", "s": [], "ex": "Wear a warm coat, or you'll [catch a cold].", "ft": "暖かいコートを着ないと、[かぜをひく]よ。", "tip": "catchは「つかまえる」→病気をもらう。「ひいている状態」はhave a cold。coldは数えられるのでaを忘れない。= come down with a cold。"},
 {"w": "specialize in ~", "m": "〜を専門にする", "s": ["〜を専攻する"], "ex": "My uncle runs a restaurant that [specializes in] Italian food.", "ft": "おじはイタリア料理を[専門にする]レストランを経営している。", "tip": "special（特別な）＋ize（〜にする）。major in ~「〜を専攻する」と似ている。specialist 名「専門家」も出る。"},
@@ -256,11 +254,10 @@ window.EIKEN_IDIOMS = [
 {"w": "regard A as B", "m": "AをBと見なす", "s": [], "ex": "Many people [regard] him [as] the best player on the team.", "ft": "多くの人が彼をチームで一番の選手だと[見なしている]。", "tip": "asは「〜として」。= think of A as B, look on A as B, see A as B。同じ型の言いかえでよく出る。"},
 {"w": "for the most part", "m": "大部分は", "s": ["たいてい"], "ex": "[For the most part], the students enjoyed the school festival.", "ft": "生徒たちは[おおむね]文化祭を楽しんだ。", "tip": "「最も大きな部分については」→大部分は・おおむね。= mostly / mainly / largely。most of ~「〜のほとんど」と同じ発想。"},
 {"w": "prefer A to B", "m": "BよりAを好む", "s": [], "ex": "I [prefer] summer [to] winter because I love swimming.", "ft": "泳ぐのが大好きなので、私は冬より夏の方が[好きだ]。", "tip": "thanではなく to を使うのがポイント。= like A better than B。preference 名「好み」。prefer to do「〜する方を好む」も出る。"},
-// ---- 6日目 ----
 {"w": "get in the way", "m": "じゃまになる", "s": ["妨げになる"], "ex": "Your big bag is [getting in the way] of other passengers.", "ft": "あなたの大きなかばんがほかの乗客の[じゃまになっている]。", "tip": "「通り道の中に入る」→行く手をふさぐ。get in the way of ~「〜のじゃまをする」。in the wayだけでも「じゃまで」。on the way「途中で」と区別。"},
 {"w": "supply A with B", "m": "AにBを供給する", "s": [], "ex": "The farm [supplies] the town [with] fresh vegetables every day.", "ft": "その農場は毎日町に新鮮な野菜を[供給している]。", "tip": "provide A with B と同じ型。supply B to A の語順もある。名詞の supply「供給」、supply and demand「需要と供給」も出る。"},
 {"w": "get used to ~", "m": "〜に慣れる", "s": [], "ex": "I soon [got used to] living in the dormitory.", "ft": "私はすぐに寮での生活に[慣れた]。", "tip": "toは前置詞なので後ろは名詞・動名詞。be used to ~は「慣れている」状態。used to do「以前は〜した」と区別するのが頻出。"},
-{"w": "give birth to ~", "m": "〜を産む", "s": ["〜を生み出す"], "ex": "Our cat [gave birth to] four kittens last night.", "ft": "うちのネコは昨夜4匹の子ネコ[を産んだ]。", "tip": "birthは「誕生」。「誕生を与える」→産む。比ゆ的に「〜を生み出す」。birthdayと同じ語。be born「生まれる」とは主語が逆になる。"},
+{"w": "give birth to ~", "m": "〜を産む", "s": ["〜を生み出す"], "ex": "Our cat [gave birth to] four kittens last night.", "ft": "うちのネコは昨夜4匹の子ネコ[を産んだ]。", "tip": "birthは「誕生」。「誕生を与える」→産む。比ゆ的に「〜を生み出す」。birthdayのbirthと同じ。be born「生まれる」とは主語が逆になる。"},
 {"w": "give off ~", "m": "〜を発する", "s": ["（においなど）を出す"], "ex": "These flowers [give off] a sweet smell in spring.", "ft": "これらの花は春に甘い香り[を放つ]。", "tip": "offは「離れて」。中から外へ光・熱・におい・ガスを出す。= emit / release。give out ~も近い意味。環境・科学の長文で出る。"},
 {"w": "go after ~", "m": "〜を追いかける", "s": ["〜を得ようとする"], "ex": "The police officer [went after] the man who stole the bag.", "ft": "警察官はかばんを盗んだ男[を追いかけた]。", "tip": "afterは「〜の後を」。後を追う→追跡する。夢・仕事を「手に入れようとする」意味もある。= chase / pursue。run after ~も同じ。"},
 {"w": "go along with ~", "m": "〜に賛成する", "s": ["〜に従う", "〜と一緒に行く"], "ex": "I'll [go along with] your idea for the class trip.", "ft": "クラス旅行についてのあなたの案に[賛成する]よ。", "tip": "alongは「沿って」。相手の考えに沿って進む→賛成する・従う。= agree with ~。get along with ~「〜と仲よくやる」と取り違えやすい。"},
@@ -279,7 +276,7 @@ window.EIKEN_IDIOMS = [
 {"w": "as well", "m": "〜もまた", "s": [], "ex": "I like soccer, and I enjoy playing tennis [as well].", "ft": "私はサッカーが好きだし、テニスをするの[も]楽しい。", "tip": "= too, also。文末に置く。A as well as B「BだけでなくAも」とセットで覚える。肯定文で使い、否定文では either になる。"},
 {"w": "A as well as B", "m": "BだけでなくAも", "s": [], "ex": "She can speak Chinese [as well as] English.", "ft": "彼女は英語[だけでなく]中国語も話せる。", "tip": "= not only B but also A。重点はA側にあり、主語のときは動詞をAに合わせる。語順が逆になるので訳に注意。"},
 {"w": "as far as ~", "m": "〜する限り", "s": ["〜まで"], "ex": "[As far as] I know, the shop is closed on Mondays.", "ft": "私の知る[限り]、その店は月曜日が休みだ。", "tip": "範囲の限界を表す。as far as I know「私の知る限り」の形で頻出。as long as ~（条件）との違いがよく問われる。距離の「〜まで」もある。"},
-{"w": "as long as ~", "m": "〜しさえすれば", "s": ["〜する間は", "〜と同じくらい長く"], "ex": "You can borrow my bike [as long as] you return it today.", "ft": "今日返し[さえすれば]、私の自転車を借りてもいい。", "tip": "条件を表す「〜しさえすれば」。= if only。時間の「〜する間は」の意味もある。as far as（範囲）と区別する問題が頻出。"},
+{"w": "as long as ~", "m": "〜しさえすれば", "s": ["〜する間は", "〜と同じくらい長く"], "ex": "You can borrow my bike [as long as] you return it today.", "ft": "今日返し[さえすれば]、私の自転車を借りてもいい。", "tip": "条件を表す「〜しさえすれば」。= only if / provided that。時間の「〜する間は」の意味もある。as far as（範囲）と区別する問題が頻出。"},
 {"w": "as usual", "m": "いつものように", "s": [], "ex": "[As usual], my father left home at seven this morning.", "ft": "[いつものように]、父は今朝7時に家を出た。", "tip": "usualは「いつもの」。than usual「いつもより」と比較で使う形も出る（earlier than usual）。usually「ふだんは」と区別。"},
 {"w": "as if ~", "m": "まるで〜のように", "s": [], "ex": "He talks [as if] he knows everything about computers.", "ft": "彼はコンピューターのことを何でも知っている[かのように]話す。", "tip": "現実と違うことには仮定法を使い、as if he were ~ となる。= as though。look as if ~「〜のように見える」の形も多い。"},
 {"w": "at first", "m": "最初は", "s": ["初めのうちは"], "ex": "[At first] I didn't like natto, but now I love it.", "ft": "[最初は]納豆が好きではなかったが、今は大好きだ。", "tip": "後で状況が変わることを言うときに使う（but now ...）。first of all「まず第一に」、for the first time「初めて」と区別。"},
@@ -307,7 +304,7 @@ window.EIKEN_IDIOMS = [
 {"w": "lie down", "m": "横になる", "s": [], "ex": "I felt sick, so I [lay down] on the sofa.", "ft": "気分が悪かったので、ソファーに[横になった]。", "tip": "lie「横たわる」はlie-lay-lain。lay「〜を置く」(lay-laid-laid)と過去形layが重なるので頻出のひっかけ。downは「下へ」。"},
 {"w": "for a while", "m": "しばらくの間", "s": [], "ex": "Let's rest here [for a while] before we climb again.", "ft": "また登る前に、ここで[しばらく]休もう。", "tip": "whileは名詞で「（短い）時間」。after a while「しばらくして」、in a while「まもなく」も合わせて覚える。"},
 {"w": "for oneself", "m": "自分で", "s": ["自分のために"], "ex": "You should try to solve the problem [for yourself].", "ft": "その問題は[自分で]解こうとするべきだ。", "tip": "oneselfは主語に合わせて変える。自分のために・自分の力で。by oneself「一人で」と区別。see for yourself「自分で確かめる」。"},
-// ---- 7日目 ----
+// ---- Day4 ----
 {"w": "for the sake of ~", "m": "〜のために", "s": ["〜の利益のために"], "ex": "He quit smoking [for the sake of] his family's health.", "ft": "彼は家族の健康[のために]たばこをやめた。", "tip": "sakeは「利益・目的」。= for the benefit of ~。for the sake of the environment「環境のために」の形で出る。because of（原因）と区別。"},
 {"w": "from now on", "m": "今後は", "s": ["これからずっと"], "ex": "[From now on], I will study English for an hour every day.", "ft": "[これからは]、毎日1時間英語を勉強する。", "tip": "from now（今から）＋on（ずっと続けて）。決意を言うときの決まり文句。from then on「その時からずっと」も出る。"},
 {"w": "from time to time", "m": "時々", "s": [], "ex": "My cousin visits us [from time to time] on weekends.", "ft": "いとこは週末に[時々]うちに来る。", "tip": "時から時へ→ときどき。= sometimes, at times, once in a while。言いかえ問題で頻出の4つをまとめて覚える。"},
@@ -340,7 +337,7 @@ window.EIKEN_IDIOMS = [
 {"w": "on board", "m": "（乗り物に）乗って", "s": [], "ex": "All the passengers are now [on board] the ship.", "ft": "乗客は全員もう船に[乗っている]。", "tip": "boardは「船の甲板・板」。乗り物の上にいる状態。= aboard。get on board ~「〜に乗り込む」。Welcome on board.「ご搭乗ありがとうございます」も出る。"},
 {"w": "on duty", "m": "勤務中で", "s": ["当番で"], "ex": "The nurse who was [on duty] last night was very kind.", "ft": "昨夜[勤務していた]看護師はとても親切だった。", "tip": "dutyは「義務・職務」。反対はoff duty「非番で」。onは「活動中」のイメージ（on air, on saleと同じ）。"},
 {"w": "on fire", "m": "燃えて", "s": ["火事で"], "ex": "Firefighters rushed to the house that was [on fire].", "ft": "消防士たちは[燃えている]家へ急いで向かった。", "tip": "onは「〜の状態で」。燃えている状態。catch fire「火がつく」、set fire to ~「〜に火をつける」もセットで覚える。"},
-{"w": "on schedule", "m": "予定どおりに", "s": [], "ex": "The train arrived at Kyoto Station [on schedule].", "ft": "電車は[予定どおりに]京都駅に着いた。", "tip": "scheduleは「予定表」。予定表に乗っている→予定どおり。= on time。ahead of schedule「予定より早く」、behind schedule「予定より遅れて」も一緒に。"},
+{"w": "on schedule", "m": "予定どおりに", "s": [], "ex": "The train arrived at Kyoto Station [on schedule].", "ft": "電車は[予定どおりに]京都駅に着いた。", "tip": "scheduleは「予定表」。予定表に載っている→予定どおり。= on time。ahead of schedule「予定より早く」、behind schedule「予定より遅れて」も一緒に。"},
 {"w": "on purpose", "m": "わざと", "s": ["故意に"], "ex": "I'm sure he didn't break the window [on purpose].", "ft": "彼は[わざと]窓を割ったのではないと思う。", "tip": "purposeは「目的」。目的を持って→わざと。= intentionally。反対は by mistake「間違って」、by accident「偶然に」。"},
 {"w": "on time", "m": "時間どおりに", "s": [], "ex": "The bus didn't arrive [on time] because of the snow.", "ft": "雪のせいでバスは[時間どおりに]来なかった。", "tip": "onは「ぴったり接して」。予定の時刻にぴったり。in time「間に合って」と区別する問題が頻出。電車・バス・集合の場面で使う。"},
 {"w": "on the other hand", "m": "一方で", "s": ["他方では"], "ex": "City life is convenient; [on the other hand], it can be noisy.", "ft": "都会の生活は便利だが、[一方で]うるさいこともある。", "tip": "「もう一方の手では」→反対の面を言う合図。on (the) one hand とペアでも使う。長文の対比をつかむ重要表現。"},
@@ -358,7 +355,6 @@ window.EIKEN_IDIOMS = [
 {"w": "thanks to ~", "m": "〜のおかげで", "s": [], "ex": "[Thanks to] your advice, I passed the entrance exam.", "ft": "あなたのアドバイス[のおかげで]、入試に合格した。", "tip": "thank（感謝する）から。良い結果に使うことが多いが、皮肉で悪い結果にも使う。because of と言いかえられる。"},
 {"w": "out of control", "m": "制御できなくて", "s": ["手に負えなくて"], "ex": "The car went [out of control] on the icy road.", "ft": "その車は凍った道で[制御がきかなくなった]。", "tip": "out of ~は「〜の外へ」。コントロールの外→手に負えない。反対はunder control「制御されて」。get out of control「手に負えなくなる」。"},
 {"w": "out of reach", "m": "手の届かない所に", "s": [], "ex": "Keep medicine [out of reach] of small children.", "ft": "薬は小さな子どもの[手の届かない所に]置いておきなさい。", "tip": "reachは「届く範囲」。範囲の外→手が届かない。反対はwithin reach「手の届く所に」。out of reach of childrenは注意書きの定番。"},
-// ---- 8日目 ----
 {"w": "out of stock", "m": "在庫切れで", "s": ["品切れで"], "ex": "Sorry, that size is [out of stock] right now.", "ft": "申し訳ありませんが、そのサイズは今[在庫切れです]。", "tip": "stockは「在庫」。在庫の外→品切れ。反対はin stock「在庫があって」。= sold out。買い物の会話問題で頻出。"},
 {"w": "up to ~", "m": "〜まで", "s": ["〜次第で", "〜の責任で"], "ex": "This elevator can carry [up to] ten people at once.", "ft": "このエレベーターは一度に10人[まで]運べる。", "tip": "upは「上へ」。上限の「〜まで」。It's up to you.「あなた次第だ」は会話で頻出。up to now「今まで」も出る。"},
 {"w": "according to ~", "m": "〜によると", "s": ["〜に従って"], "ex": "[According to] the weather report, it will snow tonight.", "ft": "天気予報[によると]、今夜は雪が降る。", "tip": "accordは「一致する」。情報源を示すほか、according to the plan「計画に従って」の意味もある。グラフや調査の長文で頻出。"},
@@ -371,7 +367,7 @@ window.EIKEN_IDIOMS = [
 {"w": "shake hands with ~", "m": "〜と握手する", "s": [], "ex": "The new student [shook hands with] everyone in the class.", "ft": "転校生はクラスのみんなと[握手した]。", "tip": "握手は2人の手が必要なので hands と複数形になるのがポイント。shake - shook - shaken の変化にも注意。make friends with も同じく複数形。"},
 {"w": "little by little", "m": "少しずつ", "s": ["だんだんと"], "ex": "My English is getting better [little by little] every day.", "ft": "私の英語は毎日[少しずつ]上達している。", "tip": "= gradually, bit by bit, step by step。変化がゆっくり進む様子。努力や環境の変化を表す文で使う。"},
 {"w": "pick out ~", "m": "〜を選び出す", "s": ["〜を見分ける"], "ex": "Please help me [pick out] a present for my mother.", "ft": "母へのプレゼント[を選ぶ]のを手伝ってください。", "tip": "pick「つまむ」＋out「外へ」。たくさんの中からつまみ出す→選び出す。= choose / select。pick up ~「拾う・迎えに行く」と区別。"},
-{"w": "play a role in ~", "m": "〜で役割を果たす", "s": [], "ex": "Volunteers [play a role in] keeping our town clean.", "ft": "ボランティアは町をきれいに保つことで[役割を果たしている]。", "tip": "roleは「役割」。play an important role in ~のように形容詞が入る形が頻出。= play a part in ~。roll「転がる」と発音が同じ。"},
+{"w": "play a role in ~", "m": "〜で役割を果たす", "s": [], "ex": "Volunteers [play a role in] keeping our town clean.", "ft": "ボランティアは町をきれいに保つうえで[役割を果たしている]。", "tip": "roleは「役割」。play an important role in ~のように形容詞が入る形が頻出。= play a part in ~。roll「転がる」と発音が同じ。"},
 {"w": "sooner or later", "m": "遅かれ早かれ", "s": ["いつかは"], "ex": "If you keep practicing, you will win [sooner or later].", "ft": "練習を続ければ、[遅かれ早かれ]勝てるだろう。", "tip": "日本語と順番が逆（soon → late）なので注意。いつかは必ず起こることを言う。= eventually。未来の文で使う。"},
 {"w": "right away", "m": "すぐに", "s": [], "ex": "The doctor came [right away] when he heard about the accident.", "ft": "医者は事故のことを聞いて[すぐに]来た。", "tip": "rightは強調「まさに」、awayは「離れて」。= at once, immediately, right now。会話の返事 I'll do it right away. で頻出。"},
 {"w": "by far", "m": "はるかに", "s": ["断然"], "ex": "This is [by far] the most interesting book I've read.", "ft": "これは私が読んだ中で[断然]いちばんおもしろい本だ。", "tip": "比較級・最上級を強める。比較級は much も使えるが、最上級を強めるときは by far が定番。the best by far の語順もある。"},
@@ -382,7 +378,7 @@ window.EIKEN_IDIOMS = [
 {"w": "in exchange for ~", "m": "〜と引き換えに", "s": ["〜のお返しに"], "ex": "She gave me her old bike [in exchange for] my video game.", "ft": "彼女は私のテレビゲームと[引き換えに]古い自転車をくれた。", "tip": "exchange は「交換」。何かを渡す代わりに別のものを受け取るときの表現。exchange A for B「AをBと交換する」もあわせて覚える。"},
 {"w": "on the whole", "m": "全体として", "s": ["概して"], "ex": "[On the whole], the school trip was a lot of fun.", "ft": "[全体として]、修学旅行はとても楽しかった。", "tip": "wholeは「全体」。細かい点は別として→全体的に見て。= in general, generally。意見をまとめる文で使う。"},
 {"w": "under construction", "m": "工事中で", "s": ["建設中で"], "ex": "The new library near the station is [under construction] now.", "ft": "駅の近くの新しい図書館は今[建設中だ]。", "tip": "underは「〜の最中で」。construct（建てる）の名詞形。under repair「修理中」、under discussion「議論中」も同じ形。"},
-{"w": "put aside ~", "m": "〜をとっておく", "s": ["〜をわきに置く", "〜をいったん忘れる"], "ex": "I [put aside] some money every month for the trip.", "ft": "旅行のために毎月お金[をとっておいている]。", "tip": "asideは「わきへ」。わきに置く→使わずにとっておく・たくわえる。= save / set aside ~。問題を「いったん忘れる」の意味もある。"},
+{"w": "put aside ~", "m": "〜をとっておく", "s": ["〜をわきに置く", "〜をいったん忘れる"], "ex": "I [put aside] some money every month for the trip.", "ft": "旅行のために毎月いくらかお金[をとっておく]。", "tip": "asideは「わきへ」。わきに置く→使わずにとっておく・たくわえる。= save / set aside ~。問題を「いったん忘れる」の意味もある。"},
 {"w": "put up ~", "m": "〜を掲げる", "s": ["〜を建てる", "〜を泊める"], "ex": "We [put up] posters for the school festival in the hallway.", "ft": "私たちは廊下に文化祭のポスター[をはった]。", "tip": "upは「上へ」。上に上げる→ポスターを掲示する・テントを立てる・人を泊める。put up with ~「〜をがまんする」と区別。"},
 {"w": "save up", "m": "お金をためる", "s": ["貯金する"], "ex": "I am [saving up] to buy a new bicycle this summer.", "ft": "この夏、新しい自転車を買うために[お金をためている]。", "tip": "upは「いっぱいに」。少しずつためて満たす→貯金する。save up for ~「〜のために貯金する」。save moneyとも言いかえられる。"},
 {"w": "stick to ~", "m": "〜をやり通す", "s": ["〜に固執する", "〜にくっつく"], "ex": "Once you make a study plan, you should [stick to] it.", "ft": "勉強の計画を立てたら、それを[守り通す]べきだ。", "tip": "stickは「くっつく」。くっついて離れない→計画・決心を守り通す、考えに固執する。= keep to ~。stick to the point「本題からそれない」。"},

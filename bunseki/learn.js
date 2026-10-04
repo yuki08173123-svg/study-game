@@ -130,7 +130,7 @@ const SLIDES = [
     <p>判定でも偏差値でも点数でもありません。<b>取れた失点</b>です。</p>
     <div class="bar"><div style="flex:80;background:var(--accent);color:var(--accent-ink)">点数 80</div><div style="flex:12;background:var(--shu);color:#fff">12</div><div style="flex:8;background:var(--gray);color:var(--muted)">8</div></div>
     <p class="mini">80点なら失点は20点。そのうち…</p>
-    <ul><li><b style="color:var(--shu)">取れた失点 12点</b>：やったことがあるのに間違えた点</li><li><b>取れない失点 8点</b>：解法を見てもわからない点</li></ul>
+    <ul><li><b style="color:var(--shu)">取れた失点 12点</b>：やったことがあるのに間違えた点。覚えていれば・ミスしなければ取れた</li><li><b>取れない失点 8点</b>：解法を見てもわからない点。まだ習っていない・まったく歯が立たなかった</li></ul>
     <p>点数を上げるとは、この<b>取れた失点を取ること</b>です。</p>` },
 
   { sec: '4 分析マップの書き方', t: '次の目標点＝点数＋取れた失点', v: [['use', 314]], h: `

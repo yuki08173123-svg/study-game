@@ -307,8 +307,8 @@ table.sum thead tr > :first-child{background:var(--bg)}
       <div style="padding:0 14px 14px">
         <dl>
           <dt>失点</dt><dd>満点から点数を引いた、間違えた点。100点満点で87点なら、失点は13点。</dd>
-          <dt>取れた失点</dt><dd>やったことがあるのに間違えた点。</dd>
-          <dt>取れない失点</dt><dd>解法を見てもわからない点。</dd>
+          <dt>取れた失点</dt><dd>やったことがあるのに間違えた点。覚えていれば・ミスしなければ取れた点で、次のテストで取りにいく点です。</dd>
+          <dt>取れない失点</dt><dd>解法を見てもわからない点。まだ習っていない・まったく歯が立たなかったなど、いまの実力では取れなかった点です。</dd>
           <dt>KK率</dt><dd>やったことある・似てる・近い問題（KKできる問題）のうち、正解できた割合。41問のうち38問なら92%。90%以上が当たり前、100%に近づけます。</dd>
           <dt>次の目標点</dt><dd>点数＋取れた失点。取れた失点を全部取れば届く点数です。</dd>
           <dt>なぜ？ → どうする？</dt><dd>取れた失点が出た理由を具体的に書き、それを解決する行動を、教材・個数・周回数・正答率・期限の数字で決めます。</dd>
@@ -425,7 +425,7 @@ table.sum thead tr > :first-child{background:var(--bg)}
 </div>
 
 <script>
-const VER = 5;
+const VER = 6;
 const KEY = 'bunseki-v1';
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -708,7 +708,7 @@ function stNum(b, s) {
       <div class="lossbar" id="lossBar"></div>
       <div class="legend"><span><i style="background:var(--accent)"></i>点数</span><span><i style="background:var(--shu)"></i>取れた失点</span><span><i style="background:var(--gray)"></i>取れない失点</span></div>
       <p class="bigq" id="lossQ"></p>
-      <p class="mini" style="margin:0 0 8px">やったことがあるのに間違えた点が「取れた失点」。解法を見てもわからない点は「取れない失点」です。</p>
+      <p class="mini" style="margin:0 0 8px">「取れた失点」は、やったことがあるのに間違えた点（覚えていれば・ミスしなければ取れた点）。「取れない失点」は、解法を見てもわからない点（まだ習っていない・まったく歯が立たなかった問題）です。</p>
       <div class="num"><input class="inp" id="fToreta" inputmode="decimal" value="${esc(s.toreta)}" placeholder="0"><span class="u">点が取れた失点</span></div>
       <p class="help">目安：取れた失点は5点未満におさえる。</p>
       <div class="calc" id="notBox" hidden><span class="k">取れない失点（自動）</span><span class="v" id="notV"></span></div>
@@ -1250,6 +1250,6 @@ renderHome();
 checkUpdate(true);
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 </script>
-<script src="learn.js?v=5"></script>
+<script src="learn.js?v=6"></script>
 </body>
 </html>

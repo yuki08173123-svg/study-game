@@ -397,6 +397,9 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
   .pcard .b .s{font-size:8pt;color:#444}
   .phead{font:9pt 'BIZ UDPGothic',sans-serif;color:#555;margin-bottom:3mm}
 }
+/* 名前の札が出ているときは、Lv の棒をかくして見出しが切れないように（スマホ幅） */
+@media (max-width:480px){ header:has(#userTag:not(.hidden)) .lvchip i{display:none} header:has(#userTag:not(.hidden)) h1 small{display:none} }
+.usertag{flex:none;max-width:6.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:var(--chip);color:var(--ink);border-radius:999px;padding:5px 10px;font-size:13px;font-weight:700}
 </style>
 </head>
 <body>
@@ -404,6 +407,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <header>
   <h1>英検5級<small id="verLabel"></small></h1>
   <div class="bookseg" id="bookSeg"><button data-b="w">単語</button><button data-b="i">熟語</button></div>
+  <button class="usertag hidden" id="userTag" aria-label="使う人"></button>
   <button class="helpb" id="btnHelp" aria-label="使い方">？</button>
   <button class="lvchip" id="lvChip">Lv.1 <i></i></button>
 </header>
@@ -436,10 +440,65 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="idioms.js?v=2"></script>
 <script>
 'use strict';
-const VER = 2;
+const VER = 3;
+/* ===================== 使う人（兄弟で1台） =====================
+   1人目は今までの保存場所のまま（記録はそのまま残る）。2人目からは保存の名前のうしろに「__id」をつけて分ける。
+   切りかえたらページを読みなおす。レベル・仕分け・計画・記録・タイマーはすべて人ごと。 */
+const UPFX = 'eiken5_';
+const UKEY = UPFX + 'users';
+let USERS = { list:[{ id:'', name:'' }], cur:'' };
+try{ const u = JSON.parse(localStorage.getItem(UKEY)); if(u && Array.isArray(u.list) && u.list.length) USERS = u; }catch(e){}
+if(!USERS.list.some(u => u.id === USERS.cur)) USERS.cur = USERS.list[0].id;
+const SFX = USERS.cur ? '__' + USERS.cur : '';
+let NOSAVE = false;   // いまの人を消すときは、閉じる前の自動保存をしない
+function curUser(){ return USERS.list.find(u => u.id === USERS.cur) || USERS.list[0]; }
+function userName(u){ u = u || curUser(); return (u.name || '').trim() || (USERS.list.indexOf(u) + 1) + '人目'; }
+function saveUsers(){ try{ localStorage.setItem(UKEY, JSON.stringify(USERS)); }catch(e){} }
+function switchUser(id){ if(id === USERS.cur) return; save(); USERS.cur = id; saveUsers(); location.reload(); }
+function userKeys(id){
+  const ks = [];
+  try{ for(let k = 0; k < localStorage.length; k++){ const key = localStorage.key(k); if(key && key.startsWith(UPFX) && key !== UKEY && (id ? key.endsWith('__' + id) : !key.includes('__'))) ks.push(key); } }catch(e){}
+  return ks;
+}
+function usersCardHTML(){
+  const many = USERS.list.length > 1;
+  return `<div class="card set" id="usersCard"><label>使う人（兄弟で1台を使うとき）</label>
+    <div class="chips" style="flex-wrap:wrap">${USERS.list.map(u => `<button class="chipb ${u.id === USERS.cur ? 'on' : ''}" data-uid="${esc(u.id)}">${esc(userName(u))}</button>`).join('')}<button class="chipb" data-uadd="1">＋ ふやす</button></div>
+    <div style="display:flex;gap:8px;align-items:center"><span class="dim" style="white-space:nowrap">いまの人の名前</span><input id="uName" class="search" style="margin:0;flex:1;min-width:0;padding:9px 12px" maxlength="10" value="${esc(curUser().name || '')}" placeholder="${esc(userName())}"></div>
+    <p class="dim" style="margin:8px 0 0">記録・計画・レベルは人ごとに分かれます。名前を押すと、その人に切りかわります。${many ? '' : '1人で使うときは、何もしなくてOKです。'}</p>
+    ${many ? `<button class="btn line" data-udel="1" style="margin-top:10px">「${esc(userName())}」を消す</button>` : ''}</div>`;
+}
+function bindUsersCard(){
+  const c = $('#usersCard'); if(!c) return;
+  c.querySelectorAll('[data-uid]').forEach(b => b.onclick = () => switchUser(b.dataset.uid));
+  c.querySelector('[data-uadd]').onclick = () => {
+    let name = ''; try{ name = (prompt('ふやす人の名前（例：弟）') || '').trim().slice(0, 10); }catch(e){}
+    const id = 'u' + Date.now().toString(36);
+    USERS.list.push({ id, name }); saveUsers(); save();
+    USERS.cur = id; saveUsers(); location.reload();
+  };
+  c.querySelector('#uName').onchange = e => { curUser().name = e.target.value.trim().slice(0, 10); saveUsers(); renderUserTag(); renderSet(); };
+  const del = c.querySelector('[data-udel]');
+  if(del) del.onclick = () => {
+    if(!confirm('「' + userName() + '」の記録をすべて消します（元に戻せません）。よろしいですか？')) return;
+    NOSAVE = true;
+    userKeys(USERS.cur).forEach(k => { try{ localStorage.removeItem(k); }catch(e){} });
+    USERS.list = USERS.list.filter(u => u.id !== USERS.cur);
+    USERS.cur = USERS.list[0].id; saveUsers(); location.reload();
+  };
+}
+function renderUserTag(){
+  const t = $('#userTag'); if(!t) return;
+  t.classList.toggle('hidden', USERS.list.length < 2);
+  t.textContent = userName();
+}
+function openUsersCard(){
+  const b = document.querySelector('nav.tabs button[data-tab="set"]'); if(b) b.click();
+  setTimeout(() => { const c = $('#usersCard'); if(c) c.scrollIntoView({ behavior:'smooth', block:'center' }); }, 60);
+}
 /* 単語（600語）と熟語（100個）は、べつべつの記録で進める。右上の「単語／熟語」で切りかえ（ページを読みなおす）。
    レベル（XP）と使い方を見たかどうかは、2つで共通。 */
-const BOOKKEY = 'eiken5_book';
+const BOOKKEY = 'eiken5_book' + SFX;
 let BOOK = 'w';
 try{ BOOK = localStorage.getItem(BOOKKEY) === 'i' ? 'i' : 'w'; }catch(e){}
 const IDIOM = BOOK === 'i';
@@ -450,8 +509,8 @@ const PER = IDIOM ? 25 : 100;            // 1日の数（単語100語・熟語25
 const DAYS = Math.ceil(N / PER);         // 1周の日数（単語600語なら6日・熟語100個なら4日）
 let LAPS = 4, TOTAL = DAYS * 4;          // 周回数は設定で変えられる（setLaps）
 const GAPS = [1, 3, 7];                  // リマインド：まちがえた翌日 → 3日後 → 7日後 → 卒業
-const KEY = 'eiken5_' + BOOK + '_v2';   // v2：1日の数を変えたので記録を分けた
-const COMMON = 'eiken5_common';
+const KEY = 'eiken5_' + BOOK + '_v2' + SFX;   // v2：1日の数を変えたので記録を分けた
+const COMMON = 'eiken5_common' + SFX;
 const NO_W = IDIOM ? 3 : 4;              // 音声ファイルの番号の桁数
 const AUD = 'audio/' + BOOK + '/';
 
@@ -490,13 +549,13 @@ function load(){
 /* 単語の進み具合（熟語の「今日」で、単語を完走したかを見る） */
 function wordsProgress(){
   try{
-    const w = JSON.parse(localStorage.getItem('eiken5_w_v2')) || {};
+    const w = JSON.parse(localStorage.getItem('eiken5_w_v2' + SFX)) || {};
     const total = 7 * ((w.cfg && w.cfg.laps) || 8);
     return { done: Object.keys(w.days || {}).length, total };
   }catch(e){ return { done:0, total:48 }; }
 }
 function setLaps(n){ LAPS = Math.max(1, Math.min(10, +n || 4)); TOTAL = DAYS * LAPS; }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); localStorage.setItem(COMMON, JSON.stringify({ xp:S.xp, xpDay:S.xpDay, guideSeen:S.guideSeen })); }catch(e){} }
+function save(){ if(NOSAVE) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); localStorage.setItem(COMMON, JSON.stringify({ xp:S.xp, xpDay:S.xpDay, guideSeen:S.guideSeen })); }catch(e){} }
 function ws(i){ return S.w[i] || (S.w[i] = { c:0, x:0, sk:0, st:0, due:'' }); }
 load();
 
@@ -1322,6 +1381,7 @@ function renderSet(){
   el.innerHTML = `<div class="card"><h3>使い方</h3>
       <div class="gset">${guideSlides().map((g, k) => `<button data-g="${k}"><div class="num">${k+1}</div><b>${g.t}</b><span>${g.p[0].replace(/<[^>]+>/g, '')}</span></button>`).join('')}</div>
       <button class="btn line" id="sGuide" style="margin-top:6px">使い方をはじめから見る</button></div>
+    ${usersCardHTML()}
     <div class="card set"><label>いま進めているもの</label>
       <div class="seg" id="sBook"><button class="${!IDIOM?'on':''}" data-b="w">英単語 600</button><button class="${IDIOM?'on':''}" data-b="i">英熟語 100</button></div>
       <p class="dim" style="margin:8px 0 0">単語と熟語は、計画・テストの記録がべつべつです（レベルの XP は合計）。右上でも切りかえられます。</p></div>
@@ -1356,6 +1416,7 @@ function renderSet(){
     <div class="card"><h3>最初からやり直す</h3><p class="dim">いま開いている${BNAME}の記録をすべて消します（元に戻せません。レベルの XP は残ります）。</p><button class="btn shu" id="sReset">${BNAME}の記録を消す</button></div>`;
   $$('.gset button').forEach(b => b.onclick = () => openGuide(+b.dataset.g));
   $('#sGuide').onclick = () => openGuide(0);
+  bindUsersCard();
   $$('#sBook button').forEach(b => b.onclick = () => switchBook(b.dataset.b));
   $('#sStart').onchange = e => { if(e.target.value){ S.start = e.target.value; S.startSet = true; save(); renderAll(); renderSet(); toast('開始日を変えました'); } };
   $$('#sLaps button').forEach(b => b.onclick = () => { S.cfg.laps = +b.dataset.n; setLaps(S.cfg.laps); save(); renderAll(); renderSet(); });
@@ -1382,7 +1443,7 @@ function renderSet(){
   const APPID = 'eiken5-' + BOOK;
   $('#sExp').onclick = () => {
     const blob = new Blob([JSON.stringify({ app: APPID, ...S })], { type:'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = APPID + '-' + today() + '.json'; a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = APPID + '-' + (USERS.list.length > 1 ? userName() + '-' : '') + today() + '.json'; a.click();
   };
   $('#sImp').onclick = () => $('#sFile').click();
   $('#sFile').onchange = async e => {
@@ -1612,6 +1673,8 @@ function guideSlides(){
       v:`<div class="minicard"><b style="color:var(--shu)">✕</b> まちがえた</div><div class="minicard">翌日 → 3日後 → 1週間後 にもう一度</div><div class="minicard"><b style="color:#2E7A57">◯◯◯</b> 3回つづけて正解で卒業</div>` },
     { t:'レベルアップ', p:['覚える・解くたびに <b>XP</b> がたまり、たまると<b>レベルが上がります</b>（単語と熟語の合計）。','ランクは英検の級で上がっていきます。Starter からはじめて、めざせ Master！'],
       v:`<table class="xprules">${XP_RULES.slice(0, 6).map(([t, n]) => `<tr><td style="font-size:13.5px">${t}</td><td class="r">+${n}</td></tr>`).join('')}</table>` },
+    { t:'兄弟で使う', p:['1台を兄弟で使うときは、「設定」の<b>使う人</b>で「＋ ふやす」。名前を押すと切りかわります。','記録・計画・レベルは<b>人ごとに分かれる</b>ので、まざりません。2人以上のときは、上に名前が出ます。'],
+      v:`<div class="chips" style="flex-wrap:wrap;margin:0"><span class="chipb on">兄</span><span class="chipb">弟</span><span class="chipb">＋ ふやす</span></div>` },
     { t:'さいごに：ホーム画面に追加', p:['iPhone は、ホーム画面に追加していないサイトの記録を消すことがあります。長くつづけるアプリなので、<b>必ずホーム画面に追加</b>してください。','使い方は、右上の <b>？</b> と「設定」からいつでも見られます。'],
       v:`<div class="minicard">Safari で開く → 共有ボタン → <b style="font-size:15px">ホーム画面に追加</b></div>` },
   ];
@@ -1641,6 +1704,8 @@ function openGuide(start){
   paint();
 }
 $('#btnHelp').onclick = () => openGuide(0);
+$('#userTag').onclick = openUsersCard;
+renderUserTag();
 
 /* ===================== 共通の部品 ===================== */
 function makeOv(){ closeOv(true); const ov = document.createElement('div'); ov.className = 'ov'; document.body.appendChild(ov); document.body.style.overflow = 'hidden'; return ov; }

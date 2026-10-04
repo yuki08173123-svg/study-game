@@ -631,6 +631,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
     </div>
     <div id="goals"></div>
     <button class="bigbtn" id="btnGoalAdd">＋ 目標をふやす</button>
+    <button class="subbtn" id="btnBunseki">分析マップから読みこむ（貼りつけ）</button>
   </section>
 
   <section id="tabHist" class="hidden">
@@ -759,7 +760,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 55;
+const VER = 56;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1905,6 +1906,101 @@ $('#goals').onclick = e => {
 };
 $('#btnGoalAdd').onclick = ()=>openGoalEditor(null);
 
+/* ---------- 分析マップから読みこむ ----------
+   分析マップのアプリの「計画マップに入れる」でコピーした文章を貼りつけると、目標のやることに入る。
+   文章の形（分析マップ v2〜）:
+     【分析マップ】定期テスト②（2026/10/4）
+     □【国語】漢字ドリル p.10〜40 を細かく見て書く（10周）［2026/11/4まで］
+   ホーム画面のアプリどうしはデータを直接わたせないので、文章でわたす。 */
+function parseBunseki(text){
+  const out = { title:'', items:[] };
+  const now = new Date();
+  String(text||'').split(/\r?\n/).forEach(raw=>{
+    const ln = raw.trim(); if(!ln) return;
+    const h = ln.match(/^【分析マップ】(.+?)(?:（[\d/]+）)?$/);
+    if(h){ out.title = h[1].trim(); return; }
+    const m = ln.match(/^[□☑✅■・\-]?\s*【(.+?)】\s*(.+)$/);
+    if(!m) return;
+    let subj = m[1].trim(), tx = m[2].trim(), due = '';
+    const f = tx.match(/［(\d{4})\/(\d{1,2})\/(\d{1,2})まで］\s*$/);
+    if(f){ due = iso(new Date(+f[1], +f[2]-1, +f[3])); tx = tx.slice(0, f.index).trim(); }
+    else {
+      // 年のない「11/4まで」（古い形・手書き）。今日より3か月以上前になるなら来年とみなす
+      const g = tx.match(/(\d{1,2})\/(\d{1,2})まで/);
+      if(g){
+        let d = new Date(now.getFullYear(), +g[1]-1, +g[2]);
+        if(d < new Date(now.getFullYear(), now.getMonth()-3, 1)) d = new Date(now.getFullYear()+1, +g[1]-1, +g[2]);
+        due = iso(d);
+        tx = tx.replace(/[・]?\s*\d{1,2}\/\d{1,2}まで/, '').replace(/（\s*）|\(\s*\)/, '').replace(/（・/, '（').trim();
+      }
+    }
+    if(!tx) return;
+    if(!SUBJ.includes(subj)){ tx = subj + '：' + tx; subj = ''; }
+    out.items.push({ text:tx, due:due, subj:subj });
+  });
+  return out;
+}
+function openBunsekiImport(){
+  const gs = goalsSorted();
+  const sh = openSheet('<h2>分析マップから読みこむ</h2>'
+    + '<p style="color:var(--muted); font-size:13px; margin-bottom:10px">分析マップのアプリで「計画マップに入れる」を押してコピーしたものを、下に貼りつけます。</p>'
+    + '<button class="subbtn" id="bkPaste" style="margin-top:0">コピーしたものを貼りつける</button>'
+    + '<div class="field" style="margin-top:10px"><div class="lab">または、ここに貼りつけ</div>'
+    + '<textarea id="bkText" rows="5" style="border:1px solid var(--line); border-radius:12px; padding:10px; font-size:14px; background:var(--card)" placeholder="【分析マップ】…&#10;□【国語】…"></textarea></div>'
+    + '<div id="bkPrev"></div>'
+    + '<div class="field" id="bkWhere" hidden><div class="lab">どの目標に入れますか？</div>'
+    + '<div class="mchips" id="bkGoals" style="margin:6px 0 0">'
+    + '<button data-g="" class="on" style="padding:8px 13px; font-size:13.5px">＋ 新しい目標</button>'
+    + gs.map(g=>'<button data-g="'+g.id+'" style="padding:8px 13px; font-size:13.5px">'+esc(g.name)+'</button>').join('')
+    + '</div><input type="text" id="bkName" style="margin-top:10px; border:1px solid var(--line); border-radius:12px; padding:10px; background:var(--card)" placeholder="新しい目標の名前（例：2学期期末テスト）"></div>'
+    + '<button class="bigbtn" id="bkOK" disabled style="opacity:.5">目標に入れる</button>');
+  const ta = sh.querySelector('#bkText');
+  let parsed = { title:'', items:[] }, target = '';
+  const nameInp = sh.querySelector('#bkName');
+  const upd = ()=>{
+    parsed = parseBunseki(ta.value);
+    const n = parsed.items.length;
+    sh.querySelector('#bkPrev').innerHTML = !ta.value.trim() ? '' : !n
+      ? '<div class="empty" style="padding:10px">やることが見つかりませんでした。分析マップのアプリでコピーしたものか確かめてください。</div>'
+      : '<div class="card" style="padding:10px 12px; margin-top:6px"><div style="font-weight:800; margin-bottom:4px">'+n+'個のやること'+(parsed.title?'（'+esc(parsed.title)+'）':'')+'</div>'
+        + parsed.items.map(x=>'<div style="font-size:13.5px; padding:3px 0; border-top:1px solid var(--line)">'
+          + (x.subj?'<b>'+esc(x.subj)+'</b> ':'')+esc(x.text)+(x.due?' <span style="color:var(--muted)">〜'+esc(md(parseISO(x.due)))+'</span>':'')+'</div>').join('')+'</div>';
+    sh.querySelector('#bkWhere').hidden = !n;
+    if(n && !nameInp.value && parsed.title) nameInp.value = '次のテスト（'+parsed.title+'の分析から）';
+    const ok = sh.querySelector('#bkOK'); ok.disabled = !n; ok.style.opacity = n ? '' : '.5';
+  };
+  ta.oninput = upd;
+  sh.querySelector('#bkPaste').onclick = async ()=>{
+    try{ const t = await navigator.clipboard.readText(); if(!t){ toast('コピーしたものがありません'); return; } ta.value = t; upd(); }
+    catch(e){ toast('下の欄を長押しして「ペースト」してください'); ta.focus(); }
+  };
+  sh.querySelector('#bkGoals').onclick = e => {
+    const b = e.target.closest('button'); if(!b) return;
+    target = b.dataset.g;
+    sh.querySelectorAll('#bkGoals button').forEach(x=>x.classList.toggle('on', x === b));
+    nameInp.hidden = !!target;
+  };
+  sh.querySelector('#bkOK').onclick = ()=>{
+    if(!parsed.items.length) return;
+    let g = target && goalsOf().find(x=>x.id === target);
+    if(!g){
+      const nm = nameInp.value.trim(); if(!nm){ toast('新しい目標の名前を書いてください'); nameInp.focus(); return; }
+      g = { id:uid(), name:nm, aim:'', spans:[], start:'', date:'', items:[] };
+      goalsOf().push(g);
+    }
+    g.items = g.items || [];
+    let add = 0, skip = 0;
+    parsed.items.forEach(x=>{
+      if(g.items.some(y=>y.text === x.text && (y.subj||'') === x.subj)){ skip++; return; }
+      g.items.push({ id:uid(), text:x.text, due:x.due, subj:x.subj, done:false }); add++;
+    });
+    g.view = 'subj';
+    sh.remove(); renderGoals(); renderTop(); save();
+    toast('「'+g.name+'」に'+add+'個入れました'+(skip?'（同じもの'+skip+'個はとばしました）':''));
+  };
+}
+$('#btnBunseki').onclick = openBunsekiImport;
+
 /* ---------- 時間わり（10分きざみのタイムテーブル） ---------- */
 function drawTimeline(light){
   const W = 1080, PAD = 30, F = "'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif";
@@ -2818,7 +2914,7 @@ const SLIDES = [
   </div>
 </div>
 <p>下の<b>「目標」</b>タブでは、次のテストや入試など<b>長いはんいの計画</b>を書けます。<br>
-やることは<b>月ごと</b >にならびます。<b>「今週へ」</b>を押すと、そのまま今週の計画に入ります。</p>`,
+やることは<b>月ごと</b >にならびます。<b>「今週へ」</b>を押すと、そのまま今週の計画に入ります。<br>分析マップのアプリでコピーした行動タスクは、<b>「分析マップから読みこむ」</b>で貼りつけると、ここに入ります。</p>`,
 
 `<span class="snum">⑧</span>
 <h3>日曜のお知らせと、カウントダウン</h3>

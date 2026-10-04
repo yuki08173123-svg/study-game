@@ -231,6 +231,7 @@ table.sum thead tr > :first-child{background:var(--bg)}
           <dt>失点</dt><dd>満点から点数を引いた点。100点満点で87点なら、失点は13点。</dd>
           <dt>取れた失点</dt><dd>失点のうち、覚えていれば・ミスしなければ取れた点。次のテストで取りにいく点です。</dd>
           <dt>取れない失点</dt><dd>まだ習っていない・まったく歯が立たなかったなど、いまの実力では取れなかった点。</dd>
+          <dt>KK率（経験率）</dt><dd>やったことある・似てる・近い問題（KKできる問題）のうち、正解できた割合。41問のうち38問なら92%。90%以上が当たり前、100%に近づけます。</dd>
           <dt>次の目標点</dt><dd>点数＋取れた失点。取れた失点を全部取れば届く点数です。</dd>
           <dt>なぜ？ → どうする？</dt><dd>取れた失点が出た理由を具体的に書き、それを解決する行動を、教材・個数・周回数・正答率・期限の数字で決めます。</dd>
         </dl>
@@ -280,6 +281,24 @@ table.sum thead tr > :first-child{background:var(--bg)}
   </div>
 </div>
 
+<!-- 計画マップへの入れ方 -->
+<div class="sheet" id="planSheet" hidden>
+  <div class="panel">
+    <div class="ph"><h3>行動タスクをコピーしました</h3><button class="x" data-close>✕</button></div>
+    <div class="card">
+      <p style="margin:0 0 8px;font-weight:700">計画マップのアプリで</p>
+      <ol style="margin:0;padding-left:22px;line-height:1.9">
+        <li>下の<b>「目標」</b>タブを開く</li>
+        <li><b>「分析マップから読みこむ（貼りつけ）」</b>を押す</li>
+        <li><b>「コピーしたものを貼りつける」</b>を押す</li>
+        <li>入れる目標をえらんで<b>「目標に入れる」</b></li>
+      </ol>
+    </div>
+    <p class="mini">入ったやることは、計画マップの「今週へ」で、その週の計画に入れられます。</p>
+    <button class="btn pri wide" data-close>わかった</button>
+  </div>
+</div>
+
 <!-- 一覧（どこからでも直す） -->
 <div class="sheet" id="jumpSheet" hidden>
   <div class="panel">
@@ -315,7 +334,7 @@ table.sum thead tr > :first-child{background:var(--bg)}
 </div>
 
 <script>
-const VER = 1;
+const VER = 2;
 const KEY = 'bunseki-v1';
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -348,13 +367,23 @@ function kkOf(s) {
   if (m) { const a = +m[1], b = +m[2]; if (b > 0) return { pct: Math.floor(a / b * 100), frac: m[1] + '/' + m[2] }; return null; }
   const n = num(t); return n === null ? null : { pct: n, frac: '' };
 }
+/* KK率（経験率）＝ これまでやった問題と同じ・似た・近い問題（KKできる問題）のうち、正解できた割合
+   ヒラの説明（分析マップのアップデート動画・KK率の出し方と戦略立て）:
+   ① テストの全問題数 ② そのうち、やったことある・似てる・近い問題（KKできる問題）③ そのうち実際に正解できた問題
+   KK率 ＝ ③ ÷ ② × 100（例 41÷45 → 91%）。90%以上が当たり前、100%に近づける。
+   KKできる問題の割合 ＝ ② ÷ ①（例 25÷30 → 83%） */
+function kkCalc(s) {
+  const all = num(s.kkAll), can = num(s.kkCan), ok = num(s.kkOk);
+  if (can !== null && can > 0 && ok !== null) return { pct: r1(ok / can * 100), frac: fmt(ok) + '/' + fmt(can), miss: r1(can - ok), can, ok, all, share: all ? r1(can / all * 100) : null };
+  return kkOf(s.kk);
+}
 function calc(s) {
   const score = num(s.score), full = num(s.full), avg = num(s.avg), toreta = num(s.toreta);
   const lost = score !== null && full !== null ? r1(full - score) : null;
   const diff = score !== null && avg !== null ? r1(score - avg) : null;
   const notT = lost !== null && toreta !== null ? r1(lost - toreta) : null;
   const target = score !== null && toreta !== null ? r1(score + toreta) : null;
-  return { score, full, avg, toreta, lost, diff, notT, target, kk: kkOf(s.kk), dev: num(s.dev), rank: num(s.rank), total: num(s.total) };
+  return { score, full, avg, toreta, lost, diff, notT, target, kk: kkCalc(s), dev: num(s.dev), rank: num(s.rank), total: num(s.total) };
 }
 function today() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function md(iso) { if (!iso) return ''; const [y, m, d] = iso.split('-'); return (+m) + '/' + (+d); }
@@ -445,7 +474,7 @@ function steps(m) {
   return a;
 }
 function subOf(id) { return cur.subs.find(s => s.id === id); }
-function newSub(name) { return { id: uid(), name, full: String(S.full || 100), score: '', avg: '', rank: '', total: '', dev: '', toreta: '', kk: '', reasons: [''], acts: [newAct()] }; }
+function newSub(name) { return { id: uid(), name, full: String(S.full || 100), score: '', avg: '', rank: '', total: '', dev: '', toreta: '', kk: '', kkAll: '', kkCan: '', kkOk: '', reasons: [''], acts: [newAct()] }; }
 function newAct() { return { id: uid(), text: '', laps: '', rate: '', due: '', r: -1, done: false }; }
 
 function openWiz(i) {
@@ -565,7 +594,7 @@ function stNum(b, s) {
   b.innerHTML = `
     <span class="subjtag">${esc(s.name)}</span>
     <h2>${esc(s.name)}の結果を入れましょう</h2>
-    <p class="lead">分かるところだけでOK。順位・偏差値・KK率は空でも大丈夫です。</p>
+    <p class="lead">分かるところだけでOK。順位・偏差値は空でも大丈夫です。</p>
     <div class="field">
       <span class="flabel">点数</span>
       <div class="num"><input class="inp" id="fScore" inputmode="decimal" value="${esc(s.score)}" placeholder="0"><span class="u">点 ／</span><input class="inp s" id="fFull" inputmode="decimal" value="${esc(s.full)}"><span class="u">点満点</span></div>
@@ -588,13 +617,22 @@ function stNum(b, s) {
       <p class="bigq" id="lossQ"></p>
       <p class="mini" style="margin:0 0 8px">覚えていれば・ミスしなければ取れた点が「取れた失点」。まだ習っていない・まったく歯が立たなかった問題は「取れない失点」です。</p>
       <div class="num"><input class="inp" id="fToreta" inputmode="decimal" value="${esc(s.toreta)}" placeholder="0"><span class="u">点が取れた失点</span></div>
+      <p class="help">目安：取れた失点は5点未満におさえる。</p>
       <div class="calc" id="notBox" hidden><span class="k">取れない失点（自動）</span><span class="v" id="notV"></span></div>
       <div class="warn" id="lossWarn" hidden></div>
     </div>
-    <div class="field">
-      <span class="flabel">KK率（分かれば）</span>
-      <div class="num"><input class="inp" style="width:160px;font-size:17px" id="fKK" value="${esc(s.kk)}" placeholder="35/45 か 77"><span class="u" id="kkV"></span></div>
-      <p class="help">「35/45」のように入れると、％を自動で出します。％だけでもOK。</p>
+    <div class="split">
+      <h3 style="margin:0">KK率（経験率）を出します</h3>
+      <p class="mini" style="margin:4px 0 10px">KK＝これまでやった問題の解き方を使えること（解法の活用）。問題用紙と答案を見ながら、3つ数えます。分からなければ空でOK。</p>
+      <p class="bigq" style="margin-top:0">① テストの問題は全部で何問？</p>
+      <div class="num"><input class="inp" id="fKkAll" inputmode="numeric" value="${esc(s.kkAll)}" placeholder="—"><span class="u">問</span></div>
+      <p class="bigq">② そのうち「やったことある・似てる・近い」問題は何問？</p>
+      <p class="mini" style="margin:0 0 6px">見たことがない問題は数えません。これが「KKできる問題」です。</p>
+      <div class="num"><input class="inp" id="fKkCan" inputmode="numeric" value="${esc(s.kkCan)}" placeholder="—"><span class="u">問</span></div>
+      <p class="bigq">③ ②のうち、実際に正解できた問題は何問？</p>
+      <div class="num"><input class="inp" id="fKkOk" inputmode="numeric" value="${esc(s.kkOk)}" placeholder="—"><span class="u">問</span></div>
+      <div class="calc" id="kkBox" hidden><span class="k">KK率（③÷②）</span><span class="v" id="kkV"></span></div>
+      <div id="kkNote"></div>
     </div>
     <div class="target" id="tgBox" hidden>
       <div class="k">次の目標点（点数＋取れた失点）</div>
@@ -602,7 +640,7 @@ function stNum(b, s) {
       <div class="f" id="tgF"></div>
     </div>`;
   const bind = (id, key) => { $(id).oninput = e => { s[key] = e.target.value; saveSoon(); upd(); }; };
-  bind('fScore', 'score'); bind('fFull', 'full'); bind('fAvg', 'avg'); bind('fRank', 'rank'); bind('fTotal', 'total'); bind('fDev', 'dev'); bind('fToreta', 'toreta'); bind('fKK', 'kk');
+  bind('fScore', 'score'); bind('fFull', 'full'); bind('fAvg', 'avg'); bind('fRank', 'rank'); bind('fTotal', 'total'); bind('fDev', 'dev'); bind('fToreta', 'toreta'); bind('fKkAll', 'kkAll'); bind('fKkCan', 'kkCan'); bind('fKkOk', 'kkOk');
   function upd() {
     const c = calc(s);
     $('diffBox').hidden = c.diff === null; $('diffV').textContent = sgn(c.diff) + '点';
@@ -615,7 +653,17 @@ function stNum(b, s) {
     $('notV').textContent = c.notT !== null ? fmt(c.notT) + ' / ' + fmt(c.lost) : '';
     const w = c.lost !== null && c.toreta !== null && c.toreta > c.lost ? `取れた失点（${fmt(c.toreta)}点）が、失点（${fmt(c.lost)}点）より大きくなっています。` : (c.score !== null && c.full !== null && c.score > c.full ? '点数が満点より大きくなっています。' : '');
     $('lossWarn').hidden = !w; $('lossWarn').textContent = w;
-    $('kkV').textContent = c.kk ? c.kk.pct + '%' : '';
+    $('kkBox').hidden = !c.kk; $('kkV').textContent = c.kk ? (c.kk.frac ? c.kk.frac + '　' : '') + c.kk.pct + '%' : '';
+    let kn = '';
+    const ka = num(s.kkAll), kc = num(s.kkCan), ko = num(s.kkOk);
+    if (ka !== null && kc !== null && kc > ka) kn = '<div class="warn">②が①より多くなっています。</div>';
+    else if (kc !== null && ko !== null && ko > kc) kn = '<div class="warn">③が②より多くなっています。</div>';
+    else if (c.kk) {
+      kn = (c.kk.share !== null ? `<p class="help">KKできる問題の割合（②÷①）は ${c.kk.share}%。</p>` : '')
+        + (c.kk.pct >= 90 ? `<div class="ok">90%以上。普段の勉強が身になっています。100%に近づけましょう。</div>`
+          : `<div class="warn">90%に届いていません。KKできたはずの問題を ${fmt(c.kk.miss)}問 落としています。ここが穴＝取れた失点です。「なぜ？」で、なぜ極まっていなかったかを書きましょう。</div>`);
+    }
+    $('kkNote').innerHTML = kn;
     $('tgBox').hidden = c.target === null;
     $('tgV').textContent = c.target !== null ? fmt(c.target) + '点' : '';
     $('tgF').textContent = c.target !== null ? fmt(c.score) + ' ＋ ' + fmt(c.toreta) + ' ＝ ' + fmt(c.target) : '';
@@ -636,7 +684,7 @@ function sumTable(m) {
     <td>${c.avg !== null ? fmt(c.avg) : '—'}</td>
     <td>${c.diff !== null ? sgn(c.diff) : '—'}</td>
     <td>${c.rank !== null ? fmt(c.rank) + '位' + (c.total !== null ? '<span class="small2">/' + fmt(c.total) + '人</span>' : '') : ''}${c.dev !== null ? '<span class="small2">偏差値 ' + fmt(c.dev) + '</span>' : ''}${c.rank === null && c.dev === null ? '—' : ''}</td>
-    <td class="g">${c.toreta !== null ? fmt(c.toreta) + (c.lost !== null ? '<span class="small2">/' + fmt(c.lost) + '</span>' : '') : '—'}${c.kk ? '<span class="small2">KK ' + c.kk.pct + '%</span>' : ''}</td>
+    <td class="g">${c.toreta !== null ? fmt(c.toreta) + (c.lost !== null ? '<span class="small2">/' + fmt(c.lost) + '</span>' : '') : '—'}${c.kk ? '<span class="small2">KK率 ' + c.kk.pct + '%</span>' : ''}</td>
     <td>${c.notT !== null ? fmt(c.notT) : '—'}</td>
     <td class="t">${c.target !== null ? fmt(c.target) : '—'}</td></tr>`).join('');
   let total = '';
@@ -667,6 +715,7 @@ function stWhy(b, s) {
     <span class="subjtag">${esc(s.name)}</span>
     <h2>なぜ「取れた失点」が出た？</h2>
     <p class="lead">${c.toreta !== null ? `${esc(s.name)}の取れた失点は <b>${fmt(c.toreta)}点</b>。` : ''}その理由を具体的に。1つの欄に1つずつ書きます。</p>
+    ${c.kk && c.kk.pct < 90 && c.kk.miss ? `<div class="tip">KK率は <b>${c.kk.pct}%</b>。やったことがある・似ている問題を <b>${fmt(c.kk.miss)}問</b> 落としています。その問題は、なぜ極まっていなかった？</div>` : ''}
     <div class="tip"><b>書くときの3つの質問</b><br>① どの問題で？（単元・問題の形）<br>② 何をまちがえた？<br>③ なぜ？（覚えていなかった・読み落とした・時間が足りなかった…）</div>
     <div id="rList"></div>
     <button class="add" id="rAdd">＋ 理由を足す</button>
@@ -724,6 +773,7 @@ function stHow(b, s) {
     <h2>取れた失点を取るために、どうする？</h2>
     <p class="lead">理由を解決する行動を書きます。<b>教材・個数・周回数・正答率・期限</b>の数字で決めましょう。</p>
     ${rs.length ? `<div class="refs">${rs.map(([t, i]) => `<div class="r"><b>${circ(i)}</b><span>${esc(t)}</span></div>`).join('')}</div>` : ''}
+    <div class="tip">考え方：<b>KKできなかった分を補う</b>＋<b>次に出そうなところを、KKできるように演習する</b>。</div>
     <div id="aList"></div>
     <button class="add" id="aAdd">＋ 行動を足す</button>
     <details class="ex"><summary>書き方の例</summary><ul>
@@ -808,7 +858,7 @@ function renderView() {
     ${acts.length ? `<div class="card"><div style="display:flex;justify-content:space-between;font-weight:700"><span>行動タスク</span><span>${done} / ${acts.length} できた</span></div><div class="pbar"><i style="width:${done / acts.length * 100}%"></i></div><p class="mini" style="margin:0">□ を押すと、できた印がつきます。</p></div>` : ''}
     <div class="actions">
       <button class="btn pri wide" id="vImg">画像にする（Discord に出す）</button>
-      <button class="btn line wide" id="vPlan">計画マップ用に行動タスクをコピー</button>
+      <button class="btn pri wide" id="vPlan" style="background:var(--ok)">計画マップに入れる（コピー）</button>
       <button class="btn line wide" id="vText">文章でコピー</button>
       <button class="btn danger wide" id="vDel">この分析マップを消す</button>
     </div>`;
@@ -819,7 +869,7 @@ function renderView() {
   });
   $('vBody').querySelectorAll('[data-go]').forEach(b => b.onclick = () => { show('wiz'); goStep(+b.dataset.go); });
   $('vImg').onclick = makeImage;
-  $('vPlan').onclick = () => copy(planText(m), '行動タスクをコピーしました。計画マップに入れましょう');
+  $('vPlan').onclick = async () => { if (await copy(planText(m), 'コピーしました')) openSheet('planSheet'); };
   $('vText').onclick = () => copy(fullText(m), 'コピーしました');
   $('vDel').onclick = () => {
     if (!confirm('「' + (m.title || 'この分析マップ') + '」を消しますか？元に戻せません。')) return;
@@ -829,10 +879,15 @@ function renderView() {
 $('vBack').onclick = () => { show('home'); renderHome(); };
 $('vEdit').onclick = () => { stepI = -1; openJump(); };
 
+/* 計画マップの「分析マップから読みこむ」で読める形。期限は年まで入れる（［2026/11/4まで］） */
 function planText(m) {
   const L = [];
-  m.subs.forEach(s => s.acts.forEach(a => { const t = actText(a); if (t) L.push('□【' + s.name + '】' + t); }));
-  return L.join('\n');
+  m.subs.forEach(s => s.acts.forEach(a => {
+    if (!actText(a)) return;
+    const t = actText(Object.assign({}, a, { due: '' }));
+    L.push('□【' + s.name + '】' + (t || '（期限まで）') + (a.due ? '［' + ymd(a.due) + 'まで］' : ''));
+  }));
+  return L.length ? '【分析マップ】' + m.title + (m.date ? '（' + ymd(m.date) + '）' : '') + '\n' + L.join('\n') : '';
 }
 function fullText(m) {
   const L = ['【分析マップ】' + m.title + (m.date ? '（' + ymd(m.date) + '）' : '')];
@@ -847,7 +902,7 @@ function fullText(m) {
     L.push(a.join('　'));
     const b = [];
     if (c.toreta !== null) b.push('取れた失点 ' + fmt(c.toreta) + (c.lost !== null ? '/' + fmt(c.lost) : ''));
-    if (c.kk) b.push('KK率 ' + (c.kk.frac ? c.kk.frac + ' ' : '') + c.kk.pct + '%');
+    if (c.kk) b.push('KK率 ' + (c.kk.frac ? c.kk.frac + ' ' : '') + c.kk.pct + '%' + (c.kk.share !== null && c.kk.share !== undefined ? '（KKできる問題 ' + fmt(c.kk.can) + '/' + fmt(c.kk.all) + '）' : ''));
     if (c.notT !== null) b.push('取れない失点 ' + fmt(c.notT) + '/' + fmt(c.lost));
     if (b.length) L.push(b.join('　'));
     if (c.target !== null) L.push('次の目標点 ' + fmt(c.score) + '+' + fmt(c.toreta) + '=' + fmt(c.target));
@@ -1031,12 +1086,13 @@ function toast(msg) {
   clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600);
 }
 async function copy(text, msg) {
-  if (!text.trim()) { toast('コピーするものがありません'); return; }
-  try { await navigator.clipboard.writeText(text); toast(msg); }
+  if (!text.trim()) { toast('コピーするものがありません'); return false; }
+  try { await navigator.clipboard.writeText(text); toast(msg); return true; }
   catch (e) {
     const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.append(ta); ta.select();
-    try { document.execCommand('copy'); toast(msg); } catch (e2) { toast('コピーできませんでした'); }
-    ta.remove();
+    let ok = false;
+    try { ok = document.execCommand('copy'); toast(ok ? msg : 'コピーできませんでした'); } catch (e2) { toast('コピーできませんでした'); }
+    ta.remove(); return ok;
   }
 }
 

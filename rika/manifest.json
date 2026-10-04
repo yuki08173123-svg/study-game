@@ -1,0 +1,17 @@
+{
+  "name": "理科の一問一答（中学受験）",
+  "short_name": "理科一問一答",
+  "description": "中学受験の理科で必ずおさえたい知識を、仕分け＋カード（A〜D）で覚えきるアプリ",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EDF1F5",
+  "theme_color": "#EDF1F5",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

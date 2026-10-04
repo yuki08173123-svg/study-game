@@ -432,11 +432,11 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 
 <div id="print"></div>
 
-<script src="words.js?v=2"></script>
-<script src="idioms.js?v=2"></script>
+<script src="words.js?v=3"></script>
+<script src="idioms.js?v=3"></script>
 <script>
 'use strict';
-const VER = 2;
+const VER = 3;
 /* 単語（1000語）と熟語（300個）は、べつべつの記録で進める。右上の「単語／熟語」で切りかえ（ページを読みなおす）。
    レベル（XP）と使い方を見たかどうかは、2つで共通。 */
 const BOOKKEY = 'eiken3_book';
@@ -1096,6 +1096,8 @@ function answersFor(i, mode){
   const w = W[i], ok = new Set();
   if(mode === 'cloze') ok.add(normEn(blankParts(w).join(' ')));
   else headVariants(w).forEach(x => ok.add(normEn(x)));
+  // 意味→英語では、意味（m）がまったく同じ語（すばらしい＝wonderful・excellent など）を書いても正解にする
+  if(mode === 'type') W.forEach(o => { if(o !== w && o.m === w.m) headVariants(o).forEach(x => ok.add(normEn(x))); });
   ok.delete('');
   return ok;
 }

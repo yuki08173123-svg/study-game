@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="mysta"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>マイスタ</title>
 <link rel="manifest" href="manifest.json">
@@ -323,6 +324,7 @@ textarea.field{min-height:120px;}
       <span class="spacer"></span>
       <span class="saved" id="savedMark">保存済み</span>
       <span class="ver">v<span id="verNo"></span></span>
+      <button data-users-tag hidden></button>
       <button class="hbtn" id="btnHelp" title="使い方"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
     </div>
     <div class="hairline"></div>
@@ -377,6 +379,7 @@ textarea.field{min-height:120px;}
 
   <!-- 設定 -->
   <section id="vSet" class="hidden">
+    <div data-users-card></div>
     <div class="card">
       <h3>使い方</h3>
       <div id="setSlides"></div>
@@ -454,7 +457,7 @@ textarea.field{min-height:120px;}
 <div class="toast" id="toast"></div>
 
 <script>
-const VER = 9;
+const VER = 10;
 const KEY = 'mysta_v1', BK = 'mysta_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -1007,6 +1010,7 @@ $('#btnNudge').onclick = () => { const m = unsentMs(); if(m) openSendView(m); };
 /* ===================== 使い方（スライド） =====================
    アプリを変えたら、ここも直す。生徒はここでしか使い方を知れない。 */
 const SICO = {
+  users: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.2a4.5 4.5 0 0 1 5 4.8"/></svg>',
   doc: '<svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h5M10 17h5"/></svg>',
   plus: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
   star: '<svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>',
@@ -1024,8 +1028,9 @@ const SLIDES = [
   { ico:'chart', t:'4. 型が見えてくる', p:'同じ方法が <b>2回で「芽」→ 3回で「確立」→ 5回で「マイスタ」</b> になります。<b>マイスタ</b>タブで、いまの自分の型がいつでも見られます。', ex:'教科ごとに、どの方法が効いているかも出ます。' },
   { ico:'star', t:'5. レベルとスコア', p:'記録するたびに <b>スコア</b> が増えます。記録1枚で10点、方法が確立すると30点、マイスタになると50点。記録 <b>10枚ごとにレベル</b> が上がります。', ex:'ホームのいちばん上で、次の発表まであと何枚かが分かります。' },
   { ico:'send', t:'6. 10枚で発表 → 部屋に出す', p:'記録が10枚たまると <b>「暫定マイスタ発表」</b> が出ます。そのまま <b>「画像にして部屋に出す」</b> を押して、共有から Discord をえらび、部屋に送ってください。', ex:'ひとりで進めずに、勉強法を見てもらうためです。出した回は「マイスタ」タブに残ります。' },
-  { ico:'install', t:'7. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、記録が消えてしまうことがあります。', ex:'Safari の共有ボタン →「ホーム画面に追加」→「追加」。やり方は、上の赤い帯からも見られます。' },
-  { ico:'save', t:'8. 控えをとる', p:'記録は <b>この端末の中だけ</b> に保存されます。設定の <b>「控えを書き出す」</b> を、ときどき押してください。', ex:'機種変更のときは、書き出した控えを新しい端末で「控えから読みこむ」で戻せます。' },
+  { ico:'users', t:'7. 兄弟で使う', p:'1台を兄弟で使うときは、設定のいちばん上の <b>「使う人」</b> で <b>「＋ ふやす」</b> を押します。', ex:'名前を押すと、その人に切りかわります。記録・型・スコアは <b>人ごとに分かれます</b>。' },
+  { ico:'install', t:'8. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、記録が消えてしまうことがあります。', ex:'Safari の共有ボタン →「ホーム画面に追加」→「追加」。やり方は、上の赤い帯からも見られます。' },
+  { ico:'save', t:'9. 控えをとる', p:'記録は <b>この端末の中だけ</b> に保存されます。設定の <b>「控えを書き出す」</b> を、ときどき押してください。', ex:'機種変更のときは、書き出した控えを新しい端末で「控えから読みこむ」で戻せます。' },
 ];
 function slidesHtml(){
   return '<div class="slides"><div class="sl-track">'+SLIDES.map((sl, i) =>

@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="burupo"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ブルポ帳</title>
 <meta name="description" content="まちがえた漢字を、手書きか写真のブルポにしてためて、ちょうどいい日にれんしゅうするノート">
@@ -258,6 +259,7 @@ textarea{ width:100%; min-height:80px; border-radius:12px; border:1.5px solid va
     <img class="logo" src="icon-192.png" alt="">
     <div class="appname">ブルポ帳</div>
     <div class="sp"></div>
+    <button data-users-tag hidden></button>
     <button class="icobtn" id="btnHelp" aria-label="つかいかた"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
   </div>
   <div class="band hidden" id="btnInstallBand"><span>ホーム画面に ついかしてね</span><button id="btnInstall">やりかた</button></div>
@@ -268,6 +270,7 @@ textarea{ width:100%; min-height:80px; border-radius:12px; border:1.5px solid va
   <section id="tab-Today"></section>
   <section id="tab-Book" class="hidden"></section>
   <section id="tab-Set" class="hidden">
+    <div data-users-card></div>
     <div class="card">
       <h2>つかいかた</h2>
       <div id="setSlides"></div>
@@ -317,7 +320,7 @@ textarea{ width:100%; min-height:80px; border-radius:12px; border:1.5px solid va
 
 <script>
 'use strict';
-const VER = 2;
+const VER = 3;
 const APP_NAME = 'ブルポ帳';
 const KEY = 'burupo_v1', BK = 'burupo_backup';
 /* 出てくる間隔。子どもは さわらない（はじめは ふつうのまま）。おうちの方が せっていで かえられる。
@@ -337,6 +340,7 @@ const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const ICO = {
+  users: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.2a4.5 4.5 0 0 1 5 4.8"/></svg>',
   pen: '<svg viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>',
   camera: '<svg viewBox="0 0 24 24"><path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>',
   image: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="9.5" r="1.8"/><path d="m21 16-5-5-9 9"/></svg>',
@@ -1192,6 +1196,7 @@ function slides(){ return [
   { ico:'text', t:'2. もんだいを いれる', p:'さいごに <b>よみかたや ことば</b>（れい：せかいの「かい」）を いれると、れんしゅうの とき もんだいに なるよ。ドリルや プリントの <b>もんだいを しゃしんで</b> いれることも できるよ。', ex:'いれなくても だいじょうぶ。そのときは、ブルポを よく見てから かくして かく れんしゅうに なるよ。あとから ページの「もんだいを なおす」でも いれられるよ。' },
   { ico:'play', t:'3. れんしゅう', p:`ブルポは <b>${gaps().map(n => gapWord(n)).join('・')}</b> に「きょう」に でてくるよ。<b>ノートに かいてから</b> こたえを 見て、<b>◯ かけた</b> か <b>✕ まちがえた</b> を おそう。`, ex:'まちがえた ブルポは、さいごに もう一回 でてくるよ。そして あしたから やりなおし。' },
   { ico:'maru', t:'4. おぼえた！', p:`<b>${gaps().length}かい つづけて</b> かけたら「おぼえた」に なるよ。ブルポ帳の「おぼえた」で 見かえせるよ。`, ex:'ブルポ帳の ページを おすと、めくって ながめたり、かきたしたり、いつでも れんしゅう できるよ。' },
+  { ico:'users', t:'きょうだいで つかう', p:'1だいを きょうだいで つかうときは、せっていの いちばん上の <b>「使う人」</b>で <b>＋ ふやす</b> を おしてね。', ex:'なまえを おすと、その人に きりかわるよ。ブルポと れんしゅうの きろくは、人ごとに わかれるよ。' },
   { ico:'install', t:'おうちの方へ：ホーム画面に追加', p:'<b>最初に必ず</b> ホーム画面に追加してください。追加していないと、しばらく開かない間にブルポが消えることがあります。', ex:'Safari の共有ボタン（iPad は右上、iPhone は下。見当たらないときは「…」の中）→「ホーム画面に追加」。上の赤い帯の「やりかた」からも見られます。' },
   { ico:'redo', t:'おうちの方へ：出てくる間隔', p:'せっていの <b>「間隔を変える」</b> で、ブルポが出てくる日を変えられます（例：最後を3か月後に／テスト前は短く）。', ex:'はじめは「ふつう」（翌日・3日後・1週間後・2週間後・1か月後）です。' },
   { ico:'save', t:'おうちの方へ：控え', p:'ブルポはこの端末の中だけに保存されます。機種変更のときは、せっていの <b>「控えをとる」</b> で保存し、新しい端末で <b>「控えから戻す」</b> を押してください。', ex:'ホーム画面のアイコンを消すと、中のブルポも一緒に消えます。消す前に控えをとってください。' },

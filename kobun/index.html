@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="kobun"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>古文単語350</title>
 <link rel="manifest" href="manifest.json">
@@ -415,6 +416,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 
 <header>
   <h1>古文単語350<small id="verLabel"></small></h1>
+  <button data-users-tag hidden></button>
   <button class="helpb" id="btnHelp" aria-label="使い方">？</button>
   <button class="lvchip" id="lvChip">Lv.1 <i></i></button>
 </header>
@@ -446,7 +448,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js?v=10"></script>
 <script>
 'use strict';
-const VER = 18;
+const VER = 19;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -1337,7 +1339,7 @@ function renderLog(){
 /* ===================== 設定 ===================== */
 function renderSet(){
   const el = $('#tab-set'), end = addDays(S.start, TOTAL - 1);
-  el.innerHTML = `<div class="card"><h3>使い方</h3>
+  el.innerHTML = `<div data-users-card></div><div class="card"><h3>使い方</h3>
       <div class="gset">${guideSlides().map((g, k) => `<button data-g="${k}"><div class="num">${k+1}</div><b>${g.t}</b><span>${g.p[0].replace(/<[^>]+>/g, '')}</span></button>`).join('')}</div>
       <button class="btn line" id="sGuide" style="margin-top:6px">使い方をはじめから見る</button></div>
     <div class="card set">
@@ -1729,6 +1731,8 @@ function guideSlides(){
       v:`<div class="minicard"><b style="color:var(--shu)">✕</b> まちがえた</div><div class="minicard">翌日 → 3日後 → 1週間後 にもう一度</div><div class="minicard"><b style="color:#2E7A57">◯◯◯</b> 3回つづけて正解で卒業</div>` },
     { t:'レベルアップ', p:['覚える・解くたびに <b>XP</b> がたまり、たまると<b>レベルが上がります</b>。','レベルが上がると、平安時代の位（くらい）が上がっていきます。無位からはじめて、めざせ関白！'],
       v:`<table class="xprules">${XP_RULES.slice(0, 6).map(([t, n]) => `<tr><td style="font-size:13.5px">${t}</td><td class="r">+${n}</td></tr>`).join('')}</table>` },
+    { t:'兄弟で使う', p:['1台を兄弟で使うときは、「設定」のいちばん上の<b>使う人</b>で「＋ ふやす」。名前を押すと切りかわります。','計画・記録・レベル・仕分けは<b>人ごとに分かれる</b>ので、まざりません。2人以上のときは、上に名前が出ます。'],
+      v:`<div class="chips" style="flex-wrap:wrap;margin:0"><span class="chipb on">兄</span><span class="chipb">弟</span><span class="chipb">＋ ふやす</span></div>` },
     { t:'さいごに：ホーム画面に追加', p:['iPhone は、ホーム画面に追加していないサイトの記録を消すことがあります。2か月つづけるアプリなので、<b>必ずホーム画面に追加</b>してください。','使い方は、右上の <b>？</b> と「設定」からいつでも見られます。'],
       v:`<div class="minicard">Safari で開く → 共有ボタン → <b style="font-size:15px">ホーム画面に追加</b></div>` },
   ];

@@ -4,7 +4,7 @@
    ネットが ない ときだけ キャッシュで うごく（オフラインでも 勉強できる）。
    キャッシュを 先に 見る 方式に すると「直したのに 古い 画面が 出る」事故に
    なる（開発中に いちど やらかした）ので、ぜったいに しない。 */
-const VER = 'mq-v1';
+const VER = 'mq-v2';
 
 self.addEventListener('install', e => self.skipWaiting());
 

@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="report"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>勉強報告</title>
 <meta name="theme-color" content="#F4F7FB">
@@ -166,7 +167,8 @@ textarea{min-height:64px}
       <h1>勉強報告</h1>
       <div class="sub"><span id="dateLabel"></span> <span class="streak" id="streakLabel" title="タップして日数を直す"></span> <span class="saved" id="savedLabel">保存済み</span></div>
     </div>
-    <div class="row">
+    <div class="row" style="flex-wrap:nowrap;flex:none">
+      <button data-users-tag hidden></button>
       <button class="iconbtn" id="histBtn" title="過去の報告">🗂</button>
       <button class="iconbtn" id="setBtn" title="設定">⚙️</button>
     </div>
@@ -303,6 +305,7 @@ textarea{min-height:64px}
 <div class="sheet" id="setSheet">
   <div class="sh"><h3>設定</h3><button class="btn ghost" data-close>閉じる</button></div>
   <div class="body">
+    <div data-users-card></div>
     <p><label><input type="checkbox" id="optStreak" style="width:auto;border:0;background:none;padding:0"> 日付の横に「連続◯日目」を付ける</label></p>
     <p class="mini">連続日数は、報告文をコピーまたは送った日に自動で1増えます。数字を直すときは上の「連続◯日目」をタップ。</p>
     <hr style="border:0;border-top:1px solid var(--line)">
@@ -332,7 +335,7 @@ textarea{min-height:64px}
 <div class="toast" id="toast"></div>
 
 <script>
-const VER = 6;
+const VER = 7;
 const KEY = 'studyreport-v1';
 const BK = 'studyreport-backup';
 const DEF_SUBJECTS = ['英語','数学','国語','理科','社会','その他'];

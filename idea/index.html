@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="idea"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ひらめきメモ</title>
 <link rel="manifest" href="manifest.json">
@@ -147,6 +148,7 @@ body.nowDragging{-webkit-user-select:none; user-select:none; overscroll-behavior
   <header class="head">
     <div class="logo"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg></div>
     <h1>ひらめきメモ</h1>
+    <button data-users-tag hidden></button>
     <span class="ver" id="verLabel"></span>
   </header>
 
@@ -182,6 +184,7 @@ body.nowDragging{-webkit-user-select:none; user-select:none; overscroll-behavior
   </section>
 
   <section id="tab-rec" class="hidden">
+    <div data-users-card></div>
     <div id="recList"></div>
     <div class="tools">
       <button id="btnExport">控えを書き出す</button>
@@ -207,7 +210,7 @@ body.nowDragging{-webkit-user-select:none; user-select:none; overscroll-behavior
 <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastBtn" class="hidden">元に戻す</button></div>
 
 <script>
-const VER = 5;
+const VER = 6;
 const KEY = 'idea_v1', BAK = 'idea_backup';
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

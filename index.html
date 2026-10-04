@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="common/users.js?v=1" data-app="anki"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-store">
 <title>暗記クエスト</title>
@@ -507,7 +508,7 @@ window.addEventListener('error', function(ev){
   </div>
 
   <button class="btn gold wide" style="font-size:1.3rem;padding:22px" onclick="go('prep')">⚔️ ぼうけん</button>
-  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">暗記クエスト v8</p>
+  <p class="muted" style="text-align:center;margin:14px 0 0;font-size:.62rem;opacity:.55">暗記クエスト v9</p>
 </section>
 
 <!-- ================= 冒険の準備 ================= -->
@@ -727,6 +728,8 @@ window.addEventListener('error', function(ev){
     <div><b id="z-acc">—</b><span>正答率</span></div>
     <div><b id="z-best">0</b><span>さいこうコンボ</span></div>
   </div>
+
+  <div class="win" style="padding-bottom:2px"><div data-users-card></div></div>
 
   <div class="win">
     <h3 style="font-size:.95rem">✨ AI整形（にんい）</h3>
@@ -1738,6 +1741,8 @@ const TUT = [
     b:'モンスターが もんだいを だす<br>せいかいすると<br>こうげき できる！' },
   { ico:'⭐', t:'④ そだてる',
     b:'たおすと けいけんち<br>レベルが あがると<br>すがたが しんか する' },
+  { ico:'👥', t:'⑤ きょうだいで つかう',
+    b:'「ずかん」タブの「使う人」で<br>＋ ふやす → なまえを おすと きりかわる<br>きろくは ひとりずつ べつだよ' },
 ];
 let tutI = 0;
 

@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="rika"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>理科の一問一答</title>
 <link rel="manifest" href="manifest.json">
@@ -353,6 +354,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 
 <header>
   <h1>理科の一問一答<small id="verLabel"></small></h1>
+  <button data-users-tag hidden></button>
   <button class="helpb" id="btnHelp" aria-label="使い方">？</button>
   <button class="lvchip" id="lvChip">Lv.1 <i></i></button>
 </header>
@@ -377,7 +379,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="qs.js?v=1"></script>
 <script>
 'use strict';
-const VER = 1;
+const VER = 2;
 /* 問題：{ q:問題文, a:答え, r:答えのよみ, alt:[別の書き方], ex:解説, u:単元, lv:1〜3, f:分野コード } */
 const W = (window.RIKA_QS || []).map((x, i) => ({ ...x, i, alt: x.alt || [] }));
 const N = W.length;
@@ -986,7 +988,7 @@ function copyReport(){
 function renderSet(){
   const el = $('#tab-set');
   const left = W.filter(w => !isEx(w.i) && !started(w.i)).length;
-  el.innerHTML = `<div class="card"><h3>使い方</h3>
+  el.innerHTML = `<div data-users-card></div><div class="card"><h3>使い方</h3>
       <div class="gset">${guideSlides().map((g, k) => `<button data-g="${k}"><div class="num">${k+1}</div><b>${g.t}</b><span>${g.p[0].replace(/<[^>]+>/g, '')}</span></button>`).join('')}</div>
       <button class="btn line" id="sGuide" style="margin-top:6px">使い方をはじめから見る</button></div>
     <div class="card set"><label>今日の新しい問題の範囲</label>
@@ -1154,6 +1156,8 @@ function guideSlides(){
       v:`<div style="background:#173A5C;color:#fff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px"><b style="font-size:24px">9:42</b><small style="opacity:.8">覚える時間</small><span style="margin-left:auto;font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:99px">一時停止</span></div>` },
     { t:'レベルアップ', p:['即答・仕分け・覚えた時間で <b>XP</b> がたまり、レベルが上がります。','称号は「理科の芽」から。めざせ「理科の達人」！記録は「記録」タブから<b>報告用にコピー</b>できます。'],
       v:`<table class="xprules">${XP_RULES.map(([t, n]) => `<tr><td style="font-size:13.5px">${t}</td><td class="r">+${n}</td></tr>`).join('')}</table>` },
+    { t:'兄弟で使う', p:['1台を兄弟で使うときは、「設定」のいちばん上の<b>「使う人」</b>で <b>＋ ふやす</b>。','名前を押すと、その人に切りかわります。仕分け・記録・レベルは<b>人ごとに分かれます</b>。'],
+      v:`<div class="minicard">設定 → 👥 使う人 → <b style="font-size:15px">＋ ふやす</b></div>` },
     { t:'さいごに：ホーム画面に追加', p:['iPhone は、ホーム画面に追加していないサイトの記録を消すことがあります。<b>必ずホーム画面に追加</b>してください。','使い方は、右上の <b>？</b> と「設定」からいつでも見られます。'],
       v:`<div class="minicard">Safari で開く → 共有ボタン → <b style="font-size:15px">ホーム画面に追加</b></div>` },
   ];

@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="bunseki"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>分析マップ</title>
 <meta name="theme-color" content="#F3F5F4">
@@ -290,6 +291,7 @@ table.sum thead tr > :first-child{background:var(--bg)}
 <section id="home">
   <header class="top" id="homeTop">
     <h1><img src="icon-192-v1.png" alt="">分析マップ</h1>
+    <button data-users-tag hidden></button>
     <button class="iconbtn" id="btnSet" aria-label="設定">⚙️<i class="dot" id="setDot" hidden></i></button>
   </header>
   <div class="wrap">
@@ -402,6 +404,7 @@ table.sum thead tr > :first-child{background:var(--bg)}
 <div class="sheet" id="setSheet" hidden>
   <div class="panel">
     <div class="ph"><h3>設定</h3><button class="x" data-close>✕</button></div>
+    <div data-users-card></div>
     <div class="card">
       <h3>更新</h3>
       <button class="btn line wide" id="btnCheckUpd">更新を確認する</button>
@@ -425,7 +428,7 @@ table.sum thead tr > :first-child{background:var(--bg)}
 </div>
 
 <script>
-const VER = 6;
+const VER = 7;
 const KEY = 'bunseki-v1';
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

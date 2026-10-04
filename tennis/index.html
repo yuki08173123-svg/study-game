@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="tennis"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>マッチノート</title>
 <link rel="manifest" href="manifest.json">
@@ -197,7 +198,7 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
 </head>
 <body>
 <div class="wrap">
-  <header class="app"><h1>マッチノート</h1><span class="sub">テニス試合レコーダー</span></header>
+  <header class="app"><h1>マッチノート</h1><span class="sub">テニス試合レコーダー</span><button data-users-tag hidden style="margin-left:auto;align-self:center"></button></header>
 
   <!-- ===== ホーム ===== -->
   <div id="view-home" class="stack">
@@ -206,6 +207,7 @@ input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); out
     <button class="primary pt-btn" id="btn-new">＋ 新しい試合をはじめる</button>
     <div class="label">試合の記録</div>
     <div id="match-list" class="stack"></div>
+    <div data-users-card></div>
     <div class="card stack" style="gap:8px">
       <div class="label">データ</div>
       <div class="rowline">
@@ -1367,7 +1369,7 @@ $("btn-import").addEventListener("click", ()=>{
 });
 
 /* ---------- 更新の確認 ---------- */
-const VER = 18; // リリースのたびに version.json の v と一緒に上げる
+const VER = 19; // リリースのたびに version.json の v と一緒に上げる
 $("ver-label").textContent = "マッチノート v" + VER;
 function checkUpdate(manual){
   fetch("version.json", {cache:"no-store"}).then(r=>r.json()).then(d=>{

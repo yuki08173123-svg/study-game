@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="review"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>報告レビュー</title>
 <meta name="theme-color" content="#F4F7FB">
@@ -118,7 +119,8 @@ textarea.out{min-height:200px;font-size:15px;line-height:1.7}
       <h1>報告レビュー</h1>
       <div class="sub">勉強報告を出す前に、ヒラ先生の基準でチェック</div>
     </div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;align-items:center">
+      <button data-users-tag hidden></button>
       <button class="iconbtn" id="histBtn" title="これまでのレビュー" aria-label="これまでのレビュー">🗂</button>
       <button class="iconbtn" id="setBtn" title="設定" aria-label="設定">⚙️<span class="dot" id="setDot" hidden></span></button>
     </div>
@@ -180,6 +182,7 @@ textarea.out{min-height:200px;font-size:15px;line-height:1.7}
 <div class="sheet" id="setSheet" hidden>
   <div class="box">
     <h3>設定 <button class="btn" data-close>とじる</button></h3>
+    <div data-users-card></div>
 
     <div class="srow" style="border-top:0;margin-top:0;padding-top:0">
       <div class="t"><b>更新を確認する</b><span>いま v<span id="verNo"></span></span></div>
@@ -213,7 +216,7 @@ textarea.out{min-height:200px;font-size:15px;line-height:1.7}
 </div>
 
 <script>
-const VER = 7;
+const VER = 8;
 /* AIレビューの中継サーバー（Cloudflare Worker）。空のあいだは「準備中」と出る */
 const API = '';
 const KEY = 'reportreview-v1';

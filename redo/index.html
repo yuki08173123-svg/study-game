@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="redo"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>解き直しマップ</title>
 <link rel="manifest" href="manifest.json">
@@ -280,6 +281,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
       <h1>解き直しマップ</h1><span class="ver" id="verLabel"></span>
       <span class="spacer"></span>
       <span class="saved" id="savedMark">保存済み</span>
+      <button data-users-tag hidden></button>
       <button class="icon-btn" id="btnHelp" aria-label="使い方"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1.9-1.1 1.8"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
     </div>
     <button class="update hidden" id="btnUpdate">
@@ -293,6 +295,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
   <section id="tab-Map" class="hidden"></section>
 
   <section id="tab-Set" class="hidden">
+    <div data-users-card></div>
     <div class="card">
       <h3><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 8v4l2.5 2.5"/></svg>解き直しの間隔</h3>
       <div class="dim" style="margin-bottom:8px">登録した日から数えて、何日後に解き直すか。4回「できた」で「極まった」になります。</div>
@@ -369,7 +372,7 @@ nav.tabs .badge{position:absolute; top:2px; right:22%; min-width:18px; height:18
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 1;
+const VER = 2;
 const KEY = 'redo_v1', BK = 'redo_backup';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -987,6 +990,8 @@ function openHelp(){
     <li><b>またミス</b>：原因を選んで記録。翌日からやり直しです。</li></ul>
     <h3>4. ミスマップを見る</h3>
     <p>教科別・原因別の件数と、週ごとの動きが自動でたまります。自分がどこで、なぜミスしているかが見えます。</p>
+    <h3>5. 兄弟で使う</h3>
+    <p>1台を兄弟で使うときは、設定のいちばん上の「使う人」で「＋ ふやす」を押します。名前を押すとその人に切りかわり、問題・写真・ミスマップは人ごとに分かれます。</p>
     <h3>データについて</h3>
     <p>写真も記録も、この端末の中だけに保存されます。設定の「控え」からときどきファイルに残してください。</p>
     <button class="close">閉じる</button></div>`;

@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="note"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-store">
 <title>ReNote</title>
@@ -409,7 +410,7 @@ code{background:var(--surf2);border-radius:6px;padding:2px 6px;font-size:.82rem;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 32;
+const VER = 33;
 const K_N = 'mn_notes', K_F = 'mn_folders', K_C = 'mn_cfg';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -745,7 +746,7 @@ function openViewer(src){
 /* ===================== 画面の切り替え ===================== */
 function bar(left, title, right, big){
   $('#tbar').innerHTML = big
-    ? `<div class="ttl big">${title}</div><div class="side r">${right||''}</div>`
+    ? `<div class="ttl big">${title}</div><div class="side r"><button data-users-tag hidden></button>${right||''}</div>`
     : `<div class="side">${left||''}</div><div class="ttl">${title||''}</div><div class="side r">${right||''}</div>`;
 }
 const btnBack = (lbl) => `<button class="tbtn" data-back>${ICO.left({s:20,w:2.1})}${lbl?`<span>${lbl}</span>`:''}</button>`;
@@ -1720,6 +1721,7 @@ function renderSet(){
   bar('', '設定', '', true);
   const pics = live().reduce((a,n) => a + (n.imgs||[]).length, 0);
   $('#main').innerHTML = `
+    <div data-users-card></div>
     ${syncCard()}
     <div class="label">書き出し</div>
     <div class="group">
@@ -2112,6 +2114,10 @@ function helpSheet(){
       kv:[['4段階で答える','◎即答 ・○できた ・△あいまい ・✕わからない。答えると秒数と「つぎは◯日後」が出ます。'],
           ['できたものほど間隔がのびる','◎が続くと次に出るまでが長くなります。ペースは設定で変えられます。'],
           ['範囲と件数','「範囲」でフォルダや単元を、件数は − ＋ と数字のボタンで選べます。']] }),
+    slide({ c:C.green, ic:ICO.gear({s:23,w:1.7}), sub:'SHARE', t:'兄弟で使う',
+      p:['1台を兄弟で使うときは、設定のいちばん上の「使う人」から。'],
+      kv:[['「＋ ふやす」で人を足す','名前を入れると、その人に切りかわります。'],
+          ['名前を押すと切りかわる','メモ・写真・振り返りの記録は、人ごとに分かれます。']] }),
     slide({ c:C.gray, ic:ICO.down({s:23,w:1.7}), sub:'KEEP', t:'保管',
       p:['メモと写真は、この端末の中だけにあります。どこにも送っていません。'],
       kv:[['JSONで書き出す','写真ごと1つのファイルにまとまります。設定から。'],

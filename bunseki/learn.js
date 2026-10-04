@@ -130,7 +130,7 @@ const SLIDES = [
     <p>判定でも偏差値でも点数でもありません。<b>取れた失点</b>です。</p>
     <div class="bar"><div style="flex:80;background:var(--accent);color:var(--accent-ink)">点数 80</div><div style="flex:12;background:var(--shu);color:#fff">12</div><div style="flex:8;background:var(--gray);color:var(--muted)">8</div></div>
     <p class="mini">80点なら失点は20点。そのうち…</p>
-    <ul><li><b style="color:var(--shu)">取れた失点 12点</b>：ミスした・覚えていれば取れた</li><li><b>取れない失点 8点</b>：難しすぎて、いまは取れない</li></ul>
+    <ul><li><b style="color:var(--shu)">取れた失点 12点</b>：やったことがあるのに間違えた点</li><li><b>取れない失点 8点</b>：解法を見てもわからない点</li></ul>
     <p>点数を上げるとは、この<b>取れた失点を取ること</b>です。</p>` },
 
   { sec: '4 分析マップの書き方', t: '次の目標点＝点数＋取れた失点', v: [['use', 314]], h: `
@@ -157,13 +157,13 @@ const SLIDES = [
     <p>落とした失点には、すべて原因があり、すべてに対策があります。</p>` },
 
   /* ── 5. KK率 ── */
-  { sec: '5 KK率（経験率）', t: 'KK率とは', v: [['loom', 95], ['kk', 314]], h: `
+  { sec: '5 KK率', t: 'KK率とは', v: [['loom', 95], ['kk', 314]], h: `
     <p><b>KK＝経験</b>。これまでやった問題の解き方を使えること（解法の活用）です。</p>
     <div class="quote">KK率＝やったことある・似てる問題のうち、正解できた割合</div>
     <p>「リハーサルでKKがどれだけできたか」は、ふつうは数字にできません。KK率を出すと、それが数字になります。</p>
     <p>分析マップの「取れた失点」の横に書きます。</p>` },
 
-  { sec: '5 KK率（経験率）', t: 'KK率の出し方（3ステップ）', v: [['kk', 182], ['kk', 394]], h: `
+  { sec: '5 KK率', t: 'KK率の出し方（3ステップ）', v: [['kk', 182], ['kk', 394]], h: `
     <div class="num3">
       <div>① 全問題<b>53</b>問</div><i>›</i>
       <div>② やったことある・似てる<b>45</b>問</div><i>›</i>
@@ -173,13 +173,13 @@ const SLIDES = [
     <p>②では、見たことがない問題は数えません。②÷①は「KKできる問題の割合」です（45÷53＝85%）。</p>
     <p>問題用紙と答案があれば、数分で出せます。</p>` },
 
-  { sec: '5 KK率（経験率）', t: 'KK率は90%以上が当たり前', v: [['loom', 231], ['kk', 476]], h: `
+  { sec: '5 KK率', t: 'KK率は90%以上が当たり前', v: [['loom', 231], ['kk', 476]], h: `
     <p>90%以上が当たり前。かぎりなく100%に近づけないと、ふだんの勉強が身になっているとは言えません。</p>
     <div class="grid3"><div><b>90%〜</b>成果が出たと言える</div><div><b>80%台</b>しんどい</div><div><b>70%台</b>厳しい</div></div>
     <p>KKできたのに落とした問題が<b>穴</b>で、これがほぼ取れた失点です。「なぜそこが極まっていなかったのか」を分析します。</p>
     <p>前回と今回のKK率を、点数の変化と並べて見ると最強です。</p>` },
 
-  { sec: '5 KK率（経験率）', t: 'KK率から次の作戦を立てる', v: [['kk', 900]], h: `
+  { sec: '5 KK率', t: 'KK率から次の作戦を立てる', v: [['kk', 900]], h: `
     <div class="flow">
       <div>KKできなかった分を補う<small>91%なら残りの9%。落とした問題を極める</small></div><i>＋</i>
       <div>次に出そうなところを、KKできるように演習する</div>
@@ -213,13 +213,15 @@ const SLIDES = [
     </ol>
     <p>全部「取れた失点」の話です。この4つを、1から順番にできるようにします。</p>` },
 
-  { sec: 'まとめ', t: '確認テスト', v: [], h: `
-    <details><summary>Q1 テスト分析の目的は？（2つ）</summary><div>抜けをあぶり出す／「極めたら伸びる」と言い切れるタスクを確定する</div></details>
-    <details><summary>Q2 分析マップでいちばん大事な数字は？</summary><div>取れた失点</div></details>
-    <details><summary>Q3 82点で、取れた失点が9点。次の目標点は？</summary><div>91点（82＋9）</div></details>
-    <details><summary>Q4 取れた失点の3種類は？</summary><div>M ミス問題／A 暗記問題／K 教材類似問題</div></details>
-    <details><summary>Q5 全50問、似た問題40問、そのうち正解36問。KK率は？</summary><div>90%（36÷40）</div></details>
-    <details><summary>Q6 「計算を見直す」はタスクとして良い？</summary><div>だめ。何を・いつ・どれくらい・何々する、の形と数字にする（例：途中式を全問すべて書く）</div></details>` },
+  { sec: 'まとめ', t: '確認テストに挑戦', v: [], h: `
+    <p>ここまでの内容を、<b>確認テスト（第1回〜第3回・各10問）</b>で確かめましょう。1問10点、各100点満点です。</p>
+    <div class="flow">
+      <div>第1回　分析の考え方<small>スライド1〜13</small></div>
+      <div>第2回　分析マップの書き方<small>スライド14〜19</small></div>
+      <div>第3回　KK率となぜ？どうする？<small>スライド20〜29</small></div>
+    </div>
+    <button class="btn pri wide" data-goquiz="1">第1回をはじめる</button>
+    <p class="mini" style="margin-top:8px">「学ぶ」タブの「確認テスト」からも受けられます。点数はそこに残ります。</p>` },
 
   { sec: 'まとめ', t: 'テストで結果を出すサイクル', v: [['bible', 8259]], h: `
     <div class="flow">
@@ -230,6 +232,130 @@ const SLIDES = [
     <p>このサイクルを回し続けることで、成績が伸び、偏差値が上がります。</p>
     <div class="quote">答えを教えてくれるのが、分析です。</div>` },
 ];
+
+/* ── 確認テスト（第1回〜第3回・各10問・4択） ─────────────
+   a: 正解の選択肢（いつも先頭に書く。出すときに並びをまぜる）
+   s: 復習するスライドの番号（1から）  e: 解説 */
+const QUIZ = [
+  { no: 1, name: '分析の考え方', range: 'スライド1〜13', q: [
+    { t: '分析をすると、何ができるようになる？', a: ['現在の状況がわかり、これから何をすればいいかが見える', '点数が自動で上がる', '勉強時間を減らせる', 'ほかの人と順位を比べられる'], s: 2, e: '分析は「現在から未来を管理する」こと。いまの状況が丸裸になり、次にやることが見えます。' },
+    { t: '「完全把握」している状態はどれ？', a: ['すらすら説明でき、質問にもはっきり答えられる', '答えを見ればわかる', '一度読んだことがある', 'ノートにきれいにまとめてある'], s: 3, e: '完全把握＝すらすら説明できる・質問されたらはっきり答えられる状態です。' },
+    { t: '「言語化なくして改善なし、（　）なくして成果なし」。（　）に入るのは？', a: ['分析', '努力', '時間', '才能'], s: 4, e: '言語化なくして改善なし、分析なくして成果なし。' },
+    { t: '分析にかける時間について、正しいのは？', a: ['時間がかかるのは当たり前。かけていい', 'なるべく5分以内で終わらせる', '時間をかけるのはむだ', '点数が悪かったときだけかける'], s: 4, e: '1問ずつ原因を考えれば時間がかかるのは当たり前。かけるほど、やることがはっきり見えます。' },
+    { t: '偏差値が10上がってうれしい。正しい行動は？', a: ['喜んでいいが、抜けをあぶり出してタスクを決めるまでやる', 'よかったので今回は分析を休む', '偏差値だけ記録しておく', '次も上がるように気合を入れる'], s: 12, e: '喜ぶのはかまわない。でもそれで終わったら三流。無感情で淡々と分析します。' },
+    { t: '分析の3ステップの正しい順番は？', a: ['分解する → タスク化する → 進捗管理する', 'タスク化する → 分解する → 進捗管理する', '進捗管理する → 分解する → タスク化する', '分解する → 進捗管理する → タスク化する'], s: 6, e: '上から順番に。どこかで止まると未来は変わりません。' },
+    { t: '「分解する」とき、どこまで分ける？', a: ['もうこれ以上分けられないところまで', '3つに分けたら十分', '教科ごとに分ければ十分', '分けずにまとめて考える'], s: 7, e: '「ケアレスミス」も、読んでいない・焦った・雑に計算した…とさらに分けられます。' },
+    { t: 'タスク化の形として正しいのは？', a: ['何を・いつ・どれくらい・何々する', '何を・なぜ・だれと', 'いつ・どこで・だれが', '目標・気持ち・反省'], s: 9, e: '例：理科の問題集の地震（20ページ）を、1か月以内に、3周する。' },
+    { t: 'テスト分析の目的2つは？', a: ['抜けをあぶり出す／タスクを確定する', '点数を記録する／順位を比べる', '反省する／やる気を出す', '平均点を出す／偏差値を出す'], s: 11, e: '目的はこの2つだけ。点数・判定・偏差値に一喜一憂するのは目的に入っていません。' },
+    { t: '分析マップは、テスト（成績）返却後いつまでに提出する？', a: ['1週間以内', '1か月以内', '次のテストの前日まで', '気が向いたとき'], s: 13, e: '理由は「忘れるから」。返ってきたらすぐに書きます。' },
+  ]},
+  { no: 2, name: '分析マップの書き方', range: 'スライド14〜19', q: [
+    { t: '分析マップの上段に書くのは？', a: ['事実（点数・平均点・順位など）', '反省の気持ち', '次の目標だけ', '先生からのコメント'], s: 15, e: '上段は事実だけを書くところ。わからない欄は空けておいてOK。' },
+    { t: '前回の平均点差異が＋10、今回が＋15。正しいのは？', a: ['5点分伸びた', '15点伸びた', '伸びていない', '平均点が5点上がった'], s: 15, e: '平均点差異の変化（＋15－＋10＝5）で伸びがわかります。' },
+    { t: '点数は上がったのに、平均点差異は下がった。正しいのは？', a: ['伸びたとは言えない', '伸びた', '偏差値は必ず上がっている', '気にしなくてよい'], s: 15, e: 'テストが簡単だっただけかもしれません。平均点差異で見ます。' },
+    { t: '分析マップで、いちばん大事な数字は？', a: ['取れた失点', '偏差値', '点数', '判定'], s: 16, e: '判定でも偏差値でも点数でもなく、取れた失点です。' },
+    { t: '100点満点で80点。取れた失点が12点。取れない失点は？', a: ['8点', '12点', '20点', '92点'], s: 16, e: '失点は100－80＝20点。そのうち取れた失点が12点なので、取れない失点は20－12＝8点。' },
+    { t: '82点で、取れた失点が9点。次の目標点は？', a: ['91点', '89点', '73点', '100点'], s: 17, e: '次の目標点＝点数＋取れた失点＝82＋9＝91点。' },
+    { t: '取れた失点の目安は？', a: ['5点未満におさえる', '10点未満におさえる', '20点未満におさえる', '何点でもよい'], s: 17, e: '目安は5点未満です。' },
+    { t: '取れた失点の3種類（M・A・K）は？', a: ['ミス問題・暗記問題・教材類似問題', '計算・漢字・英単語', '簡単・ふつう・難しい', '前半・中盤・後半'], s: 18, e: 'M＝ミス問題、A＝暗記問題、K＝教材類似問題。まちがえた問題に書きこみます。' },
+    { t: 'まったくわからなかった捨て問は、どう扱う？', a: ['取れない失点なので除外する', 'M（ミス問題）にする', 'A（暗記問題）にする', 'K（教材類似問題）にする'], s: 18, e: '捨て問は取れない失点。M・A・Kには入れません。' },
+    { t: 'K（教材類似問題）が多い人の対策は？', a: ['問題集を黄金ルートで極める・問題集の大原則', 'ミスマップ・バックスキャン', '単語カードだけをふやす', 'とくに何もしない'], s: 19, e: 'Kが多い＝教材が極まっていない。ミスマップ・バックスキャンはM（ミス）の対策です。' },
+  ]},
+  { no: 3, name: 'KK率となぜ？どうする？', range: 'スライド20〜29', q: [
+    { t: 'KK率の「KK」とは？', a: ['経験（これまでやった問題の解き方を使えること）', '計算と記述', '確認と見直し', '基礎と基本'], s: 20, e: 'KK＝経験＝解法の活用です。' },
+    { t: 'KK率の出し方として正しいのは？', a: ['正解できた数 ÷ やったことある・似てる問題の数', '正解できた数 ÷ 全問題数', 'やったことある・似てる問題の数 ÷ 全問題数', '点数 ÷ 満点'], s: 21, e: '③（②のうち正解）÷②（やったことある・似てる）×100。②÷①は「KKできる問題の割合」です。' },
+    { t: '全53問、やったことある・似てる問題45問、そのうち正解41問。KK率は？', a: ['91%', '77%', '85%', '100%'], s: 21, e: '41÷45×100＝91%。' },
+    { t: '全30問、やったことある・似てる問題25問、そのうち正解23問。KK率は？', a: ['92%', '77%', '83%', '100%'], s: 21, e: '23÷25×100＝92%。（25÷30＝83%は「KKできる問題の割合」）' },
+    { t: '「やったことある・似てる問題」を数えるとき、数えないのは？', a: ['見たことがない問題', '計算問題', '記述問題', '最後の大問'], s: 21, e: '見たことがない問題は数えません。' },
+    { t: 'KK率の目安は？', a: ['90%以上が当たり前', '50%あれば十分', '70%あれば十分', '気にしなくてよい'], s: 22, e: '90%以上が当たり前。かぎりなく100%に近づけます。' },
+    { t: 'KK率が91%だった。次の作戦として正しいのは？', a: ['KKできなかった分を補う＋次に出そうなところをKKできるように演習する', '新しい問題集を始める', '91%なので何もしない', '点数が低い教科をやめる'], s: 23, e: '残りの9%（落とした問題）を極める＋出そうなところの演習です。' },
+    { t: '「なぜ？」の書き方として正しいのは？', a: ['「なんで？」をくり返して、根本の原因まで書く', '「ケアレスミス」と一言だけ書く', '点数だけ書く', '書かなくてよい'], s: 24, e: '分析が浅いと、次のタスクが決まりません。' },
+    { t: 'タスクとして、いちばん良いものは？', a: ['ワーク p.46〜71 を11/13までに3周する', '計算を見直す', 'ミスに注意する', 'もっと意識して勉強する'], s: 25, e: '教材・個数・周回数・正答率・期限の数字で書きます。「見直す・注意・意識」は行動になっていません。' },
+    { t: '伸びない人の4つの特徴に「入っていない」のは？', a: ['分析マップのタスクを計画マップに入れて極めている', '取れた失点を分析していない', '取れた失点に対するタスクを設定していない', 'そのタスクを極めていない'], s: 27, e: '分析→タスク→計画マップ→極める、ができているのは伸びる人です。' },
+  ]},
+];
+function quizRec(no) { S.quiz = S.quiz || {}; return S.quiz[no] = S.quiz[no] || { best: null, tries: [] }; }
+function quizCards() {
+  const total = QUIZ.reduce((x, z) => x + (quizRec(z.no).best ?? 0), 0);
+  const doneAll = QUIZ.every(z => quizRec(z.no).best !== null);
+  return `<h3 style="margin:20px 0 4px" id="quizTop">確認テスト</h3>
+    <p class="mini" style="margin:0 0 6px">各10問・1問10点。何回でも受けられます。${doneAll ? `3回の合計（いちばん良い点）：<b style="color:var(--accent)">${total} / 300点</b>` : ''}</p>
+    ${QUIZ.map(z => {
+      const r = quizRec(z.no), last = r.tries[r.tries.length - 1];
+      return `<button class="maprow" data-quiz="${z.no}">
+        <div class="m"><div class="s">第${z.no}回・${z.range}</div><div class="n">${esc(z.name)}</div>
+        <div style="margin-top:4px">${r.best === null ? '<span class="badge">まだ受けていません</span>' : `<span class="badge ${r.best === 100 ? 'ok' : ''}">${r.best === 100 ? '満点！' : '最高 ' + r.best + '点'}</span> <span class="badge">${r.tries.length}回受けた・前回 ${last.sc}点</span>`}</div></div>
+        <div class="goal">${r.best === null ? '<span style="font-size:15px">はじめる ›</span>' : r.best + '<small>点</small>'}</div>
+      </button>`;
+    }).join('')}`;
+}
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+let qz = null;  // { z, i, ans:[{pick, ok}], opts:[[...]] }
+function openQuiz(no) {
+  const z = QUIZ.find(x => x.no === no);
+  qz = { z, i: 0, ans: [], opts: z.q.map(q => shuffle(q.a)) };
+  if (!svEl) openSlides(slideNo());   // スライドの画面（.sv）を作ってから使う
+  svEl.hidden = false; document.body.style.overflow = 'hidden';
+  svEl.dataset.mode = 'quiz';
+  drawQuiz();
+}
+function drawQuiz() {
+  const { z, i } = qz, n = z.q.length;
+  $('svC').textContent = '第' + z.no + '回　' + (i < n ? (i + 1) + ' / ' + n : '結果');
+  $('svP').style.width = (Math.min(i, n) / n * 100) + '%';
+  if (i >= n) return drawQuizResult();
+  const q = z.q[i], a = qz.ans[i];
+  const correct = q.a[0];
+  $('svStage').innerHTML = `<div class="sl">
+    <div class="sec">確認テスト 第${z.no}回・${esc(z.name)}</div>
+    <h2>Q${i + 1}. ${esc(q.t)}</h2>
+    <div class="body"><div class="qopts">${qz.opts[i].map((o, k) => {
+      let cls = '';
+      if (a) { if (o === correct) cls = 'right'; else if (o === a.pick) cls = 'wrong'; else cls = 'dim'; }
+      return `<button class="qopt ${cls}" data-k="${k}" ${a ? 'disabled' : ''}><span class="mk">${'ABCD'[k]}</span><span>${esc(o)}</span></button>`;
+    }).join('')}</div>
+    ${a ? `<div class="${a.ok ? 'ok' : 'warn'}" style="font-size:15px;padding:10px 14px">${a.ok ? '⭕ 正解！' : '❌ 正解は「' + esc(correct) + '」'}</div>
+      <div class="box" style="margin-top:10px">${esc(q.e)}<br><a href="#" class="qslide" style="color:var(--accent);font-weight:700;font-size:14px">スライド${q.s}枚目で復習する ›</a></div>` : ''}
+    </div></div>`;
+  $('svStage').scrollTop = 0;
+  $('svStage').querySelectorAll('.qopt').forEach(b => b.onclick = () => {
+    const pick = qz.opts[i][+b.dataset.k];
+    qz.ans[i] = { pick, ok: pick === correct };
+    drawQuiz();
+  });
+  const sl = $('svStage').querySelector('.qslide');
+  if (sl) sl.onclick = e => { e.preventDefault(); svEl.dataset.mode = ''; goSlide(q.s - 1); };
+  $('svPrev').disabled = i === 0; $('svPrev').style.opacity = i === 0 ? .4 : 1;
+  $('svNext').disabled = !a; $('svNext').style.opacity = a ? 1 : .4;
+  $('svNext').textContent = i === n - 1 ? '結果を見る' : '次へ ›';
+}
+function drawQuizResult() {
+  const { z } = qz, n = z.q.length;
+  const right = qz.ans.filter(a => a && a.ok).length, sc = right * 10;
+  if (!qz.saved) {
+    const r = quizRec(z.no);
+    r.tries.push({ d: today(), sc }); if (r.tries.length > 20) r.tries.shift();
+    r.best = Math.max(r.best ?? 0, sc); qz.saved = true; save();
+  }
+  const r = quizRec(z.no);
+  const msg = sc === 100 ? '満点です！分析マップの考え方が身についています。' : sc >= 80 ? 'よくできました。まちがえた問題をスライドで復習しましょう。' : 'まちがえた問題のスライドを見直して、もう一度挑戦しましょう。';
+  $('svStage').innerHTML = `<div class="sl">
+    <div class="sec">確認テスト 第${z.no}回・${esc(z.name)}</div>
+    <h2>結果</h2>
+    <div class="body">
+      <div class="target" style="margin:0 0 12px"><div class="k">あなたの点数</div><div class="v">${sc}点</div><div class="f">${right} / ${n}問 正解　（最高 ${r.best}点・${r.tries.length}回目）</div></div>
+      <p>${msg}</p>
+      ${z.q.map((q, k) => {
+        const a = qz.ans[k];
+        return `<div class="qres ${a && a.ok ? 'r' : 'w'}"><b>${a && a.ok ? '⭕' : '❌'} Q${k + 1}</b><span>${esc(q.t)}${a && a.ok ? '' : `<br><small>正解：${esc(q.a[0])}</small>`}</span>${a && a.ok ? '' : `<a href="#" data-s="${q.s}">スライド${q.s}</a>`}</div>`;
+      }).join('')}
+    </div></div>`;
+  $('svStage').scrollTop = 0;
+  $('svStage').querySelectorAll('[data-s]').forEach(x => x.onclick = e => { e.preventDefault(); svEl.dataset.mode = ''; goSlide(+x.dataset.s - 1); });
+  $('svPrev').disabled = false; $('svPrev').style.opacity = 1; $('svPrev').textContent = 'もう一度';
+  $('svNext').disabled = false; $('svNext').style.opacity = 1;
+  $('svNext').textContent = z.no < QUIZ.length ? '第' + (z.no + 1) + '回へ ›' : 'おわる';
+}
 
 /* ── 学ぶタブ ───────────────────────────────── */
 function slideNo() { return Math.min(Math.max(0, S.slide || 0), SLIDES.length - 1); }
@@ -245,6 +371,7 @@ function renderLearn() {
       <button class="btn" id="lStart">${n > 0 ? 'つづきから（' + (n + 1) + '枚目）' : 'はじめる'}</button>
       ${n > 0 ? '<button class="btn sm" id="lFirst" style="background:transparent;color:#fff;min-height:36px;margin-top:6px">最初から見る</button>' : ''}
     </div>
+    ${quizCards()}
     <h3 style="margin:20px 0 4px">ヒラの動画</h3>
     <p class="mini" style="margin:0 0 6px">押すと動画が開きます。</p>
     ${vcard('use', '使い方', '分析マップの書き方を、上の段から順番に説明。まずはこれ。', [['https://youtu.be/xKcVUAVAkkQ?t=201', '取れた失点 3:21'], ['https://youtu.be/xKcVUAVAkkQ?t=396', 'なぜ？ 6:36'], ['https://youtu.be/xKcVUAVAkkQ?t=565', 'どうする？ 9:25']])}
@@ -254,6 +381,7 @@ function renderLearn() {
     ${vcard('mind', 'マインド動画86', '分析とは何か。分解→タスク化→進捗管理の3ステップ。')}
     <p class="ver">分析マップ v${VER}</p>`;
   $('lStart').onclick = () => openSlides(slideNo());
+  $('learnBody').querySelectorAll('[data-quiz]').forEach(b => b.onclick = () => openQuiz(+b.dataset.quiz));
   if ($('lFirst')) $('lFirst').onclick = () => openSlides(0);
 }
 function vcard(k, label, desc, chaps) {
@@ -283,19 +411,29 @@ function openSlides(i) {
       <div class="nav"><button class="btn line" id="svPrev">‹ 前へ</button><button class="btn pri" id="svNext">次へ ›</button></div>`;
     document.body.append(svEl);
     $('svClose').onclick = closeSlides;
-    $('svPrev').onclick = () => goSlide(svI - 1);
-    $('svNext').onclick = () => { if (svI >= SLIDES.length - 1) { closeSlides(); toast('おつかれさまでした'); } else goSlide(svI + 1); };
+    $('svPrev').onclick = () => {
+      if (svEl.dataset.mode === 'quiz') { if (qz.i >= qz.z.q.length) openQuiz(qz.z.no); else if (qz.i > 0) { qz.i--; drawQuiz(); } return; }
+      goSlide(svI - 1);
+    };
+    $('svNext').onclick = () => {
+      if (svEl.dataset.mode === 'quiz') {
+        if (qz.i >= qz.z.q.length) { if (qz.z.no < QUIZ.length) openQuiz(qz.z.no + 1); else closeSlides(); return; }
+        if (!qz.ans[qz.i]) return;
+        qz.i++; drawQuiz(); return;
+      }
+      if (svI >= SLIDES.length - 1) { closeSlides(); toast('おつかれさまでした'); } else goSlide(svI + 1);
+    };
     let x0 = null, y0 = null;
     const st = $('svStage');
     st.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
     st.addEventListener('touchend', e => {
       if (x0 === null) return;
       const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
-      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) goSlide(svI + (dx < 0 ? 1 : -1));
+      if (svEl.dataset.mode !== 'quiz' && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) goSlide(svI + (dx < 0 ? 1 : -1));
       x0 = null;
     }, { passive: true });
     document.addEventListener('keydown', e => {
-      if (!svEl || svEl.hidden) return;
+      if (!svEl || svEl.hidden || svEl.dataset.mode === 'quiz') return;
       if (e.key === 'ArrowRight') goSlide(svI + 1);
       else if (e.key === 'ArrowLeft') goSlide(svI - 1);
       else if (e.key === 'Escape') closeSlides();
@@ -308,6 +446,8 @@ function openSlides(i) {
 function goSlide(i) {
   svI = Math.max(0, Math.min(i, SLIDES.length - 1));
   const s = SLIDES[svI];
+  svEl.dataset.mode = '';
+  $('svPrev').textContent = '‹ 前へ'; $('svNext').disabled = false; $('svNext').style.opacity = 1;
   S.slide = svI; S.slideMax = Math.max(S.slideMax || 0, svI + 1); save();
   $('svC').textContent = (svI + 1) + ' / ' + SLIDES.length;
   $('svP').style.width = ((svI + 1) / SLIDES.length * 100) + '%';
@@ -322,6 +462,7 @@ function goSlide(i) {
     ${src ? `<div class="src">${src}</div>` : ''}
   </div>`;
   $('svStage').scrollTop = 0;
+  const gq = $('svStage').querySelector('[data-goquiz]'); if (gq) gq.onclick = () => openQuiz(+gq.dataset.goquiz);
   const mk = $('svMake'); if (mk) mk.onclick = () => { closeSlides(); show('home'); renderHome(); $('btnNew').click(); };
 }
 function closeSlides() {

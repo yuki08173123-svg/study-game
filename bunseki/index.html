@@ -265,6 +265,20 @@ table.sum thead tr > :first-child{background:var(--bg)}
 .sl details[open] summary::after{content:""}
 .sl details > div{padding:0 14px 12px;color:var(--accent);font-weight:700}
 .sl .src{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px}
+.qopts{display:grid;gap:10px;margin:0 0 14px}
+.qopt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:12px 14px;font-size:16px;line-height:1.55;min-height:52px}
+.qopt .mk{flex:none;width:26px;height:26px;border-radius:50%;background:var(--chip);display:grid;place-items:center;font-weight:900;font-size:13px;color:var(--muted)}
+.qopt.right{border-color:var(--ok);background:var(--ok-soft)}
+.qopt.right .mk{background:var(--ok);color:#fff}
+.qopt.wrong{border-color:var(--shu);background:var(--shu-soft)}
+.qopt.wrong .mk{background:var(--shu);color:#fff}
+.qopt.dim{opacity:.5}
+.qopt:disabled{color:var(--ink)}
+.qres{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.qres b{flex:none;min-width:52px}
+.qres span{flex:1}
+.qres small{color:var(--shu);font-weight:700}
+.qres a{flex:none;color:var(--accent);font-weight:700;font-size:13px}
 .sv .nav{display:flex;gap:10px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--bg)}
 .sv .nav .btn{flex:1}
 .sv .nav .btn.pri{flex:2}
@@ -292,10 +306,10 @@ table.sum thead tr > :first-child{background:var(--bg)}
       <summary>分析マップの言葉</summary>
       <div style="padding:0 14px 14px">
         <dl>
-          <dt>失点</dt><dd>満点から点数を引いた点。100点満点で87点なら、失点は13点。</dd>
-          <dt>取れた失点</dt><dd>失点のうち、覚えていれば・ミスしなければ取れた点。次のテストで取りにいく点です。</dd>
-          <dt>取れない失点</dt><dd>まだ習っていない・まったく歯が立たなかったなど、いまの実力では取れなかった点。</dd>
-          <dt>KK率（経験率）</dt><dd>やったことある・似てる・近い問題（KKできる問題）のうち、正解できた割合。41問のうち38問なら92%。90%以上が当たり前、100%に近づけます。</dd>
+          <dt>失点</dt><dd>満点から点数を引いた、間違えた点。100点満点で87点なら、失点は13点。</dd>
+          <dt>取れた失点</dt><dd>やったことがあるのに間違えた点。</dd>
+          <dt>取れない失点</dt><dd>解法を見てもわからない点。</dd>
+          <dt>KK率</dt><dd>やったことある・似てる・近い問題（KKできる問題）のうち、正解できた割合。41問のうち38問なら92%。90%以上が当たり前、100%に近づけます。</dd>
           <dt>次の目標点</dt><dd>点数＋取れた失点。取れた失点を全部取れば届く点数です。</dd>
           <dt>なぜ？ → どうする？</dt><dd>取れた失点が出た理由を具体的に書き、それを解決する行動を、教材・個数・周回数・正答率・期限の数字で決めます。</dd>
         </dl>
@@ -411,7 +425,7 @@ table.sum thead tr > :first-child{background:var(--bg)}
 </div>
 
 <script>
-const VER = 3;
+const VER = 5;
 const KEY = 'bunseki-v1';
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -694,14 +708,14 @@ function stNum(b, s) {
       <div class="lossbar" id="lossBar"></div>
       <div class="legend"><span><i style="background:var(--accent)"></i>点数</span><span><i style="background:var(--shu)"></i>取れた失点</span><span><i style="background:var(--gray)"></i>取れない失点</span></div>
       <p class="bigq" id="lossQ"></p>
-      <p class="mini" style="margin:0 0 8px">覚えていれば・ミスしなければ取れた点が「取れた失点」。まだ習っていない・まったく歯が立たなかった問題は「取れない失点」です。</p>
+      <p class="mini" style="margin:0 0 8px">やったことがあるのに間違えた点が「取れた失点」。解法を見てもわからない点は「取れない失点」です。</p>
       <div class="num"><input class="inp" id="fToreta" inputmode="decimal" value="${esc(s.toreta)}" placeholder="0"><span class="u">点が取れた失点</span></div>
       <p class="help">目安：取れた失点は5点未満におさえる。</p>
       <div class="calc" id="notBox" hidden><span class="k">取れない失点（自動）</span><span class="v" id="notV"></span></div>
       <div class="warn" id="lossWarn" hidden></div>
     </div>
     <div class="split">
-      <h3 style="margin:0">KK率（経験率）を出します</h3>
+      <h3 style="margin:0">KK率を出します</h3>
       <a class="vlink" href="https://youtu.be/U1NFZE84Yq8?t=182" target="_blank" rel="noopener">▶ 動画で見る：KK率の出し方</a>
       <p class="mini" style="margin:4px 0 10px">KK＝これまでやった問題の解き方を使えること（解法の活用）。問題用紙と答案を見ながら、3つ数えます。分からなければ空でOK。</p>
       <p class="bigq" style="margin-top:0">① テストの問題は全部で何問？</p>
@@ -1236,6 +1250,6 @@ renderHome();
 checkUpdate(true);
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 </script>
-<script src="learn.js?v=3"></script>
+<script src="learn.js?v=5"></script>
 </body>
 </html>

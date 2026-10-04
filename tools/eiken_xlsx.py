@@ -10,7 +10,7 @@ from openpyxl.formatting.rule import CellIsRule
 STATUS = '"未着手,復習中,覚えた"'
 
 
-def make_xlsx(out, grade, color, url, app_url, W, I, check_note):
+def make_xlsx(out, grade, color, url, app_url, W, I, check_note, wper=200, iper=100, laps=8):
     """grade='2級' など。W/I は単語・熟語の dict のリスト。check_note は過去問での確認の一文。"""
     wb = Workbook()
     hdr = Font(bold=True, color='FFFFFF')
@@ -34,7 +34,7 @@ def make_xlsx(out, grade, color, url, app_url, W, I, check_note):
         ('覚えた単語', f'=COUNTIF(\'英単語{len(W)}\'!G2:G{len(W) + 1},"覚えた")'),
         ('覚えた熟語', f'=COUNTIF(\'英熟語{len(I)}\'!E2:E{len(I) + 1},"覚えた")'),
         ('復習中', f'=COUNTIF(\'英単語{len(W)}\'!G2:G{len(W) + 1},"復習中")+COUNTIF(\'英熟語{len(I)}\'!E2:E{len(I) + 1},"復習中")'),
-        ('計画', '単語は1日200語×7日で1周、熟語は1日100個×4日で1周。8周くり返す（単語→熟語の順）'),
+        ('計画', f'単語は1日{wper}語×{-(-len(W) // wper)}日で1周、熟語は1日{iper}個×{-(-len(I) // iper)}日で1周。{laps}周くり返す（単語→熟語の順）'),
         ('学習の順番', '①英語を見て意味を言う ②意味を見て英語を言う ③例文の[ ]を隠して言う'),
         ('復習の目安', 'まちがえたものは 翌日・3日後・1週間後 にもう一度（アプリのリマインドテストと同じ）'),
         ('仕上げ', '公式過去問で 読解・リスニング・英作文・面接 を練習する'),
@@ -70,11 +70,11 @@ def make_xlsx(out, grade, color, url, app_url, W, I, check_note):
         s.auto_filter.ref = f'A1:{chr(64 + len(cols))}{len(data) + 1}'
 
     sheet(f'英単語{len(W)}', ['No.', 'Day', '単語', '品詞', '発音', '意味', '学習状況', 'ほかの意味', '派生語', '例文', '訳', '覚え方'],
-          [[r['n'], (r['n'] - 1) // 200 + 1, r['w'], r['p'], r.get('ph', ''), r['m'], None, ' / '.join(r.get('s', [])),
+          [[r['n'], (r['n'] - 1) // wper + 1, r['w'], r['p'], r.get('ph', ''), r['m'], None, ' / '.join(r.get('s', [])),
             ' / '.join(f"{x['w']}（{x['p']}）{x['m']}" for x in r.get('d', [])), r['ex'], r['ft'], r['tip']] for r in W],
           [6, 5, 16, 7, 16, 18, 10, 24, 30, 46, 40, 60], 'G')
     sheet(f'英熟語{len(I)}', ['No.', 'Day', '熟語', '意味', '学習状況', 'ほかの意味', '例文', '訳', '覚え方'],
-          [[r['n'], (r['n'] - 1) // 100 + 1, r['w'], r['m'], None, ' / '.join(r.get('s', [])), r['ex'], r['ft'], r['tip']] for r in I],
+          [[r['n'], (r['n'] - 1) // iper + 1, r['w'], r['m'], None, ' / '.join(r.get('s', [])), r['ex'], r['ft'], r['tip']] for r in I],
           [6, 5, 26, 22, 10, 24, 46, 40, 60], 'E')
 
     # 出典と注意

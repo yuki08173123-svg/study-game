@@ -572,6 +572,13 @@ html[data-theme="light"] .tg::after{background:#fff;}
       <div class="chips" id="themeSeg"><button class="chip" data-th="dark">黒（いつもの）</button><button class="chip" data-th="light">白</button></div>
     </div>
 
+    <div class="card" id="wkCard">
+      <h3><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg>解き直しの曜日</h3>
+      <div class="sw"><span>2回目からは、決めた曜日に届く</span><button class="tg" id="tgWk" aria-label="切りかえ"></button></div>
+      <div id="wkDays" class="chips" style="margin:8px 0 4px"></div>
+      <div class="dim" id="wkNote"></div>
+    </div>
+
     <div class="card" id="simpleCard">
       <h3><svg viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V7z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>かんたんモード（小学生向け）</h3>
       <div class="sw"><span>かんたんモードにする</span><button class="tg" id="tgSimple" aria-label="切りかえ"></button></div>
@@ -669,7 +676,7 @@ html[data-theme="light"] .tg::after{background:#fff;}
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 31;
+const VER = 32;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -987,6 +994,10 @@ function norm(j){
   j.cfg.randN = [3,5,10].includes(j.cfg.randN) ? j.cfg.randN : 5;
   j.cfg.randMast = !!j.cfg.randMast;
   j.cfg.simple = !!j.cfg.simple;   // かんたんモード（使う人ごと）
+  /* 解き直しの曜日（v32・ヒラの指示。セリナ母「翌日は解き直すが、その先は週末にまとめたい」）。使う人ごと。0=日〜6=土 */
+  const wk = j.cfg.wk || {};
+  const wd = Array.isArray(wk.days) ? [...new Set(wk.days.map(Number).filter(x => x >= 0 && x <= 6))] : [];
+  j.cfg.wk = { on: !!wk.on, days: wd.length ? wd : [6, 0] };
   j.cfg.lastBackup = typeof j.cfg.lastBackup === 'string' ? j.cfg.lastBackup : '';
   j.sends = Array.isArray(j.sends) ? j.sends.filter(x => x && Array.isArray(x.ids)) : [];   // 部屋に出した記録 [{id, no, d, ids}]
   j.items.forEach(it => { it.imgs = it.imgs || []; it.log = it.log || []; it.stage = Number(it.stage)||0; it.text = it.text || ''; it.why = it.why || ''; it.fix = it.fix || ''; it.tag = it.tag || ''; it.whyP = it.whyP || null; it.fixP = it.fixP || null; it.sent = typeof it.sent === 'string' ? it.sent : ''; });
@@ -1026,13 +1037,22 @@ function addItem(o){
   S.items.unshift(it);
   save(); return it;
 }
+/* 2回目からの解き直しは、間隔の日数がたったあとの、いちばん近い「選んだ曜日」に届く（間隔は短くならない）。
+   1回目（翌日）と「解けなかった」のやり直しは、いつもどおり翌日 */
+function snapDay(d){
+  const w = S.cfg.wk; if(!d || !w || !w.on || !w.days.length) return d;
+  let x = d;
+  for(let i = 0; i < 7; i++){ if(w.days.includes(parseD(x).getDay())) return x; x = addDays(x, 1); }
+  return d;
+}
+const dueAfter = (base, stage, g) => { const d = addDays(base, (g || gaps())[stage]); return stage >= 1 ? snapDay(d) : d; };
 function markOk(it, practice){
   const t = today();
   it.log.push({ d:t, ok:true, r:practice?1:0 });
   if(practice){ save(); return; }
   it.stage++;
   if(it.stage >= gaps().length){ it.done = true; it.doneAt = t; it.due = ''; }
-  else it.due = addDays(t, gaps()[it.stage]);
+  else it.due = dueAfter(t, it.stage);
   save();
 }
 function markMiss(it, practice){
@@ -2226,7 +2246,7 @@ function baseDay(it){
 function replan(it, g){
   if(it.stage >= g.length) return { done:true };
   if(it.pin && it.stage === 0 && !it.log.some(l => !l.r)) return { done:false, due:it.pin };
-  return { done:false, due:addDays(baseDay(it), g[it.stage]) };
+  return { done:false, due:dueAfter(baseDay(it), it.stage, g) };
 }
 function gapPreviewHtml(g){
   const e = gapErr(g);
@@ -2234,7 +2254,7 @@ function gapPreviewHtml(g){
   let c = 0; const days = g.map(x => (c += x));
   return `<div class="gp-pv"><b>届き方：</b>${gapsText(g)}<br>
     毎回その日に解くと、登録から <b class="num">${days.join('・')}</b> 日目に届きます。<br>
-    <b class="num">${g.length}回</b>つづけて解けたら「極まった」。</div>`;
+    <b class="num">${g.length}回</b>つづけて解けたら「極まった」。${S.cfg.wk.on ? `<br>※「解き直しの曜日」がオンなので、2回目からは ${wkText()} に届きます。` : ''}</div>`;
 }
 function renderGaps(){
   if(!gapEdit) gapEdit = gaps().slice();
@@ -2313,6 +2333,7 @@ function askApplyGaps(g){
 /* ===================== 設定 ===================== */
 function renderSet(){
   renderGaps();
+  renderWk();
   renderTheme();
   applySimple();
   renderProfs();
@@ -2381,6 +2402,37 @@ $('#btnProfDel').onclick = async () => {
   location.replace(location.pathname + '?p=' + Date.now());
 };
 $('#whoTag').onclick = () => { goTab('Set'); setTimeout(() => $('#profCard').scrollIntoView({ behavior:'smooth', block:'start' }), 60); };
+
+/* 解き直しの曜日 */
+const WDN = ['日','月','火','水','木','金','土'];
+const WD_ORDER = [1,2,3,4,5,6,0];
+const wkText = () => WD_ORDER.filter(d => S.cfg.wk.days.includes(d)).map(d => WDN[d]).join('・');
+/* 曜日の設定を変えたら、2回目からの問題の予定日を合わせ直す（1回目は動かさない） */
+function replanWk(){
+  active().forEach(it => { if(it.stage >= 1){ const p = replan(it, gaps()); if(!p.done) it.due = p.due; } });
+  save(); renderAll();
+}
+function renderWk(){
+  const w = S.cfg.wk;
+  $('#tgWk').classList.toggle('on', w.on);
+  $('#wkDays').innerHTML = WD_ORDER.map(d => `<button class="chip sm ${w.days.includes(d) ? 'on' : ''}" data-wd="${d}" ${w.on ? '' : 'disabled'}>${WDN[d]}</button>`).join('');
+  $('#wkDays').style.opacity = w.on ? '1' : '.5';
+  $('#wkNote').innerHTML = w.on
+    ? `1回目（翌日）は、いつもどおり届きます。<b>2回目からは、間隔の日数がたったあとの、いちばん近い ${wkText()} に届きます</b>（間隔が短くなることはありません）。平日は翌日の解き直しだけ、週末にまとめて解き直すときに。`
+    : 'オンにすると、1回目（翌日）はいつもどおり、2回目からの解き直しは決めた曜日（土・日など）にまとめて届きます。平日は翌日の分だけ解けばよくなります。';
+}
+$('#tgWk').onclick = () => {
+  S.cfg.wk.on = !S.cfg.wk.on; if(!S.cfg.wk.days.length) S.cfg.wk.days = [6, 0];
+  replanWk(); renderWk(); renderGaps();
+  toast(S.cfg.wk.on ? `2回目からは ${wkText()} に届きます` : 'いつもの間隔にもどしました');
+};
+$('#wkDays').onclick = e => {
+  const b = e.target.closest('[data-wd]'); if(!b || !S.cfg.wk.on) return;
+  const d = Number(b.dataset.wd), a = S.cfg.wk.days;
+  if(a.includes(d)){ if(a.length === 1) return toast('1つは選んでください'); S.cfg.wk.days = a.filter(x => x !== d); }
+  else S.cfg.wk.days = [...a, d];
+  replanWk(); renderWk(); renderGaps();
+};
 
 /* かんたんモード */
 function applySimple(){ document.documentElement.classList.toggle('simple', isSimple()); const t = $('#tgSimple'); if(t) t.classList.toggle('on', isSimple()); }
@@ -2523,7 +2575,7 @@ function slides(){ return [
   { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます。合うものがないときは「その他」を押すと、ほかの選択肢と、自分で入れる欄が出ます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。「届く日」をカレンダーで選ぶと、その日の「今日の問題」に入ります。前に解いた問題を、直前期までに極めたい日に入れておけます。' },
   { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。解法が分からなかった問題は「<b>どこで止まったか</b>」、解説とちがう解き方をした問題は「<b>自分はどう解いたか</b>」を書きます。', ex:'書き方が分からないときは、種類を選ぶと出る「書き方の例」を押してください。入った文を、自分の問題に合わせて直します（例のままでは登録できません）。例：問題文の「合計」を読み飛ばした' },
   { ico:'fix', t:'3. 改善点は「解いている最中」にやること', p:'「<b>いつ</b>（解く前・解いている途中）・<b>何を</b>・<b>どうする</b>」で書きます。解き終わってからの見直しではなく、<b>1行書くたびに前と見くらべる（バックスキャン）</b>など、その場でやることを、何を見るかまで具体的に書きます。', ex:'例：解いている途中、2x−3=5 の −3 を右に移したときの符号を、1行書くたびに前の行と指でさして見くらべる。改善点の例は見本なので、そのままでは登録できません。自分の問題に合わせて直します。' },
-  { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます。' },
+  { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます（解いた日から次の日数を数え直します）。設定の「解き直しの曜日」をオンにすると、翌日の解き直しはそのまま、2回目からは決めた曜日（土・日など）にまとめて届きます。' },
   { ico:'eye', t:'5. もう一度解く', p:'問題だけが出ます。理由と改善点を思い出してから、<b>改善点をやりながらノートにもう一度解きます</b>。解き終わったら「答え合わせ」で、登録した内容を見ます。', ex:`解けた → 次の間隔へ。${gaps().length}回つづけて解けたら「極まった」。解けなかった → 翌日からやり直し。写真は押すと大きくなります。暗く写った写真は、写真の上の「白黒くっきり」で見やすくできます（大きくしたときは、背景の黒・白も選べます）。解いているあいだは、画面が暗くならないようにしてあります。` },
   { ico:'shuffle', t:'6. ランダムに解く', p:'予定に関係なく、3・5・10問を練習できます。ランダムのときは「解けなかった」だけ記録され、「解けた」は予定を変えません。', ex:'間隔をあけて覚える仕組みを崩さないためです。' },
   { ico:'chart', t:'7. 記録を見る', p:'下の<b>「記録」</b>タブに、教科別の件数と、ミスの種類別の件数（<b>ミスパターン分析</b>）、まだ極まっていない問題の一覧が自動でたまります。いちばん多い種類が、あなたのミスのクセです。', ex:'そのクセの改善点を、ほかの問題にも使ってみてください。' },

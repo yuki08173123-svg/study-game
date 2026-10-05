@@ -424,6 +424,14 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 /* 種類の名前「解法が分からなかった」が切れないように、棒グラフの名前の欄を広げる */
 .bar{grid-template-columns:136px 1fr 34px;}
 
+/* ===================== 部屋に出す：まとめ方（v33〜） ===================== */
+.chips.sendby{margin:8px 0 6px;}
+.sgrp{border-top:1px solid var(--hair); padding:10px 0 4px; margin-top:8px;}
+.sgrp .sgh{display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:6px;}
+.sgrp .sgh b{font-size:15px;} .sgrp .sgh span{font-size:13px; color:var(--muted);}
+.sgrp .sgh i{font-style:normal; color:var(--accent); font-weight:700;}
+.sgrp .btn-primary{margin-top:8px;}
+
 /* ===================== 改善点を直す案内（v31〜） ===================== */
 .fixwarn{background:var(--miss-soft); border:1.5px solid var(--miss); border-radius:14px; padding:12px 14px; margin:10px 0; display:flex; flex-direction:column; gap:4px;}
 .fixwarn b{font-size:15px; color:var(--ink);}
@@ -676,7 +684,7 @@ html[data-theme="light"] .tg::after{background:#fff;}
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 32;
+const VER = 33;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -734,6 +742,7 @@ const FIXES = {
     { when:'解く前', what:'問題文に出てくる数', how:'全部、図や表にかき出してから解きはじめる' },
     { when:'解いている途中', what:'求めるもの', how:'x と置き、問題文のどの数と等しくなるか、式の横にメモする' },
     { when:'解いている途中', what:'使えそうな公式', how:'手が止まったところで余白に書き出し、1つずつあてはめてみる' },
+    { when:'丸付け後', what:'解説の式の立て方', how:'ブルポで書き写し、なぜその式になるか余白に自分の言葉で書く' },
   ],
   '計算ミス': [
     { when:'解いている途中', what:'移項した項の符号', how:'1行書くたびに、前の行と指でさして見くらべる（バックスキャン）' },
@@ -1000,7 +1009,7 @@ function norm(j){
   j.cfg.wk = { on: !!wk.on, days: wd.length ? wd : [6, 0] };
   j.cfg.lastBackup = typeof j.cfg.lastBackup === 'string' ? j.cfg.lastBackup : '';
   j.sends = Array.isArray(j.sends) ? j.sends.filter(x => x && Array.isArray(x.ids)) : [];   // 部屋に出した記録 [{id, no, d, ids}]
-  j.items.forEach(it => { it.imgs = it.imgs || []; it.log = it.log || []; it.stage = Number(it.stage)||0; it.text = it.text || ''; it.why = it.why || ''; it.fix = it.fix || ''; it.tag = it.tag || ''; it.whyP = it.whyP || null; it.fixP = it.fixP || null; it.sent = typeof it.sent === 'string' ? it.sent : ''; });
+  j.items.forEach(it => { it.imgs = it.imgs || []; it.log = it.log || []; it.stage = Number(it.stage)||0; it.text = it.text || ''; it.why = it.why || ''; it.fix = it.fix || ''; it.tag = it.tag || ''; it.whyP = it.whyP || null; it.fixP = it.fixP || null; it.sent = typeof it.sent === 'string' ? it.sent : ''; it.book = typeof it.book === 'string' ? it.book : ''; });
   return j;
 }
 function load(){
@@ -1031,7 +1040,7 @@ function pickDue(d){
 }
 function addItem(o){
   const t = today(), due = pickDue(o.due);
-  const it = { id:newId(), subj:o.subj, text:(o.text||'').trim(), imgs:o.imgs||[], tag:o.tag||'', why:(o.why||'').trim(), fix:(o.fix||'').trim(), whyP:o.whyP||null, fixP:o.fixP||null,
+  const it = { id:newId(), subj:o.subj, text:(o.text||'').trim(), imgs:o.imgs||[], book:(o.book||'').trim().slice(0, BOOK_MAX), tag:o.tag||'', why:(o.why||'').trim(), fix:(o.fix||'').trim(), whyP:o.whyP||null, fixP:o.fixP||null,
     created:t, stage:0, due, done:false, doneAt:'', log:[] };
   if(o.due) it.pin = due;  // 自分で選んだ日。間隔を変えても、1回目はこの日のまま
   S.items.unshift(it);
@@ -1276,7 +1285,7 @@ function openSolve(id, opt){
   host.innerHTML = `<div class="page" id="pgSolve"><div class="pin">
     <div class="topbar"><button class="back" id="svBack">${ICO.back}${opt.inSession ? 'やめる' : 'もどる'}</button><h2>問題を解く</h2><button class="r" id="svEdit">直す</button></div>
     ${prog}
-    <div class="meta"><span class="sj" style="--c:${SUBJC[it.subj]||SUBJC['その他']}">${esc(it.subj)}</span><span class="cs">${md(it.created)} 登録</span></div>
+    <div class="meta"><span class="sj" style="--c:${SUBJC[it.subj]||SUBJC['その他']}">${esc(it.subj)}</span>${it.book ? `<span class="cs">${esc(it.book)}</span>` : ''}<span class="cs">${md(it.created)} 登録</span></div>
     ${fixIssue(it) ? `<div class="fixwarn"><b>この改善点は、直してから解き直しましょう</b><span>${esc(fixIssue(it).t)}</span><button id="svFixNow">改善点を直す</button></div>` : ''}
     ${it.imgs.length ? `<div class="phbar"><span>写真</span><div class="chips" id="svClean"><button class="chip sm" data-pc="0">元の色</button><button class="chip sm" data-pc="1">白黒くっきり</button></div></div>` : ''}
     <div class="photos" id="svPhotos">${it.imgs.map((im, i) => `<div class="ph" data-g="${i}"><img data-vimg="${im}" alt=""><span class="no">${i+1}/${it.imgs.length}</span><span class="zm">${ICO.zoom}拡大</span></div>`).join('')}</div>
@@ -1514,6 +1523,9 @@ function askHtml(it){
    基準は Discord #ミスマップ でのヒラの指摘: 行動になっているか／数値化できるか／知識不足でないか。 */
 /* v31（ヒラのレビュー）：改善点は「解いている最中」にやること。解き終わったら・見直し・丸付け のときは選べない */
 const WHEN = ['解く前','解いている途中'];
+/* v33（ヒラの判断・めいの要望）：「解法が分からなかった」問題だけは「丸付け後」も選べる（解説をブルポで学ぶ など）。ほかの種類は今の基準のまま */
+const WHEN_SOLVE = [...WHEN, '丸付け後'];
+const whenList = tag => isSolve(tag) ? WHEN_SOLVE : WHEN;
 const WHEN_NG = /(終わ|おわ|見直|みなお|丸付|丸つけ|まるつけ|答え合わせ|あとで|後で|解いた後|提出)/;
 /* 「何を」が、見るものの分からない言葉だけ */
 const WHAT_VAGUE = /^(答え|こたえ|計算|式|解いた式|問題|問題文|解き方|解説|全部|ぜんぶ|ミス|答案|解答|自分の答え)$/;
@@ -1564,18 +1576,18 @@ function fixIssue(it){
   if(!it || it.done) return null;
   const f = it.fixP;
   if(!f || !(f.when || f.what || f.how)) return null;
-  return checkFix({ when:f.when || '', what:f.what || '', how:f.how || '' });
+  return checkFix({ when:f.when || '', what:f.what || '', how:f.how || '' }, it.tag);
 }
-function checkFix(d){
-  const w = d.what.trim(), h = d.how.trim();
+function checkFix(d, tag){
+  const w = d.what.trim(), h = d.how.trim(), solve = isSolve(tag);
   if(!d.when) return { t:'「いつ」をひとつ選んでください', ex:'改善点は、いつやるかが決まっていないと実行できません' };
-  if(WHEN_NG.test(d.when)) return { t:'改善点は「解く前」か「解いている途中」にやることを書きます。', ex:'解き終わってからの見直しや、丸付けのあとではなく、解いている最中にその都度やることにします。例：1行書くたびに、前の行と見くらべる（バックスキャン）' };
+  if(!solve && WHEN_NG.test(d.when)) return { t:'改善点は「解く前」か「解いている途中」にやることを書きます。', ex:'解き終わってからの見直しや、丸付けのあとではなく、解いている最中にその都度やることにします。例：1行書くたびに、前の行と見くらべる（バックスキャン）' };
   if(fixIsExample(d)) return { t:'改善点の例のままです。自分の問題に合わせて、何を見るか・どうするかを直してください。', ex:'例は書き方の見本です。その問題のどの式・どの単語・どの数字を見るのかを入れてください。例：「移項した項の符号」→「2x−3=5 の −3 を右に移したときの符号」' };
   if(!w) return { t:'「何を」を書いてください', ex:'例：問題文の条件／代入した式の符号／つづり' };
   if(h.length < 3) return { t:'「どうする」を書いてください', ex:'例：指でさして確かめる／丸をつけてから解く／声に出して1文字ずつ読む' };
   if(/な(い|いようにする|いようにします)$/.test(h)) return { t:'「〜しない」は行動ではありません。代わりに何をするかを書いてください。', ex:'例：符号を間違えない → 符号を指でさして元の式と見くらべる' };
-  if(WHAT_VAGUE.test(normFix(w))) return { t:'「何を」をもっと具体的に書いてください。', ex:`「${w}」だけでは、何を見るのか分かりません。どの式のどこ・どの単語・どの数字かを書きます。例：かっこを外したところの符号／of の位置／答えの単位` };
-  if(/解説.{0,10}(読|よ|見|み|写|うつ|確認|たし)/.test(w + h)) return { t:'解いている最中に解説は読みません。', ex:'改善点は、次に自分の力で解くとき、その場で何をするかです。手が止まったところで何をするかを書きます。例：使えそうな公式を余白に書き出し、1つずつあてはめてみる' };
+  if(WHAT_VAGUE.test(normFix(w)) && !(solve && /^解説/.test(normFix(w)))) return { t:'「何を」をもっと具体的に書いてください。', ex:`「${w}」だけでは、何を見るのか分かりません。どの式のどこ・どの単語・どの数字かを書きます。例：かっこを外したところの符号／of の位置／答えの単位` };
+  if(!solve && /解説.{0,10}(読|よ|見|み|写|うつ|確認|たし)/.test(w + h)) return { t:'解いている最中に解説は読みません。', ex:'改善点は、次に自分の力で解くとき、その場で何をするかです。手が止まったところで何をするかを書きます。例：使えそうな公式を余白に書き出し、1つずつあてはめてみる' };
   if(/見直|みなお/.test(h)) return { t:'「見直す」ではなく、解いている最中のバックスキャンにします。', ex:'解き終わってから見直すのではなく、1行（1手）書くたびに、その都度、何と何を見くらべるかを書きます。例：1行書くたびに、前の行の符号と指でさして見くらべる' };
   if(h.replace(VAGUE, '').replace(PARTS, '').length < 3) return { t:'「気をつける」「見直す」「確認する」だけでは、行動になっていません。手・目・口で何をするかを書いてください。', ex:'例：丸をつける／指でさす／声に出して読む／余白に書き出す' };
   if(COUNTY.test(h) && !/[0-9０-９一二三四五六七八九十]/.test(h)) return { t:'「たくさん」「早く」は、数にしてください。', ex:'例：3回解く／10分で解く／1日5問' };
@@ -1591,7 +1603,7 @@ const WHY_TXT = {
 };
 const FIX_HINT = {
   miss:  '改善点は「解いている最中」にやることです。解き終わってからの見直しではなく、1行（1手）書くたびに前と見くらべる（バックスキャン）など、その場でやることを、何を見るかまで具体的に書きます。バックスキャンのやり方は、プレミア動画で確かめてください。',
-  solve: '次にこの問題を自分の力で解くとき、手が止まったところで何をするかを書きます（解説を読む、は改善点になりません）。解き直しのときは、この改善点どおりに解きます。',
+  solve: '次にこの問題を自分の力で解くとき、手が止まったところで何をするかを書きます。解法が分からなかった問題だけは「丸付け後」も選べるので、解説のどこを、どう学ぶか（例：解説の式の立て方をブルポで書き写し、なぜその式になるか自分の言葉で書く）も書けます。',
   method:'次に解くとき、式を立てる前や解いている最中に何をすれば短い解き方になるかを書きます。解き直しのときは、その解き方で解きます。',
 };
 function whyExHtml(tag){
@@ -1639,8 +1651,8 @@ function suggHtml(p, tag){
 }
 function fixFields(p, d, tag){
   return `<div id="${p}Sugg">${suggHtml(p, tag)}</div>
-    <div class="sub-in"><label>いつ</label><div class="chips" id="${p}When">${WHEN.map(w => `<button class="chip sm ${d.when===w?'on':''}" data-w="${w}">${w}</button>`).join('')}<button class="chip sm ${d.when && !WHEN.includes(d.when) ? 'on' : ''}" data-w="__own">自分で書く</button></div>
-      <input type="text" class="own ${d.when && !WHEN.includes(d.when) ? '' : 'hidden'}" id="${p}WhenOwn" maxlength="14" placeholder="例：テストが配られたら" value="${esc(d.when && !WHEN.includes(d.when) ? d.when : '')}" autocomplete="off"></div>
+    <div class="sub-in"><label>いつ</label><div class="chips" id="${p}When">${whenChips(d.when, tag)}</div>
+      <input type="text" class="own ${d.when && !whenList(tag).includes(d.when) ? '' : 'hidden'}" id="${p}WhenOwn" maxlength="14" placeholder="例：テストが配られたら" value="${esc(d.when && !whenList(tag).includes(d.when) ? d.when : '')}" autocomplete="off"></div>
     <div class="sub-in"><label>何を</label><input type="text" id="${p}What" value="${esc(d.what)}" placeholder="例：代入した式の符号／問題文の条件" autocomplete="off"></div>
     <div class="sub-in"><label>どうする</label><input type="text" id="${p}How" value="${esc(d.how)}" placeholder="例：指でさして、元の式と1つずつ見くらべる" autocomplete="off"></div>
     <div class="pv off" id="${p}FixPv"></div>
@@ -1664,15 +1676,23 @@ function bindSugg(root, p, fix, onch){
   });
 }
 /* ミスの種類が変わったら候補を出しなおす */
+function whenChips(cur, tag){
+  const L = whenList(tag);
+  return L.map(w => `<button class="chip sm ${cur===w?'on':''}" data-w="${w}">${w}</button>`).join('') + `<button class="chip sm ${cur && !L.includes(cur) ? 'on' : ''}" data-w="__own">自分で書く</button>`;
+}
 function refreshSugg(root, p, tag, fix, onch){
   const box = root.querySelector('#'+p+'Sugg');
   if(!box) return;
   box.innerHTML = suggHtml(p, tag);
   bindSugg(root, p, fix, onch);
+  /* 種類が変わったら「いつ」のチップも出しなおす（解法が分からなかった問題だけ「丸付け後」） */
+  const wb = root.querySelector('#'+p+'When');
+  if(wb){ wb.innerHTML = whenChips(fix.when, tag); syncWhen(root, p, fix, false); }
 }
 /* いつ のチップと「自分で書く」欄を、fix.when にそろえる */
 function syncWhen(root, p, fix, ownOpen){
-  const own = !!fix.when && !WHEN.includes(fix.when);
+  const L = whenList(root.__tag ? root.__tag() : '');
+  const own = !!fix.when && !L.includes(fix.when);
   root.querySelectorAll('#'+p+'When .chip').forEach(x => x.classList.toggle('on', x.dataset.w === '__own' ? (own || ownOpen) : x.dataset.w === fix.when));
   const inp = root.querySelector('#'+p+'WhenOwn');
   if(inp){ inp.classList.toggle('hidden', !(own || ownOpen)); if(document.activeElement !== inp) inp.value = own ? fix.when : ''; }
@@ -1688,14 +1708,17 @@ function bindWhyFix(root, p, why, fix, onch){
   q('#'+p+'Then').oninput = e => { why.then = e.target.value; hideErr(root, p+'WhyErr'); ch(); };
   q('#'+p+'What').oninput = e => { fix.what = e.target.value; pv(); hideErr(root, p+'FixErr'); ch(); };
   q('#'+p+'How').oninput = e => { fix.how = e.target.value; pv(); hideErr(root, p+'FixErr'); ch(); };
-  q('#'+p+'When').querySelectorAll('.chip').forEach(b => b.onclick = () => {
+  /* チップは種類が変わると出しなおすので、入れ物で受ける */
+  q('#'+p+'When').onclick = e => {
+    const b = e.target.closest('[data-w]'); if(!b) return;
+    const L = whenList(root.__tag ? root.__tag() : '');
     if(b.dataset.w === '__own'){
       const open = !q('#'+p+'WhenOwn').classList.contains('hidden');
-      if(open){ if(!WHEN.includes(fix.when)) fix.when = ''; syncWhen(root, p, fix, false); }
-      else { if(WHEN.includes(fix.when)) fix.when = ''; syncWhen(root, p, fix, true); q('#'+p+'WhenOwn').focus(); }
+      if(open){ if(!L.includes(fix.when)) fix.when = ''; syncWhen(root, p, fix, false); }
+      else { if(L.includes(fix.when)) fix.when = ''; syncWhen(root, p, fix, true); q('#'+p+'WhenOwn').focus(); }
     }else{ fix.when = fix.when === b.dataset.w ? '' : b.dataset.w; syncWhen(root, p, fix, false); }
     pv(); hideErr(root, p+'FixErr'); ch();
-  });
+  };
   q('#'+p+'WhenOwn').oninput = e => { fix.when = e.target.value.trim(); syncWhen(root, p, fix, true); pv(); hideErr(root, p+'FixErr'); ch(); };
   pv();
 }
@@ -1708,7 +1731,7 @@ function showErr(root, id, e){
 function hideErr(root, id){ const el = root.querySelector('#'+id); if(!el) return; el.classList.add('hidden'); const f = el.closest('.field'); if(f) f.classList.remove('bad'); }
 /* 登録前の判定。ダメなら表示して false */
 function validateWhyFix(root, p, why, fix, tag){
-  const e1 = checkWhy(why, tag), e2 = checkFix(fix);
+  const e1 = checkWhy(why, tag), e2 = checkFix(fix, tag);
   if(e1) showErr(root, p+'WhyErr', e1); else hideErr(root, p+'WhyErr');
   if(e2) showErr(root, p+'FixErr', e2); else hideErr(root, p+'FixErr');
   if(e1){ const el = root.querySelector('#'+p+'WhyErr'); el.scrollIntoView({ behavior:'smooth', block:'center' }); }
@@ -1717,7 +1740,25 @@ function validateWhyFix(root, p, why, fix, tag){
 
 /* ===================== 作る（登録） ===================== */
 const DKEY = keysOf(PID).draft;
-const blankDraft = () => ({ imgs:[], subj:'', text:'', due:'', tag:'', whyP:emptyWhy(), fixP:emptyFix() });
+const blankDraft = () => ({ imgs:[], subj:'', book:'', text:'', due:'', tag:'', whyP:emptyWhy(), fixP:emptyFix() });
+/* 問題集（任意・v33）。めい「教科ごと・問題集ごとにミスマップを分けたい」。前に入れた名前はボタンで選べる */
+const BOOK_MAX = 16;
+function usedBooks(){
+  const seen = new Set(), out = [];
+  S.items.slice().sort((a, b) => a.created < b.created ? 1 : -1).forEach(i => { if(i.book && !seen.has(i.book)){ seen.add(i.book); out.push(i.book); } });
+  return out.slice(0, 12);
+}
+function bookHtml(p, v){
+  const L = usedBooks();
+  return `${L.length ? `<div class="chips hscroll" id="${p}BookChips">${L.map(b => `<button class="chip sm ${b === v ? 'on' : ''}" data-b="${esc(b)}">${esc(b)}</button>`).join('')}</div>` : ''}
+    <input type="text" class="own" id="${p}Book" maxlength="${BOOK_MAX}" placeholder="例：基礎精講／塾のテキスト" value="${esc(v || '')}" autocomplete="off">`;
+}
+function bindBook(root, p, get, set){
+  const inp = root.querySelector('#'+p+'Book'), box = root.querySelector('#'+p+'BookChips');
+  const sync = () => { if(box) box.querySelectorAll('[data-b]').forEach(x => x.classList.toggle('on', x.dataset.b === get())); };
+  inp.oninput = () => { set(inp.value.trim().slice(0, BOOK_MAX)); sync(); };
+  if(box) box.onclick = e => { const b = e.target.closest('[data-b]'); if(!b) return; const v = get() === b.dataset.b ? '' : b.dataset.b; set(v); inp.value = v; sync(); };
+}
 function loadDraft(){
   try{
     const d = JSON.parse(localStorage.getItem(DKEY) || 'null');
@@ -1748,6 +1789,9 @@ function renderAdd(){
     </div>
 
     <div class="field req"><label>教科<b>必須</b></label><div id="addSubj"></div></div>
+
+    <div class="field s-hide"><label>問題集（なくてもOK）</label>${bookHtml('add', draft.book)}
+      <div class="hint">入れておくと、部屋に出す画像を問題集ごとに分けられます。次からはボタンで選べます。</div></div>
 
     <div class="field f-due"><label>届く日（「今日の問題」に入る日）</label>
       <div class="dayrow"><input type="date" id="addDay" min="${today()}"><button class="chip sm" id="addDayToday">今日</button><button class="chip sm" id="addDayStd">${gapLabel(gaps()[0])}</button></div>
@@ -1788,6 +1832,7 @@ function renderAdd(){
   showDay();
   bindWhyFix(document, 'add', draft.whyP, draft.fixP, saveDraft);
   mountPicker($('#addSubj'), 'subj', () => draft.subj, v => { draft.subj = v; saveDraft(); });
+  bindBook(document, 'add', () => draft.book, v => { draft.book = v; saveDraft(); });
   document.__tag = () => draft.tag;
   mountPicker($('#addTag'), 'tag', () => draft.tag, v => {
     draft.tag = v;
@@ -1803,9 +1848,9 @@ function renderAdd(){
     if(!draft.subj) return toast('教科を選んでください');
     if(!draft.tag){ showErr(document, 'addTagErr', { t:'ミスの種類をひとつ選んでください', ex:'選ぶと、その種類でよく効く改善点が候補で出ます。' }); return toast('赤い所を直してください'); }
     if(!validateWhyFix(document, 'add', draft.whyP, draft.fixP, draft.tag)) return toast('赤い所を直してください');
-    const keepSubj = draft.subj;
+    const keepSubj = draft.subj, keepBook = draft.book;
     const it = addItem({ ...draft, why:composeWhy(draft.whyP), fix:composeFix(draft.fixP), whyP:{ ...draft.whyP }, fixP:{ ...draft.fixP } });
-    draft = { ...blankDraft(), subj:keepSubj };
+    draft = { ...blankDraft(), subj:keepSubj, book:keepBook };
     clearDraft();
     renderAdd(); renderAll();
     window.scrollTo({ top:0, behavior:'smooth' });
@@ -1841,7 +1886,7 @@ function renderAddThumbs(){
 /* 直す（編集） */
 function openEdit(id, opt){
   const it = byId(id); if(!it) return;
-  const d = { subj:it.subj, text:it.text, tag:it.tag, imgs:it.imgs.slice(), whyP:{ ...(it.whyP || { did:it.why, then:'' }) }, fixP:{ ...(it.fixP || { when:'', what:'', how:it.fix }) } };
+  const d = { subj:it.subj, book:it.book || '', text:it.text, tag:it.tag, imgs:it.imgs.slice(), whyP:{ ...(it.whyP || { did:it.why, then:'' }) }, fixP:{ ...(it.fixP || { when:'', what:'', how:it.fix }) } };
   const bg = document.createElement('div'); bg.className = 'sheet-bg';
   bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>問題を直す</h2>
     <div class="field"><label>写真</label><div class="photos-in" id="edThumbs"></div>
@@ -1849,6 +1894,7 @@ function openEdit(id, opt){
       <input type="file" id="edFCam" accept="image/*" capture="environment" class="hidden"><input type="file" id="edFPick" accept="image/*" multiple class="hidden"></div>
     <div class="field"><label>問題（文字）</label><textarea id="edText" rows="2">${esc(d.text)}</textarea></div>
     <div class="field"><label>教科</label><div id="edSubj"></div></div>
+    <div class="field s-hide"><label>問題集（なくてもOK）</label>${bookHtml('ed', d.book)}</div>
     <div class="field"><label>ミスの種類</label><div id="edTag"></div><div class="err hidden" id="edTagErr"></div></div>
     <div class="field"><label><span class="t-full">間違えた理由</span><span class="t-simple">なんで まちがえた？</span></label>${whyFields('ed', d.whyP, d.tag)}</div>
     <div class="field"><label><span class="t-full">改善点（いつ・何を・どうする）</span><span class="t-simple">つぎは どうする？（いつ・何を・どうする）</span></label>${fixFields('ed', d.fixP, d.tag)}</div>
@@ -1873,6 +1919,7 @@ function openEdit(id, opt){
   bg.querySelector('#edFCam').onchange = e => take(e.target.files);
   bg.querySelector('#edFPick').onchange = e => take(e.target.files);
   mountPicker(bg.querySelector('#edSubj'), 'subj', () => d.subj, v => { d.subj = v; });
+  bindBook(bg, 'ed', () => d.book, v => { d.book = v; });
   bg.__tag = () => d.tag;
   mountPicker(bg.querySelector('#edTag'), 'tag', () => d.tag, v => {
     d.tag = v;
@@ -1888,7 +1935,7 @@ function openEdit(id, opt){
   bg.querySelector('#edSave').onclick = async () => {
     if(!d.tag){ showErr(bg, 'edTagErr', { t:'ミスの種類をひとつ選んでください', ex:'記録タブのミスパターン分析に使います。' }); return toast('赤い所を直してください'); }
     if(!validateWhyFix(bg, 'ed', d.whyP, d.fixP, d.tag)) return toast('赤い所を直してください');
-    it.subj = d.subj; it.text = bg.querySelector('#edText').value.trim(); it.tag = d.tag; it.imgs = d.imgs;
+    it.subj = d.subj; it.book = d.book; it.text = bg.querySelector('#edText').value.trim(); it.tag = d.tag; it.imgs = d.imgs;
     it.whyP = { ...d.whyP }; it.fixP = { ...d.fixP }; it.why = composeWhy(d.whyP); it.fix = composeFix(d.fixP);
     save(); bg.remove(); await sweepImgs(); openSolve(it.id, opt); renderAll(); toast('直しました');
   };
@@ -2000,10 +2047,33 @@ function renderMap(){
 /* ===================== ミスマップの部屋に出す =====================
    10問たまるごとに、紙のミスマップと同じ並び（日付・教科・種類・問題・理由・改善点・解き直し）の
    1枚の画像にして、Discord の #ミスマップ に出す。ひとりで進めず、先生のフィードバックをもらうため。 */
+/* まとめ方（v33・使う人ごと）。all＝まぜる（今まで）／subj＝教科ごと／book＝問題集ごと。第◯回は、まとめ方と教科（問題集）ごとに数える */
+const SEND_BY = [['all','まぜる'],['subj','教科ごと'],['book','問題集ごと']];
+const sendBy = () => S.cfg.sendBy || 'all';
+const groupOf = (it, by) => by === 'subj' ? (it.subj || 'その他') : by === 'book' ? (it.book || '問題集なし') : '';
+const sendNo = (by, g) => S.sends.filter(x => (x.by || 'all') === by && (x.g || '') === g).length + 1;
+function sendGroups(){
+  const by = sendBy(), m = new Map();
+  unsent().forEach(it => { const g = groupOf(it, by); if(!m.has(g)) m.set(g, []); m.get(g).push(it); });
+  return [...m.entries()].map(([g, items]) => ({ g, items, no:sendNo(by, g) })).sort((a, b) => b.items.length - a.items.length);
+}
+const sendByChips = () => `<div class="chips sendby">${SEND_BY.map(([k, l]) => `<button class="chip sm ${sendBy() === k ? 'on' : ''}" data-sendby="${k}">${l}</button>`).join('')}</div>`;
 function sendCard(){
-  const u = unsent().length, no = S.sends.length + 1;
+  if(sendBy() !== 'all'){
+    const gs = sendGroups();
+    let h = `<div class="card send"><div class="sh"><b>ミスマップの部屋に出す</b><span>${sendBy() === 'subj' ? '教科ごと' : '問題集ごと'}に ${SEND_N}問ずつ</span></div>${sendByChips()}`;
+    h += gs.length ? gs.map((x, i) => {
+      const u = x.items.length, full = u >= SEND_N;
+      return `<div class="sgrp"><div class="sgh"><b>${esc(x.g)}</b><span>${full ? `第${x.no}回 <i class="num">${u}</i>問たまりました` : `第${x.no}回まで あと<i class="num">${SEND_N - u}</i>問`}</span></div>
+        <div class="seg10">${Array.from({ length:SEND_N }, (_, k) => `<i class="${k < u ? 'on' : ''}"></i>`).join('')}</div>
+        ${full ? `<button class="btn-primary" data-send-g="${i}">${ICO.image}${esc(x.g)}の ${SEND_N}問を画像にする</button>` : ''}</div>`;
+    }).join('') : `<div class="dim">まだ出していない問題はありません。</div>`;
+    return h + '</div>';
+  }
+  const u = unsent().length, no = sendNo('all', '');
   const full = u >= SEND_N, left = Math.max(0, SEND_N - u);
   let h = `<div class="card send"><div class="sh"><b>ミスマップの部屋に出す</b><span>${full ? `第${no}回 <i class="num">${u}</i>問たまりました` : `第${no}回まで あと<i class="num">${left}</i>問`}</span></div>
+    ${sendByChips()}
     <div class="seg10">${Array.from({ length:SEND_N }, (_, i) => `<i class="${i < u ? 'on' : ''}"></i>`).join('')}</div>`;
   if(full){
     h += `<div class="dim">${u > SEND_N ? `古い順に ${SEND_N}問を` : ''}1枚の画像にして、Discord の <b>#ミスマップ</b> に出しましょう。フィードバックがもらえます。</div>
@@ -2017,30 +2087,37 @@ function sendHistoryCard(){
   const u = unsent();
   let h = `<div class="card send"><h3>${ICO.image}部屋に出したミスマップ</h3>`;
   h += S.sends.length
-    ? S.sends.slice().reverse().map(x => `<button class="srow" data-again="${x.id}"><b>第${x.no}回</b><span>${md(x.d)} に出した・${x.ids.length}問</span>${ICO.chev}</button>`).join('')
+    ? S.sends.slice().reverse().map(x => `<button class="srow" data-again="${x.id}"><b>${x.g ? esc(x.g) + ' ' : ''}第${x.no}回</b><span>${md(x.d)} に出した・${x.ids.length}問</span>${ICO.chev}</button>`).join('')
     : `<div class="dim">まだ出していません。問題が ${SEND_N}問たまると「解く」タブに案内が出ます。</div>`;
-  if(u.length) h += `<button class="btn-line" data-send>${u.length >= SEND_N ? `次の ${SEND_N}問を画像にする` : `いまの ${u.length}問で画像にする`}</button>`;
+  if(sendBy() === 'all'){ if(u.length) h += `<button class="btn-line" data-send>${u.length >= SEND_N ? `次の ${SEND_N}問を画像にする` : `いまの ${u.length}問で画像にする`}</button>`; }
+  else h += sendGroups().map((x, i) => `<button class="btn-line" data-send-g="${i}">${esc(x.g)}：${x.items.length >= SEND_N ? `次の ${SEND_N}問を画像にする` : `いまの ${x.items.length}問で画像にする`}</button>`).join('');
   return h + '</div>';
 }
 function bindSend(root){
   root.querySelectorAll('[data-send]').forEach(b => b.onclick = () => {
     const ids = unsent().slice(0, SEND_N).map(i => i.id);
-    if(ids.length) openSendSheet({ ids, no:S.sends.length + 1 });
+    if(ids.length) openSendSheet({ ids, no:sendNo('all', ''), by:'all', g:'' });
   });
+  root.querySelectorAll('[data-send-g]').forEach(b => b.onclick = () => {
+    const x = sendGroups()[Number(b.dataset.sendG)]; if(!x) return;
+    openSendSheet({ ids:x.items.slice(0, SEND_N).map(i => i.id), no:x.no, by:sendBy(), g:x.g });
+  });
+  root.querySelectorAll('[data-sendby]').forEach(b => b.onclick = () => { S.cfg.sendBy = b.dataset.sendby; save(); renderAll(); });
   root.querySelectorAll('[data-again]').forEach(b => b.onclick = () => {
-    const x = S.sends.find(v => v.id === b.dataset.again); if(x) openSendSheet({ ids:x.ids, no:x.no, d:x.d, again:true });
+    const x = S.sends.find(v => v.id === b.dataset.again); if(x) openSendSheet({ ids:x.ids, no:x.no, d:x.d, g:x.g || '', by:x.by || 'all', again:true });
   });
 }
-function markSent(ids, no){
-  if(S.sends.some(x => x.no === no)) return;
+function markSent(ids, no, by, g){
+  by = by || 'all'; g = g || '';
+  if(S.sends.some(x => x.no === no && (x.by || 'all') === by && (x.g || '') === g)) return;
   const t = today();
-  S.sends.push({ id:newId(), no, d:t, ids:ids.slice() });
+  S.sends.push({ id:newId(), no, d:t, ids:ids.slice(), by, g });
   ids.forEach(id => { const it = byId(id); if(it) it.sent = t; });
   save(); renderAll();
 }
 
 /* 画像を作る（幅1080px。iPhone の canvas の上限 約1,600万px をこえないように縮める） */
-async function drawSend(items, no, dateStr){
+async function drawSend(items, no, dateStr, label){
   const FF = "'BIZ UDPGothic','Hiragino Sans','Hiragino Kaku Gothic ProN',sans-serif";
   try{ await Promise.all([document.fonts.load('700 30px "BIZ UDPGothic"'), document.fonts.load('400 30px "BIZ UDPGothic"'), document.fonts.load('700 54px "Bodoni Moda"', APP_NAME)]); }catch(e){}
   const W = 1080, PAD = 40, CW = W - PAD*2, TH = 210, IN = 22, RX = PAD + IN + TH + 26, RW = W - PAD - IN - RX;
@@ -2085,7 +2162,7 @@ async function drawSend(items, no, dateStr){
   const ds = items.map(i => i.created).sort();
   g.fillStyle = C.gold; g.font = "700 54px 'Bodoni Moda','Times New Roman',serif"; g.textAlign = 'left'; g.fillText(APP_NAME, PAD, 78);
   const tw = g.measureText(APP_NAME).width;
-  g.fillStyle = C.ink; g.font = '700 34px '+FF; g.fillText(`第${no}回　${items.length}問`, PAD + tw + 22, 76);
+  g.fillStyle = C.ink; g.font = '700 34px '+FF; g.fillText(`${label ? label.slice(0, 12) + '　' : ''}第${no}回　${items.length}問`, PAD + tw + 22, 76);
   g.fillStyle = C.mut; g.font = '400 25px '+FF;
   g.fillText(`${md(ds[0])}〜${md(ds[ds.length-1])} に作った問題`, PAD, 122);
   g.textAlign = 'right'; g.fillText(`${md(dateStr)} 提出`, W - PAD, 122); g.textAlign = 'left';
@@ -2171,7 +2248,7 @@ function openSendSheet(o){
   const canShare = !!(navigator.canShare && navigator.share);
   const bg = document.createElement('div'); bg.className = 'sheet-bg';
   bg.innerHTML = `<div class="sheet"><div class="grab"></div>
-    <h2>ミスマップの部屋に出す（第${o.no}回）</h2>
+    <h2>ミスマップの部屋に出す（${o.g ? esc(o.g) + ' ' : ''}第${o.no}回）</h2>
     <p class="dim" id="sdMsg">画像を作っています…</p>
     <div id="sdBody" class="hidden">
       <img class="shot" id="sdImg" alt="${APP_NAME} 第${o.no}回">
@@ -2188,17 +2265,17 @@ function openSendSheet(o){
   const close = () => { bg.remove(); if(url) URL.revokeObjectURL(url); };
   bg.querySelector('#sdClose').onclick = close;
   bg.addEventListener('click', e => { if(e.target === bg) close(); });
-  const name = `${APP_NAME}_第${o.no}回_${dateStr}.jpg`;
+  const name = `${APP_NAME}_${o.g ? o.g.replace(/[\\/:*?"<>|\s]/g, '') + '_' : ''}第${o.no}回_${dateStr}.jpg`;
   let blob = null;
   const done = () => {
     if(o.again) return;
-    markSent(o.ids, o.no);
+    markSent(o.ids, o.no, o.by, o.g);
     toast(`第${o.no}回を提出済みにしました`);
     close();
   };
   let url = '';
   const fail = () => { bg.querySelector('#sdMsg').textContent = '画像を作れませんでした。もう一度開いてください。'; };
-  drawSend(items, o.no, dateStr).then(cv => {
+  drawSend(items, o.no, dateStr, o.g || '').then(cv => {
     /* 変換は1回だけ（toDataURL と toBlob を両方やると、縦に長い画像で iPhone が重くなる） */
     cv.toBlob(b => {
       if(!b) return fail();
@@ -2572,14 +2649,14 @@ $('#btnWipe').onclick = async () => {
    ※ 設定の「更新の履歴」は v16 で廃止（生徒には不要というユーザー判断）。CHANGES 配列も消した。 */
 function slides(){ return [
   { ico:'doc', t:`${APP_NAME}とは`, p:'丸付けで✕がついた問題を、<b>全部まとめて解き直す</b>ための道具です。ケアレスミスも、解法が分からなかった問題も、解説とちがう解き方をした問題も、ここに入れます。', ex:'紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）と同じ流れを、アプリにしました。' },
-  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます。合うものがないときは「その他」を押すと、ほかの選択肢と、自分で入れる欄が出ます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。「届く日」をカレンダーで選ぶと、その日の「今日の問題」に入ります。前に解いた問題を、直前期までに極めたい日に入れておけます。' },
+  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます（問題集の名前も入れておけます）。合うものがないときは「その他」を押すと、ほかの選択肢と、自分で入れる欄が出ます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。「届く日」をカレンダーで選ぶと、その日の「今日の問題」に入ります。前に解いた問題を、直前期までに極めたい日に入れておけます。' },
   { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。解法が分からなかった問題は「<b>どこで止まったか</b>」、解説とちがう解き方をした問題は「<b>自分はどう解いたか</b>」を書きます。', ex:'書き方が分からないときは、種類を選ぶと出る「書き方の例」を押してください。入った文を、自分の問題に合わせて直します（例のままでは登録できません）。例：問題文の「合計」を読み飛ばした' },
-  { ico:'fix', t:'3. 改善点は「解いている最中」にやること', p:'「<b>いつ</b>（解く前・解いている途中）・<b>何を</b>・<b>どうする</b>」で書きます。解き終わってからの見直しではなく、<b>1行書くたびに前と見くらべる（バックスキャン）</b>など、その場でやることを、何を見るかまで具体的に書きます。', ex:'例：解いている途中、2x−3=5 の −3 を右に移したときの符号を、1行書くたびに前の行と指でさして見くらべる。改善点の例は見本なので、そのままでは登録できません。自分の問題に合わせて直します。' },
+  { ico:'fix', t:'3. 改善点は「解いている最中」にやること', p:'「<b>いつ</b>（解く前・解いている途中）・<b>何を</b>・<b>どうする</b>」で書きます。解き終わってからの見直しではなく、<b>1行書くたびに前と見くらべる（バックスキャン）</b>など、その場でやることを、何を見るかまで具体的に書きます。', ex:'例：解いている途中、2x−3=5 の −3 を右に移したときの符号を、1行書くたびに前の行と指でさして見くらべる。改善点の例は見本なので、そのままでは登録できません。自分の問題に合わせて直します。解法が分からなかった問題だけは「丸付け後」も選べます（解説のどこを、どう学ぶか）。' },
   { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます（解いた日から次の日数を数え直します）。設定の「解き直しの曜日」をオンにすると、翌日の解き直しはそのまま、2回目からは決めた曜日（土・日など）にまとめて届きます。' },
   { ico:'eye', t:'5. もう一度解く', p:'問題だけが出ます。理由と改善点を思い出してから、<b>改善点をやりながらノートにもう一度解きます</b>。解き終わったら「答え合わせ」で、登録した内容を見ます。', ex:`解けた → 次の間隔へ。${gaps().length}回つづけて解けたら「極まった」。解けなかった → 翌日からやり直し。写真は押すと大きくなります。暗く写った写真は、写真の上の「白黒くっきり」で見やすくできます（大きくしたときは、背景の黒・白も選べます）。解いているあいだは、画面が暗くならないようにしてあります。` },
   { ico:'shuffle', t:'6. ランダムに解く', p:'予定に関係なく、3・5・10問を練習できます。ランダムのときは「解けなかった」だけ記録され、「解けた」は予定を変えません。', ex:'間隔をあけて覚える仕組みを崩さないためです。' },
   { ico:'chart', t:'7. 記録を見る', p:'下の<b>「記録」</b>タブに、教科別の件数と、ミスの種類別の件数（<b>ミスパターン分析</b>）、まだ極まっていない問題の一覧が自動でたまります。いちばん多い種類が、あなたのミスのクセです。', ex:'そのクセの改善点を、ほかの問題にも使ってみてください。' },
-  { ico:'send', t:'8. ミスマップの部屋に出す', p:`問題を <b>${SEND_N}問</b> 作るごとに、紙のミスマップと同じ形の <b>1枚の画像</b> にして、Discord の <b>#ミスマップ</b> に出します。ひとりで進めずに、フィードバックをもらうためです。`, ex:'「解く」タブの「ミスマップの部屋に出す」から。共有の画面で Discord を選び、#ミスマップ に送ります。出した回は「ミスマップ」タブにたまり、あとから出し直せます。' },
+  { ico:'send', t:'8. ミスマップの部屋に出す', p:`問題を <b>${SEND_N}問</b> 作るごとに、紙のミスマップと同じ形の <b>1枚の画像</b> にして、Discord の <b>#ミスマップ</b> に出します。ひとりで進めずに、フィードバックをもらうためです。`, ex:'「解く」タブの「ミスマップの部屋に出す」から。共有の画面で Discord を選び、#ミスマップ に送ります。出した回は「記録」タブにたまり、あとから出し直せます。「まぜる／教科ごと／問題集ごと」を選ぶと、教科や問題集ごとに10問ずつ、別々の回にできます。' },
   { ico:'install', t:'9. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、登録した問題と写真が消えてしまうことがあります。', ex:'Safari の共有ボタン（iPhone は画面の下、iPad は右上。見当たらないときは「…」の中）→「ホーム画面に追加」→「追加」。やり方は、上の赤い帯の「やり方」からも見られます。' },
   { ico:'save', t:'10. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の <b>「記録の控えをとる」</b> を、ときどき押してください。軽いのですぐ終わります。', ex:'写真も残したいときは「写真もとる」。重いので何回かに分けて保存します。機種変更のときだけで十分です。' },
   { ico:'people', t:'11. 兄弟で使う', p:'1台を兄弟で使うときは、設定の <b>「使う人」</b> で人をふやします。名前を押すと切りかわり、問題・写真・記録は<b>人ごとに別々</b>に保存されます。', ex:'いまだれの画面かは、上の名前の札で分かります。札を押すと、切りかえの所に飛びます。' },

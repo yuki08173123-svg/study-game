@@ -424,6 +424,22 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 /* 種類の名前「解法が分からなかった」が切れないように、棒グラフの名前の欄を広げる */
 .bar{grid-template-columns:136px 1fr 34px;}
 
+/* ===================== 写真の切り抜き（v35〜） ===================== */
+.cropper{position:fixed; inset:0; z-index:95; background:#0B0B0C; display:flex; flex-direction:column; color:#F2EDE3;}
+.cropper .cbar{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:calc(10px + env(safe-area-inset-top)) 12px 8px;}
+.cropper .cbar b{font-size:16px;}
+.cropper .cbar button{font-size:15px; font-weight:700; padding:8px 12px; border-radius:999px; color:#F2EDE3; border:1px solid rgba(255,255,255,.35);}
+.cropper .cbar .go{background:var(--metal); color:#16120A; border:none; padding:8px 18px;}
+.cropper .chint{font-size:13px; color:#B9AF9E; text-align:center; padding:0 16px 6px;}
+.cropper .cstage{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:4px 12px;}
+.cropper .crop{position:relative; touch-action:none; -webkit-user-select:none; user-select:none;}
+.cropper .crop canvas{display:block; width:100%; height:100%; pointer-events:none;}
+.cropper .shade{position:absolute; inset:0; overflow:hidden;}
+.cropper .box{position:absolute; border:3px solid #E0C06A; box-shadow:0 0 0 9999px rgba(0,0,0,.55);}
+.cropper .h{position:absolute; width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; background:#fff; border:4px solid #E0C06A;}
+.cropper .ctools{padding:10px 12px calc(14px + env(safe-area-inset-bottom)); display:flex; justify-content:center;}
+.cropper .ctools button{font-size:14px; font-weight:700; color:#F2EDE3; border:1px solid rgba(255,255,255,.35); border-radius:999px; padding:10px 18px;}
+
 /* ===================== 答え（v34〜） ===================== */
 .anscard .ans-tg{margin-top:0;}
 .ansph{display:flex; flex-direction:column; gap:6px; margin-top:6px;}
@@ -690,7 +706,7 @@ html[data-theme="light"] .tg::after{background:#fff;}
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 34;
+const VER = 35;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -1039,13 +1055,17 @@ const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2
 const byId = id => S.items.find(x => x.id === id);
 
 /* 最初に届く日。ふつうは 登録日＋1回目の間隔。カレンダーで好きな日を選べる（過ぎた日は今日、おかしな値はふつうの日にする） */
-function pickDue(d){
+/* 取り組んだ日（v35・ユウキ・ハルネコ「前日の分を今日入れると、解き直しの日程がずれる」）。未来の日・おかしな値は今日 */
+const pickDay = d => (/^\d{4}-\d{2}-\d{2}$/.test(d||'') && d <= today()) ? d : today();
+/* ふつうの届く日＝取り組んだ日＋1回目の間隔（過ぎていたら今日） */
+const stdDueFrom = day => { const t = today(), d = addDays(pickDay(day), gaps()[0]); return d < t ? t : d; };
+function pickDue(d, day){
   const t = today();
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(d||'')) return addDays(t, gaps()[0]);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d||'')) return stdDueFrom(day);
   return d < t ? t : d;
 }
 function addItem(o){
-  const t = today(), due = pickDue(o.due);
+  const t = pickDay(o.day), due = pickDue(o.due, t);
   const it = { id:newId(), subj:o.subj, text:(o.text||'').trim(), imgs:o.imgs||[], ansImgs:o.ansImgs||[], ansText:(o.ansText||'').trim(), book:(o.book||'').trim().slice(0, BOOK_MAX), tag:o.tag||'', why:(o.why||'').trim(), fix:(o.fix||'').trim(), whyP:o.whyP||null, fixP:o.fixP||null,
     created:t, stage:0, due, done:false, doneAt:'', log:[] };
   if(o.due) it.pin = due;  // 自分で選んだ日。間隔を変えても、1回目はこの日のまま
@@ -1127,6 +1147,71 @@ async function fillImgs(root){
     if(u) el.src = u;
   }
 }
+/* 写真の切り抜き（v35・ブルポ帳と同じ作り）。撮る・選ぶたびに、使うところを枠で囲む。
+   「全体を使う」で切らずに使える。「やめる」はその写真を使わない（null） */
+function cropBlob(blob){
+  return new Promise(async resolve => {
+    let im;
+    try{ im = await createImageBitmap(blob); }catch(e){ return resolve(blob); }
+    const W = im.width, H = im.height;
+    const p = document.createElement('div'); p.className = 'cropper';
+    p.innerHTML = `<div class="cbar"><button data-x>やめる</button><b>問題のところを かこむ</b><button class="go" data-ok>使う</button></div>
+      <div class="chint">かどの ○ を動かして、使うところだけを囲みます。枠の中を動かすと移動します。</div>
+      <div class="cstage"><div class="crop"><canvas></canvas><div class="shade"><div class="box"></div></div>${'<div class="h"></div>'.repeat(4)}</div></div>
+      <div class="ctools"><button data-all>切らずに全体を使う</button></div>`;
+    document.body.appendChild(p);
+    const wrap = p.querySelector('.crop'), cv = p.querySelector('canvas'), box = p.querySelector('.box'), hs = p.querySelectorAll('.h');
+    cv.width = W; cv.height = H; cv.getContext('2d').drawImage(im, 0, 0);
+    const m = 0.06; let r = { x:W*m, y:H*m, w:W*(1-2*m), h:H*(1-2*m) }, sc = 1;
+    const draw = () => {
+      box.style.left = r.x*sc+'px'; box.style.top = r.y*sc+'px'; box.style.width = r.w*sc+'px'; box.style.height = r.h*sc+'px';
+      [[r.x, r.y], [r.x+r.w, r.y], [r.x, r.y+r.h], [r.x+r.w, r.y+r.h]].forEach(([x, y], k) => { hs[k].style.left = x*sc+'px'; hs[k].style.top = y*sc+'px'; });
+    };
+    const fit = () => {
+      const st = p.querySelector('.cstage');
+      sc = Math.min((st.clientWidth - 48) / W, (st.clientHeight - 24) / H);
+      wrap.style.width = Math.round(W*sc)+'px'; wrap.style.height = Math.round(H*sc)+'px';
+      draw();
+    };
+    let drag = null;
+    const pt = e => { const b = wrap.getBoundingClientRect(); return { x:(e.clientX - b.left)/sc, y:(e.clientY - b.top)/sc }; };
+    wrap.addEventListener('pointerdown', e => {
+      const q = pt(e), tol = 30 / sc, cs = [[r.x, r.y], [r.x+r.w, r.y], [r.x, r.y+r.h], [r.x+r.w, r.y+r.h]];
+      const k = cs.findIndex(([x, y]) => Math.hypot(q.x - x, q.y - y) < tol);
+      if(k >= 0) drag = { k, r0:{ ...r }, q0:q };
+      else if(q.x > r.x && q.x < r.x+r.w && q.y > r.y && q.y < r.y+r.h) drag = { k:'move', r0:{ ...r }, q0:q };
+      else return;
+      try{ wrap.setPointerCapture(e.pointerId); }catch(err){} e.preventDefault();
+    });
+    wrap.addEventListener('pointermove', e => {
+      if(!drag) return;
+      const q = pt(e), dx = q.x - drag.q0.x, dy = q.y - drag.q0.y, a = drag.r0, MIN = Math.min(W, H) * 0.1;
+      if(drag.k === 'move'){ r.x = Math.max(0, Math.min(W - a.w, a.x + dx)); r.y = Math.max(0, Math.min(H - a.h, a.y + dy)); }
+      else{
+        let x1 = a.x, y1 = a.y, x2 = a.x + a.w, y2 = a.y + a.h;
+        if(drag.k === 0 || drag.k === 2) x1 = Math.max(0, Math.min(x2 - MIN, a.x + dx)); else x2 = Math.min(W, Math.max(x1 + MIN, a.x + a.w + dx));
+        if(drag.k === 0 || drag.k === 1) y1 = Math.max(0, Math.min(y2 - MIN, a.y + dy)); else y2 = Math.min(H, Math.max(y1 + MIN, a.y + a.h + dy));
+        r = { x:x1, y:y1, w:x2 - x1, h:y2 - y1 };
+      }
+      draw();
+    });
+    const up = () => { drag = null; };
+    wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
+    const end = v => { window.removeEventListener('resize', fit); p.remove(); if(im.close) im.close(); resolve(v); };
+    const finish = rr => {
+      const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(rr.w)); c.height = Math.max(1, Math.round(rr.h));
+      c.getContext('2d').drawImage(im, rr.x, rr.y, rr.w, rr.h, 0, 0, c.width, c.height);
+      c.toBlob(b => end(b || blob), 'image/jpeg', 0.85);
+    };
+    p.querySelector('[data-x]').onclick = () => end(null);
+    p.querySelector('[data-ok]').onclick = () => finish(r);
+    p.querySelector('[data-all]').onclick = () => end(blob);
+    window.addEventListener('resize', fit);
+    fit(); requestAnimationFrame(fit);
+  });
+}
+/* 小さくしてから、切り抜く */
+async function shrinkCrop(file){ const b = await shrink(file); return cropBlob(b); }
 async function shrink(file){
   const MAX = 1600;
   let src = null, w = 0, h = 0, bmp = null, tmp = '';
@@ -1751,7 +1836,7 @@ function validateWhyFix(root, p, why, fix, tag){
 
 /* ===================== 作る（登録） ===================== */
 const DKEY = keysOf(PID).draft;
-const blankDraft = () => ({ imgs:[], ansImgs:[], ansText:'', ansOpen:false, subj:'', book:'', text:'', due:'', tag:'', whyP:emptyWhy(), fixP:emptyFix() });
+const blankDraft = () => ({ imgs:[], ansImgs:[], ansText:'', ansOpen:false, day:'', subj:'', book:'', text:'', due:'', tag:'', whyP:emptyWhy(), fixP:emptyFix() });
 /* 問題集（任意・v33）。めい「教科ごと・問題集ごとにミスマップを分けたい」。前に入れた名前はボタンで選べる */
 const BOOK_MAX = 16;
 function usedBooks(){
@@ -1806,6 +1891,11 @@ function renderAdd(){
     <div class="field s-hide"><label>問題集（なくてもOK）</label>${bookHtml('add', draft.book)}
       <div class="hint">入れておくと、部屋に出す画像を問題集ごとに分けられます。次からはボタンで選べます。</div></div>
 
+    <div class="field"><label>取り組んだ日</label>
+      <div class="dayrow"><input type="date" id="addWorkDay" max="${today()}"><button class="chip sm" id="addWdToday">今日</button><button class="chip sm" id="addWdYest">昨日</button></div>
+      <div class="dnote" id="addWdNote"></div>
+      <div class="hint">きのう解いた問題を今日入れるときは「昨日」に。解き直しの日程は、取り組んだ日から数えます。</div></div>
+
     <div class="field f-due"><label>届く日（「今日の問題」に入る日）</label>
       <div class="dayrow"><input type="date" id="addDay" min="${today()}"><button class="chip sm" id="addDayToday">今日</button><button class="chip sm" id="addDayStd">${gapLabel(gaps()[0])}</button></div>
       <div class="dnote" id="addDayNote"></div>
@@ -1828,10 +1918,16 @@ function renderAdd(){
   $('#fCam').onchange = e => takeFiles(e.target.files);
   $('#fPick').onchange = e => takeFiles(e.target.files);
   $('#addText').oninput = e => { draft.text = e.target.value; saveDraft(); };
-  const stdDue = () => addDays(today(), gaps()[0]);
-  const setDue = d => { d = pickDue(d); draft.due = d === stdDue() ? '' : d; showDay(); saveDraft(); };
+  const stdDue = () => stdDueFrom(draft.day);
+  const setDue = d => { d = pickDue(d, draft.day); draft.due = d === stdDue() ? '' : d; showDay(); saveDraft(); };
+  const setWd = d => { d = pickDay(d); draft.day = d === today() ? '' : d; showDay(); saveDraft(); };
   const showDay = () => {
-    const f = pickDue(draft.due);
+    const wd = pickDay(draft.day);
+    $('#addWorkDay').value = wd;
+    $('#addWdToday').classList.toggle('on', wd === today());
+    $('#addWdYest').classList.toggle('on', wd === addDays(today(), -1));
+    $('#addWdNote').innerHTML = wd === today() ? '' : `<b>${mdw(wd)}</b>（${relDay(wd)}）に取り組んだ問題として登録します`;
+    const f = pickDue(draft.due, draft.day);
     if(draft.due && draft.due !== f) draft.due = f;  // 書きかけの日が過ぎていたら今日にする
     $('#addDay').value = f;
     $('#addDayToday').classList.toggle('on', f === today());
@@ -1842,6 +1938,9 @@ function renderAdd(){
   $('#addDay').onchange = e => setDue(e.target.value || '');
   $('#addDayToday').onclick = () => setDue(today());
   $('#addDayStd').onclick = () => setDue('');
+  $('#addWorkDay').onchange = e => setWd(e.target.value || '');
+  $('#addWdToday').onclick = () => setWd('');
+  $('#addWdYest').onclick = () => setWd(addDays(today(), -1));
   showDay();
   bindWhyFix(document, 'add', draft.whyP, draft.fixP, saveDraft);
   mountPicker($('#addSubj'), 'subj', () => draft.subj, v => { draft.subj = v; saveDraft(); });
@@ -1862,9 +1961,9 @@ function renderAdd(){
     if(!draft.subj) return toast('教科を選んでください');
     if(!draft.tag){ showErr(document, 'addTagErr', { t:'ミスの種類をひとつ選んでください', ex:'選ぶと、その種類でよく効く改善点が候補で出ます。' }); return toast('赤い所を直してください'); }
     if(!validateWhyFix(document, 'add', draft.whyP, draft.fixP, draft.tag)) return toast('赤い所を直してください');
-    const keepSubj = draft.subj, keepBook = draft.book;
+    const keepSubj = draft.subj, keepBook = draft.book, keepDay = draft.day;
     const it = addItem({ ...draft, why:composeWhy(draft.whyP), fix:composeFix(draft.fixP), whyP:{ ...draft.whyP }, fixP:{ ...draft.fixP } });
-    draft = { ...blankDraft(), subj:keepSubj, book:keepBook };
+    draft = { ...blankDraft(), subj:keepSubj, book:keepBook, day:keepDay };   // 続けて入れるとき、取り組んだ日もそのまま
     clearDraft();
     renderAdd(); renderAll();
     window.scrollTo({ top:0, behavior:'smooth' });
@@ -1884,7 +1983,7 @@ async function takeFiles(files){
   busy = true; $('#btnCam').classList.add('busy'); $('#btnPick').classList.add('busy');
   toast(list.length > 1 ? `${list.length}枚を取り込んでいます…` : '写真を取り込んでいます…');
   for(const f of list){
-    try{ const b = await shrink(f); const id = newId(); await putImg(id, b); draft.imgs.push(id); saveDraft(); renderAddThumbs(); }
+    try{ const b = await shrinkCrop(f); if(!b) continue; const id = newId(); await putImg(id, b); draft.imgs.push(id); saveDraft(); renderAddThumbs(); }
     catch(e){ toast('この写真は取り込めませんでした'); }
   }
   busy = false; $('#btnCam').classList.remove('busy'); $('#btnPick').classList.remove('busy');
@@ -1930,7 +2029,7 @@ function bindAns(root, p, st, onch, delNow){
   };
   const take = async files => {
     for(const f of Array.from(files || [])){
-      try{ const b = await shrink(f); const id = newId(); await putImg(id, b); st.ansImgs.push(id); ch(); thumbs(); }
+      try{ const b = await shrinkCrop(f); if(!b) continue; const id = newId(); await putImg(id, b); st.ansImgs.push(id); ch(); thumbs(); }
       catch(e){ toast('この写真は取り込めませんでした'); }
     }
     q('#'+p+'AnsFCam').value = ''; q('#'+p+'AnsFPick').value = '';
@@ -1971,7 +2070,7 @@ function openEdit(id, opt){
   thumbs();
   const take = async files => {
     for(const f of Array.from(files || [])){
-      try{ const b = await shrink(f); const nid = newId(); await putImg(nid, b); d.imgs.push(nid); thumbs(); }catch(e){ toast('この写真は取り込めませんでした'); }
+      try{ const b = await shrinkCrop(f); if(!b) continue; const nid = newId(); await putImg(nid, b); d.imgs.push(nid); thumbs(); }catch(e){ toast('この写真は取り込めませんでした'); }
     }
   };
   bg.querySelector('#edCam').onclick = () => bg.querySelector('#edFCam').click();
@@ -2710,7 +2809,7 @@ $('#btnWipe').onclick = async () => {
    ※ 設定の「更新の履歴」は v16 で廃止（生徒には不要というユーザー判断）。CHANGES 配列も消した。 */
 function slides(){ return [
   { ico:'doc', t:`${APP_NAME}とは`, p:'丸付けで✕がついた問題を、<b>全部まとめて解き直す</b>ための道具です。ケアレスミスも、解法が分からなかった問題も、解説とちがう解き方をした問題も、ここに入れます。', ex:'紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）と同じ流れを、アプリにしました。' },
-  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます（問題集の名前も入れておけます）。「＋ 答えも入れる」で、答えの写真や文字も入れておけます（答え合わせのときに出ます）。合うものがないときは「その他」を押すと、ほかの選択肢と、自分で入れる欄が出ます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。「届く日」をカレンダーで選ぶと、その日の「今日の問題」に入ります。前に解いた問題を、直前期までに極めたい日に入れておけます。' },
+  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます（問題集の名前も入れておけます）。「＋ 答えも入れる」で、答えの写真や文字も入れておけます（答え合わせのときに出ます）。合うものがないときは「その他」を押すと、ほかの選択肢と、自分で入れる欄が出ます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'写真は撮るたびに、使うところだけを枠で囲んで切り抜けます。「取り組んだ日」を「昨日」にすると、きのう解いた問題をきのうの日付で入れられます。写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。「届く日」をカレンダーで選ぶと、その日の「今日の問題」に入ります。前に解いた問題を、直前期までに極めたい日に入れておけます。' },
   { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。解法が分からなかった問題は「<b>どこで止まったか</b>」、解説とちがう解き方をした問題は「<b>自分はどう解いたか</b>」を書きます。', ex:'書き方が分からないときは、種類を選ぶと出る「書き方の例」を押してください。入った文を、自分の問題に合わせて直します（例のままでは登録できません）。例：問題文の「合計」を読み飛ばした' },
   { ico:'fix', t:'3. 改善点は「解いている最中」にやること', p:'「<b>いつ</b>（解く前・解いている途中）・<b>何を</b>・<b>どうする</b>」で書きます。解き終わってからの見直しではなく、<b>1行書くたびに前と見くらべる（バックスキャン）</b>など、その場でやることを、何を見るかまで具体的に書きます。', ex:'例：解いている途中、2x−3=5 の −3 を右に移したときの符号を、1行書くたびに前の行と指でさして見くらべる。改善点の例は見本なので、そのままでは登録できません。自分の問題に合わせて直します。解法が分からなかった問題だけは「丸付け後」も選べます（解説のどこを、どう学ぶか）。' },
   { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます（解いた日から次の日数を数え直します）。設定の「解き直しの曜日」をオンにすると、翌日の解き直しはそのまま、2回目からは決めた曜日（土・日など）にまとめて届きます。' },

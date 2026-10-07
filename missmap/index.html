@@ -431,14 +431,18 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 .cropper .cbar button{font-size:15px; font-weight:700; padding:8px 12px; border-radius:999px; color:#F2EDE3; border:1px solid rgba(255,255,255,.35);}
 .cropper .cbar .go{background:var(--metal); color:#16120A; border:none; padding:8px 18px;}
 .cropper .chint{font-size:13px; color:#B9AF9E; text-align:center; padding:0 16px 6px;}
-.cropper .cstage{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:4px 12px;}
+.cropper .cstage{flex:1; min-height:0; display:flex; padding:4px 12px; overflow:hidden;}
+.cropper .crop{margin:auto; flex:none;}
+.cropper .ctools .zl{font-size:13px; color:#B9AF9E; min-width:42px; text-align:center; align-self:center;}
+.cropper .ctools [data-zo], .cropper .ctools [data-zi]{min-width:44px; font-size:18px; padding:6px 12px;}
 .cropper .crop{position:relative; touch-action:none; -webkit-user-select:none; user-select:none;}
 .cropper .crop canvas{display:block; width:100%; height:100%; pointer-events:none;}
 .cropper .shade{position:absolute; inset:0; overflow:hidden;}
 .cropper .box{position:absolute; border:3px solid #E0C06A; box-shadow:0 0 0 9999px rgba(0,0,0,.55);}
 .cropper .h{position:absolute; width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; background:#fff; border:4px solid #E0C06A;}
-.cropper .ctools{padding:10px 12px calc(14px + env(safe-area-inset-bottom)); display:flex; justify-content:center;}
-.cropper .ctools button{font-size:14px; font-weight:700; color:#F2EDE3; border:1px solid rgba(255,255,255,.35); border-radius:999px; padding:10px 18px;}
+.cropper .ctools{padding:10px 12px calc(14px + env(safe-area-inset-bottom)); display:flex; justify-content:center; flex-wrap:wrap; gap:8px;}
+.cropper .ctools button{font-size:14px; font-weight:700; color:#F2EDE3; border:1px solid rgba(255,255,255,.35); border-radius:999px; padding:10px 14px;}
+.cropper .ctools [data-zoom]{background:rgba(224,192,106,.16); border-color:#E0C06A; color:#E0C06A;}
 
 /* ===================== 答え（v34〜） ===================== */
 .anscard .ans-tg{margin-top:0;}
@@ -706,7 +710,7 @@ html[data-theme="light"] .tg::after{background:#fff;}
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 36;
+const VER = 37;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -1150,70 +1154,119 @@ async function fillImgs(root){
 /* 写真の切り抜き（v35・ブルポ帳と同じ作り）。撮る・選ぶたびに、使うところを枠で囲む。
    「全体を使う」で切らずに使える。「やめる」はその写真を使わない（null） */
 function cropBlob(blob){
+  /* v37（ユウキ・ハルネコ「枠を一番小さくしても3行入る・拡大できない」）：
+     ・「囲んだところを大きくする」で、囲んだ部分だけを画面いっぱいに出し直す（何回でも）→ 1行だけ選べる
+     ・「↻ 回す」で90度ずつ回す（横向きに撮った紙）
+     ・枠は かど だけでなく ふち（上下左右）でも動かせる。いちばん小さい幅も細くした
+     ・元の写真は大きいまま（3000px）で扱い、できあがりだけ 1600px にする（細い行でも字がつぶれない） */
   return new Promise(async resolve => {
     let im;
     try{ im = await createImageBitmap(blob); }catch(e){ return resolve(blob); }
-    const W = im.width, H = im.height;
+    let src = document.createElement('canvas'); src.width = im.width; src.height = im.height; src.getContext('2d').drawImage(im, 0, 0);
+    if(im.close) im.close();
+    let W = src.width, H = src.height;
     const p = document.createElement('div'); p.className = 'cropper';
-    p.innerHTML = `<div class="cbar"><button data-x>やめる</button><b>問題のところを かこむ</b><button class="go" data-ok>使う</button></div>
-      <div class="chint">かどの ○ を動かして、使うところだけを囲みます。枠の中を動かすと移動します。</div>
+    p.innerHTML = `<div class="cbar"><button data-x>やめる</button><b>使うところを かこむ</b><button class="go" data-ok>使う</button></div>
+      <div class="chint">かどの ○ や ふちを動かして囲みます。細かいところは「＋」で拡大し、枠の中を指でなぞると見る場所を動かせます。</div>
       <div class="cstage"><div class="crop"><canvas></canvas><div class="shade"><div class="box"></div></div>${'<div class="h"></div>'.repeat(4)}</div></div>
-      <div class="ctools"><button data-all>切らずに全体を使う</button></div>`;
+      <div class="ctools"><button data-zo>－</button><span class="zl">100%</span><button data-zi>＋</button><button data-zoom>囲んだところを大きくする</button><button data-rot>↻ 回す</button><button data-all>全体を使う</button></div>`;
     document.body.appendChild(p);
     const wrap = p.querySelector('.crop'), cv = p.querySelector('canvas'), box = p.querySelector('.box'), hs = p.querySelectorAll('.h');
-    cv.width = W; cv.height = H; cv.getContext('2d').drawImage(im, 0, 0);
-    const m = 0.06; let r = { x:W*m, y:H*m, w:W*(1-2*m), h:H*(1-2*m) }, sc = 1;
+    let r, sc = 1, zl = 1;   // zl＝拡大（1〜6）。拡大中は、枠の中をなぞると見る場所が動く
+    const stage = p.querySelector('.cstage');
+    const MIN = () => Math.max(6, Math.min(W, H) * 0.02);
+    const setSrc = (c, m) => {
+      src = c; W = c.width; H = c.height;
+      cv.width = W; cv.height = H; cv.getContext('2d').drawImage(c, 0, 0);
+      r = { x:W*m, y:H*m, w:W*(1-2*m), h:H*(1-2*m) };
+      zl = 1; fit();
+    };
     const draw = () => {
       box.style.left = r.x*sc+'px'; box.style.top = r.y*sc+'px'; box.style.width = r.w*sc+'px'; box.style.height = r.h*sc+'px';
       [[r.x, r.y], [r.x+r.w, r.y], [r.x, r.y+r.h], [r.x+r.w, r.y+r.h]].forEach(([x, y], k) => { hs[k].style.left = x*sc+'px'; hs[k].style.top = y*sc+'px'; });
     };
     const fit = () => {
-      const st = p.querySelector('.cstage');
-      sc = Math.min((st.clientWidth - 48) / W, (st.clientHeight - 24) / H);
+      sc = Math.min((stage.clientWidth - 48) / W, (stage.clientHeight - 24) / H) * zl;
       wrap.style.width = Math.round(W*sc)+'px'; wrap.style.height = Math.round(H*sc)+'px';
+      p.querySelector('.zl').textContent = Math.round(zl * 100) + '%';
       draw();
+    };
+    /* 拡大を変えたら、枠のまん中が画面のまん中にくるように */
+    const setZoom = z => {
+      zl = Math.max(1, Math.min(6, z)); fit();
+      stage.scrollLeft = (r.x + r.w/2) * sc + wrap.offsetLeft - stage.clientWidth/2;
+      stage.scrollTop = (r.y + r.h/2) * sc + wrap.offsetTop - stage.clientHeight/2;
     };
     let drag = null;
     const pt = e => { const b = wrap.getBoundingClientRect(); return { x:(e.clientX - b.left)/sc, y:(e.clientY - b.top)/sc }; };
     wrap.addEventListener('pointerdown', e => {
-      const q = pt(e), tol = 30 / sc, cs = [[r.x, r.y], [r.x+r.w, r.y], [r.x, r.y+r.h], [r.x+r.w, r.y+r.h]];
-      const k = cs.findIndex(([x, y]) => Math.hypot(q.x - x, q.y - y) < tol);
-      if(k >= 0) drag = { k, r0:{ ...r }, q0:q };
-      else if(q.x > r.x && q.x < r.x+r.w && q.y > r.y && q.y < r.y+r.h) drag = { k:'move', r0:{ ...r }, q0:q };
+      const q = pt(e), tol = 26 / sc, cs = [[r.x, r.y], [r.x+r.w, r.y], [r.x, r.y+r.h], [r.x+r.w, r.y+r.h]];
+      const inX = q.x > r.x - tol && q.x < r.x + r.w + tol, inY = q.y > r.y - tol && q.y < r.y + r.h + tol;
+      let k = cs.findIndex(([x, y]) => Math.hypot(q.x - x, q.y - y) < tol);
+      if(k < 0){
+        /* ふち：細い枠のときは、近いほうのふちを動かす */
+        const dT = Math.abs(q.y - r.y), dB = Math.abs(q.y - (r.y + r.h)), dL = Math.abs(q.x - r.x), dR = Math.abs(q.x - (r.x + r.w));
+        const ends = [], tv = Math.min(tol, r.h / 3), th = Math.min(tol, r.w / 3);   // 細い枠でも、まん中をなぞれば見る場所が動くように
+        if(inX && dT < tv) ends.push(['t', dT]); if(inX && dB < tv) ends.push(['b', dB]);
+        if(inY && dL < th) ends.push(['l', dL]); if(inY && dR < th) ends.push(['r', dR]);
+        ends.sort((a, b) => a[1] - b[1]);
+        if(ends.length) k = ends[0][0];
+      }
+      const inside = q.x > r.x && q.x < r.x+r.w && q.y > r.y && q.y < r.y+r.h;
+      if(k !== -1 && k !== undefined) drag = { k, r0:{ ...r }, q0:q };
+      else if(zl > 1) drag = { k:'pan', sl:stage.scrollLeft, st:stage.scrollTop, cx:e.clientX, cy:e.clientY };   // 拡大中は見る場所を動かす
+      else if(inside) drag = { k:'move', r0:{ ...r }, q0:q };
       else return;
       try{ wrap.setPointerCapture(e.pointerId); }catch(err){} e.preventDefault();
     });
     wrap.addEventListener('pointermove', e => {
       if(!drag) return;
-      const q = pt(e), dx = q.x - drag.q0.x, dy = q.y - drag.q0.y, a = drag.r0, MIN = Math.min(W, H) * 0.1;
-      if(drag.k === 'move'){ r.x = Math.max(0, Math.min(W - a.w, a.x + dx)); r.y = Math.max(0, Math.min(H - a.h, a.y + dy)); }
+      if(drag.k === 'pan'){ stage.scrollLeft = drag.sl - (e.clientX - drag.cx); stage.scrollTop = drag.st - (e.clientY - drag.cy); return; }
+      const q = pt(e), dx = q.x - drag.q0.x, dy = q.y - drag.q0.y, a = drag.r0, mn = MIN(), k = drag.k;
+      if(k === 'move'){ r.x = Math.max(0, Math.min(W - a.w, a.x + dx)); r.y = Math.max(0, Math.min(H - a.h, a.y + dy)); }
       else{
         let x1 = a.x, y1 = a.y, x2 = a.x + a.w, y2 = a.y + a.h;
-        if(drag.k === 0 || drag.k === 2) x1 = Math.max(0, Math.min(x2 - MIN, a.x + dx)); else x2 = Math.min(W, Math.max(x1 + MIN, a.x + a.w + dx));
-        if(drag.k === 0 || drag.k === 1) y1 = Math.max(0, Math.min(y2 - MIN, a.y + dy)); else y2 = Math.min(H, Math.max(y1 + MIN, a.y + a.h + dy));
+        const L = k === 0 || k === 2 || k === 'l', R = k === 1 || k === 3 || k === 'r', T = k === 0 || k === 1 || k === 't', B = k === 2 || k === 3 || k === 'b';
+        if(L) x1 = Math.max(0, Math.min(x2 - mn, a.x + dx));
+        if(R) x2 = Math.min(W, Math.max(x1 + mn, a.x + a.w + dx));
+        if(T) y1 = Math.max(0, Math.min(y2 - mn, a.y + dy));
+        if(B) y2 = Math.min(H, Math.max(y1 + mn, a.y + a.h + dy));
         r = { x:x1, y:y1, w:x2 - x1, h:y2 - y1 };
       }
       draw();
     });
     const up = () => { drag = null; };
     wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
-    const end = v => { window.removeEventListener('resize', fit); p.remove(); if(im.close) im.close(); resolve(v); };
-    const finish = rr => {
-      const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(rr.w)); c.height = Math.max(1, Math.round(rr.h));
-      c.getContext('2d').drawImage(im, rr.x, rr.y, rr.w, rr.h, 0, 0, c.width, c.height);
-      c.toBlob(b => end(b || blob), 'image/jpeg', 0.85);
+    const cut = rr => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(rr.w)); c.height = Math.max(1, Math.round(rr.h)); c.getContext('2d').drawImage(src, rr.x, rr.y, rr.w, rr.h, 0, 0, c.width, c.height); return c; };
+    const end = v => { window.removeEventListener('resize', fit); p.remove(); resolve(v); };
+    /* できあがりは長い辺 1600px まで */
+    const out = c => {
+      const k = Math.min(1, 1600 / Math.max(c.width, c.height));
+      let o = c;
+      if(k < 1){ o = document.createElement('canvas'); o.width = Math.round(c.width*k); o.height = Math.round(c.height*k); o.getContext('2d').drawImage(c, 0, 0, o.width, o.height); }
+      o.toBlob(b => end(b || blob), 'image/jpeg', 0.88);
     };
     p.querySelector('[data-x]').onclick = () => end(null);
-    p.querySelector('[data-ok]').onclick = () => finish(r);
-    p.querySelector('[data-all]').onclick = () => end(blob);
+    p.querySelector('[data-ok]').onclick = () => out(cut(r));
+    p.querySelector('[data-all]').onclick = () => out(src);
+    p.querySelector('[data-zi]').onclick = () => setZoom(zl * 1.6);
+    p.querySelector('[data-zo]').onclick = () => setZoom(zl / 1.6);
+    p.querySelector('[data-zoom]').onclick = () => {
+      if(r.w >= W * 0.98 && r.h >= H * 0.98) return toast('先に、大きくしたいところを囲んでください');
+      setSrc(cut(r), 0.03);
+    };
+    p.querySelector('[data-rot]').onclick = () => {
+      const c = document.createElement('canvas'); c.width = H; c.height = W;
+      const g = c.getContext('2d'); g.translate(H, 0); g.rotate(Math.PI / 2); g.drawImage(src, 0, 0);
+      setSrc(c, 0.06);
+    };
     window.addEventListener('resize', fit);
-    fit(); requestAnimationFrame(fit);
+    setSrc(src, 0.06); requestAnimationFrame(fit);
   });
 }
-/* 小さくしてから、切り抜く */
-async function shrinkCrop(file){ const b = await shrink(file); return cropBlob(b); }
-async function shrink(file){
-  const MAX = 1600;
+/* 大きいまま（3000px）読みこんでから、切り抜く（できあがりは1600px） */
+async function shrinkCrop(file){ const b = await shrink(file, 3000); return cropBlob(b); }
+async function shrink(file, MAX = 1600){
   let src = null, w = 0, h = 0, bmp = null, tmp = '';
   try{ bmp = await createImageBitmap(file, { imageOrientation:'from-image' }); }
   catch(e){ try{ bmp = await createImageBitmap(file); }catch(e2){ bmp = null; } }
@@ -2888,7 +2941,7 @@ $('#btnWipe').onclick = async () => {
    ※ 設定の「更新の履歴」は v16 で廃止（生徒には不要というユーザー判断）。CHANGES 配列も消した。 */
 function slides(){ return [
   { ico:'doc', t:`${APP_NAME}とは`, p:'丸付けで✕がついた問題を、<b>全部まとめて解き直す</b>ための道具です。ケアレスミスも、解法が分からなかった問題も、解説とちがう解き方をした問題も、ここに入れます。', ex:'紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）と同じ流れを、アプリにしました。' },
-  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます（問題集の名前も入れておけます）。「＋ 答えも入れる」で、答えの写真や文字も入れておけます（答え合わせのときに出ます）。合うものがないときは「その他」を押すと、ほかの選択肢と、自分で入れる欄が出ます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'写真は撮るたびに、使うところだけを枠で囲んで切り抜けます。「取り組んだ日」を「昨日」にすると、きのう解いた問題をきのうの日付で入れられます。写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。「届く日」をカレンダーで選ぶと、その日の「今日の問題」に入ります。前に解いた問題を、直前期までに極めたい日に入れておけます。' },
+  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます（問題集の名前も入れておけます）。「＋ 答えも入れる」で、答えの写真や文字も入れておけます（答え合わせのときに出ます）。合うものがないときは「その他」を押すと、ほかの選択肢と、自分で入れる欄が出ます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'写真は撮るたびに、使うところだけを枠で囲んで切り抜けます（「囲んだところを大きくする」で1行だけも選べます。「↻ 回す」で向きも直せます）。「取り組んだ日」を「昨日」にすると、きのう解いた問題をきのうの日付で入れられます。写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。「届く日」をカレンダーで選ぶと、その日の「今日の問題」に入ります。前に解いた問題を、直前期までに極めたい日に入れておけます。' },
   { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。解法が分からなかった問題は「<b>どこで止まったか</b>」、解説とちがう解き方をした問題は「<b>自分はどう解いたか</b>」を書きます。', ex:'紙のミスマップに書いている人は、「理由と改善点の入れ方」を「紙のミスマップの写真で入れる」にすると、紙のその行を撮るだけで入れられます。書き方が分からないときは、種類を選ぶと出る「書き方の例」を押してください。入った文を、自分の問題に合わせて直します（例のままでは登録できません）。例：問題文の「合計」を読み飛ばした' },
   { ico:'fix', t:'3. 改善点は「解いている最中」にやること', p:'「<b>いつ</b>（解く前・解いている途中）・<b>何を</b>・<b>どうする</b>」で書きます。解き終わってからの見直しではなく、<b>1行書くたびに前と見くらべる（バックスキャン）</b>など、その場でやることを、何を見るかまで具体的に書きます。', ex:'例：解いている途中、2x−3=5 の −3 を右に移したときの符号を、1行書くたびに前の行と指でさして見くらべる。改善点の例は見本なので、そのままでは登録できません。自分の問題に合わせて直します。解法が分からなかった問題だけは「丸付け後」も選べます（解説のどこを、どう学ぶか）。' },
   { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます（解いた日から次の日数を数え直します）。設定の「解き直しの曜日」をオンにすると、翌日の解き直しはそのまま、2回目からは決めた曜日（土・日など）にまとめて届きます。' },

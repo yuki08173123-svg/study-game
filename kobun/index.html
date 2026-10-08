@@ -448,7 +448,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js?v=10"></script>
 <script>
 'use strict';
-const VER = 20;
+const VER = 21;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -1094,10 +1094,18 @@ function startTest(o){
   T.timer = setInterval(() => { const e = $('.ov .tm'); if(e && T) e.textContent = clock((Date.now() - T.t0) / 1000); }, 500);
   drawQ();
 }
+/* 意味のまとまり（いちばん大事な意味＋ほかの意味を「・／、」で区切ったもの）。
+   4択のまちがいの選択肢に、正解の単語の「ほかの意味」が出ないようにするため（塾生Vczzの声：たより＝手紙 なのに×になった） */
+function meanSet(w){
+  if(w._ms) return w._ms;
+  return w._ms = new Set([w.m, ...(w.s || [])].flatMap(x => String(x).split(/[・／、,]/)).map(x => x.replace(/[（(][^）)]*[）)]/g, '').replace(/[〜~\s]/g, '').trim()).filter(Boolean));
+}
+function meansOverlap(a, b){ const A = meanSet(a); for(const x of meanSet(b)) if(A.has(x)) return true; return false; }
 function choicesFor(i, dir){
   const w = W[i];
-  const same = W.filter(x => x.i !== i && x.p === w.p && x.m !== w.m);
-  const pool = shuffle(same.length >= 3 ? same : W.filter(x => x.i !== i && x.m !== w.m));
+  const okDistractor = x => x.i !== i && x.m !== w.m && !meansOverlap(x, w);
+  const same = W.filter(x => okDistractor(x) && x.p === w.p);
+  const pool = shuffle(same.length >= 3 ? same : W.filter(okDistractor));
   const picked = [], seen = new Set([dir === 'm2w' ? w.w : w.m]);
   for(const x of pool){ const key = dir === 'm2w' ? x.w : x.m; if(seen.has(key)) continue; seen.add(key); picked.push(x.i); if(picked.length === 3) break; }
   return shuffle([i, ...picked]);
@@ -1111,6 +1119,10 @@ function answersFor(i, mode){
   if(mode === 'cloze' && w.exr){
     const kana = blankParts(w, true).join(''), raw = blankParts(w, false).join('');
     [kana, raw, yomi(kana)].forEach(x => x && ok.add(normKana(x)));
+  }
+  if(mode === 'type'){
+    const key = [...meanSet({ m: w.m, s: [] })][0];
+    W.forEach(x => { if(x.i !== i && key && meanSet(x).has(key)) [x.w.replace(/（.*?）/g, ''), x.y].filter(Boolean).forEach(v => ok.add(normKana(v))); });
   }
   return ok;
 }
@@ -1206,6 +1218,7 @@ function answerTyped(val){
     let note = '';
     if(exact.includes(v)) note = '';
     else if(mode === 'cloze' && v === normKana(head)) note = `（例文では「${esc(perfect)}」の形）`;
+    else if(mode === 'type' && v !== normKana(w.y || '')) note = `（同じ意味の語。この問題の答えは「${esc(perfect)}」）`;
     else note = `（旧かなでは「${esc(perfect)}」）`;
     T.lastOK = `○ 正解　<b>${esc(perfect)}</b>${mode === 'cloze' && perfect !== head ? `（${esc(head)}）` : ''}${note}`;
     next();   // すぐ次へ（iPhone でキーボードを閉じないように、押した流れのまま次の問題を出す）

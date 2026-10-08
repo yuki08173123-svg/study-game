@@ -424,6 +424,25 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 /* 種類の名前「解法が分からなかった」が切れないように、棒グラフの名前の欄を広げる */
 .bar{grid-template-columns:136px 1fr 34px;}
 
+/* ===================== まとめて登録（v38〜） ===================== */
+.batch-go{width:100%; display:flex; align-items:center; gap:12px; text-align:left; background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:16px; padding:12px 14px; margin-bottom:12px; color:var(--ink);}
+.batch-go svg{width:26px; height:26px; stroke:var(--accent); fill:none; stroke-width:2; flex:none;}
+.batch-go b{display:block; font-size:15.5px; color:var(--accent);} .batch-go small{display:block; font-size:12.5px; color:var(--muted);}
+.bsheet{overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:10px; border:1px solid var(--line); background:#fff;}
+.bwrap{position:relative; min-width:100%;}
+.bwrap img{display:block; width:100%;}
+.bln{position:absolute; left:0; right:0; height:2px; margin-top:-1px; background:rgba(224,74,58,.85);}
+.bln::after{content:''; position:absolute; left:0; right:0; top:-10px; bottom:-10px;}
+.bvx{position:absolute; top:0; bottom:0; width:3px; margin-left:-1.5px; background:#E0C06A; touch-action:none;}
+.bvx i{position:absolute; top:-2px; left:50%; width:30px; height:30px; margin-left:-15px; border-radius:50%; background:#fff; border:4px solid #E0C06A;}
+.bvx::after{content:''; position:absolute; top:0; bottom:0; left:-14px; right:-14px;}
+.brow{background:var(--card); border:1px solid var(--hair); border-radius:12px; padding:8px 10px; margin-bottom:8px;}
+.brow.off{opacity:.5;}
+.brow .bhead{display:flex; align-items:center; gap:8px; font-size:14px; margin-bottom:6px;}
+.brow .bhead input{width:22px; height:22px; accent-color:var(--accent);}
+.brow .bstrip{overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:6px; background:#fff; margin-bottom:6px;}
+.brow .bstrip img{display:block; height:52px; width:auto; max-width:none;}   /* 1行はとても横長なので、高さをそろえて横にスクロールで読む */
+
 /* ===================== 写真の切り抜き（v35〜） ===================== */
 .cropper{position:fixed; inset:0; z-index:95; background:#0B0B0C; display:flex; flex-direction:column; color:#F2EDE3;}
 .cropper .cbar{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:calc(10px + env(safe-area-inset-top)) 12px 8px;}
@@ -710,7 +729,7 @@ html[data-theme="light"] .tg::after{background:#fff;}
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 37;
+const VER = 38;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -1153,7 +1172,7 @@ async function fillImgs(root){
 }
 /* 写真の切り抜き（v35・ブルポ帳と同じ作り）。撮る・選ぶたびに、使うところを枠で囲む。
    「全体を使う」で切らずに使える。「やめる」はその写真を使わない（null） */
-function cropBlob(blob){
+function cropBlob(blob, maxOut = 1600, title = '使うところを かこむ'){
   /* v37（ユウキ・ハルネコ「枠を一番小さくしても3行入る・拡大できない」）：
      ・「囲んだところを大きくする」で、囲んだ部分だけを画面いっぱいに出し直す（何回でも）→ 1行だけ選べる
      ・「↻ 回す」で90度ずつ回す（横向きに撮った紙）
@@ -1166,7 +1185,7 @@ function cropBlob(blob){
     if(im.close) im.close();
     let W = src.width, H = src.height;
     const p = document.createElement('div'); p.className = 'cropper';
-    p.innerHTML = `<div class="cbar"><button data-x>やめる</button><b>使うところを かこむ</b><button class="go" data-ok>使う</button></div>
+    p.innerHTML = `<div class="cbar"><button data-x>やめる</button><b>${title}</b><button class="go" data-ok>使う</button></div>
       <div class="chint">かどの ○ や ふちを動かして囲みます。細かいところは「＋」で拡大し、枠の中を指でなぞると見る場所を動かせます。</div>
       <div class="cstage"><div class="crop"><canvas></canvas><div class="shade"><div class="box"></div></div>${'<div class="h"></div>'.repeat(4)}</div></div>
       <div class="ctools"><button data-zo>－</button><span class="zl">100%</span><button data-zi>＋</button><button data-zoom>囲んだところを大きくする</button><button data-rot>↻ 回す</button><button data-all>全体を使う</button></div>`;
@@ -1241,7 +1260,7 @@ function cropBlob(blob){
     const end = v => { window.removeEventListener('resize', fit); p.remove(); resolve(v); };
     /* できあがりは長い辺 1600px まで */
     const out = c => {
-      const k = Math.min(1, 1600 / Math.max(c.width, c.height));
+      const k = Math.min(1, maxOut / Math.max(c.width, c.height));
       let o = c;
       if(k < 1){ o = document.createElement('canvas'); o.width = Math.round(c.width*k); o.height = Math.round(c.height*k); o.getContext('2d').drawImage(c, 0, 0, o.width, o.height); }
       o.toBlob(b => end(b || blob), 'image/jpeg', 0.88);
@@ -1497,6 +1516,195 @@ async function keepAwake(){
 function letSleep(){ try{ if(wakeLock) wakeLock.release(); }catch(e){} wakeLock = null; }
 document.addEventListener('visibilitychange', () => { if(!document.hidden && $('#pgSolve')) keepAwake(); });
 function closePage(){ $('#host').innerHTML = ''; letSleep(); }
+
+/* ===================== 紙のミスマップから、まとめて登録（v38） =====================
+   ユウキ・ハルネコ（10/8）「仕事・子育て・受験の付き添いで睡眠を削っている。入力の負担を減らしたい」→ ヒラの判断：AIなし・無料・写真は端末の中だけ。
+   紙のミスマップを1枚撮る → 表の横線を見つけて行に区切る（タップで足す・消す）→ たての線で左右に分ける
+   左（日付・ミス内容）＝問題の写真、右（理由・改善点）＝紙のミスマップの写真 として、行ごとに1問ずつ登録する。 */
+let bt = null;
+/* 表の線をさがす。紙の明るさで割ってから（影に強く）、横に長く続く暗い線＝横線、たてに長く続く暗い線＝たて線 */
+function detectGrid(c){
+  const sw = Math.min(800, c.width), k = sw / c.width, sh = Math.max(1, Math.round(c.height * k));
+  const t = document.createElement('canvas'); t.width = sw; t.height = sh;
+  const g = t.getContext('2d', { willReadFrequently:true }); g.drawImage(c, 0, 0, sw, sh);
+  const px = g.getImageData(0, 0, sw, sh).data, n = sw * sh, L = new Float32Array(n);
+  for(let i = 0, j = 0; i < n; i++, j += 4) L[i] = 0.299*px[j] + 0.587*px[j+1] + 0.114*px[j+2];
+  const B = 16, gw = Math.ceil(sw / B), gh = Math.ceil(sh / B), bg = new Float32Array(gw * gh), buf = [];
+  for(let by = 0; by < gh; by++) for(let bx = 0; bx < gw; bx++){
+    buf.length = 0;
+    for(let y = by*B; y < Math.min(sh, (by+1)*B); y++) for(let x = bx*B; x < Math.min(sw, (bx+1)*B); x++) buf.push(L[y*sw + x]);
+    buf.sort((a, b) => b - a); bg[by*gw + bx] = buf[Math.floor(buf.length * 0.2)] || 255;
+  }
+  const dark = new Uint8Array(n);
+  for(let y = 0; y < sh; y++) for(let x = 0; x < sw; x++){ const b = bg[Math.floor(y/B)*gw + Math.floor(x/B)]; if(L[y*sw + x] / Math.max(b, 1) < 0.72) dark[y*sw + x] = 1; }
+  const runs = (f, len, thr, scale) => {
+    const out = []; let st = -1;
+    for(let i = 0; i <= len; i++){
+      const v = i < len ? (f[Math.max(0, i-1)] + f[i] + f[Math.min(len-1, i+1)]) / 3 : 0;
+      if(v > thr && st < 0) st = i;
+      else if(v <= thr && st >= 0){ out.push(((st + i - 1) / 2) / scale); st = -1; }
+    }
+    return out;
+  };
+  const rowF = new Float32Array(sh), colF = new Float32Array(sw);
+  for(let y = 0; y < sh; y++){ let s = 0; for(let x = 0; x < sw; x++) s += dark[y*sw + x]; rowF[y] = s / sw; }
+  for(let x = 0; x < sw; x++){ let s = 0; for(let y = 0; y < sh; y++) s += dark[y*sw + x]; colF[x] = s / sh; }
+  let lines = runs(rowF, sh, 0.35, k);
+  const gap = c.height * 0.008; lines = lines.filter((y, i) => i === 0 || y - lines[i-1] > gap);
+  const vls = runs(colF, sw, 0.35, k).filter(x => x > c.width * 0.12 && x < c.width * 0.6);
+  vls.sort((a, b) => Math.abs(a - c.width*0.33) - Math.abs(b - c.width*0.33));
+  return { lines, vx: vls[0] || c.width * 0.33, dark, sw, sh, k };
+}
+/* 行の中に、字がどれくらいあるか（何も書いていない行は、はじめから外しておく） */
+function inkOf(y0, y1){
+  const d = bt.grid; if(!d) return 1;
+  const a = Math.round((y0 + (y1 - y0) * 0.2) * d.k), b = Math.round((y1 - (y1 - y0) * 0.2) * d.k), x0 = Math.round(bt.vx * d.k + 6), x1 = d.sw - 6;
+  let s = 0, m = 0;
+  for(let y = a; y < b; y++) for(let x = x0; x < x1; x++){ s += d.dark[y*d.sw + x]; m++; }
+  return m ? s / m : 0;
+}
+function buildRows(){
+  const H = bt.src.height, ls = [...new Set(bt.lines.map(Math.round))].sort((a, b) => a - b), old = bt.rows || [];
+  const cuts = [ ...(ls[0] > H*0.03 ? [0] : []), ...ls, ...(ls.length && ls[ls.length-1] < H*0.97 ? [H] : []) ];
+  if(!ls.length) cuts.push(0, H);
+  const rows = [];
+  for(let i = 0; i + 1 < cuts.length; i++){
+    const y0 = cuts[i], y1 = cuts[i+1];
+    if(y1 - y0 < Math.max(8, H * 0.012)) continue;
+    const prev = old.find(o => Math.abs(o.y0 - y0) < 4 && Math.abs(o.y1 - y1) < 4);
+    rows.push(prev ? { ...prev, y0, y1 } : { y0, y1, on: inkOf(y0, y1) > 0.006, tag:'' });
+  }
+  bt.rows = rows;
+}
+function openBatch(){
+  bt = { src:null, url:'', lines:[], vx:0, rows:[], grid:null, subj:draft.subj || '', book:draft.book || '', day:'', zoom:1 };
+  renderBatch();
+}
+function batchCut(x0, y0, x1, y1){
+  const c = document.createElement('canvas'), w = Math.max(1, Math.round(x1 - x0)), h = Math.max(1, Math.round(y1 - y0));
+  const k = Math.min(1, 1600 / w); c.width = Math.round(w*k); c.height = Math.max(1, Math.round(h*k));
+  c.getContext('2d').drawImage(bt.src, x0, y0, w, h, 0, 0, c.width, c.height);
+  return c;
+}
+function renderBatch(){
+  const host = $('#host');
+  if(!bt.src){
+    host.innerHTML = `<div class="page" id="pgBatch"><div class="pin">
+      <div class="topbar"><button class="back" id="btBack">${ICO.back}もどる</button><h2>まとめて登録</h2><span class="r"></span></div>
+      <div class="card" style="margin-top:6px"><h3>${ICO.image}紙のミスマップ1枚から、まとめて登録</h3>
+        <ol class="steps3"><li>紙のミスマップを撮って、<b>表のところ</b>を囲みます（向きは「↻ 回す」で直せます）</li>
+        <li>アプリが表の横線を見つけて、行ごとに区切ります。線はタップで足したり消したりできます</li>
+        <li>教科と、行ごとのミスの種類を選んで「登録する」</li></ol>
+        <div class="dim">左がわ（日付・ミス内容）が「問題」、右がわ（間違えた理由・改善点）が「紙のミスマップの写真」として入ります。写真は外に送りません。</div>
+        <div class="photo-btns" style="margin-top:12px"><button class="photo-btn" id="btCam">${ICO.camera}カメラで撮る</button><button class="photo-btn" id="btPick">${ICO.image}写真から選ぶ</button></div>
+        <input type="file" id="btFCam" accept="image/*" capture="environment" class="hidden"><input type="file" id="btFPick" accept="image/*" class="hidden"></div>
+    </div></div>`;
+    $('#btBack').onclick = () => { bt = null; closePage(); };
+    $('#btCam').onclick = () => $('#btFCam').click();
+    $('#btPick').onclick = () => $('#btFPick').click();
+    const take = async e => {
+      const f = e.target.files && e.target.files[0]; e.target.value = ''; if(!f) return;
+      let b;
+      try{ b = await cropBlob(await shrink(f, 3000), 3000, '表のところを かこむ'); }catch(err){ return toast('この写真は取り込めませんでした'); }
+      if(!b) return;
+      const im = await createImageBitmap(b), c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); if(im.close) im.close();
+      bt.src = c; bt.url = c.toDataURL('image/jpeg', 0.85);
+      const d = detectGrid(c); bt.grid = d; bt.lines = d.lines; bt.vx = d.vx;
+      buildRows(); renderBatch();
+      toast(bt.rows.length ? `${bt.rows.length}行に区切りました。線を確かめてください` : '線が見つかりませんでした。行の切れ目をタップしてください');
+    };
+    $('#btFCam').onchange = take; $('#btFPick').onchange = take;
+    return;
+  }
+  const W = bt.src.width, H = bt.src.height;
+  host.innerHTML = `<div class="page" id="pgBatch"><div class="pin">
+    <div class="topbar"><button class="back" id="btBack">${ICO.back}もどる</button><h2>まとめて登録</h2><button class="r" id="btRetake">撮り直す</button></div>
+    <div class="dim" style="margin:2px 0 8px">行の切れ目をタップすると線が増え、線をタップすると消えます。<b>金のたて線</b>より左が「問題」、右が「理由・改善点」になります（上の ○ を左右に動かせます）。</div>
+    <div class="chips" style="margin-bottom:8px"><button class="chip sm" data-z="1">ふつう</button><button class="chip sm" data-z="2">2倍</button><button class="chip sm" data-z="3">3倍</button><button class="chip sm" id="btAuto">線をさがし直す</button><button class="chip sm" id="btClear">線をぜんぶ消す</button></div>
+    <div class="bsheet" id="btSheet"><div class="bwrap" id="btWrap"><img src="${bt.url}" alt=""><div id="btLines"></div><div class="bvx" id="btVx"><i></i></div></div></div>
+
+    <div class="field req" style="margin-top:14px"><label>教科（全部の行）<b>必須</b></label><div id="btSubj"></div></div>
+    <div class="field s-hide"><label>問題集（なくてもOK）</label>${bookHtml('bt', bt.book)}</div>
+    <div class="field"><label>取り組んだ日</label><div class="dayrow"><input type="date" id="btDay" max="${today()}"><button class="chip sm" data-d="t">今日</button><button class="chip sm" data-d="y">昨日</button></div></div>
+
+    <div class="sec-label" style="margin-top:12px">登録する行<span class="cnt num" id="btCnt"></span></div>
+    <div class="dim" style="margin-bottom:6px">何も書いていない行と、いちばん上の見出しの行は、チェックを外してください。ミスの種類は、選ばなくても登録できます。行の写真は横にスクロールして読めます。</div>
+    <div id="btRows"></div>
+  </div>
+  <div class="judge"><div class="inner"><button class="reveal" id="btGo">登録する</button></div></div></div>`;
+  $('#btBack').onclick = () => { bt = null; closePage(); };
+  $('#btRetake').onclick = () => { bt.src = null; bt.rows = []; renderBatch(); };
+  const wrap = $('#btWrap');
+  const drawLines = () => {
+    wrap.style.width = (bt.zoom * 100) + '%';
+    $('#btLines').innerHTML = bt.lines.map((y, i) => `<div class="bln" data-li="${i}" style="top:${y / H * 100}%"></div>`).join('');
+    $('#btVx').style.left = (bt.vx / W * 100) + '%';
+    $$('#pgBatch [data-z]').forEach(b => b.classList.toggle('on', Number(b.dataset.z) === bt.zoom));
+  };
+  const drawRows = () => {
+    const sel = bt.rows.filter(r => r.on).length;
+    $('#btCnt').textContent = `${sel} / ${bt.rows.length}`;
+    $('#btGo').textContent = sel ? `${sel}問を登録する` : '登録する行を選んでください';
+    $('#btGo').disabled = !sel;
+    $('#btRows').innerHTML = bt.rows.map((r, i) => `<div class="brow ${r.on ? '' : 'off'}">
+      <label class="bhead"><input type="checkbox" data-ri="${i}" ${r.on ? 'checked' : ''}><b>${i + 1}行目</b></label>
+      <div class="bstrip"><img src="${batchCut(0, r.y0, W, r.y1).toDataURL('image/jpeg', 0.8)}" alt=""></div>
+      <div class="chips hscroll">${TAGS.map(t => `<button class="chip sm ${r.tag === t ? 'on' : ''}" data-rt="${i}" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>`).join('');
+  };
+  drawLines(); drawRows();
+  /* タップで線を足す・消す */
+  wrap.onclick = e => {
+    if(e.target.closest('.bvx')) return;
+    const ln = e.target.closest('.bln');
+    const rc = wrap.getBoundingClientRect(), y = (e.clientY - rc.top) / rc.height * H;
+    const near = bt.lines.findIndex(v => Math.abs(v - y) < H * 0.008);
+    if(ln) bt.lines.splice(Number(ln.dataset.li), 1);
+    else if(near >= 0) bt.lines.splice(near, 1);
+    else bt.lines.push(y);
+    bt.lines.sort((a, b) => a - b); buildRows(); drawLines(); drawRows();
+  };
+  /* たて線（左右の分かれ目）を動かす */
+  const vxEl = $('#btVx');
+  vxEl.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation();
+    try{ vxEl.setPointerCapture(e.pointerId); }catch(err){}
+    const move = ev => { const rc = wrap.getBoundingClientRect(); bt.vx = Math.max(W*0.05, Math.min(W*0.9, (ev.clientX - rc.left) / rc.width * W)); vxEl.style.left = (bt.vx / W * 100) + '%'; };
+    const up = () => { vxEl.removeEventListener('pointermove', move); vxEl.removeEventListener('pointerup', up); vxEl.removeEventListener('pointercancel', up); buildRows(); drawRows(); };
+    vxEl.addEventListener('pointermove', move); vxEl.addEventListener('pointerup', up); vxEl.addEventListener('pointercancel', up);
+  });
+  $$('#pgBatch [data-z]').forEach(b => b.onclick = () => { bt.zoom = Number(b.dataset.z); drawLines(); });
+  $('#btAuto').onclick = () => { const d = detectGrid(bt.src); bt.grid = d; bt.lines = d.lines; bt.rows = []; buildRows(); drawLines(); drawRows(); toast(`${bt.rows.length}行に区切りました`); };
+  $('#btClear').onclick = () => { bt.lines = []; buildRows(); drawLines(); drawRows(); };
+  $('#btRows').onclick = e => {
+    const c = e.target.closest('[data-ri]'); if(c && e.target.tagName === 'INPUT'){ bt.rows[Number(c.dataset.ri)].on = c.checked; drawRows(); return; }
+    const t = e.target.closest('[data-rt]'); if(t){ const r = bt.rows[Number(t.dataset.rt)]; r.tag = r.tag === t.dataset.t ? '' : t.dataset.t; if(r.tag) r.on = true; drawRows(); }
+  };
+  mountPicker($('#btSubj'), 'subj', () => bt.subj, v => { bt.subj = v; });
+  bindBook($('#pgBatch'), 'bt', () => bt.book, v => { bt.book = v; });
+  const showDay = () => { const d = pickDay(bt.day); $('#btDay').value = d; $$('#pgBatch [data-d]').forEach(b => b.classList.toggle('on', (b.dataset.d === 't' && d === today()) || (b.dataset.d === 'y' && d === addDays(today(), -1)))); };
+  $('#btDay').onchange = e => { bt.day = pickDay(e.target.value); showDay(); };
+  $$('#pgBatch [data-d]').forEach(b => b.onclick = () => { bt.day = b.dataset.d === 'y' ? addDays(today(), -1) : ''; showDay(); });
+  showDay();
+  $('#btGo').onclick = async () => {
+    const rows = bt.rows.filter(r => r.on);
+    if(!rows.length) return;
+    if(!bt.subj) return toast('教科を選んでください');
+    const go = $('#btGo'); go.disabled = true; go.textContent = '登録しています…';
+    const toBlob = c => new Promise(res => c.toBlob(res, 'image/jpeg', 0.88));
+    let n = 0;
+    for(const r of rows){
+      try{
+        const a = await toBlob(batchCut(0, r.y0, bt.vx, r.y1)), b = await toBlob(batchCut(bt.vx, r.y0, W, r.y1));
+        const ia = newId(); await putImg(ia, a); const ib = newId(); await putImg(ib, b);
+        addItem({ subj:bt.subj, book:bt.book, day:bt.day, tag:r.tag, text:'', imgs:[ia], noteImgs:[ib], why:'', fix:'', whyP:null, fixP:null });
+        n++;
+      }catch(e){}
+    }
+    draft.subj = bt.subj; draft.book = bt.book; saveDraft();
+    bt = null; closePage(); renderAdd(); renderAll(); goTab('Today');
+    toast(`${n}問を登録しました`);
+  };
+}
 
 /* ===================== 印刷 =====================
    算数・理科などで、条件に丸をつけたり、線を引いたり、図に書きこんだりしながら解けるように、
@@ -1927,6 +2135,8 @@ let busy = false;
 function renderAdd(){
   const root = $('#tab-Add');
   root.innerHTML = `
+    <button class="batch-go" id="goBatch">${ICO.image}<span><b>紙のミスマップ1枚から、まとめて登録</b><small>紙を1回撮るだけで、何問も一度に入れられます</small></span></button>
+
     <div class="field req"><label>問題（ミスした内容）<b>必須</b></label>
       <div class="photos-in" id="addThumbs"></div>
       <div class="photo-btns">
@@ -1971,6 +2181,7 @@ function renderAdd(){
     <button class="btn-primary" id="addGo">この問題を登録する</button>
     <div class="dim" style="text-align:center; margin-top:8px"><span id="addDueMsg"></span><br>書きかけは自動で残るので、とちゅうで閉じても大丈夫です。</div>
     ${draftFilled() ? `<button class="btn-line" id="addClear">書きかけを消す</button>` : ''}`;
+  $('#goBatch').onclick = openBatch;
   $('#btnCam').onclick = () => $('#fCam').click();
   $('#btnPick').onclick = () => $('#fPick').click();
   $('#fCam').onchange = e => takeFiles(e.target.files);
@@ -2941,7 +3152,7 @@ $('#btnWipe').onclick = async () => {
    ※ 設定の「更新の履歴」は v16 で廃止（生徒には不要というユーザー判断）。CHANGES 配列も消した。 */
 function slides(){ return [
   { ico:'doc', t:`${APP_NAME}とは`, p:'丸付けで✕がついた問題を、<b>全部まとめて解き直す</b>ための道具です。ケアレスミスも、解法が分からなかった問題も、解説とちがう解き方をした問題も、ここに入れます。', ex:'紙のミスマップ（日付・ミス内容・間違えた理由・改善点・解き直し）と同じ流れを、アプリにしました。' },
-  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます（問題集の名前も入れておけます）。「＋ 答えも入れる」で、答えの写真や文字も入れておけます（答え合わせのときに出ます）。合うものがないときは「その他」を押すと、ほかの選択肢と、自分で入れる欄が出ます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'写真は撮るたびに、使うところだけを枠で囲んで切り抜けます（「囲んだところを大きくする」で1行だけも選べます。「↻ 回す」で向きも直せます）。「取り組んだ日」を「昨日」にすると、きのう解いた問題をきのうの日付で入れられます。写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。「届く日」をカレンダーで選ぶと、その日の「今日の問題」に入ります。前に解いた問題を、直前期までに極めたい日に入れておけます。' },
+  { ico:'camera', t:'1. 問題を作る', p:'「作る」タブで、✕がついた問題を<b>写真</b>に撮るか、<b>文字</b>で入れます。教科と、ミスの種類を選びます（問題集の名前も入れておけます）。「＋ 答えも入れる」で、答えの写真や文字も入れておけます（答え合わせのときに出ます）。合うものがないときは「その他」を押すと、ほかの選択肢と、自分で入れる欄が出ます。◯でも解説より遠回りだった問題は「解説とちがう解き方」で入れられます。', ex:'紙のミスマップに書いている人は、「作る」の上の「紙のミスマップ1枚から、まとめて登録」で、紙を1回撮るだけで何問も一度に入れられます。写真は撮るたびに、使うところだけを枠で囲んで切り抜けます（「囲んだところを大きくする」で1行だけも選べます。「↻ 回す」で向きも直せます）。「取り組んだ日」を「昨日」にすると、きのう解いた問題をきのうの日付で入れられます。写真は何枚でも。問題・自分の答え・解説をまとめて撮っておくと、あとで見返しやすいです。「届く日」をカレンダーで選ぶと、その日の「今日の問題」に入ります。前に解いた問題を、直前期までに極めたい日に入れておけます。' },
   { ico:'why', t:'2. 間違えた理由', p:'「<b>何をした／しなかった</b>」を書きます。解法が分からなかった問題は「<b>どこで止まったか</b>」、解説とちがう解き方をした問題は「<b>自分はどう解いたか</b>」を書きます。', ex:'紙のミスマップに書いている人は、「理由と改善点の入れ方」を「紙のミスマップの写真で入れる」にすると、紙のその行を撮るだけで入れられます。書き方が分からないときは、種類を選ぶと出る「書き方の例」を押してください。入った文を、自分の問題に合わせて直します（例のままでは登録できません）。例：問題文の「合計」を読み飛ばした' },
   { ico:'fix', t:'3. 改善点は「解いている最中」にやること', p:'「<b>いつ</b>（解く前・解いている途中）・<b>何を</b>・<b>どうする</b>」で書きます。解き終わってからの見直しではなく、<b>1行書くたびに前と見くらべる（バックスキャン）</b>など、その場でやることを、何を見るかまで具体的に書きます。', ex:'例：解いている途中、2x−3=5 の −3 を右に移したときの符号を、1行書くたびに前の行と指でさして見くらべる。改善点の例は見本なので、そのままでは登録できません。自分の問題に合わせて直します。解法が分からなかった問題だけは「丸付け後」も選べます（解説のどこを、どう学ぶか）。' },
   { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます（解いた日から次の日数を数え直します）。設定の「解き直しの曜日」をオンにすると、翌日の解き直しはそのまま、2回目からは決めた曜日（土・日など）にまとめて届きます。' },

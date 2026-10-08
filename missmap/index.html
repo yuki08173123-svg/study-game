@@ -424,6 +424,20 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 /* 種類の名前「解法が分からなかった」が切れないように、棒グラフの名前の欄を広げる */
 .bar{grid-template-columns:136px 1fr 34px;}
 
+/* ===================== まとめて消す（v39〜） ===================== */
+.mrow{position:relative;}
+.mrow.pickable, .mrow.picked{padding-left:46px;}
+.mrow .pk{position:absolute; left:12px; top:50%; margin-top:-13px; width:26px; height:26px; border-radius:50%; border:2px solid var(--muted); display:grid; place-items:center;}
+.mrow .pk svg{width:16px; height:16px; stroke:transparent; fill:none; stroke-width:3;}
+.mrow.picked{border-color:var(--miss); background:var(--miss-soft);}
+.mrow.picked .pk{background:var(--miss); border-color:var(--miss);}
+.mrow.picked .pk svg{stroke:var(--miss-ink);}
+.selbar{position:fixed; left:0; right:0; bottom:calc(64px + env(safe-area-inset-bottom)); z-index:30; padding:8px 12px; background:color-mix(in srgb, var(--bg) 92%, transparent); border-top:1px solid var(--hair);}
+.selbar .inner{max-width:560px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.selbar button{border-radius:12px; padding:12px 8px; font-size:14.5px; font-weight:700; border:1px solid var(--accent-line); color:var(--ink);}
+.selbar .del{background:var(--miss); color:var(--miss-ink); border-color:var(--miss);}
+.selbar .del:disabled{opacity:.45;}
+
 /* ===================== まとめて登録（v38〜） ===================== */
 .batch-go{width:100%; display:flex; align-items:center; gap:12px; text-align:left; background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:16px; padding:12px 14px; margin-bottom:12px; color:var(--ink);}
 .batch-go svg{width:26px; height:26px; stroke:var(--accent); fill:none; stroke-width:2; flex:none;}
@@ -729,7 +743,7 @@ html[data-theme="light"] .tg::after{background:#fff;}
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 38;
+const VER = 39;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -2489,10 +2503,14 @@ function openGallery(ids, start){
 /* ===================== ミスマップ（一覧と分析） ===================== */
 let mapFilter = 'all', showMast = false;
 function weekStart(s){ const d = parseD(s); const w = (d.getDay()+6)%7; d.setDate(d.getDate()-w); return ymd(d); }
+/* まとめて消す（v39・ユウキ・ハルネコ「うまく登録できなかった問題が20問ほど。1問ずつ開いて消すのが大変」）。
+   記録タブの一覧で「まとめて消す」→ 押した問題に印 → 下の「◯問を消す」。mapSel が null のときは、ふつう（押すと開く） */
+let mapSel = null;
 function rowHtml(it){
   const q = it.imgs[0] ? `<img data-img="${it.imgs[0]}" alt="">` : '';
   const qt = it.text ? esc(it.text) : (it.imgs.length ? `写真 ${it.imgs.length}枚` : '');
-  return `<button class="mrow ${it.done?'mast':''}" data-open="${it.id}">
+  const sel = mapSel ? (mapSel.has(it.id) ? ' picked' : ' pickable') : '';
+  return `<button class="mrow ${it.done?'mast':''}${sel}" data-open="${it.id}">${mapSel ? `<span class="pk">${ICO.check}</span>` : ''}
     <div class="top"><span class="d num">${md(it.created)}</span><span class="sj" style="--c:${SUBJC[it.subj]||SUBJC['その他']}">${esc(it.subj)}</span>${it.tag ? `<span class="cs">${esc(it.tag)}</span>` : ''}${stageDots(it)}</div>
     <div class="g"><span class="k">問題</span><span class="v q">${q}<span>${qt}</span></span>
       ${hasNote(it) ? `<span class="k">理由<br>改善点</span><span class="v">紙のミスマップの写真</span>` : `<span class="k">理由</span><span class="v">${esc(it.why)}</span>
@@ -2523,18 +2541,45 @@ function renderMap(){
     <div class="dim" style="margin-top:6px">教科をタップすると、下の一覧をしぼりこめます。</div></div>`;
   h += `<div class="card"><h3>ミスパターン分析（種類別・すべての問題）</h3><div class="bars">${byTag.map(x => `<div class="bar ${x.n?'':'zero'}"><span class="nm">${esc(x.t)}</span><span class="tr"><i style="width:${x.n/maxT*100}%"></i></span><span class="v num">${x.n}</span></div>`).join('')}</div>
     <div class="dim" style="margin-top:6px">いちばん多い種類が、あなたのミスのクセです。その改善点を、全部の問題に使ってみてください。</div></div>`;
-  h += `<div class="sec-label">まだ極まっていない問題<span class="cnt num">${list.length}</span></div>
+  h += `<div class="sec-label">まだ極まっていない問題<span class="cnt num">${list.length}</span><span class="spacer"></span><button class="lnk" id="selMode">${mapSel ? 'えらぶのをやめる' : 'まとめて消す'}</button></div>
+    ${mapSel ? `<div class="dim" style="margin:-2px 0 8px">消したい問題を押して印をつけ、下の「消す」を押します。</div>` : ''}
     <div class="filter"><button class="chip ${mapFilter==='all'?'on':''}" data-f="all">すべて</button>${subjs.filter(s => act.some(i => i.subj === s)).map(s => `<button class="chip sub ${mapFilter===s?'on':''}" data-f="${esc(s)}" style="--c:${SUBJC[s] || SUBJC['その他']}">${esc(s)}</button>`).join('')}</div>`;
   h += list.length ? `<div class="mlist">${list.map(rowHtml).join('')}</div>` : `<div class="empty"><b>この教科の問題はありません</b></div>`;
   h += `<div class="sec-label" style="margin-top:18px">極まった問題<span class="cnt num">${mas.length}</span><span class="spacer"></span>${mas.length ? `<button class="lnk" id="tglMast">${showMast ? 'たたむ' : '見る ›'}</button>` : ''}</div>`;
   if(showMast && mas.length) h += `<div class="mlist">${mas.map(rowHtml).join('')}</div>`;
   else if(mas.length) h += `<div class="dim">${gaps().length}回つづけて解けた問題です。消えずにここに残ります。</div>`;
   else h += `<div class="dim">${gaps().length}回「解けた」がそろうと、ここに移ります。</div>`;
+  if(mapSel) h += `<div style="height:76px"></div>`;   // 下の「消す」の帯に、いちばん下の問題がかくれないように
   root.innerHTML = h;
   root.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { mapFilter = (mapFilter === b.dataset.f && b.classList.contains('bar')) ? 'all' : b.dataset.f; renderMap(); });
   const tg = root.querySelector('#tglMast'); if(tg) tg.onclick = () => { showMast = !showMast; renderMap(); };
   bindSend(root);
   bindOpen(root);
+  root.querySelector('#selMode').onclick = () => { mapSel = mapSel ? null : new Set(); renderMap(); };
+  if(mapSel){
+    root.querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
+      const id = b.dataset.open; if(mapSel.has(id)) mapSel.delete(id); else mapSel.add(id);
+      b.classList.toggle('picked', mapSel.has(id)); b.classList.toggle('pickable', !mapSel.has(id)); drawSelBar();
+    });
+  }
+  drawSelBar();
+}
+/* 下の帯：すべて選ぶ／◯問を消す */
+function drawSelBar(){
+  let bar = $('#selBar');
+  const show = mapSel && !$('#tab-Map').classList.contains('hidden');
+  if(!show){ if(bar) bar.remove(); return; }
+  if(!bar){ bar = document.createElement('div'); bar.id = 'selBar'; bar.className = 'selbar'; document.body.appendChild(bar); }
+  const nav = document.querySelector('nav.tabs'); if(nav) bar.style.bottom = nav.offsetHeight + 'px';   // 下のタブのすぐ上
+  const vis = [...$$('#tab-Map [data-open]')].map(b => b.dataset.open), all = vis.length && vis.every(id => mapSel.has(id));
+  bar.innerHTML = `<div class="inner"><button id="selAll">${all ? '全部はずす' : '全部選ぶ'}</button><button id="selDel" class="del" ${mapSel.size ? '' : 'disabled'}>${mapSel.size ? `${mapSel.size}問を消す` : '消す問題を選ぶ'}</button></div>`;
+  bar.querySelector('#selAll').onclick = () => { if(all) vis.forEach(id => mapSel.delete(id)); else vis.forEach(id => mapSel.add(id)); renderMap(); };
+  bar.querySelector('#selDel').onclick = async () => {
+    const n = mapSel.size; if(!n) return;
+    if(!confirm(`選んだ ${n}問を消します。写真も消えて、元に戻せません。よろしいですか？`)) return;
+    S.items = S.items.filter(it => !mapSel.has(it.id)); save();
+    mapSel = null; await sweepImgs(); renderAll(); renderMap(); toast(`${n}問を消しました`);
+  };
 }
 
 /* ===================== ミスマップの部屋に出す =====================
@@ -3158,7 +3203,7 @@ function slides(){ return [
   { ico:'redo', t:'4. 問題が届く', p:`登録した問題は、<b>${gapsText()}</b>に「今日の問題」として届きます。「解く」タブの上の大きなボタンから始めます。`, ex:'日数は、前にその問題を解いた日から数えます。間隔と回数は、設定の「問題が届く間隔」で自分で変えられます。やり残しは消えず、次の日に繰り越されます（解いた日から次の日数を数え直します）。設定の「解き直しの曜日」をオンにすると、翌日の解き直しはそのまま、2回目からは決めた曜日（土・日など）にまとめて届きます。' },
   { ico:'eye', t:'5. もう一度解く', p:'問題だけが出ます。理由と改善点を思い出してから、<b>改善点をやりながらノートにもう一度解きます</b>。解き終わったら「答え合わせ」で、登録した内容を見ます。', ex:`解けた → 次の間隔へ。${gaps().length}回つづけて解けたら「極まった」。解けなかった → 翌日からやり直し。写真は押すと大きくなります。暗く写った写真は、写真の上の「白黒くっきり」で見やすくできます（大きくしたときは、背景の黒・白も選べます）。解いているあいだは、画面が暗くならないようにしてあります。` },
   { ico:'shuffle', t:'6. ランダムに解く', p:'予定に関係なく、3・5・10問を練習できます。ランダムのときは「解けなかった」だけ記録され、「解けた」は予定を変えません。', ex:'間隔をあけて覚える仕組みを崩さないためです。' },
-  { ico:'chart', t:'7. 記録を見る', p:'下の<b>「記録」</b>タブに、教科別の件数と、ミスの種類別の件数（<b>ミスパターン分析</b>）、まだ極まっていない問題の一覧が自動でたまります。いちばん多い種類が、あなたのミスのクセです。', ex:'そのクセの改善点を、ほかの問題にも使ってみてください。' },
+  { ico:'chart', t:'7. 記録を見る', p:'下の<b>「記録」</b>タブに、教科別の件数と、ミスの種類別の件数（<b>ミスパターン分析</b>）、まだ極まっていない問題の一覧が自動でたまります。いらない問題は、一覧の「まとめて消す」で何問でも一度に消せます。いちばん多い種類が、あなたのミスのクセです。', ex:'そのクセの改善点を、ほかの問題にも使ってみてください。' },
   { ico:'send', t:'8. ミスマップの部屋に出す', p:`問題を <b>${SEND_N}問</b> 作るごとに、紙のミスマップと同じ形の <b>1枚の画像</b> にして、Discord の <b>#ミスマップ</b> に出します。ひとりで進めずに、フィードバックをもらうためです。`, ex:'「解く」タブの「ミスマップの部屋に出す」から。共有の画面で Discord を選び、#ミスマップ に送ります。出した回は「記録」タブにたまり、あとから出し直せます。「まぜる／教科ごと／問題集ごと」を選ぶと、教科や問題集ごとに10問ずつ、別々の回にできます。' },
   { ico:'install', t:'9. ホーム画面に追加', p:'<b>かならず最初にやってください。</b>ホーム画面に追加していないと、しばらく開かない間に、登録した問題と写真が消えてしまうことがあります。', ex:'Safari の共有ボタン（iPhone は画面の下、iPad は右上。見当たらないときは「…」の中）→「ホーム画面に追加」→「追加」。やり方は、上の赤い帯の「やり方」からも見られます。' },
   { ico:'save', t:'10. データと控え', p:'写真も記録も、この端末の中だけに保存されます。設定の <b>「記録の控えをとる」</b> を、ときどき押してください。軽いのですぐ終わります。', ex:'写真も残したいときは「写真もとる」。重いので何回かに分けて保存します。機種変更のときだけで十分です。' },
@@ -3265,7 +3310,7 @@ function goTab(name){ const b = document.querySelector(`nav.tabs button[data-tab
 $$('nav.tabs button').forEach(b => b.onclick = () => {
   $$('nav.tabs button').forEach(x => x.classList.toggle('on', x === b));
   ['Today','Add','Map','Set'].forEach(t => $('#tab-'+t).classList.toggle('hidden', t !== b.dataset.tab));
-  if(b.dataset.tab === 'Map') renderMap();
+  if(b.dataset.tab === 'Map') renderMap(); else drawSelBar();
   if(b.dataset.tab === 'Set') renderSet();
   window.scrollTo(0,0);
 });

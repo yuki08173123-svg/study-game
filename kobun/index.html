@@ -445,10 +445,10 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 
 <div id="print"></div>
 
-<script src="words.js?v=10"></script>
+<script src="words.js?v=11"></script>
 <script>
 'use strict';
-const VER = 21;
+const VER = 22;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -1100,7 +1100,9 @@ function meanSet(w){
   if(w._ms) return w._ms;
   return w._ms = new Set([w.m, ...(w.s || [])].flatMap(x => String(x).split(/[・／、,]/)).map(x => x.replace(/[（(][^）)]*[）)]/g, '').replace(/[〜~\s]/g, '').trim()).filter(Boolean));
 }
-function meansOverlap(a, b){ const A = meanSet(a); for(const x of meanSet(b)) if(A.has(x)) return true; return false; }
+/* 意味が近い（言い換え）単語どうしも、まちがいの選択肢にしない。words.js の nx（No. の一覧・対称）を使う（塾生Yuuyの声：なのめなり＝ありふれている に「並一通りだ」が出た） */
+function nearPair(a, b){ return (a.nx || []).includes(b.i + 1) || (b.nx || []).includes(a.i + 1); }
+function meansOverlap(a, b){ if(nearPair(a, b)) return true; const A = meanSet(a); for(const x of meanSet(b)) if(A.has(x)) return true; return false; }
 function choicesFor(i, dir){
   const w = W[i];
   const okDistractor = x => x.i !== i && x.m !== w.m && !meansOverlap(x, w);
@@ -1122,7 +1124,7 @@ function answersFor(i, mode){
   }
   if(mode === 'type'){
     const key = [...meanSet({ m: w.m, s: [] })][0];
-    W.forEach(x => { if(x.i !== i && key && meanSet(x).has(key)) [x.w.replace(/（.*?）/g, ''), x.y].filter(Boolean).forEach(v => ok.add(normKana(v))); });
+    W.forEach(x => { if(x.i !== i && ((key && meanSet(x).has(key)) || nearPair(x, w))) [x.w.replace(/（.*?）/g, ''), x.y].filter(Boolean).forEach(v => ok.add(normKana(v))); });
   }
   return ok;
 }
@@ -1218,7 +1220,7 @@ function answerTyped(val){
     let note = '';
     if(exact.includes(v)) note = '';
     else if(mode === 'cloze' && v === normKana(head)) note = `（例文では「${esc(perfect)}」の形）`;
-    else if(mode === 'type' && v !== normKana(w.y || '')) note = `（同じ意味の語。この問題の答えは「${esc(perfect)}」）`;
+    else if(mode === 'type' && v !== normKana(w.y || '')) note = `（同じ・近い意味の語。この問題の答えは「${esc(perfect)}」）`;
     else note = `（旧かなでは「${esc(perfect)}」）`;
     T.lastOK = `○ 正解　<b>${esc(perfect)}</b>${mode === 'cloze' && perfect !== head ? `（${esc(head)}）` : ''}${note}`;
     next();   // すぐ次へ（iPhone でキーボードを閉じないように、押した流れのまま次の問題を出す）

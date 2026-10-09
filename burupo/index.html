@@ -408,7 +408,7 @@ textarea{ width:100%; min-height:80px; border-radius:12px; border:1.5px solid va
 
 <script>
 'use strict';
-const VER = 4;
+const VER = 5;
 const APP_NAME = 'ブルポ帳';
 const KEY = 'burupo_v1', BK = 'burupo_backup';
 /* 出てくる間隔。子どもは さわらない（はじめは ふつうのまま）。おうちの方が せっていで かえられる。
@@ -673,7 +673,7 @@ function letSleep(){ try{ if(wakeLock) wakeLock.release(); }catch(e){} wakeLock 
    ・とじている あいだ（あさ）に つけるには、サーバー（PUSH_URL）から 毎朝 しらせる。
      サーバーに おくるのは「日づけごとの まいすう」だけ（ブルポの 中身・なまえは おくらない）。
    iPhone・iPad は「通知を許可」しないと 数字が でない（Apple の きまり）ので、おうちの方が せっていで オンにする。 */
-const PUSH_URL = '';
+const PUSH_URL = 'https://burupo-push.yuki08173123.workers.dev';
 const PUSH_FLAG = 'burupo_push', PUSH_SENT = 'burupo_push_sent';
 function setBadge(n){
   try{

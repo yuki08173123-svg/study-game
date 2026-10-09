@@ -379,6 +379,17 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 .lapt:first-child{margin-top:0}
 .hint1{font-family:'Lexend',sans-serif;letter-spacing:.08em}
 
+/* 仕分け（古文単語 v18 と同じ・塾生の声） */
+.srtb{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.srtb .btn{margin:0;padding:15px 8px;line-height:1.3}
+.srtb .btn small{display:block;font-size:12px;font-weight:400;opacity:.9}
+.btn.know{background:#fff;border:2px solid #9AA8BA;color:var(--ink)}
+.btn.out{background:#5B6B80;color:#fff}
+.srtq{text-align:center;margin:0 0 8px;font-weight:700}
+.dot.ex{background:#9AA8BA}
+.cell.exd{background:#9AA8BA!important;color:#fff}
+.exlink{display:block;margin:6px auto 0;color:var(--muted);font-size:13px;text-decoration:underline;padding:4px}
+
 /* 印刷用カード */
 #print{display:none}
 @media print{
@@ -440,7 +451,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="idioms.js?v=3"></script>
 <script>
 'use strict';
-const VER = 4;
+const VER = 5;
 /* ===================== 使う人（兄弟で1台） =====================
    1人目は今までの保存場所のまま（記録はそのまま残る）。2人目からは保存の名前のうしろに「__id」をつけて分ける。
    切りかえたらページを読みなおす。レベル・仕分け・計画・記録・タイマーはすべて人ごと。 */
@@ -503,6 +514,7 @@ let BOOK = 'w';
 try{ BOOK = localStorage.getItem(BOOKKEY) === 'i' ? 'i' : 'w'; }catch(e){}
 const IDIOM = BOOK === 'i';
 const BNAME = IDIOM ? '熟語' : '単語';
+const UNIT = IDIOM ? '個' : '語';
 const W = ((IDIOM ? window.EIKEN_IDIOMS : window.EIKEN_WORDS) || []).map((x, i) => ({ ...x, i, s: x.s || [], d: x.d || [] }));
 const N = W.length;
 const PER = IDIOM ? 30 : 100;            // 1日の数（単語100語・熟語30個）
@@ -557,6 +569,11 @@ function wordsProgress(){
 function setLaps(n){ LAPS = Math.max(1, Math.min(10, +n || 4)); TOTAL = DAYS * LAPS; }
 function save(){ if(NOSAVE) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); localStorage.setItem(COMMON, JSON.stringify({ xp:S.xp, xpDay:S.xpDay, guideSeen:S.guideSeen })); }catch(e){} }
 function ws(i){ return S.w[i] || (S.w[i] = { c:0, x:0, sk:0, st:0, due:'' }); }
+/* 仕分け（塾生の声）：完璧に知っているものは ex＝外した。外したものは Day のカード・一覧・解説・テスト・リマインドに出ない */
+function isEx(i){ return !!(S.w[i] && S.w[i].ex); }
+function isSorted(i){ return !!(S.w[i] && (S.w[i].srt || S.w[i].ex)); }
+function exCount(){ let c = 0; for(let i=0;i<N;i++) if(isEx(i)) c++; return c; }
+function unsortedIds(){ return W.filter(w => !isSorted(w.i)).map(w => w.i); }
 load();
 
 /* ===================== 計画（単語は1日100語×7日、熟語は1日30個×5日で1周。8周＝単語は56日・熟語は40日）
@@ -564,7 +581,8 @@ load();
 function plan(n){
   const lap = Math.floor(n / DAYS) + 1, d = n % DAYS + 1;
   const from = (d-1) * PER, to = Math.min(N, d * PER);
-  return { n, lap, d, from, to, date: addDays(S.start, n), ids: range(from, to) };
+  const ids = range(from, to).filter(i => !isEx(i));
+  return { n, lap, d, from, to, date: addDays(S.start, n), ids, exN: to - from - ids.length };
 }
 function range(a, b){ const r = []; for(let i=a;i<b;i++) r.push(i); return r; }
 function curN(){ for(let n=0;n<TOTAL;n++) if(!S.days[n]) return n; return TOTAL; }
@@ -583,9 +601,11 @@ function statusText(){
 function isMastered(i){ const s = S.w[i]; return !!s && s.sk >= 2; }      // 2回つづけて正解＝定着
 function isWeak(i){ const s = S.w[i]; return !!s && s.x > 0 && s.sk < 2; }
 function masteredCount(){ let c = 0; for(let i=0;i<N;i++) if(isMastered(i)) c++; return c; }
-function dueList(){ const t = today(); return W.filter(w => { const s = S.w[w.i]; return s && s.due && s.due <= t; }).map(w => w.i); }
+function dueList(){ const t = today(); return W.filter(w => { const s = S.w[w.i]; return s && !s.ex && s.due && s.due <= t; }).map(w => w.i); }
+function cntText(p){ return p.ids.length + UNIT + (p.exN ? `・外した${p.exN}${UNIT}をのぞく` : ''); }
 function stateDot(i){
   const s = S.w[i];
+  if(s && s.ex) return 'ex';
   if(!s || (s.c + s.x) === 0) return '';
   if(s.due) return 'ng';
   if(s.sk >= 2) return 'ok';
@@ -597,7 +617,7 @@ function stateDot(i){
 const XP_RULES = [
   ['テストで1問正解', 2], ['リマインドテストで1問正解', 3], ['単語が「定着」した（2回つづけて正解）', 5],
   ['単語カードで「覚えた」を押す', 1], ['1分解説を最後まで聞く', 3], ['覚える時間 1分ごと', 1],
-  ['その日のテストをはじめてクリア', 20], ['テストで全問正解（10問以上）', 10],
+  ['その日のテストをはじめてクリア', 20], ['テストで全問正解（10問以上）', 10], ['仕分け 10' + UNIT + 'ごと', 2],
 ];
 const RANKS = [[1,'Starter'],[2,'5級'],[4,'5級プラス'],[7,'4級'],[10,'4級プラス'],[14,'3級'],[18,'3級プラス'],[23,'準2級'],[29,'2級'],[36,'Master']];
 function needXP(lv){ return 100 + 20 * (lv - 1); }
@@ -695,11 +715,11 @@ function renderToday(){
     hero = `<div class="hero">
       <div class="lap">第${p.lap}周 ／ 全${LAPS}周　・　${n+1}日目 / ${TOTAL}日</div>
       <div class="big">${doneToday ? '次は ' : ''}Day ${p.d}</div>
-      <div class="range">${BNAME} No.${p.from+1} 〜 ${p.to}（${p.to - p.from}${IDIOM ? '個' : '語'}）　予定日 ${md(p.date)}(${wd(p.date)})</div>
+      <div class="range">${BNAME} No.${p.from+1} 〜 ${p.to}（${cntText(p)}）　予定日 ${md(p.date)}(${wd(p.date)})</div>
       <span class="st ${st.late ? 'late' : ''}">${st.t}</span>
       <div class="steps">
         <button class="step ${studied ? 'done' : ''}" id="stStudy"><span class="n">${studied ? '✓' : '1'}</span><span class="t">覚える時間　⏱ ${S.timer ? 'のこり時間は上に' : S.cfg.studyMin + '分'}<small>時間を自分で決めて、カード・一覧・1分解説で覚える</small></span></button>
-        <button class="step main" id="stTest"><span class="n">2</span><span class="t">テスト ${p.to - p.from}問<small>時間と正答率は自動で記録されます</small></span></button>
+        <button class="step main" id="stTest"><span class="n">2</span><span class="t">テスト ${p.ids.length}問<small>時間と正答率は自動で記録されます</small></span></button>
       </div>
       <div class="quick"><button id="stCards">カードだけ</button><button id="stList">一覧だけ</button><button id="stLessons">1分解説だけ</button></div></div>`;
   }
@@ -711,7 +731,11 @@ function renderToday(){
   const order = wp && wp.done < wp.total && !S.tests.length ? `<div class="card" style="border-color:var(--gold);background:var(--gold-soft)"><h3>おすすめの順番：単語 → 熟語</h3>
     <div class="dim">単語を完璧に覚えてから熟語に進むと、熟語の例文もすっと読めます。いまの単語は <b>${wp.done} / ${wp.total}日</b>。</div>
     <button class="btn sub" id="backWords" style="margin-top:10px">単語にもどる</button></div>` : '';
-  el.innerHTML = order + hero + lvCardHTML() + remind + `<h2>計画（1日${PER}${IDIOM ? '個' : '語'} × ${DAYS}日 × ${LAPS}周 ＝ ${TOTAL}日）</h2><div class="card">${gridHTML()}</div>`;
+  const uns = unsortedIds().length, exn = exCount();
+  const sortCard = uns ? `<div class="card remind"><div class="num" style="color:var(--ai);font-size:26px">${uns}<small>${UNIT}</small></div>
+    <div style="flex:1"><h3>仕分け</h3><div class="dim">完璧に知っている${BNAME}を外して、覚えるものだけにします。${exn ? `<br>外した${BNAME} ${exn}${UNIT}` : ''}</div></div>
+    <button class="btn" style="width:auto;padding:12px 16px" id="goSort">仕分け</button></div>` : '';
+  el.innerHTML = order + hero + sortCard + lvCardHTML() + remind + `<h2>計画（1日${PER}${IDIOM ? '個' : '語'} × ${DAYS}日 × ${LAPS}周 ＝ ${TOTAL}日）</h2><div class="card">${gridHTML()}</div>`;
   if(n < TOTAL){
     const p = plan(n);
     $('#stStudy').onclick = () => openStudy(n);
@@ -721,6 +745,7 @@ function renderToday(){
     $('#stTest').onclick = () => testOrStudy(n);
   }
   if($('#goRemind')) $('#goRemind').onclick = startRemind;
+  if($('#goSort')) $('#goSort').onclick = () => startSort(unsortedIds().slice(0, SORTN), '仕分け');
   if($('#goIdiom')) $('#goIdiom').onclick = () => switchBook('i');
   if($('#backWords')) $('#backWords').onclick = () => switchBook('w');
   $('#lvCard').onclick = openLevel;
@@ -731,6 +756,7 @@ function gridHTML(){
   const cur = curN(), t = today();
   const cell = n => {
     const r = S.days[n], p = plan(n);
+    if(r && !r.n) return `<button class="cell d exd" data-n="${n}">外</button>`;
     if(r){ const rate = r.ok / r.n; return `<button class="cell d" data-n="${n}" style="background:${rateColor(rate)}">${Math.round(rate*100)}</button>`; }
     return `<button class="cell ${n === cur ? 'cur' : ''} ${p.date < t ? 'late' : ''}" data-n="${n}">${md(p.date)}</button>`;
   };
@@ -743,7 +769,7 @@ function gridHTML(){
     h = '<div class="grid wide">';
     for(let l=0; l<LAPS; l++){ h += `<div class="lapt">第${l+1}周（Day1〜${DAYS}）</div>`; for(let d=0; d<DAYS; d++) h += cell(l*DAYS + d); }
   }
-  h += '</div><div class="legend"><span><i style="background:#2E7A57"></i>90%以上</span><span><i style="background:#6E9A5C"></i>70%〜</span><span><i style="background:#C9953A"></i>50%〜</span><span><i style="background:#B63E2B"></i>50%未満</span><span>数字＝1回目の正答率</span></div>';
+  h += '</div><div class="legend"><span><i style="background:#2E7A57"></i>90%以上</span><span><i style="background:#6E9A5C"></i>70%〜</span><span><i style="background:#C9953A"></i>50%〜</span><span><i style="background:#B63E2B"></i>50%未満</span><span>数字＝1回目の正答率</span>' + (Object.values(S.days).some(r => !r.n) ? '<span><i style="background:#9AA8BA"></i>外＝ぜんぶ外した日</span>' : '') + '</div>';
   return h;
 }
 function bindGrid(root){
@@ -752,12 +778,14 @@ function bindGrid(root){
 function openDaySheet(n){
   const p = plan(n), r = S.days[n];
   const bg = sheet(`<h2>第${p.lap}周 Day${p.d}</h2>
-    <p>${BNAME} No.${p.from+1}〜${p.to}（${p.to-p.from}${IDIOM ? '個' : '語'}）　予定日 ${md(p.date)}(${wd(p.date)})</p>
-    ${r ? `<div class="note">1回目：${r.d.slice(5).replace('-','/')} に ${r.n}問中 ${r.ok}問正解（${Math.round(r.ok/r.n*100)}%）・${fmtSec(r.secs)}${r.best != null && r.best > r.ok ? `<br>いちばん良かった回：${r.best}問正解` : ''}</div>` : '<p class="dim">まだテストしていません。</p>'}
+    <p>${BNAME} No.${p.from+1}〜${p.to}（${cntText(p)}）　予定日 ${md(p.date)}(${wd(p.date)})</p>
+    ${r && !r.n ? `<div class="note">この日の${BNAME}は、ぜんぶ外したので完了にしました。</div>` : r ? `<div class="note">1回目：${r.d.slice(5).replace('-','/')} に ${r.n}問中 ${r.ok}問正解（${Math.round(r.ok/r.n*100)}%）・${fmtSec(r.secs)}${r.best != null && r.best > r.ok ? `<br>いちばん良かった回：${r.best}問正解` : ''}</div>` : '<p class="dim">まだテストしていません。</p>'}
     <div style="margin-top:12px"><button class="btn" data-a="test">この日のテストをする</button>
     <button class="btn sub" data-a="cards">カードで覚える</button>
-    <button class="btn sub" data-a="print">印刷用のカードを作る</button></div>`);
+    <button class="btn sub" data-a="print">印刷用のカードを作る</button>
+    <button class="btn sub" data-a="sort">この日の${BNAME}を仕分け（完璧なものを外す）</button></div>`);
   bg.querySelector('[data-a=test]').onclick = () => { bg.remove(); testOrStudy(n); };
+  bg.querySelector('[data-a=sort]').onclick = () => { bg.remove(); startSort(range(p.from, p.to), `Day${p.d} の仕分け`); };
   bg.querySelector('[data-a=cards]').onclick = () => { bg.remove(); openCards(p.ids, `Day${p.d} のカード`, null, () => startDayTest(n)); };
   bg.querySelector('[data-a=print]').onclick = () => { bg.remove(); printCards(p.ids, `Day${p.d}（No.${p.from+1}〜${p.to}）`); };
 }
@@ -768,14 +796,14 @@ function renderWords(){
   const el = $('#tab-words');
   el.innerHTML = `<input class="search" id="wq" placeholder="${IDIOM ? '熟語・意味で検索（例：look／楽しみ）' : '単語・意味で検索（例：decide／決める）'}" value="${esc(wf.q)}" autocapitalize="off" autocorrect="off">
     <div class="chips" id="wday"><button class="chipb ${wf.d===0?'on':''}" data-d="0">ぜんぶ</button>${range(1, DAYS+1).map(d => `<button class="chipb ${wf.d===d?'on':''}" data-d="${d}">Day${d}</button>`).join('')}</div>
-    <div class="chips" id="wst">${[['','すべて'],['ng','リマインド中'],['weak','苦手'],['ok','定着'],['new','まだ']].map(([k,t]) => `<button class="chipb ${wf.st===k?'on':''}" data-s="${k}">${t}</button>`).join('')}</div>
+    <div class="chips" id="wst">${[['','すべて'],['ng','リマインド中'],['weak','苦手'],['ok','定着'],['new','まだ'],['ex','外した']].map(([k,t]) => `<button class="chipb ${wf.st===k?'on':''}" data-s="${k}">${t}</button>`).join('')}</div>
     <div class="row" style="margin-bottom:10px"><button class="btn sub" id="wCards">この一覧でカード</button><button class="btn sub" id="wPrint">印刷用カード</button></div>
     <div class="dim" id="wcount" style="margin:0 2px 6px"></div>
     <div class="wlist" id="wlist"></div>`;
   $('#wq').oninput = e => { wf.q = e.target.value; drawWordList(); };
   $$('#wday button').forEach(b => b.onclick = () => { wf.d = +b.dataset.d; renderWords(); });
   $$('#wst button').forEach(b => b.onclick = () => { wf.st = b.dataset.s; renderWords(); });
-  $('#wCards').onclick = () => { const ids = filteredIds(); if(ids.length) openCards(ids, 'カード（' + ids.length + '枚）'); };
+  $('#wCards').onclick = () => { const ids = filteredIds().filter(i => wf.st === 'ex' || !isEx(i)); if(ids.length) openCards(ids, 'カード（' + ids.length + '枚）'); };
   $('#wPrint').onclick = () => { const ids = filteredIds(); if(ids.length) printCards(ids, wf.d ? 'Day' + wf.d : '選んだ' + BNAME); };
   drawWordList();
 }
@@ -783,7 +811,8 @@ function filteredIds(){
   const q = wf.q.trim().toLowerCase();
   return W.filter(w => {
     if(wf.d && Math.floor(w.i / PER) + 1 !== wf.d) return false;
-    if(wf.st === 'ng' && !(S.w[w.i] && S.w[w.i].due)) return false;
+    if(wf.st === 'ex' && !isEx(w.i)) return false;
+    if(wf.st === 'ng' && !(S.w[w.i] && S.w[w.i].due && !isEx(w.i))) return false;
     if(wf.st === 'weak' && !isWeak(w.i)) return false;
     if(wf.st === 'ok' && !isMastered(w.i)) return false;
     if(wf.st === 'new' && S.w[w.i] && (S.w[w.i].c + S.w[w.i].x) > 0) return false;
@@ -861,9 +890,11 @@ function openWord(i, list){
     <div class="note" style="margin-top:10px"><b>覚え方</b>　${esc(w.tip)}</div>
     <p style="margin:10px 0 0"><span style="font-family:var(--mincho)">${exHTML(w)}</span><br>${ftBox(w)}</p>
     <p class="dim">テスト：正解 ${s.c}回・まちがい ${s.x}回${s.due ? `・<b style="color:var(--shu)">リマインド ${md(s.due)}</b>` : ''}${isMastered(i) ? '・<b style="color:var(--ok)">定着</b>' : ''}</p>
-    <button class="btn" data-a="play">▶ 1分解説（読み上げ）</button>`);
+    <button class="btn" data-a="play">▶ 1分解説（読み上げ）</button>
+    <button class="btn sub" data-a="exb">${isEx(i) ? `外した${BNAME}を、もとにもどす` : `完璧なので、この${BNAME}を外す`}</button>`);
   fitSlide(bg);
   bindSpk(bg);
+  bg.querySelector('[data-a=exb]').onclick = () => { const x = ws(i); if(x.ex){ delete x.ex; toast('もとにもどしました'); } else { x.ex = 1; x.srt = 1; toast('「' + w.w + '」を外しました'); } save(); bg.remove(); renderAll(); };
   bg.querySelector('[data-a=play]').onclick = () => { bg.remove(); openLesson(list || [i], (list || [i]).indexOf(i)); };
 }
 
@@ -1042,6 +1073,7 @@ function openCards(ids, title, onAllKnown, toTest){
 function undoCard(){
   const h = C.hist.pop(); if(!h) return;
   C.q = h.q; C.flip = false;
+  if(h.a === 'ex'){ const s = S.w[h.i]; if(s){ delete s.ex; if(!h.srt) delete s.srt; } C.total++; save(); }
   if(h.a === 'yes'){ S.xp = Math.max(0, S.xp - 1); const d = today(); S.xpDay[d] = Math.max(0, (S.xpDay[d] || 0) - 1); save(); renderLv(); }
   drawCard();
 }
@@ -1072,6 +1104,7 @@ function drawCard(){
       </div></div>
       <div class="row"><button class="btn shu" data-a="no">まだ</button><button class="btn" data-a="yes">覚えた</button></div>
       <button class="btn line" data-a="lesson" style="margin-top:8px">▶ この${BNAME}の1分解説</button>
+      <button class="exlink" data-a="ex">完璧に知っているので、この${BNAME}を外す</button>
     </div>`;
   bindSpk(ov);
   if(!C.flip && S.cfg.autoSpk) speakWord(i, ov.querySelector('.front [data-spk]'));
@@ -1080,6 +1113,7 @@ function drawCard(){
   ov.querySelector('[data-a=undo]').onclick = undoCard;
   ov.querySelector('[data-a=no]').onclick = () => { C.hist.push({ q: C.q.slice(), a:'no' }); C.q.push(C.q.shift()); C.flip = false; drawCard(); };
   ov.querySelector('[data-a=yes]').onclick = () => { C.hist.push({ q: C.q.slice(), a:'yes' }); C.q.shift(); C.flip = false; gainXP(1, '覚えた'); drawCard(); };
+  ov.querySelector('[data-a=ex]').onclick = () => { const s = ws(i); C.hist.push({ q: C.q.slice(), a:'ex', i, srt: s.srt }); s.ex = 1; s.srt = 1; save(); C.q = C.q.filter(x => x !== i); C.total = Math.max(1, C.total - 1); C.flip = false; toast('「' + w.w + '」を外しました'); drawCard(); };
   ov.querySelector('[data-a=lesson]').onclick = () => {
     const keep = C;
     // 解説を閉じたらカードにもどる
@@ -1112,6 +1146,10 @@ function testOrStudy(n){
 }
 function startDayTest(n){
   const p = plan(n);
+  if(!p.ids.length){   // ぜんぶ外した日は、テストなしで完了
+    if(!S.days[n]){ S.days[n] = { d: today(), n:0, ok:0, secs:0, best:0 }; save(); }
+    toast('この日の' + BNAME + 'はぜんぶ外したので、完了にしました'); renderAll(); return;
+  }
   startTest({ ids: p.ids, type:'day', plan:n, label:`第${p.lap}周 Day${p.d}（${p.from+1}〜${p.to}）` });
 }
 function startRemind(){
@@ -1315,9 +1353,9 @@ let tf = { scope:'learned', cnt:50, day:1 };
 function renderTest(){
   const el = $('#tab-test'), cur = curN(), due = dueList();
   const learnedTo = Math.min(N, cur >= DAYS ? N : cur * PER);
-  const weak = W.filter(w => isWeak(w.i)).map(w => w.i);
+  const weak = W.filter(w => isWeak(w.i) && !isEx(w.i)).map(w => w.i);
   el.innerHTML = `
-    ${cur < TOTAL ? `<div class="card"><h3>${lagOf(cur) < 0 ? '次の日のテスト（先取り）' : '今日のテスト'}</h3><div class="dim">第${plan(cur).lap}周 Day${plan(cur).d}（No.${plan(cur).from+1}〜${plan(cur).to}）</div><button class="btn" id="tDay" style="margin-top:10px">${plan(cur).to - plan(cur).from}問 はじめる</button></div>` : ''}
+    ${cur < TOTAL ? `<div class="card"><h3>${lagOf(cur) < 0 ? '次の日のテスト（先取り）' : '今日のテスト'}</h3><div class="dim">第${plan(cur).lap}周 Day${plan(cur).d}（No.${plan(cur).from+1}〜${plan(cur).to}）</div><button class="btn" id="tDay" style="margin-top:10px">${plan(cur).ids.length}問 はじめる</button></div>` : ''}
     <div class="card"><h3>リマインドテスト　<span style="color:var(--shu)">${due.length}${IDIOM ? '個' : '語'}</span></h3><div class="dim">まちがえた${BNAME}が、翌日 → 3日後 → 1週間後 にもどってきます。3回つづけて正解で卒業。</div>
       <button class="btn shu" id="tRem" style="margin-top:10px" ${due.length ? '' : 'disabled'}>${due.length ? due.length + '問 はじめる' : '今日はありません'}</button></div>
     <div class="card"><h3>シャッフルテスト</h3><div class="dim">範囲を選んで、ばらばらの順番で出します。</div>
@@ -1342,6 +1380,7 @@ function renderTest(){
     else if(tf.scope === 'all'){ ids = range(0, N); lab = 'シャッフル（全' + N + '）'; }
     else if(tf.scope === 'day'){ ids = range((tf.day-1)*PER, Math.min(N, tf.day*PER)); lab = 'シャッフル（Day' + tf.day + '）'; }
     else { ids = weak; lab = 'シャッフル（苦手）'; }
+    ids = ids.filter(i => !isEx(i));
     if(!ids.length){ toast('対象がありません'); return; }
     ids = shuffle(ids); if(tf.cnt) ids = ids.slice(0, tf.cnt);
     startTest({ ids, type:'shuffle', label: lab });
@@ -1598,7 +1637,7 @@ function timeUp(){
 
 /* タイマーを使わずに カード・一覧・1分解説 で覚えた時間も記録する（古文単語の塾生の声：一覧で覚えた時間が入らない）。
    画面をとじたり、アプリを裏にしたりしたら止まる。1回のまとまりは最大30分まで数える。 */
-const KIND = { cards:'カード', list:'一覧', lesson:'1分解説' };
+const KIND = { cards:'カード', list:'一覧', lesson:'1分解説', sort:'仕分け' };
 let SESS = null;
 function sessStart(kind, ids){
   sessEnd();
@@ -1656,6 +1695,72 @@ function openList(ids, title, scrollTo){
   if(scrollTo) ov.scrollTop = scrollTo;
 }
 
+/* ===================== 仕分け（塾生の声「最初の仕分けがほしい」・古文単語 v18 と同じ） =====================
+   完璧に知っているものを外す。「完璧に知ってる」を押したら意味を見せて、合っていたかを確かめる（思いこみで外さないように）。 */
+const SORTN = Math.min(PER, 50);   // 今日タブからは50ずつ
+let Q = null;
+function startSort(ids, title){
+  if(!ids.length){ toast('仕分けする' + BNAME + 'がありません'); return; }
+  closeOv();
+  makeOv();
+  Q = { ids: ids.slice(), k: 0, title, out: 0, keep: 0, check: false, hist: [] };
+  sessStart('sort', ids);
+  drawSort();
+}
+function drawSort(){
+  const ov = $('.ov');
+  if(Q.k >= Q.ids.length){ finishSort(); return; }
+  const i = Q.ids[Q.k], w = W[i];
+  ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">${esc(Q.title)}</div><button class="undo" data-a="undo" ${Q.hist.length || Q.check ? '' : 'disabled'}>↶ 戻る</button><div class="tm">${Q.k+1} / ${Q.ids.length}</div></div>
+    <div class="pbar"><i style="width:${Q.k / Q.ids.length * 100}%"></i></div>
+    <div class="dim" style="text-align:center">外した <b>${Q.out}</b>　・　覚える <b>${Q.keep}</b></div>
+    <div class="ovbody">
+      <div class="fc"><div class="fc-in ${Q.check ? 'flip' : ''}">
+        <div class="fc-face front"><span class="no">No.${i+1}　${esc(pname(w.p))}</span><div class="w ${isLong(w) ? 'long' : ''}">${esc(w.w)}</div><div class="k ph">${esc(w.ph || '')}</div><div class="face-top">${spkBtn(i)}</div></div>
+        <div class="fc-face back"><div class="bw" style="font-weight:600">${esc(w.w)} <span class="ph" style="font-size:13px">${esc(w.ph || '')}</span></div>
+          <div class="bm">${esc(w.m)}</div>${w.s.length ? `<div class="bs">ほかに：${w.s.map(esc).join('／')}</div>` : ''}</div>
+      </div></div>
+      ${Q.check ? `<p class="srtq">思っていた意味と、合っていた？</p>
+        <div class="srtb"><button class="btn" data-a="keep">ちがった<small>覚える${BNAME}にする</small></button><button class="btn out" data-a="out">合っていた<small>完璧なので外す</small></button></div>`
+      : `<div class="srtb"><button class="btn" data-a="keep">あやしい・知らない<small>覚える${BNAME}にする</small></button><button class="btn know" data-a="know">完璧に知ってる<small>意味を確かめて外す</small></button></div>`}
+    </div>`;
+  bindSpk(ov);
+  if(!Q.check && S.cfg.autoSpk) speakWord(i, ov.querySelector('.front [data-spk]'));
+  ov.querySelector('[data-a=x]').onclick = closeOv;
+  ov.querySelector('[data-a=undo]').onclick = () => {
+    if(Q.check){ Q.check = false; drawSort(); return; }
+    const h = Q.hist.pop(); if(!h) return;
+    Q.k = h.k; Q.out = h.out; Q.keep = h.keep;
+    if(h.prev) S.w[h.i] = h.prev; else delete S.w[h.i];
+    save(); drawSort();
+  };
+  const decide = out => {
+    Q.hist.push({ k: Q.k, out: Q.out, keep: Q.keep, i, prev: S.w[i] ? JSON.parse(JSON.stringify(S.w[i])) : null });
+    const s = ws(i); s.srt = 1;
+    if(out){ s.ex = 1; Q.out++; } else { delete s.ex; Q.keep++; }
+    Q.k++; Q.check = false; save();
+    if(Q.k % 10 === 0) gainXP(2, '仕分け');
+    drawSort();
+  };
+  ov.querySelector('[data-a=keep]').onclick = () => decide(false);
+  if(ov.querySelector('[data-a=out]')) ov.querySelector('[data-a=out]').onclick = () => decide(true);
+  if(ov.querySelector('[data-a=know]')) ov.querySelector('[data-a=know]').onclick = () => { Q.check = true; drawSort(); };
+}
+function finishSort(){
+  const ov = $('.ov'), q = Q, more = unsortedIds();
+  stopSpk();
+  ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">${esc(q.title)}</div></div>
+    <div class="ovbody"><div class="res"><div class="pct">✓</div><p><b>${q.ids.length}${UNIT}の仕分けが終わりました</b></p>
+      <div class="meta"><span>外した ${q.out}${UNIT}</span><span>覚える ${q.keep}${UNIT}</span></div>
+      <p class="dim">外した${BNAME}は「一覧」タブの「外した」で見られます。もとにもどすこともできます。</p></div>
+      ${more.length ? `<button class="btn" data-a="more">つづけて次の${Math.min(SORTN, more.length)}${UNIT}を仕分け（のこり ${more.length}${UNIT}）</button>` : ''}
+      <button class="btn sub" data-a="x2">閉じる</button></div>`;
+  Q = null;
+  ov.querySelector('[data-a=x]').onclick = closeOv; ov.querySelector('[data-a=x2]').onclick = closeOv;
+  if(ov.querySelector('[data-a=more]')) ov.querySelector('[data-a=more]').onclick = () => startSort(unsortedIds().slice(0, SORTN), '仕分け');
+  renderAll();
+}
+
 /* ===================== 使い方スライド（はじめて開いたとき・？ボタン・設定） ===================== */
 function guideSlides(){
   return [
@@ -1663,6 +1768,8 @@ function guideSlides(){
       v:`<div class="minicard"><b>decide</b><span class="dim">→</span><span style="color:var(--shu);font-weight:700">〜を決める</span></div><div class="minicard"><b>look forward to ~</b><span class="dim">→</span><span style="color:var(--shu);font-weight:700">〜を楽しみに待つ</span></div><div class="dim" style="text-align:center">英検4級によく出る単語・熟語</div>` },
     { t:'単語は2か月で8周', p:['単語は<b>1日100語 × 7日で1周</b>。これを<b>8周（56日・約2か月）</b>くり返します。','単語を完璧に覚えたら、<b>熟語</b>へ。熟語は<b>1日30個 × 5日で1周</b>です。','その日にやる範囲は「今日」タブに出ます。遅れても大丈夫。次にやる日から続きが出ます。'],
       v:`<div class="grid" style="grid-template-columns:34px repeat(7,minmax(0,1fr))"><div></div>${[1,2,3,4,5,6,7].map(d => `<div class="h">Day${d}</div>`).join('')}${[1,2,3].map(l => `<div class="l">${l}周</div>` + [0,1,2,3,4,5,6].map(d => `<span class="cell ${l===1&&d<3?'d':''} ${l===1&&d===3?'cur':''}" style="${l===1&&d<3?'background:#2E7A57':''}">${l===1&&d<3?[96,88,92][d]:''}</span>`).join('')).join('')}</div><div class="dim" style="text-align:center">…8周まで</div>` },
+    { t:'はじめに：仕分け', p:['「今日」の<b>仕分け</b>で、順番に見て<b>完璧に知っているものは外します</b>。','「完璧に知ってる」を押すと意味が出るので、<b>合っていたら外す</b>。外したものは、カード・一覧・テストに出なくなります（「一覧」タブの「外した」から、もとにもどせます）。'],
+      v:`<div class="srtb"><span class="btn" style="font-size:14px">あやしい・知らない<small>覚える${BNAME}にする</small></span><span class="btn know" style="font-size:14px">完璧に知ってる<small>意味を確かめて外す</small></span></div>` },
     { t:'① 覚える時間', p:['「今日」の①を押して、<b>覚える時間を自分で決めます</b>（3分〜、自由に入力も）。','のこり時間は<b>画面のいちばん上</b>に出ます。カード・一覧・1分解説から、好きな方法で覚えましょう。'],
       v:`<div style="background:#1F2A4D;color:#fff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px"><b style="font-size:24px">9:42</b><small style="opacity:.8">覚える時間</small><span style="margin-left:auto;font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:99px">一時停止</span></div><div class="minicard">カード　／　一覧（意味をかくせる）　／　1分解説</div>` },
     { t:'発音と1分解説', p:['<b>スピーカーのボタン</b>で、ネイティブの発音が聞けます。カードを出すと自動で鳴ります。','1分解説は、スライドと音声で1つを約30秒で解説。英語はネイティブの声、意味や覚え方は日本語の声です。'],
@@ -1709,7 +1816,7 @@ renderUserTag();
 
 /* ===================== 共通の部品 ===================== */
 function makeOv(){ closeOv(true); const ov = document.createElement('div'); ov.className = 'ov'; document.body.appendChild(ov); document.body.style.overflow = 'hidden'; return ov; }
-function closeOv(silent){ sessEnd(); stopSpk(); $$('.ov').forEach(o => o.remove()); document.body.style.overflow = ''; if(L){ L.seq++; stopSpeech(); clearInterval(L.timer); if(L.audio){ try{ L.audio.pause(); }catch(e){} L.audio = null; } } if(!silent){ L = null; C = null; if(T){ clearInterval(T.timer); T = null; } } }
+function closeOv(silent){ sessEnd(); stopSpk(); $$('.ov').forEach(o => o.remove()); document.body.style.overflow = ''; if(L){ L.seq++; stopSpeech(); clearInterval(L.timer); if(L.audio){ try{ L.audio.pause(); }catch(e){} L.audio = null; } } if(!silent){ L = null; C = null; Q = null; if(T){ clearInterval(T.timer); T = null; } } }
 function sheet(html){
   const bg = document.createElement('div'); bg.className = 'sheet-bg';
   bg.innerHTML = `<div class="sheet"><div class="grab"></div>${html}<button class="close">閉じる</button></div>`;

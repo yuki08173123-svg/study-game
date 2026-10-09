@@ -342,6 +342,8 @@ body.timing .xpop{top:calc(var(--sbh,52px) + 52px)}
 .tin.ng{border-color:var(--shu);background:var(--shu-soft)}
 .tform .btn{width:auto;padding:14px 18px;flex:none}
 .okflash{background:var(--ok-soft);color:#154B33;border-radius:12px;padding:8px 12px;font-size:14px;margin-top:4px}
+.rep{white-space:pre-wrap;word-break:break-all;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0 0;font:13.5px/1.75 'BIZ UDPGothic',sans-serif;color:var(--ink);-webkit-user-select:text;user-select:text}
+.cimg{display:block;width:100%;max-height:220px;object-fit:contain;border-radius:12px;margin-top:10px;background:#F4EEE2}
 .goro{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(154,118,48,.35);font-weight:700;color:#5A3E12}
 .goro b{display:inline-block;background:var(--gold);color:#fff;font-size:11.5px;padding:1px 8px;border-radius:999px;margin-right:8px;vertical-align:1px}
 .fb .goro{border-top-color:var(--line)}
@@ -448,7 +450,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js?v=11"></script>
 <script>
 'use strict';
-const VER = 22;
+const VER = 23;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -700,14 +702,14 @@ function openDaySheet(n){
   const bg = sheet(`<h2>第${p.lap}周 Day${p.d}</h2>
     <p>No.${p.from+1}〜${p.to}（${cntText(p)}）　予定日 ${md(p.date)}(${wd(p.date)})</p>
     ${r && !r.n ? '<div class="note">この日の単語は、ぜんぶ外したので完了にしました。</div>' : r ? `<div class="note">1回目：${r.d.slice(5).replace('-','/')} に ${r.n}問中 ${r.ok}問正解（${Math.round(r.ok/r.n*100)}%）・${fmtSec(r.secs)}${r.best != null && r.best > r.ok ? `<br>いちばん良かった回：${r.best}問正解` : ''}</div>` : '<p class="dim">まだテストしていません。</p>'}
-    ${r && r.n ? `<button class="btn line" data-a="copy" style="margin-top:10px">${md(r.d)} の記録を報告用にコピー</button>` : ''}
+    ${r && r.n && reportFor(r.d) ? `<h3>${md(r.d)} の記録（報告用）</h3><pre class="rep">${esc(reportFor(r.d))}</pre><button class="btn line" data-a="copy" style="margin-top:8px">この記録をコピー</button>` : ''}
     <div style="margin-top:12px"><button class="btn" data-a="test">この日のテストをする</button>
     <button class="btn sub" data-a="cards">単語カードで覚える</button>
     <button class="btn sub" data-a="print">印刷用の単語カードを作る</button>
     <button class="btn sub" data-a="sort">この日の単語を仕分け（完璧な語を外す）</button></div>`);
   bg.querySelector('[data-a=test]').onclick = () => { bg.remove(); testOrStudy(n); };
   bg.querySelector('[data-a=sort]').onclick = () => { bg.remove(); startSort(range(p.from, p.to), `Day${p.d} の仕分け`); };
-  if(r) bg.querySelector('[data-a=copy]').onclick = () => { const t = reportFor(r.d); if(t) copyText(t, md(r.d) + ' の記録をコピーしました'); else toast('この日の記録が見つかりません'); };
+  if(bg.querySelector('[data-a=copy]')) bg.querySelector('[data-a=copy]').onclick = () => { const t = reportFor(r.d); if(t) copyText(t, md(r.d) + ' の記録をコピーしました'); else toast('この日の記録が見つかりません'); };
   bg.querySelector('[data-a=cards]').onclick = () => { bg.remove(); openCards(p.ids, `Day${p.d} の単語カード`, null, () => startDayTest(n)); };
   bg.querySelector('[data-a=print]').onclick = () => { bg.remove(); printCards(p.ids, `Day${p.d}（No.${p.from+1}〜${p.to}）`); };
 }
@@ -806,6 +808,11 @@ document.addEventListener('click', e => {
 function ftText(w){ return w.ft ? w.ft.replace(/[\[\]]/g, '') : w.tr; }
 /* 語呂合わせ（words.js の g）。覚え方の下に1行だけ */
 function goroHTML(w){ return w.g ? `<div class="goro"><b>語呂</b>${esc(w.g)}</div>` : ''; }
+/* イメージ画像（塾生Vczzの声）：kobun/img/NNN.jpg。あるものの番号を img/index.json に入れておき、ない語は何も出さない */
+let AIMG = null;
+fetch('img/index.json?v=' + VER).then(r => r.ok ? r.json() : null).then(j => { if(j) AIMG = new Set(j.map(String)); }).catch(() => {});
+function imgHTML(i){ const no = pad3(i + 1); return AIMG && AIMG.has(no) ? `<img class="cimg" src="img/${no}.jpg?v=${VER}" alt="${esc(W[i].w)} のイメージ" loading="lazy" onload="growCard(this)">` : ''; }
+function growCard(el){ const fin = el.closest('.fc-in'); if(!fin) return; const back = fin.querySelector('.fc-face.back'); fin.style.minHeight = '0px'; fin.style.minHeight = Math.max(340, back.scrollHeight + 2) + 'px'; }
 function pname(p){ return ({'名':'名詞','動':'動詞','形':'形容詞','形動':'形容動詞','副':'副詞','連体':'連体詞','接':'接続詞','感':'感動詞','連語':'連語'})[p] || p || ''; }
 function openWord(i, list){
   const w = W[i], s = S.w[i] || { c:0, x:0, sk:0 };
@@ -813,6 +820,7 @@ function openWord(i, list){
     <div style="margin-top:12px"><div style="font-family:var(--mincho);font-weight:900;font-size:26px">${esc(w.w)} <span class="dim" style="font-size:15px">${esc(w.k)}　${esc(pname(w.p))}</span></div>
     <div style="color:var(--shu);font-weight:700;font-size:19px">${esc(w.m)}</div>
     ${w.s.length ? `<div class="dim">ほかの意味：${w.s.map(esc).join('／')}</div>` : ''}</div>
+    ${imgHTML(i)}
     <div class="note" style="margin-top:10px"><b>覚え方</b>　${esc(w.tip)}${goroHTML(w)}</div>
     ${w.ex ? `<p style="margin:10px 0 0"><span style="font-family:var(--mincho);font-weight:700">${exHTML(w)}</span><br>${ftBox(w)}</p>` : ''}
     <p class="dim">テスト：正解 ${s.c}回・まちがい ${s.x}回${s.due ? `・<b style="color:var(--shu)">リマインド ${md(s.due)}</b>` : ''}${isMastered(i) ? '・<b style="color:var(--ok)">定着</b>' : ''}</p>
@@ -897,7 +905,7 @@ function drawLesson(){
   const ov = $('.ov'), i = L.ids[L.k];
   ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">1分解説　${L.k+1} / ${L.ids.length}</div>${ctmHTML()}</div>
     <div class="ovbody"><div class="lcard">${slideHTML(i)}
-      <div class="cap">${lessonParts(i).filter(p => p.sec === 'tip' || p.sec === 'ex').map(p => `<div class="cp" data-sec="${p.sec}">${p.show}</div>`).join('')}</div></div>
+      <div class="cap">${imgHTML(i)}${lessonParts(i).filter(p => p.sec === 'tip' || p.sec === 'ex').map(p => `<div class="cp" data-sec="${p.sec}">${p.show}</div>`).join('')}</div></div>
       <div class="ctrl"><button class="playb" data-a="play"></button>
         <div class="lbar"><div class="pbar"><i style="width:0%"></i></div><span class="lt">0:00 / 1:00</span></div></div>
       <div class="nav"><button class="btn sub" data-a="prev" ${L.k ? '' : 'disabled style="opacity:.4"'}>‹ 前</button><button class="btn sub" data-a="next" ${L.k < L.ids.length-1 ? '' : 'disabled style="opacity:.4"'}>次 ›</button></div>
@@ -1025,6 +1033,7 @@ function drawCard(){
         <div class="fc-face front"><span class="no">No.${i+1}　${esc(pname(w.p))}</span><div class="w">${esc(w.w)}</div><div class="k">${esc(w.k)}</div><div class="hint">タップでうら返す</div></div>
         <div class="fc-face back"><div class="bw">${esc(w.w)} <span class="dim" style="font-size:14px;font-family:'BIZ UDPGothic'">${esc(w.k)}</span></div>
           <div class="bm">${esc(w.m)}</div>${w.s.length ? `<div class="bs">ほかに：${w.s.map(esc).join('／')}</div>` : ''}
+          ${imgHTML(i)}
           ${w.g ? `<div class="bg"><b>語呂</b>${esc(w.g)}</div>` : ''}
           <div class="bt"><b>覚え方</b>　${esc(w.tip)}</div>
           ${w.ex ? `<div class="bx"><span class="ex">${exHTML(w)}</span><br>${ftBox(w)}</div>` : ''}</div>
@@ -1269,7 +1278,8 @@ function finishTest(){
         <div class="dim" style="margin-top:12px">まちがえた単語は、<b>明日のリマインドテスト</b>に出ます。</div>
         <div class="wlist wrongs">${wrong.map(i => `<button class="wrow" data-i="${i}"><span class="no">${i+1}</span><span class="wd">${esc(W[i].w)}</span><span class="mn">${esc(W[i].m)}</span></button>`).join('')}</div>`
       : `<div class="note" style="text-align:center">全問正解！</div>`}
-      <button class="btn line" data-a="copy" style="margin-top:10px">今日の記録を報告用にコピー</button>
+      ${reportFor(today()) ? `<h3 style="margin:16px 2px 0;font-size:15px">今日の記録（報告用）</h3><pre class="rep">${esc(reportFor(today()))}</pre>` : ''}
+      <button class="btn line" data-a="copy" style="margin-top:8px">今日の記録を報告用にコピー</button>
       <button class="btn sub" data-a="x2">おわる</button>
     </div>`;
   T = null;
@@ -1344,7 +1354,7 @@ function renderLog(){
     <h2>覚える時間・テストの記録（自動）</h2>
     <div class="card" style="padding:8px 12px">${rows.length ? `<table class="log"><tr><th>日付</th><th>内容</th><th style="text-align:right">正答率</th><th style="text-align:right">時間</th></tr>
       ${rows.slice(0, 250).map(t => { if(t.type === 'study') return `<tr><td>${md(t.d)}<br><span class="dim">${new Date(t.at).toTimeString().slice(0,5)}</span></td><td>${t.kind ? KIND[t.kind] + 'で覚えた' : '覚える時間'}<br><span class="dim">${esc(t.label)}</span></td><td class="r dim">—</td><td class="r"><b>${fmtSec(t.secs)}</b></td></tr>`; const r = t.ok/t.n; return `<tr><td>${md(t.d)}<br><span class="dim">${new Date(t.at).toTimeString().slice(0,5)}</span></td><td>${esc(t.label)}<br><span class="dim">${t.n}問・${TYPE[t.type]||''}</span></td><td class="r"><span class="rate ${r>=.9?'hi':r<.7?'lo':''}">${Math.round(r*100)}%</span><br><span class="dim">${t.ok}/${t.n}</span></td><td class="r">${fmtSec(t.secs)}<br><span class="dim">${(t.secs/t.n).toFixed(1)}秒/問</span></td></tr>`; }).join('')}</table>` : '<p class="dim">まだテストの記録はありません。テストを解くと、日付・問題数・正答率・時間が自動でここに入ります。</p>'}</div>
-    ${rows.length ? '<button class="btn line" id="logCopy">今日の記録を報告用にコピー</button>' : ''}`;
+    ${reportFor(today()) ? `<h2>今日の記録（報告用）</h2><pre class="rep">${esc(reportFor(today()))}</pre><button class="btn line" id="logCopy" style="margin-top:8px">この記録をコピー</button>` : ''}`;
   bindGrid(el);
   if($('#logCopy')) $('#logCopy').onclick = () => {
     const t = reportFor(today());

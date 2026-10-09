@@ -158,6 +158,18 @@ nav.tabs button.make svg{ width:26px; height:26px; stroke-width:2.6; }
 
 /* かく */
 .stage{ flex:1; display:flex; align-items:center; justify-content:center; padding:4px 12px; min-height:0; }
+.ebody{ flex:1; display:flex; flex-direction:column; min-height:0; }
+.ed .stage{ padding:2px 8px; min-width:0; }
+.ed .ptop{ padding-bottom:4px; }
+.ed .tools{ padding:6px 8px calc(8px + var(--safe-b)); }
+/* 横長の画面（iPad の横向きなど）：道具を 左に たてに ならべて、紙を 上から下まで つかう */
+@media (orientation:landscape) and (min-width:700px){
+  .ed .ebody{ flex-direction:row-reverse; }
+  .ed .tools{ padding:4px 0 calc(8px + var(--safe-b)) 10px; display:flex; align-items:center; }
+  .ed .tools .in{ flex-direction:column; flex-wrap:nowrap; width:auto; padding:8px 6px; gap:6px; }
+  .ed .tsep{ width:30px; height:1px; }
+  .ed .tool{ flex-direction:column; gap:0; height:auto; min-height:44px; padding:4px 6px; font-size:12px; }
+}
 .cv{ position:relative; background:#fff; border-radius:6px; box-shadow:0 6px 24px -8px rgba(40,30,10,.35); touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 .cv canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; border-radius:6px; touch-action:none; }
 .tools{ padding:8px 10px calc(10px + var(--safe-b)); }
@@ -246,6 +258,81 @@ nav.tabs button.make svg{ width:26px; height:26px; stroke-width:2.6; }
 .sl-nav .dots i{ border-color:var(--faint); width:8px; height:8px; }
 .sl-nav .dots i.on{ background:var(--blue); border-color:var(--blue); }
 
+/* ブルポ帳（冊）v4 */
+.bsum{ display:flex; flex-wrap:wrap; gap:6px; margin:-6px 0 14px; }
+.bsum span{ background:var(--paper); border:1.5px solid var(--line); border-radius:999px; padding:2px 12px; font-size:14.5px; font-weight:700; }
+.btag{ display:inline-block; background:var(--blue-soft); color:var(--blue-d); border-radius:999px; padding:2px 11px; font-size:13.5px; font-weight:700; margin:0 6px 4px 0; }
+.th-tag{ position:absolute; top:8px; left:8px; margin:0; max-width:70%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; box-shadow:0 1px 4px rgba(0,0,0,.12); }
+.btop{ display:flex; align-items:center; gap:8px; margin-top:10px; }
+.btop .sp{ flex:1; }
+.bchips{ flex:1; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:2px; }
+.bchips::-webkit-scrollbar{ display:none; }
+.bchips button{ flex:none; border:1.5px solid var(--line); background:var(--paper); border-radius:999px; padding:6px 14px; font-weight:700; font-size:14.5px; color:var(--muted); }
+.bchips button.on{ border-color:var(--blue); background:var(--blue-soft); color:var(--blue-d); }
+.prbtn{ flex:none; display:inline-flex; align-items:center; gap:5px; border:1.5px solid var(--line); background:var(--paper); border-radius:999px; padding:6px 13px; font-weight:700; font-size:14.5px; box-shadow:var(--sh); }
+.prbtn svg{ width:19px; height:19px; }
+.bpick{ display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:8px; }
+.bpick button{ display:flex; align-items:center; gap:8px; border:2px solid var(--line); background:var(--paper); border-radius:14px; padding:12px; font-family:var(--kl); font-weight:600; font-size:18px; text-align:left; }
+.bpick button svg{ color:var(--faint); }
+.bpick button.on{ border-color:var(--blue); background:var(--blue-soft); color:var(--blue-d); }
+.bpick button.on svg{ color:var(--blue); }
+.bset{ border:1.5px solid var(--line); border-radius:14px; padding:10px 12px 8px; margin:10px 0; background:#fff; }
+.bset .gaprow{ margin:6px 0 4px; }
+.wkd{ display:flex; gap:6px; margin:4px 0 8px; }
+.wkd button{ flex:1; border:2px solid var(--line); border-radius:12px; padding:8px 0; font-weight:700; background:var(--paper); }
+.wkd button.on{ border-color:var(--blue); background:var(--blue); color:#fff; }
+
+/* いんさつ（v4・セリナ母の要望）。画面の見本と 印刷は 同じ中身（.paper） */
+.prl{ display:grid; gap:8px; margin-top:10px; }
+.prl label{ display:flex; align-items:center; gap:10px; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; padding:8px 10px; }
+.prl input{ width:22px; height:22px; accent-color:var(--blue); flex:none; }
+.prl img{ width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid var(--line); background:#fff; flex:none; }
+.prl .tx{ flex:1; min-width:0; }
+.prl .tx b{ display:block; font-family:var(--kl); font-weight:600; font-size:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.prl .tx small{ color:var(--muted); font-size:13px; font-weight:700; }
+.chipsr{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.chipsr button{ border:1.5px solid var(--line); background:var(--paper); border-radius:999px; padding:6px 13px; font-weight:700; font-size:14px; }
+.chipsr button.on{ border-color:var(--blue); background:var(--blue-soft); color:var(--blue-d); }
+.swr{ display:flex; align-items:center; gap:10px; margin-top:12px; font-weight:700; font-size:15px; }
+.swr span{ flex:1; }
+.tg{ width:52px; height:30px; border-radius:999px; background:#C9CED8; position:relative; flex:none; transition:.15s; }
+.tg::after{ content:''; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:.15s; }
+.tg.on{ background:var(--blue); }
+.tg.on::after{ left:25px; }
+.prprev{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; margin-top:8px; color:#000; font-size:12px; }
+#printArea{ display:none; }
+.paper{ color:#000; font-family:var(--go); }
+.paper .ph{ display:flex; align-items:baseline; justify-content:space-between; border-bottom:1.5px solid #000; padding-bottom:4px; margin-bottom:10px; }
+.paper .ph b{ font-family:var(--kl); font-weight:600; font-size:1.5em; }
+.paper .ph span{ font-size:1em; }
+.paper .pq{ display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
+.paper .pc{ border:1px solid #888; border-radius:8px; padding:8px 10px; break-inside:avoid; page-break-inside:avoid; }
+.paper .pc.wide{ grid-column:1 / -1; }
+.paper .pn{ display:inline-grid; place-items:center; width:1.9em; height:1.9em; border:1.5px solid #000; border-radius:50%; font-weight:700; margin-right:6px; vertical-align:middle; }
+.paper .pt{ font-family:var(--kl); font-weight:600; font-size:1.7em; vertical-align:middle; word-break:break-all; }
+.paper .pc img{ display:block; max-width:100%; max-height:60mm; margin:6px auto 0; object-fit:contain; }
+.paper .pc img.look{ max-height:34mm; }
+.paper .pl{ font-size:.95em; margin:4px 0 0; }
+.paper .masu{ display:flex; gap:0; margin-top:8px; }
+.paper .masu i{ width:16mm; height:16mm; border:1px solid #666; margin-left:-1px; background:linear-gradient(#ccc,#ccc) center/100% 1px no-repeat, linear-gradient(90deg,#ccc,#ccc) center/1px 100% no-repeat; }
+.paper .masu i:first-child{ margin-left:0; }
+.paper .ans{ break-before:page; page-break-before:always; margin-top:16px; }
+.prprev .ans{ border-top:2px dashed #999; padding-top:12px; }
+.paper .pa{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+.paper .pa div{ border:1px solid #888; border-radius:8px; padding:6px; text-align:center; break-inside:avoid; page-break-inside:avoid; }
+.paper .pa img{ display:block; width:100%; max-height:52mm; object-fit:contain; }
+.paper .pa small{ display:block; font-size:.9em; margin-top:2px; }
+.prprev .masu i{ width:30px; height:30px; }
+.prprev .pc img{ max-height:160px; }
+.prprev .pc img.look{ max-height:90px; }
+.prprev .pa img{ max-height:130px; }
+@media print{
+  @page{ margin:12mm; }
+  html, body{ background:#fff !important; min-height:0; padding:0 !important; }
+  body > *:not(#printArea){ display:none !important; }
+  #printArea{ display:block !important; font-size:10.5pt; }
+}
+
 .row{ display:flex; align-items:center; gap:10px; }
 .row .sp{ flex:1; }
 textarea{ width:100%; min-height:80px; border-radius:12px; border:1.5px solid var(--line); padding:10px; font-size:14px; background:#fff; }
@@ -278,10 +365,11 @@ textarea{ width:100%; min-height:80px; border-radius:12px; border:1.5px solid va
     <div class="card">
       <h2>おうちの方へ</h2>
       <p class="dim" style="font-size:15px">ブルポは、この端末の中だけに保存されます（どこにも送られません）。</p>
-      <h3>ブルポが出てくる間隔</h3>
-      <p style="font-size:15px">練習した日から数えて、この日にまた出てきます。全部つづけて◯なら「おぼえた」になります（✕なら翌日からやり直し）。</p>
-      <div class="gaprow" id="gapNow"></div>
-      <button class="btn btn-line btn-small" id="btnGaps">間隔を変える</button>
+      <h3>ブルポ帳と、出てくる間隔</h3>
+      <p style="font-size:15px">練習した日から数えて、この日にまた出てきます。全部つづけて◯なら「おぼえた」になります（✕なら翌日からやり直し）。教科や問題集ごとにブルポ帳を分けると、それぞれ間隔を変えられます。</p>
+      <div id="bookList"></div>
+      <button class="btn btn-line btn-small" id="btnAddBook">＋ ブルポ帳をふやす</button>
+      <div id="pushBox"></div>
       <h3>ホーム画面に追加</h3>
       <p id="instState" style="font-size:15px"></p>
       <button class="btn btn-line btn-small" id="btnInstall2">やり方を見る</button>
@@ -320,7 +408,7 @@ textarea{ width:100%; min-height:80px; border-radius:12px; border:1.5px solid va
 
 <script>
 'use strict';
-const VER = 3;
+const VER = 4;
 const APP_NAME = 'ブルポ帳';
 const KEY = 'burupo_v1', BK = 'burupo_backup';
 /* 出てくる間隔。子どもは さわらない（はじめは ふつうのまま）。おうちの方が せっていで かえられる。
@@ -334,7 +422,22 @@ const GAP_PRESETS = [
 const GAP_CHOICES = [1, 2, 3, 4, 5, 7, 10, 14, 21, 30, 45, 60, 90, 120, 180, 365];
 const GAP_MIN = 2, GAP_MAX = 8;
 const okGaps = a => Array.isArray(a) && a.length >= GAP_MIN && a.length <= GAP_MAX && a.every(n => Number.isInteger(n) && n >= 1 && n <= 365);
-const gaps = () => okGaps(S.gaps) ? S.gaps : GAPS_STD;
+/* ブルポ帳は 何冊でも つくれる（v4・セリナ母「問題集や教科ごとに間隔を変えたい」）。
+   1冊だけの あいだは、子どもには 冊の ことは なにも 見せない。間隔・曜日は 冊ごと（おうちの方が せっていで） */
+const BOOK_NAME_MAX = 12;
+const bookOf = it => S.books.find(b => b.id === it.book) || S.books[0];
+const gapsB = b => okGaps(b && b.gaps) ? b.gaps : GAPS_STD;
+const gapsOf = it => gapsB(bookOf(it));
+const multiBook = () => S.books.length > 1;
+const okWk = a => Array.isArray(a) && a.length > 0 && a.every(n => Number.isInteger(n) && n >= 0 && n <= 6);
+/* 2回目からは、間隔の日数が たった あとの、いちばん近い「えらんだ曜日」に でてくる（間隔は みじかく ならない）。
+   1回目（あした）と、まちがえた あとの やりなおしは いつもどおり（Essence v32 と おなじ） */
+function snapDay(d, b){
+  if(!b || !okWk(b.wk)) return d;
+  let x = d;
+  for(let i = 0; i < 7; i++){ if(b.wk.includes(parseD(x).getDay())) return x; x = addDays(x, 1); }
+  return d;
+}
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -361,6 +464,8 @@ const ICO = {
   crop: '<svg viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>',
   install: '<svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M12 7v7"/><path d="m9 11.5 3 3 3-3"/></svg>',
   save: '<svg viewBox="0 0 24 24"><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/></svg>',
+  print: '<svg viewBox="0 0 24 24"><path d="M7 9V3.5h10V9"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/></svg>',
+  bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>',
 };
 /* はなまる：まん中の うずまき＋まわりに 小さな わっか（花びら）。線は計算で作る */
 const HANAMARU = (() => {
@@ -390,22 +495,35 @@ function whenText(s){
 }
 
 /* ===================== データ ===================== */
+function normBook(b){
+  const o = { id:String(b.id), name:String(b.name || '').trim().slice(0, BOOK_NAME_MAX) || 'ブルポ帳' };
+  if(okGaps(b.gaps) && b.gaps.join() !== GAPS_STD.join()) o.gaps = [...b.gaps];
+  if(okWk(b.wk)) o.wk = [...new Set(b.wk)];
+  return o;
+}
 function norm(j){
   j = j && typeof j === 'object' ? j : {};
+  /* 冊（v3までは 1冊だけで、間隔は j.gaps に あった → 1冊目に うつす） */
+  const seen = new Set();
+  j.books = (Array.isArray(j.books) ? j.books : []).filter(b => b && b.id && !seen.has(String(b.id)) && seen.add(String(b.id))).map(normBook);
+  if(!j.books.length) j.books = [normBook({ id:'k', name:'かんじ', gaps:j.gaps })];
+  delete j.gaps;
+  const ids = new Set(j.books.map(b => b.id));
   j.items = Array.isArray(j.items) ? j.items.filter(x => x && x.id && x.img) : [];
   j.items.forEach(it => {
     it.q = typeof it.q === 'string' ? it.q : '';
     it.stage = Number(it.stage) || 0;
     it.created = it.created || today();
     it.qImg = typeof it.qImg === 'string' ? it.qImg : '';
-    it.due = it.due || addDays(it.created, (okGaps(j.gaps) ? j.gaps : GAPS_STD)[0]);
+    if(!ids.has(it.book)) it.book = j.books[0].id;
+    it.due = it.due || addDays(it.created, gapsB(j.books.find(b => b.id === it.book))[0]);
     it.done = !!it.done; it.doneAt = it.doneAt || '';
     it.log = Array.isArray(it.log) ? it.log : [];
   });
   j.nextNo = Math.max(Number(j.nextNo) || 1, ...j.items.map(i => (Number(i.no) || 0) + 1), 1);
   j.items.forEach(it => { if(!it.no) it.no = j.nextNo++; });
   j.lastBackup = j.lastBackup || '';
-  if(!okGaps(j.gaps)) delete j.gaps;
+  if(!ids.has(j.lastBook)) j.lastBook = j.books[0].id;
   return j;
 }
 function load(){
@@ -418,6 +536,7 @@ let S = load();
 function save(){
   try{ const t = JSON.stringify(S); localStorage.setItem(KEY, t); localStorage.setItem(BK, t); }
   catch(e){ toast('ほぞんできませんでした（ようりょうが いっぱい かも）'); }
+  pushSync();
 }
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const byId = id => S.items.find(x => x.id === id);
@@ -426,27 +545,29 @@ const cmpDue = (a,b) => a.due < b.due ? -1 : a.due > b.due ? 1 : a.no - b.no;
 const todayList = () => active().filter(i => i.due <= today()).sort(cmpDue);
 const upcoming = () => active().filter(i => i.due > today()).sort(cmpDue);
 const mastered = () => S.items.filter(i => i.done);
-function addItem(img, q, qImg){
-  const it = { id:newId(), no:S.nextNo++, img, q:(q||'').trim(), qImg:qImg || '', created:today(), stage:0, due:addDays(today(), gaps()[0]), done:false, doneAt:'', log:[] };
+function addItem(img, q, qImg, book){
+  const b = S.books.find(x => x.id === book) || S.books[0];
+  const it = { id:newId(), no:S.nextNo++, book:b.id, img, q:(q||'').trim(), qImg:qImg || '', created:today(), stage:0, due:addDays(today(), gapsB(b)[0]), done:false, doneAt:'', log:[] };
+  S.lastBook = b.id;
   S.items.unshift(it); save(); return it;
 }
 /* かけた: 次の間隔へ。間隔の数だけ つづけて かけたら おぼえた */
 function markOk(it){
-  const G = gaps();
+  const G = gapsOf(it);
   it.log.push({ d:today(), ok:1 });
   it.stage++;
   if(it.stage >= G.length){ it.done = true; it.doneAt = today(); it.due = ''; }
-  else it.due = addDays(today(), G[it.stage]);
+  else it.due = snapDay(addDays(today(), G[it.stage]), bookOf(it));
   save();
 }
 /* まちがえた: あしたから やりなおし */
 function markMiss(it){
   it.log.push({ d:today(), ok:0 });
-  it.stage = 0; it.done = false; it.doneAt = ''; it.due = addDays(today(), gaps()[0]);
+  it.stage = 0; it.done = false; it.doneAt = ''; it.due = addDays(today(), gapsOf(it)[0]);
   save();
 }
-function reopen(it){ it.stage = 0; it.done = false; it.doneAt = ''; it.due = addDays(today(), gaps()[0]); save(); }
-const dotsHtml = it => `<span class="dots">${gaps().map((_, k) => `<i class="${k < it.stage || it.done ? 'on' : ''}"></i>`).join('')}</span>`;
+function reopen(it){ it.stage = 0; it.done = false; it.doneAt = ''; it.due = addDays(today(), gapsOf(it)[0]); save(); }
+const dotsHtml = it => `<span class="dots">${gapsOf(it).map((_, k) => `<i class="${k < it.stage || it.done ? 'on' : ''}"></i>`).join('')}</span>`;
 /* 間隔の よびかた（子ども向けは ひらがな、おうちの方向けは ふつうの日本語） */
 function gapWord(n, adult){
   if(n === 1) return adult ? '翌日' : 'あした';
@@ -456,13 +577,13 @@ function gapWord(n, adult){
   if(n >= 7 && n % 7 === 0) return adult ? `${n/7}週間後` : `${n/7}しゅうかんご`;
   return adult ? `${n}日後` : `${n}日ご`;
 }
-/* 間隔を かえたとき：すでに さいごの 段まで すすんでいる ブルポは、あと1回 かけたら おぼえた に */
-function setGaps(G){
-  if(!okGaps(G) || G.join() === GAPS_STD.join()) delete S.gaps; else S.gaps = [...G];
-  const L = gaps().length;
-  S.items.forEach(it => { if(!it.done && it.stage >= L) it.stage = L - 1; });
-  save();
+/* 間隔を かえたとき・べつの冊に うつしたとき：すでに さいごの 段まで すすんでいる ブルポは、あと1回 かけたら おぼえた に */
+function clampStages(){
+  S.items.forEach(it => { const L = gapsOf(it).length; if(!it.done && it.stage >= L) it.stage = L - 1; });
 }
+const WD_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const wkText = a => WD_ORDER.filter(d => a.includes(d)).map(d => WD[d]).join('・');
+const bookTag = it => multiBook() ? `<span class="btag">${esc(bookOf(it).name)}</span>` : '';
 
 /* ===================== 写真の保存（IndexedDB） ===================== */
 const DB = 'burupo', STORE = 'imgs';
@@ -546,11 +667,99 @@ async function keepAwake(){
 }
 function letSleep(){ try{ if(wakeLock) wakeLock.release(); }catch(e){} wakeLock = null; }
 
+/* ===================== アイコンの 数字（バッジ） =====================
+   娘さん（10/9）「今日のタスクがあるときは、アプリのアイコンにバッジがついたら嬉しい」。
+   ・アプリを ひらいている あいだは、ここで「きょうの まいすう」を つける／けす。
+   ・とじている あいだ（あさ）に つけるには、サーバー（PUSH_URL）から 毎朝 しらせる。
+     サーバーに おくるのは「日づけごとの まいすう」だけ（ブルポの 中身・なまえは おくらない）。
+   iPhone・iPad は「通知を許可」しないと 数字が でない（Apple の きまり）ので、おうちの方が せっていで オンにする。 */
+const PUSH_URL = '';
+const PUSH_FLAG = 'burupo_push', PUSH_SENT = 'burupo_push_sent';
+function setBadge(n){
+  try{
+    if(!navigator.setAppBadge) return;
+    (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {});
+  }catch(e){}
+}
+const pushOn = () => { try{ return localStorage.getItem(PUSH_FLAG) === '1' && 'Notification' in window && Notification.permission === 'granted'; }catch(e){ return false; } };
+const b64u = s => { s = s.replace(/-/g, '+').replace(/_/g, '/'); const b = atob(s + '='.repeat((4 - s.length % 4) % 4)); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+async function pushSub(make){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if(!sub && make){
+    const key = await (await fetch(PUSH_URL + '/key')).text();
+    sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:b64u(key.trim()) });
+  }
+  return sub;
+}
+/* 日づけごとの まいすう（60日先まで。すぎた日の ぶんは きょうに まとめる） */
+function dueCounts(){
+  const t = today(), end = addDays(t, 60), o = {};
+  for(const it of active()){ if(it.due > end) continue; const d = it.due < t ? t : it.due; o[d] = (o[d] || 0) + 1; }
+  return o;
+}
+let pushT = null;
+function pushSync(force){
+  if(!PUSH_URL || !pushOn()) return;
+  clearTimeout(pushT);
+  pushT = setTimeout(async () => {
+    try{
+      const dues = dueCounts(), sig = JSON.stringify(dues) + '|' + today();
+      if(!force && localStorage.getItem(PUSH_SENT) === sig) return;   // かわっていなければ おくらない
+      const sub = await pushSub(false); if(!sub) return;
+      const r = await fetch(PUSH_URL + '/sync', { method:'POST', headers:{ 'content-type':'application/json' },
+        body:JSON.stringify({ sub:sub.toJSON(), uid:(window.SGUsers && SGUsers.suffix) || 'u0', dues }) });
+      if(r.ok) localStorage.setItem(PUSH_SENT, sig);
+    }catch(e){}
+  }, force ? 0 : 1500);
+}
+function renderPushCard(){
+  const box = $('#pushBox'); if(!box) return;
+  if(!PUSH_URL){ box.innerHTML = ''; return; }
+  const can = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  const on = pushOn();
+  box.innerHTML = `<h3>アイコンに数字を出す</h3>
+    <p style="font-size:15px">その日のブルポがある朝（6時ごろ）に、ホーム画面のアイコンに枚数の数字がつき、通知でもお知らせします。ない日は何も出ません。お知らせのために送るのは「日付ごとの枚数」だけで、ブルポの中身・名前・写真は送りません。</p>
+    ${on ? `<p style="font-size:15px; color:var(--blue-d); font-weight:700">✓ オンになっています</p>
+        <div class="row" style="flex-wrap:wrap"><button class="btn btn-line btn-small" id="pushTest">${ICO.bell} ためしに送る</button><button class="btn btn-line btn-small" id="pushOff">オフにする</button></div>`
+      : !can ? `<p class="dim" style="font-size:14px">${deviceKind() === 'pc' ? 'この端末では使えません。' : '先にホーム画面に追加して、ホーム画面のアイコンから開くと使えます（iPhone・iPad は iOS 16.4 以降）。'}</p>`
+      : `<button class="btn btn-line btn-small" id="pushOn">${ICO.bell} オンにする</button>
+        <p class="dim" style="font-size:14px; margin-top:6px">「通知を許可しますか？」と出たら「許可」を押してください（数字を出すのに必要です）。</p>`}`;
+  const bOn = box.querySelector('#pushOn'), bOff = box.querySelector('#pushOff'), bT = box.querySelector('#pushTest');
+  if(bOn) bOn.onclick = async () => {
+    try{
+      const perm = await Notification.requestPermission();
+      if(perm !== 'granted') return toast('通知が許可されませんでした（端末の設定 → 通知 → ブルポ帳 で許可できます）');
+      await pushSub(true);
+      localStorage.setItem(PUSH_FLAG, '1'); localStorage.removeItem(PUSH_SENT);
+      pushSync(true); renderPushCard(); toast('オンにしました');
+    }catch(e){ toast('オンにできませんでした'); }
+  };
+  if(bOff) bOff.onclick = async () => {
+    try{
+      localStorage.removeItem(PUSH_FLAG); localStorage.removeItem(PUSH_SENT);
+      const sub = await pushSub(false);
+      /* 1台の 端末で きょうだいが つかっていても、しらせは 1つ。この人の ぶんだけ はずす */
+      if(sub) await fetch(PUSH_URL + '/remove', { method:'POST', headers:{ 'content-type':'application/json' }, body:JSON.stringify({ endpoint:sub.endpoint, uid:(window.SGUsers && SGUsers.suffix) || 'u0' }) });
+    }catch(e){}
+    setBadge(0); renderPushCard(); toast('オフにしました');
+  };
+  if(bT) bT.onclick = async () => {
+    try{
+      const sub = await pushSub(false); if(!sub) throw 0;
+      await fetch(PUSH_URL + '/sync', { method:'POST', headers:{ 'content-type':'application/json' }, body:JSON.stringify({ sub:sub.toJSON(), uid:(window.SGUsers && SGUsers.suffix) || 'u0', dues:dueCounts(), test:1 }) });
+      toast('送りました。少し待つと通知が来ます');
+    }catch(e){ toast('送れませんでした'); }
+  };
+}
+
 /* ===================== きょう ===================== */
 function renderToday(){
   const box = $('#tab-Today');
   const tl = todayList(), up = upcoming();
   $('#todayDot').classList.toggle('hidden', !tl.length);
+  setBadge(tl.length);
   let hero = '';
   if(!S.items.length){
     hero = `<div class="hero">
@@ -558,7 +767,7 @@ function renderToday(){
       <ul class="steps" style="margin-top:12px">
         <li><span class="n">1</span><div>まちがえた かんじを、<b>てがき</b>か<b>しゃしん</b>で ブルポに する</div></li>
         <li><span class="n">2</span><div>ちょうど いい 日に、ブルポが でてくる</div></li>
-        <li><span class="n">3</span><div>ノートに かいてみて、${gaps().length}かい つづけて かけたら <b>おぼえた！</b></div></li>
+        <li><span class="n">3</span><div>ノートに かいてみて、${gapsB(S.books[0]).length}かい つづけて かけたら <b>おぼえた！</b></div></li>
       </ul>
       <div class="btns" style="margin-top:16px"><button class="btn btn-blue" data-act="make">${ICO.pen} はじめての ブルポを つくる</button></div>
     </div>`;
@@ -566,6 +775,7 @@ function renderToday(){
     hero = `<div class="hero">
       <div class="lab">きょうの ブルポ</div>
       <div class="big"><b>${tl.length}</b><span>まい</span></div>
+      ${multiBook() ? `<p class="bsum">${S.books.map(b => [b, tl.filter(i => bookOf(i) === b).length]).filter(x => x[1]).map(([b, n]) => `<span>${esc(b.name)} ${n}</span>`).join('')}</p>` : ''}
       <button class="btn btn-blue" data-act="start">${ICO.play} れんしゅう する</button>
     </div>`;
   }else{
@@ -595,26 +805,35 @@ function renderToday(){
 }
 
 /* ===================== ブルポ帳（一覧） ===================== */
-let bookFilter = 'all';
+let bookFilter = 'all', bookSel = '';   // bookSel: '' = ぜんぶの冊
 function bookList(f){
-  const l = [...S.items].sort((a,b) => b.no - a.no);
+  const l = [...S.items].filter(i => !bookSel || bookOf(i).id === bookSel).sort((a,b) => b.no - a.no);
   if(f === 'active') return l.filter(i => !i.done);
   if(f === 'done') return l.filter(i => i.done);
   return l;
 }
 function renderBook(){
   const box = $('#tab-Book');
+  if(bookSel && !S.books.some(b => b.id === bookSel)) bookSel = '';
   const list = bookList(bookFilter);
-  const segs = [['all','ぜんぶ', S.items.length], ['active','れんしゅう', active().length], ['done','おぼえた', mastered().length]];
-  box.innerHTML = `<div class="seg">${segs.map(([k, t, n]) => `<button data-f="${k}" class="${bookFilter === k ? 'on' : ''}">${t} ${n}</button>`).join('')}</div>
+  const all = bookList('all');
+  const segs = [['all','ぜんぶ', all.length], ['active','れんしゅう', all.filter(i => !i.done).length], ['done','おぼえた', all.filter(i => i.done).length]];
+  box.innerHTML = `<div class="btop">
+      ${multiBook() ? `<div class="bchips">${[['', 'ぜんぶ'], ...S.books.map(b => [b.id, b.name])].map(([id, n]) => `<button data-b="${esc(id)}" class="${bookSel === id ? 'on' : ''}">${esc(n)}</button>`).join('')}</div>` : '<span class="sp"></span>'}
+      ${active().length ? `<button class="prbtn" data-print>${ICO.print} いんさつ</button>` : ''}
+    </div>
+    <div class="seg">${segs.map(([k, t, n]) => `<button data-f="${k}" class="${bookFilter === k ? 'on' : ''}">${t} ${n}</button>`).join('')}</div>
     ${list.length ? `<div class="grid">${list.map(it => `<button class="pg" data-view="${it.id}">
         <div class="th"><img data-img="${it.img}" alt=""></div>
         ${it.done ? '<span class="stamp">おぼえた</span>' : ''}
+        ${multiBook() && !bookSel ? `<span class="btag th-tag">${esc(bookOf(it).name)}</span>` : ''}
         <div class="meta"><div class="q">${esc(it.q) || (it.qImg ? '<span class="dim">しゃしんの もんだい</span>' : '<span class="dim">　</span>')}</div>
         <div class="no"><span>${it.no}ページ</span>${dotsHtml(it)}</div></div>
       </button>`).join('')}</div>`
     : `<div class="empty">${S.items.length ? 'ここには まだ ないよ' : 'まだ ブルポが ないよ。<br>下の「つくる」から はじめよう'}</div>`}`;
   box.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { bookFilter = b.dataset.f; renderBook(); });
+  box.querySelectorAll('[data-b]').forEach(b => b.onclick = () => { bookSel = b.dataset.b; renderBook(); });
+  const pb = box.querySelector('[data-print]'); if(pb) pb.onclick = openPrint;
   box.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { const ids = list.map(i => i.id); openView(ids, ids.indexOf(b.dataset.view)); });
   fillImgs(box);
 }
@@ -733,13 +952,12 @@ function paper(ctx, W, H){
   ctx.stroke();
 }
 function openEditor(bgSrc, onDone, kind){
-  const W = bgSrc ? imW(bgSrc) : 1200, H = bgSrc ? imH(bgSrc) : 1200;
-  const p = openPage();
+  const p = openPage('ed');
   keepAwake();
   const title = kind === 'photo' ? 'あおペンで かきこもう' : kind === 'edit' ? 'かきたす' : 'ブルポを かこう';
   p.innerHTML = `<div class="ptop"><button class="icobtn" data-x>${ICO.close}</button><div class="t">${title}</div><button class="go" data-ok>できた</button></div>
     ${kind === 'photo' ? '<div class="hint">かきこまなくても だいじょうぶ。そのまま「できた」でも OK</div>' : ''}
-    <div class="stage"><div class="cv"><canvas class="bgc"></canvas><canvas class="ink"></canvas></div></div>
+    <div class="ebody"><div class="stage"><div class="cv"><canvas class="bgc"></canvas><canvas class="ink"></canvas></div></div>
     <div class="tools"><div class="in">
       ${PENS.map((pn, k) => `<button class="tool" data-pen="${k}" aria-label="${pn.n}"><span class="pen-dot" style="background:${pn.c}"></span></button>`).join('')}
       <span class="tsep"></span>
@@ -748,7 +966,16 @@ function openEditor(bgSrc, onDone, kind){
       <button class="tool" data-er>${ICO.eraser}けす</button>
       <button class="tool" data-undo>${ICO.undo}もどす</button>
       <button class="tool" data-clear>${ICO.trash}</button>
-    </div></div>`;
+    </div></div></div>`;
+  /* 書きこむ紙は、画面いっぱいの形に（v4・「書き込みスペースをもう少し大きく」）。
+     まっ白な紙は 画面の たて よこに あわせる（横長の iPad なら 横長の紙）。しゃしんは しゃしんの形のまま */
+  let W = 1200, H = 1200;
+  if(bgSrc){ W = imW(bgSrc); H = imH(bgSrc); }
+  else{
+    const st = p.querySelector('.stage'), aw = st.clientWidth - 16, ah = st.clientHeight - 8;
+    const r = aw > 50 && ah > 50 ? Math.max(0.6, Math.min(1.5, ah / aw)) : 1;
+    if(r < 1){ W = 1500; H = Math.round(1500 * r); } else { W = 1200; H = Math.round(1200 * r); }
+  }
   const cv = p.querySelector('.cv'), bgc = p.querySelector('.bgc'), ink = p.querySelector('.ink');
   bgc.width = ink.width = W; bgc.height = ink.height = H;
   const bx = bgc.getContext('2d'), ix = ink.getContext('2d');
@@ -757,7 +984,7 @@ function openEditor(bgSrc, onDone, kind){
   let cssW = 1;
   const fit = () => {
     const st = p.querySelector('.stage');
-    const aw = Math.min(st.clientWidth - 32, 1000), ah = st.clientHeight - 16;   // clientWidth は padding こみ
+    const aw = st.clientWidth - 16, ah = st.clientHeight - 8;   // clientWidth は padding こみ
     cssW = Math.max(100, Math.min(aw, ah * W / H));
     cv.style.width = Math.round(cssW)+'px'; cv.style.height = Math.round(cssW * H / W)+'px';
   };
@@ -850,14 +1077,24 @@ function qPhotoBox(box, cur, onChange){
   draw(cur);
 }
 
+/* ---- どの冊に いれるか（冊が 2つ いじょう の ときだけ 出す）。大きな ボタンで えらぶ ---- */
+function bookPicker(box, cur, onPick){
+  const draw = () => {
+    box.innerHTML = S.books.map(b => `<button data-bk="${esc(b.id)}" class="${b.id === cur ? 'on' : ''}">${ICO.book}<span>${esc(b.name)}</span></button>`).join('');
+    box.querySelectorAll('[data-bk]').forEach(x => x.onclick = () => { cur = x.dataset.bk; onPick(cur); draw(); });
+  };
+  draw();
+}
+
 /* ---- さいご：もんだい（ことば・しゃしん）を いれて ブルポ帳に いれる ---- */
 function openFinish(blob){
   const p = openPage('fin');
   const u = URL.createObjectURL(blob);
-  let qBlob = null;
+  let qBlob = null, book = S.lastBook;
   p.innerHTML = `<div class="ptop"><button class="icobtn" data-x>${ICO.back}</button><div class="t">さいごに</div><span style="width:42px"></span></div>
     <div class="pbody"><div class="in">
       <img src="${u}" alt="">
+      ${multiBook() ? `<label>どの ブルポ帳に いれる？</label><div class="bpick" id="finBook"></div>` : ''}
       <label for="finQ">なんの ブルポ？</label>
       <input id="finQ" maxlength="40" placeholder="れい：せかいの「かい」" autocomplete="off" enterkeyhint="done">
       <p class="dim" style="font-size:15px; margin:8px 2px 0">よみかたや ことばを いれると、れんしゅうの とき <b>もんだい</b>に なるよ。なくても だいじょうぶ。</p>
@@ -867,13 +1104,15 @@ function openFinish(blob){
       <div class="btns" style="margin-top:18px"><button class="btn btn-blue" data-ok>${ICO.book} ブルポ帳に いれる</button></div>
     </div></div>`;
   qPhotoBox(p.querySelector('#finQPh'), '', b => { qBlob = b; });
+  const fb = p.querySelector('#finBook');
+  if(fb) bookPicker(fb, book, id => { book = id; });
   const go = async () => {
     const id = newId(), qid = qBlob ? newId() : '';
     try{ await putImg(id, blob); if(qBlob) await putImg(qid, qBlob); }catch(e){ return toast('ほぞんできませんでした'); }
-    addItem(id, p.querySelector('#finQ').value, qid);
+    const it = addItem(id, p.querySelector('#finQ').value, qid, book);
     URL.revokeObjectURL(u); closePage(p);
     renderAll();
-    toast(`ブルポ帳に いれたよ！ ${whenText(addDays(today(), gaps()[0]))}から でてくるよ`);
+    toast(`${multiBook() ? `「${bookOf(it).name}」` : 'ブルポ帳'}に いれたよ！ ${whenText(it.due)}から でてくるよ`);
   };
   p.querySelector('[data-ok]').onclick = go;
   p.querySelector('#finQ').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing){ e.preventDefault(); e.target.blur(); } });
@@ -903,13 +1142,13 @@ function renderSes(){
   const done = Math.min(ses.i, ses.ids.length);
   let body = '';
   if(ses.phase === 'q'){
-    body = `<div class="qcard">${retry ? '<span class="retry">もう いちど</span>' : ''}
+    body = `<div class="qcard">${bookTag(it)}${retry ? '<span class="retry">もう いちど</span>' : ''}
       ${it.qImg ? `<img class="qimg qq" data-img="${it.qImg}" alt="">` : ''}
       ${it.q ? `<div class="qtext"${it.qImg ? ' style="font-size:26px"' : ''}>${esc(it.q)}</div>` : ''}
       <p class="guide">${it.qImg ? '<b>ノートに といてみよう</b>' : 'ブルポを おもいだして、<b>ノートに かいてみよう</b>'}</p>
       <button class="btn btn-blue" data-a="show">${ICO.eye} こたえを みる</button></div>`;
   }else if(ses.phase === 'look'){
-    body = `<div class="qcard">${retry ? '<span class="retry">もう いちど</span>' : ''}
+    body = `<div class="qcard">${bookTag(it)}${retry ? '<span class="retry">もう いちど</span>' : ''}
       <p class="guide" style="margin-top:0">よく みて、おぼえよう</p>
       <img class="qimg" data-img="${it.img}" alt="">
       <div class="btns"><button class="btn btn-blue" data-a="hide">${ICO.hide} かくして かいてみる</button></div></div>`;
@@ -987,7 +1226,7 @@ function openView(ids, start){
         ${it.qImg ? `<div class="vlab">もんだい</div><img class="vimg" style="max-height:34vh" data-img="${it.qImg}" alt=""><div class="vlab">ブルポ</div>` : ''}
         <img class="vimg" data-img="${it.img}" alt="">
         <div class="vq">${esc(it.q)}</div>
-        <div class="vinfo">${dotsHtml(it)}${state}</div>
+        <div class="vinfo">${bookTag(it)}${dotsHtml(it)}${state}</div>
         <div class="vnav"><button data-p ${i ? '' : 'disabled'}>${ICO.back}</button><span>${i + 1} / ${ids.length}</span><button data-n ${i < ids.length - 1 ? '' : 'disabled'}>${ICO.next}</button></div>
         <div class="vacts">
           <button class="btn btn-blue btn-small" style="width:100%" data-practice>${ICO.play} れんしゅう</button>
@@ -1005,17 +1244,21 @@ function openView(ids, start){
     p.querySelector('[data-practice]').onclick = () => { closePage(p); startSession([it.id]); };
     p.querySelector('[data-q]').onclick = async () => {
       /* undefined = かえない、null = はずす、Blob = あたらしい しゃしん */
-      let nb;
+      let nb, nBook = bookOf(it).id;
       const cur = it.qImg ? await imgUrl(it.qImg) : '';
       const bg = openSheet(`<h2>もんだいを なおす</h2>
         <div class="fin"><label for="edQ" style="margin-top:0">なんの ブルポ？</label>
         <input id="edQ" maxlength="40" autocomplete="off" enterkeyhint="done" value="${esc(it.q)}">
         <label>もんだいの しゃしん</label></div>
         <div id="edQPh"></div>
+        ${multiBook() ? `<div class="fin"><label>ブルポ帳</label></div><div class="bpick" id="edBook"></div>` : ''}
         <div class="btns" style="margin-top:16px"><button class="btn btn-blue" data-sv>なおす</button></div>`);
       qPhotoBox(bg.querySelector('#edQPh'), cur, b => { nb = b; });
+      const eb = bg.querySelector('#edBook');
+      if(eb) bookPicker(eb, nBook, id => { nBook = id; });
       bg.querySelector('[data-sv]').onclick = async () => {
         it.q = bg.querySelector('#edQ').value.trim().slice(0, 40);
+        if(nBook !== it.book){ it.book = nBook; clampStages(); }
         if(nb !== undefined){
           const old = it.qImg, nid = nb ? newId() : '';
           if(nb){ try{ await putImg(nid, nb); }catch(e){ return toast('ほぞんできませんでした'); } }
@@ -1060,21 +1303,174 @@ function openView(ids, start){
   draw();
 }
 
+/* ===================== いんさつ =====================
+   セリナ母（10/9）「Essence のように問題を印刷したい」。えらんだ ブルポの もんだいを 紙に。
+   ことばの もんだい → ことば＋かく ます／しゃしんの もんだい → しゃしん（白黒くっきり）／もんだい なし → ブルポを 見て かく。
+   こたえ（ブルポ）は さいごの ページに まとめて（色のまま。青ペン・赤ペンが ブルポの いのち なので） */
+let prSel = new Set(), prAns = true, prClean = true;
+/* 写真を「スキャンしたような白黒」に（Essence v28 と同じ しくみ）。もんだいの しゃしん だけに つかう */
+const cleanCache = new Map();
+async function cleanUrl(id){
+  if(cleanCache.has(id)) return cleanCache.get(id);
+  const src = await imgUrl(id); if(!src) return '';
+  let im;
+  try{ im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }catch(e){ return src; }
+  const W = im.naturalWidth, H = im.naturalHeight;
+  if(!W || !H) return src;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d', { willReadFrequently:true }); g.drawImage(im, 0, 0);
+  const d = g.getImageData(0, 0, W, H), px = d.data, n = W * H;
+  const L = new Float32Array(n);
+  for(let i = 0, j = 0; i < n; i++, j += 4) L[i] = 0.299*px[j] + 0.587*px[j+1] + 0.114*px[j+2];
+  const B = Math.max(12, Math.round(Math.max(W, H) / 80)), gw = Math.ceil(W / B), gh = Math.ceil(H / B);
+  let bg = new Float32Array(gw * gh);
+  const buf = [];
+  for(let by = 0; by < gh; by++) for(let bx = 0; bx < gw; bx++){
+    buf.length = 0;
+    const x1 = Math.min(W, (bx+1)*B), y1 = Math.min(H, (by+1)*B);
+    for(let y = by*B; y < y1; y += 2) for(let x = bx*B; x < x1; x += 2) buf.push(L[y*W + x]);
+    buf.sort((a, b) => b - a);
+    bg[by*gw + bx] = buf[Math.floor(buf.length * 0.2)] || 255;
+  }
+  const nb = new Float32Array(gw * gh);
+  for(let y = 0; y < gh; y++) for(let x = 0; x < gw; x++){
+    let s = 0, k = 0;
+    for(let dy = -1; dy <= 1; dy++) for(let dx = -1; dx <= 1; dx++){ const xx = x+dx, yy = y+dy; if(xx >= 0 && yy >= 0 && xx < gw && yy < gh){ s += bg[yy*gw + xx]; k++; } }
+    nb[y*gw + x] = s / k;
+  }
+  bg = nb;
+  const LO = 0.5, HI = 0.86;
+  for(let y = 0; y < H; y++){
+    const fy = Math.min(gh - 1, Math.max(0, y / B - 0.5)), y0 = Math.floor(fy), y1 = Math.min(gh - 1, y0 + 1), ty = fy - y0;
+    for(let x = 0; x < W; x++){
+      const fx = Math.min(gw - 1, Math.max(0, x / B - 0.5)), x0 = Math.floor(fx), x1 = Math.min(gw - 1, x0 + 1), tx = fx - x0;
+      const b = (bg[y0*gw+x0]*(1-tx) + bg[y0*gw+x1]*tx)*(1-ty) + (bg[y1*gw+x0]*(1-tx) + bg[y1*gw+x1]*tx)*ty;
+      const r = L[y*W + x] / Math.max(b, 1);
+      let t = (r - LO) / (HI - LO); t = t < 0 ? 0 : t > 1 ? 1 : t;
+      const v = Math.round(255 * Math.pow(t, 1.4)), j = (y*W + x) * 4;
+      px[j] = px[j+1] = px[j+2] = v;
+    }
+  }
+  g.putImageData(d, 0, 0);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
+  const u = blob ? URL.createObjectURL(blob) : src;
+  cleanCache.set(id, u);
+  return u;
+}
+async function fillPrintImgs(root){
+  for(const el of root.querySelectorAll('img[data-pimg]:not([src])')){
+    const u = el.dataset.clean === '1' && prClean ? await cleanUrl(el.dataset.pimg) : await imgUrl(el.dataset.pimg);
+    if(u) el.src = u;
+  }
+}
+const masu = n => `<div class="masu">${'<i></i>'.repeat(n)}</div>`;
+function printHtml(items){
+  const who = window.SGUsers && SGUsers.many() ? '　' + esc(SGUsers.name()) : '';
+  const head = t => `<div class="ph"><b>ブルポ帳　${t}</b><span>${mdw(today())}${who}</span></div>`;
+  const cell = (it, k) => {
+    const no = `<span class="pn">${k + 1}</span>`;
+    if(it.qImg) return `<div class="pc wide">${no}${it.q ? `<span class="pt">${esc(it.q)}</span>` : ''}<img data-pimg="${it.qImg}" data-clean="1" alt=""></div>`;
+    if(it.q) return `<div class="pc">${no}<span class="pt">${esc(it.q)}</span>${masu(4)}</div>`;
+    return `<div class="pc">${no}<span class="pl">よく 見て、かくして かこう</span><img class="look" data-pimg="${it.img}" alt="">${masu(4)}</div>`;
+  };
+  return head(`もんだい ${items.length}`) + `<div class="pq">${items.map(cell).join('')}</div>`
+    + (prAns ? `<div class="ans">${head('こたえ')}<div class="pa">${items.map((it, k) => `<div><span class="pn">${k + 1}</span><img data-pimg="${it.img}" alt="">${it.q ? `<small>${esc(it.q)}</small>` : ''}</div>`).join('')}</div></div>` : '');
+}
+function printArea(){
+  let pa = $('#printArea');
+  if(!pa){ pa = document.createElement('div'); pa.id = 'printArea'; pa.className = 'paper'; document.body.appendChild(pa); }
+  return pa;
+}
+function openPrint(){
+  const act = active().slice().sort(cmpDue);
+  if(!act.length) return toast('いんさつ できる ブルポが ないよ');
+  const t = today(), wk = addDays(t, 7);
+  const Q = [['today', `きょう（${act.filter(i => i.due <= t).length}）`, i => i.due <= t],
+             ['week', `1週間いない（${act.filter(i => i.due <= wk).length}）`, i => i.due <= wk],
+             ...(multiBook() ? S.books.map(b => ['b:' + b.id, `${b.name}（${act.filter(i => bookOf(i) === b).length}）`, i => bookOf(i) === b]) : []),
+             ['all', `ぜんぶ（${act.length}）`, () => true]];
+  prSel = new Set(act.filter(i => i.due <= t).map(i => i.id));
+  const p = openPage();
+  p.innerHTML = `<div class="ptop"><button class="icobtn" data-x>${ICO.close}</button><div class="t">いんさつ する</div><button class="go" data-go>いんさつ</button></div>
+    <div class="pbody"><div class="in">
+      <p class="dim" style="font-size:15px; margin:0 2px">いんさつ したい ブルポに チェックを いれてね。もんだいと かく ますが でるよ。</p>
+      <div class="chipsr" id="prQ">${Q.map(([k, n]) => `<button data-q="${esc(k)}">${esc(n)}</button>`).join('')}<button data-q="none">はずす</button></div>
+      <div class="prl" id="prL">${act.map(it => `<label><input type="checkbox" data-id="${it.id}"><img data-img="${it.qImg || it.img}" alt="">
+        <span class="tx"><b>${esc(it.q) || (it.qImg ? 'しゃしんの もんだい' : 'ブルポを 見て かく')}</b><small>${it.no}ページ・${whenText(it.due)}${multiBook() ? '・' + esc(bookOf(it).name) : ''}</small></span></label>`).join('')}</div>
+      <div class="swr"><span>こたえ（ブルポ）を さいごの ページに つける</span><button class="tg" id="prAns" aria-label="きりかえ"></button></div>
+      <div class="swr"><span>もんだいの しゃしんを 白黒で くっきり</span><button class="tg" id="prClean" aria-label="きりかえ"></button></div>
+      <p class="dim" style="font-size:13.5px; margin:4px 2px 0">紙の色や かげを けして、白い 紙に 黒い 字に するよ。ブルポは 色の まま。</p>
+      <div class="vlab" style="margin-top:16px">いんさつの みほん</div>
+      <div class="prprev paper" id="prPrev"></div>
+      <div class="btns"><button class="btn btn-blue" data-go>${ICO.print} いんさつ する</button></div>
+    </div></div>`;
+  fillImgs(p.querySelector('#prL'));
+  const update = () => {
+    p.querySelectorAll('#prL input').forEach(c => { c.checked = prSel.has(c.dataset.id); });
+    const sel = act.filter(i => prSel.has(i.id));
+    p.querySelectorAll('#prQ [data-q]').forEach(b => {
+      const q = Q.find(x => x[0] === b.dataset.q), want = q ? act.filter(q[2]) : [];
+      b.classList.toggle('on', !!q && want.length > 0 && want.length === sel.length && want.every(i => prSel.has(i.id)));
+    });
+    p.querySelector('#prAns').classList.toggle('on', prAns);
+    p.querySelector('#prClean').classList.toggle('on', prClean);
+    const html = sel.length ? printHtml(sel) : '<p class="dim" style="text-align:center">ブルポを えらぶと、ここに みほんが でるよ</p>';
+    p.querySelector('#prPrev').innerHTML = html; printArea().innerHTML = sel.length ? html : '';
+    fillPrintImgs(p.querySelector('#prPrev')); fillPrintImgs(printArea());
+    p.querySelectorAll('[data-go]').forEach(b => { b.disabled = !sel.length; });
+    p.querySelector('.btns [data-go]').innerHTML = `${ICO.print} いんさつ する（${sel.length}まい）`;
+  };
+  p.querySelector('#prL').onchange = e => { const c = e.target.closest('input[data-id]'); if(!c) return; if(c.checked) prSel.add(c.dataset.id); else prSel.delete(c.dataset.id); update(); };
+  p.querySelector('#prQ').onclick = e => {
+    const b = e.target.closest('[data-q]'); if(!b) return;
+    const q = Q.find(x => x[0] === b.dataset.q);
+    prSel = new Set(q ? act.filter(q[2]).map(i => i.id) : []);
+    update();
+  };
+  p.querySelector('#prAns').onclick = () => { prAns = !prAns; update(); };
+  p.querySelector('#prClean').onclick = () => { prClean = !prClean; update(); };
+  p.querySelector('[data-x]').onclick = () => { printArea().innerHTML = ''; closePage(p); };
+  /* print は おした 直後に よぶ（しゃしんが まだ じゅんび中なら、もう一回 おしてもらう） */
+  p.querySelectorAll('[data-go]').forEach(b => b.onclick = () => {
+    if(!prSel.size) return toast('いんさつ する ブルポを えらんでね');
+    const imgs = [...printArea().querySelectorAll('img')];
+    if(imgs.some(i => !i.getAttribute('src') || !i.complete)) return toast('しゃしんを じゅんび しているよ。もう一回 おしてね');
+    if(typeof window.print !== 'function') return toast('この たんまつでは いんさつ できません');
+    window.print();
+  });
+  update();
+}
+
 /* ===================== せってい ===================== */
 function renderSet(){
   renderSlides();
   $('#instState').innerHTML = isInstalled() ? '✓ ホーム画面から開いています。' : '<b style="color:var(--red)">まだホーム画面に追加されていません。</b>追加しないと、しばらく開かない間にブルポが消えることがあります。';
   $('#bkState').textContent = S.lastBackup ? `最後に控えをとった日：${mdw(S.lastBackup)}` : (S.items.length ? 'まだ控えをとっていません。' : '');
   $('#verLabel').textContent = 'v' + VER;
-  const G = gaps();
-  $('#gapNow').innerHTML = G.map(n => `<span>${gapWord(n, true)}</span>`).join('') + `<span style="background:var(--red-soft); color:#8E2219">${G.length}回で おぼえた</span>`;
+  /* 冊ごとの 間隔と曜日 */
+  $('#bookList').innerHTML = S.books.map(b => {
+    const G = gapsB(b), n = S.items.filter(i => bookOf(i) === b).length;
+    return `<div class="bset"><div class="row"><b class="kl" style="font-size:18px">${esc(b.name)}</b><span class="dim" style="font-size:14px">${n}枚</span><span class="sp"></span><button class="btn btn-line btn-small" data-edbook="${esc(b.id)}">変える</button></div>
+      <div class="gaprow">${G.map(x => `<span>${gapWord(x, true)}</span>`).join('')}<span style="background:var(--red-soft); color:#8E2219">${G.length}回で おぼえた</span></div>
+      ${okWk(b.wk) ? `<p class="dim" style="font-size:14px; margin:0">2回目からは ${wkText(b.wk)}曜日にまとめて出てきます</p>` : ''}</div>`;
+  }).join('');
+  $$('#bookList [data-edbook]').forEach(x => x.onclick = () => openBookSet(S.books.find(b => b.id === x.dataset.edbook)));
+  renderPushCard();
 }
-/* 間隔を変える（おうちの方向け）：きまった形から えらぶ か、1つずつ えらぶ */
-function openGaps(){
-  let G = [...gaps()];
-  const bg = openSheet(`<h2>ブルポが出てくる間隔</h2><div id="gpBody"></div>
-    <div class="btns" style="margin-top:14px"><button class="btn btn-blue" id="gpSave">この間隔にする</button></div>`);
-  const body = bg.querySelector('#gpBody');
+/* ブルポ帳（1冊）の せってい（おうちの方向け）：名前・間隔（きまった形 か 1つずつ）・曜日にまとめる。
+   b が null なら あたらしい冊 */
+function openBookSet(b){
+  const isNew = !b;
+  let G = [...gapsB(b)], wk = b && okWk(b.wk) ? [...b.wk] : null, name = b ? b.name : '';
+  const n = b ? S.items.filter(i => bookOf(i) === b).length : 0;
+  const bg = openSheet(`<h2>${isNew ? 'ブルポ帳をふやす' : 'ブルポ帳の設定'}</h2>
+    <div class="fin"><label for="bkName" style="margin-top:0">名前</label>
+    <input id="bkName" maxlength="${BOOK_NAME_MAX}" autocomplete="off" enterkeyhint="done" placeholder="例：さんすう／計算ドリル" value="${esc(name)}"></div>
+    <h3>出てくる間隔</h3><div id="gpBody"></div>
+    <h3>曜日にまとめる</h3><div id="wkBody"></div>
+    <div class="btns" style="margin-top:14px"><button class="btn btn-blue" id="gpSave">${isNew ? 'ふやす' : 'この設定にする'}</button>
+    ${!isNew && multiBook() ? `<button class="btn btn-red btn-small" id="bkDel" style="justify-self:start">${ICO.trash} このブルポ帳を消す</button>` : ''}</div>`);
+  const body = bg.querySelector('#gpBody'), wbody = bg.querySelector('#wkBody');
   const draw = () => {
     const cur = GAP_PRESETS.find(x => x.d.join() === G.join());
     body.innerHTML = `<div class="gsel">${GAP_PRESETS.map(x => `<button data-pre="${x.k}" class="${cur && cur.k === x.k ? 'on' : ''}"><b>${x.n}</b><small>${x.d.map(n => gapWord(n, true)).join('・')}</small></button>`).join('')}
@@ -1082,18 +1478,45 @@ function openGaps(){
       <div class="gcust">${G.map((n, k) => `<div class="r"><span>${k + 1}回目</span><select data-k="${k}">${GAP_CHOICES.map(c => `<option value="${c}"${c === n ? ' selected' : ''}>${gapWord(c, true)}</option>`).join('')}</select></div>`).join('')}
         <div class="row"><button class="btn btn-line btn-small" data-add ${G.length >= GAP_MAX ? 'disabled' : ''}>＋ 1回ふやす</button><button class="btn btn-line btn-small" data-rm ${G.length <= GAP_MIN ? 'disabled' : ''}>− 1回へらす</button></div>
       </div>
-      <p class="dim" style="font-size:14px; margin-top:10px">いま予定に入っている日はそのままで、次に◯をつけたときから新しい間隔になります。</p>`;
-    body.querySelectorAll('[data-pre]').forEach(b => b.onclick = () => { const x = GAP_PRESETS.find(y => y.k === b.dataset.pre); if(x) G = [...x.d]; draw(); });
+      ${isNew ? '' : '<p class="dim" style="font-size:14px; margin-top:10px">いま予定に入っている日はそのままで、次に◯をつけたときから新しい間隔になります。</p>'}`;
+    body.querySelectorAll('[data-pre]').forEach(x => x.onclick = () => { const p = GAP_PRESETS.find(y => y.k === x.dataset.pre); if(p) G = [...p.d]; draw(); });
     body.querySelectorAll('select').forEach(sl => sl.onchange = () => { G[+sl.dataset.k] = +sl.value; draw(); });
     body.querySelector('[data-add]').onclick = () => { if(G.length < GAP_MAX){ G.push(Math.min(365, GAP_CHOICES.find(c => c > G[G.length - 1] * 1.8) || 365)); draw(); } };
     body.querySelector('[data-rm]').onclick = () => { if(G.length > GAP_MIN){ G.pop(); draw(); } };
+    /* 曜日：オンにすると、翌日の1回目はそのまま、2回目からは えらんだ曜日に まとめて出る（平日は翌日の分だけ） */
+    wbody.innerHTML = `<div class="gsel">
+        <button data-wk="0" class="${wk ? '' : 'on'}"><b>まとめない</b><small>間隔のとおりの日に出てきます</small></button>
+        <button data-wk="1" class="${wk ? 'on' : ''}"><b>決めた曜日にまとめる</b><small>1回目（${gapWord(G[0], true)}）はそのまま。2回目からは、間隔の日数がたったあとの、いちばん近い曜日に出てきます（短くはなりません）</small></button></div>
+      ${wk ? `<div class="wkd">${WD_ORDER.map(d => `<button data-wd="${d}" class="${wk.includes(d) ? 'on' : ''}">${WD[d]}</button>`).join('')}</div>` : ''}`;
+    wbody.querySelectorAll('[data-wk]').forEach(x => x.onclick = () => { wk = x.dataset.wk === '1' ? (wk || [6, 0]) : null; draw(); });
+    wbody.querySelectorAll('[data-wd]').forEach(x => x.onclick = () => {
+      const d = +x.dataset.wd;
+      if(wk.includes(d)){ if(wk.length === 1) return toast('1つは選んでください'); wk = wk.filter(y => y !== d); }
+      else wk = [...wk, d];
+      draw();
+    });
   };
   draw();
+  const ni = bg.querySelector('#bkName');
+  ni.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing){ e.preventDefault(); e.target.blur(); } });
   bg.querySelector('#gpSave').onclick = () => {
-    setGaps(G); bg.remove(); renderSet(); renderAll(); toast('間隔を変えました');
+    const nm = ni.value.trim().slice(0, BOOK_NAME_MAX);
+    if(!nm) return toast('名前を入れてください');
+    const o = normBook({ id:b ? b.id : 'b' + newId(), name:nm, gaps:G, wk });
+    if(isNew) S.books.push(o); else S.books[S.books.indexOf(b)] = o;
+    clampStages(); save();
+    bg.remove(); renderSet(); renderAll();
+    toast(isNew ? `「${nm}」をふやしました` : '設定を変えました');
+  };
+  const del = bg.querySelector('#bkDel');
+  if(del) del.onclick = () => {
+    if(n) return toast(`中にブルポが${n}枚あります。先にほかのブルポ帳へ移すか、消してください`);
+    if(!confirm(`「${b.name}」を消しますか？`)) return;
+    S.books = S.books.filter(x => x !== b); S = norm(S); save();
+    bg.remove(); renderSet(); renderAll(); toast('消しました');
   };
 }
-$('#btnGaps').onclick = openGaps;
+$('#btnAddBook').onclick = () => openBookSet(null);
 const blobToDataUrl = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
 function dataUrlToBlob(u){
   const m = /^data:([^;]+);base64,(.*)$/.exec(u || ''); if(!m) return null;
@@ -1162,7 +1585,10 @@ async function importText(text){
       if(cur) Object.assign(cur, it); else { S.items.push(it); added++; }
     }
     S.nextNo = Math.max(S.nextNo, Number(j.data.nextNo) || 1);
-    if(okGaps(j.data.gaps) && !S.gaps) S.gaps = j.data.gaps;
+    /* 冊：ないものだけ ふやす（v3 までの控えは 冊が なく、間隔は data.gaps） */
+    if(Array.isArray(j.data.books)){
+      for(const b of j.data.books) if(b && b.id && !S.books.some(x => x.id === String(b.id))) S.books.push(normBook(b));
+    }else if(okGaps(j.data.gaps) && !S.books[0].gaps) S.books[0] = normBook({ ...S.books[0], gaps:j.data.gaps });
     S = norm(S); save();
   }
   return { added, imgs:nImg };
@@ -1183,7 +1609,7 @@ $('#btnWipe').onclick = async () => {
   if(!confirm('ブルポと きろくを すべて けします。いいですか？')) return;
   if(!confirm('ほんとうに けしますか？（控えが なければ もどせません）')) return;
   const ids = S.items.flatMap(i => i.qImg ? [i.img, i.qImg] : [i.img]);
-  S = norm({}); save();
+  S = norm({ books:S.books }); save();   // 冊と 間隔の せっていは のこす
   for(const id of ids){ try{ await delImg(id); }catch(e){} }
   renderAll(); renderSet(); toast('すべて けしました');
 };
@@ -1194,11 +1620,13 @@ function slides(){ return [
   { ico:'book', t:'ブルポ帳って？', p:'まちがえた かんじを、<b>ブルポ</b>（あおペンで かいた ポイント）ごと おぼえる ための ノートだよ。', ex:'ことばで おぼえる 人も、かたちで おぼえる 人も、じぶんの ブルポを ためていこう。' },
   { ico:'pen', t:'1. つくる', p:'下の <b>「つくる」</b> を おして、<b>てがきで かく</b> か、ノートの ブルポを <b>しゃしんに とる</b> よ。', ex:'しゃしんは、つかう ところを わくで かこめるよ。しゃしんの 上に あおペンで かきこむことも できるよ。' },
   { ico:'text', t:'2. もんだいを いれる', p:'さいごに <b>よみかたや ことば</b>（れい：せかいの「かい」）を いれると、れんしゅうの とき もんだいに なるよ。ドリルや プリントの <b>もんだいを しゃしんで</b> いれることも できるよ。', ex:'いれなくても だいじょうぶ。そのときは、ブルポを よく見てから かくして かく れんしゅうに なるよ。あとから ページの「もんだいを なおす」でも いれられるよ。' },
-  { ico:'play', t:'3. れんしゅう', p:`ブルポは <b>${gaps().map(n => gapWord(n)).join('・')}</b> に「きょう」に でてくるよ。<b>ノートに かいてから</b> こたえを 見て、<b>◯ かけた</b> か <b>✕ まちがえた</b> を おそう。`, ex:'まちがえた ブルポは、さいごに もう一回 でてくるよ。そして あしたから やりなおし。' },
-  { ico:'maru', t:'4. おぼえた！', p:`<b>${gaps().length}かい つづけて</b> かけたら「おぼえた」に なるよ。ブルポ帳の「おぼえた」で 見かえせるよ。`, ex:'ブルポ帳の ページを おすと、めくって ながめたり、かきたしたり、いつでも れんしゅう できるよ。' },
+  { ico:'play', t:'3. れんしゅう', p:`ブルポは <b>${gapsB(S.books[0]).map(n => gapWord(n)).join('・')}</b> に「きょう」に でてくるよ。<b>ノートに かいてから</b> こたえを 見て、<b>◯ かけた</b> か <b>✕ まちがえた</b> を おそう。`, ex:'まちがえた ブルポは、さいごに もう一回 でてくるよ。そして あしたから やりなおし。' },
+  { ico:'maru', t:'4. おぼえた！', p:`<b>${gapsB(S.books[0]).length}かい つづけて</b> かけたら「おぼえた」に なるよ。ブルポ帳の「おぼえた」で 見かえせるよ。`, ex:'ブルポ帳の ページを おすと、めくって ながめたり、かきたしたり、いつでも れんしゅう できるよ。' },
+  { ico:'print', t:'いんさつ する', p:'ブルポ帳の 上の <b>「いんさつ」</b> で、もんだいを かみに いんさつ できるよ。', ex:'えらんだ ブルポの もんだいと、かく ますが でるよ。こたえ（ブルポ）は さいごの ページに まとめて でるよ。' },
   { ico:'users', t:'きょうだいで つかう', p:'1だいを きょうだいで つかうときは、せっていの いちばん上の <b>「使う人」</b>で <b>＋ ふやす</b> を おしてね。', ex:'なまえを おすと、その人に きりかわるよ。ブルポと れんしゅうの きろくは、人ごとに わかれるよ。' },
   { ico:'install', t:'おうちの方へ：ホーム画面に追加', p:'<b>最初に必ず</b> ホーム画面に追加してください。追加していないと、しばらく開かない間にブルポが消えることがあります。', ex:'Safari の共有ボタン（iPad は右上、iPhone は下。見当たらないときは「…」の中）→「ホーム画面に追加」。上の赤い帯の「やりかた」からも見られます。' },
-  { ico:'redo', t:'おうちの方へ：出てくる間隔', p:'せっていの <b>「間隔を変える」</b> で、ブルポが出てくる日を変えられます（例：最後を3か月後に／テスト前は短く）。', ex:'はじめは「ふつう」（翌日・3日後・1週間後・2週間後・1か月後）です。' },
+  { ico:'redo', t:'おうちの方へ：出てくる間隔', p:'せっていの「ブルポ帳と、出てくる間隔」の <b>「変える」</b> で、ブルポが出てくる日を変えられます（例：最後を3か月後に／テスト前は短く）。<b>「決めた曜日にまとめる」</b>にすると、翌日の1回目はそのまま、2回目からは土・日などにまとめて出てきます。', ex:'はじめは「ふつう」（翌日・3日後・1週間後・2週間後・1か月後）です。' },
+  { ico:'book', t:'おうちの方へ：ブルポ帳をふやす', p:'<b>「＋ ブルポ帳をふやす」</b> で、教科や問題集ごとにブルポ帳を分けられます。間隔と曜日は、ブルポ帳ごとに決められます。', ex:'1冊だけのあいだは、お子さんの画面は今までどおりです。2冊以上になると、つくるときに「どの ブルポ帳に いれる？」が出ます。「きょう」は全部の冊をまとめて練習します。' },
   { ico:'save', t:'おうちの方へ：控え', p:'ブルポはこの端末の中だけに保存されます。機種変更のときは、せっていの <b>「控えをとる」</b> で保存し、新しい端末で <b>「控えから戻す」</b> を押してください。', ex:'ホーム画面のアイコンを消すと、中のブルポも一緒に消えます。消す前に控えをとってください。' },
 ]; }
 function slidesHtml(){
@@ -1312,7 +1740,7 @@ async function doUpdate(){
 $('#btnUpdate').onclick = doUpdate;
 $('#btnCheckUpd').onclick = () => checkUpdate(false);
 document.addEventListener('visibilitychange', () => {
-  if(!document.hidden){ checkUpdate(true); checkDayChange(); if($('#host').children.length) keepAwake(); }
+  if(!document.hidden){ checkUpdate(true); checkDayChange(); if($('#host').children.length) keepAwake(); pushSync(); }
   else save();
 });
 window.addEventListener('focus', checkDayChange);

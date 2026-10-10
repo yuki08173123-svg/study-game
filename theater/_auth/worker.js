@@ -292,10 +292,10 @@ async function roster(url, env) {
                    名前は本人が決めたニックネーム。先生の合言葉（変数 ROOM_ADMIN_KEY）を入れた人だけ
                    「みんなへのひとこと」を出せる。
    ・/room       … 入室券で呼ぶ。自分の席を書きこみ（POST）、みんなの席と動きを返す。
-   ・決まった間隔（15/25/50分）ごとに「続けていますか？」の確認がある。
-     確認の時間を10分すぎても押さないと、自動で退室になる（記録は確認の時間まで）。
+   ・v3（ヒラの案）：スマホを別の部屋・遠くに置いてはじめ、集中の時間（15/25/50分）がおわったら
+     もどってきて確認＝休憩。もどる時間を15分すぎると自動で退室（記録はもどる時間まで）。
    ===================================================================== */
-const R_GRACE  = 10 * 60000;        /* 確認の時間をすぎてから自動で退室させるまで */
+const R_GRACE  = 15 * 60000;        /* もどる時間をすぎてから自動で退室させるまで（スマホは別の部屋なので長め） */
 const R_BREAK  = 30 * 60000;        /* 休憩がこれより長いと退室 */
 const R_STALE  = 3 * 3600000;       /* 3時間なにも届かない席は片づける */
 const R_TICKET = 30 * 60000;        /* 入室券の有効期間 */
@@ -319,6 +319,8 @@ async function ensureRoom(env) {
   await env.DB.prepare(
     `CREATE TABLE IF NOT EXISTS rcheer (fr TEXT, too TEXT, at INTEGER, PRIMARY KEY (fr, too))`).run();
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS rnote (k INTEGER PRIMARY KEY, txt TEXT, at INTEGER)`).run();
+  /* v3：スマホを置いた場所（room＝別の部屋・far＝遠く）。前からある表には列を足す */
+  try { await env.DB.prepare(`ALTER TABLE seat ADD COLUMN pl TEXT`).run(); } catch (e) {}
   roomReady = true;
 }
 
@@ -407,7 +409,8 @@ async function roomSeat(env, tk, name, s, now) {
     subj: String(s.subj || '').slice(0, 10), memo: String(s.memo || '').slice(0, 40),
     goal: cl(s.goal, 0, 720), start, brk: cl(s.brk, 0, now - start),
     st: s.st === 'break' ? 'break' : 'study', stat: cl(s.stat, start, now),
-    chk: cl(s.chk, start, now), ivl: R_IVL.includes(+s.ivl) ? +s.ivl : 25, beat: now
+    chk: cl(s.chk, start, now), ivl: R_IVL.includes(+s.ivl) ? +s.ivl : 25, beat: now,
+    pl: s.pl === 'far' ? 'far' : 'room'
   };
 
   const cur = await env.DB.prepare('SELECT * FROM seat WHERE id = ?').bind(tk.i).first();
@@ -428,16 +431,21 @@ async function roomSeat(env, tk, name, s, now) {
   const fresh = !cur || cur.sid !== sid;
   const gl = fresh ? 0 : cur.gl;
   await env.DB.prepare(
-    `INSERT INTO seat (id, name, sid, subj, memo, goal, start, brk, st, stat, chk, ivl, beat, cheers, gl)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0,?)
+    `INSERT INTO seat (id, name, sid, subj, memo, goal, start, brk, st, stat, chk, ivl, beat, cheers, gl, pl)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?)
      ON CONFLICT(id) DO UPDATE SET name=excluded.name, sid=excluded.sid, subj=excluded.subj,
        memo=excluded.memo, goal=excluded.goal, start=excluded.start, brk=excluded.brk, st=excluded.st,
-       stat=excluded.stat, chk=excluded.chk, ivl=excluded.ivl, beat=excluded.beat`
+       stat=excluded.stat, chk=excluded.chk, ivl=excluded.ivl, beat=excluded.beat, pl=excluded.pl`
   ).bind(n.id, n.name, n.sid, n.subj, n.memo, n.goal, n.start, n.brk, n.st, n.stat, n.chk, n.ivl,
-         n.beat, gl).run();
+         n.beat, gl, n.pl).run();
   if (fresh) {
     await env.DB.prepare('UPDATE seat SET cheers = 0, gl = 0 WHERE id = ?').bind(n.id).run();
-    await rFeed(env, now, 'start', { n: n.name, s: n.subj, g: n.goal });
+    await rFeed(env, now, 'start', { n: n.name, s: n.subj, g: n.goal, p: n.pl });
+  }
+  /* 集中の時間をおえて もどってきた（確認した）＝やりとげた */
+  if (!fresh && cur.st === 'study' && n.chk > (cur.chk || 0) &&
+      n.chk >= Math.max(cur.chk || 0, cur.start) + (cur.ivl || 25) * 60000 - 60000) {
+    await rFeed(env, now, 'block', { n: n.name, m: cur.ivl || 25 });
   }
   if (n.goal && !gl && studied(n, now) >= n.goal * 60000) {
     await env.DB.prepare('UPDATE seat SET gl = 1 WHERE id = ?').bind(n.id).run();
@@ -474,7 +482,7 @@ async function roomSay(env, name, txt, now) {
 /* みんなの席・今日の記録・動き を返す */
 async function roomLook(env, tk, now) {
   const seats = await env.DB.prepare(
-    `SELECT id, name, subj, memo, goal, start, brk, st, stat, chk, ivl, cheers FROM seat ORDER BY start`).all();
+    `SELECT id, name, subj, memo, goal, start, brk, st, stat, chk, ivl, cheers, pl FROM seat ORDER BY start`).all();
   const today = await env.DB.prepare(
     `SELECT id, name, SUM(mins) AS mins, MAX(fin) AS fin, COUNT(*) AS n FROM rlog
      WHERE day = ? GROUP BY id ORDER BY fin DESC LIMIT 100`).bind(rDay(now)).all();

@@ -95,6 +95,9 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
 .me .clock{font-size:52px; font-weight:900; text-align:center; line-height:1.1; margin:14px 0 4px; position:relative;}
 .me .state{text-align:center; font-size:13px; font-weight:700; color:var(--muted); position:relative;}
 .me .state.brk{color:var(--brk);}
+.me .away{text-align:center; font-size:14px; font-weight:900; color:var(--lamp-deep); margin-top:16px; position:relative;}
+.me #myBack{margin-top:4px;}
+.pl2{display:block; width:100%; margin-top:10px; padding:13px; border-radius:16px; background:var(--chip); font-weight:900; font-size:15px;}
 .bar{height:8px; background:var(--chip); border-radius:999px; overflow:hidden; margin:12px 0 4px; position:relative;}
 .bar i{display:block; height:100%; background:var(--lamp); border-radius:999px; transition:width .6s;}
 .bar.done i{background:var(--ok);}
@@ -251,13 +254,15 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
 
 <script>
 'use strict';
-const VER = 2;
+const VER = 3;
 const API = 'https://theater-auth.yuki08173123.workers.dev';   /* Theater と同じ入り口（ログインと記録の置き場） */
 const K_UID = 'js_uid', K_CUR = 'js_cur', K_LOG = 'js_log', K_CFG = 'js_cfg';
-const GRACE = 10 * 60000, BREAK_MAX = 30 * 60000;              /* Worker と同じ数字 */
+const GRACE = 15 * 60000, BREAK_MAX = 30 * 60000;              /* Worker と同じ数字 */
 const SUBJ = [['国語','--s1'],['数学','--s2'],['英語','--s3'],['理科','--s4'],['社会','--s5'],['その他','--s6']];
 const GOALS = [[0,'決めない'],[30,'30分'],[60,'1時間'],[90,'1時間半'],[120,'2時間'],[180,'3時間']];
 const IVLS = [15, 25, 50];
+const PLACE = { room:'別の部屋', far:'遠く' };   /* スマホを置いた場所 */
+const plTx = p => PLACE[p] || PLACE.room;
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -265,7 +270,7 @@ const jget = (k, d) => { try{ const v = JSON.parse(localStorage.getItem(k)); ret
 const jset = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
 
 /* ---------- 保存しているもの ---------- */
-let cfg = Object.assign({ ivl:25, wake:true, sound:true, subj:'数学', goal:60, name:'', key:'' }, jget(K_CFG, {}));
+let cfg = Object.assign({ ivl:25, sound:true, subj:'数学', goal:60, name:'', key:'' }, jget(K_CFG, {}));
 let cur = jget(K_CUR, null);      /* いまの自分の席 {sid,subj,memo,goal,start,brk,st,stat,chk,ivl} */
 let log = jget(K_LOG, []);        /* 自分の記録 [{sid,day,start,fin,mins,subj,memo,done,auto}] */
 const saveCfg = () => jset(K_CFG, cfg);
@@ -321,14 +326,7 @@ function chime(){
     });
   }catch(e){}
 }
-let wl = null;
-async function wake(){
-  const want = !!(cur && cfg.wake && !document.hidden);
-  try{
-    if(want && !wl && 'wakeLock' in navigator){ wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); }
-    else if(!want && wl){ const w = wl; wl = null; await w.release(); }
-  }catch(e){ wl = null; }
-}
+function wake(){}   /* v3 から画面をつけっぱなしにしない（スマホは別の部屋に置く） */
 
 /* =====================================================================
    サーバーとのやりとり（Theater の Worker の /room）
@@ -408,26 +406,41 @@ let nameWarned = false;
    ===================================================================== */
 const newSid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
-function startStudy(subj, memo, goal){
+function startStudy(subj, memo, goal, ivl, pl){
   const t = nowS();
-  cur = { sid:newSid(), subj, memo, goal, start:t, brk:0, st:'study', stat:t, chk:t, ivl:cfg.ivl };
-  saveCur(); lastCheers = 0; wake(); render(); call();
-  toast('席につきました。みんなの画面にあなたの席が出ています');
+  cur = { sid:newSid(), subj, memo, goal, start:t, brk:0, st:'study', stat:t, chk:t, ivl, pl };
+  saveCur(); lastCheers = 0; render(); call();
+  showAway();
 }
-function takeBreak(){
-  if(!cur || cur.st === 'break') return;
-  cur.st = 'break'; cur.stat = nowS(); saveCur(); closeCheck(); render(); call();
+/* 集中の時間がおわって もどってきた（＝確認）。そのまま休憩に入る */
+function backToBreak(){
+  if(!cur) return;
+  const t = nowS();
+  cur.chk = t;
+  if(cur.st !== 'break'){ cur.st = 'break'; cur.stat = t; }
+  saveCur(); closeCheck(); render(); call();
 }
-function resume(){
+/* スマホを置いて、次の集中へ */
+function resume(pl){
   if(!cur) return;
   const t = nowS();
   if(cur.st === 'break') cur.brk += Math.max(0, t - cur.stat);
-  cur.st = 'study'; cur.stat = t; cur.chk = t; saveCur(); render(); call();
+  cur.st = 'study'; cur.stat = t; cur.chk = t; if(pl) cur.pl = pl;
+  saveCur(); closeCheck(); render(); call();
+  showAway();
 }
-function confirmGo(){
+/* スマホを置きにいく合図（もどる時間を大きく出す） */
+function showAway(){
   if(!cur) return;
-  cur.chk = nowS(); saveCur(); closeCheck(); render(); call();
-  toast('確認しました。この調子で！');
+  const back = dueOf(cur);
+  const ov = sheet(`<div style="text-align:center">
+    <div class="lampbig" style="width:64px;height:64px;margin:0 auto 6px">${ICO.lamp}</div>
+    <h2>スマホを置いてきてください</h2>
+    <div class="lead" style="margin-top:6px">置き場所：<b>${plTx(cur.pl)}</b>。みんなの画面に「📵 ${plTx(cur.pl)}・あと○分」と出ています。</div>
+    <div class="big num">${hm(back)}</div>
+    <div class="lead">にもどってきて、自習室をひらいてください（${cur.ivl}分後）。<br>時計やタイマーで時間をはかると安心です。<br>${GRACE / 60000}分すぎてももどらないと、自動で退室になります。</div></div>
+    <button class="go" id="ok">置いてきます</button>`);
+  ov.querySelector('#ok').onclick = () => ov.remove();
 }
 async function endStudy(done){
   if(!cur) return;
@@ -456,16 +469,16 @@ function openCheck(){
   ckOpen = true;
   const d = document.createElement('div'); d.className = 'ck'; d.id = 'ck';
   d.innerHTML = `<div class="box"><div class="lampbig">${ICO.lamp}</div>
-    <h2>続けていますか？</h2>
-    <p>${cur.ivl}分たちました。押すと、みんなの画面に「確認ずみ」と出ます。</p>
+    <h2>おかえりなさい</h2>
+    <p>${cur.ivl}分の集中、おつかれさまでした。押すと、みんなの画面に「やりとげた」と出ます。</p>
     <div class="left num" id="ckLeft"></div>
-    <button class="go" id="ckGo" style="margin-top:12px">続けています</button>
-    <button class="sub" id="ckBrk">休憩する</button></div>`;
+    <button class="go" id="ckGo" style="margin-top:12px">もどりました（休憩する）</button>
+    <button class="sub" id="ckOn">休憩しないで、またスマホを置く</button></div>`;
   document.body.appendChild(d);
-  $('#ckGo').onclick = confirmGo; $('#ckBrk').onclick = takeBreak;
-  chime(); try{ navigator.vibrate && navigator.vibrate([250, 120, 250]); }catch(e){}
+  $('#ckGo').onclick = backToBreak; $('#ckOn').onclick = () => resume();
+  chime();
   let f = false; clearInterval(titleT);
-  titleT = setInterval(() => { document.title = (f = !f) ? '🔔 確認があります' : '自習室'; }, 1000);
+  titleT = setInterval(() => { document.title = (f = !f) ? '🔔 もどる時間です' : '自習室'; }, 1000);
 }
 function closeCheck(){ ckOpen = false; const d = $('#ck'); if(d) d.remove(); clearInterval(titleT); document.title = '自習室'; }
 
@@ -511,17 +524,26 @@ function renderRoom(){
   if(!cur){
     h += `<section class="me"><div class="idle">
       <button class="go" id="bStart">${ICO.play}勉強をはじめる</button>
-      <p>はじめると、みんなの画面にあなたの席が出ます。<br>${cfg.ivl}分ごとに「続けていますか？」の確認があります。</p></div></section>`;
-  }else{
-    const brk = cur.st === 'break';
-    h += `<section class="me ${brk ? 'brk' : 'on'}">
+      <p>スマホを別の部屋に置いて勉強します。<br>集中の時間がおわったら、もどってきて休憩。そのときに、みんなの様子が見られます。</p></div></section>`;
+  }else if(cur.st === 'break'){
+    h += `<section class="me brk">
       <div class="top">${sjTag(cur.subj)}<div class="memo">${esc(cur.memo || '（やることは書いていません）')}</div>
         <span class="cheer num" id="myClap">👏 0</span></div>
       <div class="clock num" id="myClock">0:00:00</div>
-      <div class="state ${brk ? 'brk' : ''}" id="myState"></div>
-      ${cur.goal ? `<div class="bar" id="myBarW"><i id="myBar" style="width:0"></i></div><div class="goalTx"><span>目標 ${goalTx(cur.goal)}</span><span id="myGoalLeft"></span></div>` : ''}
-      <div class="acts">
-        ${brk ? `<button class="b-res" id="bRes">${ICO.play}再開する</button>` : `<button class="b-brk" id="bBrk">${ICO.pause}休憩する</button>`}
+      <div class="state brk" id="myState"></div>
+      ${goalBar()}
+      <div class="acts"><button class="b-res" id="bResR">📵 別の部屋に置いて再開</button></div>
+      <div class="acts" style="margin-top:8px"><button class="b-brk" id="bResF">遠くに置いて再開</button>
+        <button class="b-end" id="bEnd">${ICO.stop}おわる</button></div></section>`;
+  }else{
+    h += `<section class="me on">
+      <div class="top">${sjTag(cur.subj)}<div class="memo">${esc(cur.memo || '（やることは書いていません）')}</div>
+        <span class="cheer num" id="myClap">👏 0</span></div>
+      <div class="away">📵 スマホを${plTx(cur.pl)}に置いて集中中</div>
+      <div class="clock num" id="myBack">${hm(dueOf(cur))}</div>
+      <div class="state" id="myState"></div>
+      ${goalBar()}
+      <div class="acts"><button class="b-brk" id="bBack">もどった・休憩</button>
         <button class="b-end" id="bEnd">${ICO.stop}おわる</button></div></section>`;
   }
 
@@ -569,8 +591,9 @@ function renderRoom(){
   /* ボタン */
   const on = (id, f) => { const e = $(id); if(e) e.onclick = f; };
   on('#bStart', () => { unlockAudio(); cfg.name ? showStart() : showName(showStart); });
-  on('#bBrk', takeBreak);
-  on('#bRes', () => { unlockAudio(); resume(); });
+  on('#bBack', backToBreak);
+  on('#bResR', () => { unlockAudio(); resume('room'); });
+  on('#bResF', () => { unlockAudio(); resume('far'); });
   on('#bEnd', showEnd);
   on('#sayGo', () => { const v = $('#sayIn').value.trim(); if(!v) return; call({ say:v }); toast('みんなの画面に出しました'); });
   on('#sayDel', () => { call({ say:'' }); toast('消しました'); });
@@ -580,9 +603,10 @@ function renderRoom(){
 function feedText(f){
   const n = `<b>${esc(f.n)}</b>`, s = f.s ? esc(f.s) : '勉強';
   switch(f.k){
-    case 'start': return `${n} が ${s} をはじめました${f.g ? `（目標 ${goalTx(f.g)}）` : ''}`;
+    case 'start': return `${n} が ${s} をはじめました（📵 スマホは${plTx(f.p)}）`;
+    case 'block': return `✅ ${n} が ${f.m}分の集中をやりとげました`;
     case 'end':   return `${n} が ${s} を ${dur(f.m)} やって終わりました`;
-    case 'auto':  return `${n} は確認がなかったので、自動で退室しました（${dur(f.m)}）`;
+    case 'auto':  return `${n} は時間までにもどらなかったので、自動で退室しました（${dur(f.m)}）`;
     case 'goal':  return `🎉 ${n} が目標の ${goalTx(f.g)} を達成しました`;
     case 'cheer': return f.h ? `ヒラ が <b>${esc(f.t)}</b> に 👏` : `${n} が <b>${esc(f.t)}</b> に 👏`;
     case 'say':   return `📣 ヒラ：${esc(f.x)}`;
@@ -615,7 +639,7 @@ function tick(){
           st.textContent = '休憩中 ' + mmss(t - cur.stat) + '（あと' + Math.max(0, Math.ceil(left / 60000)) + '分で自動で退室）';
         }else{
           const left = dueOf(cur) - t;
-          st.textContent = left > 0 ? '勉強中・次の確認まで ' + mmss(left) : '確認を待っています';
+          st.textContent = left > 0 ? 'にもどってきてください（あと ' + mmss(left) + '）' : 'もどる時間です';
         }
       }
       if(cur.goal){
@@ -638,8 +662,8 @@ function tick(){
         if(bar){ const p = Math.min(1, ms / (s.goal * 60000)); bar.style.width = (p * 100).toFixed(1) + '%'; bar.parentNode.classList.toggle('done', p >= 1); }
         const ft = el.querySelector('[data-ft]');
         if(s.st === 'break') ft.textContent = '休憩中 ' + mmss(t - s.stat);
-        else if(t > dueOf(s)) ft.textContent = '確認を待っています';
-        else { const a = Math.max(0, Math.floor((t - Math.max(s.chk || 0, s.start)) / 60000)); ft.textContent = a < 1 ? '✓ いま確認' : '✓ ' + a + '分前に確認'; }
+        else if(t > dueOf(s)) ft.textContent = 'もどり待ち';
+        else ft.textContent = '📵 ' + plTx(s.pl) + '・あと' + Math.ceil((dueOf(s) - t) / 60000) + '分';
         const want = s.st === 'break' ? 'brk' : t > dueOf(s) ? 'wait' : 'study';
         if(!el.classList.contains(want)){ el.classList.remove('brk', 'wait', 'study'); el.classList.add(want); }
       }
@@ -651,8 +675,11 @@ function tick(){
   if(needCheck()) openCheck();   /* PCで別のタブを見ていても、タブの名前が点滅して気づける */
   if(ckOpen && cur){
     const l = $('#ckLeft'), left = dueOf(cur) + GRACE - t;
-    if(l) l.textContent = left > 0 ? 'あと ' + mmss(left) + ' で自動で退室になります' : 'まもなく自動で退室になります';
+    if(l) l.textContent = left > 0 ? '' : 'まもなく自動で退室になります';
   }
+}
+function goalBar(){
+  return cur && cur.goal ? `<div class="bar" id="myBarW"><i id="myBar" style="width:0"></i></div><div class="goalTx"><span>目標 ${goalTx(cur.goal)}</span><span id="myGoalLeft"></span></div>` : '';
 }
 const fmtBig = m => { m = Math.floor(m); const h = Math.floor(m / 60); return h ? h + '<span>時間</span>' + (m % 60) + '<span>分</span>' : m + '<span>分</span>'; };
 
@@ -665,16 +692,21 @@ function sheet(html){
   return ov;
 }
 function showStart(){
-  let subj = cfg.subj, goal = cfg.goal;
+  let subj = cfg.subj, goal = cfg.goal, ivl = cfg.ivl;
   const last = log.find(x => x.subj === subj);
   const ov = sheet(`<h2>勉強をはじめる</h2><div class="lead">ここに書いたことが、みんなの画面のあなたの席に出ます。</div>
     <label>教科</label><div class="chips" id="sjc">${SUBJ.map(s => `<button class="sjb" style="--c:var(${s[1]})" data-v="${s[0]}">${s[0]}</button>`).join('')}</div>
     <label>やること（ひとこと）</label><input type="text" id="memo" maxlength="40" placeholder="例：青チャート 例題20〜30" value="${esc(last ? last.memo : '')}">
-    <label>目標の時間</label><div class="chips" id="glc">${GOALS.map(g => `<button data-v="${g[0]}">${g[1]}</button>`).join('')}</div>
-    <button class="go" id="go">${ICO.play}席につく</button><button class="cancel" id="cx">やめる</button>`);
+    <label>きょうの目標</label><div class="chips" id="glc">${GOALS.map(g => `<button data-v="${g[0]}">${g[1]}</button>`).join('')}</div>
+    <label>1回の集中の長さ（スマホを置いておく時間）</label><div class="chips" id="ivc">${IVLS.map(v => `<button data-v="${v}">${v}分</button>`).join('')}</div>
+    <label>スマホをどこに置く？（押すとはじまります）</label>
+    <button class="go" id="goR">📵 別の部屋に置いてはじめる</button>
+    <button class="pl2" id="goF">遠くに置いてはじめる（かばんの中・部屋のすみ など）</button>
+    <button class="cancel" id="cx">やめる</button>`);
   const paint = () => {
     ov.querySelectorAll('#sjc button').forEach(b => b.classList.toggle('on', b.dataset.v === subj));
     ov.querySelectorAll('#glc button').forEach(b => b.classList.toggle('on', +b.dataset.v === goal));
+    ov.querySelectorAll('#ivc button').forEach(b => b.classList.toggle('on', +b.dataset.v === ivl));
   };
   ov.querySelectorAll('#sjc button').forEach(b => b.onclick = () => {
     subj = b.dataset.v; paint();
@@ -682,11 +714,14 @@ function showStart(){
   });
   ov.querySelector('#memo').oninput = e => { e.target.dataset.typed = 1; };
   ov.querySelectorAll('#glc button').forEach(b => b.onclick = () => { goal = +b.dataset.v; paint(); });
+  ov.querySelectorAll('#ivc button').forEach(b => b.onclick = () => { ivl = +b.dataset.v; paint(); });
   ov.querySelector('#cx').onclick = () => ov.remove();
-  ov.querySelector('#go').onclick = () => {
-    cfg.subj = subj; cfg.goal = goal; saveCfg(); ov.remove();
-    startStudy(subj, ov.querySelector('#memo').value.trim(), goal);
+  const go = pl => {
+    cfg.subj = subj; cfg.goal = goal; cfg.ivl = ivl; saveCfg(); ov.remove();
+    startStudy(subj, ov.querySelector('#memo').value.trim(), goal, ivl, pl);
   };
+  ov.querySelector('#goR').onclick = () => go('room');
+  ov.querySelector('#goF').onclick = () => go('far');
   paint();
 }
 
@@ -759,23 +794,18 @@ function renderSet(){
     <div data-users-card></div>
     <h3>名前</h3><div class="card"><div class="sw"><div class="tx"><b>${esc(cfg.name || 'まだ決めていません')}</b><small>自習室に来ているみんなに見えます。本名ではなくニックネームにしてください。</small></div></div>
       <button class="btn" id="bName">名前を変える</button></div>
-    <h3>「続けていますか？」の間隔</h3><div class="card"><div class="chips" id="ivc">${IVLS.map(v => `<button data-v="${v}">${v}分</button>`).join('')}</div>
-      <p style="margin-top:10px">この間隔ごとに確認が出ます。押さずに10分たつと、自動で退室になります（記録は確認の時間まで）。次に席についたときから変わります。</p></div>
-    <h3>勉強中</h3><div class="card">
-      <div class="sw"><div class="tx"><b>画面を消さない</b><small>勉強中は画面がつきっぱなしになり、確認の音が鳴ります。</small></div><button class="tg ${cfg.wake ? 'on' : ''}" id="tgW"></button></div>
-      <div class="sep"></div>
-      <div class="sw"><div class="tx"><b>確認の音</b><small>「続けていますか？」のときに小さく鳴ります。</small></div><button class="tg ${cfg.sound ? 'on' : ''}" id="tgS"></button></div></div>
+    <h3>音</h3><div class="card">
+      <div class="sw"><div class="tx"><b>もどったときの音</b><small>集中の時間がおわって自習室をひらいたときに、小さく鳴ります。</small></div><button class="tg ${cfg.sound ? 'on' : ''}" id="tgS"></button></div></div>
     <h3>使い方</h3><div class="card"><p>
-      1. 「勉強をはじめる」で、教科とやることを書いて席につきます。みんなの画面にあなたの席が出ます。<br>
-      2. ほかの人の席の 👏 で応援できます。あなたの席にも 👏 が届きます。<br>
-      3. 決まった間隔で「続けていますか？」が出ます。押すと、みんなの画面に「✓ 確認」と出ます。<br>
-      4. 「おわる」で記録に残ります。報告文をコピーして Discord に貼れます。</p></div>
+      1. 「勉強をはじめる」で教科とやることを書き、「スマホを別の部屋に置いてはじめる」を押します。みんなの画面にあなたの席が出ます。<br>
+      2. スマホを置いて勉強します。もどる時間は画面に大きく出ます（時計やタイマーではかると安心）。<br>
+      3. 時間になったらもどって自習室をひらき、「もどりました」を押して休憩。みんなの画面に「✅ やりとげました」と出ます。休憩中に、みんなの様子を見たり 👏 で応援したりできます。<br>
+      4. 「スマホを置いて再開」で次の集中へ。もどる時間を15分すぎると、自動で退室になります。<br>
+      5. 「おわる」で記録に残ります。報告文をコピーして Discord に貼れます。</p></div>
     <button class="btn" id="bUpd">更新があるか調べる</button>
     <h3>先生用</h3><div class="card"><p>${me.admin ? '先生として入っています。自習室の画面で、みんなへのひとことを出せます。' : '先生の合言葉を入れると、みんなの画面にひとことを出せます。'}</p>
       <button class="btn" id="bKey">${cfg.key ? '先生の合言葉を変える・消す' : '先生の合言葉を入れる'}</button></div>
     <div class="ver">自習室 v${VER}</div></div>`;
-  document.querySelectorAll('#ivc button').forEach(b => { b.classList.toggle('on', +b.dataset.v === cfg.ivl); b.onclick = () => { cfg.ivl = +b.dataset.v; saveCfg(); renderSet(); }; });
-  $('#tgW').onclick = () => { cfg.wake = !cfg.wake; saveCfg(); wake(); renderSet(); };
   $('#tgS').onclick = () => { cfg.sound = !cfg.sound; saveCfg(); unlockAudio(); if(cfg.sound) chime(); renderSet(); };
   $('#bUpd').onclick = () => checkUpdate(false);
   $('#bName').onclick = () => showName(() => { call(); renderSet(); });
@@ -838,7 +868,10 @@ function schedule(){
 }
 document.addEventListener('visibilitychange', async () => {
   wake();
-  if(!document.hidden){ await call(); schedule(); checkUpdate(true); }
+  if(!document.hidden){
+    if(cur && cur.st === 'study' && nowS() < dueOf(cur)) toast('まだ集中の時間です（あと' + Math.ceil((dueOf(cur) - nowS()) / 60000) + '分）。スマホを置いてきましょう');
+    await call(); schedule(); checkUpdate(true);
+  }
   else clearTimeout(pollT);
 });
 setInterval(tick, 1000);

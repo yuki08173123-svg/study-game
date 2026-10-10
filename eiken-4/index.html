@@ -390,6 +390,17 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 .cell.exd{background:#9AA8BA!important;color:#fff}
 .exlink{display:block;margin:6px auto 0;color:var(--muted);font-size:13px;text-decoration:underline;padding:4px}
 
+/* 少しずつ進める（塾生の声：10〜20ずつ 覚える→すぐテスト） */
+.parts{margin-top:12px;position:relative;z-index:1;background:rgba(255,255,255,.08);border-radius:14px;padding:10px 12px}
+.parts .pt{font-size:14px;font-weight:700;margin-bottom:8px}
+.parts .pt small{font-weight:400;font-size:12.5px;opacity:.85;margin-left:4px}
+.pgr{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:6px}
+.pc{background:rgba(255,255,255,.14);color:#fff;border-radius:10px;padding:7px 0;font-size:11.5px;font-weight:700;line-height:1.25;text-align:center;white-space:nowrap;letter-spacing:-.02em}
+.pc small{display:block;font-weight:400;font-size:11px;opacity:.9;min-height:1.25em}
+.pc.next{background:#fff;color:var(--ai)}
+.pc.next small{opacity:1;font-weight:700}
+.cell.mvd{background:#AEB9C7!important;color:#fff}
+
 /* 印刷用カード */
 #print{display:none}
 @media print{
@@ -451,7 +462,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="idioms.js?v=3"></script>
 <script>
 'use strict';
-const VER = 5;
+const VER = 6;
 /* ===================== 使う人（兄弟で1台） =====================
    1人目は今までの保存場所のまま（記録はそのまま残る）。2人目からは保存の名前のうしろに「__id」をつけて分ける。
    切りかえたらページを読みなおす。レベル・仕分け・計画・記録・タイマーはすべて人ごと。 */
@@ -517,11 +528,14 @@ const BNAME = IDIOM ? '熟語' : '単語';
 const UNIT = IDIOM ? '個' : '語';
 const W = ((IDIOM ? window.EIKEN_IDIOMS : window.EIKEN_WORDS) || []).map((x, i) => ({ ...x, i, s: x.s || [], d: x.d || [] }));
 const N = W.length;
-const PER = IDIOM ? 30 : 100;            // 1日の数（単語100語・熟語30個）
-const DAYS = Math.ceil(N / PER);         // 1周の日数（単語700語なら7日・熟語150個なら5日）
+const PERS0 = { w:100, i:30 };              // もとの1日の数（単語100語・熟語30個）
+const PER0 = PERS0[BOOK];
+const PER_OPTS = [...new Set([...(IDIOM ? [25, 50, 100] : [50, 100, 150, 200]), PER0])].sort((a, b) => a - b);
+let PER = PER0, DAYS = Math.ceil(N / PER);  // 1日の数は設定で変えられる（塾生の声）。load で決める
 let LAPS = 4, TOTAL = DAYS * 4;          // 周回数は設定で変えられる（setLaps）
 const GAPS = [1, 3, 7];                  // リマインド：まちがえた翌日 → 3日後 → 7日後 → 卒業
-const KEY = 'eiken4_' + BOOK + '_v1' + SFX;
+const keyOf = b => 'eiken4_' + b + '_v1' + SFX;
+const KEY = keyOf(BOOK);
 const COMMON = 'eiken4_common' + SFX;
 const NO_W = IDIOM ? 3 : 4;              // 音声ファイルの番号の桁数
 const AUD = 'audio/' + BOOK + '/';
@@ -543,7 +557,7 @@ function clock(t){ t = Math.floor(t); return Math.floor(t/60) + ':' + String(t%6
 
 /* ===================== 保存 ===================== */
 let S;
-function blank(){ return { v:1, start: today(), cfg:{ dir:'w2m', voice:true, rate:1, pitch:1.1, voiceName:'', voiceMode:'ai', aRate:1, studyMin: IDIOM ? 20 : 30, laps: 8, autoSpk:true }, w:{}, days:{}, tests:[], study:[], timer:null, xp:0, xpDay:{}, guideSeen:false }; }
+function blank(){ return { v:1, start: today(), cfg:{ dir:'w2m', voice:true, rate:1, pitch:1.1, voiceName:'', voiceMode:'ai', aRate:1, studyMin: IDIOM ? 20 : 30, laps: 8, autoSpk:true, chunk:20 }, w:{}, days:{}, parts:{}, tests:[], study:[], timer:null, xp:0, xpDay:{}, guideSeen:false }; }
 function load(){
   try{ S = JSON.parse(localStorage.getItem(KEY)) || blank(); }catch(e){ S = blank(); }
   const b = blank();
@@ -556,13 +570,17 @@ function load(){
   if(S.xp == null) S.xp = 0;
   // まだ何も始めていないうちは、開始日を「今日」に合わせる（熟語は単語のあとに始めるので、はじめて取り組んだ日からの計画にする）
   if(!S.startSet && !S.tests.length && !S.study.length && !Object.keys(S.days).length) S.start = today();
+  S.parts = S.parts || {};
+  PER = PER_OPTS.includes(+S.cfg.per) ? +S.cfg.per : PER0; DAYS = Math.ceil(N / PER);
   setLaps(S.cfg.laps);
 }
+/* 単語・熟語それぞれの1日の数（もう一方の記録から読む） */
+function perOf(b){ if(b === BOOK) return PER; try{ const c = (JSON.parse(localStorage.getItem(keyOf(b))) || {}).cfg || {}; return +c.per || PERS0[b]; }catch(e){ return PERS0[b]; } }
 /* 単語の進み具合（熟語の「今日」で、単語を完走したかを見る） */
 function wordsProgress(){
   try{
-    const w = JSON.parse(localStorage.getItem('eiken4_w_v1' + SFX)) || {};
-    const total = 7 * ((w.cfg && w.cfg.laps) || 8);
+    const w = JSON.parse(localStorage.getItem(keyOf('w'))) || {};
+    const total = Math.ceil((window.EIKEN_WORDS || []).length / perOf('w')) * ((w.cfg && w.cfg.laps) || 8);
     return { done: Object.keys(w.days || {}).length, total };
   }catch(e){ return { done:0, total:56 }; }
 }
@@ -707,7 +725,7 @@ function renderToday(){
   if(n >= TOTAL){
     hero = `<div class="hero"><div class="lap">${LAPS}周</div><div class="big">完走しました</div>
       <div class="range">${N}${IDIOM ? '個' : '語'} × ${LAPS}周、おつかれさまでした。${IDIOM ? 'シャッフルテストで仕上げましょう。' : '次は熟語です。'}</div>
-      ${IDIOM ? '' : '<div class="steps"><button class="step main" id="goIdiom"><span class="n">→</span><span class="t">熟語150に進む<small>1日30個 × 5日で1周</small></span></button></div>'}</div>`;
+      ${IDIOM ? '' : `<div class="steps"><button class="step main" id="goIdiom"><span class="n">→</span><span class="t">熟語150に進む<small>1日${perOf('i')}個 × ${Math.ceil((window.EIKEN_IDIOMS || []).length / perOf('i'))}日で1周</small></span></button></div>`}</div>`;
   }else{
     const p = plan(n), lag = lagOf(n);
     const doneToday = lag < 0;   // 今日の分はもう終わっていて、次の日を表示している
@@ -721,7 +739,7 @@ function renderToday(){
         <button class="step ${studied ? 'done' : ''}" id="stStudy"><span class="n">${studied ? '✓' : '1'}</span><span class="t">覚える時間　⏱ ${S.timer ? 'のこり時間は上に' : S.cfg.studyMin + '分'}<small>時間を自分で決めて、カード・一覧・1分解説で覚える</small></span></button>
         <button class="step main" id="stTest"><span class="n">2</span><span class="t">テスト ${p.ids.length}問<small>時間と正答率は自動で記録されます</small></span></button>
       </div>
-      <div class="quick"><button id="stCards">カードだけ</button><button id="stList">一覧だけ</button><button id="stLessons">1分解説だけ</button></div></div>`;
+      <div class="quick"><button id="stCards">カードだけ</button><button id="stList">一覧だけ</button><button id="stLessons">1分解説だけ</button></div>${partsHTML(n)}</div>`;
   }
   const due = dueList();
   const remind = `<div class="card remind"><div class="num">${due.length}<small>語</small></div>
@@ -743,6 +761,7 @@ function renderToday(){
     $('#stList').onclick = () => openList(p.ids, `第${p.lap}周 Day${p.d} の一覧`);
     $('#stLessons').onclick = () => openLessonPicker(p.ids, `Day${p.d} の1分解説`);
     $('#stTest').onclick = () => testOrStudy(n);
+    el.querySelectorAll('.pc').forEach(b => b.onclick = () => openPart(n, +b.dataset.k));
   }
   if($('#goRemind')) $('#goRemind').onclick = startRemind;
   if($('#goSort')) $('#goSort').onclick = () => startSort(unsortedIds().slice(0, SORTN), '仕分け');
@@ -751,11 +770,58 @@ function renderToday(){
   $('#lvCard').onclick = openLevel;
   bindGrid(el);
 }
+/* 少しずつ進める（塾生の声：200語ぜんぶ見てからでなく、10〜20ずつ覚えて すぐテスト）。
+   S.parts[n].t[i] ＝ その語の1回目の答え（1＝正解・0＝まちがい）。全部そろったら その日のテストも完了。 */
+function chunksOf(n){
+  const p = plan(n), c = +S.cfg.chunk, r = [];
+  if(!c) return r;
+  for(let a = p.from; a < p.to; a += c){ const b = Math.min(p.to, a + c); r.push({ a, b, ids: range(a, b).filter(i => !isEx(i)) }); }
+  return r;
+}
+function partInfo(n, ch){
+  const t = (S.parts[n] || {}).t || {}, got = ch.ids.filter(i => i in t);
+  return { done: got.length === ch.ids.length, n: got.length, ok: got.filter(i => t[i]).length };
+}
+function nextPart(n){ return chunksOf(n).findIndex(ch => ch.ids.length && !partInfo(n, ch).done); }
+function partsHTML(n){
+  const cs = chunksOf(n);
+  if(cs.length < 2) return '';
+  const nk = nextPart(n);
+  return `<div class="parts"><div class="pt">少しずつ進める<small>${S.cfg.chunk}${UNIT}ずつ「覚える → すぐテスト」</small></div><div class="pgr">${cs.map((ch, k) => {
+    const f = partInfo(n, ch), rate = f.n ? f.ok / f.n : 0, done = ch.ids.length && f.done;
+    return `<button class="pc ${k === nk ? 'next' : ''}" data-k="${k}" style="${done ? 'background:' + rateColor(rate) : ''}">${ch.a+1}〜${ch.b}<small>${!ch.ids.length ? '外' : done ? Math.round(rate*100) + '%' : k === nk ? 'つぎ' : ''}</small></button>`;
+  }).join('')}</div></div>`;
+}
+function partLabel(n, ch){ const p = plan(n); return `第${p.lap}周 Day${p.d}（${ch.a+1}〜${ch.b}）`; }
+function partCards(n, k){
+  const ch = chunksOf(n)[k]; if(!ch || !ch.ids.length) return;
+  openCards(ch.ids, `Day${plan(n).d} の ${ch.a+1}〜${ch.b}`, null, () => startPartTest(n, k));
+}
+function startPartTest(n, k){
+  const ch = chunksOf(n)[k]; if(!ch || !ch.ids.length) return;
+  startTest({ ids: ch.ids, type:'part', plan:n, label: partLabel(n, ch) });
+}
+function openPart(n, k){
+  const ch = chunksOf(n)[k]; if(!ch) return;
+  if(!ch.ids.length){ toast('この範囲は、ぜんぶ外しています'); return; }
+  const f = partInfo(n, ch), lab = `Day${plan(n).d} の ${ch.a+1}〜${ch.b}`;
+  const bg = sheet(`<h2>${lab}</h2>
+    <p>${ch.ids.length}${UNIT}を覚えて、<b>すぐテスト</b>します。${f.done ? `<br><span class="dim">1回目：${f.ok} / ${f.n}問 正解（${Math.round(f.ok / f.n * 100)}%）</span>` : ''}</p>
+    <div style="margin-top:12px"><button class="btn" data-a="cards">カードで覚える → テスト</button>
+    <button class="btn sub" data-a="list">一覧で覚える</button>
+    <button class="btn sub" data-a="lesson">1分解説で覚える</button>
+    <button class="btn line" data-a="test">覚えたので、テスト ${ch.ids.length}問</button></div>`);
+  bg.querySelector('[data-a=cards]').onclick = () => { bg.remove(); partCards(n, k); };
+  bg.querySelector('[data-a=list]').onclick = () => { bg.remove(); openList(ch.ids, lab + ' の一覧'); };
+  bg.querySelector('[data-a=lesson]').onclick = () => { bg.remove(); openLessonPicker(ch.ids, lab + ' の1分解説'); };
+  bg.querySelector('[data-a=test]').onclick = () => { bg.remove(); startPartTest(n, k); };
+}
 function rateColor(r){ return r >= .9 ? '#2E7A57' : r >= .7 ? '#6E9A5C' : r >= .5 ? '#C9953A' : '#B63E2B'; }
 function gridHTML(){
   const cur = curN(), t = today();
   const cell = n => {
     const r = S.days[n], p = plan(n);
+    if(r && r.mv) return `<button class="cell d mvd" data-n="${n}">済</button>`;
     if(r && !r.n) return `<button class="cell d exd" data-n="${n}">外</button>`;
     if(r){ const rate = r.ok / r.n; return `<button class="cell d" data-n="${n}" style="background:${rateColor(rate)}">${Math.round(rate*100)}</button>`; }
     return `<button class="cell ${n === cur ? 'cur' : ''} ${p.date < t ? 'late' : ''}" data-n="${n}">${md(p.date)}</button>`;
@@ -769,7 +835,7 @@ function gridHTML(){
     h = '<div class="grid wide">';
     for(let l=0; l<LAPS; l++){ h += `<div class="lapt">第${l+1}周（Day1〜${DAYS}）</div>`; for(let d=0; d<DAYS; d++) h += cell(l*DAYS + d); }
   }
-  h += '</div><div class="legend"><span><i style="background:#2E7A57"></i>90%以上</span><span><i style="background:#6E9A5C"></i>70%〜</span><span><i style="background:#C9953A"></i>50%〜</span><span><i style="background:#B63E2B"></i>50%未満</span><span>数字＝1回目の正答率</span>' + (Object.values(S.days).some(r => !r.n) ? '<span><i style="background:#9AA8BA"></i>外＝ぜんぶ外した日</span>' : '') + '</div>';
+  h += '</div><div class="legend"><span><i style="background:#2E7A57"></i>90%以上</span><span><i style="background:#6E9A5C"></i>70%〜</span><span><i style="background:#C9953A"></i>50%〜</span><span><i style="background:#B63E2B"></i>50%未満</span><span>数字＝1回目の正答率</span>' + (Object.values(S.days).some(r => r.mv) ? '<span><i style="background:#AEB9C7"></i>済＝1日の数を変える前に終えた日</span>' : '') + (Object.values(S.days).some(r => !r.n && !r.mv) ? '<span><i style="background:#9AA8BA"></i>外＝ぜんぶ外した日</span>' : '') + '</div>';
   return h;
 }
 function bindGrid(root){
@@ -779,7 +845,7 @@ function openDaySheet(n){
   const p = plan(n), r = S.days[n];
   const bg = sheet(`<h2>第${p.lap}周 Day${p.d}</h2>
     <p>${BNAME} No.${p.from+1}〜${p.to}（${cntText(p)}）　予定日 ${md(p.date)}(${wd(p.date)})</p>
-    ${r && !r.n ? `<div class="note">この日の${BNAME}は、ぜんぶ外したので完了にしました。</div>` : r ? `<div class="note">1回目：${r.d.slice(5).replace('-','/')} に ${r.n}問中 ${r.ok}問正解（${Math.round(r.ok/r.n*100)}%）・${fmtSec(r.secs)}${r.best != null && r.best > r.ok ? `<br>いちばん良かった回：${r.best}問正解` : ''}</div>` : '<p class="dim">まだテストしていません。</p>'}
+    ${r && r.mv ? `<div class="note">1日の数を変える前に終えた範囲です（済）。</div>` : r && !r.n ? `<div class="note">この日の${BNAME}は、ぜんぶ外したので完了にしました。</div>` : r ? `<div class="note">1回目：${r.d.slice(5).replace('-','/')} に ${r.n}問中 ${r.ok}問正解（${Math.round(r.ok/r.n*100)}%）・${fmtSec(r.secs)}${r.best != null && r.best > r.ok ? `<br>いちばん良かった回：${r.best}問正解` : ''}</div>` : '<p class="dim">まだテストしていません。</p>'}
     <div style="margin-top:12px"><button class="btn" data-a="test">この日のテストをする</button>
     <button class="btn sub" data-a="cards">カードで覚える</button>
     <button class="btn sub" data-a="print">印刷用のカードを作る</button>
@@ -1309,6 +1375,19 @@ function finishTest(){
     if(!r){ S.days[T.plan] = { d: today(), n, ok: T.ok, secs, best: T.ok }; bonus.push(['Dayクリア', 20]); }
     else r.best = Math.max(r.best ?? r.ok, T.ok);
   }
+  let partDay = false;
+  if(T.type === 'part'){   // 少しずつ：1回目の答えだけ残す。その日の分がそろったら Day も完了
+    const pr = S.parts[T.plan] || (S.parts[T.plan] = { t:{}, secs:0 });
+    let fresh = false;
+    T.ids.forEach(i => { if(!(i in pr.t)){ pr.t[i] = T.wrong.includes(i) ? 0 : 1; fresh = true; } });
+    if(fresh) pr.secs += secs;
+    const ids = plan(T.plan).ids;
+    if(!S.days[T.plan] && ids.every(i => i in pr.t)){
+      const ok = ids.filter(i => pr.t[i]).length;
+      S.days[T.plan] = { d: today(), n: ids.length, ok, secs: pr.secs, best: ok, parts:1 };
+      bonus.push(['Dayクリア', 20]); partDay = true;
+    }
+  }
   if(n >= 10 && T.ok === n) bonus.push(['全問正解', 10]);
   save();
   bonus.forEach(([t, v]) => gainXP(v, t));
@@ -1316,6 +1395,7 @@ function finishTest(){
   const stSec = T.type === 'day' ? S.study.filter(x => x.n === T.plan && x.d === today()).reduce((a,x) => a + x.secs, 0) : 0;
   const report = `【英検4級 ${BNAME}】${T.label}${stSec ? `　覚える時間 ${fmtSec(stSec)}` : ''}　テスト ${n}問　正答率 ${Math.round(rate*100)}%（${T.ok}/${n}）　時間 ${fmtSec(secs)}`;
   const ov = $('.ov'), wrong = [...new Set(T.wrong)], keep = T;
+  const nk = T.type === 'part' && !S.days[T.plan] ? nextPart(T.plan) : -1, nch = nk >= 0 ? chunksOf(T.plan)[nk] : null;
   ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">${esc(T.label)}　結果</div></div>
     <div class="ovbody"><div class="res">
       <div class="pct" style="color:${rateColor(rate)}">${Math.round(rate*100)}<small>%</small></div>
@@ -1330,6 +1410,8 @@ function finishTest(){
         <div class="dim" style="margin-top:12px">まちがえた${BNAME}は、<b>明日のリマインドテスト</b>に出ます。</div>
         <div class="wlist wrongs">${wrong.map(i => `<button class="wrow" data-i="${i}"><span class="no">${i+1}</span><span class="wd">${esc(W[i].w)}</span><span class="mn">${esc(W[i].m)}</span></button>`).join('')}</div>`
       : `<div class="note" style="text-align:center">全問正解！</div>`}
+      ${nch ? `<button class="btn" data-a="nextp" style="margin-top:10px">つぎの ${nch.a+1}〜${nch.b} へ（覚える → テスト）</button>` : ''}
+      ${partDay ? `<div class="note" style="text-align:center;margin-top:10px">Day${plan(keep.plan).d} の分が、ぜんぶおわりました！</div>` : ''}
       <button class="btn line" data-a="copy" style="margin-top:10px">報告用にコピー</button>
       <button class="btn sub" data-a="x2">おわる</button>
     </div>`;
@@ -1337,6 +1419,7 @@ function finishTest(){
   ov.querySelector('[data-a=x]').onclick = closeOv;
   ov.querySelector('[data-a=x2]').onclick = closeOv;
   ov.querySelector('[data-a=copy]').onclick = () => copyText(report, 'コピーしました');
+  if(nch) ov.querySelector('[data-a=nextp]').onclick = () => partCards(keep.plan, nk);
   if(wrong.length){
     const relabel = 'やり直し　' + keep.label.replace(/（.*）$/, '');
     ov.querySelector('[data-a=retry]').onclick = () => startTest({ ids: wrong, type:'retry', label: relabel });
@@ -1388,7 +1471,7 @@ function renderTest(){
 }
 
 /* ===================== 記録 ===================== */
-const TYPE = { day:'Day', remind:'リマインド', shuffle:'シャッフル', retry:'やり直し' };
+const TYPE = { day:'Day', part:'少しずつ', remind:'リマインド', shuffle:'シャッフル', retry:'やり直し' };
 function renderLog(){
   const el = $('#tab-log'), ts = S.tests;
   const q = ts.reduce((a,t) => a + t.n, 0), ok = ts.reduce((a,t) => a + t.ok, 0), sec = ts.reduce((a,t) => a + t.secs, 0);
@@ -1428,7 +1511,12 @@ function renderSet(){
       <label>${BNAME}の開始日</label><input type="date" id="sStart" value="${S.start}">
       <label style="margin-top:12px">何周する？</label>
       <div class="seg" id="sLaps">${[4,6,8,10].map(n => `<button class="${LAPS===n?'on':''}" data-n="${n}">${n}周</button>`).join('')}</div>
-      <p class="dim" style="margin:8px 0 0">1日${PER}${IDIOM ? '個' : '語'} × ${DAYS}日 = 1周。${LAPS}周で <b>${TOTAL}日</b>。この日から始めると、完走予定は <b>${md(end)}(${wd(end)})</b> です。${IDIOM ? '熟語は、単語を完走してから始めるのがおすすめです。' : '8周で約2か月です。'}</p></div>
+      <label style="margin-top:12px">1日の数</label>
+      <div class="seg" id="sPer">${PER_OPTS.map(n => `<button class="${PER===n?'on':''}" data-n="${n}">${n}${UNIT}</button>`).join('')}</div>
+      <p class="dim" style="margin:8px 0 0">1日${PER}${IDIOM ? '個' : '語'} × ${DAYS}日 = 1周。${LAPS}周で <b>${TOTAL}日</b>。この日から始めると、完走予定は <b>${md(end)}(${wd(end)})</b> です。${IDIOM ? '熟語は、単語を完走してから始めるのがおすすめです。' : ''}</p></div>
+    <div class="card set"><label>少しずつ進める（覚える → すぐテスト）</label>
+      <div class="seg" id="sChunk">${[[10,'10ずつ'],[20,'20ずつ'],[0,'使わない']].map(([c,t]) => `<button class="${+S.cfg.chunk===c?'on':''}" data-c="${c}">${t}</button>`).join('')}</div>
+      <p class="dim" style="margin:8px 0 0">「今日」で、その日の${BNAME}を${S.cfg.chunk || 20}${UNIT}ずつに分けて、覚えたらすぐテストできます。全部の区切りをテストすると、その日のテストも完了です。</p></div>
     <div class="card set"><label>発音</label>
       <div class="seg" id="sAuto"><button class="${S.cfg.autoSpk?'on':''}" data-v="1">自動で鳴らす</button><button class="${!S.cfg.autoSpk?'on':''}" data-v="0">押したときだけ</button></div>
       <p class="dim" style="margin:8px 0 0">カードを出したとき・「英語→意味」の問題で、英語の発音を自動で鳴らします。</p></div>
@@ -1459,6 +1547,8 @@ function renderSet(){
   $$('#sBook button').forEach(b => b.onclick = () => switchBook(b.dataset.b));
   $('#sStart').onchange = e => { if(e.target.value){ S.start = e.target.value; S.startSet = true; save(); renderAll(); renderSet(); toast('開始日を変えました'); } };
   $$('#sLaps button').forEach(b => b.onclick = () => { S.cfg.laps = +b.dataset.n; setLaps(S.cfg.laps); save(); renderAll(); renderSet(); });
+  $$('#sPer button').forEach(b => b.onclick = () => askPer(+b.dataset.n));
+  $$('#sChunk button').forEach(b => b.onclick = () => { S.cfg.chunk = +b.dataset.c; save(); renderAll(); renderSet(); });
   $$('#sAuto button').forEach(b => b.onclick = () => { S.cfg.autoSpk = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sVoice button').forEach(b => b.onclick = () => { S.cfg.voice = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sRate button').forEach(b => b.onclick = () => { S.cfg.rate = +b.dataset.r; save(); renderSet(); });
@@ -1496,6 +1586,28 @@ function renderSet(){
   if(newVer > VER){ $('#btnUpdate').classList.remove('hidden'); $('#updVer').textContent = 'v' + VER + ' → v' + newVer; }
 }
 /* 単語 ⇔ 熟語 の切りかえ（記録を保存してから読みなおす） */
+/* 1日の数を変える（塾生の声）。いまの続きの位置（第何周の No.いくつ）から、新しい区切りで進める。
+   それまでに終えた日は「済」にする（テストの記録・1つずつの状態・リマインドはそのまま）。遅れ・先取りの日数も変えない。 */
+function applyPer(np){
+  const c = curN(), nd = Math.ceil(N / np);
+  const c2 = c >= TOTAL ? LAPS * nd : Math.floor(c / DAYS) * nd + Math.floor(Math.min(N, (c % DAYS) * PER) / np);
+  if(c > 0){ S.oldPlans = (S.oldPlans || []).concat([{ at: today(), per: PER, days: S.days }]); S.start = addDays(S.start, c - c2); S.startSet = true; }
+  S.days = {}; for(let k = 0; k < c2; k++) S.days[k] = { d: today(), n:0, ok:0, secs:0, best:0, mv:1 };
+  S.parts = {}; S.cfg.per = np; PER = np; DAYS = nd; setLaps(LAPS);
+  save(); renderAll(); renderSet(); toast(`1日${np}${UNIT}にしました`);
+}
+function askPer(np){
+  if(np === PER) return;
+  const c = curN();
+  if(c === 0 && !Object.keys(S.parts).length){ applyPer(np); return; }
+  const p = c < TOTAL ? plan(c) : null;
+  const bg = sheet(`<h2>1日 ${np}${UNIT} にしますか？</h2>
+    <p>いまの続き（${p ? `第${p.lap}周 No.${p.from+1} から` : '完走'}）から、1日${np}${UNIT}で進みます。</p>
+    <div class="note">表の区切りが変わるので、これまで終えた日は「済」になります。テストの記録・まちがえた${BNAME}のリマインドは、そのまま残ります。</div>
+    <div style="margin-top:14px"><button class="btn" data-a="ok">1日 ${np}${UNIT} にする</button><button class="btn sub" data-a="no">やめる</button></div>`);
+  bg.querySelector('[data-a=ok]').onclick = () => { bg.remove(); applyPer(np); };
+  bg.querySelector('[data-a=no]').onclick = () => bg.remove();
+}
 function switchBook(b){
   if(b === BOOK) return;
   if(T && !confirm('テストを中断して切りかえますか？')) return;
@@ -1766,7 +1878,7 @@ function guideSlides(){
   return [
     { t:'ようこそ', p:['英検4級に出る<b>英単語700語</b>と<b>英熟語・表現150個</b>を、何周もして覚えきるアプリです。','やることは毎日かんたん。<b>覚える → テスト</b> の2つだけ。右上の「単語／熟語」で切りかえます。'],
       v:`<div class="minicard"><b>decide</b><span class="dim">→</span><span style="color:var(--shu);font-weight:700">〜を決める</span></div><div class="minicard"><b>look forward to ~</b><span class="dim">→</span><span style="color:var(--shu);font-weight:700">〜を楽しみに待つ</span></div><div class="dim" style="text-align:center">英検4級によく出る単語・熟語</div>` },
-    { t:'単語は2か月で8周', p:['単語は<b>1日100語 × 7日で1周</b>。これを<b>8周（56日・約2か月）</b>くり返します。','単語を完璧に覚えたら、<b>熟語</b>へ。熟語は<b>1日30個 × 5日で1周</b>です。','その日にやる範囲は「今日」タブに出ます。遅れても大丈夫。次にやる日から続きが出ます。'],
+    { t:'単語は2か月で8周', p:['単語は<b>1日100語 × 7日で1周</b>。これを<b>8周（56日・約2か月）</b>くり返します。','単語を完璧に覚えたら、<b>熟語</b>へ。熟語は<b>1日30個 × 5日で1周</b>です。','その日にやる範囲は「今日」タブに出ます。遅れても大丈夫。次にやる日から続きが出ます。','<b>1日の数は「設定」で変えられます</b>。多すぎるときは減らしてOK。'],
       v:`<div class="grid" style="grid-template-columns:34px repeat(7,minmax(0,1fr))"><div></div>${[1,2,3,4,5,6,7].map(d => `<div class="h">Day${d}</div>`).join('')}${[1,2,3].map(l => `<div class="l">${l}周</div>` + [0,1,2,3,4,5,6].map(d => `<span class="cell ${l===1&&d<3?'d':''} ${l===1&&d===3?'cur':''}" style="${l===1&&d<3?'background:#2E7A57':''}">${l===1&&d<3?[96,88,92][d]:''}</span>`).join('')).join('')}</div><div class="dim" style="text-align:center">…8周まで</div>` },
     { t:'はじめに：仕分け', p:['「今日」の<b>仕分け</b>で、順番に見て<b>完璧に知っているものは外します</b>。','「完璧に知ってる」を押すと意味が出るので、<b>合っていたら外す</b>。外したものは、カード・一覧・テストに出なくなります（「一覧」タブの「外した」から、もとにもどせます）。'],
       v:`<div class="srtb"><span class="btn" style="font-size:14px">あやしい・知らない<small>覚える${BNAME}にする</small></span><span class="btn know" style="font-size:14px">完璧に知ってる<small>意味を確かめて外す</small></span></div>` },
@@ -1774,7 +1886,7 @@ function guideSlides(){
       v:`<div style="background:#1F2A4D;color:#fff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px"><b style="font-size:24px">9:42</b><small style="opacity:.8">覚える時間</small><span style="margin-left:auto;font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:99px">一時停止</span></div><div class="minicard">カード　／　一覧（意味をかくせる）　／　1分解説</div>` },
     { t:'発音と1分解説', p:['<b>スピーカーのボタン</b>で、ネイティブの発音が聞けます。カードを出すと自動で鳴ります。','1分解説は、スライドと音声で1つを約30秒で解説。英語はネイティブの声、意味や覚え方は日本語の声です。'],
       v:`<div class="minicard" style="flex-direction:column;align-items:flex-start"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:22px">decide</b><span class="ph">/dɪˈsaɪd/</span><span class="spk">${SPK_SVG}</span></div><span style="color:var(--shu);font-weight:700;border:1.5px solid var(--shu);border-radius:8px;padding:2px 8px">〜を決める</span><span class="dim" style="font-size:12.5px">仲間の語：decision（名）決定</span></div>` },
-    { t:'② テスト', p:['その日の分の4択テスト（単語100問・熟語30問）。<b>時間と正答率は自動で記録</b>されます。','まちがえたものだけ、すぐにもう一度。「報告用にコピー」で、勉強報告にそのまま貼れます。','慣れてきたら、テストタブの「出題の形式」で<b>聞いて答える</b>・<b>書いて答える</b>・<b>例文の穴埋め</b>にも変えられます。'],
+    { t:'② テスト', p:['その日の分の4択テスト（単語100問・熟語30問）。<b>時間と正答率は自動で記録</b>されます。','まちがえたものだけ、すぐにもう一度。「報告用にコピー」で、勉強報告にそのまま貼れます。','<b>少しずつ進める</b>：「今日」の <b>1〜20</b> などを押すと、その分だけ覚えて<b>すぐテスト</b>できます。全部おわると、その日のテストも完了です。','慣れてきたら、テストタブの「出題の形式」で<b>聞いて答える</b>・<b>書いて答える</b>・<b>例文の穴埋め</b>にも変えられます。'],
       v:`<div style="text-align:center"><div style="font-family:var(--mincho);font-weight:700;font-size:44px;color:#2E7A57;line-height:1.1">92<small style="font-size:18px">%</small></div><div class="dim">100問中 92問 正解　・　時間 10分50秒</div></div>` },
     { t:'リマインドテスト', p:['まちがえたものは、<b>翌日 → 3日後 → 1週間後</b>にもどってきます。','3回つづけて正解したら卒業。苦手なものほど何度も出るので、自然に覚えきれます。'],
       v:`<div class="minicard"><b style="color:var(--shu)">✕</b> まちがえた</div><div class="minicard">翌日 → 3日後 → 1週間後 にもう一度</div><div class="minicard"><b style="color:#2E7A57">◯◯◯</b> 3回つづけて正解で卒業</div>` },

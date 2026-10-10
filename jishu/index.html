@@ -68,9 +68,6 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
 
 /* 見本・お知らせの帯 */
 .band{display:flex; align-items:center; gap:10px; border-radius:14px; padding:10px 12px; margin-bottom:12px; font-size:13px; line-height:1.5;}
-.band.demo{background:var(--chip); color:var(--muted);}
-.band.demo b{color:var(--ink);}
-.band.demo button{flex:none; background:var(--ink); color:var(--bg); font-weight:700; border-radius:999px; padding:7px 13px; font-size:13px;}
 .band.note{background:var(--lamp-soft); color:var(--ink); border:1px solid var(--lamp);}
 .band.note .who{font-size:11px; font-weight:900; color:var(--lamp-deep); display:block;}
 .band.off{background:var(--wait-soft); color:var(--muted);}
@@ -254,9 +251,9 @@ svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; s
 
 <script>
 'use strict';
-const VER = 1;
+const VER = 2;
 const API = 'https://theater-auth.yuki08173123.workers.dev';   /* Theater と同じ入り口（ログインと記録の置き場） */
-const K_TOK = 'js_tok', K_CUR = 'js_cur', K_LOG = 'js_log', K_CFG = 'js_cfg';
+const K_UID = 'js_uid', K_CUR = 'js_cur', K_LOG = 'js_log', K_CFG = 'js_cfg';
 const GRACE = 10 * 60000, BREAK_MAX = 30 * 60000;              /* Worker と同じ数字 */
 const SUBJ = [['国語','--s1'],['数学','--s2'],['英語','--s3'],['理科','--s4'],['社会','--s5'],['その他','--s6']];
 const GOALS = [[0,'決めない'],[30,'30分'],[60,'1時間'],[90,'1時間半'],[120,'2時間'],[180,'3時間']];
@@ -268,7 +265,7 @@ const jget = (k, d) => { try{ const v = JSON.parse(localStorage.getItem(k)); ret
 const jset = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
 
 /* ---------- 保存しているもの ---------- */
-let cfg = Object.assign({ ivl:25, wake:true, sound:true, subj:'数学', goal:60, seen:0 }, jget(K_CFG, {}));
+let cfg = Object.assign({ ivl:25, wake:true, sound:true, subj:'数学', goal:60, name:'', key:'' }, jget(K_CFG, {}));
 let cur = jget(K_CUR, null);      /* いまの自分の席 {sid,subj,memo,goal,start,brk,st,stat,chk,ivl} */
 let log = jget(K_LOG, []);        /* 自分の記録 [{sid,day,start,fin,mins,subj,memo,done,auto}] */
 const saveCfg = () => jset(K_CFG, cfg);
@@ -334,35 +331,33 @@ async function wake(){
 }
 
 /* =====================================================================
-   サーバーとのやりとり
-   本物（live）：Theater の Worker の /room。ログインしていないときは見本（demo）を出す。
+   サーバーとのやりとり（Theater の Worker の /room）
+   Discord のログインはいらない。端末ごとの番号（js_uid）とニックネームで入る。
    ===================================================================== */
-let mode = 'demo';          /* 'live' | 'demo' */
-let why = 'login';          /* 見本を出している理由：login（未ログイン）・prep（準備中）・member（塾生でない） */
 let tk = null, tkX = 0;     /* 入室券と、その期限 */
-let me = { id:'me', name:'あなた', admin:false };
+let me = { id:'', admin:false };
 let R = null;               /* 最後に受けとった自習室の様子 */
 let offline = false;
-const tokGet = () => { try{ return localStorage.getItem(K_TOK) || ''; }catch(e){ return ''; } };
-const tokSet = t => { try{ if(t) localStorage.setItem(K_TOK, t); else localStorage.removeItem(K_TOK); }catch(e){} };
+function uid(){
+  let u = '';
+  try{ u = localStorage.getItem(K_UID) || ''; }catch(e){}
+  if(!/^[A-Za-z0-9_-]{12,48}$/.test(u)){
+    const a = new Uint8Array(18); crypto.getRandomValues(a);
+    u = btoa(String.fromCharCode.apply(null, a)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    try{ localStorage.setItem(K_UID, u); }catch(e){}
+  }
+  return u;
+}
 
 async function enter(){
-  const t = tokGet();
-  if(!t){ mode = 'demo'; why = 'login'; return false; }
-  let r, j = null;
-  try{ r = await fetch(API + '/room/enter?t=' + encodeURIComponent(t), { method:'POST', cache:'no-store' }); j = await r.json(); }
-  catch(e){ offline = true; return false; }
-  offline = false;
-  if(j && j.ok){
-    tk = j.k; tkX = ticketExp(j.k); if(j.t) tokSet(j.t);
-    me = { id:j.me, name:j.name || 'あなた', admin:!!j.admin };
-    mode = 'live'; return true;
-  }
-  const e = j && j.error;
-  if(e === 'not_found'){ mode = 'demo'; why = 'prep'; return false; }          /* Worker がまだ自習室に対応していない */
-  if(e === 'need_login'){ tokSet(''); mode = 'demo'; why = 'login'; return false; }
-  if(e === 'not_member'){ tokSet(''); mode = 'demo'; why = 'member'; return false; }
-  offline = true; return false;                                                  /* こんでいる・一時的な不調 */
+  let j = null;
+  try{
+    const r = await fetch(API + '/room/enter', { method:'POST', cache:'no-store', headers:{ 'content-type':'text/plain' },
+      body:JSON.stringify({ u:uid(), key:cfg.key || '' }) });
+    j = await r.json();
+  }catch(e){ offline = true; return false; }
+  if(j && j.ok){ offline = false; tk = j.k; tkX = ticketExp(j.k); me = { id:j.me, admin:!!j.admin }; return true; }
+  offline = true; return false;
 }
 function ticketExp(k){
   try{ const b = k.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(escape(atob(b)))).x || 0; }
@@ -373,12 +368,12 @@ function ticketExp(k){
 async function call(body){
   body = body || {};
   if(cur && !body.s) body.s = Object.assign({}, cur);
-  if(mode !== 'live') return applyRoom(demo.call(body));
-  if(!tk || tkX - Date.now() < 120000){ if(!(await enter())) return mode === 'demo' ? applyRoom(demo.call(body)) : null; }
+  body.nm = cfg.name || '';
+  if(!tk || tkX - Date.now() < 120000){ if(!(await enter())){ render(); return null; } }
   for(let i = 0; i < 2; i++){
-    let r, j = null;
+    let j = null;
     try{
-      r = await fetch(API + '/room?k=' + encodeURIComponent(tk), { method:'POST', cache:'no-store',
+      const r = await fetch(API + '/room?k=' + encodeURIComponent(tk), { method:'POST', cache:'no-store',
         headers:{ 'content-type':'text/plain' }, body:JSON.stringify(body) });
       j = await r.json();
     }catch(e){ offline = true; render(); return null; }
@@ -396,6 +391,7 @@ function applyRoom(j){
   if(!j) return null;
   if(j.now) off = j.now - Date.now();
   R = j;
+  if(j.badName && !nameWarned){ nameWarned = true; toast('その名前は使えないので「ゲスト」で出ています。設定で変えてください'); }
   if(j.mine && j.mine.gone && cur) finishLocal(j.mine.mins, j.mine.auto, '', j.mine.fin);
   const mySeat = (j.seats || []).find(s => s.id === j.me);
   if(mySeat && cur && mySeat.cheers > lastCheers && lastCheers >= 0){
@@ -405,74 +401,7 @@ function applyRoom(j){
   render();
   return j;
 }
-
-/* ---------- 見本（ログイン前に、どんな画面になるかを見せる） ---------- */
-const demo = (() => {
-  const t0 = Date.now(), M = 60000;
-  const mk = (id, name, subj, memo, goal, ago, chkAgo, extra) => Object.assign(
-    { id, name, subj, memo, goal, start:t0 - ago * M, brk:0, st:'study', stat:t0 - ago * M, chk:t0 - chkAgo * M, ivl:25, cheers:0 }, extra || {});
-  const seats = [
-    mk('d1', 'はるか', '数学', '青チャート 例題40〜50', 120, 96, 9, { cheers:4, brk:8 * M }),
-    mk('d2', 'そうた', '英語', 'ターゲット1900 1〜200', 60, 41, 16, { cheers:2 }),
-    mk('d3', 'みお', '理科', '化学 重要問題集 第3章', 90, 63, 3, { st:'break', stat:t0 - 4 * M, cheers:1 }),
-    mk('d4', 'けんと', '社会', '日本史 一問一答 近代', 0, 22, 22, { cheers:0 }),
-    mk('d5', 'ゆい', '国語', '古文単語 Day3', 30, 31, 33, { cheers:3 }),
-  ];
-  const today = [
-    { id:'d6', name:'りく', mins:95, fin:t0 - 50 * M, n:1 },
-    { id:'d1', name:'はるか', mins:60, fin:t0 - 100 * M, n:1 },
-    { id:'d7', name:'あおい', mins:45, fin:t0 - 140 * M, n:1 },
-  ];
-  const feed = [
-    { at:t0 - 4 * M, k:'cheer', n:'そうた', t:'はるか' },
-    { at:t0 - 22 * M, k:'start', n:'けんと', s:'社会', g:0 },
-    { at:t0 - 31 * M, k:'start', n:'ゆい', s:'国語', g:30 },
-    { at:t0 - 35 * M, k:'say', n:'ヒラ', x:'今日は21時までいっしょにがんばろう！' },
-    { at:t0 - 41 * M, k:'start', n:'そうた', s:'英語', g:60 },
-    { at:t0 - 50 * M, k:'end', n:'りく', s:'数学', m:95 },
-    { at:t0 - 63 * M, k:'start', n:'みお', s:'理科', g:90 },
-    { at:t0 - 96 * M, k:'start', n:'はるか', s:'数学', g:120 },
-  ];
-  const note = { txt:'今日は21時までいっしょにがんばろう！', at:t0 - 35 * M };
-  const sent = {};
-  let mine = null;
-  /* ときどき、だれかが👏したり、確認を押したりする（見本でも「人がいる」感じを出す） */
-  setInterval(() => {
-    const now = Date.now(), live = seats.filter(s => s.id !== 'me');
-    const a = live[Math.floor(Math.random() * live.length)], b = live[Math.floor(Math.random() * live.length)];
-    if(Math.random() < .5 && a !== b){ b.cheers++; feed.unshift({ at:now, k:'cheer', n:a.name, t:b.name }); }
-    else if(a.st === 'study' && a.id !== 'd4') a.chk = now;
-    if(mine && Math.random() < .35){ mine.cheers++; feed.unshift({ at:now, k:'cheer', n:a.name, t:me.name }); }
-  }, 45000);
-  function call(body){
-    const now = Date.now();
-    if(body.cheer){
-      const s = seats.find(x => x.id === body.cheer);
-      if(s && !(sent[s.id] > now - 180000)){ sent[s.id] = now; s.cheers++; feed.unshift({ at:now, k:'cheer', n:me.name, t:s.name }); }
-    }
-    let res = null;
-    if(body.s){
-      const s = body.s;
-      if(s.end){
-        const m = Math.floor(studied(s, now) / 60000);
-        const i = seats.indexOf(mine); if(i >= 0) seats.splice(i, 1);
-        mine = null; today.unshift({ id:'me', name:me.name, mins:m, fin:now, n:1 });
-        feed.unshift({ at:now, k:'end', n:me.name, s:s.subj, m });
-        res = { ended:true, mins:m };
-      }else{
-        if(!mine || mine.sid !== s.sid){
-          mine = { id:'me', name:me.name, cheers:0 }; seats.push(mine);
-          feed.unshift({ at:now, k:'start', n:me.name, s:s.subj, g:s.goal });
-        }
-        Object.assign(mine, s, { id:'me', name:me.name });
-        res = { ok:true };
-      }
-    }
-    return { ok:true, now, me:'me', admin:false, demo:true, mine:res,
-      seats:seats.map(s => Object.assign({}, s)), today:today.slice(), feed:feed.slice(0, 30), note };
-  }
-  return { call };
-})();
+let nameWarned = false;
 
 /* =====================================================================
    自分の席（はじめる・休憩・再開・確認・おわる）
@@ -559,14 +488,6 @@ function render(){
 
 function bandHtml(){
   let h = '';
-  if(mode === 'demo'){
-    const t = why === 'prep'
-      ? '<b>自習室はいま準備中です。</b>いまは見本の画面です。'
-      : why === 'member'
-        ? '<b>塾の Discord に入っている人だけが使えます。</b>いまは見本の画面です。'
-        : '<b>いまは見本の画面です。</b>Discord でログインすると、本物の自習室に入れます。';
-    h += `<div class="band demo"><div class="tx">${t}</div>${why === 'prep' ? '' : '<button id="bLogin">ログイン</button>'}</div>`;
-  }
   if(offline) h += '<div class="band off"><div class="tx">つながっていません。時間はこの端末で数えつづけています。</div></div>';
   if(R && R.note) h += `<div class="band note"><div class="tx"><span class="who">ヒラからのひとこと</span>${esc(R.note.txt)}</div></div>`;
   return h;
@@ -605,7 +526,7 @@ function renderRoom(){
   }
 
   /* 平山さんだけ：みんなへのひとこと */
-  if(mode === 'live' && me.admin){
+  if(me.admin){
     h += `<div class="adm"><p>みんなの画面の上に出すひとこと（6時間で消えます）</p><div class="row">
       <input type="text" id="sayIn" maxlength="80" placeholder="例：今日は21時までいっしょにがんばろう" value="${esc(R && R.note ? R.note.txt : '')}">
       <button id="sayGo">出す</button><button class="sub" id="sayDel">消す</button></div></div>`;
@@ -647,8 +568,7 @@ function renderRoom(){
 
   /* ボタン */
   const on = (id, f) => { const e = $(id); if(e) e.onclick = f; };
-  on('#bLogin', () => showLogin());
-  on('#bStart', () => { unlockAudio(); showStart(); });
+  on('#bStart', () => { unlockAudio(); cfg.name ? showStart() : showName(showStart); });
   on('#bBrk', takeBreak);
   on('#bRes', () => { unlockAudio(); resume(); });
   on('#bEnd', showEnd);
@@ -835,14 +755,10 @@ function renderLog(){
 
 /* ---------- 設定 ---------- */
 function renderSet(){
-  const login = mode === 'live'
-    ? `<div class="sw"><div class="tx"><b>${esc(me.name)} でログイン中</b><small>塾の Discord の名前が、みんなの画面に出ます。</small></div></div>
-       <button class="btn warn" id="bOut">ログアウト</button>`
-    : `<p>${why === 'prep' ? '自習室はいま準備中です。ログインはできていますが、まだ本物の自習室には入れません。' : '塾の Discord に入っている人だけが、本物の自習室に入れます。いまは見本の画面です。'}</p>
-       ${why === 'prep' ? '' : '<button class="btn pri" id="bIn">Discordでログイン</button><button class="btn" id="bPaste">合言葉を貼りつける（iPhoneのホーム画面の人）</button>'}`;
   $('#view').innerHTML = `<div class="set">
     <div data-users-card></div>
-    <h3>ログイン</h3><div class="card">${login}</div>
+    <h3>名前</h3><div class="card"><div class="sw"><div class="tx"><b>${esc(cfg.name || 'まだ決めていません')}</b><small>自習室に来ているみんなに見えます。本名ではなくニックネームにしてください。</small></div></div>
+      <button class="btn" id="bName">名前を変える</button></div>
     <h3>「続けていますか？」の間隔</h3><div class="card"><div class="chips" id="ivc">${IVLS.map(v => `<button data-v="${v}">${v}分</button>`).join('')}</div>
       <p style="margin-top:10px">この間隔ごとに確認が出ます。押さずに10分たつと、自動で退室になります（記録は確認の時間まで）。次に席についたときから変わります。</p></div>
     <h3>勉強中</h3><div class="card">
@@ -855,59 +771,45 @@ function renderSet(){
       3. 決まった間隔で「続けていますか？」が出ます。押すと、みんなの画面に「✓ 確認」と出ます。<br>
       4. 「おわる」で記録に残ります。報告文をコピーして Discord に貼れます。</p></div>
     <button class="btn" id="bUpd">更新があるか調べる</button>
+    <h3>先生用</h3><div class="card"><p>${me.admin ? '先生として入っています。自習室の画面で、みんなへのひとことを出せます。' : '先生の合言葉を入れると、みんなの画面にひとことを出せます。'}</p>
+      <button class="btn" id="bKey">${cfg.key ? '先生の合言葉を変える・消す' : '先生の合言葉を入れる'}</button></div>
     <div class="ver">自習室 v${VER}</div></div>`;
   document.querySelectorAll('#ivc button').forEach(b => { b.classList.toggle('on', +b.dataset.v === cfg.ivl); b.onclick = () => { cfg.ivl = +b.dataset.v; saveCfg(); renderSet(); }; });
   $('#tgW').onclick = () => { cfg.wake = !cfg.wake; saveCfg(); wake(); renderSet(); };
   $('#tgS').onclick = () => { cfg.sound = !cfg.sound; saveCfg(); unlockAudio(); if(cfg.sound) chime(); renderSet(); };
   $('#bUpd').onclick = () => checkUpdate(false);
-  const bi = $('#bIn'); if(bi) bi.onclick = () => { location.href = loginUrl(); };
-  const bp = $('#bPaste'); if(bp) bp.onclick = showPaste;
-  const bo = $('#bOut'); if(bo) bo.onclick = () => {
-    if(cur) return toast('勉強中はログアウトできません。先に「おわる」を押してください');
-    tokSet(''); tk = null; mode = 'demo'; why = 'login'; me = { id:'me', name:'あなた', admin:false }; call(); renderSet(); toast('ログアウトしました');
-  };
+  $('#bName').onclick = () => showName(() => { call(); renderSet(); });
+  $('#bKey').onclick = showKey;
 }
 
-/* ---------- ログイン ---------- */
-const loginUrl = () => API + '/login?back=' + encodeURIComponent(location.origin + location.pathname);
-const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-function showLogin(){
-  const ov = sheet(`<h2>Discordでログイン</h2>
-    <div class="lead">オンラインコミュニティ塾【ヒラ】の Discord に入っている人だけが、本物の自習室に入れます。
-    ログインしても、こちらから Discord に書きこんだり、あなたの発言を読んだりすることはありません。</div>
-    <button class="go" id="go">Discordでログイン</button>
-    <button class="cancel" id="ps">合言葉を貼りつける（iPhoneのホーム画面の人）</button>`);
-  ov.querySelector('#go').onclick = () => { location.href = loginUrl(); };
-  ov.querySelector('#ps').onclick = () => { ov.remove(); showPaste(); };
-}
-function showPaste(){
-  const ov = sheet(`<h2>合言葉を貼りつける</h2>
-    <div class="lead">Safari で「Discordでログイン」をしたときに出た合言葉を、下に貼りつけてください。</div>
-    <textarea class="code" id="cd" placeholder="ここに貼りつける"></textarea>
-    <button class="go" id="go">これでログイン</button><button class="cancel" id="cx">もどる</button>`);
+/* ---------- 名前・先生の合言葉 ---------- */
+const BAD_NAME = /ヒラ|ひら先生|平山|hira/i;
+function showName(after){
+  const ov = sheet(`<h2>${cfg.name ? '名前を変える' : '自習室で使う名前'}</h2>
+    <div class="lead">自習室に来ているみんなの画面に、この名前で席が出ます。<b>本名ではなく、ニックネームにしてください。</b></div>
+    <input type="text" id="nm" maxlength="12" placeholder="例：はるか・数学がんばる人" value="${esc(cfg.name)}">
+    <button class="go" id="go">これにする</button><button class="cancel" id="cx">やめる</button>`);
+  const inp = ov.querySelector('#nm');
+  setTimeout(() => inp.focus(), 250);
   ov.querySelector('#cx').onclick = () => ov.remove();
-  ov.querySelector('#go').onclick = async () => {
-    const v = ov.querySelector('#cd').value.trim();
-    if(v.indexOf('.') < 0) return toast('合言葉がちがうようです');
-    tokSet(v); ov.remove(); await boot2(); render();
+  ov.querySelector('#go').onclick = () => {
+    const v = inp.value.replace(/[<>]/g, '').trim().slice(0, 12);
+    if(!v) return toast('名前を入れてください');
+    if(BAD_NAME.test(v) && !me.admin) return toast('その名前は先生用なので使えません');
+    cfg.name = v; saveCfg(); nameWarned = false; ov.remove(); after && after();
   };
 }
-function showCode(t){
-  const ov = sheet(`<h2>ログインできました</h2>
-    <div class="lead">ホーム画面に「自習室」を入れている人は、この合言葉をコピーして、アプリの設定 →「合言葉を貼りつける」に入れてください。</div>
-    <textarea class="code" readonly id="cd">${esc(t)}</textarea>
-    <button class="go" id="cp">合言葉をコピー</button><button class="cancel" id="cx">このままブラウザで使う</button>`);
-  ov.querySelector('#cp').onclick = async () => { try{ await navigator.clipboard.writeText(t); toast('コピーしました'); }catch(e){ ov.querySelector('#cd').select(); toast('長押しして「コピー」を選んでください'); } };
+function showKey(){
+  const ov = sheet(`<h2>先生の合言葉</h2>
+    <div class="lead">ヒラ先生だけが使います。生徒は入れなくて大丈夫です。空にすると、ふつうの席にもどります。</div>
+    <input type="text" id="ky" autocomplete="off" value="${esc(cfg.key)}">
+    <button class="go" id="go">これにする</button><button class="cancel" id="cx">やめる</button>`);
   ov.querySelector('#cx').onclick = () => ov.remove();
-}
-/* ログインから戻ってきたときに # についてくる合図 */
-function readAuthHash(){
-  const h = (location.hash || '').replace(/^#/, '');
-  if(h.indexOf('auth=') < 0) return null;
-  const q = new URLSearchParams(h), a = q.get('auth'), t = q.get('t') || '';
-  try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){ location.hash = ''; }
-  if(a === 'ok' && t){ tokSet(t); return 'ok'; }
-  return a || 'failed';
+  ov.querySelector('#go').onclick = async () => {
+    cfg.key = ov.querySelector('#ky').value.trim(); saveCfg(); ov.remove();
+    tk = null; await call(); renderSet();
+    toast(me.admin ? '先生として入りました' : cfg.key ? '合言葉がちがうようです' : 'ふつうの席にもどりました');
+  };
 }
 
 /* ---------- 更新の確認 ---------- */
@@ -934,10 +836,6 @@ function schedule(){
   if(document.hidden) return;
   pollT = setTimeout(async () => { await call(); schedule(); }, cur ? 15000 : 25000);
 }
-async function boot2(){
-  if(tokGet()) await enter(); else { mode = 'demo'; why = 'login'; }
-  await call();
-}
 document.addEventListener('visibilitychange', async () => {
   wake();
   if(!document.hidden){ await call(); schedule(); checkUpdate(true); }
@@ -946,12 +844,10 @@ document.addEventListener('visibilitychange', async () => {
 setInterval(tick, 1000);
 
 (async () => {
-  const a = readAuthHash();
   render();
-  await boot2();
+  await call();
   schedule();
-  if(a === 'ok' && mode === 'live' && !standalone()) showCode(tokGet());
-  else if(a && a !== 'ok') toast('ログインできませんでした。もう一度ためしてください');
+  if(!cfg.name) showName(null);
   wake();
   checkUpdate(true);
   if('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

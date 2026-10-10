@@ -34,7 +34,8 @@
      DB                     D1 データベース。生徒の記録（見た回数・レベル）を入れる
 
    2026-10-10 から「自習室」アプリ（/study-game/jishu/）の入り口もかねる（/room・/room/enter）。
-   ログインのしくみと D1 は Theater と同じものを使う。新しく登録するものはない。
+   D1 は Theater と同じものを使う。自習室は Discord のログインなしで、だれでも入れる。
+     ROOM_ADMIN_KEY         自習室の「先生の合言葉」。これを入れた人だけ、みんなへのひとことを出せる ← シークレット
    ===================================================================== */
 
 const FILES = ['videos.json', 'chapters.json', 'manual.json'];
@@ -287,9 +288,9 @@ async function roster(url, env) {
 /* =====================================================================
    自習室（2026-10-10）
    Zoom の自習室の代わり。映像は流さず、「いま誰が・何を・何分やっているか」をみんなで見る。
-   ・/room/enter … Discord で塾生かをたしかめて、30分だけ使える「入室券」をわたす。
-                   自習室は15〜20秒ごとに呼ばれるので、毎回 Discord に聞くと断られる。
-                   だから Discord に聞くのは入室券を出すときだけにする。
+   ・/room/enter … 30分だけ使える「入室券」をわたす。Discord のログインはいらない（だれでも入れる）。
+                   名前は本人が決めたニックネーム。先生の合言葉（変数 ROOM_ADMIN_KEY）を入れた人だけ
+                   「みんなへのひとこと」を出せる。
    ・/room       … 入室券で呼ぶ。自分の席を書きこみ（POST）、みんなの席と動きを返す。
    ・決まった間隔（15/25/50分）ごとに「続けていますか？」の確認がある。
      確認の時間を10分すぎても押さないと、自動で退室になる（記録は確認の時間まで）。
@@ -324,26 +325,18 @@ async function ensureRoom(env) {
 async function room(req, url, path, env) {
   if (!env.DB) return json({ ok: false, error: 'no_db' }, 503);
 
-  /* 入室券をもらう（ここだけ Discord に聞く。通行証が古ければ新しくする） */
+  /* 入室券をもらう。Discord のログインはいらない（2026-10-10 ヒラの判断：だれでも入れる）。
+     端末ごとの番号 u から、ほかの人に見せる番号（id）を Worker の鍵で作る。
+     u はその端末の中にしかないので、id を見ても ほかの人の席はいじれない。 */
   if (path === '/room/enter') {
-    const s = await unpack(env, url.searchParams.get('t'));
-    if (!s) return json({ ok: false, error: 'need_login', why: 'bad_token' }, 401);
-    let who = await check(s.a, env), fresh = null;
-    if (!who.ok && who.why === 'token_expired' && s.r) {
-      const tok = await tokenReq(env, { grant_type: 'refresh_token', refresh_token: s.r });
-      if (tok) { who = await check(tok.access_token, env); if (who.ok) fresh = await pack(env, tok, who); }
-    }
-    if (!who.ok) {
-      if (who.why === 'not_member' || who.why === 'no_role') return json({ ok: false, error: 'not_member' }, 403);
-      if (who.why === 'busy' || String(who.why).indexOf('check_failed') === 0)
-        return json({ ok: false, error: 'busy', why: who.why }, 503);
-      return json({ ok: false, error: 'need_login', why: who.why }, 401);
-    }
-    const admin = !!(env.ADMIN_ID && who.id === env.ADMIN_ID);
-    const k = await ticketMake(env, { i: who.id, n: who.name, a: admin ? 1 : 0, x: Date.now() + R_TICKET });
-    const out = { ok: true, k, me: who.id, name: who.name, admin };
-    if (fresh) out.t = fresh;
-    return json(out);
+    let b = {};
+    try { b = JSON.parse(await req.text()) || {}; } catch (e) {}
+    const u = String(b.u || '');
+    if (!/^[A-Za-z0-9_-]{12,48}$/.test(u)) return json({ ok: false, error: 'bad_device' }, 400);
+    const id = 'r' + (await roomHash(env, 'uid:' + u)).slice(0, 18);
+    const admin = !!(env.ROOM_ADMIN_KEY && b.key && String(b.key) === env.ROOM_ADMIN_KEY);
+    const k = await ticketMake(env, { i: id, a: admin ? 1 : 0, x: Date.now() + R_TICKET });
+    return json({ ok: true, k, me: id, admin });
   }
 
   const tk = await ticketRead(env, url.searchParams.get('k'));
@@ -360,9 +353,11 @@ async function room(req, url, path, env) {
   await roomSweep(env, now);
 
   const out = { ok: true, now };
-  if (b.cheer) out.cheer = await roomCheer(env, tk, String(b.cheer).slice(0, 32), now);
-  if (tk.a && typeof b.say === 'string') await roomSay(env, tk, b.say, now);
-  if (b.s && typeof b.s === 'object') out.mine = await roomSeat(env, tk, b.s, now);
+  const nm = roomName(b.nm, tk.a);
+  if (!nm.ok) out.badName = true;
+  if (b.cheer) out.cheer = await roomCheer(env, tk, nm.name, String(b.cheer).slice(0, 32), now);
+  if (tk.a && typeof b.say === 'string') await roomSay(env, nm.name, b.say, now);
+  if (b.s && typeof b.s === 'object') out.mine = await roomSeat(env, tk, nm.name, b.s, now);
   return json(Object.assign(out, await roomLook(env, tk, now)));
 }
 
@@ -402,13 +397,13 @@ async function roomSweep(env, now) {
 }
 
 /* 自分の席を書きこむ（はじめる・続ける・休憩・おわる） */
-async function roomSeat(env, tk, s, now) {
+async function roomSeat(env, tk, name, s, now) {
   const sid = String(s.sid || '').slice(0, 24);
   if (!sid) return { error: 'no_sid' };
   const cl = (v, lo, hi) => Math.min(hi, Math.max(lo, Math.round(+v || 0)));
   const start = cl(s.start, now - 12 * 3600000, now);
   const n = {
-    id: tk.i, name: String(tk.n || '').slice(0, 32), sid,
+    id: tk.i, name, sid,
     subj: String(s.subj || '').slice(0, 10), memo: String(s.memo || '').slice(0, 40),
     goal: cl(s.goal, 0, 720), start, brk: cl(s.brk, 0, now - start),
     st: s.st === 'break' ? 'break' : 'study', stat: cl(s.stat, start, now),
@@ -452,7 +447,7 @@ async function roomSeat(env, tk, s, now) {
 }
 
 /* 👏 を送る */
-async function roomCheer(env, tk, to, now) {
+async function roomCheer(env, tk, name, to, now) {
   if (to === tk.i) return 'self';
   const seat = await env.DB.prepare('SELECT name FROM seat WHERE id = ?').bind(to).first();
   if (!seat) return 'gone';
@@ -462,18 +457,18 @@ async function roomCheer(env, tk, to, now) {
     `INSERT INTO rcheer (fr, too, at) VALUES (?,?,?) ON CONFLICT(fr, too) DO UPDATE SET at=excluded.at`
   ).bind(tk.i, to, now).run();
   await env.DB.prepare('UPDATE seat SET cheers = cheers + 1 WHERE id = ?').bind(to).run();
-  await rFeed(env, now, 'cheer', { n: tk.n, t: seat.name, h: tk.a ? 1 : 0 });
+  await rFeed(env, now, 'cheer', { n: name, t: seat.name, h: tk.a ? 1 : 0 });
   return 'ok';
 }
 
 /* 平山さんから みんなへのひとこと（空なら消す） */
-async function roomSay(env, tk, txt, now) {
+async function roomSay(env, name, txt, now) {
   txt = String(txt).trim().slice(0, 80);
   if (!txt) { await env.DB.prepare('DELETE FROM rnote WHERE k = 1').run(); return; }
   await env.DB.prepare(
     `INSERT INTO rnote (k, txt, at) VALUES (1,?,?) ON CONFLICT(k) DO UPDATE SET txt=excluded.txt, at=excluded.at`
   ).bind(txt, now).run();
-  await rFeed(env, now, 'say', { n: tk.n, x: txt });
+  await rFeed(env, now, 'say', { n: name, x: txt });
 }
 
 /* みんなの席・今日の記録・動き を返す */
@@ -496,6 +491,18 @@ async function roomLook(env, tk, now) {
     }),
     note: note && now - note.at < 6 * 3600000 ? note : null
   };
+}
+
+/* 表示する名前。ヒラ先生になりすませないよう、先生の合言葉がない人は「ヒラ」「平山」を使えない */
+function roomName(v, admin) {
+  let n = String(v || '').replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, 12);
+  if (!n) return { ok: true, name: 'ゲスト' };
+  if (!admin && /ヒラ|ひら先生|平山|hira/i.test(n)) return { ok: false, name: 'ゲスト' };
+  return { ok: true, name: n };
+}
+async function roomHash(env, s) {
+  const sig = await crypto.subtle.sign('HMAC', await roomKey(env), new TextEncoder().encode(s));
+  return [...new Uint8Array(sig)].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
 /* 入室券（中身は見えてもよいが、Worker の鍵がないと作れない・書きかえられない） */

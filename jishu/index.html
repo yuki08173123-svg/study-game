@@ -1,0 +1,961 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="jishu"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>自習室</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="自習室">
+<meta name="theme-color" content="#F5F0E6">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
+<style>
+/* 自習室：昼は木の机と紙の色、夜は灯りのついた自習室。勉強中の席には「灯り」がともる */
+:root{
+  --bg:#F5F0E6; --card:#FFFDF8; --ink:#27221B; --muted:#6B6254; --line:#E4D9C6; --chip:#EEE6D6;
+  --lamp:#E39A2D; --lamp-deep:#A9670C; --lamp-soft:#FCEACB; --lamp-glow:rgba(240,170,60,.30); --on-lamp:#2A1A00;
+  --brk:#3F7FB5; --brk-soft:#E1ECF6; --wait:#8C8577; --wait-soft:#ECE8E0; --ok:#2E8B5E; --warn:#C0492F;
+  --s1:#C2453A; --s2:#2F6DB5; --s3:#7B4BB0; --s4:#2E8B57; --s5:#B7701C; --s6:#6B6B6B; --sj-ink:#fff;
+  --shadow:0 1px 3px rgba(70,50,20,.08); --shadow-lg:0 12px 30px rgba(70,50,20,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11141B; --card:#1A1E28; --ink:#EDE7DB; --muted:#A39B8C; --line:#2C3242; --chip:#242A37;
+    --lamp:#F2B24A; --lamp-deep:#F2B24A; --lamp-soft:#3A2C14; --lamp-glow:rgba(242,178,74,.22); --on-lamp:#1E1300;
+    --brk:#7DB3E6; --brk-soft:#1C2B3B; --wait:#8E8A82; --wait-soft:#262A33; --ok:#5CC892; --warn:#F08A72;
+    --s1:#EF7D72; --s2:#7FAEF0; --s3:#B992EC; --s4:#6CCB93; --s5:#EBA75A; --s6:#A8A8A8; --sj-ink:#14110C;
+    --shadow:0 1px 3px rgba(0,0,0,.45); --shadow-lg:0 12px 30px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11141B; --card:#1A1E28; --ink:#EDE7DB; --muted:#A39B8C; --line:#2C3242; --chip:#242A37;
+  --lamp:#F2B24A; --lamp-deep:#F2B24A; --lamp-soft:#3A2C14; --lamp-glow:rgba(242,178,74,.22); --on-lamp:#1E1300;
+  --brk:#7DB3E6; --brk-soft:#1C2B3B; --wait:#8E8A82; --wait-soft:#262A33; --ok:#5CC892; --warn:#F08A72;
+  --s1:#EF7D72; --s2:#7FAEF0; --s3:#B992EC; --s4:#6CCB93; --s5:#EBA75A; --s6:#A8A8A8; --sj-ink:#14110C;
+  --shadow:0 1px 3px rgba(0,0,0,.45); --shadow-lg:0 12px 30px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%;}
+body{background:var(--bg); color:var(--ink); font-family:'Zen Kaku Gothic New','Hiragino Sans','Hiragino Kaku Gothic ProN',sans-serif;
+  font-size:16px; line-height:1.6; font-weight:500; min-height:100vh;}
+.num{font-variant-numeric:tabular-nums; letter-spacing:.01em;}
+.wrap{max-width:660px; margin:0 auto; padding:calc(12px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom));}
+button,input,textarea{font-family:inherit; color:inherit; font-size:inherit;}
+button{background:none; border:none; cursor:pointer; touch-action:manipulation;}
+button:active{transform:scale(.97);}
+button:disabled{opacity:.4; pointer-events:none;}
+.hidden{display:none !important;}
+svg.i{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+
+/* 見出し */
+.head{display:flex; align-items:center; gap:10px; padding:4px 0 12px;}
+.logo{width:36px; height:36px; border-radius:11px; background:#161C2A; display:grid; place-items:center; flex:none;}
+.logo svg{width:24px; height:24px;}
+.head h1{font-size:21px; font-weight:900; letter-spacing:.04em; flex:1;}
+.live{display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:var(--muted); white-space:nowrap;}
+.live i{width:8px; height:8px; border-radius:50%; background:var(--lamp); box-shadow:0 0 0 4px var(--lamp-glow); animation:pulse 2.4s infinite;}
+@keyframes pulse{50%{box-shadow:0 0 0 7px transparent;}}
+
+.update{width:100%; margin-bottom:12px; background:var(--lamp); color:var(--on-lamp); border-radius:14px; padding:11px 14px; display:flex; align-items:center; gap:10px; text-align:left; font-weight:700;}
+.update span{flex:1; font-size:14px;}
+.update b{background:rgba(255,255,255,.4); border-radius:999px; padding:5px 12px; font-size:13px;}
+
+/* 見本・お知らせの帯 */
+.band{display:flex; align-items:center; gap:10px; border-radius:14px; padding:10px 12px; margin-bottom:12px; font-size:13px; line-height:1.5;}
+.band.demo{background:var(--chip); color:var(--muted);}
+.band.demo b{color:var(--ink);}
+.band.demo button{flex:none; background:var(--ink); color:var(--bg); font-weight:700; border-radius:999px; padding:7px 13px; font-size:13px;}
+.band.note{background:var(--lamp-soft); color:var(--ink); border:1px solid var(--lamp);}
+.band.note .who{font-size:11px; font-weight:900; color:var(--lamp-deep); display:block;}
+.band.off{background:var(--wait-soft); color:var(--muted);}
+.band .tx{flex:1; min-width:0;}
+
+/* 全体の数字 */
+.sum{display:flex; gap:10px; margin-bottom:12px;}
+.sum div{flex:1; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:9px 12px; box-shadow:var(--shadow);}
+.sum small{display:block; font-size:11px; color:var(--muted); font-weight:700;}
+.sum b{font-size:20px; font-weight:900;}
+.sum b span{font-size:12px; font-weight:700; margin-left:2px;}
+
+/* 自分の机 */
+.me{background:var(--card); border:1px solid var(--line); border-radius:20px; padding:16px; box-shadow:var(--shadow-lg); margin-bottom:18px; position:relative; overflow:hidden;}
+.me.on{border-color:var(--lamp);}
+.me.on::before{content:''; position:absolute; left:50%; top:-120px; width:340px; height:220px; transform:translateX(-50%); background:radial-gradient(closest-side, var(--lamp-glow), transparent); pointer-events:none;}
+.me.brk{border-color:var(--brk);}
+.me .idle{text-align:center; padding:6px 0 2px;}
+.me .idle p{font-size:13px; color:var(--muted); margin-top:10px;}
+.go{width:100%; background:var(--lamp); color:var(--on-lamp); font-weight:900; font-size:18px; border-radius:16px; padding:15px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 6px 16px var(--lamp-glow);}
+.go svg{stroke-width:2.4;}
+.me .top{display:flex; align-items:center; gap:8px; position:relative;}
+.me .top .memo{flex:1; min-width:0; font-size:14px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.me .cheer{font-size:13px; font-weight:700; color:var(--lamp-deep); background:var(--lamp-soft); border-radius:999px; padding:3px 10px; white-space:nowrap;}
+.me .clock{font-size:52px; font-weight:900; text-align:center; line-height:1.1; margin:14px 0 4px; position:relative;}
+.me .state{text-align:center; font-size:13px; font-weight:700; color:var(--muted); position:relative;}
+.me .state.brk{color:var(--brk);}
+.bar{height:8px; background:var(--chip); border-radius:999px; overflow:hidden; margin:12px 0 4px; position:relative;}
+.bar i{display:block; height:100%; background:var(--lamp); border-radius:999px; transition:width .6s;}
+.bar.done i{background:var(--ok);}
+.goalTx{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); font-weight:700;}
+.acts{display:flex; gap:10px; margin-top:14px; position:relative;}
+.acts button{flex:1; border-radius:14px; padding:12px; font-weight:900; font-size:15px; display:flex; align-items:center; justify-content:center; gap:6px;}
+.b-brk{background:var(--brk-soft); color:var(--brk);}
+.b-res{background:var(--lamp); color:var(--on-lamp);}
+.b-end{background:var(--chip); color:var(--ink);}
+
+/* 教科の色 */
+.sj{display:inline-block; font-size:12px; font-weight:900; color:var(--sj-ink); border-radius:7px; padding:1px 8px; white-space:nowrap; flex:none; background:var(--c, var(--s6));}
+
+/* 席 */
+.h2{display:flex; align-items:baseline; gap:8px; font-size:15px; font-weight:900; margin:4px 2px 10px;}
+.h2 small{font-size:12px; color:var(--muted); font-weight:700;}
+.seats{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:22px;}
+@media (min-width:560px){ .seats{grid-template-columns:1fr 1fr 1fr;} }
+.seat{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:11px 11px 10px; box-shadow:var(--shadow); position:relative; overflow:hidden; min-height:128px; display:flex; flex-direction:column;}
+.seat.study::before{content:''; position:absolute; left:50%; top:-70px; width:180px; height:120px; transform:translateX(-50%); background:radial-gradient(closest-side, var(--lamp-glow), transparent); pointer-events:none;}
+.seat.mine{border-color:var(--lamp); border-width:2px; padding:10px 10px 9px;}
+.seat.brk{background:linear-gradient(var(--brk-soft), var(--card) 70%);}
+.seat.wait{opacity:.72;}
+.seat .nm{display:flex; align-items:center; gap:6px; font-size:14px; font-weight:900; position:relative;}
+.seat .nm span{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.seat .dot{width:9px; height:9px; border-radius:50%; flex:none; background:var(--lamp); box-shadow:0 0 0 3px var(--lamp-glow);}
+.seat.brk .dot{background:var(--brk); box-shadow:none;}
+.seat.wait .dot{background:var(--wait); box-shadow:none;}
+.seat .mm{font-size:12px; color:var(--muted); margin-top:5px; display:flex; gap:6px; align-items:center; min-width:0; position:relative;}
+.seat .mm em{font-style:normal; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+.seat .tm{font-size:24px; font-weight:900; margin-top:auto; padding-top:6px; position:relative;}
+.seat .bar{height:5px; margin:3px 0 4px;}
+.seat .ft{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); font-weight:700; position:relative;}
+.seat .ft span{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.seat.brk .ft span{color:var(--brk);}
+.clap{flex:none; display:flex; align-items:center; gap:3px; font-size:12px; font-weight:900; border-radius:999px; padding:3px 9px; background:var(--lamp-soft); color:var(--lamp-deep);}
+.clap.sent{background:var(--chip); color:var(--muted);}
+.clap.pop{animation:pop .5s;}
+@keyframes pop{40%{transform:scale(1.35);}}
+.seat.empty{background:transparent; border:1.5px dashed var(--line); box-shadow:none; align-items:center; justify-content:center; color:var(--muted); font-size:12px; font-weight:700; gap:4px;}
+.seat.empty svg{width:30px; height:30px; stroke:var(--line); stroke-width:1.6;}
+
+/* 今日の人・動き */
+.today{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:22px;}
+.today span{font-size:12px; font-weight:700; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px 11px;}
+.today span b{color:var(--lamp-deep); margin-left:4px;}
+.today span.now{border-color:var(--lamp);}
+.feed{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:4px 14px; box-shadow:var(--shadow); margin-bottom:20px;}
+.feed div{display:flex; gap:10px; font-size:13px; padding:9px 0; border-bottom:1px solid var(--line); line-height:1.5;}
+.feed div:last-child{border-bottom:none;}
+.feed time{flex:none; color:var(--muted); font-size:12px; width:38px; padding-top:1px;}
+.feed .say{font-weight:700; color:var(--lamp-deep);}
+.feed .auto{color:var(--muted);}
+.none{color:var(--muted); font-size:13px; padding:14px 0; text-align:center;}
+
+/* 平山さん用 */
+.adm{background:var(--card); border:1px dashed var(--lamp); border-radius:16px; padding:12px; margin-bottom:20px;}
+.adm p{font-size:12px; color:var(--muted); font-weight:700; margin-bottom:6px;}
+.adm .row{display:flex; gap:8px;}
+.adm input{flex:1; min-width:0; border:1px solid var(--line); background:var(--bg); border-radius:10px; padding:9px 10px; font-size:15px; outline:none;}
+.adm button{background:var(--lamp); color:var(--on-lamp); font-weight:900; border-radius:10px; padding:0 14px; font-size:14px;}
+.adm button.sub{background:var(--chip); color:var(--ink);}
+
+/* 下のタブ */
+.tabs{position:fixed; left:0; right:0; bottom:0; background:var(--card); border-top:1px solid var(--line); display:flex; justify-content:center; padding:6px 0 calc(6px + env(safe-area-inset-bottom)); z-index:20;}
+.tabs div{display:flex; width:100%; max-width:660px;}
+.tabs button{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:11px; font-weight:700; color:var(--muted); padding:4px 0;}
+.tabs button svg{width:23px; height:23px;}
+.tabs button.on{color:var(--ink);}
+.tabs button.on svg{stroke:var(--lamp-deep);}
+
+/* 記録 */
+.card{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; box-shadow:var(--shadow); margin-bottom:14px;}
+.week{display:flex; align-items:flex-end; gap:8px; height:120px; padding-top:18px;}
+.week div{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:4px;}
+.week i{display:block; width:100%; max-width:34px; background:var(--lamp); border-radius:7px 7px 3px 3px; min-height:3px; position:relative;}
+.week i.zero{background:var(--chip);}
+.week b{font-size:10px; color:var(--muted); font-weight:700; white-space:nowrap;}
+.week small{font-size:11px; color:var(--muted); font-weight:700;}
+.week .td small{color:var(--ink); font-weight:900;}
+.lg .day{font-size:12px; font-weight:900; color:var(--muted); margin:16px 2px 6px;}
+.lg .it{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px 12px; margin-bottom:8px; display:flex; gap:10px; align-items:flex-start;}
+.lg .it .bd{flex:1; min-width:0;}
+.lg .it .t1{display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700;}
+.lg .it .t1 span:not(.sj){flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.lg .it .t2{font-size:12px; color:var(--muted); margin-top:2px; white-space:pre-wrap; word-break:break-word;}
+.lg .it .mn{font-size:16px; font-weight:900; white-space:nowrap;}
+.lg .it .au{font-size:11px; color:var(--warn); font-weight:700;}
+
+/* 設定 */
+.set h3{font-size:13px; color:var(--muted); font-weight:900; margin:18px 4px 8px;}
+.set .card p{font-size:13px; color:var(--muted); line-height:1.6;}
+.chips{display:flex; flex-wrap:wrap; gap:7px;}
+.chips button{border:1.5px solid var(--line); background:var(--card); border-radius:999px; padding:7px 14px; font-weight:700; font-size:14px;}
+.chips button.on{background:var(--ink); color:var(--bg); border-color:var(--ink);}
+.sw{display:flex; align-items:center; gap:12px; padding:4px 0;}
+.sw .tx{flex:1;}
+.sw .tx b{display:block; font-size:15px;}
+.sw .tx small{font-size:12px; color:var(--muted);}
+.tg{width:50px; height:30px; border-radius:999px; background:var(--chip); position:relative; flex:none; transition:background .2s;}
+.tg::after{content:''; position:absolute; left:3px; top:3px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:left .2s;}
+.tg.on{background:var(--ok);}
+.tg.on::after{left:23px;}
+.sep{height:1px; background:var(--line); margin:12px 0;}
+.btn{display:block; width:100%; text-align:center; border-radius:12px; padding:11px; font-weight:900; font-size:15px; background:var(--chip); margin-top:10px;}
+.btn.pri{background:var(--ink); color:var(--bg);}
+.btn.warn{color:var(--warn);}
+.ver{font-size:12px; color:var(--muted); text-align:center; margin-top:16px;}
+
+/* 下から出る画面 */
+.ov{position:fixed; inset:0; background:rgba(15,12,8,.45); z-index:50; display:flex; align-items:flex-end; justify-content:center; animation:fade .2s;}
+@keyframes fade{from{opacity:0;}}
+.sh{background:var(--card); width:100%; max-width:560px; border-radius:22px 22px 0 0; padding:18px 18px calc(20px + env(safe-area-inset-bottom)); max-height:92vh; overflow-y:auto; animation:up .25s;}
+@keyframes up{from{transform:translateY(40px);}}
+.sh h2{font-size:19px; font-weight:900; margin-bottom:4px;}
+.sh .lead{font-size:13px; color:var(--muted); margin-bottom:14px;}
+.sh label{display:block; font-size:13px; font-weight:900; color:var(--muted); margin:14px 2px 7px;}
+.sh input[type=text], .sh textarea{width:100%; border:1.5px solid var(--line); background:var(--bg); border-radius:12px; padding:11px 12px; font-size:16px; outline:none;}
+.sh textarea{min-height:84px; resize:vertical; line-height:1.6;}
+.sh input:focus, .sh textarea:focus{border-color:var(--lamp);}
+.sh .chips button.on.sjb{background:var(--c); border-color:var(--c); color:var(--sj-ink);}
+.sh .go{margin-top:20px;}
+.sh .cancel{display:block; width:100%; text-align:center; color:var(--muted); font-weight:700; padding:12px; margin-top:4px;}
+.rep{background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:12px; font-size:14px; white-space:pre-wrap; line-height:1.7; margin-top:10px;}
+.big{font-size:42px; font-weight:900; text-align:center; margin:6px 0 2px;}
+.code{width:100%; height:90px; font-size:12px; border:1.5px solid var(--line); background:var(--bg); border-radius:12px; padding:10px; word-break:break-all;}
+
+/* 確認（まんなかに大きく） */
+.ck{position:fixed; inset:0; z-index:60; background:rgba(15,12,8,.62); display:flex; align-items:center; justify-content:center; padding:20px; animation:fade .2s;}
+.ck .box{background:var(--card); border-radius:24px; padding:26px 20px 18px; width:100%; max-width:380px; text-align:center; box-shadow:var(--shadow-lg); border:2px solid var(--lamp);}
+.ck .lampbig{width:64px; height:64px; margin:0 auto 8px;}
+.ck h2{font-size:22px; font-weight:900;}
+.ck p{font-size:13px; color:var(--muted); margin:6px 0 16px;}
+.ck .left{font-size:13px; font-weight:900; color:var(--warn);}
+.ck .go{font-size:20px; padding:17px;}
+.ck .sub{display:block; width:100%; margin-top:10px; padding:12px; border-radius:14px; background:var(--brk-soft); color:var(--brk); font-weight:900;}
+
+.toast{position:fixed; left:50%; bottom:calc(84px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:var(--ink); color:var(--bg); font-size:14px; font-weight:700; border-radius:999px; padding:10px 18px; z-index:80; box-shadow:var(--shadow-lg); max-width:90vw; text-align:center; animation:fade .2s;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20h14" stroke="#F2B24A" stroke-width="2" stroke-linecap="round"/><path d="M12 20V11" stroke="#F2B24A" stroke-width="2" stroke-linecap="round"/><path d="M7.5 11h9L14 4h-4z" fill="#F2B24A"/><circle cx="12" cy="13.6" r="1" fill="#F2B24A" opacity=".6"/></svg></div>
+    <h1>自習室</h1>
+    <button data-users-tag hidden></button>
+    <div class="live" id="live"><i></i><span id="liveN">—</span></div>
+  </header>
+  <button class="update hidden" id="btnUpdate"><span id="updText">新しいバージョンがあります</span><b>更新</b></button>
+  <main id="view"></main>
+</div>
+<nav class="tabs"><div id="tabs"></div></nav>
+<div id="layer"></div>
+
+<script>
+'use strict';
+const VER = 1;
+const API = 'https://theater-auth.yuki08173123.workers.dev';   /* Theater と同じ入り口（ログインと記録の置き場） */
+const K_TOK = 'js_tok', K_CUR = 'js_cur', K_LOG = 'js_log', K_CFG = 'js_cfg';
+const GRACE = 10 * 60000, BREAK_MAX = 30 * 60000;              /* Worker と同じ数字 */
+const SUBJ = [['国語','--s1'],['数学','--s2'],['英語','--s3'],['理科','--s4'],['社会','--s5'],['その他','--s6']];
+const GOALS = [[0,'決めない'],[30,'30分'],[60,'1時間'],[90,'1時間半'],[120,'2時間'],[180,'3時間']];
+const IVLS = [15, 25, 50];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jget = (k, d) => { try{ const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } };
+const jset = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
+
+/* ---------- 保存しているもの ---------- */
+let cfg = Object.assign({ ivl:25, wake:true, sound:true, subj:'数学', goal:60, seen:0 }, jget(K_CFG, {}));
+let cur = jget(K_CUR, null);      /* いまの自分の席 {sid,subj,memo,goal,start,brk,st,stat,chk,ivl} */
+let log = jget(K_LOG, []);        /* 自分の記録 [{sid,day,start,fin,mins,subj,memo,done,auto}] */
+const saveCfg = () => jset(K_CFG, cfg);
+const saveCur = () => { if(cur) jset(K_CUR, cur); else try{ localStorage.removeItem(K_CUR); }catch(e){} };
+const saveLog = () => jset(K_LOG, log);
+
+/* ---------- 時間 ---------- */
+let off = 0;                                   /* サーバーの時計とのずれ */
+const nowS = () => Date.now() + off;
+const studied = (s, at) => Math.max(0, at - s.start - (s.brk || 0) - (s.st === 'break' ? Math.max(0, at - s.stat) : 0));
+const dueOf = s => Math.max(s.chk || 0, s.start) + (s.ivl || 25) * 60000;
+const pad = n => String(n).padStart(2, '0');
+const clock = ms => { const t = Math.floor(ms / 1000); return Math.floor(t / 3600) + ':' + pad(Math.floor(t / 60) % 60) + ':' + pad(t % 60); };
+const mmss = ms => { const t = Math.max(0, Math.floor(ms / 1000)); return Math.floor(t / 60) + ':' + pad(t % 60); };
+const dur = m => { m = Math.max(0, Math.round(m)); const h = Math.floor(m / 60); return h ? h + '時間' + (m % 60 ? (m % 60) + '分' : '') : m + '分'; };
+const jday = t => new Date(t + 9 * 3600000).toISOString().slice(0, 10);
+const hm = t => { const d = new Date(t); return d.getHours() + ':' + pad(d.getMinutes()); };
+const WD = '日月火水木金土';
+const dayLabel = d => { const x = new Date(d + 'T00:00:00+09:00'); return (x.getMonth() + 1) + '/' + x.getDate() + '（' + WD[x.getDay()] + '）'; };
+const sjVar = s => (SUBJ.find(x => x[0] === s) || SUBJ[5])[1];
+const sjTag = s => s ? `<span class="sj" style="--c:var(${sjVar(s)})">${esc(s)}</span>` : '';
+const goalTx = g => (GOALS.find(x => x[0] === g) || [0, dur(g)])[1];
+
+/* ---------- 小道具 ---------- */
+let toastT = 0;
+function toast(t){
+  document.querySelectorAll('.toast').forEach(e => e.remove());
+  const d = document.createElement('div'); d.className = 'toast'; d.textContent = t;
+  document.body.appendChild(d); clearTimeout(toastT); toastT = setTimeout(() => d.remove(), 2600);
+}
+const ICO = {
+  room:'<svg class="i" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M12 20v-8"/><path d="M8 12h8l-2.5-7h-3z"/></svg>',
+  log:'<svg class="i" viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>',
+  set:'<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  play:'<svg class="i" viewBox="0 0 24 24"><path d="M7 4l12 8-12 8z"/></svg>',
+  pause:'<svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>',
+  stop:'<svg class="i" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+  desk:'<svg class="i" viewBox="0 0 24 24"><path d="M3 12h18"/><path d="M5 12v7M19 12v7"/><path d="M9 12V9h6v3"/></svg>',
+  lamp:'<svg viewBox="0 0 64 64"><circle cx="32" cy="30" r="26" fill="var(--lamp-glow)"/><path d="M14 54h36" stroke="var(--lamp)" stroke-width="4" stroke-linecap="round"/><path d="M32 54V30" stroke="var(--lamp)" stroke-width="4" stroke-linecap="round"/><path d="M20 30h24l-6-18H26z" fill="var(--lamp)"/></svg>'
+};
+
+/* ---------- 音・画面を消さない ---------- */
+let actx = null;
+function unlockAudio(){ try{ if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if(actx.state === 'suspended') actx.resume(); }catch(e){} }
+function chime(){
+  if(!cfg.sound || !actx) return;
+  try{
+    [0, .22].forEach((d, i) => {
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + d;
+      o.type = 'sine'; o.frequency.value = i ? 1046 : 784;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.25, t + .02); g.gain.exponentialRampToValueAtTime(.001, t + .9);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + 1);
+    });
+  }catch(e){}
+}
+let wl = null;
+async function wake(){
+  const want = !!(cur && cfg.wake && !document.hidden);
+  try{
+    if(want && !wl && 'wakeLock' in navigator){ wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); }
+    else if(!want && wl){ const w = wl; wl = null; await w.release(); }
+  }catch(e){ wl = null; }
+}
+
+/* =====================================================================
+   サーバーとのやりとり
+   本物（live）：Theater の Worker の /room。ログインしていないときは見本（demo）を出す。
+   ===================================================================== */
+let mode = 'demo';          /* 'live' | 'demo' */
+let why = 'login';          /* 見本を出している理由：login（未ログイン）・prep（準備中）・member（塾生でない） */
+let tk = null, tkX = 0;     /* 入室券と、その期限 */
+let me = { id:'me', name:'あなた', admin:false };
+let R = null;               /* 最後に受けとった自習室の様子 */
+let offline = false;
+const tokGet = () => { try{ return localStorage.getItem(K_TOK) || ''; }catch(e){ return ''; } };
+const tokSet = t => { try{ if(t) localStorage.setItem(K_TOK, t); else localStorage.removeItem(K_TOK); }catch(e){} };
+
+async function enter(){
+  const t = tokGet();
+  if(!t){ mode = 'demo'; why = 'login'; return false; }
+  let r, j = null;
+  try{ r = await fetch(API + '/room/enter?t=' + encodeURIComponent(t), { method:'POST', cache:'no-store' }); j = await r.json(); }
+  catch(e){ offline = true; return false; }
+  offline = false;
+  if(j && j.ok){
+    tk = j.k; tkX = ticketExp(j.k); if(j.t) tokSet(j.t);
+    me = { id:j.me, name:j.name || 'あなた', admin:!!j.admin };
+    mode = 'live'; return true;
+  }
+  const e = j && j.error;
+  if(e === 'not_found'){ mode = 'demo'; why = 'prep'; return false; }          /* Worker がまだ自習室に対応していない */
+  if(e === 'need_login'){ tokSet(''); mode = 'demo'; why = 'login'; return false; }
+  if(e === 'not_member'){ tokSet(''); mode = 'demo'; why = 'member'; return false; }
+  offline = true; return false;                                                  /* こんでいる・一時的な不調 */
+}
+function ticketExp(k){
+  try{ const b = k.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(escape(atob(b)))).x || 0; }
+  catch(e){ return 0; }
+}
+
+/* 自習室に書きこんで、みんなの様子をもらう。body = { s:自分の席, cheer:相手のid, say:ひとこと } */
+async function call(body){
+  body = body || {};
+  if(cur && !body.s) body.s = Object.assign({}, cur);
+  if(mode !== 'live') return applyRoom(demo.call(body));
+  if(!tk || tkX - Date.now() < 120000){ if(!(await enter())) return mode === 'demo' ? applyRoom(demo.call(body)) : null; }
+  for(let i = 0; i < 2; i++){
+    let r, j = null;
+    try{
+      r = await fetch(API + '/room?k=' + encodeURIComponent(tk), { method:'POST', cache:'no-store',
+        headers:{ 'content-type':'text/plain' }, body:JSON.stringify(body) });
+      j = await r.json();
+    }catch(e){ offline = true; render(); return null; }
+    offline = false;
+    if(j && j.ok) return applyRoom(j);
+    if(j && j.error === 'need_enter'){ tk = null; if(!(await enter())) break; continue; }
+    break;
+  }
+  render(); return null;
+}
+
+/* 受けとった様子を反映する */
+let lastCheers = -1;
+function applyRoom(j){
+  if(!j) return null;
+  if(j.now) off = j.now - Date.now();
+  R = j;
+  if(j.mine && j.mine.gone && cur) finishLocal(j.mine.mins, j.mine.auto, '', j.mine.fin);
+  const mySeat = (j.seats || []).find(s => s.id === j.me);
+  if(mySeat && cur && mySeat.cheers > lastCheers && lastCheers >= 0){
+    toast('👏 が届きました（' + mySeat.cheers + '）');
+  }
+  lastCheers = mySeat ? mySeat.cheers : (cur ? lastCheers : -1);
+  render();
+  return j;
+}
+
+/* ---------- 見本（ログイン前に、どんな画面になるかを見せる） ---------- */
+const demo = (() => {
+  const t0 = Date.now(), M = 60000;
+  const mk = (id, name, subj, memo, goal, ago, chkAgo, extra) => Object.assign(
+    { id, name, subj, memo, goal, start:t0 - ago * M, brk:0, st:'study', stat:t0 - ago * M, chk:t0 - chkAgo * M, ivl:25, cheers:0 }, extra || {});
+  const seats = [
+    mk('d1', 'はるか', '数学', '青チャート 例題40〜50', 120, 96, 9, { cheers:4, brk:8 * M }),
+    mk('d2', 'そうた', '英語', 'ターゲット1900 1〜200', 60, 41, 16, { cheers:2 }),
+    mk('d3', 'みお', '理科', '化学 重要問題集 第3章', 90, 63, 3, { st:'break', stat:t0 - 4 * M, cheers:1 }),
+    mk('d4', 'けんと', '社会', '日本史 一問一答 近代', 0, 22, 22, { cheers:0 }),
+    mk('d5', 'ゆい', '国語', '古文単語 Day3', 30, 31, 33, { cheers:3 }),
+  ];
+  const today = [
+    { id:'d6', name:'りく', mins:95, fin:t0 - 50 * M, n:1 },
+    { id:'d1', name:'はるか', mins:60, fin:t0 - 100 * M, n:1 },
+    { id:'d7', name:'あおい', mins:45, fin:t0 - 140 * M, n:1 },
+  ];
+  const feed = [
+    { at:t0 - 4 * M, k:'cheer', n:'そうた', t:'はるか' },
+    { at:t0 - 22 * M, k:'start', n:'けんと', s:'社会', g:0 },
+    { at:t0 - 31 * M, k:'start', n:'ゆい', s:'国語', g:30 },
+    { at:t0 - 35 * M, k:'say', n:'ヒラ', x:'今日は21時までいっしょにがんばろう！' },
+    { at:t0 - 41 * M, k:'start', n:'そうた', s:'英語', g:60 },
+    { at:t0 - 50 * M, k:'end', n:'りく', s:'数学', m:95 },
+    { at:t0 - 63 * M, k:'start', n:'みお', s:'理科', g:90 },
+    { at:t0 - 96 * M, k:'start', n:'はるか', s:'数学', g:120 },
+  ];
+  const note = { txt:'今日は21時までいっしょにがんばろう！', at:t0 - 35 * M };
+  const sent = {};
+  let mine = null;
+  /* ときどき、だれかが👏したり、確認を押したりする（見本でも「人がいる」感じを出す） */
+  setInterval(() => {
+    const now = Date.now(), live = seats.filter(s => s.id !== 'me');
+    const a = live[Math.floor(Math.random() * live.length)], b = live[Math.floor(Math.random() * live.length)];
+    if(Math.random() < .5 && a !== b){ b.cheers++; feed.unshift({ at:now, k:'cheer', n:a.name, t:b.name }); }
+    else if(a.st === 'study' && a.id !== 'd4') a.chk = now;
+    if(mine && Math.random() < .35){ mine.cheers++; feed.unshift({ at:now, k:'cheer', n:a.name, t:me.name }); }
+  }, 45000);
+  function call(body){
+    const now = Date.now();
+    if(body.cheer){
+      const s = seats.find(x => x.id === body.cheer);
+      if(s && !(sent[s.id] > now - 180000)){ sent[s.id] = now; s.cheers++; feed.unshift({ at:now, k:'cheer', n:me.name, t:s.name }); }
+    }
+    let res = null;
+    if(body.s){
+      const s = body.s;
+      if(s.end){
+        const m = Math.floor(studied(s, now) / 60000);
+        const i = seats.indexOf(mine); if(i >= 0) seats.splice(i, 1);
+        mine = null; today.unshift({ id:'me', name:me.name, mins:m, fin:now, n:1 });
+        feed.unshift({ at:now, k:'end', n:me.name, s:s.subj, m });
+        res = { ended:true, mins:m };
+      }else{
+        if(!mine || mine.sid !== s.sid){
+          mine = { id:'me', name:me.name, cheers:0 }; seats.push(mine);
+          feed.unshift({ at:now, k:'start', n:me.name, s:s.subj, g:s.goal });
+        }
+        Object.assign(mine, s, { id:'me', name:me.name });
+        res = { ok:true };
+      }
+    }
+    return { ok:true, now, me:'me', admin:false, demo:true, mine:res,
+      seats:seats.map(s => Object.assign({}, s)), today:today.slice(), feed:feed.slice(0, 30), note };
+  }
+  return { call };
+})();
+
+/* =====================================================================
+   自分の席（はじめる・休憩・再開・確認・おわる）
+   ===================================================================== */
+const newSid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+function startStudy(subj, memo, goal){
+  const t = nowS();
+  cur = { sid:newSid(), subj, memo, goal, start:t, brk:0, st:'study', stat:t, chk:t, ivl:cfg.ivl };
+  saveCur(); lastCheers = 0; wake(); render(); call();
+  toast('席につきました。みんなの画面にあなたの席が出ています');
+}
+function takeBreak(){
+  if(!cur || cur.st === 'break') return;
+  cur.st = 'break'; cur.stat = nowS(); saveCur(); closeCheck(); render(); call();
+}
+function resume(){
+  if(!cur) return;
+  const t = nowS();
+  if(cur.st === 'break') cur.brk += Math.max(0, t - cur.stat);
+  cur.st = 'study'; cur.stat = t; cur.chk = t; saveCur(); render(); call();
+}
+function confirmGo(){
+  if(!cur) return;
+  cur.chk = nowS(); saveCur(); closeCheck(); render(); call();
+  toast('確認しました。この調子で！');
+}
+async function endStudy(done){
+  if(!cur) return;
+  const s = Object.assign({}, cur, { end:true, done });
+  const local = Math.floor(studied(cur, nowS()) / 60000);
+  const j = await call({ s });
+  const mins = j && j.mine && (j.mine.ended || j.mine.gone) ? j.mine.mins : local;
+  if(cur) finishLocal(mins, j && j.mine && j.mine.gone ? j.mine.auto : false, done);
+}
+/* 自分の記録に残して、席をはなれる */
+function finishLocal(mins, auto, done, fin){
+  if(!cur) return;
+  const c = cur;
+  if(!log.some(x => x.sid === c.sid))
+    log.unshift({ sid:c.sid, day:jday(c.start), start:c.start, fin:fin || nowS(), mins:+mins || 0, subj:c.subj, memo:c.memo, done:done || '', auto:!!auto });
+  log = log.slice(0, 2000); saveLog();
+  cur = null; saveCur(); lastCheers = -1; closeCheck(); wake();
+  showDone(log[0] && log[0].sid === c.sid ? log[0] : null);
+}
+
+/* ---------- 「続けていますか？」の確認 ---------- */
+let ckOpen = false, titleT = 0;
+function needCheck(){ return !!(cur && cur.st === 'study' && nowS() >= dueOf(cur)); }
+function openCheck(){
+  if(ckOpen) return;
+  ckOpen = true;
+  const d = document.createElement('div'); d.className = 'ck'; d.id = 'ck';
+  d.innerHTML = `<div class="box"><div class="lampbig">${ICO.lamp}</div>
+    <h2>続けていますか？</h2>
+    <p>${cur.ivl}分たちました。押すと、みんなの画面に「確認ずみ」と出ます。</p>
+    <div class="left num" id="ckLeft"></div>
+    <button class="go" id="ckGo" style="margin-top:12px">続けています</button>
+    <button class="sub" id="ckBrk">休憩する</button></div>`;
+  document.body.appendChild(d);
+  $('#ckGo').onclick = confirmGo; $('#ckBrk').onclick = takeBreak;
+  chime(); try{ navigator.vibrate && navigator.vibrate([250, 120, 250]); }catch(e){}
+  let f = false; clearInterval(titleT);
+  titleT = setInterval(() => { document.title = (f = !f) ? '🔔 確認があります' : '自習室'; }, 1000);
+}
+function closeCheck(){ ckOpen = false; const d = $('#ck'); if(d) d.remove(); clearInterval(titleT); document.title = '自習室'; }
+
+/* =====================================================================
+   画面
+   ===================================================================== */
+let tab = 'room';
+const TABS = [['room','自習室',ICO.room],['log','記録',ICO.log],['set','設定',ICO.set]];
+function renderTabs(){
+  $('#tabs').innerHTML = TABS.map(t => `<button data-t="${t[0]}" class="${tab === t[0] ? 'on' : ''}">${t[2]}<span>${t[1]}</span></button>`).join('');
+  document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; render(); window.scrollTo(0, 0); });
+}
+function render(){
+  renderTabs();
+  const n = R ? (R.seats || []).length : 0;
+  $('#liveN').textContent = R ? 'いま ' + n + '人' : '—';
+  if(tab === 'room') renderRoom(); else if(tab === 'log') renderLog(); else renderSet();
+  tick();
+}
+
+function bandHtml(){
+  let h = '';
+  if(mode === 'demo'){
+    const t = why === 'prep'
+      ? '<b>自習室はいま準備中です。</b>いまは見本の画面です。'
+      : why === 'member'
+        ? '<b>塾の Discord に入っている人だけが使えます。</b>いまは見本の画面です。'
+        : '<b>いまは見本の画面です。</b>Discord でログインすると、本物の自習室に入れます。';
+    h += `<div class="band demo"><div class="tx">${t}</div>${why === 'prep' ? '' : '<button id="bLogin">ログイン</button>'}</div>`;
+  }
+  if(offline) h += '<div class="band off"><div class="tx">つながっていません。時間はこの端末で数えつづけています。</div></div>';
+  if(R && R.note) h += `<div class="band note"><div class="tx"><span class="who">ヒラからのひとこと</span>${esc(R.note.txt)}</div></div>`;
+  return h;
+}
+
+function renderRoom(){
+  const t = nowS(), seats = R ? R.seats || [] : [], myId = R ? R.me : me.id;
+  /* 今日のみんなの合計（終わった分＋いま勉強中の分） */
+  const tot = {};
+  (R ? R.today || [] : []).forEach(x => { tot[x.id] = { name:x.name, mins:+x.mins || 0, now:false, fin:x.fin }; });
+  seats.forEach(s => { const o = tot[s.id] || (tot[s.id] = { name:s.name, mins:0, fin:0 }); o.now = true; o.live = s; });
+  const people = Object.keys(tot).length;
+
+  let h = bandHtml();
+  h += `<div class="sum">
+    <div><small>いま勉強中</small><b class="num">${seats.filter(s => s.st !== 'break').length}<span>人</span></b></div>
+    <div><small>今日みんなで</small><b class="num" id="allMins">—</b></div>
+    <div><small>今日来た人</small><b class="num">${people}<span>人</span></b></div></div>`;
+
+  /* 自分の机 */
+  if(!cur){
+    h += `<section class="me"><div class="idle">
+      <button class="go" id="bStart">${ICO.play}勉強をはじめる</button>
+      <p>はじめると、みんなの画面にあなたの席が出ます。<br>${cfg.ivl}分ごとに「続けていますか？」の確認があります。</p></div></section>`;
+  }else{
+    const brk = cur.st === 'break';
+    h += `<section class="me ${brk ? 'brk' : 'on'}">
+      <div class="top">${sjTag(cur.subj)}<div class="memo">${esc(cur.memo || '（やることは書いていません）')}</div>
+        <span class="cheer num" id="myClap">👏 0</span></div>
+      <div class="clock num" id="myClock">0:00:00</div>
+      <div class="state ${brk ? 'brk' : ''}" id="myState"></div>
+      ${cur.goal ? `<div class="bar" id="myBarW"><i id="myBar" style="width:0"></i></div><div class="goalTx"><span>目標 ${goalTx(cur.goal)}</span><span id="myGoalLeft"></span></div>` : ''}
+      <div class="acts">
+        ${brk ? `<button class="b-res" id="bRes">${ICO.play}再開する</button>` : `<button class="b-brk" id="bBrk">${ICO.pause}休憩する</button>`}
+        <button class="b-end" id="bEnd">${ICO.stop}おわる</button></div></section>`;
+  }
+
+  /* 平山さんだけ：みんなへのひとこと */
+  if(mode === 'live' && me.admin){
+    h += `<div class="adm"><p>みんなの画面の上に出すひとこと（6時間で消えます）</p><div class="row">
+      <input type="text" id="sayIn" maxlength="80" placeholder="例：今日は21時までいっしょにがんばろう" value="${esc(R && R.note ? R.note.txt : '')}">
+      <button id="sayGo">出す</button><button class="sub" id="sayDel">消す</button></div></div>`;
+  }
+
+  /* 席 */
+  h += `<div class="h2">いまの自習室 <small>👏 で応援できます</small></div><div class="seats">`;
+  const order = seats.slice().sort((a, b) => (b.id === myId) - (a.id === myId) || a.start - b.start);
+  order.forEach(s => {
+    const mine = s.id === myId, brk = s.st === 'break', wait = !brk && t > dueOf(s);
+    const cls = brk ? 'brk' : wait ? 'wait' : 'study';
+    h += `<div class="seat ${cls} ${mine ? 'mine' : ''}" data-id="${esc(s.id)}">
+      <div class="nm"><i class="dot"></i><span>${esc(s.name)}${mine && s.name !== 'あなた' ? '（あなた）' : ''}</span></div>
+      <div class="mm">${sjTag(s.subj)}<em>${esc(s.memo || '')}</em></div>
+      <div class="tm num" data-tm>0:00:00</div>
+      ${s.goal ? '<div class="bar"><i data-bar style="width:0"></i></div>' : ''}
+      <div class="ft"><span data-ft></span>${mine
+        ? `<span class="clap sent num" style="flex:none">👏 ${s.cheers || 0}</span>`
+        : `<button class="clap num" data-clap="${esc(s.id)}">👏 ${s.cheers || 0}</button>`}</div></div>`;
+  });
+  const empty = Math.max(order.length % 2 ? 1 : 0, 4 - order.length);
+  for(let i = 0; i < empty; i++) h += `<div class="seat empty">${ICO.desk}空席</div>`;
+  h += '</div>';
+
+  /* 今日来た人 */
+  const list = Object.values(tot).sort((a, b) => (b.now - a.now) || (b.fin - a.fin));
+  if(list.length){
+    h += `<div class="h2">今日の自習室 <small>来た人と、勉強した時間</small></div><div class="today">` +
+      list.map(o => `<span class="${o.now ? 'now' : ''}" ${o.live ? `data-tot="${esc(o.live.id)}" data-base="${o.mins}"` : ''}>${esc(o.name)}<b class="num">${dur(o.mins)}</b></span>`).join('') + '</div>';
+  }
+
+  /* 動き */
+  const feed = R ? R.feed || [] : [];
+  h += `<div class="h2">動き</div><div class="feed">` +
+    (feed.length ? feed.slice(0, 20).map(f => `<div><time class="num">${hm(f.at)}</time><span class="${f.k === 'say' ? 'say' : f.k === 'auto' ? 'auto' : ''}">${feedText(f)}</span></div>`).join('')
+      : '<div class="none">まだ動きはありません</div>') + '</div>';
+
+  $('#view').innerHTML = h;
+
+  /* ボタン */
+  const on = (id, f) => { const e = $(id); if(e) e.onclick = f; };
+  on('#bLogin', () => showLogin());
+  on('#bStart', () => { unlockAudio(); showStart(); });
+  on('#bBrk', takeBreak);
+  on('#bRes', () => { unlockAudio(); resume(); });
+  on('#bEnd', showEnd);
+  on('#sayGo', () => { const v = $('#sayIn').value.trim(); if(!v) return; call({ say:v }); toast('みんなの画面に出しました'); });
+  on('#sayDel', () => { call({ say:'' }); toast('消しました'); });
+  document.querySelectorAll('[data-clap]').forEach(b => b.onclick = () => clap(b));
+}
+
+function feedText(f){
+  const n = `<b>${esc(f.n)}</b>`, s = f.s ? esc(f.s) : '勉強';
+  switch(f.k){
+    case 'start': return `${n} が ${s} をはじめました${f.g ? `（目標 ${goalTx(f.g)}）` : ''}`;
+    case 'end':   return `${n} が ${s} を ${dur(f.m)} やって終わりました`;
+    case 'auto':  return `${n} は確認がなかったので、自動で退室しました（${dur(f.m)}）`;
+    case 'goal':  return `🎉 ${n} が目標の ${goalTx(f.g)} を達成しました`;
+    case 'cheer': return f.h ? `ヒラ が <b>${esc(f.t)}</b> に 👏` : `${n} が <b>${esc(f.t)}</b> に 👏`;
+    case 'say':   return `📣 ヒラ：${esc(f.x)}`;
+  }
+  return '';
+}
+
+const clapSent = {};
+function clap(b){
+  const id = b.dataset.clap;
+  if(clapSent[id] > Date.now() - 180000) return toast('同じ人への 👏 は3分に1回までです');
+  clapSent[id] = Date.now();
+  b.classList.add('pop', 'sent');
+  const s = R && (R.seats || []).find(x => x.id === id);
+  if(s){ s.cheers = (s.cheers || 0) + 1; b.textContent = '👏 ' + s.cheers; }
+  call({ cheer:id });
+}
+
+/* 1秒ごとに、数字だけ書きかえる（全部を描きなおすと、押しているボタンが消えるため） */
+function tick(){
+  const t = nowS();
+  if(tab === 'room'){
+    if(cur){
+      const ms = studied(cur, t), el = $('#myClock');
+      if(el) el.textContent = clock(ms);
+      const st = $('#myState');
+      if(st){
+        if(cur.st === 'break'){
+          const left = BREAK_MAX - (t - cur.stat);
+          st.textContent = '休憩中 ' + mmss(t - cur.stat) + '（あと' + Math.max(0, Math.ceil(left / 60000)) + '分で自動で退室）';
+        }else{
+          const left = dueOf(cur) - t;
+          st.textContent = left > 0 ? '勉強中・次の確認まで ' + mmss(left) : '確認を待っています';
+        }
+      }
+      if(cur.goal){
+        const p = Math.min(1, ms / (cur.goal * 60000)), bar = $('#myBar');
+        if(bar){ bar.style.width = (p * 100).toFixed(1) + '%'; $('#myBarW').classList.toggle('done', p >= 1); }
+        const gl = $('#myGoalLeft'); if(gl) gl.textContent = p >= 1 ? '達成！' : 'あと ' + dur(Math.ceil((cur.goal * 60000 - ms) / 60000));
+      }
+      const mySeat = R && (R.seats || []).find(s => s.id === R.me);
+      const c = $('#myClap'); if(c) c.textContent = '👏 ' + (mySeat ? mySeat.cheers || 0 : 0);
+    }
+    const seats = R ? R.seats || [] : [];
+    let all = 0;
+    (R ? R.today || [] : []).forEach(x => all += +x.mins || 0);
+    seats.forEach(s => {
+      const ms = studied(s, t); all += ms / 60000;
+      const el = document.querySelector(`.seat[data-id="${CSS.escape(s.id)}"]`);
+      if(el){
+        el.querySelector('[data-tm]').textContent = clock(ms);
+        const bar = el.querySelector('[data-bar]');
+        if(bar){ const p = Math.min(1, ms / (s.goal * 60000)); bar.style.width = (p * 100).toFixed(1) + '%'; bar.parentNode.classList.toggle('done', p >= 1); }
+        const ft = el.querySelector('[data-ft]');
+        if(s.st === 'break') ft.textContent = '休憩中 ' + mmss(t - s.stat);
+        else if(t > dueOf(s)) ft.textContent = '確認を待っています';
+        else { const a = Math.max(0, Math.floor((t - Math.max(s.chk || 0, s.start)) / 60000)); ft.textContent = a < 1 ? '✓ いま確認' : '✓ ' + a + '分前に確認'; }
+        const want = s.st === 'break' ? 'brk' : t > dueOf(s) ? 'wait' : 'study';
+        if(!el.classList.contains(want)){ el.classList.remove('brk', 'wait', 'study'); el.classList.add(want); }
+      }
+      const tt = document.querySelector(`[data-tot="${CSS.escape(s.id)}"] b`);
+      if(tt) tt.textContent = dur(+tt.parentNode.dataset.base + ms / 60000);
+    });
+    const am = $('#allMins'); if(am) am.innerHTML = fmtBig(all);
+  }
+  if(needCheck()) openCheck();   /* PCで別のタブを見ていても、タブの名前が点滅して気づける */
+  if(ckOpen && cur){
+    const l = $('#ckLeft'), left = dueOf(cur) + GRACE - t;
+    if(l) l.textContent = left > 0 ? 'あと ' + mmss(left) + ' で自動で退室になります' : 'まもなく自動で退室になります';
+  }
+}
+const fmtBig = m => { m = Math.floor(m); const h = Math.floor(m / 60); return h ? h + '<span>時間</span>' + (m % 60) + '<span>分</span>' : m + '<span>分</span>'; };
+
+/* ---------- はじめる ---------- */
+function sheet(html){
+  const ov = document.createElement('div'); ov.className = 'ov';
+  ov.innerHTML = `<div class="sh">${html}</div>`;
+  ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
+  $('#layer').appendChild(ov);
+  return ov;
+}
+function showStart(){
+  let subj = cfg.subj, goal = cfg.goal;
+  const last = log.find(x => x.subj === subj);
+  const ov = sheet(`<h2>勉強をはじめる</h2><div class="lead">ここに書いたことが、みんなの画面のあなたの席に出ます。</div>
+    <label>教科</label><div class="chips" id="sjc">${SUBJ.map(s => `<button class="sjb" style="--c:var(${s[1]})" data-v="${s[0]}">${s[0]}</button>`).join('')}</div>
+    <label>やること（ひとこと）</label><input type="text" id="memo" maxlength="40" placeholder="例：青チャート 例題20〜30" value="${esc(last ? last.memo : '')}">
+    <label>目標の時間</label><div class="chips" id="glc">${GOALS.map(g => `<button data-v="${g[0]}">${g[1]}</button>`).join('')}</div>
+    <button class="go" id="go">${ICO.play}席につく</button><button class="cancel" id="cx">やめる</button>`);
+  const paint = () => {
+    ov.querySelectorAll('#sjc button').forEach(b => b.classList.toggle('on', b.dataset.v === subj));
+    ov.querySelectorAll('#glc button').forEach(b => b.classList.toggle('on', +b.dataset.v === goal));
+  };
+  ov.querySelectorAll('#sjc button').forEach(b => b.onclick = () => {
+    subj = b.dataset.v; paint();
+    const l = log.find(x => x.subj === subj); const m = ov.querySelector('#memo'); if(l && !m.dataset.typed) m.value = l.memo || '';
+  });
+  ov.querySelector('#memo').oninput = e => { e.target.dataset.typed = 1; };
+  ov.querySelectorAll('#glc button').forEach(b => b.onclick = () => { goal = +b.dataset.v; paint(); });
+  ov.querySelector('#cx').onclick = () => ov.remove();
+  ov.querySelector('#go').onclick = () => {
+    cfg.subj = subj; cfg.goal = goal; saveCfg(); ov.remove();
+    startStudy(subj, ov.querySelector('#memo').value.trim(), goal);
+  };
+  paint();
+}
+
+/* ---------- おわる ---------- */
+function showEnd(){
+  if(!cur) return;
+  const m = Math.floor(studied(cur, nowS()) / 60000);
+  const ov = sheet(`<h2>おわりにしますか？</h2><div class="lead">${sjTag(cur.subj)} ${esc(cur.memo || '')}</div>
+    <div class="big num">${dur(m)}</div>
+    <label>やったこと（ひとこと・なくてもOK）</label><textarea id="done" maxlength="200" placeholder="例：例題20〜30を解いた。27と29は解き直し"></textarea>
+    <button class="go" id="go">${ICO.stop}記録しておわる</button><button class="cancel" id="cx">まだ続ける</button>`);
+  ov.querySelector('#cx').onclick = () => ov.remove();
+  ov.querySelector('#go').onclick = () => { const d = ov.querySelector('#done').value.trim(); ov.remove(); endStudy(d); };
+}
+function reportText(x){
+  const todayM = log.filter(y => y.day === x.day).reduce((a, y) => a + y.mins, 0);
+  return `【自習室】${dayLabel(x.day)}\n${x.subj} ${dur(x.mins)}${x.memo ? '（' + x.memo + '）' : ''}` +
+    (x.done ? '\nやったこと：' + x.done : '') + `\n今日の合計：${dur(todayM)}`;
+}
+function showDone(x){
+  if(!x) return render();
+  const txt = reportText(x);
+  const ov = sheet(`<h2>${x.auto ? '自動で退室になりました' : 'おつかれさまでした'}</h2>
+    <div class="lead">${x.auto ? '「続けていますか？」の確認がなかったので、確認の時間までを記録しました。' : '記録に残しました。'}</div>
+    <div class="big num">${dur(x.mins)}</div>
+    <label>Discord に報告するとき（コピーして貼りつけ）</label><div class="rep" id="rep">${esc(txt)}</div>
+    <button class="go" id="cp">報告文をコピー</button><button class="cancel" id="cx">とじる</button>`);
+  ov.querySelector('#cp').onclick = async () => {
+    try{ await navigator.clipboard.writeText(txt); toast('コピーしました'); }
+    catch(e){ const r = document.createRange(); r.selectNodeContents(ov.querySelector('#rep')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('長押しして「コピー」を選んでください'); }
+  };
+  ov.querySelector('#cx').onclick = () => ov.remove();
+  render();
+}
+
+/* ---------- 記録 ---------- */
+function renderLog(){
+  const t = nowS(), td = jday(t);
+  const byDay = {};
+  log.forEach(x => { byDay[x.day] = (byDay[x.day] || 0) + x.mins; });
+  const liveM = cur ? studied(cur, t) / 60000 : 0;
+  const days = [];
+  for(let i = 6; i >= 0; i--){ const d = jday(t - i * 86400000); days.push([d, (byDay[d] || 0) + (d === td ? liveM : 0)]); }
+  const wk = days.reduce((a, d) => a + d[1], 0), mx = Math.max(60, ...days.map(d => d[1]));
+  const all = log.reduce((a, x) => a + x.mins, 0) + liveM;
+  let h = `<div class="sum">
+    <div><small>今日</small><b class="num">${fmtBig(days[6][1])}</b></div>
+    <div><small>この7日</small><b class="num">${fmtBig(wk)}</b></div>
+    <div><small>ぜんぶ</small><b class="num">${fmtBig(all)}</b></div></div>`;
+  h += `<div class="card"><div class="h2" style="margin:0">この7日</div><div class="week">` + days.map(d => {
+    const x = new Date(d[0] + 'T00:00:00+09:00');
+    return `<div class="${d[0] === td ? 'td' : ''}"><b class="num">${d[1] >= 1 ? dur(d[1]) : ''}</b><i class="${d[1] < 1 ? 'zero' : ''}" style="height:${Math.max(3, d[1] / mx * 100)}%"></i><small>${WD[x.getDay()]}</small></div>`;
+  }).join('') + '</div></div>';
+  h += '<div class="lg">';
+  if(!log.length) h += '<div class="none">まだ記録はありません。自習室で「勉強をはじめる」を押すと、ここにたまっていきます。</div>';
+  let lastDay = '';
+  log.slice(0, 200).forEach(x => {
+    if(x.day !== lastDay){ lastDay = x.day; h += `<div class="day">${dayLabel(x.day)}　合計 ${dur(byDay[x.day] || 0)}</div>`; }
+    h += `<div class="it"><div class="bd"><div class="t1">${sjTag(x.subj)}<span>${esc(x.memo || '')}</span></div>
+      <div class="t2">${hm(x.start)}〜${hm(x.fin)}${x.done ? '\n' + esc(x.done) : ''}</div>${x.auto ? '<div class="au">自動で退室</div>' : ''}</div>
+      <div class="mn num">${dur(x.mins)}</div></div>`;
+  });
+  h += '</div>';
+  $('#view').innerHTML = h;
+}
+
+/* ---------- 設定 ---------- */
+function renderSet(){
+  const login = mode === 'live'
+    ? `<div class="sw"><div class="tx"><b>${esc(me.name)} でログイン中</b><small>塾の Discord の名前が、みんなの画面に出ます。</small></div></div>
+       <button class="btn warn" id="bOut">ログアウト</button>`
+    : `<p>${why === 'prep' ? '自習室はいま準備中です。ログインはできていますが、まだ本物の自習室には入れません。' : '塾の Discord に入っている人だけが、本物の自習室に入れます。いまは見本の画面です。'}</p>
+       ${why === 'prep' ? '' : '<button class="btn pri" id="bIn">Discordでログイン</button><button class="btn" id="bPaste">合言葉を貼りつける（iPhoneのホーム画面の人）</button>'}`;
+  $('#view').innerHTML = `<div class="set">
+    <div data-users-card></div>
+    <h3>ログイン</h3><div class="card">${login}</div>
+    <h3>「続けていますか？」の間隔</h3><div class="card"><div class="chips" id="ivc">${IVLS.map(v => `<button data-v="${v}">${v}分</button>`).join('')}</div>
+      <p style="margin-top:10px">この間隔ごとに確認が出ます。押さずに10分たつと、自動で退室になります（記録は確認の時間まで）。次に席についたときから変わります。</p></div>
+    <h3>勉強中</h3><div class="card">
+      <div class="sw"><div class="tx"><b>画面を消さない</b><small>勉強中は画面がつきっぱなしになり、確認の音が鳴ります。</small></div><button class="tg ${cfg.wake ? 'on' : ''}" id="tgW"></button></div>
+      <div class="sep"></div>
+      <div class="sw"><div class="tx"><b>確認の音</b><small>「続けていますか？」のときに小さく鳴ります。</small></div><button class="tg ${cfg.sound ? 'on' : ''}" id="tgS"></button></div></div>
+    <h3>使い方</h3><div class="card"><p>
+      1. 「勉強をはじめる」で、教科とやることを書いて席につきます。みんなの画面にあなたの席が出ます。<br>
+      2. ほかの人の席の 👏 で応援できます。あなたの席にも 👏 が届きます。<br>
+      3. 決まった間隔で「続けていますか？」が出ます。押すと、みんなの画面に「✓ 確認」と出ます。<br>
+      4. 「おわる」で記録に残ります。報告文をコピーして Discord に貼れます。</p></div>
+    <button class="btn" id="bUpd">更新があるか調べる</button>
+    <div class="ver">自習室 v${VER}</div></div>`;
+  document.querySelectorAll('#ivc button').forEach(b => { b.classList.toggle('on', +b.dataset.v === cfg.ivl); b.onclick = () => { cfg.ivl = +b.dataset.v; saveCfg(); renderSet(); }; });
+  $('#tgW').onclick = () => { cfg.wake = !cfg.wake; saveCfg(); wake(); renderSet(); };
+  $('#tgS').onclick = () => { cfg.sound = !cfg.sound; saveCfg(); unlockAudio(); if(cfg.sound) chime(); renderSet(); };
+  $('#bUpd').onclick = () => checkUpdate(false);
+  const bi = $('#bIn'); if(bi) bi.onclick = () => { location.href = loginUrl(); };
+  const bp = $('#bPaste'); if(bp) bp.onclick = showPaste;
+  const bo = $('#bOut'); if(bo) bo.onclick = () => {
+    if(cur) return toast('勉強中はログアウトできません。先に「おわる」を押してください');
+    tokSet(''); tk = null; mode = 'demo'; why = 'login'; me = { id:'me', name:'あなた', admin:false }; call(); renderSet(); toast('ログアウトしました');
+  };
+}
+
+/* ---------- ログイン ---------- */
+const loginUrl = () => API + '/login?back=' + encodeURIComponent(location.origin + location.pathname);
+const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+function showLogin(){
+  const ov = sheet(`<h2>Discordでログイン</h2>
+    <div class="lead">オンラインコミュニティ塾【ヒラ】の Discord に入っている人だけが、本物の自習室に入れます。
+    ログインしても、こちらから Discord に書きこんだり、あなたの発言を読んだりすることはありません。</div>
+    <button class="go" id="go">Discordでログイン</button>
+    <button class="cancel" id="ps">合言葉を貼りつける（iPhoneのホーム画面の人）</button>`);
+  ov.querySelector('#go').onclick = () => { location.href = loginUrl(); };
+  ov.querySelector('#ps').onclick = () => { ov.remove(); showPaste(); };
+}
+function showPaste(){
+  const ov = sheet(`<h2>合言葉を貼りつける</h2>
+    <div class="lead">Safari で「Discordでログイン」をしたときに出た合言葉を、下に貼りつけてください。</div>
+    <textarea class="code" id="cd" placeholder="ここに貼りつける"></textarea>
+    <button class="go" id="go">これでログイン</button><button class="cancel" id="cx">もどる</button>`);
+  ov.querySelector('#cx').onclick = () => ov.remove();
+  ov.querySelector('#go').onclick = async () => {
+    const v = ov.querySelector('#cd').value.trim();
+    if(v.indexOf('.') < 0) return toast('合言葉がちがうようです');
+    tokSet(v); ov.remove(); await boot2(); render();
+  };
+}
+function showCode(t){
+  const ov = sheet(`<h2>ログインできました</h2>
+    <div class="lead">ホーム画面に「自習室」を入れている人は、この合言葉をコピーして、アプリの設定 →「合言葉を貼りつける」に入れてください。</div>
+    <textarea class="code" readonly id="cd">${esc(t)}</textarea>
+    <button class="go" id="cp">合言葉をコピー</button><button class="cancel" id="cx">このままブラウザで使う</button>`);
+  ov.querySelector('#cp').onclick = async () => { try{ await navigator.clipboard.writeText(t); toast('コピーしました'); }catch(e){ ov.querySelector('#cd').select(); toast('長押しして「コピー」を選んでください'); } };
+  ov.querySelector('#cx').onclick = () => ov.remove();
+}
+/* ログインから戻ってきたときに # についてくる合図 */
+function readAuthHash(){
+  const h = (location.hash || '').replace(/^#/, '');
+  if(h.indexOf('auth=') < 0) return null;
+  const q = new URLSearchParams(h), a = q.get('auth'), t = q.get('t') || '';
+  try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){ location.hash = ''; }
+  if(a === 'ok' && t){ tokSet(t); return 'ok'; }
+  return a || 'failed';
+}
+
+/* ---------- 更新の確認 ---------- */
+async function checkUpdate(silent){
+  try{
+    const res = await fetch('version.json?t=' + Date.now(), { cache:'no-store' });
+    const j = await res.json(), v = Number(j.v) || 0;
+    if(v > VER){ $('#updText').textContent = '新しいバージョン v' + v + (j.note ? '：' + j.note : ''); $('#btnUpdate').classList.remove('hidden'); }
+    else{ $('#btnUpdate').classList.add('hidden'); if(!silent) toast('いまが最新です（v' + VER + '）'); }
+  }catch(e){ if(!silent) toast('調べられませんでした'); }
+}
+$('#btnUpdate').onclick = async () => {
+  try{
+    if('serviceWorker' in navigator){ const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.unregister())); }
+    if(window.caches){ const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
+  }catch(e){}
+  location.replace(location.pathname + '?u=' + Date.now());
+};
+
+/* ---------- 起動・ときどき様子を聞く ---------- */
+let pollT = 0;
+function schedule(){
+  clearTimeout(pollT);
+  if(document.hidden) return;
+  pollT = setTimeout(async () => { await call(); schedule(); }, cur ? 15000 : 25000);
+}
+async function boot2(){
+  if(tokGet()) await enter(); else { mode = 'demo'; why = 'login'; }
+  await call();
+}
+document.addEventListener('visibilitychange', async () => {
+  wake();
+  if(!document.hidden){ await call(); schedule(); checkUpdate(true); }
+  else clearTimeout(pollT);
+});
+setInterval(tick, 1000);
+
+(async () => {
+  const a = readAuthHash();
+  render();
+  await boot2();
+  schedule();
+  if(a === 'ok' && mode === 'live' && !standalone()) showCode(tokGet());
+  else if(a && a !== 'ok') toast('ログインできませんでした。もう一度ためしてください');
+  wake();
+  checkUpdate(true);
+  if('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+})();
+</script>
+</body>
+</html>

@@ -32,6 +32,9 @@
 
    Cloudflare に登録するデータベース（設定 → バインディング）
      DB                     D1 データベース。生徒の記録（見た回数・レベル）を入れる
+
+   2026-10-10 から「自習室」アプリ（/study-game/jishu/）の入り口もかねる（/room・/room/enter）。
+   ログインのしくみと D1 は Theater と同じものを使う。新しく登録するものはない。
    ===================================================================== */
 
 const FILES = ['videos.json', 'chapters.json', 'manual.json'];
@@ -48,6 +51,7 @@ export default {
       if (path === '/sync')     return cors(env, await sync(req, url, env));
       if (path === '/roster')   return cors(env, await roster(url, env));
       if (path === '/find')     return cors(env, await find(url, env));
+      if (path === '/room' || path === '/room/enter') return cors(env, await room(req, url, path, env));
       return cors(env, json({ error: 'not_found' }, 404));
     } catch (e) {
       return cors(env, json({ error: 'server_error', detail: String((e && e.message) || e) }, 500));
@@ -278,6 +282,242 @@ async function roster(url, env) {
   const q = await env.DB.prepare(
     'SELECT name, lv, exp, views, seen, outs, at FROM rec ORDER BY exp DESC, at DESC LIMIT 500').all();
   return json({ ok: true, list: (q && q.results) || [] });
+}
+
+/* =====================================================================
+   自習室（2026-10-10）
+   Zoom の自習室の代わり。映像は流さず、「いま誰が・何を・何分やっているか」をみんなで見る。
+   ・/room/enter … Discord で塾生かをたしかめて、30分だけ使える「入室券」をわたす。
+                   自習室は15〜20秒ごとに呼ばれるので、毎回 Discord に聞くと断られる。
+                   だから Discord に聞くのは入室券を出すときだけにする。
+   ・/room       … 入室券で呼ぶ。自分の席を書きこみ（POST）、みんなの席と動きを返す。
+   ・決まった間隔（15/25/50分）ごとに「続けていますか？」の確認がある。
+     確認の時間を10分すぎても押さないと、自動で退室になる（記録は確認の時間まで）。
+   ===================================================================== */
+const R_GRACE  = 10 * 60000;        /* 確認の時間をすぎてから自動で退室させるまで */
+const R_BREAK  = 30 * 60000;        /* 休憩がこれより長いと退室 */
+const R_STALE  = 3 * 3600000;       /* 3時間なにも届かない席は片づける */
+const R_TICKET = 30 * 60000;        /* 入室券の有効期間 */
+const R_CHEER  = 3 * 60000;         /* 同じ人への👏は3分に1回まで */
+const R_IVL    = [15, 25, 50];
+
+let roomReady = false;
+async function ensureRoom(env) {
+  if (roomReady) return;
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS seat (
+       id TEXT PRIMARY KEY, name TEXT, sid TEXT, subj TEXT, memo TEXT, goal INTEGER,
+       start INTEGER, brk INTEGER, st TEXT, stat INTEGER, chk INTEGER, ivl INTEGER,
+       beat INTEGER, cheers INTEGER DEFAULT 0, gl INTEGER DEFAULT 0)`).run();
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS rlog (
+       sid TEXT PRIMARY KEY, id TEXT, name TEXT, subj TEXT, memo TEXT, done TEXT,
+       start INTEGER, fin INTEGER, mins INTEGER, day TEXT, auto INTEGER DEFAULT 0)`).run();
+  await env.DB.prepare(`CREATE INDEX IF NOT EXISTS rlog_day ON rlog(day)`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS rfeed (at INTEGER, kind TEXT, d TEXT)`).run();
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS rcheer (fr TEXT, too TEXT, at INTEGER, PRIMARY KEY (fr, too))`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS rnote (k INTEGER PRIMARY KEY, txt TEXT, at INTEGER)`).run();
+  roomReady = true;
+}
+
+async function room(req, url, path, env) {
+  if (!env.DB) return json({ ok: false, error: 'no_db' }, 503);
+
+  /* 入室券をもらう（ここだけ Discord に聞く。通行証が古ければ新しくする） */
+  if (path === '/room/enter') {
+    const s = await unpack(env, url.searchParams.get('t'));
+    if (!s) return json({ ok: false, error: 'need_login', why: 'bad_token' }, 401);
+    let who = await check(s.a, env), fresh = null;
+    if (!who.ok && who.why === 'token_expired' && s.r) {
+      const tok = await tokenReq(env, { grant_type: 'refresh_token', refresh_token: s.r });
+      if (tok) { who = await check(tok.access_token, env); if (who.ok) fresh = await pack(env, tok, who); }
+    }
+    if (!who.ok) {
+      if (who.why === 'not_member' || who.why === 'no_role') return json({ ok: false, error: 'not_member' }, 403);
+      if (who.why === 'busy' || String(who.why).indexOf('check_failed') === 0)
+        return json({ ok: false, error: 'busy', why: who.why }, 503);
+      return json({ ok: false, error: 'need_login', why: who.why }, 401);
+    }
+    const admin = !!(env.ADMIN_ID && who.id === env.ADMIN_ID);
+    const k = await ticketMake(env, { i: who.id, n: who.name, a: admin ? 1 : 0, x: Date.now() + R_TICKET });
+    const out = { ok: true, k, me: who.id, name: who.name, admin };
+    if (fresh) out.t = fresh;
+    return json(out);
+  }
+
+  const tk = await ticketRead(env, url.searchParams.get('k'));
+  if (!tk) return json({ ok: false, error: 'need_enter' }, 401);
+  await ensureRoom(env);
+
+  const now = Date.now();
+  let b = {};
+  if (req.method === 'POST') {
+    const tx = await req.text();
+    if (tx.length > 4000) return json({ ok: false, error: 'too_big' }, 413);
+    try { b = JSON.parse(tx) || {}; } catch (e) {}
+  }
+  await roomSweep(env, now);
+
+  const out = { ok: true, now };
+  if (b.cheer) out.cheer = await roomCheer(env, tk, String(b.cheer).slice(0, 32), now);
+  if (tk.a && typeof b.say === 'string') await roomSay(env, tk, b.say, now);
+  if (b.s && typeof b.s === 'object') out.mine = await roomSeat(env, tk, b.s, now);
+  return json(Object.assign(out, await roomLook(env, tk, now)));
+}
+
+/* 席にいる時間のうち、休憩をのぞいた「勉強した時間」 */
+const studied = (s, at) =>
+  Math.max(0, at - s.start - (s.brk || 0) - (s.st === 'break' ? Math.max(0, at - s.stat) : 0));
+const rDay = t => new Date(t + 9 * 3600000).toISOString().slice(0, 10);   /* 日本の日付 */
+const rFeed = (env, at, kind, d) =>
+  env.DB.prepare('INSERT INTO rfeed (at, kind, d) VALUES (?,?,?)').bind(at, kind, JSON.stringify(d)).run();
+
+/* 席を片づけて記録に残す */
+async function roomEnd(env, seat, at, done, auto) {
+  const mins = Math.floor(studied(seat, at) / 60000);
+  await env.DB.prepare(
+    `INSERT INTO rlog (sid, id, name, subj, memo, done, start, fin, mins, day, auto)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(sid) DO NOTHING`
+  ).bind(seat.sid, seat.id, seat.name, seat.subj, seat.memo, String(done || '').slice(0, 200),
+         seat.start, at, mins, rDay(seat.start), auto ? 1 : 0).run();
+  await env.DB.prepare('DELETE FROM seat WHERE id = ? AND sid = ?').bind(seat.id, seat.sid).run();
+  await rFeed(env, Date.now(), auto ? 'auto' : 'end', { n: seat.name, s: seat.subj, m: mins });
+  return mins;
+}
+
+/* 確認がない席・長すぎる休憩・止まった席を、自動で退室にする */
+async function roomSweep(env, now) {
+  const q = await env.DB.prepare('SELECT * FROM seat').all();
+  for (const s of (q && q.results) || []) {
+    const due = Math.max(s.chk || 0, s.start) + (s.ivl || 25) * 60000;
+    if (s.st === 'break' && now > s.stat + R_BREAK) await roomEnd(env, s, s.stat, '', 1);
+    else if (s.st !== 'break' && now > due + R_GRACE) await roomEnd(env, s, due, '', 1);
+    else if (now - (s.beat || 0) > R_STALE) await roomEnd(env, s, Math.min(due, now), '', 1);
+  }
+  if (Math.random() < 0.05) {
+    await env.DB.prepare('DELETE FROM rfeed WHERE at < ?').bind(now - 2 * 86400000).run();
+    await env.DB.prepare('DELETE FROM rcheer WHERE at < ?').bind(now - 86400000).run();
+  }
+}
+
+/* 自分の席を書きこむ（はじめる・続ける・休憩・おわる） */
+async function roomSeat(env, tk, s, now) {
+  const sid = String(s.sid || '').slice(0, 24);
+  if (!sid) return { error: 'no_sid' };
+  const cl = (v, lo, hi) => Math.min(hi, Math.max(lo, Math.round(+v || 0)));
+  const start = cl(s.start, now - 12 * 3600000, now);
+  const n = {
+    id: tk.i, name: String(tk.n || '').slice(0, 32), sid,
+    subj: String(s.subj || '').slice(0, 10), memo: String(s.memo || '').slice(0, 40),
+    goal: cl(s.goal, 0, 720), start, brk: cl(s.brk, 0, now - start),
+    st: s.st === 'break' ? 'break' : 'study', stat: cl(s.stat, start, now),
+    chk: cl(s.chk, start, now), ivl: R_IVL.includes(+s.ivl) ? +s.ivl : 25, beat: now
+  };
+
+  const cur = await env.DB.prepare('SELECT * FROM seat WHERE id = ?').bind(tk.i).first();
+  if (!cur || cur.sid !== sid) {
+    /* もう片づけられた席（自動で退室・別の端末でおわった）なら、その結果を返す */
+    const old = await env.DB.prepare('SELECT mins, auto, fin FROM rlog WHERE sid = ?').bind(sid).first();
+    if (old) return { gone: true, mins: old.mins, auto: !!old.auto, fin: old.fin };
+    /* 別の端末で前の席が残っていたら、それはおわりにする */
+    if (cur) await roomEnd(env, cur, now, '', 0);
+  }
+
+  if (s.end) {
+    const mins = await roomEnd(env, cur && cur.sid === sid ? Object.assign({}, cur, n) : n, now,
+                               s.done, 0);
+    return { ended: true, mins };
+  }
+
+  const fresh = !cur || cur.sid !== sid;
+  const gl = fresh ? 0 : cur.gl;
+  await env.DB.prepare(
+    `INSERT INTO seat (id, name, sid, subj, memo, goal, start, brk, st, stat, chk, ivl, beat, cheers, gl)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0,?)
+     ON CONFLICT(id) DO UPDATE SET name=excluded.name, sid=excluded.sid, subj=excluded.subj,
+       memo=excluded.memo, goal=excluded.goal, start=excluded.start, brk=excluded.brk, st=excluded.st,
+       stat=excluded.stat, chk=excluded.chk, ivl=excluded.ivl, beat=excluded.beat`
+  ).bind(n.id, n.name, n.sid, n.subj, n.memo, n.goal, n.start, n.brk, n.st, n.stat, n.chk, n.ivl,
+         n.beat, gl).run();
+  if (fresh) {
+    await env.DB.prepare('UPDATE seat SET cheers = 0, gl = 0 WHERE id = ?').bind(n.id).run();
+    await rFeed(env, now, 'start', { n: n.name, s: n.subj, g: n.goal });
+  }
+  if (n.goal && !gl && studied(n, now) >= n.goal * 60000) {
+    await env.DB.prepare('UPDATE seat SET gl = 1 WHERE id = ?').bind(n.id).run();
+    await rFeed(env, now, 'goal', { n: n.name, s: n.subj, g: n.goal });
+  }
+  return { ok: true };
+}
+
+/* 👏 を送る */
+async function roomCheer(env, tk, to, now) {
+  if (to === tk.i) return 'self';
+  const seat = await env.DB.prepare('SELECT name FROM seat WHERE id = ?').bind(to).first();
+  if (!seat) return 'gone';
+  const last = await env.DB.prepare('SELECT at FROM rcheer WHERE fr = ? AND too = ?').bind(tk.i, to).first();
+  if (last && now - last.at < R_CHEER) return 'wait';
+  await env.DB.prepare(
+    `INSERT INTO rcheer (fr, too, at) VALUES (?,?,?) ON CONFLICT(fr, too) DO UPDATE SET at=excluded.at`
+  ).bind(tk.i, to, now).run();
+  await env.DB.prepare('UPDATE seat SET cheers = cheers + 1 WHERE id = ?').bind(to).run();
+  await rFeed(env, now, 'cheer', { n: tk.n, t: seat.name, h: tk.a ? 1 : 0 });
+  return 'ok';
+}
+
+/* 平山さんから みんなへのひとこと（空なら消す） */
+async function roomSay(env, tk, txt, now) {
+  txt = String(txt).trim().slice(0, 80);
+  if (!txt) { await env.DB.prepare('DELETE FROM rnote WHERE k = 1').run(); return; }
+  await env.DB.prepare(
+    `INSERT INTO rnote (k, txt, at) VALUES (1,?,?) ON CONFLICT(k) DO UPDATE SET txt=excluded.txt, at=excluded.at`
+  ).bind(txt, now).run();
+  await rFeed(env, now, 'say', { n: tk.n, x: txt });
+}
+
+/* みんなの席・今日の記録・動き を返す */
+async function roomLook(env, tk, now) {
+  const seats = await env.DB.prepare(
+    `SELECT id, name, subj, memo, goal, start, brk, st, stat, chk, ivl, cheers FROM seat ORDER BY start`).all();
+  const today = await env.DB.prepare(
+    `SELECT id, name, SUM(mins) AS mins, MAX(fin) AS fin, COUNT(*) AS n FROM rlog
+     WHERE day = ? GROUP BY id ORDER BY fin DESC LIMIT 100`).bind(rDay(now)).all();
+  const feed = await env.DB.prepare(
+    'SELECT at, kind, d FROM rfeed WHERE at > ? ORDER BY at DESC LIMIT 40').bind(now - 86400000).all();
+  const note = await env.DB.prepare('SELECT txt, at FROM rnote WHERE k = 1').first();
+  return {
+    me: tk.i, admin: !!tk.a, day: rDay(now),
+    seats: (seats && seats.results) || [],
+    today: (today && today.results) || [],
+    feed: ((feed && feed.results) || []).map(f => {
+      let d = {}; try { d = JSON.parse(f.d); } catch (e) {}
+      return Object.assign(d, { at: f.at, k: f.kind });
+    }),
+    note: note && now - note.at < 6 * 3600000 ? note : null
+  };
+}
+
+/* 入室券（中身は見えてもよいが、Worker の鍵がないと作れない・書きかえられない） */
+async function roomKey(env) {
+  return crypto.subtle.importKey('raw', new TextEncoder().encode('room:' + env.SESSION_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
+}
+async function ticketMake(env, o) {
+  const body = b64url(unescape(encodeURIComponent(JSON.stringify(o))));
+  const sig = await crypto.subtle.sign('HMAC', await roomKey(env), new TextEncoder().encode(body));
+  return body + '.' + b64url(bin(new Uint8Array(sig)));
+}
+async function ticketRead(env, k) {
+  if (!k || k.indexOf('.') < 0) return null;
+  try {
+    const [body, sig] = k.split('.');
+    const raw = new Uint8Array([...fromB64url(sig)].map(c => c.charCodeAt(0)));
+    const ok = await crypto.subtle.verify('HMAC', await roomKey(env), raw, new TextEncoder().encode(body));
+    if (!ok) return null;
+    const o = JSON.parse(decodeURIComponent(escape(fromB64url(body))));
+    return o && o.x > Date.now() ? o : null;
+  } catch (e) { return null; }
 }
 
 /* ---------- サーバーにいるか ----------

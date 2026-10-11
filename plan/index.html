@@ -598,7 +598,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
     <div class="more" id="addMore">
     <div class="durrow" id="durRow">
       <span class="rl">かかる時間</span>
-      <button class="qd" data-d="15">＋15分</button>
+      <button class="qd" data-d="10">＋10分</button>
       <button class="qd" data-d="30">＋30分</button>
       <button class="qd" data-d="60">＋60分</button>
       <button class="zero" data-d="0">0に</button>
@@ -782,7 +782,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 57;
+const VER = 58;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;

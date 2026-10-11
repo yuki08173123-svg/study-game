@@ -462,7 +462,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="idioms.js?v=2"></script>
 <script>
 'use strict';
-const VER = 5;
+const VER = 6;
 /* ===================== 使う人（兄弟で1台） =====================
    1人目は今までの保存場所のまま（記録はそのまま残る）。2人目からは保存の名前のうしろに「__id」をつけて分ける。
    切りかえたらページを読みなおす。レベル・仕分け・計画・記録・タイマーはすべて人ごと。 */
@@ -566,7 +566,7 @@ function load(){
   S.w = S.w || {}; S.days = S.days || {}; S.tests = S.tests || []; S.start = S.start || b.start;
   S.xpDay = S.xpDay || {};
   let c = null; try{ c = JSON.parse(localStorage.getItem(COMMON)); }catch(e){}
-  if(c){ S.xp = c.xp || 0; S.xpDay = c.xpDay || {}; S.guideSeen = !!c.guideSeen; }
+  if(c){ S.xp = c.xp || 0; S.xpDay = c.xpDay || {}; S.guideSeen = !!c.guideSeen; S.ftOpen = !!c.ftOpen; }
   if(S.xp == null) S.xp = 0;
   // まだ何も始めていないうちは、開始日を「今日」に合わせる（熟語は単語のあとに始めるので、はじめて取り組んだ日からの計画にする）
   if(!S.startSet && !S.tests.length && !S.study.length && !Object.keys(S.days).length) S.start = today();
@@ -585,7 +585,7 @@ function wordsProgress(){
   }catch(e){ return { done:0, total:48 }; }
 }
 function setLaps(n){ LAPS = Math.max(1, Math.min(10, +n || 4)); TOTAL = DAYS * LAPS; }
-function save(){ if(NOSAVE) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); localStorage.setItem(COMMON, JSON.stringify({ xp:S.xp, xpDay:S.xpDay, guideSeen:S.guideSeen })); }catch(e){} }
+function save(){ if(NOSAVE) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); localStorage.setItem(COMMON, JSON.stringify({ xp:S.xp, xpDay:S.xpDay, guideSeen:S.guideSeen, ftOpen:!!S.ftOpen })); }catch(e){} }
 function ws(i){ return S.w[i] || (S.w[i] = { c:0, x:0, sk:0, st:0, due:'' }); }
 /* 仕分け（塾生の声）：完璧に知っているものは ex＝外した。外したものは Day のカード・一覧・解説・テスト・リマインドに出ない */
 function isEx(i){ return !!(S.w[i] && S.w[i].ex); }
@@ -932,7 +932,7 @@ function exText(w){ return w.ex.replace(/[\[\]]/g, ''); }
 function ftHTML(w){ return esc(w.ft).replace(/\[/g, '<span class="hw">').replace(/\]/g, '</span>'); }
 /* 訳は、はじめはかくしておき、ワンタップで見せる（もう一度押すとかくれる） */
 function ftBox(w, small){
-  return `<span class="ftw${small ? ' sm' : ''}" role="button" aria-label="タップで訳を見る"><span class="ft-hide">▼ タップで訳を見る</span><span class="ft-body">→ ${ftHTML(w)}</span></span>`;
+  return `<span class="ftw${small ? ' sm' : ''}${S.ftOpen ? ' open' : ''}" role="button" aria-label="タップで訳を見る"><span class="ft-hide">▼ タップで訳を見る</span><span class="ft-body">→ ${ftHTML(w)}</span></span>`;
 }
 document.addEventListener('click', e => {
   const f = e.target.closest && e.target.closest('.ftw');
@@ -1517,6 +1517,9 @@ function renderSet(){
     <div class="card set"><label>少しずつ進める（覚える → すぐテスト）</label>
       <div class="seg" id="sChunk">${[[10,'10ずつ'],[20,'20ずつ'],[0,'使わない']].map(([c,t]) => `<button class="${+S.cfg.chunk===c?'on':''}" data-c="${c}">${t}</button>`).join('')}</div>
       <p class="dim" style="margin:8px 0 0">「今日」で、その日の${BNAME}を${S.cfg.chunk || 20}${UNIT}ずつに分けて、覚えたらすぐテストできます。全部の区切りをテストすると、その日のテストも完了です。</p></div>
+    <div class="card set"><label>例文の訳</label>
+      <div class="seg" id="sFt"><button class="${!S.ftOpen?'on':''}" data-v="0">タップで見る</button><button class="${S.ftOpen?'on':''}" data-v="1">最初から見せる</button></div>
+      <p class="dim" style="margin:8px 0 0">はじめは「最初から見せる」で訳を見てパッとつかみ、周回して力がついたら「タップで見る」にして、自分で文脈から訳すのがおすすめです（単語・熟語で共通）。</p></div>
     <div class="card set"><label>発音</label>
       <div class="seg" id="sAuto"><button class="${S.cfg.autoSpk?'on':''}" data-v="1">自動で鳴らす</button><button class="${!S.cfg.autoSpk?'on':''}" data-v="0">押したときだけ</button></div>
       <p class="dim" style="margin:8px 0 0">カードを出したとき・「英語→意味」の問題で、英語の発音を自動で鳴らします。</p></div>
@@ -1549,6 +1552,7 @@ function renderSet(){
   $$('#sLaps button').forEach(b => b.onclick = () => { S.cfg.laps = +b.dataset.n; setLaps(S.cfg.laps); save(); renderAll(); renderSet(); });
   $$('#sPer button').forEach(b => b.onclick = () => askPer(+b.dataset.n));
   $$('#sChunk button').forEach(b => b.onclick = () => { S.cfg.chunk = +b.dataset.c; save(); renderAll(); renderSet(); });
+  $$('#sFt button').forEach(b => b.onclick = () => { S.ftOpen = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sAuto button').forEach(b => b.onclick = () => { S.cfg.autoSpk = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sVoice button').forEach(b => b.onclick = () => { S.cfg.voice = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sRate button').forEach(b => b.onclick = () => { S.cfg.rate = +b.dataset.r; save(); renderSet(); });
@@ -1884,7 +1888,7 @@ function guideSlides(){
       v:`<div class="srtb"><span class="btn" style="font-size:14px">あやしい・知らない<small>覚える${BNAME}にする</small></span><span class="btn know" style="font-size:14px">完璧に知ってる<small>意味を確かめて外す</small></span></div>` },
     { t:'① 覚える時間', p:['「今日」の①を押して、<b>覚える時間を自分で決めます</b>（3分〜、自由に入力も）。','のこり時間は<b>画面のいちばん上</b>に出ます。カード・一覧・1分解説から、好きな方法で覚えましょう。'],
       v:`<div style="background:#1F2A4D;color:#fff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px"><b style="font-size:24px">9:42</b><small style="opacity:.8">覚える時間</small><span style="margin-left:auto;font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:99px">一時停止</span></div><div class="minicard">カード　／　一覧（意味をかくせる）　／　1分解説</div>` },
-    { t:'発音と1分解説', p:['<b>スピーカーのボタン</b>で、ネイティブの発音が聞けます。カードを出すと自動で鳴ります。','1分解説は、スライドと音声で1つを約30秒で解説。英語はネイティブの声、意味や覚え方は日本語の声です。'],
+    { t:'発音と1分解説', p:['<b>スピーカーのボタン</b>で、ネイティブの発音が聞けます。カードを出すと自動で鳴ります。','1分解説は、スライドと音声で1つを約30秒で解説。英語はネイティブの声、意味や覚え方は日本語の声です。','例文の訳は、はじめは「タップで見る」です。「設定」の<b>例文の訳</b>で「最初から見せる」にもできます。'],
       v:`<div class="minicard" style="flex-direction:column;align-items:flex-start"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:22px">cook</b><span class="ph">/kʊk/</span><span class="spk">${SPK_SVG}</span></div><span style="color:var(--shu);font-weight:700;border:1.5px solid var(--shu);border-radius:8px;padding:2px 8px">〜を料理する</span><span class="dim" style="font-size:12.5px">仲間の語：cooking（名）料理</span></div>` },
     { t:'② テスト', p:['その日の分の4択テスト（単語100問・熟語25問）。<b>時間と正答率は自動で記録</b>されます。','まちがえたものだけ、すぐにもう一度。「報告用にコピー」で、勉強報告にそのまま貼れます。','<b>少しずつ進める</b>：「今日」の <b>1〜20</b> などを押すと、その分だけ覚えて<b>すぐテスト</b>できます。全部おわると、その日のテストも完了です。','慣れてきたら、テストタブの「出題の形式」で<b>聞いて答える</b>・<b>書いて答える</b>・<b>例文の穴埋め</b>にも変えられます。'],
       v:`<div style="text-align:center"><div style="font-family:var(--mincho);font-weight:700;font-size:44px;color:#2E7A57;line-height:1.1">92<small style="font-size:18px">%</small></div><div class="dim">100問中 92問 正解　・　時間 10分50秒</div></div>` },

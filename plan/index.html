@@ -232,6 +232,28 @@ textarea::placeholder, input::placeholder{color:var(--muted); opacity:.95;}
 .tplist .cnt{font-size:11px; font-weight:900; color:var(--muted); flex:none;}
 .tplist .use{font-size:12.5px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:8px 14px; flex:none;}
 .tplist .rm{width:30px; height:30px; border-radius:9px; background:var(--chip); font-size:15px; font-weight:900; color:var(--muted); flex:none;}
+/* テンプレートの中身を見て、入れる曜日をえらぶ画面 */
+.tpchips{display:flex; gap:6px; align-items:center; margin:12px 0 10px; position:sticky; top:40px; z-index:2; background:var(--bg); padding:6px 0;}
+.tpchips .ds{display:flex; gap:4px; flex:1;}
+.tpchips .ds button{flex:1; height:40px; border-radius:10px; background:var(--chip); font-size:13px; font-weight:900; color:var(--muted);}
+.tpchips .ds button.on{background:var(--accent); color:var(--accent-ink);}
+.tpchips .all{font-size:12.5px; font-weight:900; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:11px 13px; flex:none;}
+.tpday{border:1px solid var(--line); border-radius:12px; background:var(--card); margin-bottom:8px; overflow:hidden;}
+.tpday.off{opacity:.4;}
+.tpday .h{display:flex; align-items:center; gap:8px; padding:9px 12px; background:var(--chip);}
+.tpday .h b{font-size:14.5px; font-weight:900;}
+.tpday .h .dt{font-size:12px; color:var(--muted); font-weight:700; flex:1;}
+.tpday .h .n{font-size:11px; font-weight:900; color:var(--muted);}
+.tpday .ls{padding:2px 12px 8px;}
+.tpday .ls > div{display:flex; align-items:baseline; gap:7px; padding:6px 0; font-size:13.5px; border-top:1px solid var(--line);}
+.tpday .ls > div:first-child{border-top:0;}
+.tpday .tm{font-size:12px; font-weight:900; color:var(--accent); width:40px; flex:none;}
+.tpday .tm.non{color:var(--muted);}
+.tpday .tx{flex:1; min-width:0; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.tpday .kd{font-size:10px; font-weight:900; color:var(--muted); background:var(--chip); border-radius:999px; padding:2px 7px; flex:none;}
+.tpday .mn{font-size:11px; font-weight:900; color:var(--muted); flex:none;}
+.tpday .dup .tx{color:var(--muted); text-decoration:line-through;}
+.tpday .ls .empty{color:var(--muted); font-size:12.5px; padding:8px 0; border-top:0;}
 .histlist{display:flex; flex-direction:column; gap:6px; max-height:52vh; overflow:auto;}
 .histlist div{display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:9px 8px 9px 13px;}
 .histlist span{flex:1; font-size:14px; font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -760,7 +782,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 56;
+const VER = 57;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -2501,7 +2523,7 @@ function openTemplates(){
       : '<p style="text-align:center; color:var(--muted); font-size:13.5px; padding:14px 0 6px">まだテンプレートがありません</p>');
   };
   const sh = openSheet('<h2>テンプレート</h2>'
-    + '<p style="font-size:13px; color:var(--muted); line-height:1.8">毎週おなじやることを、まとめて入れられます。<br>いまの週をそのままテンプレートにして、次の週に「入れる」を押すだけです。</p>'
+    + '<p style="font-size:13px; color:var(--muted); line-height:1.8">毎週おなじやることを、まとめて入れられます。<br>いまの週をそのままテンプレートにして、次の週に「入れる」を押すだけです。<br><b>「入れる」を押すと、中身をたしかめてから、入れる曜日をえらべます。</b></p>'
     + '<div id="tplBox">'+draw()+'</div>'
     + '<button class="bigbtn" id="tplSave">いまの週をテンプレートにする</button>');
   const box = sh.querySelector('#tplBox');
@@ -2513,22 +2535,7 @@ function openTemplates(){
       if(!confirm('「'+tp.name+'」を消しますか？')) return;
       S.templates = tplList().filter(x=>x.id !== id); save(); box.innerHTML = draw(); return;
     }
-    let n = 0, dup = 0;
-    for(let i=0;i<7;i++){
-      const d = dayOf(S.cur, i);
-      (tp.days[i]||[]).forEach(t=>{
-        // 同じ日に、同じ時こく・同じ文字のものがすでにあれば入れない（2回押しても重ならない）
-        if(d.tasks.some(x=>x.text === t.text && (x.time||'') === (t.time||''))){ dup++; return; }
-        d.tasks.push({ time:t.time||'', text:t.text, min:Number(t.min)||S.defMin,
-                       done:false, star:false, nostar:!!t.nostar, evt:!!t.evt, note:'' });
-        histAdd(t.text); n++;
-      });
-      sortTasks(d);
-    }
-    sh.remove(); renderAll();
-    if(!n && !dup) toast('このテンプレートは空です');
-    else if(!n) toast('もう入っています（同じものは入れませんでした）');
-    else toast(n+'件入れました'+(dup ? '（すでにあった'+dup+'件は入れていません）' : ''));
+    sh.remove(); openTplPreview(tp);   // いきなり入れずに、中身と入れる曜日をたしかめてもらう
   };
   sh.querySelector('#tplSave').onclick = ()=>{
     const days = [];
@@ -2556,6 +2563,76 @@ function openTemplates(){
     };
     s2.querySelector('#tplOK').onclick = ok;
     inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); ok(); } });
+  };
+}
+/* テンプレートの中身を見て、入れる曜日をえらぶ（ユウキ・ハルネコさんの要望） */
+function openTplPreview(tp){
+  const m = parseISO(S.cur);
+  const sel = [true,true,true,true,true,true,true];
+  const isDup = (i,t)=>{
+    const d = dayRaw(S.cur, i), ts = (d && d.tasks) || [];
+    return ts.some(x=>x.text === t.text && (x.time||'') === (t.time||''));
+  };
+  const addN = ()=>{ let n = 0;
+    for(let i=0;i<7;i++) if(sel[i]) (tp.days[i]||[]).forEach(t=>{ if(!isDup(i,t)) n++; });
+    return n; };
+
+  const body = ()=>{
+    const chips = '<div class="tpchips"><div class="ds">'
+      + WD.map((w,i)=>'<button data-d="'+i+'" class="'+(sel[i]?'on':'')+'">'+w+'</button>').join('')
+      + '</div><button class="all" id="tpAll">'+(sel.every(Boolean) ? 'なし' : '全部')+'</button></div>';
+    const days = WD.map((w,i)=>{
+      const ts = tp.days[i] || [];
+      const rows = ts.length ? ts.map(t=>{
+        const dup = isDup(i,t);
+        const kd = t.evt ? '<span class="kd">予定</span>' : (t.nostar ? '<span class="kd">★なし</span>' : '');
+        return '<div class="'+(dup?'dup':'')+'">'
+          + '<span class="tm'+(t.time?'':' non')+'">'+(t.time || 'なし')+'</span>'
+          + '<span class="tx">'+esc(t.text)+'</span>'+kd
+          + '<span class="mn">'+(dup ? 'すでにある' : fmtHM(Number(t.min)||S.defMin))+'</span></div>';
+      }).join('') : '<div class="empty">（やることなし）</div>';
+      return '<div class="tpday'+(sel[i]?'':' off')+'">'
+        + '<div class="h"><b>'+w+'</b><span class="dt">'+md(addDays(m,i))+'</span>'
+        + '<span class="n">'+ts.length+'件</span></div>'
+        + '<div class="ls">'+rows+'</div></div>';
+    }).join('');
+    const n = addN();
+    return '<h2>'+esc(tp.name)+'</h2>'
+      + '<p style="font-size:13px; color:var(--muted); line-height:1.8">中身をたしかめて、<b>入れる曜日</b>をえらんでください。<br>曜日を押すと、入れる・入れないが変わります。すでに入っているものは、もう一度入りません。</p>'
+      + chips + days
+      + '<button class="bigbtn" id="tpGo"'+(n ? '' : ' disabled style="opacity:.45"')+'>'
+      + (n ? 'えらんだ曜日に入れる（'+n+'件）' : '入れるものがありません')+'</button>';
+  };
+
+  const sh = openSheet('<div id="tpBody">'+body()+'</div>');
+  const box = sh.querySelector('#tpBody');
+  const redraw = ()=>{ box.innerHTML = body(); };
+  box.onclick = e => {
+    const d = e.target.closest('button[data-d]');
+    if(d){ sel[+d.dataset.d] = !sel[+d.dataset.d]; redraw(); return; }
+    if(e.target.closest('#tpAll')){ const all = sel.every(Boolean); for(let i=0;i<7;i++) sel[i] = !all; redraw(); return; }
+    if(!e.target.closest('#tpGo')) return;
+
+    let n = 0, dup = 0, ds = 0;
+    for(let i=0;i<7;i++){
+      if(!sel[i]) continue;
+      const list = tp.days[i] || []; if(!list.length) continue;
+      const d2 = dayOf(S.cur, i);
+      let put = 0;
+      list.forEach(t=>{
+        // 同じ日に、同じ時こく・同じ文字のものがすでにあれば入れない（2回押しても重ならない）
+        if(d2.tasks.some(x=>x.text === t.text && (x.time||'') === (t.time||''))){ dup++; return; }
+        d2.tasks.push({ time:t.time||'', text:t.text, min:Number(t.min)||S.defMin,
+                        done:false, star:false, nostar:!!t.nostar, evt:!!t.evt, note:'' });
+        histAdd(t.text); n++; put++;
+      });
+      if(put) ds++;
+      sortTasks(d2);
+    }
+    sh.remove(); save(); renderAll();
+    if(!n && dup) toast('もう入っています（同じものは入れませんでした）');
+    else if(!n) toast('入れるものがありませんでした');
+    else toast(ds+'日ぶん・'+n+'件入れました'+(dup ? '（すでにあった'+dup+'件は入れていません）' : ''));
   };
 }
 $('#btnTpl').onclick = openTemplates;
@@ -2898,7 +2975,8 @@ const SLIDES = [
 </div>
 <p>このボタンを押すと、7日ぶんの予定・できた時間・やること・TQCスコアが<b>1枚にまとまります</b>。<br>
 スクリーンショットを撮るか、「画像を保存する」で保存して、提出に使えます。<br>
-その下の<b>「テンプレート」</b>を使うと、毎週おなじやることを一度おぼえさせて、次の週から1回で入れられます。</p>`,
+その下の<b>「テンプレート」</b>を使うと、毎週おなじやることを一度おぼえさせて、次の週から1回で入れられます。<br>
+「入れる」を押すと<b>中身をたしかめてから、入れる曜日をえらべます</b>。月曜だけ入れる、という使い方もできます。</p>`,
 
 `<span class="snum">⑦</span>
 <h3>長い計画（目標）</h3>

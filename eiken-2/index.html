@@ -370,6 +370,8 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 .spk.big{width:84px;height:84px}
 .spk.big svg{width:40px;height:40px}
 .spk.on{background:var(--ai);color:#fff}
+.spk.ex{width:30px;height:30px;margin-left:6px;vertical-align:-6px}
+.spk.ex svg{width:16px;height:16px}
 .der{margin-top:8px;font-size:14.5px}
 .der span{display:inline-block;margin:2px 6px 2px 0;background:var(--chip);border-radius:8px;padding:2px 8px}
 .der span b{font-family:'Lexend',sans-serif;font-weight:600;margin-right:4px}
@@ -462,7 +464,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="idioms.js?v=3"></script>
 <script>
 'use strict';
-const VER = 7;
+const VER = 8;
 /* ===================== 使う人（兄弟で1台） =====================
    1人目は今までの保存場所のまま（記録はそのまま残る）。2人目からは保存の名前のうしろに「__id」をつけて分ける。
    切りかえたらページを読みなおす。レベル・仕分け・計画・記録・タイマーはすべて人ごと。 */
@@ -566,7 +568,8 @@ function load(){
   S.w = S.w || {}; S.days = S.days || {}; S.tests = S.tests || []; S.start = S.start || b.start;
   S.xpDay = S.xpDay || {};
   let c = null; try{ c = JSON.parse(localStorage.getItem(COMMON)); }catch(e){}
-  if(c){ S.xp = c.xp || 0; S.xpDay = c.xpDay || {}; S.guideSeen = !!c.guideSeen; S.ftOpen = !!c.ftOpen; }
+  if(c){ S.xp = c.xp || 0; S.xpDay = c.xpDay || {}; S.guideSeen = !!c.guideSeen; S.ftOpen = !!c.ftOpen; S.exAud = c.exAud || 'btn'; }
+  if(!S.exAud) S.exAud = 'btn';
   if(S.xp == null) S.xp = 0;
   // まだ何も始めていないうちは、開始日を「今日」に合わせる（熟語は単語のあとに始めるので、はじめて取り組んだ日からの計画にする）
   if(!S.startSet && !S.tests.length && !S.study.length && !Object.keys(S.days).length) S.start = today();
@@ -585,7 +588,7 @@ function wordsProgress(){
   }catch(e){ return { done:0, total:56 }; }
 }
 function setLaps(n){ LAPS = Math.max(1, Math.min(10, +n || 4)); TOTAL = DAYS * LAPS; }
-function save(){ if(NOSAVE) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); localStorage.setItem(COMMON, JSON.stringify({ xp:S.xp, xpDay:S.xpDay, guideSeen:S.guideSeen, ftOpen:!!S.ftOpen })); }catch(e){} }
+function save(){ if(NOSAVE) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); localStorage.setItem(COMMON, JSON.stringify({ xp:S.xp, xpDay:S.xpDay, guideSeen:S.guideSeen, ftOpen:!!S.ftOpen, exAud:S.exAud })); }catch(e){} }
 function ws(i){ return S.w[i] || (S.w[i] = { c:0, x:0, sk:0, st:0, due:'' }); }
 /* 仕分け（塾生の声）：完璧に知っているものは ex＝外した。外したものは Day のカード・一覧・解説・テスト・リマインドに出ない */
 function isEx(i){ return !!(S.w[i] && S.w[i].ex); }
@@ -954,7 +957,7 @@ function openWord(i, list){
     ${w.s.length ? `<div class="dim">ほかの意味：${w.s.map(esc).join('／')}</div>` : ''}
     ${derHTML(w)}
     <div class="note" style="margin-top:10px"><b>覚え方</b>　${esc(w.tip)}</div>
-    <p style="margin:10px 0 0"><span style="font-family:var(--mincho)">${exHTML(w)}</span><br>${ftBox(w)}</p>
+    <p style="margin:10px 0 0"><span style="font-family:var(--mincho)">${exHTML(w)}</span>${exSpk(i)}<br>${ftBox(w)}</p>
     <p class="dim">テスト：正解 ${s.c}回・まちがい ${s.x}回${s.due ? `・<b style="color:var(--shu)">リマインド ${md(s.due)}</b>` : ''}${isMastered(i) ? '・<b style="color:var(--ok)">定着</b>' : ''}</p>
     <button class="btn" data-a="play">▶ 1分解説（読み上げ）</button>
     <button class="btn sub" data-a="exb">${isEx(i) ? `外した${BNAME}を、もとにもどす` : `完璧なので、この${BNAME}を外す`}</button>`);
@@ -1012,13 +1015,43 @@ function speakWord(i, btn){
   }
   ttsWord(i, done);
 }
+/* 例文（英語）だけを鳴らす。音声ファイルの区切り2（例文）〜3（訳）のあいだ */
+function speakEx(i, btn){
+  stopSpk(); stopSpeech();
+  if(btn) btn.classList.add('on');
+  const done = () => { if(btn) btn.classList.remove('on'); };
+  const rec = audRec(i);
+  if(S.cfg.voice !== false && S.cfg.voiceMode !== 'device' && rec && rec.t.length > 3){
+    const st = rec.t[2], en = rec.t[3];
+    const a = new Audio(AUD + noOf(i) + '.mp3?h=' + (rec.h || VER) + '#t=' + st);
+    const x = SPK = { a, t: 0 };
+    const fin = () => { if(SPK !== x) return; clearTimeout(x.t); try{ a.pause(); }catch(e){} done(); SPK = null; };
+    const seek = () => { if(a.currentTime < st - .3 || a.currentTime > en) a.currentTime = st; };
+    try{ a.currentTime = st; }catch(e){}   // #t が効かない端末でも例文の位置から
+    a.addEventListener('loadedmetadata', seek);
+    a.addEventListener('playing', () => { if(SPK !== x) return; seek(); clearTimeout(x.t); x.t = setTimeout(fin, (en - st) * 1000 + 400); });
+    a.addEventListener('timeupdate', () => { if(a.currentTime >= en + .05) fin(); });
+    a.addEventListener('ended', fin);
+    a.play().catch(() => { if(SPK === x){ stopSpk(); ttsEx(i, done); } });
+    return;
+  }
+  ttsEx(i, done);
+}
+function ttsEx(i, done){
+  if(!('speechSynthesis' in window)){ done && done(); return; }
+  const u = sayUtter(exText(W[i]), 'en'); u.onend = u.onerror = () => done && done(); speechSynthesis.speak(u);
+}
+function exSpk(i){ return S.exAud === 'off' ? '' : `<span class="spk ex" role="button" aria-label="例文を聞く" data-exspk="${i}">${SPK_SVG}</span>`; }
 function ttsWord(i, done){
   if(!('speechSynthesis' in window)){ done && done(); return; }
   const u = sayUtter(enHead(W[i]), 'en'); u.onend = u.onerror = () => done && done(); speechSynthesis.speak(u);
 }
 const SPK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
 function spkBtn(i, big){ return `<span class="spk${big ? ' big' : ''}" role="button" aria-label="発音を聞く" data-spk="${i}">${SPK_SVG}</span>`; }
-function bindSpk(root){ root.querySelectorAll('[data-spk]').forEach(b => b.onclick = e => { e.stopPropagation(); speakWord(+b.dataset.spk, b); }); }
+function bindSpk(root){
+  root.querySelectorAll('[data-spk]').forEach(b => b.onclick = e => { e.stopPropagation(); speakWord(+b.dataset.spk, b); });
+  root.querySelectorAll('[data-exspk]').forEach(b => b.onclick = e => { e.stopPropagation(); speakEx(+b.dataset.exspk, b); });
+}
 
 /* ===================== 1分解説（スライド＋読み上げ） ===================== */
 function openLessonPicker(ids, title){
@@ -1165,7 +1198,7 @@ function drawCard(){
         <div class="fc-face back"><div class="bw" style="font-weight:600">${esc(w.w)} <span class="ph" style="font-size:13px">${esc(w.ph || '')}</span></div>
           <div class="bm">${esc(w.m)}</div>${w.s.length ? `<div class="bs">ほかに：${w.s.map(esc).join('／')}</div>` : ''}
           ${derHTML(w)}
-          <div class="bx"><span class="ex" style="font-weight:500">${exHTML(w)}</span><br>${ftBox(w)}</div>
+          <div class="bx"><span class="ex" style="font-weight:500">${exHTML(w)}</span>${exSpk(i)}<br>${ftBox(w)}</div>
           <div class="bt"><b>覚え方</b>　${esc(w.tip)}</div></div>
       </div></div>
       <div class="row"><button class="btn shu" data-a="no">まだ</button><button class="btn" data-a="yes">覚えた</button></div>
@@ -1175,7 +1208,7 @@ function drawCard(){
   bindSpk(ov);
   if(!C.flip && S.cfg.autoSpk) speakWord(i, ov.querySelector('.front [data-spk]'));
   ov.querySelector('[data-a=x]').onclick = closeOv;
-  ov.querySelector('[data-a=flip]').onclick = () => { C.flip = !C.flip; ov.querySelector('.fc-in').classList.toggle('flip', C.flip); };
+  ov.querySelector('[data-a=flip]').onclick = () => { C.flip = !C.flip; ov.querySelector('.fc-in').classList.toggle('flip', C.flip); if(C.flip && S.exAud === 'auto') speakEx(i, ov.querySelector('.back [data-exspk]')); else if(!C.flip) stopSpk(); };
   ov.querySelector('[data-a=undo]').onclick = undoCard;
   ov.querySelector('[data-a=no]').onclick = () => { C.hist.push({ q: C.q.slice(), a:'no' }); C.q.push(C.q.shift()); C.flip = false; drawCard(); };
   ov.querySelector('[data-a=yes]').onclick = () => { C.hist.push({ q: C.q.slice(), a:'yes' }); C.q.shift(); C.flip = false; gainXP(1, '覚えた'); drawCard(); };
@@ -1520,6 +1553,9 @@ function renderSet(){
     <div class="card set"><label>例文の訳</label>
       <div class="seg" id="sFt"><button class="${!S.ftOpen?'on':''}" data-v="0">タップで見る</button><button class="${S.ftOpen?'on':''}" data-v="1">最初から見せる</button></div>
       <p class="dim" style="margin:8px 0 0">はじめは「最初から見せる」で訳を見てパッとつかみ、周回して力がついたら「タップで見る」にして、自分で文脈から訳すのがおすすめです（単語・熟語で共通）。</p></div>
+    <div class="card set"><label>英語の例文の音声</label>
+      <div class="seg" id="sExAud">${[['off','使わない'],['btn','ボタンで聞く'],['auto','自動で鳴らす']].map(([k,t]) => `<button class="${S.exAud===k?'on':''}" data-k="${k}">${t}</button>`).join('')}</div>
+      <p class="dim" style="margin:8px 0 0">「ボタンで聞く」は、例文の横のスピーカーを押すと例文を読みます。「自動で鳴らす」は、カードをうら返したときに例文を読みます（単語・熟語で共通）。</p></div>
     <div class="card set"><label>発音</label>
       <div class="seg" id="sAuto"><button class="${S.cfg.autoSpk?'on':''}" data-v="1">自動で鳴らす</button><button class="${!S.cfg.autoSpk?'on':''}" data-v="0">押したときだけ</button></div>
       <p class="dim" style="margin:8px 0 0">カードを出したとき・「英語→意味」の問題で、英語の発音を自動で鳴らします。</p></div>
@@ -1552,6 +1588,7 @@ function renderSet(){
   $$('#sLaps button').forEach(b => b.onclick = () => { S.cfg.laps = +b.dataset.n; setLaps(S.cfg.laps); save(); renderAll(); renderSet(); });
   $$('#sPer button').forEach(b => b.onclick = () => askPer(+b.dataset.n));
   $$('#sChunk button').forEach(b => b.onclick = () => { S.cfg.chunk = +b.dataset.c; save(); renderAll(); renderSet(); });
+  $$('#sExAud button').forEach(b => b.onclick = () => { S.exAud = b.dataset.k; save(); renderSet(); });
   $$('#sFt button').forEach(b => b.onclick = () => { S.ftOpen = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sAuto button').forEach(b => b.onclick = () => { S.cfg.autoSpk = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sVoice button').forEach(b => b.onclick = () => { S.cfg.voice = b.dataset.v === '1'; save(); renderSet(); });
@@ -1888,7 +1925,7 @@ function guideSlides(){
       v:`<div class="srtb"><span class="btn" style="font-size:14px">あやしい・知らない<small>覚える${BNAME}にする</small></span><span class="btn know" style="font-size:14px">完璧に知ってる<small>意味を確かめて外す</small></span></div>` },
     { t:'① 覚える時間', p:['「今日」の①を押して、<b>覚える時間を自分で決めます</b>（3分〜、自由に入力も）。','のこり時間は<b>画面のいちばん上</b>に出ます。カード・一覧・1分解説から、好きな方法で覚えましょう。'],
       v:`<div style="background:#1F2A4D;color:#fff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px"><b style="font-size:24px">9:42</b><small style="opacity:.8">覚える時間</small><span style="margin-left:auto;font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:99px">一時停止</span></div><div class="minicard">カード　／　一覧（意味をかくせる）　／　1分解説</div>` },
-    { t:'発音と1分解説', p:['<b>スピーカーのボタン</b>で、ネイティブの発音が聞けます。カードを出すと自動で鳴ります。','1分解説は、スライドと音声で1つを約30秒で解説。英語はネイティブの声、意味や覚え方は日本語の声です。','例文の訳は、はじめは「タップで見る」です。「設定」の<b>例文の訳</b>で「最初から見せる」にもできます。'],
+    { t:'発音と1分解説', p:['<b>スピーカーのボタン</b>で、ネイティブの発音が聞けます。カードを出すと自動で鳴ります。','1分解説は、スライドと音声で1つを約30秒で解説。英語はネイティブの声、意味や覚え方は日本語の声です。','<b>例文の音声</b>：例文の横のスピーカーで、英語の例文だけを聞けます（「設定」で 使わない／自動で鳴らす にもできます）。','例文の訳は、はじめは「タップで見る」です。「設定」の<b>例文の訳</b>で「最初から見せる」にもできます。'],
       v:`<div class="minicard" style="flex-direction:column;align-items:flex-start"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:22px">pollute</b><span class="ph">/pəˈlut/</span><span class="spk">${SPK_SVG}</span></div><span style="color:var(--shu);font-weight:700;border:1.5px solid var(--shu);border-radius:8px;padding:2px 8px">〜を汚染する</span><span class="dim" style="font-size:12.5px">仲間の語：pollution（名）汚染</span></div>` },
     { t:'② テスト', p:['その日の分の4択テスト（単語200問・熟語100問）。<b>時間と正答率は自動で記録</b>されます。','まちがえたものだけ、すぐにもう一度。「報告用にコピー」で、勉強報告にそのまま貼れます。','<b>少しずつ進める</b>：「今日」の <b>1〜20</b> などを押すと、その分だけ覚えて<b>すぐテスト</b>できます。全部おわると、その日のテストも完了です。','慣れてきたら、テストタブの「出題の形式」で<b>聞いて答える</b>・<b>書いて答える</b>・<b>例文の穴埋め</b>にも変えられます。'],
       v:`<div style="text-align:center"><div style="font-family:var(--mincho);font-weight:700;font-size:44px;color:#2E7A57;line-height:1.1">92<small style="font-size:18px">%</small></div><div class="dim">200問中 184問 正解　・　時間 21分40秒</div></div>` },

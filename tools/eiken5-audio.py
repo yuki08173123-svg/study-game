@@ -14,6 +14,7 @@ eiken-5/audio/w/NNNN.mp3（単語）・audio/i/NNN.mp3（熟語）を書き出�
 """
 import asyncio, hashlib, json, os, re, subprocess, sys, tempfile
 import edge_tts
+import eiken_headfix   # 品詞で読み方が変わる動詞（live など）は「to live.」と読ませる
 import imageio_ffmpeg
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -63,12 +64,12 @@ def parts(w, idiom):
     if s:
         mean += 'ほかに、' + '、'.join(sub_mean(x) for x in s) + '。'
     return [
-        (EN, head if head[-1:] in '.?!' else head + '.'),
+        (EN, eiken_headfix.head_text(w, head if head[-1:] in '.?!' else head + '.')),
         (JA, ja(mean)),
         (EN, w['ex'].replace('[', '').replace(']', '')),
         (JA, ja('訳。' + w['ft'])),
         (JA, ja('覚え方。' + w['tip'])),
-        (EN, head if head[-1:] in '.?!' else head + '.'),
+        (EN, eiken_headfix.head_text(w, head if head[-1:] in '.?!' else head + '.')),
     ]
 
 

@@ -346,6 +346,11 @@ body.timing .xpop{top:calc(var(--sbh,52px) + 52px)}
 .tin.ng{border-color:var(--shu);background:var(--shu-soft)}
 .tform .btn{width:auto;padding:14px 18px;flex:none}
 .okflash{background:var(--ok-soft);color:#154B33;border-radius:12px;padding:8px 12px;font-size:14px;margin-top:4px}
+.core{margin-top:10px;background:#FBF3E4;border:1px solid #E8D3AE;border-radius:12px;padding:10px 12px}
+.core .ci{font-size:18px;font-weight:700;color:var(--ink);line-height:1.45}
+.core b{display:inline-block;background:var(--shu);color:#fff;font-size:11.5px;padding:1px 8px;border-radius:5px;margin-right:8px;vertical-align:2px;font-weight:700}
+.core .cpt{margin-top:8px;font-size:14.5px;line-height:1.7;color:var(--ink)}
+.core .cpt b{background:#8A5A2B}
 .rep{white-space:pre-wrap;word-break:break-all;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0 0;font:13.5px/1.75 'BIZ UDPGothic',sans-serif;color:var(--ink);-webkit-user-select:text;user-select:text}
 .cimg{display:block;width:100%;max-height:220px;object-fit:contain;border-radius:12px;margin-top:10px;background:#F4EEE2}
 .goro{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(154,118,48,.35);font-weight:700;color:#5A3E12}
@@ -451,10 +456,10 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 
 <div id="print"></div>
 
-<script src="words.js?v=11"></script>
+<script src="words.js?v=12"></script>
 <script>
 'use strict';
-const VER = 24;
+const VER = 25;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -815,6 +820,8 @@ function goroHTML(w){ return w.g ? `<div class="goro"><b>語呂</b>${esc(w.g)}</
 /* イメージ画像（塾生Vczzの声）：kobun/img/NNN.jpg。あるものの番号を img/index.json に入れておき、ない語は何も出さない */
 let AIMG = null;
 fetch('img/index.json?v=' + VER).then(r => r.ok ? r.json() : null).then(j => { if(j) AIMG = new Set(j.map(String)); }).catch(() => {});
+/* これだけ！（コアイメージ）とポイント！（身近な場面のたとえ）：words.js の ci / cp（塾生Vczzの参考カードから・文はオリジナル） */
+function coreHTML(w){ return w.ci ? `<div class="core"><div class="ci"><b>これだけ！</b>${esc(w.ci)}</div>${w.cp ? `<div class="cpt"><b>ポイント！</b>${esc(w.cp)}</div>` : ''}</div>` : ''; }
 function imgHTML(i){ const no = pad3(i + 1); return AIMG && AIMG.has(no) ? `<img class="cimg" src="img/${no}.jpg?v=${VER}" alt="${esc(W[i].w)} のイメージ" loading="lazy" onload="growCard(this)">` : ''; }
 function growCard(el){ const fin = el.closest('.fc-in'); if(!fin) return; const back = fin.querySelector('.fc-face.back'); fin.style.minHeight = '0px'; fin.style.minHeight = Math.max(340, back.scrollHeight + 2) + 'px'; }
 function pname(p){ return ({'名':'名詞','動':'動詞','形':'形容詞','形動':'形容動詞','副':'副詞','連体':'連体詞','接':'接続詞','感':'感動詞','連語':'連語'})[p] || p || ''; }
@@ -824,7 +831,7 @@ function openWord(i, list){
     <div style="margin-top:12px"><div style="font-family:var(--mincho);font-weight:900;font-size:26px">${esc(w.w)} <span class="dim" style="font-size:15px">${esc(w.k)}　${esc(pname(w.p))}</span></div>
     <div style="color:var(--shu);font-weight:700;font-size:19px">${esc(w.m)}</div>
     ${w.s.length ? `<div class="dim">ほかの意味：${w.s.map(esc).join('／')}</div>` : ''}</div>
-    ${imgHTML(i)}
+    ${imgHTML(i)}${coreHTML(w)}
     <div class="note" style="margin-top:10px"><b>覚え方</b>　${esc(w.tip)}${goroHTML(w)}</div>
     ${w.ex ? `<p style="margin:10px 0 0"><span style="font-family:var(--mincho);font-weight:700">${exHTML(w)}</span><br>${ftBox(w)}</p>` : ''}
     <p class="dim">テスト：正解 ${s.c}回・まちがい ${s.x}回${s.due ? `・<b style="color:var(--shu)">リマインド ${md(s.due)}</b>` : ''}${isMastered(i) ? '・<b style="color:var(--ok)">定着</b>' : ''}</p>
@@ -909,7 +916,7 @@ function drawLesson(){
   const ov = $('.ov'), i = L.ids[L.k];
   ov.innerHTML = `<div class="ovbar"><button class="x" data-a="x">×</button><div class="ttl">1分解説　${L.k+1} / ${L.ids.length}</div>${ctmHTML()}</div>
     <div class="ovbody"><div class="lcard">${slideHTML(i)}
-      <div class="cap">${imgHTML(i)}${lessonParts(i).filter(p => p.sec === 'tip' || p.sec === 'ex').map(p => `<div class="cp" data-sec="${p.sec}">${p.show}</div>`).join('')}</div></div>
+      <div class="cap">${imgHTML(i)}${coreHTML(W[i])}${lessonParts(i).filter(p => p.sec === 'tip' || p.sec === 'ex').map(p => `<div class="cp" data-sec="${p.sec}">${p.show}</div>`).join('')}</div></div>
       <div class="ctrl"><button class="playb" data-a="play"></button>
         <div class="lbar"><div class="pbar"><i style="width:0%"></i></div><span class="lt">0:00 / 1:00</span></div></div>
       <div class="nav"><button class="btn sub" data-a="prev" ${L.k ? '' : 'disabled style="opacity:.4"'}>‹ 前</button><button class="btn sub" data-a="next" ${L.k < L.ids.length-1 ? '' : 'disabled style="opacity:.4"'}>次 ›</button></div>
@@ -1037,7 +1044,7 @@ function drawCard(){
         <div class="fc-face front"><span class="no">No.${i+1}　${esc(pname(w.p))}</span><div class="w">${esc(w.w)}</div><div class="k">${esc(w.k)}</div><div class="hint">タップでうら返す</div></div>
         <div class="fc-face back"><div class="bw">${esc(w.w)} <span class="dim" style="font-size:14px;font-family:'BIZ UDPGothic'">${esc(w.k)}</span></div>
           <div class="bm">${esc(w.m)}</div>${w.s.length ? `<div class="bs">ほかに：${w.s.map(esc).join('／')}</div>` : ''}
-          ${imgHTML(i)}
+          ${imgHTML(i)}${coreHTML(w)}
           ${w.g ? `<div class="bg"><b>語呂</b>${esc(w.g)}</div>` : ''}
           <div class="bt"><b>覚え方</b>　${esc(w.tip)}</div>
           ${w.ex ? `<div class="bx"><span class="ex">${exHTML(w)}</span><br>${ftBox(w)}</div>` : ''}</div>

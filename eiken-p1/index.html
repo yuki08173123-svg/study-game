@@ -169,6 +169,10 @@ nav.tabs button.on{color:var(--ai)}
 .choice.ng{background:var(--shu-soft);border-color:var(--shu);color:#7A2213}
 .choice:disabled{cursor:default}
 .idk{margin-top:10px;color:var(--muted);font-size:14px;padding:10px;text-decoration:underline}
+/* まちがえたときの「次へ」は画面の下に固定（塾生の声：スクロールしないと押せない） */
+.nextfix{position:fixed;left:0;right:0;bottom:0;z-index:60;padding:14px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(rgba(0,0,0,0),var(--bg) 35%)}
+.nextfix .btn{display:block;max-width:640px;margin:0 auto;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.ov:has(.nextfix){padding-bottom:calc(92px + env(safe-area-inset-bottom))}
 .fb{margin-top:12px;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--shu);border-radius:12px;padding:12px 14px;font-size:15px}
 .fb .fw{font-family:var(--mincho);font-weight:900;font-size:20px}
 .fb .fm{color:var(--shu);font-weight:700}
@@ -464,7 +468,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="idioms.js?v=4"></script>
 <script>
 'use strict';
-const VER = 11;
+const VER = 12;
 /* ===================== 使う人（兄弟で1台） =====================
    1人目は今までの保存場所のまま（記録はそのまま残る）。2人目からは保存の名前のうしろに「__id」をつけて分ける。
    切りかえたらページを読みなおす。レベル・仕分け・計画・記録・タイマーはすべて人ごと。 */
@@ -1359,7 +1363,7 @@ function recordAnswer(ok, i){
 }
 function wrongFB(w, pre){
   return `<div class="fb">${pre || ''}<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;min-width:0"><span class="fw" style="font-weight:600">${esc(w.w)}</span> <span class="ph">${esc(w.ph || '')}</span>　<span class="fm">${esc(w.m)}</span></div>${spkBtn(w.i)}</div>${w.s.length ? `<div class="dim">ほかに：${w.s.map(esc).join('／')}</div>` : ''}<div style="margin-top:6px;font-family:Lexend,sans-serif;font-size:14.5px">${exHTML(w)}</div><div class="dim" style="font-size:14px">→ ${ftHTML(w)}</div><div style="margin-top:6px">${esc(w.tip)}</div></div>
-      <button class="btn" style="margin-top:10px" id="btnNext">次へ</button>`;
+      <div class="nextfix"><button class="btn" id="btnNext">次へ ›</button></div>`;
 }
 function answer(c){
   if(T.answered) return;

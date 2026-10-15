@@ -264,6 +264,8 @@ nav.tabs button.on{color:var(--ai)}
 .lvchip.bump{animation:bump .5s}
 @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
 .lvchip i::after{transition:width .6s ease}
+/* レベルと XP を表示しない設定（保護者の声） */
+body.nolv #lvChip,body.nolv .lvcard,body.nolv .xpop,body.nolv .resxp,body.nolv .lvfx{display:none!important}
 /* +XP の小さな表示 */
 .xpop{position:fixed;right:18px;top:calc(var(--sbh0,0px) + 58px + env(safe-area-inset-top));z-index:96;background:var(--gold);color:#fff;font-weight:700;font-size:14px;padding:4px 10px;border-radius:999px;pointer-events:none;animation:xpop 1.3s ease-out forwards;box-shadow:0 2px 8px rgba(154,118,48,.35);white-space:nowrap}
 .xpop small{font-weight:400;font-size:11px;margin-left:4px;opacity:.9}
@@ -459,7 +461,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="words.js?v=12"></script>
 <script>
 'use strict';
-const VER = 28;
+const VER = 29;
 const W = (window.KOBUN_WORDS || []).map((x, i) => ({ ...x, i, s: x.s || [] }));
 const N = W.length;
 const PER = 50;                          // 1日の語数
@@ -565,7 +567,8 @@ function gainXP(n, why){
   S.xp += n; S.xpDay[today()] = todayXP() + n;
   if(T) T.xp = (T.xp || 0) + n;
   save();
-  popXP(n, why); renderLv(true);
+  if(!lvOff()) popXP(n, why);
+  renderLv(true);
   const after = lvInfo(S.xp).lv;
   if(after > before){
     if(T) lvQueue = { from: lvQueue ? lvQueue.from : before, to: after };   // テスト中はじゃましない。結果画面で出す
@@ -579,12 +582,16 @@ function popXP(n, why){
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 1300);
 }
+/* レベルと XP を表示しないか（設定）。表示しなくても XP は裏でたまる */
+function lvOff(){ return !!S.cfg.hideLv; }
 function renderLv(anim){
+  document.body.classList.toggle('nolv', lvOff());
   const x = lvInfo(S.xp), chip = $('#lvChip');
   chip.innerHTML = 'Lv.' + x.lv + ' <i style="--p:' + (x.cur / x.need * 100) + '%"></i>';
   if(anim){ chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); }
 }
 function celebrate(from, to){
+  if(lvOff()) return;
   const x = lvInfo(S.xp), newRank = rankOf(to) !== rankOf(from);
   const fx = document.createElement('div'); fx.className = 'lvfx';
   fx.innerHTML = `<div class="box"><div class="k">LEVEL UP</div><div class="big">Lv.${to}</div>
@@ -704,7 +711,7 @@ function reportFor(d){
   const x0 = lvInfo(S.xp);
   return '【古文単語 ' + md(d) + '】\n' + (sts.length ? `・覚える時間 ${fmtSec(sts.reduce((a,x) => a + x.secs, 0))}\n` : '')
     + list.map(x => `・${x.label} ${x.n}問　${Math.round(x.ok/x.n*100)}%（${x.ok}/${x.n}）　${fmtSec(x.secs)}`).join('\n')
-    + `\n正解した語 ${correctCount()}/${N}語　定着 ${masteredCount()}/${N}語　Lv.${x0.lv}（${rankOf(x0.lv)}）` + (d === today() ? `　今日 +${todayXP()} XP` : '');
+    + `\n正解した語 ${correctCount()}/${N}語　定着 ${masteredCount()}/${N}語` + (lvOff() ? '' : `　Lv.${x0.lv}（${rankOf(x0.lv)}）` + (d === today() ? `　今日 +${todayXP()} XP` : ''));
 }
 function openDaySheet(n){
   const p = plan(n), r = S.days[n];
@@ -1386,6 +1393,9 @@ function renderSet(){
     <div class="card set"><label>カード・一覧・1分解説のタイマー</label>
       <div class="seg" id="sCtm"><button class="${S.cfg.ctm!=='off'?'on':''}" data-v="up">カウントアップを出す</button><button class="${S.cfg.ctm==='off'?'on':''}" data-v="off">出さない</button></div>
       <p class="dim" style="margin:8px 0 0">画面の上の ⏱ を押すと、カウントダウンにもできます。</p></div>
+    <div class="card set"><label>レベルと XP</label>
+      <div class="seg" id="sLv"><button class="${!S.cfg.hideLv?'on':''}" data-v="0">表示する</button><button class="${S.cfg.hideLv?'on':''}" data-v="1">表示しない</button></div>
+      <p class="dim" style="margin:8px 0 0">レベルと XP がいらないときは「表示しない」に。表示しなくても XP は裏でたまっていて、「表示する」にもどせば、そのまま出ます。</p></div>
     <div class="card set"><label>例文のふりがな</label>
       <div class="seg" id="sRuby"><button class="${S.cfg.ruby!==false?'on':''}" data-v="1">つける</button><button class="${S.cfg.ruby===false?'on':''}" data-v="0">つけない</button></div>
       <p class="dim" style="margin:8px 0 0">単語カード・1分解説・単語の詳しい画面の例文に、ふりがなをつけます。</p></div>
@@ -1418,6 +1428,7 @@ function renderSet(){
   $$('#sRate button').forEach(b => b.onclick = () => { S.cfg.rate = +b.dataset.r; save(); renderSet(); });
   $$('#sPitch button').forEach(b => b.onclick = () => { S.cfg.pitch = +b.dataset.r; save(); renderSet(); });
   $$('#sCtm button').forEach(b => b.onclick = () => { S.cfg.ctm = b.dataset.v; save(); renderSet(); });
+  $$('#sLv button').forEach(b => b.onclick = () => { S.cfg.hideLv = b.dataset.v === '1'; save(); renderAll(); renderSet(); });
   $$('#sRuby button').forEach(b => b.onclick = () => { S.cfg.ruby = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sMode button').forEach(b => b.onclick = () => { S.cfg.voiceMode = b.dataset.m; save(); renderSet(); });
   $$('#sARate button').forEach(b => b.onclick = () => { S.cfg.aRate = +b.dataset.r; save(); renderSet(); });
@@ -1767,7 +1778,7 @@ function guideSlides(){
       v:`<div style="text-align:center"><div style="font-family:var(--mincho);font-weight:900;font-size:44px;color:#2E7A57;line-height:1.1">92<small style="font-size:18px">%</small></div><div class="dim">50問中 46問 正解　・　時間 6分12秒</div></div>` },
     { t:'リマインドテスト', p:['まちがえた単語は、<b>翌日 → 3日後 → 1週間後</b>にもどってきます。','3回つづけて正解したら卒業。苦手な単語ほど何度も出るので、自然に覚えきれます。'],
       v:`<div class="minicard"><b style="color:var(--shu)">✕</b> まちがえた</div><div class="minicard">翌日 → 3日後 → 1週間後 にもう一度</div><div class="minicard"><b style="color:#2E7A57">◯◯◯</b> 3回つづけて正解で卒業</div>` },
-    { t:'レベルアップ', p:['覚える・解くたびに <b>XP</b> がたまり、たまると<b>レベルが上がります</b>。','レベルが上がると、平安時代の位（くらい）が上がっていきます。無位からはじめて、めざせ関白！'],
+    { t:'レベルアップ', p:['覚える・解くたびに <b>XP</b> がたまり、たまると<b>レベルが上がります</b>。','レベルが上がると、平安時代の位（くらい）が上がっていきます。無位からはじめて、めざせ関白！','いらないときは、「設定」の<b>レベルと XP</b>で「表示しない」にできます。'],
       v:`<table class="xprules">${XP_RULES.slice(0, 6).map(([t, n]) => `<tr><td style="font-size:13.5px">${t}</td><td class="r">+${n}</td></tr>`).join('')}</table>` },
     { t:'兄弟で使う', p:['1台を兄弟で使うときは、「設定」のいちばん上の<b>使う人</b>で「＋ ふやす」。名前を押すと切りかわります。','計画・記録・レベル・仕分けは<b>人ごとに分かれる</b>ので、まざりません。2人以上のときは、上に名前が出ます。'],
       v:`<div class="chips" style="flex-wrap:wrap;margin:0"><span class="chipb on">兄</span><span class="chipb">弟</span><span class="chipb">＋ ふやす</span></div>` },

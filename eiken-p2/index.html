@@ -254,6 +254,8 @@ nav.tabs button.on{color:var(--ai)}
 .lvchip.bump{animation:bump .5s}
 @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
 .lvchip i::after{transition:width .6s ease}
+/* レベルと XP を表示しない設定（保護者の声） */
+body.nolv #lvChip,body.nolv .lvcard,body.nolv .xpop,body.nolv .resxp,body.nolv .lvfx{display:none!important}
 /* +XP の小さな表示 */
 .xpop{position:fixed;right:18px;top:calc(var(--sbh0,0px) + 58px + env(safe-area-inset-top));z-index:96;background:var(--gold);color:#fff;font-weight:700;font-size:14px;padding:4px 10px;border-radius:999px;pointer-events:none;animation:xpop 1.3s ease-out forwards;box-shadow:0 2px 8px rgba(154,118,48,.35);white-space:nowrap}
 .xpop small{font-weight:400;font-size:11px;margin-left:4px;opacity:.9}
@@ -468,7 +470,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="idioms.js?v=3"></script>
 <script>
 'use strict';
-const VER = 11;
+const VER = 12;
 /* ===================== 使う人（兄弟で1台） =====================
    1人目は今までの保存場所のまま（記録はそのまま残る）。2人目からは保存の名前のうしろに「__id」をつけて分ける。
    切りかえたらページを読みなおす。レベル・仕分け・計画・記録・タイマーはすべて人ごと。 */
@@ -572,7 +574,7 @@ function load(){
   S.w = S.w || {}; S.days = S.days || {}; S.tests = S.tests || []; S.start = S.start || b.start;
   S.xpDay = S.xpDay || {};
   let c = null; try{ c = JSON.parse(localStorage.getItem(COMMON)); }catch(e){}
-  if(c){ S.xp = c.xp || 0; S.xpDay = c.xpDay || {}; S.guideSeen = !!c.guideSeen; S.ftOpen = !!c.ftOpen; S.exAud = c.exAud || 'btn'; }
+  if(c){ S.xp = c.xp || 0; S.xpDay = c.xpDay || {}; S.guideSeen = !!c.guideSeen; S.ftOpen = !!c.ftOpen; S.exAud = c.exAud || 'btn'; S.hideLv = !!c.hideLv; }
   if(!S.exAud) S.exAud = 'btn';
   if(S.xp == null) S.xp = 0;
   // まだ何も始めていないうちは、開始日を「今日」に合わせる（熟語は単語のあとに始めるので、はじめて取り組んだ日からの計画にする）
@@ -592,7 +594,7 @@ function wordsProgress(){
   }catch(e){ return { done:0, total:56 }; }
 }
 function setLaps(n){ LAPS = Math.max(1, Math.min(10, +n || 4)); TOTAL = DAYS * LAPS; }
-function save(){ if(NOSAVE) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); localStorage.setItem(COMMON, JSON.stringify({ xp:S.xp, xpDay:S.xpDay, guideSeen:S.guideSeen, ftOpen:!!S.ftOpen, exAud:S.exAud })); }catch(e){} }
+function save(){ if(NOSAVE) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); localStorage.setItem(COMMON, JSON.stringify({ xp:S.xp, xpDay:S.xpDay, guideSeen:S.guideSeen, ftOpen:!!S.ftOpen, exAud:S.exAud, hideLv:!!S.hideLv })); }catch(e){} }
 function ws(i){ return S.w[i] || (S.w[i] = { c:0, x:0, sk:0, st:0, due:'' }); }
 /* 仕分け（塾生の声）：完璧に知っているものは ex＝外した。外したものは Day のカード・一覧・解説・テスト・リマインドに出ない */
 function isEx(i){ return !!(S.w[i] && S.w[i].ex); }
@@ -657,7 +659,8 @@ function gainXP(n, why){
   S.xp += n; S.xpDay[today()] = todayXP() + n;
   if(T) T.xp = (T.xp || 0) + n;
   save();
-  popXP(n, why); renderLv(true);
+  if(!lvOff()) popXP(n, why);
+  renderLv(true);
   const after = lvInfo(S.xp).lv;
   if(after > before){
     if(T) lvQueue = { from: lvQueue ? lvQueue.from : before, to: after };   // テスト中はじゃましない。結果画面で出す
@@ -671,12 +674,16 @@ function popXP(n, why){
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 1300);
 }
+/* レベルと XP を表示しないか（設定）。表示しなくても XP は裏でたまる */
+function lvOff(){ return !!S.hideLv; }
 function renderLv(anim){
+  document.body.classList.toggle('nolv', lvOff());
   const x = lvInfo(S.xp), chip = $('#lvChip');
   chip.innerHTML = 'Lv.' + x.lv + ' <i style="--p:' + (x.cur / x.need * 100) + '%"></i>';
   if(anim){ chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); }
 }
 function celebrate(from, to){
+  if(lvOff()) return;
   const x = lvInfo(S.xp), newRank = rankOf(to) !== rankOf(from);
   const fx = document.createElement('div'); fx.className = 'lvfx';
   fx.innerHTML = `<div class="box"><div class="k">LEVEL UP</div><div class="big">Lv.${to}</div>
@@ -1561,6 +1568,9 @@ function renderSet(){
     <div class="card set"><label>例文の訳</label>
       <div class="seg" id="sFt"><button class="${!S.ftOpen?'on':''}" data-v="0">タップで見る</button><button class="${S.ftOpen?'on':''}" data-v="1">最初から見せる</button></div>
       <p class="dim" style="margin:8px 0 0">はじめは「最初から見せる」で訳を見てパッとつかみ、周回して力がついたら「タップで見る」にして、自分で文脈から訳すのがおすすめです（単語・熟語で共通）。</p></div>
+    <div class="card set"><label>レベルと XP</label>
+      <div class="seg" id="sLv"><button class="${!S.hideLv?'on':''}" data-v="0">表示する</button><button class="${S.hideLv?'on':''}" data-v="1">表示しない</button></div>
+      <p class="dim" style="margin:8px 0 0">レベルと XP がいらないときは「表示しない」に。表示しなくても XP は裏でたまっていて、「表示する」にもどせば、そのまま出ます。（単語・熟語で共通）</p></div>
     <div class="card set"><label>英語の例文の音声</label>
       <div class="seg" id="sExAud">${[['off','使わない'],['btn','ボタンで聞く'],['auto','自動で鳴らす']].map(([k,t]) => `<button class="${S.exAud===k?'on':''}" data-k="${k}">${t}</button>`).join('')}</div>
       <p class="dim" style="margin:8px 0 0">「ボタンで聞く」は、例文の横のスピーカーを押すと例文を読みます。「自動で鳴らす」は、カードをうら返したときに例文を読みます（単語・熟語で共通）。</p></div>
@@ -1596,6 +1606,7 @@ function renderSet(){
   $$('#sLaps button').forEach(b => b.onclick = () => { S.cfg.laps = +b.dataset.n; setLaps(S.cfg.laps); save(); renderAll(); renderSet(); });
   $$('#sPer button').forEach(b => b.onclick = () => askPer(+b.dataset.n));
   $$('#sChunk button').forEach(b => b.onclick = () => { S.cfg.chunk = +b.dataset.c; save(); renderAll(); renderSet(); });
+  $$('#sLv button').forEach(b => b.onclick = () => { S.hideLv = b.dataset.v === '1'; save(); renderAll(); renderSet(); });
   $$('#sExAud button').forEach(b => b.onclick = () => { S.exAud = b.dataset.k; save(); renderSet(); });
   $$('#sFt button').forEach(b => b.onclick = () => { S.ftOpen = b.dataset.v === '1'; save(); renderSet(); });
   $$('#sAuto button').forEach(b => b.onclick = () => { S.cfg.autoSpk = b.dataset.v === '1'; save(); renderSet(); });
@@ -1939,7 +1950,7 @@ function guideSlides(){
       v:`<div style="text-align:center"><div style="font-family:var(--mincho);font-weight:700;font-size:44px;color:#2E7A57;line-height:1.1">92<small style="font-size:18px">%</small></div><div class="dim">200問中 184問 正解　・　時間 21分40秒</div></div>` },
     { t:'リマインドテスト', p:['まちがえたものは、<b>翌日 → 3日後 → 1週間後</b>にもどってきます。','3回つづけて正解したら卒業。苦手なものほど何度も出るので、自然に覚えきれます。'],
       v:`<div class="minicard"><b style="color:var(--shu)">✕</b> まちがえた</div><div class="minicard">翌日 → 3日後 → 1週間後 にもう一度</div><div class="minicard"><b style="color:#2E7A57">◯◯◯</b> 3回つづけて正解で卒業</div>` },
-    { t:'レベルアップ', p:['覚える・解くたびに <b>XP</b> がたまり、たまると<b>レベルが上がります</b>（単語と熟語の合計）。','ランクは英検の級で上がっていきます。Starter からはじめて、めざせ Master！'],
+    { t:'レベルアップ', p:['覚える・解くたびに <b>XP</b> がたまり、たまると<b>レベルが上がります</b>（単語と熟語の合計）。','ランクは英検の級で上がっていきます。Starter からはじめて、めざせ Master！','いらないときは、「設定」の<b>レベルと XP</b>で「表示しない」にできます。'],
       v:`<table class="xprules">${XP_RULES.slice(0, 6).map(([t, n]) => `<tr><td style="font-size:13.5px">${t}</td><td class="r">+${n}</td></tr>`).join('')}</table>` },
     { t:'兄弟で使う', p:['1台を兄弟で使うときは、「設定」の<b>使う人</b>で「＋ ふやす」。名前を押すと切りかわります。','記録・計画・レベルは<b>人ごとに分かれる</b>ので、まざりません。2人以上のときは、上に名前が出ます。'],
       v:`<div class="chips" style="flex-wrap:wrap;margin:0"><span class="chipb on">兄</span><span class="chipb">弟</span><span class="chipb">＋ ふやす</span></div>` },

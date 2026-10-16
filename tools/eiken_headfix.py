@@ -16,7 +16,12 @@ HET_VERBS = set("""read live use close lead record increase upset graduate refus
 separate tear bow combine decrease import export reject present object suspect transfer transport update
 overlook protest recall refund conduct estimate construct convert insult attribute contrast conflict
 digest exploit insert associate extract abuse wound polish console advocate combat escort elaborate
-relay invite excuse contract survey project subject desert""".split())
+relay invite excuse contract survey project subject desert
+resume research affect coordinate designate delegate initiate articulate convict dictate discard""".split())
+# 2026-10-16 追加：resume（塾生Yuki★の声：単独だと résumé の読みになる）ほか、-ate の動詞など
+
+# 名詞・形容詞で、単独だと動詞の読み（-ate を「エイト」）になる語は、a / an をつけて読む
+ARTICLE = {'alternate': 'an alternate.', 'subordinate': 'a subordinate.'}
 
 
 def is_fixed(w):
@@ -25,4 +30,6 @@ def is_fixed(w):
 
 
 def head_text(w, default):
-    return f"to {w['w']}." if is_fixed(w) else default
+    if is_fixed(w):
+        return f"to {w['w']}."
+    return ARTICLE.get(w['w'].lower(), default)

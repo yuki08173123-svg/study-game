@@ -747,6 +747,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <div id="syncOnBox" class="hidden">
         <div class="synccode"><span>同期コード</span><b id="syncCodeV"></b><button id="btnSyncCopy">コピー</button></div>
         <p class="note" id="syncNote"></p>
+        <button class="subbtn hidden" id="btnSyncBefore" style="color:var(--sun)"></button>
         <button class="subbtn" id="btnSyncNow">いま同期する</button>
         <button class="subbtn" id="btnSyncStop">同期をやめる（この端末だけ）</button>
       </div>
@@ -784,7 +785,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 59;
+const VER = 60;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -855,7 +856,28 @@ function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{
   syncProfileName();
 }, 200); }
 /* 「中身が変わったか」を見るための写し。時刻や同期の記録は含めない */
-function snap(){ return JSON.stringify(S, (k,v)=>(k==='mt'||k==='syncAt'||k==='tLeft'||k==='tEnd'||k==='tDone') ? undefined : v); }
+/* 見ている週・曜日、入力中の設定など「画面の状態」も含めない。
+   含めると、しばらく開いていなかった端末で曜日を押しただけで、その端末の古い中身が「いちばん新しい」ことになり、
+   ほかの端末で書いた分を同期で上書きしてしまう（2026-10 Yuki★さんの「今週の分が全部消えた」）。 */
+const SNAP_SKIP = { mt:1, syncAt:1, syncBase:1, tLeft:1, tEnd:1, tDone:1, cur:1, day:1, newKind:1, pendMin:1 };
+function snapOf(obj){
+  return JSON.stringify(obj, (k,v)=>{
+    if(SNAP_SKIP[k]) return undefined;
+    // 曜日を開いただけでできる「空の日・空の週」は数えない
+    if(k === 'weeks' && v && typeof v === 'object'){
+      const o = {};
+      Object.keys(v).sort().forEach(wk=>{
+        const w = v[wk] || {}, days = {};
+        Object.keys(w.days||{}).sort().forEach(dk=>{ const d = w.days[dk]; if(d && ((d.tasks && d.tasks.length) || d.memo)) days[dk] = d; });
+        const rest = Object.keys(w).some(x=>x !== 'days' && w[x]);
+        if(Object.keys(days).length || rest) o[wk] = Object.assign({}, w, { days });
+      });
+      return o;
+    }
+    return v;
+  });
+}
+function snap(){ return snapOf(S); }
 let lastSnap = null;
 
 function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -2390,18 +2412,21 @@ async function syncCall(params){
   const r = await fetch(SYNC_URL, { method:'POST', body: JSON.stringify(Object.assign({ secret:Q_SECRET }, params)) });
   return r.json();
 }
+let pulledOK = false;   // この端末を開いてから（もどってきてから）一度でも受け取りが終わったか
 function syncSchedule(ms){
   if(!syncOn() || !S.syncCode) return;
+  if(!pulledOK){ clearTimeout(syncT); syncT = setTimeout(()=>syncPull(true), ms || 2500); return; }   // 先に受け取る
   clearTimeout(syncT);
   syncT = setTimeout(()=>{ if(syncBusy){ syncSchedule(1500); return; } syncPush(); }, ms || 2500);
 }
 async function syncPush(){
   if(!syncOn() || !S.syncCode || syncBusy) return;
+  if(!pulledOK){ syncPull(true); return; }
   syncBusy = true;
   try{
     const r = await syncCall({ action:'put', code:S.syncCode, mt:S.mt||0, name:S.name||'', data:JSON.stringify(S) });
     if(r && r.ok && r.stale){ applyRemote(r); }
-    else if(r && r.ok){ S.syncAt = Date.now(); syncErr = ''; save(); }
+    else if(r && r.ok){ S.syncAt = Date.now(); S.syncBase = r.mt || S.mt; syncErr = ''; save(); }
     else syncErr = (r && r.err) || '送れませんでした';
   }catch(e){ syncErr = 'つながりませんでした'; }
   syncBusy = false; renderSync();
@@ -2412,24 +2437,52 @@ async function syncPull(quiet){
   syncBusy = true;
   try{
     const r = await syncCall({ action:'get', code:S.syncCode });
+    if(r && r.ok) pulledOK = true;
     if(r && r.ok && r.found){
-      if((r.mt||0) > (S.mt||0)){ applyRemote(r); if(!quiet) toast('ほかの端末の内容にそろえました'); }
-      else if((r.mt||0) < (S.mt||0)){ syncBusy = false; await syncPush(); return; }
-      else { S.syncAt = Date.now(); syncErr = ''; save(); if(!quiet) toast('同期ずみです'); }
+      const rm = r.mt||0, base = (typeof S.syncBase === 'number') ? S.syncBase : (S.mt||0);
+      // base＝この端末がさいごに預かり先とそろったときの時刻。
+      // それより向こうが新しい＝ほかの端末で書いた分がある → 向こうを優先する（この端末の分は「もどす」に残る）
+      if(rm > base || rm > (S.mt||0)){ applyRemote(r); if(!quiet) toast('ほかの端末の内容にそろえました'); }
+      else if(rm < (S.mt||0)){ syncBusy = false; await syncPush(); return; }
+      else { S.syncAt = Date.now(); S.syncBase = rm; syncErr = ''; save(); if(!quiet) toast('同期ずみです'); }
     } else if(r && r.ok){ syncBusy = false; await syncPush(); return; }
     else syncErr = (r && r.err) || '受け取れませんでした';
   }catch(e){ syncErr = 'つながりませんでした'; }
   syncBusy = false; renderSync();
+  if(syncErr && !pulledOK){ clearTimeout(syncT); syncT = setTimeout(()=>syncPull(true), 30000); }   // つながったら、もう一度受け取る
 }
 /* 預かっているデータで、この端末の中身を入れかえる */
+const BEFORE_KEY = ()=>KEY+'_before';
+function taskCount(o){ let n = 0; Object.values((o&&o.weeks)||{}).forEach(w=>Object.values(w.days||{}).forEach(d=>{ n += (d.tasks||[]).length; })); return n; }
 function applyRemote(r){
   let o = null; try{ o = JSON.parse(r.data); }catch(e){}
   if(!o || !o.weeks) return;
+  // 入れかわる前の中身を残す（中身がちがうときだけ）
+  try{
+    const mine = localStorage.getItem(KEY);
+    if(mine && taskCount(JSON.parse(mine)) && snap() !== snapOf(o)){
+      localStorage.setItem(BEFORE_KEY(), JSON.stringify({ at:Date.now(), n:taskCount(JSON.parse(mine)), data:mine }));
+    }
+  }catch(e){}
   const code = S.syncCode;
-  o.syncCode = code; o.syncAt = Date.now(); o.mt = r.mt || o.mt || 0;
+  o.syncCode = code; o.syncAt = Date.now(); o.mt = r.mt || o.mt || 0; o.syncBase = o.mt;
   try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){}
   S = defS(); load(); lastSnap = snap(); syncErr = '';
   boot(); renderSync();
+  if(beforeInfo()) toast('ほかの端末の内容にそろえました（前の内容は 設定→同期 からもどせます）');
+}
+function beforeInfo(){ try{ const b = JSON.parse(localStorage.getItem(BEFORE_KEY())||'null'); return (b && b.data && Date.now()-b.at < 14*86400000) ? b : null; }catch(e){ return null; } }
+function restoreBefore(){
+  const b = beforeInfo(); if(!b) return;
+  if(!confirm(fmtAt(b.at)+' に同期で入れかわる前の内容（やること '+b.n+'件）にもどします。\nいまの内容は、ほかの端末の内容です。よろしいですか？')) return;
+  let o = null; try{ o = JSON.parse(b.data); }catch(e){}
+  if(!o || !o.weeks){ toast('もどせませんでした'); return; }
+  o.syncCode = S.syncCode; o.syncBase = S.mt; o.mt = S.mt;
+  localStorage.setItem(KEY, JSON.stringify(o));
+  localStorage.removeItem(BEFORE_KEY());
+  S = defS(); load(); boot();
+  S.mt = Math.max(Date.now(), (S.mt||0)+1); lastSnap = null; save();   // もどした内容をいちばん新しいものとして預ける
+  renderSync(); toast('前の内容にもどしました');
 }
 function fmtAt(t){ const d = new Date(t); return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function renderSync(){
@@ -2441,6 +2494,9 @@ function renderSync(){
   $('#syncOnBox').classList.toggle('hidden', !on);
   if(!on) return;
   $('#syncCodeV').textContent = S.syncCode;
+  const bf = beforeInfo(), bb = $('#btnSyncBefore');
+  bb.classList.toggle('hidden', !bf);
+  if(bf) bb.textContent = '同期で入れかわる前にもどす（'+fmtAt(bf.at)+'・やること'+bf.n+'件）';
   const n = $('#syncNote');
   if(syncErr) n.innerHTML = '<span class="syncdot bad"></span>'+esc(syncErr)+'。つながったら自動でもう一度送ります。';
   else n.innerHTML = '<span class="syncdot"></span>さいごの同期：'+(S.syncAt ? fmtAt(S.syncAt) : 'まだ')+'<br>ほかの端末でも、設定の「ほかの端末のコードを入れる」にこのコードを入れてください。';
@@ -2480,6 +2536,7 @@ $('#btnSyncCopy').onclick = async ()=>{
   try{ await navigator.clipboard.writeText(S.syncCode); toast('コピーしました'); }
   catch(e){ toast('長押しでコピーしてください'); }
 };
+$('#btnSyncBefore').onclick = restoreBefore;
 $('#btnSyncNow').onclick = ()=>{ toast('同期しています…'); syncPull(false); };
 $('#btnSyncStop').onclick = ()=>{
   if(!confirm('この端末の同期をやめます。データはこの端末に残り、預けたぶんも消えません。よろしいですか？')) return;
@@ -3110,7 +3167,7 @@ async function doUpdate(){
 }
 $('#btnUpdate').onclick = doUpdate;
 $('#btnCheckUpd').onclick = ()=>checkUpdate(false);
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ checkUpdate(true); renderCd(); checkDayChange(); syncPull(true); } });
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pulledOK = false; checkUpdate(true); renderCd(); checkDayChange(); syncPull(true); } });
 window.addEventListener('focus', ()=>{ checkDayChange(); syncPull(true); });
 
 function boot(){

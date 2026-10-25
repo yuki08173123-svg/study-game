@@ -98,6 +98,19 @@ header .help{ width:34px; height:34px; border-radius:50%; background:var(--chip)
 textarea#goalIn{ width:100%; font:inherit; font-size:16px; padding:10px 12px; border-radius:12px; border:2px solid var(--line); background:var(--card); color:var(--ink); resize:vertical; }
 .sunbtn.eve{ background:radial-gradient(circle at 40% 35%, #FFC99A, #F08A4B 60%, #B4502A); }
 .choices.two button.wide + button.wide{ margin-top:0; }
+.cd{ text-align:center; background:var(--accent-soft); border-radius:16px; padding:10px 12px; margin:14px 0 0; }
+.cd span{ display:block; font-size:14px; color:var(--muted); font-weight:700; }
+.cd b{ display:block; font-size:22px; font-weight:900; color:var(--ink); } .cd b em{ font-style:normal; font-size:40px; color:var(--accent); margin:0 4px; }
+.cd small{ display:block; font-size:12px; color:var(--muted); }
+.cd.big{ margin:0 0 4px; padding:14px; } .cd.big b em{ font-size:56px; }
+.date + .cd.big{ margin:0 0 24px; }
+.cdform{ display:flex; gap:8px; } .cdform input{ flex:1; min-width:0; font:inherit; font-size:16px; padding:10px; border-radius:12px; border:2px solid var(--line); background:var(--card); color:var(--ink); }
+.wk{ display:flex; align-items:center; gap:14px; }
+.wkn b{ font-size:44px; font-weight:900; color:var(--ok); } .wkn span{ font-size:18px; font-weight:900; color:var(--muted); margin-left:2px; }
+.wkd{ display:flex; gap:6px; flex:1; justify-content:space-between; }
+.wkd i{ font-style:normal; font-size:11px; color:var(--muted); text-align:center; }
+.wkd i u{ display:block; width:24px; height:24px; border-radius:50%; background:var(--chip); margin:0 auto 3px; }
+.wkd i.ok u{ background:var(--ok); } .wkd i.half u{ background:#E8B93A; } .wkd i.ng u{ background:var(--ng); }
 .shot{ display:block; width:100%; border-radius:12px; box-shadow:var(--shadow-lg); }
 .chk{ display:flex; align-items:center; gap:8px; font-size:14px; padding:12px 2px 0; }
 .chk input{ width:20px; height:20px; }
@@ -159,10 +172,10 @@ textarea#goalIn{ width:100%; font:inherit; font-size:16px; padding:10px 12px; bo
 <div id="printBox"></div>
 <audio id="au" playsinline preload="auto"></audio>
 
-<script src="lines.js?v=9"></script>
+<script src="lines.js?v=10"></script>
 <script>
 /* ===================== 基本 ===================== */
-const VER = 9;
+const VER = 10;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -186,7 +199,8 @@ function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on
    S.days['YYYY-MM-DD'] = { woke:'6:42', start:'19:00', hours:2, first:'数学', backlog:true|false, review:'できた'|'半分'|'できなかった' }
    review は「その日の約束」を次の朝にふり返った答え（その日の記録に入れる）
    word は最後に選んだ一言（'喝'・'本気の喝'・'励まし'・'喝（おまかせ）' など）。back は夕方に開いた時刻（woke の代わり）
-   S.goal = { text:'ゴールの文', days:{ 'YYYY-MM-DD':true } }  ゴール宣言（v8・ユウキ・ハルネコの要望） */
+   S.goal = { text:'ゴールの文', days:{ 'YYYY-MM-DD':true } }  ゴール宣言（v8・ユウキ・ハルネコの要望）
+   S.test = { name:'期末テスト', date:'YYYY-MM-DD' }  次の大きなテストまでのカウントダウン（v10・こはるの要望） */
 let S = load();
 function load(){
   try{ const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if(j && j.days) return Object.assign({ mode:'mix', recent:[] }, j); }catch(e){}
@@ -198,6 +212,30 @@ function streak(){
   const g = goal(); let d = g.days[today()] ? today() : addDays(today(), -1), n = 0;
   while(g.days[d]){ n++; d = addDays(d, -1); }
   return n;
+}
+/* カウントダウン：テストの日まであと何日（設定していなければ null） */
+function daysLeft(){
+  const t = S.test; if(!t || !t.date) return null;
+  const [y,m,d] = t.date.split('-').map(Number), [a,b,c] = today().split('-').map(Number);
+  return Math.round((new Date(y, m-1, d) - new Date(a, b-1, c)) / 86400000);
+}
+function cdHtml(cls){
+  const n = daysLeft(); if(n === null) return '';
+  const nm = esc(S.test.name || 'テスト');
+  if(n < 0) return `<div class="cd ${cls||''}"><span>${nm}は終わりました</span><small>ホームで次のテストを設定してください</small></div>`;
+  return `<div class="cd ${cls||''}"><span>${nm}まで</span><b>${n === 0 ? '今日が本番' : `あと<em>${n}</em>日`}</b></div>`;
+}
+/* 約束を守れた日：昨日までの7日間で、ふり返りが「できた」だった日（v10・こはるの要望）。半分は数えない */
+function week7(){
+  const out = [];
+  for(let i = 7; i >= 1; i--){ const k = addDays(today(), -i), d = S.days[k]; out.push({ k, v: d && d.review || '' }); }
+  return out;
+}
+function weekHtml(){
+  const w = week7(), n = w.filter(x => x.v === 'できた').length;
+  return `<div class="wk"><div class="wkn"><b>${n}</b><span>/ 7</span></div>
+    <div class="wkd">${w.map(x => `<i class="${x.v === 'できた' ? 'ok' : x.v === '半分' ? 'half' : x.v === 'できなかった' ? 'ng' : ''}"><u></u>${WD[new Date(...x.k.split('-').map((v, i) => i === 1 ? v - 1 : +v)).getDay()]}</i>`).join('')}</div></div>
+    <p class="muted" style="margin:6px 0 0">昨日までの7日間で、約束を守れた日です（緑＝できた・黄＝半分・赤＝できなかった）。</p>`;
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast('保存できませんでした'); } }
 
@@ -281,6 +319,7 @@ function renderWake(){
   $('#stage').innerHTML = `
     <div class="clock">${hm(d)}</div>
     <div class="date">${mdw(today())}</div>
+    ${cdHtml('big')}
     <button class="sunbtn${isEve() ? ' eve' : ''}" id="sunBtn">${isEve() ? 'おかえり' : 'おはよう'}</button>
     <p class="muted" style="text-align:center;margin-top:22px">押すと、ヒラ先生の声がはじまります</p>`;
   $('#sunBtn').onclick = () => {
@@ -383,6 +422,7 @@ function finish(last){
       </div>
       <p class="muted" style="margin:10px 0 0">明日、この約束をふり返ります。</p>
     </div>
+    ${cdHtml()}
     <div class="choices two">
       ${goal().text && !goal().days[today()] ? `<button class="wide dark" id="goalNow">ゴール宣言もする</button>` : ''}
       <button class="wide" id="endBtn">${isEve() ? 'よし、始める' : 'よし、起きる'}</button></div>`;
@@ -451,7 +491,8 @@ function drawCard(light){
   c.lineWidth = 1.5; c.strokeRect(56, 56, W - 112, H - 112);
   c.textAlign = 'center'; c.fillStyle = gold; c.font = F(34); c.fillText('G O A L   D E C L A R A T I O N', W / 2, 150);
   c.fillStyle = ink; c.font = F(64); c.fillText('ゴール宣言', W / 2, 240);
-  c.fillStyle = sub; c.font = F(34); c.fillText(mdw(today()), W / 2, 300);
+  const dl = daysLeft();
+  c.fillStyle = sub; c.font = F(34); c.fillText(mdw(today()) + (dl !== null && dl >= 0 ? `　${S.test.name || 'テスト'}まで ${dl === 0 ? '今日が本番' : 'あと' + dl + '日'}` : ''), W / 2, 300);
   // ゴール
   c.font = F(64); const gl = wrapText(c, g.text, W - 240).slice(0, 4);
   let y = 420;
@@ -520,13 +561,24 @@ async function openCardSheet(){
 
 /* ===================== ホーム ===================== */
 function wakeUrl(){ return location.origin + location.pathname.replace(/index\.html$/, '') + '?wake=1'; }
+let T_EDIT = false;   // カウントダウンを書きかえ中
 function renderHome(){
   $('#ver').textContent = 'v' + VER;
   const r = S.days[today()];
   const days = Object.keys(S.days).sort().reverse().slice(0, 14);
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  const t = S.test || {};
   $('#home').innerHTML = `
+    <div class="card">
+      ${daysLeft() !== null && !T_EDIT ? `${cdHtml('big')}<button class="sub" id="cdEdit">テストを変える</button>` : `
+      <h2>次の大きなテストまでのカウントダウン</h2>
+      <p class="muted" style="margin:0 0 8px">設定すると、開くたびに「あと◯日」が大きく出ます。</p>
+      <div class="cdform"><input id="cdName" placeholder="例：期末テスト" value="${esc(t.name || '')}" maxlength="20">
+        <input id="cdDate" type="date" value="${esc(t.date || '')}"></div>
+      <button class="big dark" id="cdSave" style="margin-top:10px">このテストにする</button>
+      ${daysLeft() !== null ? '<button class="sub" id="cdCancel">やめる</button>' : ''}`}
+    </div>
     ${r && r.hours ? `
     <div class="card">
       <h2>今日の約束</h2>
@@ -540,6 +592,8 @@ function renderHome(){
       <button class="big" id="startBtn">${isEve() ? 'おかえりの会話をはじめる' : '朝の会話をはじめる'}</button>
       <p class="muted" style="margin:10px 0 0">ふだんは、iPhone のアラームを止めると自動でここが開きます（下の「準備」）。</p>
     </div>
+
+    ${Object.keys(S.days).length ? `<div class="card"><h2>約束を守れた日（この1週間）</h2>${weekHtml()}</div>` : ''}
 
     <div class="card">
       <h2>ゴール宣言</h2>
@@ -628,6 +682,12 @@ function renderHome(){
   });
   $('#helpCard').onclick = openHelp;
   if($('#goalBtn')) $('#goalBtn').onclick = openGoal;
+  if($('#cdEdit')) $('#cdEdit').onclick = () => { T_EDIT = true; renderHome(); };
+  if($('#cdCancel')) $('#cdCancel').onclick = () => { T_EDIT = false; renderHome(); };
+  if($('#cdSave')) $('#cdSave').onclick = () => {
+    const d = $('#cdDate').value; if(!d) return toast('テストの日を選んでください');
+    S.test = { name: $('#cdName').value.trim() || 'テスト', date: d }; T_EDIT = false; save(); renderHome(); toast('カウントダウンを設定しました');
+  };
   if($('#goalCard')) $('#goalCard').onclick = openCardSheet;
   if($('#goalEdit')) $('#goalEdit').onclick = () => {
     const t = prompt('新しいゴール', goal().text); if(t == null) return;
@@ -658,14 +718,16 @@ function slides(){ return [
   { pic:'🗓', t:'3. 質問にボタンで答える', p:'<b>何時から</b>勉強するか・<b>何時間</b>やるか・<b>最初に何から</b>やるか・<b>解き直しがたまっていないか</b>を、ボタンで答えます。', ex:'答え方によって、ヒラ先生の返事が変わります。同じ言葉は続けて出ません。' },
   { pic:'🔥', t:'4. 最後の一言を選ぶ', p:'最後に<b>「喝」「本気の喝」「励まし」「おまかせ」</b>から選ぶと、その一言が流れます。おまかせは、昨日の約束が<b>できた日は励まし</b>、<b>できなかった日は喝</b>です。', ex:'その日の気分で選んでください。「今日は本気の喝がほしい」と自分で選ぶのも、気持ちの切りかえになります。' },
   { pic:'✅', t:'5. 次の朝にふり返る', p:'次の朝、最初に<b>「昨日、約束した時間、できた？」</b>と聞かれます。「できた・半分・できなかった」で答えます。', ex:'約束は、決めっぱなしにしないことが大事です。' },
-  { pic:'🎯', t:'6. ゴール宣言', p:'ホームの<b>「ゴール宣言」</b>に自分のゴールを書いておきます。「ゴール宣言する」を押すとヒラ先生が<b>「ゴールは何？」</b>と聞くので、<b>声に出して言って</b>から「言った！」を押します。', ex:'宣言した日がたまり、<b>何日続いているか</b>が出ます。朝の会話の最後にも「ゴール宣言もする」が出ます。' },
-  { pic:'🖼', t:'7. 宣言を部屋に出す・印刷する', p:'宣言したあとの<b>「宣言を画像にして出す・印刷する」</b>で、ゴール・今日の約束・続いた日数が<b>1枚の画像</b>になります。「部屋に出す」で Discord をえらび、<b>宣言の部屋</b>に送ります。', ex:'「印刷する」で紙にもできます。「印刷用」にすると白い背景になり、インクを節約できます。机の前にはっておくのもおすすめです。' },
-  { pic:'🏠', t:'8. 夕方は「おかえり」', p:'昼すぎに開くと、あいさつが<b>「おかえり。お疲れさん」</b>に変わります。質問は朝と同じです。学校から帰ってから、今日の勉強を決めたい人に。', ex:'帰る時刻にもアラームをかければ、朝と同じショートカットでそのまま開きます。' },
-  { pic:'🎧', t:'9. いつでも一言を聞く', p:'ホームの<b>「喝」「本気の喝」「励まし」</b>を押すと、いつでもヒラ先生の一言が流れます。', ex:'勉強を始める前や、だらけてきたときに使ってください。' },
-  { pic:'📒', t:'10. これまでの記録', p:'起きた（帰った）時刻・約束・ふり返りが、ホームの<b>「これまでの記録」</b>に残ります。', ex:'記録はこの端末の中だけに保存されます。' },
-  { pic:'🔔', t:'11. アラームの音もヒラ先生の声に', p:'やりたい人だけです。ホームの「準備」の中の手順で、<b>アラームの音をヒラ先生の声</b>にできます。', ex:'iPhone は「GarageBand」アプリ（無料）を使います。' },
-  { pic:'👥', t:'12. 兄弟で使う', p:'1台を兄弟で使うときは、ホームのいちばん下の<b>「使う人」</b>で人をふやします。記録は人ごとに別々です。' },
-  { pic:'⬇️', t:'13. 更新があるとき', p:'新しい版が出ると、上に<b>オレンジの「更新があります」</b>が出ます。押すと最新になります。', ex:'ホームの「更新があるか調べる」でも確かめられます。' },
+  { pic:'⏳', t:'6. テストまでのカウントダウン', p:'ホームのいちばん上で、<b>次の大きなテストの名前と日</b>を設定します。開くたびに<b>「あと◯日」</b>が大きく出ます。', ex:'朝起きた画面にも出ます。テストが終わったら「テストを変える」で次のテストにしてください。' },
+  { pic:'📅', t:'7. 約束を守れた日', p:'ホームの<b>「約束を守れた日」</b>に、昨日までの7日間で約束が「できた」日の数が<b>◯/7</b>で出ます。', ex:'緑＝できた、黄＝半分、赤＝できなかった。半分は数に入りません。' },
+  { pic:'🎯', t:'8. ゴール宣言', p:'ホームの<b>「ゴール宣言」</b>に自分のゴールを書いておきます。「ゴール宣言する」を押すとヒラ先生が<b>「ゴールは何？」</b>と聞くので、<b>声に出して言って</b>から「言った！」を押します。', ex:'宣言した日がたまり、<b>何日続いているか</b>が出ます。朝の会話の最後にも「ゴール宣言もする」が出ます。' },
+  { pic:'🖼', t:'9. 宣言を部屋に出す・印刷する', p:'宣言したあとの<b>「宣言を画像にして出す・印刷する」</b>で、ゴール・今日の約束・続いた日数が<b>1枚の画像</b>になります。「部屋に出す」で Discord をえらび、<b>宣言の部屋</b>に送ります。', ex:'「印刷する」で紙にもできます。「印刷用」にすると白い背景になり、インクを節約できます。机の前にはっておくのもおすすめです。' },
+  { pic:'🏠', t:'10. 夕方は「おかえり」', p:'昼すぎに開くと、あいさつが<b>「おかえり。お疲れさん」</b>に変わります。質問は朝と同じです。学校から帰ってから、今日の勉強を決めたい人に。', ex:'帰る時刻にもアラームをかければ、朝と同じショートカットでそのまま開きます。' },
+  { pic:'🎧', t:'11. いつでも一言を聞く', p:'ホームの<b>「喝」「本気の喝」「励まし」</b>を押すと、いつでもヒラ先生の一言が流れます。', ex:'勉強を始める前や、だらけてきたときに使ってください。' },
+  { pic:'📒', t:'12. これまでの記録', p:'起きた（帰った）時刻・約束・ふり返りが、ホームの<b>「これまでの記録」</b>に残ります。', ex:'記録はこの端末の中だけに保存されます。' },
+  { pic:'🔔', t:'13. アラームの音もヒラ先生の声に', p:'やりたい人だけです。ホームの「準備」の中の手順で、<b>アラームの音をヒラ先生の声</b>にできます。', ex:'iPhone は「GarageBand」アプリ（無料）を使います。' },
+  { pic:'👥', t:'14. 兄弟で使う', p:'1台を兄弟で使うときは、ホームのいちばん下の<b>「使う人」</b>で人をふやします。記録は人ごとに別々です。' },
+  { pic:'⬇️', t:'15. 更新があるとき', p:'新しい版が出ると、上に<b>オレンジの「更新があります」</b>が出ます。押すと最新になります。', ex:'ホームの「更新があるか調べる」でも確かめられます。' },
 ]; }
 function openHelp(){
   const SL = slides();

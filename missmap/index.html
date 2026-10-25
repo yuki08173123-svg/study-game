@@ -424,6 +424,9 @@ nav.tabs{background:rgba(11,11,12,.93); border-top:1px solid rgba(224,192,106,.1
 /* 種類の名前「解法が分からなかった」が切れないように、棒グラフの名前の欄を広げる */
 .bar{grid-template-columns:136px 1fr 34px;}
 
+/* 書いた分だけ伸びる文字の欄（v43〜） */
+textarea.grow{overflow:hidden; min-height:3.6em;}
+
 /* 解くタブの教科の絞りこみ（v42〜） */
 .filter.homef{margin:12px 0 8px;}
 
@@ -754,7 +757,7 @@ html[data-theme="light"] .tg::after{background:#fff;}
 
 <script>
 /* ===================== 基本 ===================== */
-const VER = 42;
+const VER = 43;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -2188,7 +2191,7 @@ function renderAdd(){
       <input type="file" id="fCam" accept="image/*" capture="environment" class="hidden">
       <input type="file" id="fPick" accept="image/*" multiple class="hidden">
       <div class="or">または文字で</div>
-      <textarea id="addText" rows="2" placeholder="例：体系数学 p.42 問3　連立方程式の代入で符号を間違えた問題">${esc(draft.text)}</textarea>
+      <textarea class="grow" id="addText" rows="2" placeholder="例：体系数学 p.42 問3　連立方程式の代入で符号を間違えた問題">${esc(draft.text)}</textarea>
     </div>
 
     ${ansHtml('add', draft)}
@@ -2261,6 +2264,7 @@ function renderAdd(){
   $('#addPri').onclick = e => { const b = e.target.closest('[data-pr]'); if(!b) return; draft.pri = draft.pri === b.dataset.pr ? '' : b.dataset.pr; $$('#addPri [data-pr]').forEach(x => x.classList.toggle('on', x.dataset.pr === draft.pri)); saveDraft(); };
   bindBook(document, 'add', () => draft.book, v => { draft.book = v; saveDraft(); });
   bindAns(document, 'add', draft, saveDraft, true);
+  fitGrow($('#tab-Add')); requestAnimationFrame(() => fitGrow($('#tab-Add')));
   bindPaper(document, 'add', draft, saveDraft, true);
   document.__tag = () => draft.tag;
   mountPicker($('#addTag'), 'tag', () => draft.tag, v => {
@@ -2330,7 +2334,7 @@ function ansHtml(p, st){
       <div class="photos-in" id="${p}AnsThumbs"></div>
       <div class="photo-btns"><button class="photo-btn" id="${p}AnsCam">${ICO.camera}カメラで撮る</button><button class="photo-btn" id="${p}AnsPick">${ICO.image}写真から選ぶ</button></div>
       <input type="file" id="${p}AnsFCam" accept="image/*" capture="environment" class="hidden"><input type="file" id="${p}AnsFPick" accept="image/*" multiple class="hidden">
-      <textarea id="${p}AnsText" rows="2" placeholder="例：x = 4　／　(2) 第7週">${esc(st.ansText)}</textarea>
+      <textarea class="grow" id="${p}AnsText" rows="2" placeholder="例：x = 4　／　(2) 第7週">${esc(st.ansText)}</textarea>
       <div class="hint">答え合わせのときに、理由・改善点といっしょに出ます（解き終わるまでは出ません）。解説のページを撮っておいてもOKです。</div>
     </div></div>`;
 }
@@ -2348,6 +2352,7 @@ function bindAns(root, p, st, onch, delNow){
     st.ansOpen = q('#'+p+'AnsBox').classList.contains('hidden');
     q('#'+p+'AnsBox').classList.toggle('hidden', !st.ansOpen);
     q('#'+p+'AnsTg').textContent = st.ansOpen ? '答えの欄をとじる' : '＋ 答えも入れる（なくてもOK）';
+    fitGrow(q('#'+p+'AnsBox'));
     ch();
   };
   const take = async files => {
@@ -2427,6 +2432,12 @@ function bindPaper(root, p, st, onch, delNow){
 }
 const hasNote = it => !!(it.noteImgs && it.noteImgs.length);
 
+/* 文字の欄は、書いた分だけ高さが伸びる（v43・コツカワ「問題と答えの文字の欄が2行しか見えず、スクロールが要る」）。
+   見えていない欄（とじた答えの欄・ほかのタブ）は、開いたときに合わせる */
+function growOne(el){ if(!el || !el.offsetParent) return; el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
+function fitGrow(root){ (root || document).querySelectorAll('textarea.grow').forEach(growOne); }
+document.addEventListener('input', e => { if(e.target && e.target.matches && e.target.matches('textarea.grow')) growOne(e.target); });
+
 /* 直す（編集） */
 function openEdit(id, opt){
   const it = byId(id); if(!it) return;
@@ -2436,7 +2447,7 @@ function openEdit(id, opt){
     <div class="field"><label>写真</label><div class="photos-in" id="edThumbs"></div>
       <div class="photo-btns"><button class="photo-btn" id="edCam">${ICO.camera}カメラで撮る</button><button class="photo-btn" id="edPick">${ICO.image}写真から選ぶ</button></div>
       <input type="file" id="edFCam" accept="image/*" capture="environment" class="hidden"><input type="file" id="edFPick" accept="image/*" multiple class="hidden"></div>
-    <div class="field"><label>問題（文字）</label><textarea id="edText" rows="2">${esc(d.text)}</textarea></div>
+    <div class="field"><label>問題（文字）</label><textarea class="grow" id="edText" rows="2">${esc(d.text)}</textarea></div>
     ${ansHtml('ed', d)}
     <div class="field"><label>教科</label><div id="edSubj"></div></div>
     <div class="field"><label>優先順位（なくてもOK）</label><div class="chips" id="edPri">${priChips(d.pri, 'data-pr')}</div></div>
@@ -2470,6 +2481,7 @@ function openEdit(id, opt){
   bg.querySelector('#edPri').onclick = e => { const b = e.target.closest('[data-pr]'); if(!b) return; d.pri = d.pri === b.dataset.pr ? '' : b.dataset.pr; bg.querySelectorAll('#edPri [data-pr]').forEach(x => x.classList.toggle('on', x.dataset.pr === d.pri)); };
   bindBook(bg, 'ed', () => d.book, v => { d.book = v; });
   bindAns(bg, 'ed', d, null, false);
+  fitGrow(bg); requestAnimationFrame(() => fitGrow(bg));
   bindPaper(bg, 'ed', d, null, false);
   bg.__tag = () => d.tag;
   mountPicker(bg.querySelector('#edTag'), 'tag', () => d.tag, v => {
@@ -3363,6 +3375,7 @@ $$('nav.tabs button').forEach(b => b.onclick = () => {
   $$('nav.tabs button').forEach(x => x.classList.toggle('on', x === b));
   ['Today','Add','Map','Set'].forEach(t => $('#tab-'+t).classList.toggle('hidden', t !== b.dataset.tab));
   if(b.dataset.tab === 'Map') renderMap(); else drawSelBar();
+  if(b.dataset.tab === 'Add'){ fitGrow($('#tab-Add')); requestAnimationFrame(() => fitGrow($('#tab-Add'))); }
   if(b.dataset.tab === 'Set') renderSet();
   window.scrollTo(0,0);
 });

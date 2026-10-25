@@ -172,10 +172,10 @@ textarea#goalIn{ width:100%; font:inherit; font-size:16px; padding:10px 12px; bo
 <div id="printBox"></div>
 <audio id="au" playsinline preload="auto"></audio>
 
-<script src="lines.js?v=10"></script>
+<script src="lines.js?v=11"></script>
 <script>
 /* ===================== 基本 ===================== */
-const VER = 10;
+const VER = 11;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -282,9 +282,88 @@ function playOne(id, tok){
     const p = au.play(); if(p && p.catch) p.catch(() => { au.onended = au.onerror = null; missing.add(id); fallback(); });
   });
 }
+/* 2文以上を流すときは、声を読みこんで前後の余白を削り、文と文の間を GAP 秒にそろえた1本の音にしてから流す
+   （1本ずつ流すと、読みこみの待ち時間と余白が重なって間が長くなる。10-25 ヒラ「間が長すぎる」）。
+   1本の中の長い間（LONG 秒以上）も GAP 秒に詰める。<audio> で流すのは、iPhone の消音スイッチで消えないため */
+const GAP = 0.16, LONG = 0.22, SR = 48000;
+const pcm = new Map();
+let dctx = null;
+function decode(id){
+  if(pcm.has(id)) return pcm.get(id);
+  const p = fetch('voice/' + id + '.m4a?v=' + VER).then(r => { if(!r.ok) throw 0; return r.arrayBuffer(); }).then(buf => new Promise((res, rej) => {
+    dctx = dctx || new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 1, SR);
+    dctx.decodeAudioData(buf, ab => res(tidy(ab.getChannelData(0), ab.sampleRate)), rej);
+  })).catch(() => { pcm.delete(id); return null; });
+  pcm.set(id, p); return p;
+}
+/* 頭と終わりの無音を削り、中の長い間を詰める（-40dB より静かな所を無音とみる） */
+function tidy(x, sr){
+  const win = Math.round(sr * 0.01), th = Math.pow(10, -40 / 20), n = Math.floor(x.length / win);
+  const loud = new Array(n);
+  for(let i = 0; i < n; i++){ let s = 0; for(let j = i * win; j < (i + 1) * win; j++) s += x[j] * x[j]; loud[i] = Math.sqrt(s / win) > th; }
+  let a = loud.indexOf(true), z = loud.lastIndexOf(true); if(a < 0) return { x, sr };
+  a = Math.max(0, a - 3); z = Math.min(n - 1, z + 6);   // 頭は0.03秒・終わりは0.06秒だけ残す
+  const out = []; let i = a;
+  while(i <= z){
+    let j = i; while(j <= z && loud[j] === loud[i]) j++;
+    let seg = x.subarray(i * win, j * win);
+    if(!loud[i] && (j - i) * 0.01 > LONG){ const k = Math.round(GAP * sr / 2); seg = Float32Array.from([...seg.subarray(0, k), ...seg.subarray(seg.length - k)]); }
+    out.push(seg); i = j;
+  }
+  const len = out.reduce((t, s) => t + s.length, 0), y = new Float32Array(len); let o = 0;
+  for(const s of out){ y.set(s, o); o += s.length; }
+  const f = Math.min(Math.round(sr * 0.008), y.length >> 1);
+  for(let q = 0; q < f; q++){ y[q] *= q / f; y[y.length - 1 - q] *= q / f; }
+  return { x:y, sr };
+}
+function wavUrl(parts){
+  const sr = parts[0].sr, gap = Math.round(GAP * sr);
+  const len = parts.reduce((t, p, i) => t + p.x.length + (i ? gap : 0), 0);
+  const buf = new ArrayBuffer(44 + len * 2), v = new DataView(buf);
+  const w = (o, s) => { for(let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + len * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, len * 2, true);
+  let o = 44;
+  parts.forEach((p, i) => {
+    if(i) o += gap * 2;
+    for(let k = 0; k < p.x.length; k++, o += 2){ const s = Math.max(-1, Math.min(1, p.x[k])); v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7FFF, true); }
+  });
+  return URL.createObjectURL(new Blob([buf], { type:'audio/wav' }));
+}
+let lastUrl = null;
+/* iPhone は、最初に画面を押したときに音を鳴らしておかないと、読みこみを待ってから流す音を止めてしまう。
+   最初の1回だけ、押した瞬間に無音を流しておく（あとの音はこの <audio> で流れる） */
+const SILENT = 'data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YSADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';   // 0.05秒の無音
+let unlocked = false;
+function unlock(){
+  if(unlocked) return; unlocked = true;
+  try{ au.src = SILENT; const p = au.play(); if(p && p.catch) p.catch(() => { unlocked = false; }); }catch(e){ unlocked = false; }
+}
+['touchend', 'click'].forEach(ev => document.addEventListener(ev, unlock, { capture:true }));
+/* 会話の言葉は先に読みこんでおく（待ち時間をなくす） */
+function prefetch(){ LINES.forEach(l => { if(l.id !== 'alarm') decode(l.id); }); }
+function playUrl(url, tok){
+  return new Promise(res => {
+    if(tok !== speakToken) return res(false);
+    au.onended = () => { au.onended = au.onerror = null; res(true); };
+    au.onerror = () => { au.onended = au.onerror = null; res(false); };
+    au.src = url;
+    const p = au.play(); if(p && p.catch) p.catch(() => { au.onended = au.onerror = null; res(false); });
+  });
+}
 async function say(ids){
   stopVoice(); const tok = speakToken;
   const b = $('.bubble'); if(b) b.classList.add('speaking');
+  let parts = null;
+  try{ parts = await Promise.race([Promise.all(ids.map(decode)), new Promise(r => setTimeout(() => r(null), 2500))]); }catch(e){ parts = null; }
+  if(tok !== speakToken) return;
+  if(parts && parts.every(Boolean)){
+    if(lastUrl) URL.revokeObjectURL(lastUrl);
+    lastUrl = wavUrl(parts);
+    if(await playUrl(lastUrl, tok)){ if(b) b.classList.remove('speaking'); return; }
+    if(tok !== speakToken) return;
+  }
+  // つなげなかったとき（古い端末など）は、今までどおり1本ずつ
   for(const id of ids){ await playOne(id, tok); if(tok !== speakToken) return; }
   if(b) b.classList.remove('speaking');
 }
@@ -303,6 +382,7 @@ const isEve = () => { const h = new Date().getHours(); return h >= 12 || h < 4; 
 const WORDG = { F:'喝', H:'本気の喝', G:'励まし' };
 let T = null;   // 今朝の会話の状態
 function openTalk(){
+  prefetch();
   T = { rec:{}, step:0 };
   $('#talk').classList.add('on');
   document.body.style.overflow = 'hidden';
@@ -434,6 +514,7 @@ function finish(last){
 /* ===================== ゴール宣言（v8） =====================
    「ゴールは何？」→ 声に出して言う →「言った！」→ 応援の一言。宣言した日をためて、続いた日数を出す */
 function openGoal(){
+  prefetch();
   T = T || { rec:{}, step:0 };
   $('#talk').classList.add('on'); document.body.style.overflow = 'hidden';
   renderGoal(false);

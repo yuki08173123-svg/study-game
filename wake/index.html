@@ -175,7 +175,7 @@ textarea#goalIn{ width:100%; font:inherit; font-size:16px; padding:10px 12px; bo
 <div id="printBox"></div>
 <audio id="au" playsinline preload="auto"></audio>
 
-<script src="lines.js?v=12"></script>
+<script src="lines.js?v=13"></script>
 <script>
 /* HSYNC BEGIN ─────────────────────────────────────────────
    同期（iPad・スマホ・パソコンで同じにする）。ヒラボイス v12（2026-10-25 ユウキ・ハルネコ「iPadでも使いたい」）。
@@ -241,8 +241,10 @@ const HSync = (function(){
     const keys = {};
     C.keys.forEach(k => { const v = _get.call(ls, k); if(v !== null) keys[k] = v; });
     pruneTomb();
-    return { app: C.app, v: 1, keys, tomb: T };
+    return { app: C.app, v: 1, keys, tomb: T, who: whoNow() };
   }
+  /* 兄弟で1台を使うときの「いまの人」の名前（ヒラボイス v13 で追加・ほかの人のコードを入れたら止めるため） */
+  function whoNow(){ try{ return C.who ? (C.who() || '') : ''; }catch(e){ return ''; } }
   function hasLocal(){ return C.hasData ? !!C.hasData() : C.keys.some(k => _get.call(ls, k) !== null); }
   function pruneTomb(){
     const lim = now() - TOMB_DAYS * 864e5;
@@ -475,6 +477,9 @@ const HSync = (function(){
       if(r.found){
         let rem = null; try{ rem = JSON.parse(r.data || 'null'); }catch(e){}
         if(!rem || rem.app !== C.app || !rem.keys){ say('このコードの中身が読めません'); return; }
+        const me = whoNow();
+        if(rem.who && me && rem.who !== me &&
+           !(await yes('このコードは「' + rem.who + '」の記録です。\nいまの使う人は「' + me + '」です。\n\n兄弟は、人ごとに別の同期コードにしてください。もう1台でも、先に「使う人」を同じ人に切りかえてから入れます。\n\nこのまま「' + me + '」に入れますか？'))) return;
         if((C.lists || C.mergeKey) && hasLocal()){
           if(!(await yes('この端末の記録と、コード「' + code + '」に預けてある記録を合わせます。\nどちらの記録も残ります。よろしいですか？'))) return;
           const merged = merge(collect(), rem, true);
@@ -571,7 +576,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 /* ===================== 基本 ===================== */
-const VER = 12;
+const VER = 13;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1207,7 +1212,7 @@ function slides(){ return [
   { pic:'📒', t:'12. これまでの記録', p:'起きた（帰った）時刻・約束・ふり返りが、ホームの<b>「これまでの記録」</b>に残ります。', ex:'記録はこの端末の中だけに保存されます。' },
   { pic:'🔔', t:'13. アラームの音もヒラ先生の声に', p:'やりたい人だけです。ホームの「準備」の中の手順で、<b>アラームの音をヒラ先生の声</b>にできます。', ex:'iPhone は「GarageBand」アプリ（無料）を使います。' },
   { pic:'🔄', t:'14. iPad・スマホで同期する', p:'ホームの<b>「同期」</b>で、計画マップなどと<b>同じ同期コード</b>を入れると、iPad とスマホで記録が同じになります。', ex:'約束・ふり返り・ゴール宣言・カウントダウンが同期されます。2台で別々に記録しても、日ごとに両方残ります。' },
-  { pic:'👥', t:'15. 兄弟で使う', p:'1台を兄弟で使うときは、ホームのいちばん下の<b>「使う人」</b>で人をふやします。記録は人ごとに別々です。' },
+  { pic:'👥', t:'15. 兄弟で使う', p:'1台を兄弟で使うときは、ホームのいちばん下の<b>「使う人」</b>で人をふやします。記録は人ごとに別々です。', ex:'同期するときは、<b>人ごとに別の同期コード</b>にします。もう1台でも、先に「使う人」を同じ人に切りかえてから、その人のコードを入れてください。' },
   { pic:'⬇️', t:'16. 更新があるとき', p:'新しい版が出ると、上に<b>オレンジの「更新があります」</b>が出ます。押すと最新になります。', ex:'ホームの「更新があるか調べる」でも確かめられます。' },
 ]; }
 function openHelp(){
@@ -1315,7 +1320,10 @@ HSync.init({
   hasData: () => Object.keys(S.days).length > 0 || !!(S.goal && S.goal.text) || !!S.test,
   busy: () => $('#talk').classList.contains('on') || !!document.querySelector('.sheet-bg'),   // 会話・宣言の最中やシートを開いているときは読みなおさない
   mount: '#hsBox', cls: { btn: 'sub ok', ghost: 'sub', dim: 'muted' },
-  note: '約束・ふり返り・ゴール宣言・カウントダウンが同期されます。',
+  note: (window.SGUsers && SGUsers.many()
+    ? '<b>いまは「' + esc(SGUsers.name()) + '」の同期です。</b>兄弟は、人ごとに別の同期コードにしてください。もう1台でも、先に下の「使う人」を同じ人に切りかえてから、その人のコードを入れます。<br>'
+    : '') + '約束・ふり返り・ゴール宣言・カウントダウンが同期されます。',
+  who: () => (window.SGUsers && SGUsers.many()) ? SGUsers.name() : '',
   delay: 3000,
   toast: toast, ask: hsAsk, yes: hsYes
 });

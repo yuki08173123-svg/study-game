@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="wake"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ヒラ目覚まし</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBF6EE">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+:root{
+  --bg:#FBF6EE; --card:#FFFFFF; --ink:#2A2118; --muted:#6B5E50; --line:#EADFCF;
+  --accent:#E8742A; --accent-soft:#FDEBDD; --accent-ink:#FFFFFF;
+  --sun:#F2B33D; --ok:#2E9E6A; --ok-soft:#E2F4EA; --ng:#D9534A; --ng-soft:#FBE7E5;
+  --chip:#F3ECE1; --shadow:0 1px 3px rgba(60,40,20,.08); --shadow-lg:0 8px 24px rgba(60,40,20,.14);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17130F; --card:#221C16; --ink:#F3EADF; --muted:#B3A595; --line:#3A3027;
+    --accent:#F2934F; --accent-soft:#3D2A1C; --accent-ink:#1A120C;
+    --sun:#F4C35E; --ok:#5CCB95; --ok-soft:#1D3528; --ng:#F08A80; --ng-soft:#3E2523;
+    --chip:#2D251E; --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 8px 24px rgba(0,0,0,.5);
+  }
+}
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ margin:0; background:var(--bg); color:var(--ink); }
+body{ font-family:'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif; font-weight:500; line-height:1.6;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); min-height:100vh; }
+button{ font:inherit; color:inherit; border:0; background:none; cursor:pointer; }
+header{ display:flex; align-items:center; gap:8px; padding:14px 16px 6px; max-width:560px; margin:0 auto; }
+header h1{ font-size:20px; font-weight:900; margin:0; flex:1; display:flex; align-items:center; gap:8px; }
+header h1 small{ font-size:12px; color:var(--muted); font-weight:500; }
+header h1 .logo{ width:28px; height:28px; border-radius:8px; }
+main{ max-width:560px; margin:0 auto; padding:6px 16px 40px; }
+.card{ background:var(--card); border-radius:18px; box-shadow:var(--shadow); padding:16px; margin:12px 0; }
+.card h2{ font-size:16px; margin:0 0 10px; font-weight:900; }
+.muted{ color:var(--muted); font-size:13px; }
+.big{ display:block; width:100%; padding:18px; border-radius:16px; background:var(--accent); color:var(--accent-ink);
+  font-size:19px; font-weight:900; box-shadow:var(--shadow-lg); }
+.sub{ display:block; width:100%; padding:13px; border-radius:14px; background:var(--chip); font-weight:700; margin-top:10px; }
+.seg{ display:flex; gap:6px; background:var(--chip); padding:4px; border-radius:14px; }
+.seg button{ flex:1; padding:10px 4px; border-radius:11px; font-weight:700; color:var(--muted); }
+.seg button.on{ background:var(--card); color:var(--ink); box-shadow:var(--shadow); }
+.promise{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; }
+.promise div{ background:var(--accent-soft); border-radius:14px; padding:10px 4px; }
+.promise b{ display:block; font-size:20px; font-weight:900; }
+.promise span{ font-size:12px; color:var(--muted); }
+.hist{ width:100%; border-collapse:collapse; font-size:14px; }
+.hist td{ padding:7px 4px; border-top:1px solid var(--line); }
+.tag{ display:inline-block; font-size:12px; padding:1px 8px; border-radius:99px; background:var(--chip); }
+.tag.ok{ background:var(--ok-soft); color:var(--ok); } .tag.ng{ background:var(--ng-soft); color:var(--ng); }
+ol.steps{ padding-left:22px; margin:6px 0; } ol.steps li{ margin:6px 0; }
+.url{ display:flex; gap:8px; align-items:center; background:var(--chip); border-radius:12px; padding:8px 10px; font-size:13px; word-break:break-all; }
+.url button{ flex:none; background:var(--accent); color:var(--accent-ink); border-radius:10px; padding:6px 12px; font-weight:700; }
+details{ margin-top:8px; } summary{ font-weight:700; cursor:pointer; }
+
+/* 朝の会話（全画面） */
+#talk{ position:fixed; inset:0; background:var(--bg); z-index:50; display:none; flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 16px); overflow-y:auto; }
+#talk.on{ display:flex; }
+#talk .top{ display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:14px; max-width:560px; width:100%; margin:0 auto; }
+#talk .stage{ flex:1; display:flex; flex-direction:column; justify-content:center; max-width:560px; width:100%; margin:0 auto; }
+.clock{ text-align:center; font-size:64px; font-weight:900; letter-spacing:.02em; line-height:1.1; }
+.date{ text-align:center; color:var(--muted); margin-bottom:28px; }
+.sunbtn{ display:block; margin:0 auto; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle at 40% 35%, #FFD27A, var(--sun) 60%, var(--accent));
+  color:#2A1A08; font-size:30px; font-weight:900; box-shadow:0 10px 40px rgba(232,116,42,.45); animation:pulse 2.2s ease-in-out infinite; }
+@keyframes pulse{ 50%{ transform:scale(1.05); } }
+.who{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.who img{ width:44px; height:44px; border-radius:50%; background:var(--chip); }
+.who b{ font-weight:900; }
+.bubble{ background:var(--card); border-radius:4px 20px 20px 20px; padding:16px 18px; font-size:21px; font-weight:700; box-shadow:var(--shadow-lg); min-height:66px; }
+.bubble.speaking{ outline:3px solid var(--accent-soft); }
+.hint{ margin:12px 0 0; padding:10px 12px; border-radius:12px; background:var(--accent-soft); font-size:14px; }
+.choices{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:18px; }
+.choices.two{ grid-template-columns:1fr 1fr; } .choices.four{ grid-template-columns:repeat(4,1fr); }
+.choices button{ background:var(--card); border:2px solid var(--line); border-radius:14px; padding:14px 2px; font-size:clamp(14px, 4.2vw, 17px); font-weight:900; white-space:nowrap; }
+.choices button:active{ background:var(--accent-soft); border-color:var(--accent); }
+.choices button.wide{ grid-column:1/-1; background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.dots{ display:flex; gap:6px; justify-content:center; margin-top:18px; }
+.dots i{ width:8px; height:8px; border-radius:50%; background:var(--line); } .dots i.on{ background:var(--accent); }
+.toast{ position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom) + 24px); transform:translateX(-50%); background:var(--ink); color:var(--bg);
+  padding:10px 16px; border-radius:12px; font-size:14px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:99; }
+.toast.on{ opacity:1; }
+</style>
+</head>
+<body>
+<header>
+  <h1><img class="logo" src="icon-192.png" alt="">ヒラ目覚まし <small id="ver"></small></h1>
+  <button data-users-tag hidden></button>
+</header>
+<main id="home"></main>
+
+<div id="talk">
+  <div class="top"><span id="tStep"></span><button id="tClose">とじる ✕</button></div>
+  <div class="stage" id="stage"></div>
+</div>
+<div class="toast" id="toast"></div>
+<audio id="au" playsinline preload="auto"></audio>
+
+<script src="lines.js?v=1"></script>
+<script>
+/* ===================== 基本 ===================== */
+const VER = 1;
+const KEY = 'wake_v1';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today = () => ymd(new Date());
+const addDays = (s, n) => { const [y,m,d] = s.split('-').map(Number); const t = new Date(y, m-1, d+n); return ymd(t); };
+const WD = ['日','月','火','水','木','金','土'];
+const mdw = s => { const [y,m,d] = s.split('-').map(Number); return m+'/'+d+'（'+WD[new Date(y,m-1,d).getDay()]+'）'; };
+const hm = d => d.getHours()+':'+pad(d.getMinutes());
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const LINE = Object.fromEntries(LINES.map(l => [l.id, l]));
+const SUBJ = ['英語','数学','国語','理科','社会','解き直し','その他'];
+const HOURS = [0.5, 1, 1.5, 2, 3, 4, 5, 6];
+const hLabel = h => h === 0.5 ? '30分' : h+'時間' + (h >= 6 ? '〜' : '');
+function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(()=>e.classList.remove('on'), 1800); }
+
+/* ===================== データ =====================
+   S.mode: 'mix'（喝と励ましをまぜる）/ 'katsu' / 'hagemashi'
+   S.days['YYYY-MM-DD'] = { woke:'6:42', start:'19:00', hours:2, first:'数学', backlog:true|false, review:'できた'|'半分'|'できなかった' }
+   review は「その日の約束」を次の朝にふり返った答え（その日の記録に入れる） */
+let S = load();
+function load(){
+  try{ const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if(j && j.days) return Object.assign({ mode:'mix', recent:[] }, j); }catch(e){}
+  return { mode:'mix', days:{}, recent:[] };
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast('保存できませんでした'); } }
+
+/* 同じ端末の 解き直しマップ・Essence の「今日の分」を数える（読めないときは null）。
+   iPhone でホーム画面に置いたアプリは入れ物が別なので、読めないことが多い。そのときは本人に聞くだけ */
+function backlogFromApps(){
+  const t = today(); const out = [];
+  try{
+    const r = JSON.parse(localStorage.getItem('redo_v1') || 'null');
+    if(r && Array.isArray(r.items)){ const n = r.items.filter(i => !i.done && i.due && i.due <= t).length; out.push({ name:'解き直しマップ', n }); }
+  }catch(e){}
+  try{
+    const m = JSON.parse(localStorage.getItem('miss_v1') || 'null');
+    if(m && Array.isArray(m.items)){ const n = m.items.filter(i => !i.done && i.due && i.due <= t).length; out.push({ name:'Essence', n }); }
+  }catch(e){}
+  return out.length ? out : null;
+}
+
+/* ===================== 声 =====================
+   voice/<id>.m4a があれば ヒラ先生の録音を流す。なければ端末の読み上げ（録音が届くまでの代わり） */
+const au = $('#au');
+const missing = new Set();
+let speakToken = 0;
+function stopVoice(){ speakToken++; try{ au.pause(); }catch(e){} try{ speechSynthesis.cancel(); }catch(e){} }
+function playOne(id, tok){
+  return new Promise(res => {
+    if(tok !== speakToken) return res();
+    const l = LINE[id];
+    const tts = () => {
+      try{
+        const u = new SpeechSynthesisUtterance(l.text.replace(/／/g, '。'));
+        u.lang = 'ja-JP'; u.rate = 1.05; u.onend = u.onerror = () => res();
+        speechSynthesis.speak(u);
+        setTimeout(res, 1200 + l.text.length * 180);   // 読み上げが動かない端末でも先へ進む
+      }catch(e){ res(); }
+    };
+    if(missing.has(id)) return tts();
+    const done = () => { au.onended = au.onerror = null; res(); };
+    au.onended = done;
+    au.onerror = () => { au.onended = au.onerror = null; missing.add(id); tts(); };
+    au.src = 'voice/' + id + '.m4a?v=' + VER;
+    const p = au.play(); if(p && p.catch) p.catch(() => { au.onended = au.onerror = null; missing.add(id); tts(); });
+  });
+}
+async function say(ids){
+  stopVoice(); const tok = speakToken;
+  const b = $('.bubble'); if(b) b.classList.add('speaking');
+  for(const id of ids){ await playOne(id, tok); if(tok !== speakToken) return; }
+  if(b) b.classList.remove('speaking');
+}
+/* 同じ言葉が続かないように、最近つかった言葉をさける */
+function choose(ids){
+  const fresh = ids.filter(id => !S.recent.includes(id));
+  const id = pick(fresh.length ? fresh : ids);
+  S.recent = [id, ...S.recent.filter(x => x !== id)].slice(0, 12);
+  return id;
+}
+const ofGroup = (g, k) => LINES.filter(l => l.g === g && (k === undefined || l.k === k)).map(l => l.id);
+
+/* ===================== 朝の会話 ===================== */
+let T = null;   // 今朝の会話の状態
+function openTalk(){
+  T = { rec:{}, step:0 };
+  $('#talk').classList.add('on');
+  document.body.style.overflow = 'hidden';
+  renderWake();
+}
+function closeTalk(){
+  stopVoice(); $('#talk').classList.remove('on'); document.body.style.overflow = ''; T = null; renderHome();
+}
+$('#tClose').onclick = closeTalk;
+
+function renderWake(){
+  const d = new Date();
+  $('#tStep').textContent = '';
+  $('#stage').innerHTML = `
+    <div class="clock">${hm(d)}</div>
+    <div class="date">${mdw(today())}</div>
+    <button class="sunbtn" id="sunBtn">おはよう</button>
+    <p class="muted" style="text-align:center;margin-top:22px">押すと、ヒラ先生の声がはじまります</p>`;
+  $('#sunBtn').onclick = () => {
+    T.rec.woke = hm(new Date());
+    buildFlow();
+    next(choose(ofGroup('B')));
+  };
+}
+
+/* 質問の順番。昨日の約束があって、まだふり返っていなければ最初に聞く */
+function buildFlow(){
+  const y = S.days[addDays(today(), -1)];
+  T.flow = [];
+  if(y && y.hours && !y.review) T.flow.push('review');
+  T.flow.push('start', 'hours', 'first', 'backlog', 'end');
+}
+async function next(lead){
+  const kind = T.flow[T.step++];
+  const pre = lead ? [lead] : [];
+  const steps = T.flow.filter(k => k !== 'end').length;
+  $('#tStep').textContent = kind === 'end' ? '' : (T.step)+' / '+steps;
+  if(kind === 'end') return finish(pre);
+  const q = { review:'c0', start:'d1', hours:'d2', first:'d3', backlog:'d4' }[kind];
+  let choices = '', cls = '', hint = '';
+  if(kind === 'review'){
+    const y = S.days[addDays(today(), -1)];
+    hint = `昨日の約束：${esc(y.start)}から ${esc(hLabel(y.hours))}`;
+    choices = ['できた','半分','できなかった'].map(v => `<button data-v="${v}">${v}</button>`).join('');
+  }else if(kind === 'start'){
+    const h0 = new Date().getHours();
+    const opts = ['今すぐ']; for(let h = Math.max(h0 + 1, 6); h <= 22; h++) opts.push(h+':00');
+    choices = opts.map(v => `<button data-v="${v}">${v}</button>`).join('');
+    cls = 'four';
+  }else if(kind === 'hours'){
+    choices = HOURS.map(h => `<button data-v="${h}">${hLabel(h)}</button>`).join(''); cls = 'four';
+  }else if(kind === 'first'){
+    choices = SUBJ.map(v => `<button data-v="${v}">${v}</button>`).join('');
+  }else if(kind === 'backlog'){
+    const apps = backlogFromApps();
+    if(apps) hint = apps.map(a => `${a.name}：今日の分 ${a.n}問`).join('　');
+    choices = `<button data-v="1">たまってる</button><button data-v="0">たまってない</button>`; cls = 'two';
+  }
+  const ids = [...pre, q];
+  $('#stage').innerHTML = `
+    <div class="who"><img src="icon-192.png" alt=""><b>ヒラ先生</b></div>
+    <div class="bubble">${ids.map(id => esc(LINE[id].text)).join('<br>')}</div>
+    ${hint ? `<div class="hint">${hint}</div>` : ''}
+    <div class="choices ${cls}">${choices}</div>
+    <div class="dots">${T.flow.filter(k => k !== 'end').map((k, i) => `<i class="${i < T.step ? 'on' : ''}"></i>`).join('')}</div>`;
+  $('#stage').querySelectorAll('.choices button').forEach(b => b.onclick = () => answer(kind, b.dataset.v));
+  say(ids);
+}
+function answer(kind, v){
+  let reply;
+  if(kind === 'review'){
+    S.days[addDays(today(), -1)].review = v;
+    reply = choose(ofGroup('C', v));
+  }else if(kind === 'start'){
+    T.rec.start = v === '今すぐ' ? hm(new Date()) : v;
+    reply = choose(ofGroup('E', '何時から'));
+  }else if(kind === 'hours'){
+    const h = Number(v); T.rec.hours = h;
+    reply = h <= 1 ? 'e2a' : h >= 4 ? 'e2c' : 'e2b';
+  }else if(kind === 'first'){
+    T.rec.first = v; reply = choose(ofGroup('E', '最初の教科'));
+  }else if(kind === 'backlog'){
+    T.rec.backlog = v === '1';
+    reply = choose(ofGroup('E', v === '1' ? 'たまってる' : 'たまってない'));
+  }
+  save(); next(reply);
+}
+function finish(pre){
+  const g = S.mode === 'katsu' ? ['F'] : S.mode === 'hagemashi' ? ['G'] : ['F','G'];
+  const last = choose(LINES.filter(l => g.includes(l.g)).map(l => l.id));
+  S.days[today()] = Object.assign({}, S.days[today()] || {}, T.rec);
+  save();
+  const r = S.days[today()];
+  const ids = [...pre, last];
+  $('#stage').innerHTML = `
+    <div class="who"><img src="icon-192.png" alt=""><b>ヒラ先生</b></div>
+    <div class="bubble">${ids.map(id => esc(LINE[id].text)).join('<br>')}</div>
+    <div class="card" style="margin-top:18px">
+      <h2>今日の約束</h2>
+      <div class="promise">
+        <div><b>${esc(r.start)}</b><span>から</span></div>
+        <div><b>${esc(hLabel(r.hours))}</b><span>やる</span></div>
+        <div><b>${esc(r.first)}</b><span>から始める</span></div>
+      </div>
+      <p class="muted" style="margin:10px 0 0">明日の朝、この約束をふり返ります。</p>
+    </div>
+    <div class="choices two"><button class="wide" id="endBtn">よし、起きる</button></div>`;
+  $('#endBtn').onclick = closeTalk;
+  say(ids);
+}
+
+/* ===================== ホーム ===================== */
+function wakeUrl(){ return location.origin + location.pathname.replace(/index\.html$/, '') + '?wake=1'; }
+function renderHome(){
+  $('#ver').textContent = 'v' + VER;
+  const r = S.days[today()];
+  const days = Object.keys(S.days).sort().reverse().slice(0, 14);
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  $('#home').innerHTML = `
+    ${r && r.hours ? `
+    <div class="card">
+      <h2>今日の約束</h2>
+      <div class="promise">
+        <div><b>${esc(r.start)}</b><span>から</span></div>
+        <div><b>${esc(hLabel(r.hours))}</b><span>やる</span></div>
+        <div><b>${esc(r.first)}</b><span>から始める</span></div>
+      </div>
+    </div>` : ''}
+    <div class="card">
+      <button class="big" id="startBtn">朝の会話をはじめる</button>
+      <p class="muted" style="margin:10px 0 0">ふだんは、iPhone のアラームを止めると自動でここが開きます（下の「準備」）。</p>
+    </div>
+
+    <div class="card">
+      <h2>ヒラ先生の言葉</h2>
+      <div class="seg" id="modeSeg">
+        <button data-m="katsu">喝</button><button data-m="mix">まぜる</button><button data-m="hagemashi">励まし</button>
+      </div>
+      <p class="muted" style="margin:8px 0 0">会話の最後の一言が変わります。</p>
+    </div>
+
+    <div class="card">
+      <h2>準備（はじめに1回だけ・5分）</h2>
+      ${isIOS && standalone ? `<p class="hint">いまはホーム画面から開いています。準備は <b>Safari</b> で開いて行ってください（アラームから開くのは Safari なので、記録をそろえるため）。</p>` : ''}
+      <details ${days.length ? '' : 'open'}>
+        <summary>iPhone の場合</summary>
+        <ol class="steps">
+          <li>「時計」アプリで、起きる時刻のアラームを作る。</li>
+          <li>「ショートカット」アプリ →下の「オートメーション」→ 右上の「＋」→「アラーム」。</li>
+          <li>「停止したとき」を選び、「すぐに実行」にして「次へ」。</li>
+          <li>「新規の空のオートメーション」→「アクションを追加」→「URLを開く」を選ぶ。</li>
+          <li>URL のところに、下のアドレスを貼りつけて「完了」。
+            <div class="url" style="margin-top:6px"><span id="wUrl">${esc(wakeUrl())}</span><button id="copyBtn">コピー</button></div></li>
+          <li>アラームを止めると、このアプリが開いて朝の会話がはじまります。</li>
+        </ol>
+        <p class="muted">開くのは Safari です。このページも Safari で開いたまま使ってください（ホーム画面に置かなくて大丈夫です）。</p>
+      </details>
+      <details>
+        <summary>アラームの音もヒラ先生の声にする（やりたい人だけ）</summary>
+        <ol class="steps">
+          <li>下の「声のファイルを保存」を押して、「ファイル」アプリに保存する。</li>
+          <li>「GarageBand」アプリ（無料）→「Audio Recorder」→ 上のならびの表示切りかえボタン → 右上のループのボタン →「ファイル」から、保存した声を長押しして置く。</li>
+          <li>左上の ▼ →「マイソング」→ 曲を長押し →「共有」→「着信音」→「書き出す」→「サウンドとして使用」→「標準の着信音」以外を選ぶ。</li>
+          <li>「時計」のアラームの「サウンド」で、その音を選ぶ。</li>
+        </ol>
+        <a class="sub" style="text-align:center;text-decoration:none" href="voice/alarm.m4a" download="hira-alarm.m4a" id="alarmDl">声のファイルを保存</a>
+        <p class="muted" id="alarmNote"></p>
+      </details>
+      <details>
+        <summary>Android の場合</summary>
+        <ol class="steps">
+          <li>上の「声のファイルを保存」で声を保存し、時計アプリのアラーム音にその音を選ぶ。</li>
+          <li>アラームを止めたら、このアプリを開いて「朝の会話をはじめる」を押す。</li>
+        </ol>
+      </details>
+      <button class="sub" id="testBtn">声のテスト</button>
+    </div>
+
+    ${days.length ? `
+    <div class="card">
+      <h2>これまでの朝</h2>
+      <table class="hist">
+        ${days.map(k => { const d = S.days[k]; const rv = d.review;
+          return `<tr><td>${mdw(k)}</td><td>${d.woke ? esc(d.woke)+' 起床' : ''}</td>
+            <td>${d.hours ? esc(d.start)+'から'+esc(hLabel(d.hours)) : ''}</td>
+            <td>${rv ? `<span class="tag ${rv === 'できた' ? 'ok' : rv === 'できなかった' ? 'ng' : ''}">${esc(rv)}</span>` : ''}</td></tr>`; }).join('')}
+      </table>
+    </div>` : ''}
+
+    <div data-users-card style="margin:12px 0"></div>`;
+  $('#startBtn').onclick = openTalk;
+  $('#modeSeg').querySelectorAll('button').forEach(b => {
+    b.classList.toggle('on', b.dataset.m === S.mode);
+    b.onclick = () => { S.mode = b.dataset.m; save(); renderHome(); };
+  });
+  $('#copyBtn').onclick = async () => {
+    try{ await navigator.clipboard.writeText(wakeUrl()); toast('コピーしました'); }
+    catch(e){ const r = document.createRange(); r.selectNodeContents($('#wUrl')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('選んだ字をコピーしてください'); }
+  };
+  $('#testBtn').onclick = () => say([pick(ofGroup('B'))]);
+  fetch('voice/alarm.m4a', { method:'HEAD' }).then(r => { if(!r.ok) throw 0; }).catch(() => {
+    $('#alarmDl').style.opacity = .45; $('#alarmDl').removeAttribute('href');
+    $('#alarmNote').textContent = 'ヒラ先生の声は準備中です。届いたら、ここから保存できます。';
+  });
+}
+
+renderHome();
+if(new URLSearchParams(location.search).has('wake')){
+  history.replaceState(null, '', location.pathname);   // 読みなおしで何度も開かないように
+  openTalk();
+}
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

@@ -88,13 +88,50 @@ details{ margin-top:8px; } summary{ font-weight:700; cursor:pointer; }
 .toast{ position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom) + 24px); transform:translateX(-50%); background:var(--ink); color:var(--bg);
   padding:10px 16px; border-radius:12px; font-size:14px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:99; }
 .toast.on{ opacity:1; }
+header .help{ width:34px; height:34px; border-radius:50%; background:var(--chip); font-weight:900; font-size:17px; flex:none; }
+.listen{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.listen button{ padding:16px 6px; border-radius:16px; background:#1B1712; color:#F1DDA4; box-shadow:var(--shadow-lg); }
+.listen button b{ font-size:22px; font-weight:900; } .listen button span{ font-size:14px; margin-left:2px; }
+.listen button[data-g="G"]{ background:var(--accent); color:var(--accent-ink); }
+.listen button:active{ transform:scale(.97); }
+.said{ margin-top:10px; font-size:14px; color:var(--muted); min-height:24px; }
+.said.on{ color:var(--ink); font-size:17px; font-weight:700; }
+/* 更新があるときの帯（計画マップ・解き直しマップと同じ） */
+.updwrap{ max-width:560px; margin:0 auto; padding:0 16px; }
+.update{ width:100%; margin-top:6px; background:#E9640F; color:#fff; border-radius:16px; padding:13px 14px; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow-lg); text-align:left; }
+.update.hidden{ display:none; }
+.update svg{ width:22px; height:22px; stroke:#fff; fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.update .t{ flex:1; line-height:1.3; } .update .t b{ display:block; font-size:15px; font-weight:900; } .update .t span{ font-size:11px; opacity:.9; font-weight:700; }
+.update .go{ background:rgba(255,255,255,.22); border-radius:999px; padding:7px 13px; font-size:13px; font-weight:900; flex:none; }
+/* 使い方スライド */
+.sheet-bg{ position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:80; display:flex; align-items:flex-end; justify-content:center; }
+.sheet{ background:var(--bg); width:100%; max-width:560px; border-radius:22px 22px 0 0; padding:14px 16px calc(env(safe-area-inset-bottom) + 16px); max-height:92vh; overflow-y:auto; }
+.sheet h2{ font-size:18px; font-weight:900; margin:4px 0 12px; text-align:center; }
+.sl-track{ display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
+.sl-track::-webkit-scrollbar{ display:none; }
+.sl{ flex:0 0 100%; scroll-snap-align:start; background:linear-gradient(160deg,#1E1913,#0E0D0C); color:#F3EADF; border:1px solid rgba(224,192,106,.4); border-radius:18px; padding:18px; min-height:330px; }
+.sl .no{ font-size:12px; letter-spacing:.2em; color:#E0C06A; }
+.sl .pic{ font-size:40px; margin:10px 0 6px; }
+.sl h4{ font-size:19px; margin:0 0 8px; font-weight:900; color:#F1DDA4; }
+.sl p{ margin:0; font-size:15px; line-height:1.75; } .sl p b{ color:#F1DDA4; }
+.sl .ex{ margin-top:12px; padding-top:10px; border-top:1px solid rgba(224,192,106,.22); font-size:13px; color:#B9AE9E; }
+.sl-nav{ display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
+.sl-nav button{ width:44px; height:44px; border-radius:50%; background:var(--chip); font-size:20px; font-weight:900; }
+.sl-nav .dots{ display:flex; gap:5px; flex-wrap:wrap; justify-content:center; } .sl-nav .dots i{ width:7px; height:7px; border-radius:50%; background:var(--line); } .sl-nav .dots i.on{ background:var(--accent); }
+.sheet .close{ display:block; width:100%; margin-top:12px; padding:14px; border-radius:14px; background:var(--accent); color:var(--accent-ink); font-weight:900; font-size:16px; }
 </style>
 </head>
 <body>
 <header>
   <h1><img class="logo" src="icon-192.png" alt="">ヒラボイス <small id="ver"></small></h1>
   <button data-users-tag hidden></button>
+  <button class="help" id="btnHelp" aria-label="使い方">?</button>
 </header>
+<div class="updwrap"><button class="update hidden" id="btnUpdate">
+  <svg viewBox="0 0 24 24"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>
+  <span class="t"><b>更新があります</b><span id="updVer"></span></span>
+  <span class="go">更新する</span>
+</button></div>
 <main id="home"></main>
 
 <div id="talk">
@@ -104,10 +141,10 @@ details{ margin-top:8px; } summary{ font-weight:700; cursor:pointer; }
 <div class="toast" id="toast"></div>
 <audio id="au" playsinline preload="auto"></audio>
 
-<script src="lines.js?v=4"></script>
+<script src="lines.js?v=5"></script>
 <script>
 /* ===================== 基本 ===================== */
-const VER = 4;
+const VER = 5;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -126,9 +163,11 @@ const hLabel = h => h === 0.5 ? '30分' : h+'時間' + (h >= 6 ? '〜' : '');
 function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(()=>e.classList.remove('on'), 1800); }
 
 /* ===================== データ =====================
-   S.mode: 'mix'（喝と励ましをまぜる）/ 'katsu' / 'hagemashi'
+   S.mode は v4 まで（喝・まぜる・励ましの設定）。v5 で朝の最後に選ぶ形にしたので使わない
+   S.help: 使い方スライドを見たら true（はじめて開いたときだけ自動で出す）
    S.days['YYYY-MM-DD'] = { woke:'6:42', start:'19:00', hours:2, first:'数学', backlog:true|false, review:'できた'|'半分'|'できなかった' }
-   review は「その日の約束」を次の朝にふり返った答え（その日の記録に入れる） */
+   review は「その日の約束」を次の朝にふり返った答え（その日の記録に入れる）
+   word は最後に選んだ一言（'喝'・'励まし'・'喝（おまかせ）' など） */
 let S = load();
 function load(){
   try{ const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if(j && j.days) return Object.assign({ mode:'mix', recent:[] }, j); }catch(e){}
@@ -169,12 +208,14 @@ function playOne(id, tok){
         setTimeout(res, 1200 + l.text.length * 180);   // 読み上げが動かない端末でも先へ進む
       }catch(e){ res(); }
     };
-    if(missing.has(id)) return tts();
+    /* nt の言葉は録音が届くまで読み上げない（ヒラ先生の声に機械の声がまざると不自然なため） */
+    const fallback = () => l.nt ? res() : tts();
+    if(missing.has(id)) return fallback();
     const done = () => { au.onended = au.onerror = null; res(); };
     au.onended = done;
-    au.onerror = () => { au.onended = au.onerror = null; missing.add(id); tts(); };
+    au.onerror = () => { au.onended = au.onerror = null; missing.add(id); fallback(); };
     au.src = 'voice/' + id + '.m4a?v=' + VER;
-    const p = au.play(); if(p && p.catch) p.catch(() => { au.onended = au.onerror = null; missing.add(id); tts(); });
+    const p = au.play(); if(p && p.catch) p.catch(() => { au.onended = au.onerror = null; missing.add(id); fallback(); });
   });
 }
 async function say(ids){
@@ -225,15 +266,14 @@ function buildFlow(){
   const y = S.days[addDays(today(), -1)];
   T.flow = [];
   if(y && y.hours && !y.review) T.flow.push('review');
-  T.flow.push('start', 'hours', 'first', 'backlog', 'end');
+  T.flow.push('start', 'hours', 'first', 'backlog', 'last', 'end');
 }
 async function next(lead){
   const kind = T.flow[T.step++];
   const pre = lead ? [lead] : [];
   const steps = T.flow.filter(k => k !== 'end').length;
   $('#tStep').textContent = kind === 'end' ? '' : (T.step)+' / '+steps;
-  if(kind === 'end') return finish(pre);
-  const q = { review:'c0', start:'d1', hours:'d2', first:'d3', backlog:'d4' }[kind];
+  const q = { review:'c0', start:'d1', hours:'d2', first:'d3', backlog:'d4', last:'d5' }[kind];
   let choices = '', cls = '', hint = '';
   if(kind === 'review'){
     const y = S.days[addDays(today(), -1)];
@@ -252,6 +292,10 @@ async function next(lead){
     const apps = backlogFromApps();
     if(apps) hint = apps.map(a => `${a.name}：今日の分 ${a.n}問`).join('　');
     choices = `<button data-v="1">たまってる</button><button data-v="0">たまってない</button>`; cls = 'two';
+  }else if(kind === 'last'){
+    const g = omakase();
+    hint = `おまかせ：今日は「${g === 'F' ? '喝' : g === 'G' ? '励まし' : '喝か励まし'}」${g === 'mix' ? '' : '（昨日の約束が「' + esc(yReview()) + '」だったので）'}`;
+    choices = ['喝','励まし','おまかせ'].map(v => `<button data-v="${v}">${v}</button>`).join('');
   }
   const ids = [...pre, q];
   $('#stage').innerHTML = `
@@ -279,16 +323,24 @@ function answer(kind, v){
   }else if(kind === 'backlog'){
     T.rec.backlog = v === '1';
     reply = choose(ofGroup('E', v === '1' ? 'たまってる' : 'たまってない'));
+  }else if(kind === 'last'){
+    const g = v === '喝' ? 'F' : v === '励まし' ? 'G' : omakase();
+    T.word = g === 'mix' ? pick(['F','G']) : g;
+    T.rec.word = (T.word === 'F' ? '喝' : '励まし') + (v === 'おまかせ' ? '（おまかせ）' : '');
+    save(); return finish(choose(ofGroup(T.word)));
   }
   save(); next(reply);
 }
-function finish(pre){
-  const g = S.mode === 'katsu' ? ['F'] : S.mode === 'hagemashi' ? ['G'] : ['F','G'];
-  const last = choose(LINES.filter(l => g.includes(l.g)).map(l => l.id));
+/* おまかせ：昨日のふり返りで決める（できた→励まし・できなかった→喝・半分やふり返りなし→どちらか）。ヒラの指示 10-25 */
+function yReview(){ const y = S.days[addDays(today(), -1)]; return y && y.review || ''; }
+function omakase(){ const r = yReview(); return r === 'できた' ? 'G' : r === 'できなかった' ? 'F' : 'mix'; }
+function finish(last){
+  T.step = T.flow.length;
+  $('#tStep').textContent = '';
   S.days[today()] = Object.assign({}, S.days[today()] || {}, T.rec);
   save();
   const r = S.days[today()];
-  const ids = [...pre, last];
+  const ids = [last];
   $('#stage').innerHTML = `
     <div class="who"><img src="icon-192.png" alt=""><b>ヒラ先生</b></div>
     <div class="bubble">${ids.map(id => esc(LINE[id].text)).join('<br>')}</div>
@@ -330,11 +382,12 @@ function renderHome(){
     </div>
 
     <div class="card">
-      <h2>ヒラ先生の言葉</h2>
-      <div class="seg" id="modeSeg">
-        <button data-m="katsu">喝</button><button data-m="mix">まぜる</button><button data-m="hagemashi">励まし</button>
+      <h2>ヒラ先生の一言を聞く</h2>
+      <div class="listen">
+        <button data-g="F"><b>喝</b><span>を聞く</span></button>
+        <button data-g="G"><b>励まし</b><span>を聞く</span></button>
       </div>
-      <p class="muted" style="margin:8px 0 0">会話の最後の一言が変わります。</p>
+      <div class="said" id="said">勉強を始める前や、だらけてきたときに押してください。</div>
     </div>
 
     <div class="card">
@@ -385,12 +438,20 @@ function renderHome(){
       </table>
     </div>` : ''}
 
+    <div class="card">
+      <button class="sub" id="helpCard" style="margin:0">使い方を見る（スライド）</button>
+      <button class="sub" id="updCheck">更新があるか調べる</button>
+    </div>
+
     <div data-users-card style="margin:12px 0"></div>`;
+  $('#updCheck').onclick = () => checkUpdate(false);
   $('#startBtn').onclick = openTalk;
-  $('#modeSeg').querySelectorAll('button').forEach(b => {
-    b.classList.toggle('on', b.dataset.m === S.mode);
-    b.onclick = () => { S.mode = b.dataset.m; save(); renderHome(); };
+  $('#home').querySelectorAll('.listen button').forEach(b => b.onclick = () => {
+    const id = choose(ofGroup(b.dataset.g)); save();
+    const box = $('#said'); box.textContent = LINE[id].text; box.classList.add('on');
+    say([id]);
   });
+  $('#helpCard').onclick = openHelp;
   $('#copyBtn').onclick = async () => {
     try{ await navigator.clipboard.writeText(wakeUrl()); toast('コピーしました'); }
     catch(e){ const r = document.createRange(); r.selectNodeContents($('#wUrl')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('選んだ字をコピーしてください'); }
@@ -402,7 +463,73 @@ function renderHome(){
   });
 }
 
+/* ===================== 使い方（スライド） =====================
+   ルール: 機能を変えたら、ここ（slides()）を必ず同じ更新で直す。 */
+function slides(){ return [
+  { pic:'⏰', t:'ヒラボイスとは', p:'アラームを止めると、<b>ヒラ先生の声で朝の会話</b>がはじまる目覚ましです。起きてすぐに、<b>今日の勉強の約束</b>を決めます。', ex:'朝が弱い人ほど、起きた直後に「今日やること」を決めておくと、1日が動きだします。' },
+  { pic:'🛠', t:'1. はじめに1回だけ準備', p:'ホームの<b>「準備」</b>の手順どおりに、iPhone の<b>「ショートカット」</b>アプリで「アラームを止めたら、このアプリを開く」を設定します（5分）。', ex:'このアプリは <b>Safari</b> で開いて使ってください。アラームから開くのも Safari です。Android の人は、アラームを止めたらアプリを開いてください。' },
+  { pic:'☀️', t:'2. 朝は「おはよう」を押す', p:'アラームを止めると、このアプリが開きます。まん中の<b>「おはよう」</b>を押すと、ヒラ先生の声がはじまります。', ex:'スマホは、画面を押すまで音を出せない決まりです。押すこと自体が「起きた」合図になります。' },
+  { pic:'🗓', t:'3. 質問にボタンで答える', p:'<b>何時から</b>勉強するか・<b>何時間</b>やるか・<b>最初に何から</b>やるか・<b>解き直しがたまっていないか</b>を、ボタンで答えます。', ex:'答え方によって、ヒラ先生の返事が変わります。同じ言葉は続けて出ません。' },
+  { pic:'🔥', t:'4. 最後の一言を選ぶ', p:'最後に<b>「喝」「励まし」「おまかせ」</b>から選ぶと、その一言が流れます。おまかせは、昨日の約束が<b>できた日は励まし</b>、<b>できなかった日は喝</b>です。', ex:'その日の気分で選んでください。「今日は喝がほしい」と自分で選ぶのも、気持ちの切りかえになります。' },
+  { pic:'✅', t:'5. 次の朝にふり返る', p:'次の朝、最初に<b>「昨日、約束した時間、できた？」</b>と聞かれます。「できた・半分・できなかった」で答えます。', ex:'約束は、決めっぱなしにしないことが大事です。' },
+  { pic:'🎧', t:'6. いつでも一言を聞く', p:'ホームの<b>「喝を聞く」「励ましを聞く」</b>を押すと、いつでもヒラ先生の一言が流れます。', ex:'勉強を始める前や、だらけてきたときに使ってください。' },
+  { pic:'📒', t:'7. これまでの朝', p:'起きた時刻・約束・ふり返りが、ホームの<b>「これまでの朝」</b>に残ります。', ex:'記録はこの端末の中だけに保存されます。' },
+  { pic:'🔔', t:'8. アラームの音もヒラ先生の声に', p:'やりたい人だけです。ホームの「準備」の中の手順で、<b>アラームの音をヒラ先生の声</b>にできます。', ex:'iPhone は「GarageBand」アプリ（無料）を使います。' },
+  { pic:'👥', t:'9. 兄弟で使う', p:'1台を兄弟で使うときは、ホームのいちばん下の<b>「使う人」</b>で人をふやします。記録は人ごとに別々です。' },
+  { pic:'⬇️', t:'10. 更新があるとき', p:'新しい版が出ると、上に<b>オレンジの「更新があります」</b>が出ます。押すと最新になります。', ex:'ホームの「更新があるか調べる」でも確かめられます。' },
+]; }
+function openHelp(){
+  const SL = slides();
+  const bg = document.createElement('div'); bg.className = 'sheet-bg';
+  bg.innerHTML = `<div class="sheet"><h2>ヒラボイスの使い方</h2>
+    <div class="sl-track">${SL.map((sl, i) => `<div class="sl"><div class="no">${i+1} / ${SL.length}</div><div class="pic">${sl.pic}</div><h4>${sl.t}</h4><p>${sl.p}</p>${sl.ex ? `<div class="ex">${sl.ex}</div>` : ''}</div>`).join('')}</div>
+    <div class="sl-nav"><button class="prev" aria-label="前へ">‹</button><span class="dots">${SL.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('')}</span><button class="next" aria-label="次へ">›</button></div>
+    <button class="close">閉じる</button></div>`;
+  document.body.appendChild(bg);
+  const track = bg.querySelector('.sl-track'), dots = bg.querySelectorAll('.dots i');
+  let idx = 0, st = null;
+  const step = () => track.children[0].offsetWidth + 10;
+  const mark = () => dots.forEach((d, k) => d.classList.toggle('on', k === idx));
+  const go = i => { idx = Math.max(0, Math.min(SL.length - 1, i)); mark(); track.scrollTo({ left:idx * step(), behavior:'smooth' }); };
+  track.addEventListener('scroll', () => { clearTimeout(st); st = setTimeout(() => { idx = Math.round(track.scrollLeft / step()); mark(); }, 80); }, { passive:true });
+  bg.querySelector('.prev').onclick = () => go(idx - 1);
+  bg.querySelector('.next').onclick = () => go(idx + 1);
+  const close = () => { bg.remove(); if(!S.help){ S.help = true; save(); } };
+  bg.querySelector('.close').onclick = close;
+  bg.addEventListener('click', e => { if(e.target === bg) close(); });
+}
+$('#btnHelp').onclick = openHelp;
+
+/* ===================== 更新の確認（解き直しマップと同じ仕組み） ===================== */
+async function checkUpdate(silent){
+  try{
+    const res = await fetch('version.json?t=' + Date.now(), { cache:'no-store' });
+    if(!res.ok) throw 0;
+    const j = await res.json(), v = Number(j.v) || 0;
+    if(v > VER){
+      $('#updVer').textContent = 'v' + VER + ' → v' + v + (j.note ? '　' + j.note : '');
+      $('#btnUpdate').classList.remove('hidden');
+    }else{
+      $('#btnUpdate').classList.add('hidden');
+      if(!silent) toast('いまが最新です（v' + VER + '）');
+    }
+  }catch(e){ if(!silent) toast('調べられませんでした'); }
+}
+async function doUpdate(){
+  toast('更新しています…');
+  try{
+    if('serviceWorker' in navigator){ const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.unregister())); }
+    if(window.caches){ const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
+  }catch(e){}
+  location.replace(location.pathname + '?u=' + Date.now());
+}
+$('#btnUpdate').onclick = doUpdate;
+document.addEventListener('visibilitychange', () => { if(!document.hidden) checkUpdate(true); });
+
 renderHome();
+checkUpdate(true);
+const WAKE = new URLSearchParams(location.search).has('wake');
+if(!S.help && !WAKE) openHelp();   // はじめて開いたときだけ（アラームから開いた朝は出さない）
 if(new URLSearchParams(location.search).has('wake')){
   history.replaceState(null, '', location.pathname);   // 読みなおしで何度も開かないように
   openTalk();

@@ -98,6 +98,15 @@ header .help{ width:34px; height:34px; border-radius:50%; background:var(--chip)
 textarea#goalIn{ width:100%; font:inherit; font-size:16px; padding:10px 12px; border-radius:12px; border:2px solid var(--line); background:var(--card); color:var(--ink); resize:vertical; }
 .sunbtn.eve{ background:radial-gradient(circle at 40% 35%, #FFC99A, #F08A4B 60%, #B4502A); }
 .choices.two button.wide + button.wide{ margin-top:0; }
+.shot{ display:block; width:100%; border-radius:12px; box-shadow:var(--shadow-lg); }
+.chk{ display:flex; align-items:center; gap:8px; font-size:14px; padding:12px 2px 0; }
+.chk input{ width:20px; height:20px; }
+#printBox{ display:none; }
+@media print{
+  body > *:not(#printBox){ display:none !important; }
+  #printBox{ display:block !important; } #printBox img{ width:100%; max-width:170mm; display:block; margin:0 auto; }
+  body{ background:#fff !important; padding:0; }
+}
 .listen button{ padding:16px 6px; border-radius:16px; background:#1B1712; color:#F1DDA4; box-shadow:var(--shadow-lg); }
 .listen button{ padding:12px 4px; } .listen button b{ display:block; font-size:19px; font-weight:900; white-space:nowrap; } .listen button span{ display:block; font-size:12px; opacity:.85; }
 .listen button[data-g="G"]{ background:var(--accent); color:var(--accent-ink); }
@@ -147,12 +156,13 @@ textarea#goalIn{ width:100%; font:inherit; font-size:16px; padding:10px 12px; bo
   <div class="stage" id="stage"></div>
 </div>
 <div class="toast" id="toast"></div>
+<div id="printBox"></div>
 <audio id="au" playsinline preload="auto"></audio>
 
-<script src="lines.js?v=8"></script>
+<script src="lines.js?v=9"></script>
 <script>
 /* ===================== 基本 ===================== */
-const VER = 8;
+const VER = 9;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -408,11 +418,104 @@ function renderGoal(fromTalk){
       <div class="bubble">${esc(LINE[r].text)}</div>
       <div class="goalcard"><span>わたしのゴール</span><b>${esc(g.text)}</b></div>
       <div class="promise" style="margin-top:14px"><div><b>${n}日</b><span>続いている</span></div><div><b>${total}日</b><span>宣言した日</span></div><div><b>${mdw(today())}</b><span>今日</span></div></div>
-      <div class="choices two"><button class="wide" id="gEnd">とじる</button></div>`;
+      <div class="choices two"><button class="wide dark" id="gCard">宣言を画像にして出す・印刷する</button><button class="wide" id="gEnd">とじる</button></div>`;
     $('#gEnd').onclick = closeTalk;
+    $('#gCard').onclick = openCardSheet;
     say([r]);
   };
   say([q]);
+}
+
+/* ===================== 宣言カード（v9・のぐの要望） =====================
+   宣言したゴール＋今日の約束＋続いた日数を1枚の画像にする。計画マップと同じく「アプリをえらんで送る」で
+   Discord の宣言の部屋へ。印刷用（白い背景）も選べる */
+function wrapText(ctx, text, maxW){
+  const out = []; let line = '';
+  for(const ch of String(text)){
+    if(ch === '\n'){ out.push(line); line = ''; continue; }
+    if(ctx.measureText(line + ch).width > maxW && line){
+      if('、。」）！？ー'.includes(ch)){ line += ch; out.push(line); line = ''; continue; }   // 行の頭に句読点を置かない
+      out.push(line); line = ch;
+    }else line += ch;
+  }
+  if(line) out.push(line); return out;
+}
+function drawCard(light){
+  const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d'), g = goal(), r = S.days[today()] || {};
+  const F = n => `900 ${n}px 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif`;
+  const ink = light ? '#1a1a1a' : '#F3EADF', gold = light ? '#8A6A1E' : '#E0C06A', sub = light ? '#444' : '#B9AE9E';
+  if(light){ c.fillStyle = '#fff'; c.fillRect(0, 0, W, H); }
+  else{ const gr = c.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#221C15'); gr.addColorStop(1, '#0B0A09'); c.fillStyle = gr; c.fillRect(0, 0, W, H); }
+  c.strokeStyle = gold; c.lineWidth = 4; c.strokeRect(40, 40, W - 80, H - 80);
+  c.lineWidth = 1.5; c.strokeRect(56, 56, W - 112, H - 112);
+  c.textAlign = 'center'; c.fillStyle = gold; c.font = F(34); c.fillText('G O A L   D E C L A R A T I O N', W / 2, 150);
+  c.fillStyle = ink; c.font = F(64); c.fillText('ゴール宣言', W / 2, 240);
+  c.fillStyle = sub; c.font = F(34); c.fillText(mdw(today()), W / 2, 300);
+  // ゴール
+  c.font = F(64); const gl = wrapText(c, g.text, W - 240).slice(0, 4);
+  let y = 420;
+  c.fillStyle = ink; gl.forEach((t, i) => c.fillText(t, W / 2, y + i * 86));
+  y += (gl.length - 1) * 86 + 64;
+  c.strokeStyle = gold; c.lineWidth = 2; c.beginPath(); c.moveTo(W / 2 - 120, y); c.lineTo(W / 2 + 120, y); c.stroke();
+  // 今日の約束
+  if(r.hours){
+    c.fillStyle = gold; c.font = F(34); c.fillText('今日の約束', W / 2, y + 90);
+    const cells = [[r.start, 'から'], [hLabel(r.hours), 'やる'], [r.first, 'から始める']];
+    cells.forEach(([v, l], i) => {
+      const x = W / 2 + (i - 1) * 310, yy = y + 125;
+      c.strokeStyle = light ? '#bbb' : 'rgba(224,192,106,.45)'; c.lineWidth = 2;
+      c.beginPath(); c.roundRect ? c.roundRect(x - 140, yy, 280, 160, 24) : c.rect(x - 140, yy, 280, 160); c.stroke();
+      c.fillStyle = ink; c.font = F(50); c.fillText(String(v), x, yy + 84);
+      c.fillStyle = sub; c.font = F(28); c.fillText(l, x, yy + 132);
+    });
+    y += 300;
+  }
+  // 続いた日数
+  c.fillStyle = gold; c.font = F(40); c.fillText(`${streak()}日 続けて宣言中`, W / 2, Math.max(y + 110, 960));
+  c.fillStyle = sub; c.font = F(30); c.fillText(`宣言した日 ${Object.keys(g.days).length}日`, W / 2, Math.max(y + 165, 1015));
+  c.fillStyle = gold; c.font = F(30); c.fillText('ヒラボイス', W / 2, H - 100);
+  return cv;
+}
+async function openCardSheet(){
+  try{ await document.fonts.load("900 40px 'Zen Maru Gothic'"); }catch(e){}
+  let light = false, cv = drawCard(false);
+  const canShare = !!(navigator.canShare && navigator.share);
+  const name = () => 'ゴール宣言_' + today() + '.png';
+  const bg = document.createElement('div'); bg.className = 'sheet-bg';
+  bg.innerHTML = `<div class="sheet"><h2>宣言カード</h2>
+    <img class="shot" id="cardImg" alt="宣言カード">
+    <p class="muted" style="margin:8px 0 0">${canShare ? '「部屋に出す」を押して Discord をえらび、<b>宣言の部屋</b>に送ってください。' : '画像を保存して、Discord の<b>宣言の部屋</b>に送ってください。'}</p>
+    ${canShare ? '<button class="close" id="cShare">部屋に出す（アプリをえらんで送る）</button>' : ''}
+    <button class="sub" id="cSave">画像を保存する</button>
+    <button class="sub" id="cPrint">印刷する</button>
+    <label class="chk"><input type="checkbox" id="cLight">印刷用（白い背景にしてインクを節約）</label>
+    <button class="sub" id="cClose">とじる</button></div>`;
+  document.body.appendChild(bg);
+  const img = bg.querySelector('#cardImg');
+  const show = () => { img.src = cv.toDataURL('image/png'); };
+  show();
+  const blob = () => new Promise(res => cv.toBlob(res, 'image/png'));
+  bg.querySelector('#cLight').onchange = e => { light = e.target.checked; cv = drawCard(light); show(); };
+  if(canShare) bg.querySelector('#cShare').onclick = async () => {
+    const f = new File([await blob()], name(), { type:'image/png' });
+    if(!navigator.canShare({ files:[f] })) return toast('この端末では送れません');
+    try{ await navigator.share({ files:[f] }); }catch(e){}
+  };
+  bg.querySelector('#cSave').onclick = async () => {
+    const b = await blob(); if(!b) return;
+    const f = new File([b], name(), { type:'image/png' });
+    if(navigator.canShare && navigator.canShare({ files:[f] })){ try{ await navigator.share({ files:[f] }); return; }catch(e){ if(e && e.name === 'AbortError') return; } }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name(); a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('保存しました');
+  };
+  bg.querySelector('#cPrint').onclick = () => {
+    const box = document.getElementById('printBox'); box.innerHTML = `<img src="${cv.toDataURL('image/png')}" alt="">`;
+    setTimeout(() => window.print(), 150);
+  };
+  const close = () => bg.remove();
+  bg.querySelector('#cClose').onclick = close;
+  bg.addEventListener('click', e => { if(e.target === bg) close(); });
 }
 
 /* ===================== ホーム ===================== */
@@ -444,6 +547,7 @@ function renderHome(){
         <div class="goalcard"><span>わたしのゴール</span><b>${esc(goal().text)}</b></div>
         <p class="muted" style="margin:8px 0 10px">${goal().days[today()] ? '今日は宣言しました。' : 'まだ今日は宣言していません。'}　${streak()}日続いている・宣言した日 ${Object.keys(goal().days).length}日</p>
         <button class="big dark" id="goalBtn">ゴール宣言する</button>
+        ${goal().days[today()] ? `<button class="sub" id="goalCard">宣言を画像にして出す・印刷する</button>` : ''}
         <button class="sub" id="goalEdit">ゴールを書きかえる</button>`
       : `
         <p class="muted" style="margin:0 0 8px">まず、自分のゴールを書いてください。毎日これを声に出して宣言します。</p>
@@ -524,6 +628,7 @@ function renderHome(){
   });
   $('#helpCard').onclick = openHelp;
   if($('#goalBtn')) $('#goalBtn').onclick = openGoal;
+  if($('#goalCard')) $('#goalCard').onclick = openCardSheet;
   if($('#goalEdit')) $('#goalEdit').onclick = () => {
     const t = prompt('新しいゴール', goal().text); if(t == null) return;
     if(!t.trim()) return toast('ゴールが空です');
@@ -554,12 +659,13 @@ function slides(){ return [
   { pic:'🔥', t:'4. 最後の一言を選ぶ', p:'最後に<b>「喝」「本気の喝」「励まし」「おまかせ」</b>から選ぶと、その一言が流れます。おまかせは、昨日の約束が<b>できた日は励まし</b>、<b>できなかった日は喝</b>です。', ex:'その日の気分で選んでください。「今日は本気の喝がほしい」と自分で選ぶのも、気持ちの切りかえになります。' },
   { pic:'✅', t:'5. 次の朝にふり返る', p:'次の朝、最初に<b>「昨日、約束した時間、できた？」</b>と聞かれます。「できた・半分・できなかった」で答えます。', ex:'約束は、決めっぱなしにしないことが大事です。' },
   { pic:'🎯', t:'6. ゴール宣言', p:'ホームの<b>「ゴール宣言」</b>に自分のゴールを書いておきます。「ゴール宣言する」を押すとヒラ先生が<b>「ゴールは何？」</b>と聞くので、<b>声に出して言って</b>から「言った！」を押します。', ex:'宣言した日がたまり、<b>何日続いているか</b>が出ます。朝の会話の最後にも「ゴール宣言もする」が出ます。' },
-  { pic:'🏠', t:'7. 夕方は「おかえり」', p:'昼すぎに開くと、あいさつが<b>「おかえり。お疲れさん」</b>に変わります。質問は朝と同じです。学校から帰ってから、今日の勉強を決めたい人に。', ex:'帰る時刻にもアラームをかければ、朝と同じショートカットでそのまま開きます。' },
-  { pic:'🎧', t:'8. いつでも一言を聞く', p:'ホームの<b>「喝」「本気の喝」「励まし」</b>を押すと、いつでもヒラ先生の一言が流れます。', ex:'勉強を始める前や、だらけてきたときに使ってください。' },
-  { pic:'📒', t:'9. これまでの記録', p:'起きた（帰った）時刻・約束・ふり返りが、ホームの<b>「これまでの記録」</b>に残ります。', ex:'記録はこの端末の中だけに保存されます。' },
-  { pic:'🔔', t:'10. アラームの音もヒラ先生の声に', p:'やりたい人だけです。ホームの「準備」の中の手順で、<b>アラームの音をヒラ先生の声</b>にできます。', ex:'iPhone は「GarageBand」アプリ（無料）を使います。' },
-  { pic:'👥', t:'11. 兄弟で使う', p:'1台を兄弟で使うときは、ホームのいちばん下の<b>「使う人」</b>で人をふやします。記録は人ごとに別々です。' },
-  { pic:'⬇️', t:'12. 更新があるとき', p:'新しい版が出ると、上に<b>オレンジの「更新があります」</b>が出ます。押すと最新になります。', ex:'ホームの「更新があるか調べる」でも確かめられます。' },
+  { pic:'🖼', t:'7. 宣言を部屋に出す・印刷する', p:'宣言したあとの<b>「宣言を画像にして出す・印刷する」</b>で、ゴール・今日の約束・続いた日数が<b>1枚の画像</b>になります。「部屋に出す」で Discord をえらび、<b>宣言の部屋</b>に送ります。', ex:'「印刷する」で紙にもできます。「印刷用」にすると白い背景になり、インクを節約できます。机の前にはっておくのもおすすめです。' },
+  { pic:'🏠', t:'8. 夕方は「おかえり」', p:'昼すぎに開くと、あいさつが<b>「おかえり。お疲れさん」</b>に変わります。質問は朝と同じです。学校から帰ってから、今日の勉強を決めたい人に。', ex:'帰る時刻にもアラームをかければ、朝と同じショートカットでそのまま開きます。' },
+  { pic:'🎧', t:'9. いつでも一言を聞く', p:'ホームの<b>「喝」「本気の喝」「励まし」</b>を押すと、いつでもヒラ先生の一言が流れます。', ex:'勉強を始める前や、だらけてきたときに使ってください。' },
+  { pic:'📒', t:'10. これまでの記録', p:'起きた（帰った）時刻・約束・ふり返りが、ホームの<b>「これまでの記録」</b>に残ります。', ex:'記録はこの端末の中だけに保存されます。' },
+  { pic:'🔔', t:'11. アラームの音もヒラ先生の声に', p:'やりたい人だけです。ホームの「準備」の中の手順で、<b>アラームの音をヒラ先生の声</b>にできます。', ex:'iPhone は「GarageBand」アプリ（無料）を使います。' },
+  { pic:'👥', t:'12. 兄弟で使う', p:'1台を兄弟で使うときは、ホームのいちばん下の<b>「使う人」</b>で人をふやします。記録は人ごとに別々です。' },
+  { pic:'⬇️', t:'13. 更新があるとき', p:'新しい版が出ると、上に<b>オレンジの「更新があります」</b>が出ます。押すと最新になります。', ex:'ホームの「更新があるか調べる」でも確かめられます。' },
 ]; }
 function openHelp(){
   const SL = slides();

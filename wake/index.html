@@ -89,9 +89,17 @@ details{ margin-top:8px; } summary{ font-weight:700; cursor:pointer; }
   padding:10px 16px; border-radius:12px; font-size:14px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:99; }
 .toast.on{ opacity:1; }
 header .help{ width:34px; height:34px; border-radius:50%; background:var(--chip); font-weight:900; font-size:17px; flex:none; }
-.listen{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.listen{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.listen button[data-g="H"]{ background:#3A0F0C; color:#FFB199; }
+.big.dark, .choices button.wide.dark{ background:#1B1712; color:#F1DDA4; border-color:#1B1712; }
+.goalcard{ background:linear-gradient(160deg,#1E1913,#0E0D0C); color:#F3EADF; border:1px solid rgba(224,192,106,.4); border-radius:16px; padding:14px 16px; margin-top:14px; }
+.goalcard span{ display:block; font-size:12px; letter-spacing:.15em; color:#E0C06A; }
+.goalcard b{ display:block; font-size:21px; font-weight:900; margin-top:4px; line-height:1.5; }
+textarea#goalIn{ width:100%; font:inherit; font-size:16px; padding:10px 12px; border-radius:12px; border:2px solid var(--line); background:var(--card); color:var(--ink); resize:vertical; }
+.sunbtn.eve{ background:radial-gradient(circle at 40% 35%, #FFC99A, #F08A4B 60%, #B4502A); }
+.choices.two button.wide + button.wide{ margin-top:0; }
 .listen button{ padding:16px 6px; border-radius:16px; background:#1B1712; color:#F1DDA4; box-shadow:var(--shadow-lg); }
-.listen button b{ font-size:22px; font-weight:900; } .listen button span{ font-size:14px; margin-left:2px; }
+.listen button{ padding:12px 4px; } .listen button b{ display:block; font-size:19px; font-weight:900; white-space:nowrap; } .listen button span{ display:block; font-size:12px; opacity:.85; }
 .listen button[data-g="G"]{ background:var(--accent); color:var(--accent-ink); }
 .listen button:active{ transform:scale(.97); }
 .said{ margin-top:10px; font-size:14px; color:var(--muted); min-height:24px; }
@@ -141,10 +149,10 @@ header .help{ width:34px; height:34px; border-radius:50%; background:var(--chip)
 <div class="toast" id="toast"></div>
 <audio id="au" playsinline preload="auto"></audio>
 
-<script src="lines.js?v=7"></script>
+<script src="lines.js?v=8"></script>
 <script>
 /* ===================== 基本 ===================== */
-const VER = 7;
+const VER = 8;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -167,11 +175,19 @@ function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on
    S.help: 使い方スライドを見たら true（はじめて開いたときだけ自動で出す）
    S.days['YYYY-MM-DD'] = { woke:'6:42', start:'19:00', hours:2, first:'数学', backlog:true|false, review:'できた'|'半分'|'できなかった' }
    review は「その日の約束」を次の朝にふり返った答え（その日の記録に入れる）
-   word は最後に選んだ一言（'喝'・'励まし'・'喝（おまかせ）' など） */
+   word は最後に選んだ一言（'喝'・'本気の喝'・'励まし'・'喝（おまかせ）' など）。back は夕方に開いた時刻（woke の代わり）
+   S.goal = { text:'ゴールの文', days:{ 'YYYY-MM-DD':true } }  ゴール宣言（v8・ユウキ・ハルネコの要望） */
 let S = load();
 function load(){
   try{ const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if(j && j.days) return Object.assign({ mode:'mix', recent:[] }, j); }catch(e){}
   return { mode:'mix', days:{}, recent:[] };
+}
+function goal(){ if(!S.goal) S.goal = { text:'', days:{} }; return S.goal; }
+/* 続いている日数（今日まだ宣言していなければ、昨日から数える） */
+function streak(){
+  const g = goal(); let d = g.days[today()] ? today() : addDays(today(), -1), n = 0;
+  while(g.days[d]){ n++; d = addDays(d, -1); }
+  return n;
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast('保存できませんでした'); } }
 
@@ -233,7 +249,10 @@ function choose(ids){
 }
 const ofGroup = (g, k) => LINES.filter(l => l.g === g && (k === undefined || l.k === k)).map(l => l.id);
 
-/* ===================== 朝の会話 ===================== */
+/* ===================== 朝・夕方の会話 =====================
+   昼すぎ（12時〜翌4時）に開いたら夕方版：あいさつが「おかえり」になる（v8・ユウキ・ハルネコの要望）。質問は同じ */
+const isEve = () => { const h = new Date().getHours(); return h >= 12 || h < 4; };
+const WORDG = { F:'喝', H:'本気の喝', G:'励まし' };
 let T = null;   // 今朝の会話の状態
 function openTalk(){
   T = { rec:{}, step:0 };
@@ -252,12 +271,13 @@ function renderWake(){
   $('#stage').innerHTML = `
     <div class="clock">${hm(d)}</div>
     <div class="date">${mdw(today())}</div>
-    <button class="sunbtn" id="sunBtn">おはよう</button>
+    <button class="sunbtn${isEve() ? ' eve' : ''}" id="sunBtn">${isEve() ? 'おかえり' : 'おはよう'}</button>
     <p class="muted" style="text-align:center;margin-top:22px">押すと、ヒラ先生の声がはじまります</p>`;
   $('#sunBtn').onclick = () => {
-    T.rec.woke = hm(new Date());
+    const eve = isEve();
+    T.rec[eve ? 'back' : 'woke'] = hm(new Date());
     buildFlow();
-    next(choose(ofGroup('B')));
+    next(choose(ofGroup(eve ? 'V' : 'B')));
   };
 }
 
@@ -295,7 +315,7 @@ async function next(lead){
   }else if(kind === 'last'){
     const g = omakase();
     hint = `おまかせ：今日は「${g === 'F' ? '喝' : g === 'G' ? '励まし' : '喝か励まし'}」${g === 'mix' ? '' : '（昨日の約束が「' + esc(yReview()) + '」だったので）'}`;
-    choices = ['喝','励まし','おまかせ'].map(v => `<button data-v="${v}">${v}</button>`).join('');
+    choices = ['喝','本気の喝','励まし','おまかせ'].map(v => `<button data-v="${v}">${v}</button>`).join(''); cls = 'two';
   }
   const ids = [...pre, q];
   $('#stage').innerHTML = `
@@ -324,9 +344,9 @@ function answer(kind, v){
     T.rec.backlog = v === '1';
     reply = choose(ofGroup('E', v === '1' ? 'たまってる' : 'たまってない'));
   }else if(kind === 'last'){
-    const g = v === '喝' ? 'F' : v === '励まし' ? 'G' : omakase();
+    const g = v === '喝' ? 'F' : v === '本気の喝' ? 'H' : v === '励まし' ? 'G' : omakase();
     T.word = g === 'mix' ? pick(['F','G']) : g;
-    T.rec.word = (T.word === 'F' ? '喝' : '励まし') + (v === 'おまかせ' ? '（おまかせ）' : '');
+    T.rec.word = WORDG[T.word] + (v === 'おまかせ' ? '（おまかせ）' : '');
     save(); return finish(choose(ofGroup(T.word)));
   }
   save(); next(reply);
@@ -351,11 +371,48 @@ function finish(last){
         <div><b>${esc(hLabel(r.hours))}</b><span>やる</span></div>
         <div><b>${esc(r.first)}</b><span>から始める</span></div>
       </div>
-      <p class="muted" style="margin:10px 0 0">明日の朝、この約束をふり返ります。</p>
+      <p class="muted" style="margin:10px 0 0">明日、この約束をふり返ります。</p>
     </div>
-    <div class="choices two"><button class="wide" id="endBtn">よし、起きる</button></div>`;
+    <div class="choices two">
+      ${goal().text && !goal().days[today()] ? `<button class="wide dark" id="goalNow">ゴール宣言もする</button>` : ''}
+      <button class="wide" id="endBtn">${isEve() ? 'よし、始める' : 'よし、起きる'}</button></div>`;
   $('#endBtn').onclick = closeTalk;
+  if($('#goalNow')) $('#goalNow').onclick = () => renderGoal(true);
   say(ids);
+}
+
+/* ===================== ゴール宣言（v8） =====================
+   「ゴールは何？」→ 声に出して言う →「言った！」→ 応援の一言。宣言した日をためて、続いた日数を出す */
+function openGoal(){
+  T = T || { rec:{}, step:0 };
+  $('#talk').classList.add('on'); document.body.style.overflow = 'hidden';
+  renderGoal(false);
+}
+function renderGoal(fromTalk){
+  const g = goal();
+  const q = Object.keys(g.days).length ? 'k2' : 'k1';
+  $('#tStep').textContent = 'ゴール宣言';
+  $('#stage').innerHTML = `
+    <div class="who"><img src="icon-192.png" alt=""><b>ヒラ先生</b></div>
+    <div class="bubble">${esc(LINE[q].text)}</div>
+    <div class="goalcard"><span>わたしのゴール</span><b>${esc(g.text)}</b></div>
+    <p class="muted" style="text-align:center;margin:12px 0 0">声に出して言ってから、下を押してください</p>
+    <div class="choices two"><button class="wide dark" id="saidBtn">言った！</button></div>`;
+  $('#saidBtn').onclick = () => {
+    g.days[today()] = true; save();
+    const r = choose(ofGroup('K', '言った')); save();
+    const n = streak(), total = Object.keys(g.days).length;
+    $('#tStep').textContent = '';
+    $('#stage').innerHTML = `
+      <div class="who"><img src="icon-192.png" alt=""><b>ヒラ先生</b></div>
+      <div class="bubble">${esc(LINE[r].text)}</div>
+      <div class="goalcard"><span>わたしのゴール</span><b>${esc(g.text)}</b></div>
+      <div class="promise" style="margin-top:14px"><div><b>${n}日</b><span>続いている</span></div><div><b>${total}日</b><span>宣言した日</span></div><div><b>${mdw(today())}</b><span>今日</span></div></div>
+      <div class="choices two"><button class="wide" id="gEnd">とじる</button></div>`;
+    $('#gEnd').onclick = closeTalk;
+    say([r]);
+  };
+  say([q]);
 }
 
 /* ===================== ホーム ===================== */
@@ -377,14 +434,28 @@ function renderHome(){
       </div>
     </div>` : ''}
     <div class="card">
-      <button class="big" id="startBtn">朝の会話をはじめる</button>
+      <button class="big" id="startBtn">${isEve() ? 'おかえりの会話をはじめる' : '朝の会話をはじめる'}</button>
       <p class="muted" style="margin:10px 0 0">ふだんは、iPhone のアラームを止めると自動でここが開きます（下の「準備」）。</p>
+    </div>
+
+    <div class="card">
+      <h2>ゴール宣言</h2>
+      ${goal().text ? `
+        <div class="goalcard"><span>わたしのゴール</span><b>${esc(goal().text)}</b></div>
+        <p class="muted" style="margin:8px 0 10px">${goal().days[today()] ? '今日は宣言しました。' : 'まだ今日は宣言していません。'}　${streak()}日続いている・宣言した日 ${Object.keys(goal().days).length}日</p>
+        <button class="big dark" id="goalBtn">ゴール宣言する</button>
+        <button class="sub" id="goalEdit">ゴールを書きかえる</button>`
+      : `
+        <p class="muted" style="margin:0 0 8px">まず、自分のゴールを書いてください。毎日これを声に出して宣言します。</p>
+        <textarea id="goalIn" rows="2" placeholder="例：次の定期テストで数学80点"></textarea>
+        <button class="big dark" id="goalSave" style="margin-top:10px">このゴールにする</button>`}
     </div>
 
     <div class="card">
       <h2>ヒラ先生の一言を聞く</h2>
       <div class="listen">
         <button data-g="F"><b>喝</b><span>を聞く</span></button>
+        <button data-g="H"><b>本気の喝</b><span>を聞く</span></button>
         <button data-g="G"><b>励まし</b><span>を聞く</span></button>
       </div>
       <div class="said" id="said">勉強を始める前や、だらけてきたときに押してください。</div>
@@ -402,7 +473,7 @@ function renderHome(){
           <li>「新規の空のオートメーション」→「アクションを追加」→「URLを開く」を選ぶ。</li>
           <li>URL のところに、下のアドレスを貼りつけて「完了」。
             <div class="url" style="margin-top:6px"><span id="wUrl">${esc(wakeUrl())}</span><button id="copyBtn">コピー</button></div></li>
-          <li>アラームを止めると、このアプリが開いて朝の会話がはじまります。</li>
+          <li>アラームを止めると、このアプリが開いて朝の会話がはじまります。学校から帰る時刻にもアラームをかければ、夕方は「おかえり」の会話になります。</li>
         </ol>
         <p class="muted">開くのは Safari です。このページも Safari で開いたまま使ってください（ホーム画面に置かなくて大丈夫です）。</p>
       </details>
@@ -429,10 +500,10 @@ function renderHome(){
 
     ${days.length ? `
     <div class="card">
-      <h2>これまでの朝</h2>
+      <h2>これまでの記録</h2>
       <table class="hist">
         ${days.map(k => { const d = S.days[k]; const rv = d.review;
-          return `<tr><td>${mdw(k)}</td><td>${d.woke ? esc(d.woke)+' 起床' : ''}</td>
+          return `<tr><td>${mdw(k)}</td><td>${d.woke ? esc(d.woke)+' 起床' : d.back ? esc(d.back)+' 帰宅' : ''}</td>
             <td>${d.hours ? esc(d.start)+'から'+esc(hLabel(d.hours)) : ''}</td>
             <td>${rv ? `<span class="tag ${rv === 'できた' ? 'ok' : rv === 'できなかった' ? 'ng' : ''}">${esc(rv)}</span>` : ''}</td></tr>`; }).join('')}
       </table>
@@ -452,6 +523,16 @@ function renderHome(){
     say([id]);
   });
   $('#helpCard').onclick = openHelp;
+  if($('#goalBtn')) $('#goalBtn').onclick = openGoal;
+  if($('#goalEdit')) $('#goalEdit').onclick = () => {
+    const t = prompt('新しいゴール', goal().text); if(t == null) return;
+    if(!t.trim()) return toast('ゴールが空です');
+    goal().text = t.trim().slice(0, 80); save(); renderHome(); toast('ゴールを書きかえました');
+  };
+  if($('#goalSave')) $('#goalSave').onclick = () => {
+    const t = $('#goalIn').value.trim(); if(!t) return toast('ゴールを書いてください');
+    goal().text = t.slice(0, 80); save(); renderHome(); toast('ゴールを決めました');
+  };
   $('#copyBtn').onclick = async () => {
     try{ await navigator.clipboard.writeText(wakeUrl()); toast('コピーしました'); }
     catch(e){ const r = document.createRange(); r.selectNodeContents($('#wUrl')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('選んだ字をコピーしてください'); }
@@ -470,13 +551,15 @@ function slides(){ return [
   { pic:'🛠', t:'1. はじめに1回だけ準備', p:'ホームの<b>「準備」</b>の手順どおりに、iPhone の<b>「ショートカット」</b>アプリで「アラームを止めたら、このアプリを開く」を設定します（5分）。', ex:'このアプリは <b>Safari</b> で開いて使ってください。アラームから開くのも Safari です。Android の人は、アラームを止めたらアプリを開いてください。' },
   { pic:'☀️', t:'2. 朝は「おはよう」を押す', p:'アラームを止めると、このアプリが開きます。まん中の<b>「おはよう」</b>を押すと、ヒラ先生の声がはじまります。', ex:'スマホは、画面を押すまで音を出せない決まりです。押すこと自体が「起きた」合図になります。' },
   { pic:'🗓', t:'3. 質問にボタンで答える', p:'<b>何時から</b>勉強するか・<b>何時間</b>やるか・<b>最初に何から</b>やるか・<b>解き直しがたまっていないか</b>を、ボタンで答えます。', ex:'答え方によって、ヒラ先生の返事が変わります。同じ言葉は続けて出ません。' },
-  { pic:'🔥', t:'4. 最後の一言を選ぶ', p:'最後に<b>「喝」「励まし」「おまかせ」</b>から選ぶと、その一言が流れます。おまかせは、昨日の約束が<b>できた日は励まし</b>、<b>できなかった日は喝</b>です。', ex:'その日の気分で選んでください。「今日は喝がほしい」と自分で選ぶのも、気持ちの切りかえになります。' },
+  { pic:'🔥', t:'4. 最後の一言を選ぶ', p:'最後に<b>「喝」「本気の喝」「励まし」「おまかせ」</b>から選ぶと、その一言が流れます。おまかせは、昨日の約束が<b>できた日は励まし</b>、<b>できなかった日は喝</b>です。', ex:'その日の気分で選んでください。「今日は本気の喝がほしい」と自分で選ぶのも、気持ちの切りかえになります。' },
   { pic:'✅', t:'5. 次の朝にふり返る', p:'次の朝、最初に<b>「昨日、約束した時間、できた？」</b>と聞かれます。「できた・半分・できなかった」で答えます。', ex:'約束は、決めっぱなしにしないことが大事です。' },
-  { pic:'🎧', t:'6. いつでも一言を聞く', p:'ホームの<b>「喝を聞く」「励ましを聞く」</b>を押すと、いつでもヒラ先生の一言が流れます。', ex:'勉強を始める前や、だらけてきたときに使ってください。' },
-  { pic:'📒', t:'7. これまでの朝', p:'起きた時刻・約束・ふり返りが、ホームの<b>「これまでの朝」</b>に残ります。', ex:'記録はこの端末の中だけに保存されます。' },
-  { pic:'🔔', t:'8. アラームの音もヒラ先生の声に', p:'やりたい人だけです。ホームの「準備」の中の手順で、<b>アラームの音をヒラ先生の声</b>にできます。', ex:'iPhone は「GarageBand」アプリ（無料）を使います。' },
-  { pic:'👥', t:'9. 兄弟で使う', p:'1台を兄弟で使うときは、ホームのいちばん下の<b>「使う人」</b>で人をふやします。記録は人ごとに別々です。' },
-  { pic:'⬇️', t:'10. 更新があるとき', p:'新しい版が出ると、上に<b>オレンジの「更新があります」</b>が出ます。押すと最新になります。', ex:'ホームの「更新があるか調べる」でも確かめられます。' },
+  { pic:'🎯', t:'6. ゴール宣言', p:'ホームの<b>「ゴール宣言」</b>に自分のゴールを書いておきます。「ゴール宣言する」を押すとヒラ先生が<b>「ゴールは何？」</b>と聞くので、<b>声に出して言って</b>から「言った！」を押します。', ex:'宣言した日がたまり、<b>何日続いているか</b>が出ます。朝の会話の最後にも「ゴール宣言もする」が出ます。' },
+  { pic:'🏠', t:'7. 夕方は「おかえり」', p:'昼すぎに開くと、あいさつが<b>「おかえり。お疲れさん」</b>に変わります。質問は朝と同じです。学校から帰ってから、今日の勉強を決めたい人に。', ex:'帰る時刻にもアラームをかければ、朝と同じショートカットでそのまま開きます。' },
+  { pic:'🎧', t:'8. いつでも一言を聞く', p:'ホームの<b>「喝」「本気の喝」「励まし」</b>を押すと、いつでもヒラ先生の一言が流れます。', ex:'勉強を始める前や、だらけてきたときに使ってください。' },
+  { pic:'📒', t:'9. これまでの記録', p:'起きた（帰った）時刻・約束・ふり返りが、ホームの<b>「これまでの記録」</b>に残ります。', ex:'記録はこの端末の中だけに保存されます。' },
+  { pic:'🔔', t:'10. アラームの音もヒラ先生の声に', p:'やりたい人だけです。ホームの「準備」の中の手順で、<b>アラームの音をヒラ先生の声</b>にできます。', ex:'iPhone は「GarageBand」アプリ（無料）を使います。' },
+  { pic:'👥', t:'11. 兄弟で使う', p:'1台を兄弟で使うときは、ホームのいちばん下の<b>「使う人」</b>で人をふやします。記録は人ごとに別々です。' },
+  { pic:'⬇️', t:'12. 更新があるとき', p:'新しい版が出ると、上に<b>オレンジの「更新があります」</b>が出ます。押すと最新になります。', ex:'ホームの「更新があるか調べる」でも確かめられます。' },
 ]; }
 function openHelp(){
   const SL = slides();

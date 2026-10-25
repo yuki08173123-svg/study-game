@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <script src="../common/users.js?v=1" data-app="wake"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ヒラ目覚まし</title>
+<title>ヒラボイス</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -92,7 +92,7 @@ details{ margin-top:8px; } summary{ font-weight:700; cursor:pointer; }
 </head>
 <body>
 <header>
-  <h1><img class="logo" src="icon-192.png" alt="">ヒラ目覚まし <small id="ver"></small></h1>
+  <h1><img class="logo" src="icon-192.png" alt="">ヒラボイス <small id="ver"></small></h1>
   <button data-users-tag hidden></button>
 </header>
 <main id="home"></main>
@@ -104,10 +104,10 @@ details{ margin-top:8px; } summary{ font-weight:700; cursor:pointer; }
 <div class="toast" id="toast"></div>
 <audio id="au" playsinline preload="auto"></audio>
 
-<script src="lines.js?v=2"></script>
+<script src="lines.js?v=3"></script>
 <script>
 /* ===================== 基本 ===================== */
-const VER = 2;
+const VER = 3;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

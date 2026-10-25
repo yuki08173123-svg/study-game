@@ -1,8 +1,8 @@
-/* ヒラ目覚まし の service worker
+/* ヒラボイス の service worker
    方針:「ネットワーク優先」。まずネットから最新をとり、とれたものをキャッシュに控える。
    ネットがないときだけキャッシュで動く。キャッシュを先に見る方式にすると
    「直したのに古い画面が出る」事故になるので、ぜったいにしない。 */
-const VER = 'wk-v2';
+const VER = 'wk-v3';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {

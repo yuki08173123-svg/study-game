@@ -666,6 +666,11 @@ html[data-theme="light"] .tg::after{background:#fff;}
       <div class="dim">字を大きく、言葉をやさしくして、使う機能をしぼります（ランダム・間隔の設定・届く日・部屋に出す をかくします）。ミスの種類は6つから選びます。いまの使う人だけに効くので、兄弟で「兄はいつもの、弟はかんたん」にできます。</div>
     </div>
 
+    <div class="card" id="syncCard">
+      <h3><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-13.7 5.7"/><path d="M4 12a8 8 0 0 1 13.7-5.7"/><path d="M17.7 3v3.3h-3.3"/><path d="M6.3 21v-3.3h3.3"/></svg>同期（iPad・スマホで同じにする）</h3>
+      <div id="hsBox"></div>
+    </div>
+
     <div class="card" id="profCard">
       <h3><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.3c.5-.2 1-.3 1.5-.3 2.8 0 5 2.2 5 5"/></svg>使う人（兄弟で1台を使うとき）</h3>
       <div class="dim" style="margin-bottom:10px">人ごとに、問題・写真・記録・間隔の設定が別々に保存されます。名前を押すと、その人に切りかわります。</div>
@@ -706,7 +711,7 @@ html[data-theme="light"] .tg::after{background:#fff;}
     <div class="card">
       <h3><svg viewBox="0 0 24 24"><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/></svg>控え（バックアップ）</h3>
       <div id="bkNote"></div>
-      <div class="dim" style="margin-bottom:8px">データは、この端末の中だけに保存されています（外には送りません）。機種変更や万一のために、ときどき控えを残してください。</div>
+      <div class="dim" style="margin-bottom:8px">データは、この端末の中に保存されています（上の「同期」を使っていなければ、外には送りません）。機種変更や万一のために、ときどき控えを残してください。</div>
       <button class="btn-chip acc" id="btnExport" style="width:100%"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>記録の控えをとる<span id="bkSize" class="dim" style="font-weight:700"></span></button>
       <div class="dim" style="margin:6px 0 10px">問題・間違えた理由・改善点・解いた記録が入ります。軽いので、いつでも押せます。</div>
       <div class="btnrow" style="margin-top:0">
@@ -756,8 +761,408 @@ html[data-theme="light"] .tg::after{background:#fff;}
 <div class="toast" id="toast"></div>
 
 <script>
+/* HSYNC BEGIN ─────────────────────────────────────────────
+   同期（iPad・スマホ・パソコンで同じにする）。Essence v44（2026-10-26 コツカワ「essence でも同期できるように」→ ヒラ「同期の仕組みを作って」）。
+   ※ ヒラボイスの HSYNC をそのまま持ってきたもの（もとは高校ルート→理科の一問一答→ヒラボイス）。違いは4つ：
+     ① C.metaApp … 同期の記録（hs.〜）を「使う人」ごとに分ける。預ける先のコード（derive）は app='essence' のまま（使う人の id は端末ごとにちがうため入れない）
+     ② siblingCode で、兄弟（hs.essence…）のコードはすすめない
+     ③ code()・_call・_deriveFor を外に出す … 写真を1枚ずつ預ける／受けとるのに使う（写真は HSYNC の外で運ぶ）
+     ④ 記録は1つのキー（S まるごと）なので、C.mergeKey（essMerge）で問題ごとに合わせる
+
+   預け先は計画マップと同じ Google Apps Script（plan/gas/Sync.gs）。サーバー側は変えていない。
+   ・同期コードは全アプリで1つ。計画マップのコードをそのまま入れればよい。
+   ・サーバーには、そのコードから作った「アプリごとのコード」で預ける（アプリどうしが上書きし合わない）。
+   ・預けるのは config.keys の localStorage だけ。写真（IndexedDB）は下の「写真の同期」で別に運ぶ。
+   ─────────────────────────────────────────────────────────── */
+const HSync = (function(){
+  const URL = 'https://script.google.com/macros/s/AKfycbztk0Zk4YnnAjKcOgsVU690-gAn_FfN5xGILx5u_YUj6syG5xk80sV6Biqa1WOce-uQ/exec';
+  const SECRET = 'hiramap-2026';
+  const CH = 'abcdefghjkmnpqrstuvwxyz23456789';      // 0/o/1/l/i は使わない（計画マップと同じ）
+  const TOMB_DAYS = 90;
+
+  let C = null;                 // 設定（init で受けとる）
+  let M = null;                 // この端末の同期の記録 { code, mt, at, dirty, err }
+  let T = {};                   // 消したしるし { key: { id: 時刻 } }
+  let applying = false, reloading = false, busy = false, seq = 0, timer = null, pending = null;
+  const ls = window.localStorage;
+  const _set = Storage.prototype.setItem, _get = Storage.prototype.getItem, _rm = Storage.prototype.removeItem;
+
+  /* ---------- 小道具 ---------- */
+  const now = () => Date.now();
+  const metaKey = () => 'hs.' + (C.metaApp || C.app), tombKey = () => 'hs.' + (C.metaApp || C.app) + '.tomb';
+  function loadMeta(){
+    try{ M = JSON.parse(_get.call(ls, metaKey()) || 'null') || {}; }catch(e){ M = {}; }
+    try{ T = JSON.parse(_get.call(ls, tombKey()) || 'null') || {}; }catch(e){ T = {}; }
+  }
+  function saveMeta(){ try{ _set.call(ls, metaKey(), JSON.stringify(M)); _set.call(ls, tombKey(), JSON.stringify(T)); }catch(e){} }
+  function norm(v){
+    const a = String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    return a.length === 8 ? a.slice(0, 4) + '-' + a.slice(4) : '';
+  }
+  /* コード X から、このアプリ用のコードを作る（どの端末でも同じになる） */
+  function h32(s, seed){ let h = seed >>> 0; for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h >>> 0; }
+  function derive(master){ return deriveWith(master, C.app); }
+  function deriveWith(master, app){
+    let a = h32(master + '|' + app, 2166136261), b = h32(app + '|' + master, 0x9747b28c), s = '';
+    for(let i = 0; i < 8; i++){
+      if(i === 4) s += '-';
+      if(i < 4){ s += CH[a % 31]; a = Math.floor(a / 31); } else { s += CH[b % 31]; b = Math.floor(b / 31); }
+    }
+    return s;
+  }
+  async function call(p){
+    const r = await fetch(URL, { method:'POST', body: JSON.stringify(Object.assign({ secret:SECRET }, p)) });
+    return r.json();
+  }
+  const say = (m) => { try{ C.toast && C.toast(m); }catch(e){} };
+  /* 入力と確認。C.ask / C.yes があればアプリの画面で聞く（iPhoneのホーム画面アプリでは prompt/confirm が出ないことがあるため） */
+  const ask = (msg) => C.ask ? C.ask(msg) : Promise.resolve(prompt(msg));
+  const yes = (msg) => C.yes ? C.yes(msg) : Promise.resolve(confirm(msg));
+  const fmt = (t) => { const d = new Date(t); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+
+  /* ---------- 中身の出し入れ ---------- */
+  function collect(){
+    const keys = {};
+    C.keys.forEach(k => { const v = _get.call(ls, k); if(v !== null) keys[k] = v; });
+    pruneTomb();
+    return { app: C.app, v: 1, keys, tomb: T, who: whoNow() };
+  }
+  /* 兄弟で1台を使うときの「いまの人」の名前（ヒラボイス v13 で追加・ほかの人のコードを入れたら止めるため） */
+  function whoNow(){ try{ return C.who ? (C.who() || '') : ''; }catch(e){ return ''; } }
+  function hasLocal(){ return C.hasData ? !!C.hasData() : C.keys.some(k => _get.call(ls, k) !== null); }
+  function pruneTomb(){
+    const lim = now() - TOMB_DAYS * 864e5;
+    Object.keys(T).forEach(k => { Object.keys(T[k] || {}).forEach(id => { if(T[k][id] < lim) delete T[k][id]; }); });
+  }
+  const idOf = (spec, x) => (x && x[spec.id] !== undefined) ? String(x[spec.id]) : null;
+
+  /* 消したものを覚える（lists のキーだけ） */
+  function tombDiff(k, oldRaw, newRaw){
+    const spec = C.lists && C.lists[k]; if(!spec) return;
+    let a = [], b = [];
+    try{ a = JSON.parse(oldRaw || '[]') || []; }catch(e){}
+    try{ b = JSON.parse(newRaw || '[]') || []; }catch(e){}
+    if(!Array.isArray(a) || !Array.isArray(b)) return;
+    const keep = {}; b.forEach(x => { const id = idOf(spec, x); if(id) keep[id] = 1; });
+    a.forEach(x => { const id = idOf(spec, x); if(id && !keep[id]){ (T[k] = T[k] || {})[id] = now(); } });
+    b.forEach(x => { const id = idOf(spec, x); if(id && T[k] && T[k][id]) delete T[k][id]; });   // 戻したものは消さない
+  }
+
+  /* 2台の中身を合わせる。lists は id ごとに足し合わせ、ほかは新しいほうの値 */
+  function merge(loc, rem, remNewer){
+    const out = { app: C.app, v: 1, keys: {}, tomb: {} };
+    const tb = {};
+    [loc.tomb || {}, rem.tomb || {}].forEach(t => Object.keys(t).forEach(k => Object.keys(t[k] || {}).forEach(id => {
+      tb[k] = tb[k] || {}; tb[k][id] = Math.max(tb[k][id] || 0, t[k][id]);
+    })));
+    out.tomb = tb;
+    C.keys.forEach(k => {
+      const lv = loc.keys[k], rv = rem.keys[k];
+      const spec = C.lists && C.lists[k];
+      if(!spec){
+        let v;
+        if(C.mergeKey && lv !== undefined && rv !== undefined && lv !== rv){ try{ v = C.mergeKey(k, lv, rv, remNewer); }catch(e){ v = undefined; } }
+        if(v === undefined) v = remNewer ? (rv !== undefined ? rv : lv) : (lv !== undefined ? lv : rv);
+        if(v !== undefined) out.keys[k] = v;
+        return;
+      }
+      let la = [], ra = [];
+      try{ la = JSON.parse(lv || '[]') || []; }catch(e){}
+      try{ ra = JSON.parse(rv || '[]') || []; }catch(e){}
+      const first = remNewer ? ra : la, second = remNewer ? la : ra;   // 同じ id は新しい側を優先
+      const map = {}, order = [];
+      first.concat(second).forEach(x => {
+        const id = idOf(spec, x); if(!id) return;
+        const cur = map[id];
+        if(!cur){ map[id] = x; order.push(id); return; }
+        if(spec.t && (Number(x[spec.t]) || 0) > (Number(cur[spec.t]) || 0)) map[id] = x;
+      });
+      const dead = tb[k] || {};
+      let arr = order.filter(id => !(dead[id] && !(spec.t && (Number(map[id][spec.t]) || 0) > dead[id]))).map(id => map[id]);
+      if(spec.sort) arr.sort(spec.sort);
+      out.keys[k] = JSON.stringify(arr);
+    });
+    return out;
+  }
+
+  /* 預かっていた中身をこの端末に入れて、画面を読みなおす */
+  function applyAndReload(obj, msg){
+    if(isBusy()){
+      if(!pending) setTimeout(retryPending, 5000);
+      pending = { obj, msg, seq: pending ? pending.seq : seq };
+      return;
+    }
+    applying = true;
+    try{
+      C.keys.forEach(k => {
+        if(obj.keys && obj.keys[k] !== undefined) _set.call(ls, k, obj.keys[k]);
+        else _rm.call(ls, k);
+      });
+      T = obj.tomb || {};
+    }catch(e){}
+    applying = false;
+    saveMeta();
+    try{ sessionStorage.setItem('hs.msg', msg || '同期しました'); }catch(e){}
+    reloading = true;            // このあとアプリが閉じぎわに古い中身を保存しても、書きもどさない
+    location.reload();
+  }
+  function retryPending(){
+    if(!pending) return;
+    if(isBusy()){ setTimeout(retryPending, 5000); return; }
+    const p = pending; pending = null;
+    // 待っている間にこの端末でも書いた → 2つを合わせて入れ、合わせたものを預けなおす
+    if(seq !== p.seq){
+      const merged = merge(collect(), p.obj, false);
+      M.mt = Math.max(now(), (M.mt || 0) + 1); M.dirty = true; saveMeta();
+      applyAndReload(merged, '2台の記録を合わせました');
+      return;
+    }
+    applyAndReload(p.obj, p.msg);
+  }
+  function isBusy(){
+    try{ if(C.busy && C.busy()) return true; }catch(e){}
+    const a = document.activeElement;
+    return !!(a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /text|search|number|time|date/.test(a.type || 'text'))));
+  }
+
+  /* ---------- 変わったら送る ---------- */
+  function touch(){
+    if(!M.code) return;
+    seq++;
+    M.mt = Math.max(now(), (M.mt || 0) + 1);   // 端末の時計が多少ずれていても前に進む
+    M.dirty = true; saveMeta();
+    clearTimeout(timer);
+    timer = setTimeout(push, C.delay || 3000);
+  }
+  /* localStorage への書きこみを見張る。アプリ側のコードは直さなくてよい */
+  Storage.prototype.setItem = function(k, v){
+    if(this === ls && C && !applying && C.keys.indexOf(k) >= 0){
+      if(reloading) return;
+      const old = _get.call(this, k);
+      _set.call(this, k, v);
+      if(old !== String(v)){ tombDiff(k, old, String(v)); touch(); }
+      return;
+    }
+    return _set.call(this, k, v);
+  };
+  Storage.prototype.removeItem = function(k){
+    if(this === ls && C && !applying && C.keys.indexOf(k) >= 0){
+      if(reloading) return;
+      const old = _get.call(this, k);
+      _rm.call(this, k);
+      if(old !== null){ tombDiff(k, old, '[]'); touch(); }
+      return;
+    }
+    return _rm.call(this, k);
+  };
+
+  async function push(){
+    if(!M.code) return;
+    if(busy){ clearTimeout(timer); timer = setTimeout(push, 1500); return; }
+    busy = true;
+    const mySeq = seq;
+    try{
+      const r = await call({ action:'put', code:derive(M.code), mt:M.mt || 0, name:C.label, data:JSON.stringify(collect()) });
+      if(r && r.ok && r.stale) await onRemote(r);
+      else if(r && r.ok){ M.at = now(); M.err = ''; if(seq === mySeq) M.dirty = false; }
+      else M.err = (r && r.err) || '送れませんでした';
+    }catch(e){ M.err = 'つながりませんでした'; }
+    busy = false; saveMeta(); render();
+    if(M.err){ clearTimeout(timer); timer = setTimeout(push, 30000); }
+    else if(M.dirty && seq !== mySeq){ clearTimeout(timer); timer = setTimeout(push, C.delay || 3000); }
+  }
+  /* 閉じるとき。書いた直後に閉じても届くように */
+  function flush(){
+    if(!M || !M.code || !M.dirty || reloading) return;
+    const body = JSON.stringify({ secret:SECRET, action:'put', code:derive(M.code), mt:M.mt || 0, name:C.label, data:JSON.stringify(collect()) });
+    if(body.length > 60000) return;            // keepalive で送れる大きさをこえたら、次に開いたときに送る
+    try{ fetch(URL, { method:'POST', body, keepalive:true }); }catch(e){}
+  }
+
+  /* 預かりのほうが新しかったとき */
+  async function onRemote(r){
+    let rem = null; try{ rem = JSON.parse(r.data || 'null'); }catch(e){}
+    if(!rem || rem.app !== C.app || !rem.keys){ M.err = 'このコードの中身が読めません'; return; }
+    if(!M.dirty){
+      M.mt = r.mt || M.mt; M.at = now(); M.err = ''; saveMeta();
+      applyAndReload(rem, 'ほかの端末の記録を受けとりました');
+      return;
+    }
+    // この端末にもまだ送っていない書きこみがある → 合わせて、合わせたものを預けなおす
+    const merged = merge(collect(), rem, true);
+    M.mt = Math.max(now(), (r.mt || 0) + 1); M.dirty = true; M.at = now(); M.err = ''; saveMeta();
+    applyAndReload(merged, '2台の記録を合わせました');
+  }
+
+  async function pull(quiet){
+    if(!M.code) return;
+    if(busy) return;
+    busy = true;
+    try{
+      const r = await call({ action:'get', code:derive(M.code) });
+      busy = false;
+      if(r && r.ok && r.found){
+        if((r.mt || 0) > (M.mt || 0)){ await onRemote(r); }
+        else if((r.mt || 0) < (M.mt || 0) || M.dirty){ await push(); return; }
+        else { M.at = now(); M.err = ''; if(!quiet) say('同期ずみです'); }
+      }else if(r && r.ok){ await push(); return; }
+      else M.err = (r && r.err) || '受けとれませんでした';
+    }catch(e){ busy = false; M.err = 'つながりませんでした'; }
+    saveMeta(); render();
+  }
+
+  /* ---------- ボタン ---------- */
+  async function start(){
+    say('コードを作っています…');
+    try{
+      const r = await call({ action:'new' });
+      if(!r || !r.ok){ say((r && r.err) || 'つながりませんでした'); return; }
+      M = { code:r.code, mt:now(), dirty:true, at:0, err:'' }; saveMeta(); render();
+      await push();
+      say(M.err ? M.err : '同期をはじめました');
+    }catch(e){ say('つながりませんでした'); }
+  }
+  async function join(){
+    const v = await ask('同期コード（8文字）を入れてください。\n計画マップなど、ほかのアプリで使っているコードと同じでOKです。');
+    if(v === null) return;
+    const code = norm(v);
+    if(!code){ say('コードは8文字です（例 abcd-2345）'); return; }
+    try{
+      const r = await call({ action:'get', code:derive(code) });
+      if(r && r.ok && !r.found &&
+         !(await yes('コード「' + code + '」の' + C.label + 'の記録は、まだ預けられていません。\nこの端末の記録を、このコードで預けはじめますか？\n\n計画マップなどで使っているコードなら、このままで大丈夫です。打ちまちがいがないかだけ確認してください。'))) return;
+    }catch(e){}
+    joinWith(code);
+  }
+  async function stop(){
+    if(!(await yes('この端末の同期をやめます。記録はこの端末に残り、預けたぶんも消えません。よろしいですか？'))) return;
+    M = {}; saveMeta(); render(); say('同期をやめました');
+  }
+  /* 同じサイトのほかのアプリが同期コードを持っていれば、それを使える（パソコン・Android。
+     iPhoneのホーム画面アプリはアプリごとに保存場所が別なので、たいてい見つからない） */
+  function siblingCode(){
+    const tries = [];
+    try{
+      for(let i = 0; i < ls.length; i++){
+        const k = ls.key(i); let o = null;
+        if(/^planmap_(v1|p.+)$/.test(k)){ try{ o = JSON.parse(_get.call(ls, k) || '{}'); }catch(e){} if(o && o.syncCode) tries.push(['計画マップ', o.syncCode]); }
+        else if(k === 'mn_sync'){ try{ o = JSON.parse(_get.call(ls, k) || '{}'); }catch(e){} if(o && o.code) tries.push(['ReNote', o.code]); }
+        else if(/^hs\.[a-z]+$/.test(k) && k !== metaKey() && k.indexOf('hs.' + C.app) !== 0){ try{ o = JSON.parse(_get.call(ls, k) || '{}'); }catch(e){} if(o && o.code) tries.push(['ほかのアプリ', o.code]); }
+      }
+    }catch(e){}
+    for(const t of tries){ const c = norm(t[1]); if(c) return { from:t[0], code:c }; }
+    return null;
+  }
+  async function joinWith(code){
+    say('さがしています…');
+    try{
+      const r = await call({ action:'get', code:derive(code) });
+      if(!r || !r.ok){ say((r && r.err) || 'つながりませんでした'); return; }
+      if(r.found){
+        let rem = null; try{ rem = JSON.parse(r.data || 'null'); }catch(e){}
+        if(!rem || rem.app !== C.app || !rem.keys){ say('このコードの中身が読めません'); return; }
+        const me = whoNow();
+        if(rem.who && me && rem.who !== me &&
+           !(await yes('このコードは「' + rem.who + '」の記録です。\nいまの使う人は「' + me + '」です。\n\n兄弟は、人ごとに別の同期コードにしてください。もう1台でも、先に「使う人」を同じ人に切りかえてから入れます。\n\nこのまま「' + me + '」に入れますか？'))) return;
+        if((C.lists || C.mergeKey) && hasLocal()){
+          if(!(await yes('この端末の記録と、コード「' + code + '」に預けてある記録を合わせます。\nどちらの記録も残ります。よろしいですか？'))) return;
+          const merged = merge(collect(), rem, true);
+          M = { code, mt:Math.max(now(), (r.mt || 0) + 1), dirty:true, at:now(), err:'' }; saveMeta();
+          applyAndReload(merged, '2台の記録を合わせました');
+          return;
+        }
+        if(hasLocal() && !(await yes('この端末のいまの記録は、コード「' + code + '」の記録に入れかわります。よろしいですか？\n（この端末にだけある記録は消えます）'))) return;
+        M = { code, mt:r.mt || 0, dirty:false, at:now(), err:'' }; saveMeta();
+        applyAndReload(rem, '同じ記録になりました');
+        return;
+      }
+      M = { code, mt:now(), dirty:true, at:0, err:'' }; saveMeta(); render();
+      await push();
+      say(M.err ? M.err : '同期をはじめました');
+    }catch(e){ say('つながりませんでした'); }
+  }
+  async function copy(){
+    try{ await navigator.clipboard.writeText(M.code); say('コピーしました'); }
+    catch(e){ say('長押しでコピーしてください'); }
+  }
+
+  /* ---------- 画面 ---------- */
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  function render(){
+    const el = C && document.querySelector(C.mount); if(!el) return;
+    const k = C.cls || {};
+    if(!M.code){
+      const sib = siblingCode();
+      el.innerHTML =
+        '<div class="hs-btns">' +
+          (sib ? '<button class="' + (k.btn || '') + '" data-hs="sib" data-code="' + sib.code + '">' + sib.from + 'と同じコード（' + sib.code + '）で同期する</button>' : '') +
+          '<button class="' + (sib ? (k.ghost || k.btn || '') : (k.btn || '')) + '" data-hs="start">同期をはじめる（この端末の記録をあずける）</button>' +
+          '<button class="' + (k.ghost || k.btn || '') + '" data-hs="join">ほかの端末・アプリのコードを入れる</button>' +
+        '</div>' +
+        '<p class="' + (k.dim || '') + '">1台目で「同期をはじめる」を押すと、<b>同期コード</b>（8文字）が出ます。2台目でそのコードを入れると同じ記録になり、そのあとは<b>書くたびに自動で同期</b>します。<br>' +
+        '<b>計画マップで同期している人は、そのコードをここに入れればOK</b>です（コードは全アプリ共通）。<br>' +
+        (C.note ? C.note + '<br>' : '') +
+        '記録は、ヒラのGoogleドライブに預けます。コードを知っている人は中身を見られるので、コードは人に見せないでください。</p>';
+    }else{
+      const st = M.err
+        ? '<span class="hs-dot bad"></span>' + esc(M.err) + '。つながったら自動でもう一度送ります。'
+        : '<span class="hs-dot"></span>さいごの同期：' + (M.at ? fmt(M.at) : 'まだ');
+      el.innerHTML =
+        '<div class="hs-code"><span>同期コード</span><b>' + esc(M.code) + '</b><button data-hs="copy">コピー</button></div>' +
+        '<p class="' + (k.dim || '') + '">' + st + '<br>ほかの端末でも、このコードを入れてください。計画マップなど、ほかのアプリも同じコードで同期できます。' +
+        (C.note ? '<br>' + C.note : '') + '</p>' +
+        '<div class="hs-btns">' +
+          '<button class="' + (k.btn || '') + '" data-hs="now">いま同期する</button>' +
+          '<button class="' + (k.ghost || k.btn || '') + '" data-hs="stop">同期をやめる（この端末だけ）</button>' +
+        '</div>';
+    }
+  }
+  function onClick(e){
+    const b = e.target.closest && e.target.closest('[data-hs]'); if(!b) return;
+    const a = b.getAttribute('data-hs');
+    if(a === 'start') start();
+    else if(a === 'join') join();
+    else if(a === 'stop') stop();
+    else if(a === 'copy') copy();
+    else if(a === 'sib') joinWith(b.getAttribute('data-code'));
+    else if(a === 'now'){ say('同期しています…'); pull(false); }
+  }
+
+  function init(cfg){
+    C = cfg;
+    loadMeta();
+    const st = document.createElement('style');
+    st.textContent =
+      '.hs-btns{display:flex;flex-direction:column;gap:0;margin:8px 0 0}' +
+      '.hs-code{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;margin:8px 0;' +
+        'background:' + (C.codeBg || 'rgba(127,127,127,.12)') + '}' +
+      '.hs-code span{font-size:11px;opacity:.7;flex:none}' +
+      '.hs-code b{flex:1;font-size:20px;letter-spacing:.08em;font-family:ui-monospace,Menlo,monospace;user-select:all;-webkit-user-select:all}' +
+      '.hs-code button{flex:none;padding:7px 12px;border-radius:9px;font-size:12px;font-weight:700;' +
+        'border:1px solid currentColor;background:transparent;color:inherit;opacity:.85}' +
+      '.hs-dot{display:inline-block;width:8px;height:8px;border-radius:99px;background:#35b37e;margin-right:6px;vertical-align:middle}' +
+      '.hs-dot.bad{background:#e0762a}';
+    document.head.appendChild(st);
+    document.addEventListener('click', onClick);
+    render();
+    try{ const m = sessionStorage.getItem('hs.msg'); if(m){ sessionStorage.removeItem('hs.msg'); setTimeout(() => say(m), 600); } }catch(e){}
+    if(M.code){
+      setTimeout(() => { if(M.dirty) push(); else pull(true); }, 1200);
+    }
+    let lastPull = 0;
+    const wake = () => { if(M.code && !document.hidden && now() - lastPull > 20000){ lastPull = now(); pull(true); } };
+    document.addEventListener('visibilitychange', () => { if(document.hidden) flush(); else { wake(); retryPending(); } });
+    addEventListener('focus', wake);
+    addEventListener('pagehide', flush);
+  }
+  return { init, render, pull, push, _derive: m => derive(m), _merge: merge, _collect: collect,
+    code: () => (M && M.code) || '', _call: call, _deriveFor: (m, app) => deriveWith(m, app) };
+})();
+/* HSYNC END */
+
+
 /* ===================== 基本 ===================== */
-const VER = 43;
+const VER = 44;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。
@@ -1081,7 +1486,8 @@ function norm(j){
   const wd = Array.isArray(wk.days) ? [...new Set(wk.days.map(Number).filter(x => x >= 0 && x <= 6))] : [];
   j.cfg.wk = { on: !!wk.on, days: wd.length ? wd : [6, 0] };
   j.cfg.lastBackup = typeof j.cfg.lastBackup === 'string' ? j.cfg.lastBackup : '';
-  j.sends = Array.isArray(j.sends) ? j.sends.filter(x => x && Array.isArray(x.ids)) : [];   // 部屋に出した記録 [{id, no, d, ids}]
+  j.sends = Array.isArray(j.sends) ? j.sends.filter(x => x && Array.isArray(x.ids)) : [];
+  j.deleted = (j.deleted && typeof j.deleted === 'object' && !Array.isArray(j.deleted)) ? j.deleted : {};   // 消した問題 {id: 時刻}（同期で相手にも伝える・v44）   // 部屋に出した記録 [{id, no, d, ids}]
   j.items.forEach(it => { it.imgs = it.imgs || []; it.log = it.log || []; it.stage = Number(it.stage)||0; it.text = it.text || ''; it.why = it.why || ''; it.fix = it.fix || ''; it.tag = it.tag || ''; it.whyP = it.whyP || null; it.fixP = it.fixP || null; it.sent = typeof it.sent === 'string' ? it.sent : ''; it.book = typeof it.book === 'string' ? it.book : ''; it.ansImgs = Array.isArray(it.ansImgs) ? it.ansImgs : []; it.noteImgs = Array.isArray(it.noteImgs) ? it.noteImgs : []; it.plain = !!it.plain; it.pri = ['r','y','b'].includes(it.pri) ? it.pri : ''; it.ansText = typeof it.ansText === 'string' ? it.ansText : ''; });
   return j;
 }
@@ -1093,12 +1499,40 @@ function load(){
 }
 let savedT = null;
 let noSave = false;   // 人を消したあと、ページを出るときの保存でデータを戻さないため
+/* 同期で2台の記録を合わせるため、問題ごとに「変わった時刻」mt を付け、消した問題は S.deleted に残す（v44）。
+   保存のたびに、前の保存とくらべて中身が変わった問題だけ mt を進める */
+let mtSeen = null;
+const itemSig = it => { const { mt, ...rest } = it; return JSON.stringify(rest); };
+function stampItems(){
+  const t = Date.now(), cur = new Map();
+  S.items.forEach(it => { const sg = itemSig(it); cur.set(it.id, sg); if(mtSeen && mtSeen.get(it.id) !== sg) it.mt = t; });
+  if(mtSeen) for(const id of mtSeen.keys()) if(!cur.has(id)) S.deleted[id] = t;
+  S.items.forEach(it => { if(S.deleted[it.id] && (it.mt || 0) >= S.deleted[it.id]) delete S.deleted[it.id]; });
+  const lim = t - 120 * 864e5; Object.keys(S.deleted).forEach(id => { if(S.deleted[id] < lim) delete S.deleted[id]; });
+  mtSeen = cur;
+}
+/* 2台の記録を合わせる（HSync の mergeKey）。問題は id ごとに新しいほう、消した問題は消したあとに直していなければ消す */
+function essMerge(k, lr, rr, remNewer){
+  const a = JSON.parse(lr), b = JSON.parse(rr);
+  const nw = remNewer ? b : a, od = remNewer ? a : b;
+  const del = {};
+  [a.deleted || {}, b.deleted || {}].forEach(d => Object.keys(d).forEach(id => { del[id] = Math.max(del[id] || 0, Number(d[id]) || 0); }));
+  const map = new Map();
+  [...(od.items || []), ...(nw.items || [])].forEach(it => { if(!it || !it.id) return; const c = map.get(it.id); if(!c || (it.mt || 0) >= (c.mt || 0)) map.set(it.id, it); });
+  const items = [...map.values()].filter(it => !(del[it.id] && del[it.id] > (it.mt || 0)));
+  items.sort((x, y) => x.created < y.created ? 1 : x.created > y.created ? -1 : 0);
+  const seen = new Set(), sends = [];
+  [...(nw.sends || []), ...(od.sends || [])].forEach(x => { if(x && x.id && !seen.has(x.id)){ seen.add(x.id); sends.push(x); } });
+  return JSON.stringify({ ...od, ...nw, items, deleted:del, sends });
+}
 function save(show){
   if(noSave) return;
+  stampItems();
   const s = JSON.stringify(S);
   try{ localStorage.setItem(KEY, s); localStorage.setItem(BK, s); }catch(e){ toast('保存できませんでした（容量不足の可能性）'); return; }
   const m = $('#savedMark'); m.classList.add('on'); clearTimeout(savedT); savedT = setTimeout(()=>m.classList.remove('on'), 1500);
   if(show) toast('保存しました');
+  schedImgs();
 }
 const gaps = () => S.cfg.gaps;
 const gapsText = g => (g || gaps()).map(gapLabel).join('・');
@@ -1191,9 +1625,57 @@ const putImg = (id, b) => tx_('readwrite', st => st.put(b, id));
 const getImg = id => tx_('readonly', st => st.get(id));
 const delImg = id => { urlCache.delete(id); return tx_('readwrite', st => st.delete(id)); };
 const allImgKeys = () => tx_('readonly', st => st.getAllKeys());
+/* ===================== 写真の同期（v44） =====================
+   写真は HSYNC では運べない（localStorage ではないため）。1枚ずつ、同期コードから作った「写真ごとのコード」で預ける。
+   預けるのは1回だけ（預けた写真の id は miss_imgup.<コード> に覚える）。この端末に無い写真は、表示するときに受けとる。 */
+const imgCode = (master, id) => HSync._deriveFor(master, 'essimg|' + id);
+const upKeyOf = code => 'miss_imgup.' + code;
+function upSet(code){ try{ return new Set(JSON.parse(localStorage.getItem(upKeyOf(code)) || '[]')); }catch(e){ return new Set(); } }
+function upSave(code, set){ try{ localStorage.setItem(upKeyOf(code), JSON.stringify([...set])); }catch(e){} }
+let imgBusy = false, imgT = null;
+function schedImgs(){ clearTimeout(imgT); imgT = setTimeout(pushImgs, 8000); }
+async function pushImgs(){
+  const code = HSync.code(); if(!code || imgBusy) return;
+  imgBusy = true;
+  let more = false;
+  try{
+    const up = upSet(code), ids = photoIds().filter(id => !up.has(id));
+    let n = 0;
+    for(const id of ids){
+      if(n >= 30){ more = true; break; }
+      let b = null; try{ b = await getImg(id); }catch(e){}
+      if(!b) continue;
+      const data = JSON.stringify({ img: await blobToDataUrl(b) });
+      if(data.length > 3900000){ up.add(id); continue; }
+      const r = await HSync._call({ action:'put', code:imgCode(code, id), mt:1, name:'Essence 写真', data });
+      if(r && r.ok){ up.add(id); upSave(code, up); n++; } else break;
+    }
+  }catch(e){}
+  imgBusy = false;
+  if(more) setTimeout(pushImgs, 3000);
+}
+const imgMiss = new Set(), imgPend = new Map();
+async function fetchImg(id){
+  const code = HSync.code(); if(!code || imgMiss.has(id)) return null;
+  if(imgPend.has(id)) return imgPend.get(id);
+  const job = (async () => {
+    try{
+      const r = await HSync._call({ action:'get', code:imgCode(code, id) });
+      if(r && r.ok && r.found){
+        const o = JSON.parse(r.data || '{}'), b = o.img ? dataUrlToBlob(o.img) : null;
+        if(b){ await putImg(id, b); const up = upSet(code); up.add(id); upSave(code, up); return b; }
+      }
+      if(r && r.ok) imgMiss.add(id);   // まだ預けられていない（もう1台がまだ送っていない）
+    }catch(e){}
+    return null;
+  })();
+  imgPend.set(id, job);
+  const b = await job; imgPend.delete(id); return b;
+}
 async function imgUrl(id){
   if(urlCache.has(id)) return urlCache.get(id);
   let b = null; try{ b = await getImg(id); }catch(e){}
+  if(!b) b = await fetchImg(id);
   if(!b) return '';
   const u = URL.createObjectURL(b); urlCache.set(id, u); return u;
 }
@@ -1638,7 +2120,7 @@ function renderBatch(){
         <ol class="steps3"><li>紙のミスマップを撮って、<b>表のところ</b>を囲みます（向きは「↻ 回す」で直せます）</li>
         <li>アプリが表の横線を見つけて、行ごとに区切ります。線はタップで足したり消したりできます</li>
         <li>教科と、行ごとのミスの種類を選んで「登録する」</li></ol>
-        <div class="dim">左がわ（日付・ミス内容）が「問題」、右がわ（間違えた理由・改善点）が「紙のミスマップの写真」として入ります。写真は外に送りません。</div>
+        <div class="dim">左がわ（日付・ミス内容）が「問題」、右がわ（間違えた理由・改善点）が「紙のミスマップの写真」として入ります。写真は、同期を使っていなければ外に送りません。</div>
         <div class="photo-btns" style="margin-top:12px"><button class="photo-btn" id="btCam">${ICO.camera}カメラで撮る</button><button class="photo-btn" id="btPick">${ICO.image}写真から選ぶ</button></div>
         <input type="file" id="btFCam" accept="image/*" capture="environment" class="hidden"><input type="file" id="btFPick" accept="image/*" class="hidden"></div>
     </div></div>`;
@@ -3275,6 +3757,7 @@ function slides(){ return [
   { ico:'sun', t:'12. 画面を白くする', p:'黒い画面が見にくいときは、設定の <b>「画面の色」</b> で <b>「白」</b> を選んでください。すぐに切りかわります。', ex:'この端末だけの設定です。部屋に出す画像は、いつもの黒のままです。' },
   { ico:'shield', t:'13. かんたんモード', p:'小学生が使うときは、設定の <b>「かんたんモード」</b> をオンにします。字が大きくなり、言葉がやさしくなって、使う機能がしぼられます。', ex:'使う人ごとの設定です。兄弟で「兄はいつもの、弟はかんたん」にできます。理由と改善点は、書き方の例を押して自分の問題に直します。' },
   { ico:'print', t:'14. 問題を印刷する', p:'「解く」タブの <b>「問題を印刷する」</b> で、問題にチェックを入れてまとめて印刷できます。条件に丸をつけたり、図に書きこんだりしながら解きたいときに。', ex:'白い紙に黒い字で印刷されます（画面が黒でも、インクはへりません）。写真は「白黒でくっきり」にすると、紙の色や影が消えて読みやすくなります。ふつうは問題だけ。「理由と改善点も印刷する」をオンにすると、いっしょに入ります。' },
+  { ico:'sync', t:'15. 同期（iPad・スマホで同じに）', p:'設定の <b>「同期」</b> で「同期をはじめる」を押すと、<b>同期コード</b>（8文字）が出ます。もう1台でそのコードを入れると、同じ記録になります。そのあとは書くたびに自動で同期します。', ex:'計画マップなどで同期している人は、そのコードをそのまま入れればOK。写真も1枚ずつ運びます（はじめは少し時間がかかります）。兄弟は、人ごとに別のコードにしてください。' },
 ]; }
 const SICO = {
   doc: ICO.doc, camera: ICO.camera, redo: ICO.redo, eye: ICO.eye, shuffle: ICO.shuffle,
@@ -3284,6 +3767,7 @@ const SICO = {
   save: '<svg viewBox="0 0 24 24"><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/></svg>',
   send: '<svg viewBox="0 0 24 24"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="m10 13 5-5"/></svg>',
   print: ICO.print,
+  sync: '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-13.7 5.7"/><path d="M4 12a8 8 0 0 1 13.7-5.7"/><path d="M17.7 3v3.3h-3.3"/><path d="M6.3 21v-3.3h3.3"/></svg>',
   shield: '<svg viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V7z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>',
   sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>',
   people: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.3c.5-.2 1-.3 1.5-.3 2.8 0 5 2.2 5 5"/></svg>',
@@ -3432,6 +3916,51 @@ checkUpdate(true);
 try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
 if('serviceWorker' in navigator){ window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
 setTimeout(sweepImgs, 4000);
+
+/* 同期（v44） */
+function hsAsk(msg){
+  return new Promise(res => {
+    const bg = document.createElement('div'); bg.className = 'sheet-bg';
+    bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>同期コード</h2><p class="dim" style="white-space:pre-line">${esc(msg)}</p>
+      <input id="hsIn" class="own" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="abcd-2345" style="font-size:18px; letter-spacing:.08em; font-family:ui-monospace,Menlo,monospace">
+      <div class="btnrow"><button class="btn-chip" id="hsNo">やめる</button><button class="btn-chip acc" id="hsOk">入れる</button></div></div>`;
+    document.body.appendChild(bg);
+    let fin = false; const done = v => { if(fin) return; fin = true; bg.remove(); res(v); };
+    bg.querySelector('#hsOk').onclick = () => done(bg.querySelector('#hsIn').value);
+    bg.querySelector('#hsNo').onclick = () => done(null);
+    bg.addEventListener('click', e => { if(e.target === bg) done(null); });
+    setTimeout(() => { try{ bg.querySelector('#hsIn').focus(); }catch(e){} }, 80);
+  });
+}
+function hsYes(msg){
+  return new Promise(res => {
+    const bg = document.createElement('div'); bg.className = 'sheet-bg';
+    bg.innerHTML = `<div class="sheet"><div class="grab"></div><h2>確認</h2><p class="dim" style="white-space:pre-line">${esc(msg)}</p>
+      <div class="btnrow"><button class="btn-chip" id="hsNo">やめる</button><button class="btn-chip acc" id="hsOk">はい</button></div></div>`;
+    document.body.appendChild(bg);
+    let fin = false; const done = v => { if(fin) return; fin = true; bg.remove(); res(v); };
+    bg.querySelector('#hsOk').onclick = () => done(true);
+    bg.querySelector('#hsNo').onclick = () => done(false);
+    bg.addEventListener('click', e => { if(e.target === bg) done(false); });
+  });
+}
+mtSeen = new Map(S.items.map(it => [it.id, itemSig(it)]));
+HSync.init({
+  app: 'essence', label: 'Essence',
+  metaApp: 'essence' + (PID === '0' ? '' : '.' + PID),
+  keys: [KEY],
+  mergeKey: essMerge,
+  hasData: () => S.items.length > 0,
+  busy: () => !!($('#pgSolve') || $('#pgBatch') || $('#pgPrint') || document.querySelector('.sheet-bg') || document.querySelector('.cropper') || document.querySelector('.gal')),
+  mount: '#hsBox', cls: { btn: 'btn-primary', ghost: 'btn-line', dim: 'dim' },
+  note: (multi() ? '<b>いまは「' + esc(curName()) + '」の同期です。</b>兄弟は、人ごとに別の同期コードにしてください。もう1台でも、先に「使う人」を同じ人に切りかえてから、その人のコードを入れます。<br>' : '')
+    + '問題・理由・改善点・解き直しの記録と、<b>写真</b>も同期します（写真は1枚ずつ運ぶので、はじめは少し時間がかかります）。',
+  who: () => multi() ? curName() : '',
+  delay: 3000,
+  toast: toast, ask: hsAsk, yes: hsYes
+});
+setTimeout(pushImgs, 6000);
+setInterval(pushImgs, 90000);
 </script>
 </body>
 </html>

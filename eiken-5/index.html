@@ -471,7 +471,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="idioms.js?v=2"></script>
 <script>
 'use strict';
-const VER = 11;
+const VER = 12;
 /* ===================== 使う人（兄弟で1台） =====================
    1人目は今までの保存場所のまま（記録はそのまま残る）。2人目からは保存の名前のうしろに「__id」をつけて分ける。
    切りかえたらページを読みなおす。レベル・仕分け・計画・記録・タイマーはすべて人ごと。 */
@@ -1012,17 +1012,33 @@ function sayUtter(text, lang){
 function enHead(w){ return w.w.replace(/~ing/g, 'doing').replace(/…/g, 'something').replace(/\s*~\s*$/, '').replace(/~/g, 'something').trim(); }
 /* 発音（見出し語だけ）を鳴らす */
 let SPK = null;
-function stopSpk(){ if(SPK){ try{ SPK.a && SPK.a.pause(); }catch(e){} clearTimeout(SPK.t); SPK = null; } $$('.spk.on').forEach(b => b.classList.remove('on')); }
+function stopSpk(){ if(SPK){ SPK.dead = true; try{ SPK.a && SPK.a.pause(); }catch(e){} clearTimeout(SPK.t); SPK = null; } $$('.spk.on').forEach(b => b.classList.remove('on')); }
+/* 音声ファイルの一部（st〜en 秒）だけを鳴らす（見出し語・例文）。止めるのはタイマーだけに頼らず、再生位置でも止める。
+   塾生の声：読みこみが遅いと「止める」が先に来て、あとから鳴った音が解説・覚え方まで流れていた（2026-10-27） */
+function playSeg(i, rec, st, en, done, fallback){
+  const a = new Audio(AUD + noOf(i) + '.mp3?h=' + (rec.h || VER) + '#t=' + st + ',' + en);
+  const x = SPK = { a, t: 0, dead: false };
+  const fin = () => { x.dead = true; clearTimeout(x.t); try{ a.pause(); }catch(e){} if(SPK === x){ SPK = null; done(); } };
+  const alive = () => !x.dead && SPK === x;
+  const seek = () => { if(a.currentTime < st - .3 || a.currentTime > en) try{ a.currentTime = st; }catch(e){} };
+  if(st > 0) try{ a.currentTime = st; }catch(e){}   // #t が効かない端末でも、その位置から
+  a.addEventListener('loadedmetadata', () => { if(alive()) seek(); });
+  a.addEventListener('playing', () => {
+    if(!alive()){ try{ a.pause(); }catch(e){} return; }   // もう止めた音・次の音に替わった音は鳴らさない
+    seek(); clearTimeout(x.t); x.t = setTimeout(fin, (en - st) * 1000 + 400);
+  });
+  a.addEventListener('timeupdate', () => { if(!alive() || a.currentTime >= en + .05) fin(); });
+  a.addEventListener('ended', fin);
+  x.t = setTimeout(fin, 8000);   // 8秒たっても鳴り始めなければ、あきらめる（あとから鳴っても止まる）
+  a.play().catch(() => { if(alive()){ x.dead = true; clearTimeout(x.t); SPK = null; fallback(); } });
+}
 function speakWord(i, btn){
   stopSpk(); stopSpeech();
   if(btn) btn.classList.add('on');
   const done = () => { if(btn) btn.classList.remove('on'); };
   const rec = audRec(i);
   if(S.cfg.voice !== false && S.cfg.voiceMode !== 'device' && rec){
-    const a = new Audio(AUD + noOf(i) + '.mp3?h=' + (rec.h || VER));
-    const end = rec.t[1] || 2;
-    SPK = { a, t: setTimeout(() => { try{ a.pause(); }catch(e){} done(); SPK = null; }, end * 1000 + 150) };
-    a.play().catch(() => { stopSpk(); ttsWord(i, done); });
+    playSeg(i, rec, 0, rec.t[1] || 2, done, () => ttsWord(i, done));
     return;
   }
   ttsWord(i, done);
@@ -1034,17 +1050,7 @@ function speakEx(i, btn){
   const done = () => { if(btn) btn.classList.remove('on'); };
   const rec = audRec(i);
   if(S.cfg.voice !== false && S.cfg.voiceMode !== 'device' && rec && rec.t.length > 3){
-    const st = rec.t[2], en = rec.t[3];
-    const a = new Audio(AUD + noOf(i) + '.mp3?h=' + (rec.h || VER) + '#t=' + st);
-    const x = SPK = { a, t: 0 };
-    const fin = () => { if(SPK !== x) return; clearTimeout(x.t); try{ a.pause(); }catch(e){} done(); SPK = null; };
-    const seek = () => { if(a.currentTime < st - .3 || a.currentTime > en) a.currentTime = st; };
-    try{ a.currentTime = st; }catch(e){}   // #t が効かない端末でも例文の位置から
-    a.addEventListener('loadedmetadata', seek);
-    a.addEventListener('playing', () => { if(SPK !== x) return; seek(); clearTimeout(x.t); x.t = setTimeout(fin, (en - st) * 1000 + 400); });
-    a.addEventListener('timeupdate', () => { if(a.currentTime >= en + .05) fin(); });
-    a.addEventListener('ended', fin);
-    a.play().catch(() => { if(SPK === x){ stopSpk(); ttsEx(i, done); } });
+    playSeg(i, rec, rec.t[2], rec.t[3], done, () => ttsEx(i, done));
     return;
   }
   ttsEx(i, done);

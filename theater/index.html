@@ -651,7 +651,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 62;
+const VER = 63;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal';
@@ -2545,6 +2545,7 @@ function openPlay(id, push, opt){
   $('#scrim').classList.add('hidden');
   $('#scrimt').textContent = (vid(id) || {}).t || '';
   $('#phint').classList.add('hidden');
+  clearTimeout(adTimer); adOn = false;
   stopCount();
   $('#endcard').classList.add('hidden');
   $('#ctrl').classList.add('fade');
@@ -2575,7 +2576,17 @@ function openPlay(id, push, opt){
     if(auto){
       /* すでに用意ができていれば、タップと同じ流れで再生に入る（iPhone対策） */
       try{ player.loadVideoById({ videoId:id, startSeconds:start }); }catch(e){}
-      setTimeout(() => { if(!started) $('#phint').classList.remove('hidden'); }, 1600);
+      /* しばらく経っても始まらないときは、何が起きているかで出し分ける。
+         プレーヤーが動いている（1=再生中・3=読みこみ中）＝広告が流れている → 幕を外す。
+         動いていない（-1・2・5）＝iPhoneの自動再生どめ → これまでどおりの案内。 */
+      clearTimeout(adTimer);
+      adTimer = setTimeout(() => {
+        if(started || curId !== id) return;
+        let st = -1;
+        try{ st = player.getPlayerState(); }catch(e){}
+        if(st === 1 || st === 3) adEscape();
+        else $('#phint').classList.remove('hidden');
+      }, 2500);
       $('#phint').textContent = 'もう一度 再生ボタンを押してください';
     }else{
       try{ player.cueVideoById({ videoId:id, startSeconds:start }); }catch(e){}
@@ -2598,6 +2609,7 @@ function startSecOf(v){
 function closePlay(){
   saveNow();
   stopTick();
+  clearTimeout(adTimer); adOn = false;
   $('#loomfr').classList.add('hidden');
   $('#loomfr').removeAttribute('src');   /* これを消さないと裏で音が鳴り続ける */
   try{ player && player.pauseVideo(); }catch(e){}
@@ -2608,10 +2620,32 @@ function closePlay(){
   render();
 }
 
+/* ---------- YouTubeの広告（CM）から逃がす（のぐさんの指摘・2026-10-27） ----------
+   広告が流れているあいだは本編の PLAYING が来ないので、サムネの幕（#poster）が
+   かぶさったまま音声だけ流れる（「ヒラ先生の静止画のままCMが聞こえる」）。
+   さらに上に .catch を敷いているので YouTubeの「スキップ」も押せず、
+   最後まで聞かされてしまう。広告のあいだだけ幕を外して、押せるようにする。
+   広告が終わって本編が始まったら（PLAYING）すぐ元に戻す。 */
+let adOn = false, adTimer = null;
+function adEscape(){
+  if(adOn) return;
+  adOn = true;
+  $('#poster').classList.add('hidden');   /* 広告の画面を見せる */
+  $('#catch').classList.add('hidden');    /* 「スキップ」を押せるようにする */
+  $('#phint').classList.add('hidden');
+  toast('広告が流れています。終わると始まります（「スキップ」が出たら押せます）');
+}
+function adDone(){
+  clearTimeout(adTimer);
+  if(!adOn) return;
+  adOn = false;
+  if(!isLoom(curId)) $('#catch').classList.remove('hidden');   /* 幕を戻す */
+}
 function onState(e){
   const S = YT.PlayerState;
   if(e.data === S.PLAYING){
     started = true;
+    adDone();                 /* 広告が終わって本編が始まった。幕を戻す */
     $('#poster').classList.add('hidden');
     $('#scrim').classList.add('hidden');
     $('#endcard').classList.add('hidden');
@@ -2619,8 +2653,9 @@ function onState(e){
     applyCCSoon();          /* 字幕の設定を、動画が始まるたびに言い直す */
     startTick(); showCtrl(); drawCtrl();
   }else if(e.data === S.PAUSED){
-    /* 止めた瞬間にYouTubeの画面が出るので、すぐ幕をかける */
-    if(!isLoom(curId)) $('#scrim').classList.remove('hidden');
+    /* 止めた瞬間にYouTubeの画面が出るので、すぐ幕をかける。
+       ただし広告のあいだは、幕をかけると「スキップ」が隠れるので出さない */
+    if(!isLoom(curId) && !adOn) $('#scrim').classList.remove('hidden');
     saveNow(); stopTick(); showCtrl(true); drawCtrl();
   }else if(e.data === S.ENDED){
     stopTick();

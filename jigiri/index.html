@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="jigiri"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>時切スライド</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="時切">
+<meta name="theme-color" content="#F3F1EC">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Outfit:wght@600;700;800&display=swap">
+<style>
+:root{
+  --bg:#F3F1EC; --card:#FFFFFF; --ink:#1C2232; --muted:#626B7D; --line:#E2DED5;
+  --navy:#1E2A45; --navy2:#2C3B60; --cut:#E4572E; --cut-soft:#FCE6DE; --cut-ink:#FFFFFF;
+  --done:#2B9566; --done-soft:#DFF2E8; --rest:#2F7FB5; --rest-soft:#DDECF6; --late:#B23A48;
+  --chip:#ECE8DF; --shadow:0 1px 3px rgba(20,30,50,.08); --shadow-lg:0 12px 30px rgba(20,30,50,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11141C; --card:#1B2030; --ink:#EEF0F5; --muted:#9AA3B5; --line:#2C3346;
+    --navy:#0B0F18; --navy2:#1B2335; --cut:#F06A43; --cut-soft:#3B2219;
+    --done:#4FC48E; --done-soft:#173327; --rest:#5BA8DA; --rest-soft:#16293A; --late:#EE7E8A;
+    --chip:#252B3D; --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 12px 30px rgba(0,0,0,.55);
+  }
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%;}
+body{font-family:'Zen Kaku Gothic New',system-ui,sans-serif; font-weight:500; background:var(--bg); color:var(--ink);
+  min-height:100vh; padding-bottom:calc(84px + env(safe-area-inset-bottom));}
+button{font:inherit; color:inherit; border:0; background:none; cursor:pointer;}
+input,select{font:inherit; color:inherit;}
+.num{font-family:'Outfit','Zen Kaku Gothic New',sans-serif; font-variant-numeric:tabular-nums;}
+.hidden{display:none !important;}
+
+header{position:sticky; top:0; z-index:5; background:var(--bg); padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+  display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--line);}
+header h1{font-size:19px; font-weight:900; letter-spacing:.02em; flex:1; display:flex; align-items:center; gap:8px; white-space:nowrap;}
+header h1 .logo{width:28px; height:28px; border-radius:8px; background:var(--navy); color:#fff; display:grid; place-items:center; font-size:15px;}
+header h1 small{font-size:11px; color:var(--muted); font-weight:700;}
+.helpBtn{width:34px; height:34px; border-radius:50%; background:var(--chip); font-weight:900; font-size:16px;}
+[data-users-tag]{background:var(--chip); border-radius:999px; padding:6px 12px; font-size:13px; font-weight:700;}
+
+main{max-width:640px; margin:0 auto; padding:16px;}
+.sec{margin-bottom:22px;}
+.sec h2{font-size:15px; font-weight:900; margin-bottom:10px; display:flex; align-items:center; gap:8px;}
+.sec h2 .sub{font-size:12px; color:var(--muted); font-weight:700;}
+.card{background:var(--card); border-radius:16px; box-shadow:var(--shadow); padding:14px;}
+.muted{color:var(--muted);}
+.small{font-size:13px;}
+
+/* 準備：スライドの列 */
+.slides{display:flex; flex-direction:column; gap:8px;}
+.slide{background:var(--card); border-radius:14px; box-shadow:var(--shadow); display:grid; grid-template-columns:22px 1fr auto; align-items:center; column-gap:8px; row-gap:2px; padding:6px 8px 6px 10px; border-left:5px solid var(--navy2);}
+.slide input.t{grid-column:2 / 4;}
+.slide select{grid-column:2; justify-self:start;}
+.slide.rest{border-left-color:var(--rest);}
+.slide .no{font-size:13px; font-weight:800; color:var(--muted); text-align:center; grid-row:1 / 3;}
+.slide input.t{flex:1; min-width:0; border:0; background:transparent; font-size:16px; font-weight:700; padding:6px 2px; outline:none;}
+.slide input.t:focus{background:var(--chip); border-radius:8px;}
+.slide select{border:0; background:var(--chip); border-radius:10px; padding:5px 6px; font-weight:800; font-size:14px;}
+.slide .ops{display:flex; flex:none;}
+.slide .ops button{width:30px; height:32px; border-radius:8px; font-size:14px; color:var(--muted);}
+.slide .ops button:active{background:var(--chip);}
+.slide .restTag{flex:1; font-weight:700; color:var(--rest); padding:6px 2px;}
+.empty{border:2px dashed var(--line); border-radius:14px; padding:22px 14px; text-align:center; color:var(--muted); font-size:14px; line-height:1.7;}
+
+.addRow{display:flex; gap:8px; margin-top:10px;}
+.addRow input{flex:1; min-width:0; border:1.5px solid var(--line); background:var(--card); border-radius:12px; padding:12px; font-size:16px; outline:none;}
+.addRow input:focus{border-color:var(--navy2);}
+.addRow select{border:1.5px solid var(--line); background:var(--card); border-radius:12px; padding:0 8px; font-weight:800; font-size:15px;}
+.addRow button{background:var(--navy); color:#fff; border-radius:12px; padding:0 16px; font-weight:900; font-size:15px;}
+
+.chips{display:flex; flex-wrap:wrap; gap:6px;}
+.chipBtn{background:var(--chip); border-radius:999px; padding:7px 12px; font-size:13px; font-weight:700;}
+.chipBtn.on{background:var(--navy); color:#fff;}
+.chipBtn .memo{color:var(--muted); font-weight:500;}
+.chipBtn.on .memo{color:#C8D0E4;}
+
+.opt{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-top:1px solid var(--line); flex-wrap:wrap;}
+.opt:first-child{border-top:0; padding-top:0;}
+.opt .lbl{font-weight:700; font-size:14px;}
+.opt .lbl small{display:block; font-weight:500; color:var(--muted); font-size:12px; margin-top:2px;}
+
+.total{display:flex; justify-content:space-between; align-items:baseline; font-weight:700; margin:14px 2px 10px;}
+.total b{font-size:20px;}
+.bigBtn{width:100%; padding:17px; border-radius:16px; background:var(--cut); color:var(--cut-ink); font-weight:900; font-size:18px; box-shadow:0 6px 16px rgba(228,87,46,.3);}
+.bigBtn:disabled{opacity:.4; box-shadow:none;}
+.subBtn{width:100%; padding:13px; border-radius:14px; background:var(--chip); font-weight:700; font-size:15px; margin-top:8px;}
+
+/* 下のタブ */
+nav.tabs{position:fixed; left:0; right:0; bottom:0; z-index:6; background:var(--card); border-top:1px solid var(--line);
+  display:flex; padding-bottom:env(safe-area-inset-bottom);}
+nav.tabs button{flex:1; padding:10px 0 9px; font-size:12px; font-weight:700; color:var(--muted); display:flex; flex-direction:column; align-items:center; gap:2px;}
+nav.tabs button .ic{font-size:20px; line-height:1;}
+nav.tabs button.on{color:var(--ink);}
+nav.tabs button.on .ic{transform:scale(1.08);}
+
+/* 本番：スライドを映す画面 */
+#run{position:fixed; inset:0; z-index:20; background:var(--navy); color:#fff; display:flex; flex-direction:column;
+  padding:calc(12px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));}
+#run .top{display:flex; align-items:center; gap:10px; font-weight:700; font-size:14px; color:#C8D0E4;}
+#run .top .cnt{flex:1;}
+#run .top button{background:rgba(255,255,255,.1); border-radius:999px; padding:7px 13px; font-size:13px; font-weight:700; color:#fff;}
+.bar{display:flex; gap:3px; margin:12px 0 0; height:8px;}
+.bar i{display:block; border-radius:4px; background:rgba(255,255,255,.16); position:relative; overflow:hidden; min-width:6px;}
+.bar i.done{background:#5BC593;} .bar i.cut{background:#F2855F;} .bar i.late{background:#EE7E8A;} .bar i.skip{background:rgba(255,255,255,.08);}
+.bar i.rest{background:rgba(91,168,218,.35);}
+.bar i b{position:absolute; left:0; top:0; bottom:0; background:#fff;}
+.stage{flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:18px; min-height:0;}
+.sheet16{width:100%; max-width:560px; aspect-ratio:16/10; background:#FAFAF7; color:#1C2232; border-radius:18px; box-shadow:0 18px 40px rgba(0,0,0,.35);
+  display:flex; flex-direction:column; padding:18px 20px; position:relative; overflow:hidden;}
+.sheet16.rest{background:#E6F1F9;}
+.sheet16 .kind{font-size:13px; font-weight:800; color:#626B7D; display:flex; justify-content:space-between;}
+.sheet16 .txt{flex:1; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:900; font-size:clamp(22px,7vw,38px); line-height:1.35; word-break:break-word; padding:6px 0;}
+.sheet16 .memoLine{font-size:13px; color:#626B7D; text-align:center; font-weight:700;}
+.sheet16 .prog{position:absolute; left:0; bottom:0; height:6px; background:var(--cut); transition:width .3s linear;}
+.sheet16.rest .prog{background:var(--rest);}
+.clock{font-size:clamp(64px,22vw,104px); font-weight:800; line-height:1; letter-spacing:.01em;}
+.clock.warn{color:#FFB199;}
+.until{font-size:15px; color:#C8D0E4; font-weight:700;}
+.nextLine{font-size:14px; color:#AEB8D0; text-align:center;}
+.nextLine b{color:#fff;}
+.runBtns{display:flex; gap:10px;}
+.runBtns button{flex:1; padding:16px 8px; border-radius:16px; font-weight:900; font-size:16px;}
+.runBtns .ok{background:#fff; color:var(--navy);}
+.runBtns .pz{flex:0 0 76px; background:rgba(255,255,255,.12); color:#fff; font-size:14px;}
+
+/* 時間になった画面 */
+#ring{position:fixed; inset:0; z-index:30; background:var(--cut); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+  padding:calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)); text-align:center;}
+#ring.restEnd{background:var(--rest);}
+#ring.flash{animation:fl .6s ease-in-out 3;}
+@keyframes fl{50%{filter:brightness(1.35);}}
+#ring h3{font-size:30px; font-weight:900;}
+#ring .what{font-size:19px; font-weight:700; opacity:.95; max-width:520px; word-break:break-word;}
+#ring .over{font-size:14px; font-weight:700; background:rgba(0,0,0,.18); border-radius:999px; padding:5px 12px;}
+#ring input{width:100%; max-width:480px; border:0; border-radius:12px; padding:13px; font-size:16px; color:#1C2232; outline:none;}
+#ring .rb{display:flex; gap:10px; width:100%; max-width:480px;}
+#ring .rb button{flex:1; padding:18px 8px; border-radius:16px; font-weight:900; font-size:17px;}
+#ring .rb .cutB{background:#fff; color:var(--cut);}
+#ring.restEnd .rb .cutB{color:var(--rest);}
+#ring .rb .doneB{background:rgba(255,255,255,.2); color:#fff;}
+#ring .auto{font-size:15px; font-weight:700; min-height:22px;}
+#ring .ext{font-size:13px; text-decoration:underline; opacity:.9; padding:6px; color:#fff;}
+#ring .nx{font-size:14px; opacity:.9;}
+
+/* 一時停止 */
+#pause{position:fixed; inset:0; z-index:25; background:rgba(11,15,24,.92); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; padding:20px;}
+#pause .num{font-size:56px; font-weight:800;}
+#pause button{background:#fff; color:var(--navy); border-radius:16px; padding:16px 40px; font-weight:900; font-size:18px;}
+
+/* まとめ・記録 */
+.sumHead{display:flex; align-items:center; gap:14px; margin-bottom:12px;}
+.rate{width:84px; height:84px; border-radius:50%; display:grid; place-items:center; flex:none; background:conic-gradient(var(--cut) calc(var(--p)*1%), var(--chip) 0);}
+.rate span{width:68px; height:68px; border-radius:50%; background:var(--card); display:grid; place-items:center; font-weight:800; font-size:20px;}
+.sumHead .t1{font-weight:900; font-size:18px;}
+.sumHead .t2{font-size:13px; color:var(--muted); margin-top:3px; line-height:1.6;}
+.rows{display:flex; flex-direction:column;}
+.row{display:flex; gap:10px; padding:10px 0; border-top:1px solid var(--line); align-items:flex-start;}
+.row:first-child{border-top:0;}
+.row .mk{flex:none; width:30px; height:30px; border-radius:9px; display:grid; place-items:center; font-weight:900; font-size:14px;}
+.mk.ok{background:var(--done-soft); color:var(--done);} .mk.ng{background:#F8E1E4; color:var(--late);} .mk.sk{background:var(--chip); color:var(--muted);}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .mk.ng{background:#3A1E24;} }
+.row .bd{flex:1; min-width:0;}
+.row .nm{font-weight:700; word-break:break-word;}
+.row .dt{font-size:12.5px; color:var(--muted); margin-top:2px; line-height:1.6;}
+.tag{display:inline-block; font-size:11.5px; font-weight:800; border-radius:6px; padding:1px 7px; margin-right:4px;}
+.tag.d{background:var(--done-soft); color:var(--done);} .tag.c{background:var(--cut-soft); color:var(--cut);} .tag.l{background:#F8E1E4; color:var(--late);} .tag.r{background:var(--rest-soft); color:var(--rest);} .tag.s{background:var(--chip); color:var(--muted);}
+.histItem{display:flex; align-items:center; gap:12px; padding:12px 0; border-top:1px solid var(--line); width:100%; text-align:left;}
+.histItem:first-child{border-top:0;}
+.histItem .pc{font-size:20px; font-weight:800; width:62px; flex:none;}
+.histItem .inf{flex:1; font-size:13px; color:var(--muted); line-height:1.6;}
+.histItem .inf b{color:var(--ink); font-size:14.5px;}
+.week{display:flex; gap:6px; align-items:flex-end; height:84px; margin:6px 0 4px;}
+.week div{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px; color:var(--muted); height:100%; justify-content:flex-end;}
+.week i{display:block; width:100%; max-width:30px; border-radius:6px 6px 3px 3px; background:var(--cut); min-height:3px;}
+.week i.no{background:var(--chip);}
+.laterItem{display:flex; gap:8px; align-items:center; padding:9px 0; border-top:1px solid var(--line);}
+.laterItem:first-child{border-top:0;}
+.laterItem .bd{flex:1; min-width:0; word-break:break-word;}
+.laterItem .bd small{display:block; color:var(--muted); font-size:12.5px;}
+.laterItem button{color:var(--muted); font-size:13px; padding:6px 8px; border-radius:8px; background:var(--chip);}
+
+/* シート（使い方・まとめ） */
+.ov{position:fixed; inset:0; z-index:40; background:rgba(10,14,24,.5); display:flex; align-items:flex-end; justify-content:center;}
+.ov .panel{background:var(--bg); width:100%; max-width:640px; max-height:92vh; overflow:auto; border-radius:22px 22px 0 0; padding:18px 16px calc(20px + env(safe-area-inset-bottom));}
+.ov .panel h3{font-size:18px; font-weight:900; margin-bottom:12px;}
+.ov .close{position:sticky; top:0; float:right; background:var(--chip); border-radius:999px; padding:6px 14px; font-weight:700; font-size:13px;}
+.help p{line-height:1.85; margin-bottom:10px; font-size:14.5px;}
+.help h4{font-size:15px; font-weight:900; margin:18px 0 8px;}
+.help .tip{background:var(--card); border-radius:12px; padding:11px 13px; margin-bottom:8px; box-shadow:var(--shadow); font-size:14px; line-height:1.75;}
+.help .tip b{display:block; font-weight:900; margin-bottom:2px;}
+
+.toast{position:fixed; left:50%; bottom:calc(96px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:60; background:var(--ink); color:var(--bg);
+  padding:10px 18px; border-radius:999px; font-size:14px; font-weight:700; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap;}
+.toast.show{opacity:1;}
+.seg{display:flex; background:var(--chip); border-radius:12px; padding:3px; gap:2px;}
+.seg button{padding:7px 11px; border-radius:9px; font-size:13px; font-weight:700; color:var(--muted);}
+.seg button.on{background:var(--card); color:var(--ink); box-shadow:var(--shadow);}
+.sw{width:50px; height:30px; border-radius:999px; background:var(--chip); position:relative; flex:none;}
+.sw::after{content:''; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:left .15s;}
+.sw.on{background:var(--done);} .sw.on::after{left:23px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="logo">✂</span>時切スライド <small id="verLabel"></small></h1>
+  <button data-users-tag hidden></button>
+  <button class="helpBtn" id="btnHelp" aria-label="使い方">?</button>
+</header>
+
+<main>
+  <!-- 今日（準備） -->
+  <section id="tabToday">
+    <div class="sec">
+      <h2>今日のスライド <span class="sub">1枚＝1つのやること</span></h2>
+      <div class="slides" id="slideList"></div>
+      <div class="addRow">
+        <input id="newText" placeholder="やること（例：英単語 50語）" enterkeyhint="done" maxlength="60">
+        <select id="newMin" class="num" aria-label="時間"></select>
+        <button id="btnAdd">追加</button>
+      </div>
+    </div>
+
+    <div class="sec hidden" id="laterSec">
+      <h2>あとでやる <span class="sub">切ったスライドの続き・押すと追加</span></h2>
+      <div class="chips" id="laterChips"></div>
+    </div>
+
+    <div class="sec">
+      <div class="card">
+        <div class="opt">
+          <div class="lbl">スライドの間に休憩<small>休憩も時間になったら次へ</small></div>
+          <div class="seg" id="segRest"></div>
+        </div>
+        <div class="opt">
+          <div class="lbl">前回のスライドを使う<small id="lastInfo"></small></div>
+          <button class="chipBtn" id="btnLast">読みこむ</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="total"><span>合計 <b class="num" id="totMin">0</b> 分</span><span class="muted small" id="totEnd"></span></div>
+    <button class="bigBtn" id="btnStart">▶ スライドをはじめる</button>
+    <button class="subBtn" id="btnClear">スライドを全部消す</button>
+  </section>
+
+  <!-- 記録 -->
+  <section id="tabLog" class="hidden">
+    <div class="sec">
+      <h2>この7日の時切</h2>
+      <div class="card">
+        <div class="week" id="week"></div>
+        <p class="small muted" id="weekText"></p>
+      </div>
+    </div>
+    <div class="sec">
+      <h2>これまで <span class="sub">押すと中身</span></h2>
+      <div class="card" id="histList"></div>
+    </div>
+    <div class="sec">
+      <h2>あとでやる <span class="sub">切ったスライドの続き</span></h2>
+      <div class="card" id="laterList"></div>
+    </div>
+  </section>
+
+  <!-- 設定 -->
+  <section id="tabSet" class="hidden">
+    <div class="sec"><div data-users-card></div></div>
+    <div class="sec">
+      <h2>時間になったら</h2>
+      <div class="card">
+        <div class="opt">
+          <div class="lbl">自動で次のスライドへ<small>押さなくても、この秒数で切って次へ進む</small></div>
+          <div class="seg" id="segAuto"></div>
+        </div>
+        <div class="opt">
+          <div class="lbl">延長（＋3分）を使えるようにする<small>使うと、そのスライドは時切✕になる</small></div>
+          <button class="sw" id="swExt" aria-label="延長"></button>
+        </div>
+        <div class="opt">
+          <div class="lbl">音<small>マナーモードでも鳴るように作っています</small></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="chipBtn" id="btnTest">鳴らしてみる</button>
+            <button class="sw" id="swSound" aria-label="音"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <h2>アプリ</h2>
+      <div class="card">
+        <div class="opt">
+          <div class="lbl">使い方と、時切を鍛えるコツ</div>
+          <button class="chipBtn" id="btnHelp2">ひらく</button>
+        </div>
+        <div class="opt">
+          <div class="lbl">更新<small id="updText">いまの版：<span id="verLabel2"></span></small></div>
+          <div style="display:flex;gap:8px">
+            <button class="chipBtn on hidden" id="btnUpdate">最新にする</button>
+            <button class="chipBtn" id="btnCheckUpd">更新があるか調べる</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="Today" class="on"><span class="ic">🎞️</span>今日</button>
+  <button data-tab="Log"><span class="ic">📊</span>記録</button>
+  <button data-tab="Set"><span class="ic">⚙️</span>設定</button>
+</nav>
+
+<!-- 本番の画面 -->
+<div id="run" class="hidden">
+  <div class="top">
+    <span class="cnt" id="runCnt"></span>
+    <button id="btnPause">⏸ 一時停止</button>
+    <button id="btnQuit">やめる</button>
+  </div>
+  <div class="bar" id="runBar"></div>
+  <div class="stage">
+    <div class="sheet16" id="sheet">
+      <div class="kind"><span id="sheetKind"></span><span id="sheetMin" class="num"></span></div>
+      <div class="txt" id="sheetText"></div>
+      <div class="memoLine" id="sheetMemo"></div>
+      <div class="prog" id="sheetProg"></div>
+    </div>
+    <div class="clock num" id="clock">00:00</div>
+    <div class="until" id="until"></div>
+    <div class="nextLine" id="nextLine"></div>
+  </div>
+  <div class="runBtns">
+    <button class="ok" id="btnEarly">✓ 終わった → 次へ</button>
+  </div>
+</div>
+
+<div id="pause" class="hidden">
+  <div>一時停止中</div>
+  <div class="num" id="pauseClock">0:00</div>
+  <div class="small" style="color:#AEB8D0;line-height:1.7">止めている間、スライドの時間は減りません。<br>止めた時間も記録に残ります。</div>
+  <button id="btnResume">▶ 再開する</button>
+</div>
+
+<!-- 時間になった -->
+<div id="ring" class="hidden">
+  <div style="font-size:46px">⏰</div>
+  <h3 id="ringTitle">時間です</h3>
+  <div class="what" id="ringWhat"></div>
+  <div class="over hidden" id="ringOver"></div>
+  <input id="ringMemo" placeholder="続きはここから（書かなくてもOK）" maxlength="60" enterkeyhint="done">
+  <div class="rb">
+    <button class="doneB" id="btnRingDone">✓ 終わった</button>
+    <button class="cutB" id="btnRingCut">✂ ここで切る</button>
+  </div>
+  <div class="auto" id="ringAuto"></div>
+  <div class="nx" id="ringNext"></div>
+  <button class="ext hidden" id="btnExt">＋3分 延長する（時切✕になります）</button>
+</div>
+
+<div class="ov hidden" id="ov"><div class="panel" id="ovPanel"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const VER = 1;
+const KEY = 'jg_v1';
+const MINS = [1,3,5,10,15,20,25,30,40,45,50,60,90,120];
+const GRACE = 60000;          // 時間になってから1分以内に次へ進めたら時切○
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const pad = n => String(n).padStart(2, '0');
+const hm = t => { const d = new Date(t); return d.getHours() + ':' + pad(d.getMinutes()); };
+const dayKey = t => { const d = new Date(t); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+const mmss = ms => { ms = Math.max(0, ms); const s = Math.ceil(ms / 1000); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); };
+const minTxt = ms => { const m = Math.round(ms / 60000); return m < 1 ? '1分未満' : m + '分'; };
+
+/* ===== 保存 =====
+   S = { plan:[{id,text,min}], cfg:{auto,ext,sound,rest,lastMin}, later:[{id,text,memo,at}],
+         hist:[{id,at,slides:[...]}], last:[{text,min}], run:null|{...}, seenHelp } */
+let S;
+function load(){
+  try{ S = JSON.parse(localStorage.getItem(KEY)); }catch(e){ S = null; }
+  if(!S || typeof S !== 'object') S = {};
+  S.plan = Array.isArray(S.plan) ? S.plan : [];
+  S.later = Array.isArray(S.later) ? S.later : [];
+  S.hist = Array.isArray(S.hist) ? S.hist : [];
+  S.last = Array.isArray(S.last) ? S.last : [];
+  S.cfg = Object.assign({ auto:10, ext:false, sound:true, rest:0, lastMin:15 }, S.cfg || {});
+  if(!S.run) S.run = null;
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 2200); }
+
+/* ===== タブ ===== */
+let tab = 'Today';
+$('#tabs').onclick = e => {
+  const b = e.target.closest('button'); if(!b) return;
+  tab = b.dataset.tab;
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+  ['Today', 'Log', 'Set'].forEach(k => $('#tab' + k).classList.toggle('hidden', k !== tab));
+  render(); scrollTo(0, 0);
+};
+
+/* ===== 準備の画面 ===== */
+function minOptions(sel){ return MINS.map(m => `<option value="${m}"${m === sel ? ' selected' : ''}>${m}分</option>`).join(''); }
+function planWithRest(){   // 休憩をはさんだ本番用の並び
+  const out = [];
+  S.plan.forEach((p, i) => {
+    out.push({ kind:'task', text:p.text, min:p.min, memo:p.memo || '' });
+    if(S.cfg.rest && i < S.plan.length - 1) out.push({ kind:'rest', text:'休憩', min:S.cfg.rest });
+  });
+  return out;
+}
+function renderToday(){
+  const L = $('#slideList');
+  if(!S.plan.length){
+    L.innerHTML = `<div class="empty">今日やることを、1つずつスライドにします。<br>下の欄に書いて、時間を選んで「追加」。</div>`;
+  }else{
+    L.innerHTML = S.plan.map((p, i) => `
+      <div class="slide" data-id="${p.id}">
+        <span class="no num">${i + 1}</span>
+        <input class="t" value="${esc(p.text)}" maxlength="60" aria-label="やること">
+        <select class="num" aria-label="時間">${minOptions(p.min)}</select>
+        <span class="ops">
+          <button data-op="up" aria-label="上へ">▲</button>
+          <button data-op="down" aria-label="下へ">▼</button>
+          <button data-op="del" aria-label="消す">✕</button>
+        </span>
+      </div>`).join('');
+  }
+  // あとでやる
+  $('#laterSec').classList.toggle('hidden', !S.later.length);
+  $('#laterChips').innerHTML = S.later.map(l => `<button class="chipBtn" data-later="${l.id}">＋ ${esc(l.text)}${l.memo ? ` <span class="memo">（続き：${esc(l.memo)}）</span>` : ''}</button>`).join('');
+  // 休憩
+  $('#segRest').innerHTML = [0, 3, 5, 10].map(m => `<button data-v="${m}" class="${S.cfg.rest === m ? 'on' : ''}">${m ? m + '分' : 'なし'}</button>`).join('');
+  // 前回
+  $('#lastInfo').textContent = S.last.length ? S.last.length + '枚：' + S.last.map(x => x.text).join('・').slice(0, 40) : 'まだありません';
+  $('#btnLast').disabled = !S.last.length; $('#btnLast').style.opacity = S.last.length ? 1 : .4;
+  // 合計
+  const all = planWithRest(), tot = all.reduce((a, x) => a + x.min, 0);
+  $('#totMin').textContent = tot;
+  $('#totEnd').textContent = tot ? 'いま始めると ' + hm(Date.now() + tot * 60000) + ' に終わる' : '';
+  $('#btnStart').disabled = !S.plan.length;
+  $('#btnClear').classList.toggle('hidden', !S.plan.length);
+}
+function addSlide(text, min, memo){
+  text = String(text || '').trim(); if(!text) return false;
+  S.plan.push({ id:uid(), text, min, memo:memo || '' });
+  save(); render(); return true;
+}
+$('#btnAdd').onclick = () => {
+  const m = Number($('#newMin').value) || 15;
+  if(!addSlide($('#newText').value, m)){ $('#newText').focus(); return; }
+  S.cfg.lastMin = m; save();
+  $('#newText').value = ''; $('#newText').focus();
+};
+$('#newText').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing){ e.preventDefault(); $('#btnAdd').click(); } });
+$('#slideList').addEventListener('change', e => {
+  const row = e.target.closest('.slide'); if(!row) return;
+  const p = S.plan.find(x => x.id === row.dataset.id); if(!p) return;
+  if(e.target.matches('input.t')){ const v = e.target.value.trim(); if(v) p.text = v; else e.target.value = p.text; }
+  if(e.target.matches('select')) p.min = Number(e.target.value);
+  save(); renderToday();
+});
+$('#slideList').addEventListener('click', e => {
+  const b = e.target.closest('button[data-op]'); if(!b) return;
+  const id = b.closest('.slide').dataset.id, i = S.plan.findIndex(x => x.id === id); if(i < 0) return;
+  const op = b.dataset.op;
+  if(op === 'del') S.plan.splice(i, 1);
+  if(op === 'up' && i > 0) [S.plan[i - 1], S.plan[i]] = [S.plan[i], S.plan[i - 1]];
+  if(op === 'down' && i < S.plan.length - 1) [S.plan[i + 1], S.plan[i]] = [S.plan[i], S.plan[i + 1]];
+  save(); renderToday();
+});
+$('#laterChips').onclick = e => {
+  const b = e.target.closest('[data-later]'); if(!b) return;
+  const i = S.later.findIndex(x => x.id === b.dataset.later); if(i < 0) return;
+  const l = S.later.splice(i, 1)[0];
+  addSlide(l.text, S.cfg.lastMin || 15, l.memo);
+  toast('スライドに入れました');
+};
+$('#segRest').onclick = e => { const b = e.target.closest('button'); if(!b) return; S.cfg.rest = Number(b.dataset.v); save(); renderToday(); };
+$('#btnLast').onclick = () => {
+  if(!S.last.length) return;
+  if(S.plan.length && !confirm('いまのスライドを、前回のスライドに置きかえますか？')) return;
+  S.plan = S.last.map(x => ({ id:uid(), text:x.text, min:x.min, memo:'' }));
+  save(); render(); toast('前回のスライドを読みこみました');
+};
+$('#btnClear').onclick = () => { if(!confirm('スライドを全部消しますか？')) return; S.plan = []; save(); render(); };
+
+/* ===== 音（マナーモードでも鳴らすため、無音の音声を流して「再生」のあつかいにしてもらう） ===== */
+const SILENT_WAV = 'data:audio/wav;base64,UklGRmQGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUAGAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+let actx = null, keepEl = null;
+function unlockAudio(){
+  try{ if(navigator.audioSession) navigator.audioSession.type = 'playback'; }catch(e){}
+  try{
+    if(!actx){ const C = window.AudioContext || window.webkitAudioContext; if(C) actx = new C(); }
+    if(actx && actx.state === 'suspended') actx.resume();
+  }catch(e){}
+  try{
+    if(!keepEl){ keepEl = new Audio(SILENT_WAV); keepEl.loop = true; keepEl.setAttribute('playsinline', ''); }
+    const p = keepEl.play(); if(p && p.catch) p.catch(() => {});
+  }catch(e){}
+}
+function chime(rest){
+  if(!S.cfg.sound) return;
+  unlockAudio(); if(!actx) return;
+  const notes = rest ? [660, 880] : [880, 660, 880];
+  const t0 = actx.currentTime + 0.02;
+  notes.forEach((f, i) => {
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'sine'; o.frequency.value = f;
+    const t = t0 + i * 0.32;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.5, t + 0.02); g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + 0.65);
+  });
+  try{ if(navigator.vibrate) navigator.vibrate([300, 120, 300, 120, 300]); }catch(e){}
+}
+$('#btnTest').onclick = () => { const s = S.cfg.sound; S.cfg.sound = true; chime(false); S.cfg.sound = s; };
+
+/* ===== 画面をつけたままにする ===== */
+let wl = null;
+async function wakeOn(){ try{ if('wakeLock' in navigator && !wl){ wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } }catch(e){} }
+function wakeOff(){ try{ if(wl) wl.release(); }catch(e){} wl = null; }
+
+/* ===== 本番 =====
+   run = { id, at, idx, slides:[{kind,text,min,memo, st,end, ext, res('done'|'cut'|'skip'), endAt, over, cutMemo}],
+           ring:null|{at, autoAt}, pause:null|ms, paused:0 } */
+function startRun(){
+  if(!S.plan.length) return;
+  unlockAudio();
+  const now = Date.now();
+  const slides = planWithRest().map(x => Object.assign({}, x, { st:0, end:0, ext:0, res:null, endAt:0, over:0, cutMemo:'' }));
+  S.last = S.plan.map(p => ({ text:p.text, min:p.min }));
+  S.run = { id:uid(), at:now, idx:0, slides, ring:null, pause:null, paused:0 };
+  beginSlide(now);
+  save(); showRun(); wakeOn();
+}
+$('#btnStart').onclick = startRun;
+function cur(){ return S.run && S.run.slides[S.run.idx]; }
+function beginSlide(now){ const s = cur(); s.st = now; s.end = now + s.min * 60000; S.run.ring = null; }
+
+function finishSlide(res){
+  const r = S.run, s = cur(), now = Date.now(); if(!s) return;
+  s.res = res; s.endAt = now; s.over = Math.max(0, now - s.end);
+  if(res === 'cut' || res === 'done') s.cutMemo = ($('#ringMemo').value || '').trim();
+  $('#ringMemo').value = '';
+  hideRing();
+  if(r.idx < r.slides.length - 1){ r.idx++; beginSlide(now); save(); paintRun(); }
+  else endRun();
+}
+function isJigiriOk(s){   // 時切○＝延長なし かつ 時間内に終えた or 時間になって1分以内に次へ
+  return !s.ext && s.over <= GRACE;
+}
+function endRun(){
+  const r = S.run; if(!r) return;
+  const rec = { id:r.id, at:r.at, endAt:Date.now(), paused:r.paused, slides:r.slides.map(s => ({ kind:s.kind, text:s.text, min:s.min, res:s.res || 'skip', ext:s.ext, over:s.over, used:s.endAt && s.st ? s.endAt - s.st : 0, memo:s.cutMemo || '' })) };
+  // 切ったスライド・やらなかったスライドは「あとでやる」へ
+  rec.slides.forEach(s => {
+    if(s.kind !== 'task') return;
+    if(s.res === 'cut' || s.res === 'skip') S.later.unshift({ id:uid(), text:s.text, memo:s.memo, at:Date.now() });
+  });
+  S.later = S.later.slice(0, 40);
+  S.hist.unshift(rec); S.hist = S.hist.slice(0, 200);
+  // 今日のスライドは「終わった」ものを消し、残りは次のために置いておく
+  S.plan = [];
+  S.run = null; save();
+  wakeOff(); hideRing(); $('#pause').classList.add('hidden'); $('#run').classList.add('hidden');
+  render(); showSummary(rec, true);
+}
+$('#btnEarly').onclick = () => finishSlide('done');
+$('#btnQuit').onclick = () => {
+  if(!confirm('スライドをやめますか？\nここまでの記録は残ります。残りのスライドは「あとでやる」に入ります。')) return;
+  const r = S.run, s = cur(), now = Date.now();
+  if(r.pause){ r.paused += now - r.pause; r.pause = null; }
+  if(s){ s.res = 'skip'; s.endAt = now; }
+  endRun();
+};
+$('#btnPause').onclick = () => { const r = S.run; if(!r || r.ring) return; r.pause = Date.now(); save(); paintRun(); };
+$('#btnResume').onclick = () => {
+  const r = S.run; if(!r || !r.pause) return;
+  const d = Date.now() - r.pause; r.paused += d; cur().end += d; r.pause = null; save(); unlockAudio(); paintRun();
+};
+
+function showRun(){ $('#run').classList.remove('hidden'); paintRun(); }
+function paintRun(){
+  const r = S.run; if(!r) return;
+  const s = cur(), now = Date.now();
+  const tasks = r.slides.filter(x => x.kind === 'task').length;
+  const no = r.slides.slice(0, r.idx + 1).filter(x => x.kind === 'task').length;
+  $('#runCnt').textContent = s.kind === 'rest' ? '休憩（' + no + ' / ' + tasks + ' 枚目のあと）' : no + ' / ' + tasks + ' 枚目';
+  const tot = r.slides.reduce((a, x) => a + x.min, 0);
+  $('#runBar').innerHTML = r.slides.map((x, i) => {
+    let c = x.kind === 'rest' ? 'rest' : '';
+    if(x.res) c = x.res === 'skip' ? 'skip' : (!isJigiriOk(x) ? 'late' : (x.res === 'cut' ? 'cut' : 'done'));
+    const fill = i === r.idx ? `<b style="width:${Math.min(100, (now - x.st) / (x.end - x.st) * 100)}%"></b>` : '';
+    return `<i class="${c}" style="flex:${x.min / tot}">${fill}</i>`;
+  }).join('');
+  $('#sheet').classList.toggle('rest', s.kind === 'rest');
+  $('#sheetKind').textContent = s.kind === 'rest' ? '☕ 休憩' : '🎞️ スライド ' + no;
+  $('#sheetMin').textContent = s.min + '分' + (s.ext ? '（＋' + s.ext + '）' : '');
+  $('#sheetText').textContent = s.kind === 'rest' ? 'ひと休み' : s.text;
+  $('#sheetMemo').textContent = s.kind === 'rest' ? '立って、目を休める' : s.memo ? '続き：' + s.memo : '';
+  const nx = r.slides[r.idx + 1];
+  $('#nextLine').innerHTML = nx ? '次：<b>' + esc(nx.kind === 'rest' ? '休憩' : nx.text) + '</b>（' + nx.min + '分）' : '次：<b>おしまい</b>（これが最後のスライド）';
+  $('#btnEarly').textContent = s.kind === 'rest' ? '休憩おわり → 次へ' : (nx ? '✓ 終わった → 次へ' : '✓ 終わった → おしまい');
+  $('#pause').classList.toggle('hidden', !r.pause);
+  tick();
+}
+
+function tick(){
+  const r = S.run; if(!r) return;
+  const s = cur(), now = Date.now();
+  if(r.pause){ $('#pauseClock').textContent = mmss(now - r.pause); return; }
+  const left = s.end - now;
+  $('#clock').textContent = mmss(left);
+  $('#clock').classList.toggle('warn', left < 60000);
+  $('#until').textContent = hm(s.end) + ' に次のスライドへ';
+  $('#sheetProg').style.width = Math.min(100, (now - s.st) / (s.end - s.st) * 100) + '%';
+  const b = document.querySelector('#runBar i b'); if(b) b.style.width = Math.min(100, (now - s.st) / (s.end - s.st) * 100) + '%';
+  if(left <= 0){
+    if(!r.ring){ r.ring = { at:now, autoAt:S.cfg.auto ? now + S.cfg.auto * 1000 : 0, beep:now }; save(); showRing(true); }
+    paintRing();
+  }
+}
+setInterval(tick, 250);
+
+function showRing(first){
+  const r = S.run, s = cur(); if(!r) return;
+  const rest = s.kind === 'rest', nx = r.slides[r.idx + 1];
+  const R = $('#ring'); R.classList.remove('hidden'); R.classList.toggle('restEnd', rest);
+  R.classList.remove('flash'); void R.offsetWidth; R.classList.add('flash');
+  $('#ringTitle').textContent = rest ? '休憩おわり' : '時間です';
+  $('#ringWhat').textContent = rest ? '次のスライドへ進みましょう' : s.text;
+  $('#ringMemo').classList.toggle('hidden', rest);
+  $('#btnRingDone').classList.toggle('hidden', rest);
+  $('#btnRingCut').textContent = rest ? '▶ 次へ' : '✂ ここで切る';
+  $('#ringNext').textContent = nx ? '次：' + (nx.kind === 'rest' ? '休憩' : nx.text) + '（' + nx.min + '分）' : '次：おしまい';
+  $('#btnExt').classList.toggle('hidden', !S.cfg.ext || rest);
+  if(first) chime(rest);
+  wakeOn();
+}
+function hideRing(){ $('#ring').classList.add('hidden'); }
+function paintRing(){
+  const r = S.run, s = cur(); if(!r || !r.ring) return;
+  const now = Date.now(), over = now - s.end;
+  const O = $('#ringOver');
+  O.classList.toggle('hidden', over < 15000);
+  O.textContent = over < GRACE ? '時間をすぎて ' + Math.floor(over / 1000) + '秒' : '時間をすぎて ' + minTxt(over) + '（時切✕）';
+  const writing = document.activeElement === $('#ringMemo');
+  if(S.cfg.auto){
+    if(writing){ r.ring.autoAt = 0; $('#ringAuto').textContent = '書きおわったら、どちらかを押してね'; }
+    else{
+      if(!r.ring.autoAt) r.ring.autoAt = now + S.cfg.auto * 1000;
+      const sec = Math.ceil((r.ring.autoAt - now) / 1000);
+      $('#ringAuto').textContent = 'あと ' + Math.max(0, sec) + ' 秒で自動で切って次へ';
+      if(now >= r.ring.autoAt){ finishSlide(s.kind === 'rest' ? 'done' : 'cut'); return; }
+    }
+  }else{
+    $('#ringAuto').textContent = '押すまで次へ進みません';
+  }
+  // 押されないあいだは5秒ごとに鳴らしなおす
+  if(!writing && now - r.ring.beep > 5000 && over < 5 * 60000){ r.ring.beep = now; chime(s.kind === 'rest'); }
+}
+$('#btnRingCut').onclick = () => finishSlide(cur() && cur().kind === 'rest' ? 'done' : 'cut');
+$('#btnRingDone').onclick = () => finishSlide('done');
+$('#ringMemo').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing){ e.preventDefault(); e.target.blur(); } });
+$('#btnExt').onclick = () => {
+  const r = S.run, s = cur(); if(!r) return;
+  s.ext += 3; s.end = Date.now() + 3 * 60000; r.ring = null; save(); hideRing(); paintRun();
+  toast('3分だけ延長。このスライドは時切✕');
+};
+
+/* ===== まとめ ===== */
+function stats(rec){
+  const all = rec.slides.filter(s => s.res !== 'skip');
+  const ok = all.filter(isJigiriOk).length;
+  const tasks = rec.slides.filter(s => s.kind === 'task');
+  return { n:all.length, ok, pct:all.length ? Math.round(ok / all.length * 100) : 0,
+    done:tasks.filter(s => s.res === 'done').length, cut:tasks.filter(s => s.res === 'cut').length,
+    skip:tasks.filter(s => s.res === 'skip').length, tasks:tasks.length,
+    used:rec.slides.reduce((a, s) => a + (s.used || 0), 0) };
+}
+function slideRow(s){
+  const ok = isJigiriOk(s), skip = s.res === 'skip';
+  let tags = '';
+  if(s.kind === 'rest') tags += '<span class="tag r">休憩</span>';
+  if(skip) tags += '<span class="tag s">やらなかった</span>';
+  else if(s.kind === 'task') tags += s.res === 'done' ? '<span class="tag d">✓ 終わった</span>' : '<span class="tag c">✂ 切った</span>';
+  if(s.ext) tags += '<span class="tag l">延長 ' + s.ext + '分</span>';
+  if(!skip && s.over > GRACE) tags += '<span class="tag l">' + minTxt(s.over) + 'オーバー</span>';
+  const used = skip ? '' : '（実際 ' + minTxt(s.used) + '）';
+  return `<div class="row">
+    <span class="mk ${skip ? 'sk' : ok ? 'ok' : 'ng'}">${skip ? '−' : ok ? '○' : '✕'}</span>
+    <div class="bd"><div class="nm">${esc(s.kind === 'rest' ? '休憩' : s.text)}</div>
+    <div class="dt">${tags} 予定 ${s.min}分${used}${s.memo ? '<br>続き：' + esc(s.memo) : ''}</div></div></div>`;
+}
+function reportText(rec){
+  const st = stats(rec), d = new Date(rec.at);
+  const lines = ['【時切スライド】' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hm(rec.at) + '〜' + hm(rec.endAt || rec.at),
+    '時切 ' + st.ok + ' / ' + st.n + '（' + st.pct + '%）', ''];
+  let i = 0;
+  rec.slides.forEach(s => {
+    if(s.kind === 'rest'){ if(s.res !== 'skip' && !isJigiriOk(s)) lines.push('　休憩 ' + s.min + '分 → ' + minTxt(s.over) + 'オーバー ✕'); return; }
+    i++;
+    let t = i + '. ' + s.text + '（' + s.min + '分）→ ';
+    if(s.res === 'skip') t += 'やらなかった';
+    else{
+      t += (s.res === 'done' ? '✓ 終わった' : '✂ 切った') + (isJigiriOk(s) ? ' ○' : ' ✕');
+      if(s.ext) t += '・延長' + s.ext + '分';
+      if(s.over > GRACE) t += '・' + minTxt(s.over) + 'オーバー';
+      if(s.memo) t += '\n　続き：' + s.memo;
+    }
+    lines.push(t);
+  });
+  lines.push('', '合計 ' + minTxt(st.used));
+  return lines.join('\n');
+}
+function showSummary(rec, fresh){
+  const st = stats(rec), d = new Date(rec.at);
+  const msg = !st.n ? '記録はありません' : st.pct === 100 ? '全部、時間どおりに切れました' : st.pct >= 70 ? 'よく切れています' : '「切る」練習の1回目。次は1枚でも多く○を';
+  openOv(`
+    <button class="close" data-close>閉じる</button>
+    <h3>${fresh ? 'おつかれさまでした' : (d.getMonth() + 1) + '/' + d.getDate() + ' のスライド'}</h3>
+    <div class="card" style="margin-bottom:12px">
+      <div class="sumHead">
+        <div class="rate" style="--p:${st.pct}"><span class="num">${st.pct}%</span></div>
+        <div><div class="t1">時切 ${st.ok} / ${st.n}</div>
+        <div class="t2">${msg}<br>${hm(rec.at)}〜${hm(rec.endAt || rec.at)}・✓${st.done} ✂${st.cut}${st.skip ? ' −' + st.skip : ''}</div></div>
+      </div>
+      <div class="rows">${rec.slides.map(slideRow).join('')}</div>
+    </div>
+    ${st.cut + st.skip ? '<p class="small muted" style="margin:0 2px 12px;line-height:1.7">切ったスライドとやらなかったスライドは「あとでやる」に入りました。次の準備のとき、押すとスライドに戻せます。</p>' : ''}
+    <button class="bigBtn" id="btnCopy">報告用にコピー</button>
+    <p class="small muted" style="margin:10px 2px 0;line-height:1.7">○＝時間内に終えた、または時間になって1分以内に次へ進めた。✕＝延長した、または1分以上すぎた。</p>
+    ${fresh ? '' : '<button class="subBtn" id="btnDelRec" style="color:var(--late)">この記録を消す</button>'}
+  `);
+  $('#btnCopy').onclick = async () => {
+    const t = reportText(rec);
+    try{ await navigator.clipboard.writeText(t); toast('コピーしました'); }
+    catch(e){ const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast('コピーしました'); }catch(_){ toast('コピーできませんでした'); } ta.remove(); }
+  };
+  const del = $('#btnDelRec');
+  if(del) del.onclick = () => { if(!confirm('この記録を消しますか？')) return; S.hist = S.hist.filter(h => h.id !== rec.id); save(); closeOv(); render(); };
+}
+
+/* ===== 記録の画面 ===== */
+function renderLog(){
+  const days = [];
+  for(let i = 6; i >= 0; i--){ const t = Date.now() - i * 86400000; days.push({ k:dayKey(t), d:new Date(t) }); }
+  let sOk = 0, sN = 0;
+  $('#week').innerHTML = days.map(x => {
+    let ok = 0, n = 0;
+    S.hist.forEach(h => { if(dayKey(h.at) === x.k){ const st = stats(h); ok += st.ok; n += st.n; } });
+    sOk += ok; sN += n;
+    const p = n ? Math.round(ok / n * 100) : 0;
+    return `<div><span class="num">${n ? p + '%' : ''}</span><i class="${n ? '' : 'no'}" style="height:${n ? Math.max(4, p * .55) : 3}px"></i>${'日月火水木金土'[x.d.getDay()]}</div>`;
+  }).join('');
+  $('#weekText').textContent = sN ? '7日で ' + sN + ' 枚のうち ' + sOk + ' 枚を時間どおりに切れました（' + Math.round(sOk / sN * 100) + '%）。' : 'スライドを1回やると、ここに時切の割合が出ます。';
+  $('#histList').innerHTML = S.hist.length ? S.hist.slice(0, 60).map(h => {
+    const st = stats(h), d = new Date(h.at);
+    return `<button class="histItem" data-h="${h.id}"><span class="pc num">${st.pct}%</span><span class="inf"><b>${d.getMonth() + 1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）${hm(h.at)}〜</b><br>時切 ${st.ok}/${st.n}・✓${st.done} ✂${st.cut}・${minTxt(st.used)}</span><span class="muted">›</span></button>`;
+  }).join('') : '<p class="small muted">まだ記録はありません。</p>';
+  $('#laterList').innerHTML = S.later.length ? S.later.map(l => `
+    <div class="laterItem"><div class="bd">${esc(l.text)}${l.memo ? '<small>続き：' + esc(l.memo) + '</small>' : ''}</div>
+    <button data-lt="${l.id}" data-op="add">スライドへ</button><button data-lt="${l.id}" data-op="del">✕</button></div>`).join('')
+    : '<p class="small muted">切ったスライドの続きが、ここにたまります。</p>';
+}
+$('#histList').onclick = e => { const b = e.target.closest('[data-h]'); if(!b) return; const h = S.hist.find(x => x.id === b.dataset.h); if(h) showSummary(h, false); };
+$('#laterList').onclick = e => {
+  const b = e.target.closest('[data-lt]'); if(!b) return;
+  const i = S.later.findIndex(x => x.id === b.dataset.lt); if(i < 0) return;
+  const l = S.later.splice(i, 1)[0];
+  if(b.dataset.op === 'add'){ addSlide(l.text, S.cfg.lastMin || 15, l.memo); toast('「今日」のスライドに入れました'); }
+  save(); render();
+};
+
+/* ===== 設定 ===== */
+function renderSet(){
+  $('#segAuto').innerHTML = [0, 5, 10, 20].map(v => `<button data-v="${v}" class="${S.cfg.auto === v ? 'on' : ''}">${v ? v + '秒' : 'しない'}</button>`).join('');
+  $('#swExt').classList.toggle('on', !!S.cfg.ext);
+  $('#swSound').classList.toggle('on', !!S.cfg.sound);
+}
+$('#segAuto').onclick = e => { const b = e.target.closest('button'); if(!b) return; S.cfg.auto = Number(b.dataset.v); save(); renderSet(); };
+$('#swExt').onclick = () => { S.cfg.ext = !S.cfg.ext; save(); renderSet(); };
+$('#swSound').onclick = () => { S.cfg.sound = !S.cfg.sound; save(); renderSet(); };
+
+/* ===== シート ===== */
+function openOv(html){ $('#ovPanel').innerHTML = html; $('#ov').classList.remove('hidden'); $('#ovPanel').scrollTop = 0; }
+function closeOv(){ $('#ov').classList.add('hidden'); }
+$('#ov').addEventListener('click', e => { if(e.target.id === 'ov' || e.target.closest('[data-close]')) closeOv(); });
+function showHelp(){
+  openOv(`
+    <button class="close" data-close>閉じる</button>
+    <h3>時切スライドの使い方</h3>
+    <div class="help">
+      <p>プレゼンの「ペチャクチャ」は、スライド1枚を20秒で必ず次へ送ります。これを自習に使ったのがこのアプリです。<b>今日やることを1つずつスライドにして、時間になったら次のスライドへ切りかえます。</b></p>
+      <h4>👉 使い方</h4>
+      <p>「今日」で、やることを書いて時間を選び「追加」。並べ替えは ▲▼。<br>
+      「スライドをはじめる」を押すと、1枚目のスライドと残り時間が大きく出ます。<br>
+      時間になると音が鳴って画面が切りかわります。「✂ ここで切る」か「✓ 終わった」を押すと次のスライドへ。押さなくても10秒で自動で切って次へ進みます。<br>
+      早く終わったら「✓ 終わった → 次へ」。</p>
+      <h4>✂ 時切（じぎり）の○と✕</h4>
+      <p>時間内に終えた、または時間になって1分以内に次へ進めたら ○。延長したり、1分以上すぎたら ✕。<b>終わったかどうかではなく、時間どおりに切れたかを数えます。</b>記録のタブで7日の割合が見られます。</p>
+      <p>切ったスライドは「あとでやる」に入ります。時間になったときに「続きはここから」を1行書いておくと、次に再開するときにすぐ始められます。</p>
+      <h4>📱 置き方</h4>
+      <p>画面をつけたまま机の上に立てて置いてください（このアプリを開いている間は画面が消えにくくなります）。ほかのアプリを開いたり画面を消したりすると、音が鳴りません。もどったときに、すぎた時間が記録されます。</p>
+      <h4>🧠 時切を鍛えるコツ（アプリがなくてもできる）</h4>
+      <div class="tip"><b>切る前に「続きはここから」を1行書く</b>途中でやめても次にすぐ戻れると分かると、「もう少し」が減ります。キリのいい所まで、が要らなくなります。</div>
+      <div class="tip"><b>「何分」ではなく「何時何分に切る」と決める</b>「20分やる」は伸びます。「14:20に切る」と時計の時刻で決めて、紙に書いて見える所に置きます。</div>
+      <div class="tip"><b>「もう少し」は次のスライドから削って払う</b>延長するなら、そのぶん次のやることの時間が減る、と決めておく。タダで延長できないと、延長しにくくなります。</div>
+      <div class="tip"><b>タイマーを机から離れた所に置く</b>止めるために立ち上がる＝そこで切りかわる合図になります。</div>
+      <div class="tip"><b>「終わった数」ではなく「時間どおりに切れた数」を数える</b>やり切れたかより、切れたかを毎日1つの数字にすると、時切が練習になります。</div>
+    </div>
+  `);
+  S.seenHelp = true; save();
+}
+$('#btnHelp').onclick = showHelp;
+$('#btnHelp2').onclick = showHelp;
+
+/* ===== 全体の描きなおし ===== */
+function render(){
+  if(tab === 'Today') renderToday();
+  if(tab === 'Log') renderLog();
+  if(tab === 'Set') renderSet();
+}
+
+/* ===== 更新の確認 ===== */
+async function checkUpdate(silent){
+  try{
+    const res = await fetch('version.json?t=' + Date.now(), { cache:'no-store' });
+    if(!res.ok) throw 0;
+    const j = await res.json(), v = Number(j.v) || 0;
+    if(v > VER){
+      $('#updText').textContent = '新しいバージョン v' + v + (j.note ? '：' + j.note : '');
+      $('#btnUpdate').classList.remove('hidden');
+    }else{
+      $('#btnUpdate').classList.add('hidden');
+      if(!silent) toast('いまが最新です（v' + VER + '）');
+    }
+  }catch(e){ if(!silent) toast('調べられませんでした'); }
+}
+$('#btnUpdate').onclick = async () => {
+  save();
+  try{
+    if('serviceWorker' in navigator){ const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.unregister())); }
+    if(window.caches){ const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
+  }catch(e){}
+  location.replace(location.pathname + '?u=' + Date.now());
+};
+$('#btnCheckUpd').onclick = () => checkUpdate(false);
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){ save(); return; }
+  if(S.run){ wakeOn(); tick(); } else { load(); render(); }
+  checkUpdate(true);
+});
+document.addEventListener('pointerdown', () => { if(S.run) unlockAudio(); }, { passive:true });
+
+/* 起動 */
+$('#verLabel').textContent = 'v' + VER;
+$('#verLabel2').textContent = 'v' + VER;
+load();
+$('#newMin').innerHTML = minOptions(S.cfg.lastMin || 15);
+render();
+if(S.run){ showRun(); if(cur() && Date.now() >= cur().end && !S.run.pause) showRing(false); }
+else if(!S.seenHelp) showHelp();
+checkUpdate(true);
+try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
+if('serviceWorker' in navigator){ window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
+</script>
+</body>
+</html>

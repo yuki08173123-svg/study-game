@@ -197,6 +197,7 @@ nav.tabs button.on .ic{transform:scale(1.08);}
 .help h4{font-size:15px; font-weight:900; margin:18px 0 8px;}
 .help .tip{background:var(--card); border-radius:12px; padding:11px 13px; margin-bottom:8px; box-shadow:var(--shadow); font-size:14px; line-height:1.75;}
 .help .tip b{display:block; font-weight:900; margin-bottom:2px;}
+.help .tip .app{display:block; margin-top:6px; font-size:13px; color:var(--muted); font-weight:700;}
 
 .toast{position:fixed; left:50%; bottom:calc(96px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:60; background:var(--ink); color:var(--bg);
   padding:10px 18px; border-radius:999px; font-size:14px; font-weight:700; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap;}
@@ -299,7 +300,7 @@ nav.tabs button.on .ic{transform:scale(1.08);}
       <h2>アプリ</h2>
       <div class="card">
         <div class="opt">
-          <div class="lbl">使い方と、時切を鍛えるコツ</div>
+          <div class="lbl">使い方と、時切を鍛える4ステップ</div>
           <button class="chipBtn" id="btnHelp2">ひらく</button>
         </div>
         <div class="opt">
@@ -371,7 +372,7 @@ nav.tabs button.on .ic{transform:scale(1.08);}
 <div class="toast" id="toast"></div>
 
 <script>
-const VER = 2;
+const VER = 3;
 const KEY = 'jg_v1';
 const MINS = [1,3,5,10,15,20,25,30,40,45,50,60,90,120];
 const GRACE = 60000;          // 時間になってから1分以内に次へ進めたら時切○
@@ -804,7 +805,11 @@ function showHelp(){
     <button class="close" data-close>閉じる</button>
     <h3>時切スライドの使い方</h3>
     <div class="help">
-      <p>プレゼンの「ペチャクチャ」は、スライド1枚を20秒で必ず次へ送ります。これを自習に使ったのがこのアプリです。<b>今日やることを1つずつスライドにして、時間になったら次のスライドへ切りかえます。</b></p>
+      <h4>✂ 時切（じせつ）とは</h4>
+      <p>時切は、字のとおり<b>「時間を切る」マインド</b>です。決めた時間になったら、そこでスパッと切る。これだけです。</p>
+      <p>「あともうちょっと」が口ぐせ、寝る時刻がいつも遅れる、その日のタスクが終わらない。どれも、時間を切れていないことが原因です。</p>
+      <p>時切は、誰でもできます。登校の時刻に間に合うように家を出る。降りる駅に着いたら電車を降りる。テストが終わったら手を止める。みんな、もうやっています。テストで「ぼくだけ5分延長してください」と言う人はいません。</p>
+      <p>終わらなかった分は、明日以降に回せば大丈夫です。「ここまでならできる」というデータが取れたので、次は自分の力に合った計画に直して、また時間を切ります。</p>
       <h4>👉 使い方</h4>
       <p>「今日」で、やることを書いて時間を選び「追加」。並べ替えは ▲▼。<br>
       「スライドをはじめる」を押すと、1枚目のスライドと残り時間が大きく出ます。<br>
@@ -815,12 +820,13 @@ function showHelp(){
       <p>切ったスライドは「あとでやる」に入ります。時間になったときに「続きはここから」を1行書いておくと、次に再開するときにすぐ始められます。</p>
       <h4>📱 置き方</h4>
       <p>画面をつけたまま机の上に立てて置いてください（このアプリを開いている間は画面が消えにくくなります）。ほかのアプリを開いたり画面を消したりすると、音が鳴りません。もどったときに、すぎた時間が記録されます。</p>
-      <h4>🧠 時切を鍛えるコツ（アプリがなくてもできる）</h4>
-      <div class="tip"><b>切る前に「続きはここから」を1行書く</b>途中でやめても次にすぐ戻れると分かると、「もう少し」が減ります。キリのいい所まで、が要らなくなります。</div>
-      <div class="tip"><b>「何分」ではなく「何時何分に切る」と決める</b>「20分やる」は伸びます。「14:20に切る」と時計の時刻で決めて、紙に書いて見える所に置きます。</div>
-      <div class="tip"><b>「もう少し」は次のスライドから削って払う</b>延長するなら、そのぶん次のやることの時間が減る、と決めておく。タダで延長できないと、延長しにくくなります。</div>
-      <div class="tip"><b>タイマーを机から離れた所に置く</b>止めるために立ち上がる＝そこで切りかわる合図になります。</div>
-      <div class="tip"><b>「終わった数」ではなく「時間どおりに切れた数」を数える</b>やり切れたかより、切れたかを毎日1つの数字にすると、時切が練習になります。</div>
+      <h4>🔁 時切を鍛える4ステップ</h4>
+      <p>テスト本番をイメージしながら、この4つをひたすらくり返します。</p>
+      <div class="tip"><b>① 始めるときに、終わる時刻を決める</b>「とりあえずこれくらい」ではなく、テストの制限時間のように、終わる時刻を決めてから始めます。タイマーをセットして、ちらちら見ます。<span class="app">アプリでは：スライドの画面に「○:○○ に次のスライドへ」と出ます。</span></div>
+      <div class="tip"><b>② 終わる時刻になったら、動きを止める</b>テストで「やめてください」と言われたら、手を止めて答案を裏返しますよね。「もうちょっと」と言う人は、ずっと手が動いています。終わっていなくても関係ありません。止めます。<span class="app">アプリでは：音が鳴って画面がオレンジになったら、手を止めます。</span></div>
+      <div class="tip"><b>③ 次の動きを言葉にする</b>止まったら、次にやることを頭の中で言います（口に出してもOK）。テストなら「後ろから答案を受け取って、前に回す」。さっきのタスクに戻るのはダメです。<span class="app">アプリでは：画面の「次：○○」を声に出します。</span></div>
+      <div class="tip"><b>④ 3秒以内に動く</b>3、2、1と数えて動き出します。次が休憩や、水を飲むことなら、それをすぐやります。<span class="app">アプリでは：「ここで切る」か「終わった」をすぐ押します（押さなくても10秒で次へ進みます）。</span></div>
+      <p>①〜④をぐるぐる回し続けると、時切は鍛えられます。テスト本番と同じ動きなので、本番の練習にもなります。</p>
     </div>
   `);
   S.seenHelp = true; save();

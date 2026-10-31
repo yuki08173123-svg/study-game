@@ -773,9 +773,16 @@ html[data-theme="light"] .tg::after{background:#fff;}
    ・同期コードは全アプリで1つ。計画マップのコードをそのまま入れればよい。
    ・サーバーには、そのコードから作った「アプリごとのコード」で預ける（アプリどうしが上書きし合わない）。
    ・預けるのは config.keys の localStorage だけ。写真（IndexedDB）は下の「写真の同期」で別に運ぶ。
+   ※ 2026-10-31：同期で記録が消える穴をふさいだ「共通版」（ヒラボイス v14 の直しを、Essence の HSYNC に入れたもの）。
+     理科の一問一答・高校ルート・Essence は同じ中身。直すときは3つとも（とヒラボイス）同じように直す。
+     穴＝受けとった記録をカードの最中などに後回しにしている間に書くと、合わせずに送って、もう1台の記録を上書きしていた。
+     直し＝送るときは後回しの分と合わせる（outgoing）・合わせて送ったら「まだ受けとっていない」目印（M.stale）で次に開いたら先に受けとる・
+     mergeKey のあるアプリは受けとるときいつも合わせる（この端末だけの記録も残す）。
    ─────────────────────────────────────────────────────────── */
 const HSync = (function(){
-  const URL = 'https://script.google.com/macros/s/AKfycbztk0Zk4YnnAjKcOgsVU690-gAn_FfN5xGILx5u_YUj6syG5xk80sV6Biqa1WOce-uQ/exec';
+  /* 手元（localhost）で試すときだけ、まねの預け先を使える（本物に書きこまないため・公開ページでは使わない） */
+  const URL = (location.hostname === 'localhost' && sessionStorage.getItem('hs.testurl')) ||
+    'https://script.google.com/macros/s/AKfycbztk0Zk4YnnAjKcOgsVU690-gAn_FfN5xGILx5u_YUj6syG5xk80sV6Biqa1WOce-uQ/exec';
   const SECRET = 'hiramap-2026';
   const CH = 'abcdefghjkmnpqrstuvwxyz23456789';      // 0/o/1/l/i は使わない（計画マップと同じ）
   const TOMB_DAYS = 90;
@@ -850,7 +857,7 @@ const HSync = (function(){
 
   /* 2台の中身を合わせる。lists は id ごとに足し合わせ、ほかは新しいほうの値 */
   function merge(loc, rem, remNewer){
-    const out = { app: C.app, v: 1, keys: {}, tomb: {} };
+    const out = { app: C.app, v: 1, keys: {}, tomb: {}, who: whoNow() || rem.who || loc.who || '' };
     const tb = {};
     [loc.tomb || {}, rem.tomb || {}].forEach(t => Object.keys(t).forEach(k => Object.keys(t[k] || {}).forEach(id => {
       tb[k] = tb[k] || {}; tb[k][id] = Math.max(tb[k][id] || 0, t[k][id]);
@@ -958,11 +965,12 @@ const HSync = (function(){
 
   async function push(){
     if(!M.code) return;
+    if(M.stale && !pending) return pull(true);   // まだ受けとっていない分があるときは、先に受けとって合わせる（この端末の古い中身で上書きしない）
     if(busy){ clearTimeout(timer); timer = setTimeout(push, 1500); return; }
     busy = true;
     const mySeq = seq;
     try{
-      const r = await call({ action:'put', code:derive(M.code), mt:M.mt || 0, name:C.label, data:JSON.stringify(collect()) });
+      const r = await call({ action:'put', code:derive(M.code), mt:M.mt || 0, name:C.label, data:JSON.stringify(outgoing()) });
       if(r && r.ok && r.stale) await onRemote(r);
       else if(r && r.ok){ M.at = now(); M.err = ''; if(seq === mySeq) M.dirty = false; }
       else M.err = (r && r.err) || '送れませんでした';
@@ -971,10 +979,32 @@ const HSync = (function(){
     if(M.err){ clearTimeout(timer); timer = setTimeout(push, 30000); }
     else if(M.dirty && seq !== mySeq){ clearTimeout(timer); timer = setTimeout(push, C.delay || 3000); }
   }
+  /* 送る中身。受けとった記録を（カードの最中などで）まだ入れていないときは、それと合わせてから送る。
+     2026-10-31 ヒラボイス v14 で見つけた穴：合わせずに送ると、もう1台の記録を上書きして消していた */
+  function outgoing(){
+    if(!pending) return collect();
+    const m = merge(collect(), pending.obj, false);
+    pending.obj = m;
+    M.stale = true; saveMeta();   // 預け先には合わせたものを送るが、この端末にはまだ入っていない → 次に開いたら必ず受けとる
+    return m;
+  }
+  /* 2つの中身が同じか（キーの順番がちがっても同じとみる） */
+  function canon(v){
+    if(Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
+    if(v && typeof v === 'object') return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}';
+    return JSON.stringify(v);
+  }
+  function sameKeys(a, b){
+    const ka = a.keys || {}, kb = b.keys || {};
+    return C.keys.every(k => {
+      if(ka[k] === kb[k]) return true;
+      try{ return canon(JSON.parse(ka[k])) === canon(JSON.parse(kb[k])); }catch(e){ return false; }
+    });
+  }
   /* 閉じるとき。書いた直後に閉じても届くように */
   function flush(){
     if(!M || !M.code || !M.dirty || reloading) return;
-    const body = JSON.stringify({ secret:SECRET, action:'put', code:derive(M.code), mt:M.mt || 0, name:C.label, data:JSON.stringify(collect()) });
+    const body = JSON.stringify({ secret:SECRET, action:'put', code:derive(M.code), mt:M.mt || 0, name:C.label, data:JSON.stringify(outgoing()) });
     if(body.length > 60000) return;            // keepalive で送れる大きさをこえたら、次に開いたときに送る
     try{ fetch(URL, { method:'POST', body, keepalive:true }); }catch(e){}
   }
@@ -983,6 +1013,19 @@ const HSync = (function(){
   async function onRemote(r){
     let rem = null; try{ rem = JSON.parse(r.data || 'null'); }catch(e){}
     if(!rem || rem.app !== C.app || !rem.keys){ M.err = 'このコードの中身が読めません'; return; }
+    M.stale = false;
+    /* 合わせ方がわかるアプリ（mergeKey）は、送りそこねがなくても、いつも合わせて入れる。
+       この端末にだけある記録（送る前に上書きされた分など）も消さずに残し、預けなおす（v14 の直し） */
+    if(C.mergeKey){
+      const loc = collect(), merged = merge(loc, rem, true);
+      const toRemote = !sameKeys(merged, rem), toLocal = !sameKeys(merged, loc);
+      M.mt = toRemote ? Math.max(now(), (r.mt || 0) + 1) : (r.mt || M.mt); M.at = now(); M.err = '';
+      if(toRemote) M.dirty = true;
+      saveMeta();
+      if(toLocal){ applyAndReload(merged, toRemote ? '2台の記録を合わせました' : 'ほかの端末の記録を受けとりました'); return; }
+      if(toRemote){ clearTimeout(timer); timer = setTimeout(push, 300); }
+      return;
+    }
     if(!M.dirty){
       M.mt = r.mt || M.mt; M.at = now(); M.err = ''; saveMeta();
       applyAndReload(rem, 'ほかの端末の記録を受けとりました');
@@ -1002,7 +1045,7 @@ const HSync = (function(){
       const r = await call({ action:'get', code:derive(M.code) });
       busy = false;
       if(r && r.ok && r.found){
-        if((r.mt || 0) > (M.mt || 0)){ await onRemote(r); }
+        if((r.mt || 0) > (M.mt || 0) || M.stale){ await onRemote(r); }
         else if((r.mt || 0) < (M.mt || 0) || M.dirty){ await push(); return; }
         else { M.at = now(); M.err = ''; if(!quiet) say('同期ずみです'); }
       }else if(r && r.ok){ await push(); return; }
@@ -1147,7 +1190,7 @@ const HSync = (function(){
     render();
     try{ const m = sessionStorage.getItem('hs.msg'); if(m){ sessionStorage.removeItem('hs.msg'); setTimeout(() => say(m), 600); } }catch(e){}
     if(M.code){
-      setTimeout(() => { if(M.dirty) push(); else pull(true); }, 1200);
+      setTimeout(() => { if(M.dirty && !M.stale) push(); else pull(true); }, 1200);
     }
     let lastPull = 0;
     const wake = () => { if(M.code && !document.hidden && now() - lastPull > 20000){ lastPull = now(); pull(true); } };
@@ -1162,7 +1205,7 @@ const HSync = (function(){
 
 
 /* ===================== 基本 ===================== */
-const VER = 44;
+const VER = 45;
 /* アプリの名前（ここだけ変えれば、画面の中の名前がそろう。Discord の部屋の名前「#ミスマップ」とは別） */
 const APP_NAME = 'Essence';
 /* 使う人（兄弟で1台を使うとき）。計画マップと同じしくみ。

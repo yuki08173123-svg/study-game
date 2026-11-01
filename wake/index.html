@@ -175,7 +175,7 @@ textarea#goalIn{ width:100%; font:inherit; font-size:16px; padding:10px 12px; bo
 <div id="printBox"></div>
 <audio id="au" playsinline preload="auto"></audio>
 
-<script src="lines.js?v=14"></script>
+<script src="lines.js?v=15"></script>
 <script>
 /* HSYNC BEGIN ─────────────────────────────────────────────
    同期（iPad・スマホ・パソコンで同じにする）。ヒラボイス v12（2026-10-25 ユウキ・ハルネコ「iPadでも使いたい」）。
@@ -614,7 +614,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 /* ===================== 基本 ===================== */
-const VER = 14;
+const VER = 15;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1000,6 +1000,10 @@ function wrapText(ctx, text, maxW){
   }
   if(line) out.push(line); return out;
 }
+/* 兄弟で使っているときの、いまの人の名前（名前を入れていなければ空）。v15・ユウキ・ハルネコの要望（計画マップと同じく、だれの投稿か分かるように） */
+function cardName(){
+  try{ return window.SGUsers && SGUsers.many() ? String(SGUsers.current().name || '').trim() : ''; }catch(e){ return ''; }
+}
 function drawCard(light){
   const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const c = cv.getContext('2d'), g = goal(), r = S.days[today()] || {};
@@ -1010,7 +1014,10 @@ function drawCard(light){
   c.strokeStyle = gold; c.lineWidth = 4; c.strokeRect(40, 40, W - 80, H - 80);
   c.lineWidth = 1.5; c.strokeRect(56, 56, W - 112, H - 112);
   c.textAlign = 'center'; c.fillStyle = gold; c.font = F(34); c.fillText('G O A L   D E C L A R A T I O N', W / 2, 150);
-  c.fillStyle = ink; c.font = F(64); c.fillText('ゴール宣言', W / 2, 240);
+  const who = cardName(), title = who ? who + ' の ゴール宣言' : 'ゴール宣言';
+  let ts = 64; c.font = F(ts);
+  while(c.measureText(title).width > W - 200 && ts > 34){ ts -= 2; c.font = F(ts); }   // 長い名前でも枠に収める
+  c.fillStyle = ink; c.fillText(title, W / 2, 240);
   const dl = daysLeft();
   c.fillStyle = sub; c.font = F(34); c.fillText(mdw(today()) + (dl !== null && dl >= 0 ? `　${S.test.name || 'テスト'}まで ${dl === 0 ? '今日が本番' : 'あと' + dl + '日'}` : ''), W / 2, 300);
   // ゴール
@@ -1042,12 +1049,13 @@ async function openCardSheet(){
   try{ await document.fonts.load("900 40px 'Zen Maru Gothic'"); }catch(e){}
   let light = false, cv = drawCard(false);
   const canShare = !!(navigator.canShare && navigator.share);
-  const name = () => 'ゴール宣言_' + today() + '.png';
+  const name = () => 'ゴール宣言_' + (cardName() ? cardName() + '_' : '') + today() + '.png';
   const bg = document.createElement('div'); bg.className = 'sheet-bg';
   bg.innerHTML = `<div class="sheet"><h2>宣言カード</h2>
     <img class="shot" id="cardImg" alt="宣言カード">
     <p class="muted" style="margin:8px 0 0">${canShare ? '「部屋に出す」を押して Discord をえらび、<b>宣言の部屋</b>に送ってください。' : '画像を保存して、Discord の<b>宣言の部屋</b>に送ってください。'}</p>
     ${canShare ? '<button class="close" id="cShare">部屋に出す（アプリをえらんで送る）</button>' : ''}
+    ${window.SGUsers && SGUsers.many() && !cardName() ? '<p class="muted" style="margin:8px 0 0">ホームの「使う人」で名前を入れると、画像に名前が出ます。</p>' : ''}
     <button class="sub" id="cSave">画像を保存する</button>
     <button class="sub" id="cPrint">印刷する</button>
     <label class="chk"><input type="checkbox" id="cLight">印刷用（白い背景にしてインクを節約）</label>
@@ -1244,7 +1252,7 @@ function slides(){ return [
   { pic:'⏳', t:'6. テストまでのカウントダウン', p:'ホームのいちばん上で、<b>次の大きなテストの名前と日</b>を設定します。開くたびに<b>「あと◯日」</b>が大きく出ます。', ex:'朝起きた画面にも出ます。テストが終わったら「テストを変える」で次のテストにしてください。' },
   { pic:'📅', t:'7. 約束を守れた日', p:'ホームの<b>「約束を守れた日」</b>に、昨日までの7日間で約束が「できた」日の数が<b>◯/7</b>で出ます。', ex:'緑＝できた、黄＝半分、赤＝できなかった。半分は数に入りません。' },
   { pic:'🎯', t:'8. ゴール宣言', p:'ホームの<b>「ゴール宣言」</b>に自分のゴールを書いておきます。「ゴール宣言する」を押すとヒラ先生が<b>「ゴールは何？」</b>と聞くので、<b>声に出して言って</b>から「言った！」を押します。', ex:'宣言した日がたまり、<b>何日続いているか</b>が出ます。朝の会話の最後にも「ゴール宣言もする」が出ます。' },
-  { pic:'🖼', t:'9. 宣言を部屋に出す・印刷する', p:'宣言したあとの<b>「宣言を画像にして出す・印刷する」</b>で、ゴール・今日の約束・続いた日数が<b>1枚の画像</b>になります。「部屋に出す」で Discord をえらび、<b>宣言の部屋</b>に送ります。', ex:'「印刷する」で紙にもできます。「印刷用」にすると白い背景になり、インクを節約できます。机の前にはっておくのもおすすめです。' },
+  { pic:'🖼', t:'9. 宣言を部屋に出す・印刷する', p:'宣言したあとの<b>「宣言を画像にして出す・印刷する」</b>で、ゴール・今日の約束・続いた日数が<b>1枚の画像</b>になります（兄弟で使っているときは、名前も入ります）。「部屋に出す」で Discord をえらび、<b>宣言の部屋</b>に送ります。', ex:'「印刷する」で紙にもできます。「印刷用」にすると白い背景になり、インクを節約できます。机の前にはっておくのもおすすめです。' },
   { pic:'🏠', t:'10. 夕方は「おかえり」', p:'昼すぎに開くと、あいさつが<b>「おかえり。お疲れさん」</b>に変わります。質問は朝と同じです。学校から帰ってから、今日の勉強を決めたい人に。', ex:'帰る時刻にもアラームをかければ、朝と同じショートカットでそのまま開きます。' },
   { pic:'🎧', t:'11. いつでも一言を聞く', p:'ホームの<b>「喝」「本気の喝」「励まし」</b>を押すと、いつでもヒラ先生の一言が流れます。', ex:'勉強を始める前や、だらけてきたときに使ってください。' },
   { pic:'📒', t:'12. これまでの記録', p:'起きた（帰った）時刻・約束・ふり返りが、ホームの<b>「これまでの記録」</b>に残ります。', ex:'記録はこの端末の中だけに保存されます。' },

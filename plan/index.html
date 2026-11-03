@@ -785,7 +785,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 60;
+const VER = 61;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -1638,7 +1638,7 @@ function weekChoices(){
     return { k, label: md(m)+'〜', tag: diff === 0 ? '今週' : diff === 1 ? '先週' : diff === -1 ? '来週' : '' };
   });
 }
-function openImageSheet(maker, title, prefix, hint, pick){
+function openImageSheet(maker, title, prefix, hint, pick, extra){
   let light = false;
   let sel = [S.cur], side = false;
   const call = l => pick ? maker(l, sel, side) : maker(l);
@@ -1657,6 +1657,7 @@ function openImageSheet(maker, title, prefix, hint, pick){
               + '</div><div class="wkpick hidden" id="wkLay"><span class="rl" style="align-self:center; margin-right:2px">ならべ方</span>'
               + '<button data-s="0" class="on">たて（1枚に上下）</button><button data-s="1">よこにならべる</button></div>'
               + '<p class="note" id="wkNote" style="margin:-6px 0 10px">えらんだ週が1枚の画像になります。2つえらべば、まとめて提出できます。</p>' : '')
+    + (extra ? extra.html : '')
     + '<img class="shot" id="shotImg" src="'+cv.toDataURL('image/png')+'" alt="'+title+'">'
     + (canShare ? '<button class="bigbtn" id="svShare">提出する（アプリをえらんで送る）</button>' : '')
     + '<button class="'+(canShare?'subbtn':'bigbtn')+'" id="svImg">画像を保存する</button>'
@@ -1691,6 +1692,7 @@ function openImageSheet(maker, title, prefix, hint, pick){
       toast(sel.length > 1 ? sel.length+'週ぶんを1枚にしました' : '1週ぶんにしました');
     };
   }
+  if(extra) extra.bind(sh, redraw);
   sh.querySelector('#pLight').onchange = e => {
     light = !!e.target.checked; redraw();
     toast(light ? '印刷用にしました' : 'ふつうにもどしました');
@@ -1723,7 +1725,33 @@ function openImageSheet(maker, title, prefix, hint, pick){
 }
 $('#btnWeekView').onclick = ()=>openImageSheet(drawWeek, '1週間のまとめ', '計画マップ', null, true);
 $('#btnTimeline').onclick = ()=>openImageSheet(drawTimeline, '時間わり（10分きざみ）', '計画マップ_時間わり',
-  '開始時こくを書いたやることが、時間の位置に出ます。赤＝やり残し（過ぎた日）、青＝これから、黄＝できた（★まだ）、緑＝極まった。時こくが無いものは下に並びます。');
+  '開始時こくを書いたやることが、時間の位置に出ます。赤＝やり残し（過ぎた日）、青＝これから、黄＝できた（★まだ）、緑＝極まった。時こくが無いものは下に並びます。',
+  false, timelineGoals());
+/* 時間わりの右上に出す目標を書く欄（画面をふやさないよう、このシートの中だけに置く） */
+function timelineGoals(){
+  const wm = weekMonth(S.cur);
+  return {
+    html: '<div class="field"><div class="lab">今週の目標</div><input type="text" id="tgWeek" value="'+esc(weekGoalText(S.cur))+'" placeholder="例）英単語1〜800を極める" enterkeyhint="done"></div>'
+      + '<div class="field"><div class="lab">'+wm.m+'月の目標</div><input type="text" id="tgMonth" value="'+esc(monthGoalOf(S.cur))+'" placeholder="例）定期テスト 数学80点" enterkeyhint="done"></div>'
+      + '<p class="note" style="margin:-2px 2px 12px">画像の右上に出ます。書かなければ線だけ出るので、印刷して手で書けます。達成率は自動です。</p>',
+    bind(sh, redraw){
+      const wi = sh.querySelector('#tgWeek'), mi = sh.querySelector('#tgMonth');
+      let t = null;
+      const put = ()=>{
+        week(S.cur).goal = wi.value.trim();
+        if(!S.monthGoals) S.monthGoals = {};
+        const v = mi.value.trim();
+        if(v) S.monthGoals[wm.key] = v; else delete S.monthGoals[wm.key];
+        save();
+      };
+      [wi, mi].forEach(el=>{
+        el.addEventListener('input', ()=>{ put(); clearTimeout(t); t = setTimeout(redraw, 500); });
+        el.addEventListener('change', ()=>{ put(); clearTimeout(t); redraw(); });
+        el.addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); el.blur(); } });
+      });
+    }
+  };
+}
 
 /* ---------- 目標（長い計画） ---------- */
 function goalsOf(){ if(!Array.isArray(S.goals)) S.goals = []; return S.goals; }
@@ -2052,6 +2080,11 @@ function openBunsekiImport(){
 }
 $('#btnBunseki').onclick = openBunsekiImport;
 
+/* 週の目標は S.weeks[k].goal、月の目標は S.monthGoals['YYYY-MM']。
+   月をまたぐ週は、日数の多いほうの月（木曜の月）にする。 */
+function weekMonth(k){ const d = addDays(parseISO(k), 3); return { key:iso(d).slice(0,7), m:d.getMonth()+1 }; }
+function weekGoalText(k){ const w = S.weeks[k]; return (w && w.goal) || ''; }
+function monthGoalOf(k){ return (S.monthGoals && S.monthGoals[weekMonth(k).key]) || ''; }
 /* ---------- 時間わり（10分きざみのタイムテーブル） ---------- */
 function drawTimeline(light){
   const W = 1080, PAD = 30, F = "'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif";
@@ -2070,7 +2103,7 @@ function drawTimeline(light){
   hi = Math.min(hi, 24*60+6*60); // 深夜までは30:00で打ち切り
   const ROW = 14;                // 10分 = 14px（30分の箱に「やること」と「時こく」の2行が入る高さ）
   const rows = (hi-lo)/10;
-  const GUT = 84, HEAD = 108, DH = 74;  // 左の時刻・見出し・曜日ヘッダ
+  const GUT = 84, HEAD = 150, DH = 74;  // 左の時刻・見出し・曜日ヘッダ
   const maxFree = Math.max(0, ...days.map(x=>x.free.length));
   const FREE = maxFree ? 30 + maxFree*24 : 0;
   const colW = (W-PAD*2-GUT)/7;
@@ -2086,9 +2119,34 @@ function drawTimeline(light){
   g.fillStyle='#F4F7FB'; g.fillRect(0,0,W,H);
   g.fillStyle=INK; g.font='900 34px '+F; g.textAlign='left'; g.textBaseline='alphabetic';
   g.fillText('計画マップ　時間わり', PAD, 50);
-  if(S.name){ g.fillStyle=MUT; g.font='700 22px '+F; g.textAlign='right'; g.fillText(S.name, W-PAD, 48); }
   g.fillStyle=ACC; g.font='900 26px '+F; g.textAlign='left';
   g.fillText(md(m)+'（月）〜 '+md(addDays(m,6))+'（日）', PAD, 88);
+  if(S.name){ g.fillStyle=MUT; g.font='700 21px '+F; g.fillText(clip(S.name, 350), PAD, 124); }
+
+  // 右上の枠：今週の目標・月の目標（書かなければ線だけ＝印刷して手で書ける）・達成率（自動）
+  const tq = tqcOf(S.cur), wm = weekMonth(S.cur);
+  const bx = 400, by = 14, bw = W-PAD-bx, bh = 124, tx = bx+132, tw = bw-148;
+  g.fillStyle='#fff'; rr(bx, by, bw, bh, 14); g.fill();
+  g.strokeStyle=LINE2; g.lineWidth=1.5; rr(bx, by, bw, bh, 14); g.stroke();
+  [['今週の目標', weekGoalText(S.cur)], [wm.m+'月の目標', monthGoalOf(S.cur)]].forEach((a,i)=>{
+    const y = by+34+i*38;
+    g.fillStyle=MUT; g.font='900 16px '+F; g.fillText(a[0], bx+16, y);
+    if(a[1]){
+      g.fillStyle=INK; g.font='700 20px '+F;
+      if(g.measureText(a[1]).width > tw) g.font='700 16px '+F;
+      g.fillText(clip(a[1], tw), tx, y);
+    }else{
+      g.strokeStyle=LINE2; g.lineWidth=1.5; g.beginPath(); g.moveTo(tx, y+5); g.lineTo(tx+tw, y+5); g.stroke();
+    }
+  });
+  const ay = by+110, doneTxt = tq.done+'/'+tq.all+' 完了';
+  g.fillStyle=MUT; g.font='900 16px '+F; g.fillText('達成率', bx+16, ay);
+  g.fillStyle=INK; g.font='900 22px '+F; g.fillText(tq.C+'%', tx, ay);
+  g.font='700 15px '+F; const dw = g.measureText(doneTxt).width;
+  g.fillStyle=MUT; g.textAlign='right'; g.fillText(doneTxt, tx+tw, ay); g.textAlign='left';
+  const barX = tx+70, barW = tw-70-dw-14;
+  g.fillStyle='#EDF1F7'; rr(barX, ay-12, barW, 10, 5); g.fill();
+  if(tq.C > 0){ g.fillStyle = light ? 'rgba(18,160,106,.5)' : DONE; rr(barX, ay-12, Math.max(10, barW*tq.C/100), 10, 5); g.fill(); }
 
   // 曜日ヘッダ
   const gx = PAD+GUT, gy = HEAD+DH;

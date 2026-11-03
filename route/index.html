@@ -819,10 +819,10 @@ const HSync = (function(){
 })();
 /* HSYNC END */
 
-const VER = 37;
+const VER = 38;
 const KEY = 'route.v1';
 const SUBJ_CLASS = {'英語':'eng','数学':'math','国語':'jpn','理科':'sci'};
-const EXTRA_MATH = ['nyumon_ia'];
+const EXTRA_MATH = ['kisomon_ia','kichart_ia_s','nyumon_iib','kisomon_iib','kichart_iib_s','nyumon_ia','kichart_ia','kichart_iib'];   // これまでのルート（基礎問題精講）
 
 let S = load();
 function load(){
@@ -848,6 +848,7 @@ function totalDays(v){
 }
 function bookMeta(id){
   for(const s of ROUTE.plan) for(const r of s.rows) if(r.id === id) return r;
+  for(const r of ROUTE.oldMath.rows) if(r.id === id) return r;
   return null;
 }
 
@@ -894,8 +895,13 @@ function pickGroups(){
   ROUTE.plan.forEach(sec => {
     const ids = [];
     sec.rows.forEach(r => { if(r.id && bookOf(r.id) && bookOf(r.id).variants.length) ids.push(r.id); });
-    if(sec.subject === '数学') EXTRA_MATH.forEach(x => ids.push(x));
     if(ids.length) out.push({ subject: sec.subject, cls: SUBJ_CLASS[sec.subject] || '', ids });
+    if(sec.subject === '数学'){
+      /* これまでのルート（基礎問題精講）：7ヶ月版の黄チャートだけは、印がある人にだけ出す */
+      const old = ROUTE.oldMath.rows.map(r => r.id).concat('nyumon_ia');
+      EXTRA_MATH.forEach(x => { if(!old.includes(x) && S.mark[x]) old.push(x); });
+      out.push({ subject: '数学（これまでのルート）', cls: SUBJ_CLASS[sec.subject], ids: old });
+    }
   });
   return out;
 }
@@ -948,15 +954,23 @@ function viewRoute(){
     h += '</tbody></table></div>';
   });
 
-  h += '<div class="sec-title">そのほかの計画表</div>';
-  h += '<div class="lead">全体計画には出ていませんが、スプレッドシートに計画表があるものです。</div>';
+  h += '<div class="sec-title">これまでのルート（基礎問題精講）</div>';
+  h += '<div class="lead">基礎問題精講で進めている人は、これまでどおり続けられます。「いまここ」の印も消えません。</div>';
   h += '<div class="tscroll"><table class="plan ovw"><thead><tr>'
-    + '<th class="nm">使用問題集</th><th>期間</th></tr></thead><tbody>';
-  EXTRA_MATH.forEach(id => {
+    + '<th class="nm">使用問題集</th><th>月</th><th>期間</th><th>周回数</th><th class="memo">メモ</th>'
+    + '</tr></thead><tbody>';
+  let oldGrade = null;
+  ROUTE.oldMath.rows.forEach(r => {
+    if(r.grade !== oldGrade){
+      oldGrade = r.grade;
+      h += '<tr class="grade"><td class="nm" colspan="5">▼ '+esc(oldGrade)+'</td></tr>';
+    }
+    h += planRow(r);
+  });
+  h += '<tr class="grade"><td class="nm" colspan="5">▼ そのほかの計画表</td></tr>';
+  EXTRA_MATH.filter(id => !ROUTE.oldMath.rows.some(r => r.id === id)).forEach(id => {
     const b = bookOf(id); if(!b) return;
-    h += '<tr class="tap" onclick="openBook(\''+id+'\')"><td class="nm">'
-      + esc(shortTitle(b.title)) + '<i>計画表 ›</i></td>'
-      + '<td>'+esc(spanOf(b.title))+'</td></tr>';
+    h += planRow({ id, name: shortTitle(b.title), span: spanOf(b.title) });
   });
   h += '</tbody></table></div>';
   return h;
@@ -982,11 +996,25 @@ function bookRatio(id){
   const tot = totalDays(v), m = Math.min(S.mark[id] || 0, tot);
   return tot ? m / tot : 0;
 }
+function rowsRatio(rows){
+  let done = 0, total = 0;
+  rows.forEach(r => {
+    if(!r.id || S.hidden[r.id] || !bookOf(r.id) || !bookOf(r.id).variants.length) return;
+    const tot = totalDays(variantOf(bookOf(r.id), S.vari[r.id] || 0));
+    done += Math.max(bookRatio(r.id), ALT[r.id] ? bookRatio(ALT[r.id]) : 0) * tot; total += tot;
+  });
+  return total ? done / total : 0;
+}
+/* 数学は、新しいルートとこれまでのルートのうち進んでいる方で数える */
+function scoreRows(sec){
+  if(sec.subject !== '数学') return sec.rows;
+  return rowsRatio(ROUTE.oldMath.rows) > rowsRatio(sec.rows) ? ROUTE.oldMath.rows : sec.rows;
+}
 function scoreBooks(){
   const out = [];
   ROUTE.plan.forEach(sec => {
     if(!SCORE_SUBJECTS.includes(sec.subject)) return;
-    sec.rows.forEach(r => { if(r.id && !S.hidden[r.id] && bookOf(r.id) && bookOf(r.id).variants.length) out.push({ subject:sec.subject, id:r.id, alt: ALT[r.id] || null }); });
+    scoreRows(sec).forEach(r => { if(r.id && !S.hidden[r.id] && bookOf(r.id) && bookOf(r.id).variants.length) out.push({ subject:sec.subject, id:r.id, alt: ALT[r.id] || null }); });
   });
   return out;
 }
@@ -994,7 +1022,7 @@ function scoreBooks(){
 function hiddenScoreCount(){
   let n = 0;
   ROUTE.plan.forEach(sec => { if(!SCORE_SUBJECTS.includes(sec.subject)) return;
-    sec.rows.forEach(r => { if(r.id && S.hidden[r.id] && bookOf(r.id) && bookOf(r.id).variants.length) n++; }); });
+    scoreRows(sec).forEach(r => { if(r.id && S.hidden[r.id] && bookOf(r.id) && bookOf(r.id).variants.length) n++; }); });
   return n;
 }
 function calcScore(){
@@ -1055,7 +1083,7 @@ function viewScore(){
     + '・教科スコア ＝ その教科で終わった日数 ÷ 全日数 × 100（長い問題集ほど重みが大きい）<br>'
     + '・総合スコア ＝ 国語・数学・英語の平均<br>'
     + '・「表示する問題集」で外した問題集は、スコアに入りません（<b class="warn">自分で外す場合は、必ずヒラに相談してください</b>）<br>'
-    + '・理科・社会は対象外。全体計画に入っていない問題集（入門問題精講IA）も入りません。黄チャートは4〜5ヶ月版と7ヶ月版のうち進んでいる方で数えます</div>'
+    + '・理科・社会は対象外。数学は、新しいルートとこれまでのルート（基礎問題精講）のうち進んでいる方で数えます</div>'
     + '<div class="ranktable">' + RANKS.map(([k, min], i) => '<div><span class="rk r'+k+'">'+k+'</span><span>'+min+'〜'+(i ? RANKS[i-1][1] - 1 : 100)+'点</span></div>').join('') + '</div></div>';
   return h;
 }

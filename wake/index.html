@@ -103,6 +103,8 @@ details{ margin-top:8px; } summary{ font-weight:700; cursor:pointer; }
 .who b{ font-weight:900; }
 .bubble{ background:var(--card); border-radius:4px 20px 20px 20px; padding:16px 18px; font-size:21px; font-weight:700; box-shadow:var(--shadow-lg); min-height:66px; }
 .bubble.speaking{ outline:3px solid var(--accent-soft); }
+.bubble{ position:relative; padding-right:40px; cursor:pointer; }
+.bubble::after{ content:'🔊'; position:absolute; right:12px; bottom:10px; font-size:15px; opacity:.55; }
 .hint{ margin:12px 0 0; padding:10px 12px; border-radius:12px; background:var(--accent-soft); font-size:14px; }
 .choices{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:18px; }
 .choices.two{ grid-template-columns:1fr 1fr; } .choices.four{ grid-template-columns:repeat(4,1fr); }
@@ -201,7 +203,7 @@ textarea#goalIn{ width:100%; font:inherit; font-size:16px; padding:10px 12px; bo
 <div id="printBox"></div>
 <audio id="au" playsinline preload="auto"></audio>
 
-<script src="lines.js?v=18"></script>
+<script src="lines.js?v=19"></script>
 <script>
 /* HSYNC BEGIN ─────────────────────────────────────────────
    同期（iPad・スマホ・パソコンで同じにする）。ヒラボイス v12（2026-10-25 ユウキ・ハルネコ「iPadでも使いたい」）。
@@ -640,7 +642,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 /* ===================== 基本 ===================== */
-const VER = 18;
+const VER = 19;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -844,7 +846,9 @@ function playUrl(url, tok){
     const p = au.play(); if(p && p.catch) p.catch(() => { au.onended = au.onerror = null; res(false); });
   });
 }
+let lastIds = [];
 async function say(ids){
+  lastIds = ids;
   stopVoice(); const tok = speakToken;
   const b = $('.bubble'); if(b) b.classList.add('speaking');
   let parts = null;
@@ -860,6 +864,14 @@ async function say(ids){
   for(const id of ids){ await playOne(id, tok); if(tok !== speakToken) return; }
   if(b) b.classList.remove('speaking');
 }
+/* 吹き出しを押すと、もう一度声が流れる（v19・ユウキ・ハルネコの要望）。録音がまだの言葉は、そう伝える */
+$('#stage').addEventListener('click', async e => {
+  if(!e.target.closest('.bubble') || !lastIds.length) return;
+  const ids = lastIds;
+  say(ids);
+  const parts = await Promise.all(ids.map(decode));
+  if(!parts.every(Boolean)) toast('この言葉の声は、いま準備中です');
+});
 /* 同じ言葉が続かないように、最近つかった言葉をさける */
 function choose(ids){
   const fresh = ids.filter(id => !S.recent.includes(id));
@@ -1134,14 +1146,14 @@ function addPromise(home){
 /* 時間を決めずに宣言を足す（v18）：どの宣言かを選ぶ→内容を入れる */
 function addTask(home){
   if(home){ prefetch(); T = { rec:{}, step:0, home:true }; $('#talk').classList.add('on'); document.body.style.overflow = 'hidden'; }
-  stopVoice();
   $('#tStep').textContent = '';
   $('#stage').innerHTML = `
     <div class="who"><img src="icon-192.png" alt=""><b>ヒラ先生</b></div>
-    <div class="bubble">どれを宣言する？</div>
+    <div class="bubble">${esc(LINE.d9.text)}</div>
     <div class="choices">${Object.keys(TK).map(k => `<button class="addp" data-k="${k}">${esc(TK[k].label)}</button>`).join('')}
       <button class="addp" id="tkBack">もどる</button></div>`;
   $('#tkBack').onclick = () => promiseScreen([]);
+  say(['d9']);
   $('#stage').querySelectorAll('[data-k]').forEach(b => b.onclick = () => { T.addT = true; T.flow = [b.dataset.k]; T.step = 0; next(); });
 }
 function bindDel(box, after){
@@ -1503,7 +1515,7 @@ function renderHome(){
 function slides(){ return [
   { pic:'⏰', t:'ヒラボイスとは', p:'アラームを止めると、<b>ヒラ先生の声で朝の会話</b>がはじまる目覚ましです。起きてすぐに、<b>今日の勉強の約束</b>を決めます。', ex:'朝が弱い人ほど、起きた直後に「今日やること」を決めておくと、1日が動きだします。' },
   { pic:'🛠', t:'1. はじめに1回だけ準備', p:'ホームの<b>「準備」</b>の手順どおりに、iPhone の<b>「ショートカット」</b>アプリで「アラームを止めたら、このアプリを開く」を設定します（5分）。', ex:'このアプリは <b>Safari</b> で開いて使ってください。アラームから開くのも Safari です。Android の人は、アラームを止めたらアプリを開いてください。' },
-  { pic:'☀️', t:'2. 朝は「おはよう」を押す', p:'アラームを止めると、このアプリが開きます。まん中の<b>「おはよう」</b>を押すと、ヒラ先生の声がはじまります。', ex:'スマホは、画面を押すまで音を出せない決まりです。押すこと自体が「起きた」合図になります。' },
+  { pic:'☀️', t:'2. 朝は「おはよう」を押す', p:'アラームを止めると、このアプリが開きます。まん中の<b>「おはよう」</b>を押すと、ヒラ先生の声がはじまります。', ex:'スマホは、画面を押すまで音を出せない決まりです。押すこと自体が「起きた」合図になります。会話の途中でも、<b>ヒラ先生の吹き出しを押すと、もう一度声が流れます</b>。' },
   { pic:'🗓', t:'3. 質問にボタンで答える', p:'<b>何時から</b>勉強するか・<b>何時間</b>やるか・<b>最初に何から</b>やるか・<b>解き直しがたまっていないか</b>を、ボタンで答えます。', ex:'何からやるかは<b>「その他」</b>を押すと自由に入れられます（一度入れた言葉は、次からボタンになります）。今日やることが2つ以上あるときは、最後の画面かホームの<b>「時間を決めた約束を足す」</b>で足せます（全部で5つまで）。1つでよい日は、そのままで大丈夫です。' },
   { pic:'📣', t:'4. 時間を決めずに宣言する', p:'ホームの<b>「朝に聞くことを選ぶ」</b>で、<b>計画タスク・習慣タスク・やること</b>を聞くようにできます。時間は決めず、<b>取り組む内容だけ</b>を宣言します。', ex:'「暗記の鉄則に沿って勉強する」のような毎日のことは習慣タスクに。一度入れた習慣は、次の朝からはじめから選ばれています。「何時から」の質問を外して、宣言だけにもできます。ふだんの日に足すときは、ホームの<b>「時間を決めずに宣言を足す」</b>からどうぞ。' },
   { pic:'🔥', t:'5. 最後の一言を選ぶ', p:'最後に<b>「喝」「本気の喝」「励まし」「おまかせ」</b>から選ぶと、その一言が流れます。おまかせは、昨日の約束が<b>できた日は励まし</b>、<b>できなかった日は喝</b>です。', ex:'その日の気分で選んでください。「今日は本気の喝がほしい」と自分で選ぶのも、気持ちの切りかえになります。' },

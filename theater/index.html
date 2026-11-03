@@ -492,6 +492,15 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 .focus .gl{color:var(--acc);font-size:.7rem;font-weight:800;letter-spacing:.1em}
 .focus .fx{margin-top:5px;font-size:1.02rem;font-weight:800;color:var(--ink);line-height:1.6;
   overflow-wrap:anywhere}
+/* えらんだ動画だけのくり返し中に、再生画面のいちばん上に出す帯 */
+.plbar{display:flex;align-items:center;gap:10px;margin:0 0 13px;padding:11px 13px;
+  border:1px solid var(--acc);border-radius:12px}
+.plbar .pltx{flex:1;min-width:0}
+.plbar .pltx b{display:block;font-size:.86rem;font-weight:800;color:var(--acc);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plbar .pltx span{display:block;font-size:.72rem;color:var(--ink3);font-weight:600;margin-top:3px}
+.plbar .plx{flex:none;font-size:.76rem;font-weight:700;color:var(--ink2);
+  border:1px solid var(--line);border-radius:999px;padding:7px 13px}
 /* 今日のゴール */
 .goal{display:block;width:100%;text-align:left;background:var(--surf);border:1px solid var(--line);
   border-radius:var(--r);padding:13px 15px;margin-top:12px}
@@ -651,10 +660,11 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 63;
+const VER = 64;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
-      K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal';
+      K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal',
+      K_PLIST='th_plist';
 
 /* 塾生かどうかをたしかめる入口。中身（動画リスト）は公開の場所には置いていない。
    ここに毎回聞きにいって、Discordのサーバーに「いま」いる人にだけ渡してもらう。 */
@@ -709,6 +719,11 @@ let MAN = null;         /* 使用マニュアル（どんなときに何を見�
 let prog = {};            /* {動画id: {t:秒, d:全体の秒, done:1, last:時刻}} */
 let favs = [];
 let folders = [];       /* 生徒が自分で作るフォルダ [{id, name, ids:[]}] */
+/* えらんだ動画だけをずっとくり返す（のぐさんの要望・2026-11-03）。
+   「この6本だけを今月ずっと聴いて血肉化したい」。フォルダをまるごと、
+   上から順に、終わったら先頭にもどって くり返す。
+   **フォルダのIDを覚える**ので、あとでフォルダに足した動画もそのまま入る。 */
+let plist = null;       /* {fid, name} くり返し中のフォルダ。使っていなければ null */
 let outs = {};          /* アウトプット {動画id: [{at:時刻, t:本文}]} */
 let mych = [];          /* マイチャンネル（自分で足した ヒラ先生の動画）[{id, t, at}] */
 let day = {};           /* 日ごとに見た秒数 { 'YYYY-MM-DD': 秒 } */
@@ -721,6 +736,8 @@ function load(){
   try{ prog = JSON.parse(localStorage.getItem(K_PROG) || '{}'); }catch(e){ prog = {}; }
   try{ favs = JSON.parse(localStorage.getItem(K_FAV)  || '[]'); }catch(e){ favs = []; }
   try{ folders = JSON.parse(localStorage.getItem(K_FOLD) || '[]'); }catch(e){ folders = []; }
+  try{ plist = JSON.parse(localStorage.getItem(K_PLIST) || 'null'); }catch(e){ plist = null; }
+  if(plist && !plist.fid) plist = null;
   if(!Array.isArray(folders)) folders = [];
   try{ outs = JSON.parse(localStorage.getItem(K_OUT) || '{}'); }catch(e){ outs = {}; }
   if(!outs || typeof outs !== 'object') outs = {};
@@ -736,6 +753,8 @@ function load(){
 const saveProg = () => { localStorage.setItem(K_PROG, JSON.stringify(prog)); schedulePush(); };
 const saveFav  = () => { localStorage.setItem(K_FAV,  JSON.stringify(favs));   schedulePush(); };
 const saveFold = () => { localStorage.setItem(K_FOLD, JSON.stringify(folders)); schedulePush(); };
+/* くり返しは端末ごとの「いまの聴き方」なので、同期には乗せない */
+const savePlist = () => { try{ localStorage.setItem(K_PLIST, JSON.stringify(plist)); }catch(e){} };
 const saveOut  = () => { localStorage.setItem(K_OUT,  JSON.stringify(outs));   schedulePush(); };
 const saveMych = () => { localStorage.setItem(K_MYCH, JSON.stringify(mych));   schedulePush(); };
 /* 見た時間は毎秒変わるので、ここでは同期を急かさない（閉じるときとほかの変化のついでに送る） */
@@ -900,6 +919,33 @@ const needOutList = () => DATA.videos.filter(needOut)
 
 const foldOf   = fid => folders.find(f => f.id === fid);
 const foldCount = id => folders.filter(f => f.ids.includes(id)).length;
+/* ---------- えらんだ動画だけのくり返し ---------- */
+function idsOfFold(fid){
+  if(fid === '__fav')  return favs.slice();
+  if(fid === '__mych') return mych.map(m => m.id);
+  const f = foldOf(fid);
+  return f ? f.ids.slice() : [];
+}
+function plistIds(){ return plist ? idsOfFold(plist.fid).filter(id => vid(id)) : []; }
+/* 次の1本。いちばん下まで行ったら先頭にもどる（だから終わらない） */
+function plistNext(){
+  const ids = plistIds();
+  if(!ids.length) return null;
+  const i = ids.indexOf(curId);
+  return vid(ids[(i + 1) % ids.length]) || null;
+}
+function startPlist(fid, name){
+  const ids = idsOfFold(fid).filter(id => vid(id));
+  if(!ids.length){ toast('この中に動画がありません'); return; }
+  plist = { fid, name }; savePlist();
+  openPlay(ids[0], undefined, { auto:true });
+  toast(`「${name}」を上から順にくり返します`);
+}
+function stopPlist(quiet){
+  if(!plist) return;
+  plist = null; savePlist();
+  if(!quiet) toast('くり返しをやめました');
+}
 const inFold   = (fid, id) => { const f = foldOf(fid); return !!(f && f.ids.includes(id)); };
 function toggleFold(fid, id){
   const f = foldOf(fid); if(!f) return;
@@ -2010,6 +2056,9 @@ function vFolder(){
   $('#main').innerHTML = `
     <div class="chead"><h1>${esc(f.name)}</h1><div class="st">${list.length}本</div></div>
     <div class="vlist" style="margin-top:16px">
+      ${(!isTodo && list.length) ? `<button class="btn ${plist && plist.fid === f.id ? '' : 'pri'}" id="plgo" style="margin-bottom:12px">
+          ${ICO.loop({s:18})}<span>${plist && plist.fid === f.id
+            ? 'くり返しをやめる' : 'この中だけを ずっとくり返す'}</span></button>` : ''}
       ${isMych ? `<button class="btn pri" id="myadd2" style="margin-bottom:12px">${ICO.plus({s:18})}<span>ヒラ先生の動画を足す</span></button>` : ''}
       ${list.length ? list.map(v => card(v, isMych ? { tag:false } : undefined) +
                         (isMych ? `<button class="mydel" data-mydel="${esc(v.id)}">マイチャンネルから外す</button>` : '')).join('')
@@ -2020,6 +2069,10 @@ function vFolder(){
     ${isTodo ? `<div class="lead" style="margin-top:12px">最後まで見た動画のうち、まだアウトプットを書いていないもの。
       最近見た順です。書くと ここから消えます。</div>` : ''}
     ${isMych ? `<button class="btn" id="myabout" style="margin-top:14px">マイチャンネルとは？（ヒラ先生の動画だけの理由）</button>` : ''}`;
+  if($('#plgo')) $('#plgo').onclick = () => {
+    if(plist && plist.fid === f.id){ stopPlist(); vFolder(); return; }
+    startPlist(f.id, f.name);
+  };
   if(isMych){
     const add = () => askAddMych(vFolder);
     if($('#myadd'))  $('#myadd').onclick  = add;
@@ -2665,6 +2718,13 @@ function onState(e){
   }
 }
 function onEnded(){
+  /* えらんだ動画だけのくり返しが動いていれば、それを最優先。
+     リストの次の1本へ。いちばん下まで行ったら先頭にもどる（ずっと続く）。 */
+  if(plist){
+    const nx = plistNext();
+    if(nx){ openPlay(nx.id, undefined, { auto:true }); return; }
+    stopPlist(true);        /* 中身が空になっていたら、そっとやめる */
+  }
   /* ループ再生が入っていれば、次へは行かず 同じ動画をもう一度。
      反復した回数はそのたびに1つ増える（それが目的なので） */
   if(cfg.loop){
@@ -3295,7 +3355,7 @@ function drawCtrl(){
       <button class="pb main" id="pp">${ICO.play({s:20})}</button>
       <button class="pb" id="f10">${ICO.f10({s:21})}<span class="n">10</span></button>
       <span class="sp"></span>
-      <button class="pb ${cfg.loop ? 'on' : ''}" id="loop">${ICO.loop({s:19})}</button>
+      <button class="pb ${(plist || cfg.loop) ? 'on' : ''}" id="loop">${ICO.loop({s:19})}</button>
       <button class="pb" id="spd">${speedOf(curId)}x</button>
       <button class="pb" id="exp">${ICO.exp({s:19})}</button>
     </div>`;
@@ -3350,6 +3410,8 @@ function drawCtrl(){
     showCtrl();
   });
   $('#loop').onclick = () => {
+    /* えらんだ動画だけのくり返し中は、このボタンでそれをやめる */
+    if(plist){ stopPlist(); drawCtrl(); drawBody(); showCtrl(); return; }
     cfg.loop = !cfg.loop; saveCfg();
     $('#loop').classList.toggle('on', cfg.loop);
     toast(cfg.loop ? 'くり返し再生：オン' : 'くり返し再生：オフ');
@@ -3410,7 +3472,13 @@ function showCtrl(keep){
 /* ---------- 再生画面の下（タイトル・説明） ---------- */
 function drawBody(){
   const v = vid(curId); if(!v) return;
+  const plIds = plistIds(), plNo = plIds.indexOf(curId) + 1;
   $('#pvbody').innerHTML = `
+    ${plist && plIds.length ? `<div class="plbar">
+        <div class="pltx"><b>${esc(plist.name)} をくり返し中</b>
+          <span>${plNo > 0 ? plNo + ' / ' : ''}${plIds.length}本 ・ いちばん下まで行くと先頭にもどります</span></div>
+        <button class="plx" data-plstop="1">やめる</button>
+      </div>` : ''}
     <h1>${esc(v.t)}</h1>
     <div class="vs"><span class="tag">${esc(catName(v.cat))}</span>
       ${v.g ? `<span class="tag">${esc(v.g)}</span>` : ''}
@@ -3539,6 +3607,7 @@ function drawBody(){
     drawBody();
     toast(`${hhmm(t)} に付箋をつけました`, { label:'ひとこと', fn: () => editMark(v.id, Math.round(t)) });
   };
+  $$('#pvbody [data-plstop]').forEach(b => b.onclick = () => { stopPlist(); drawBody(); drawCtrl(); });
   $$('#pvbody [data-jump]').forEach(b => b.onclick = () => seekTo(+b.dataset.jump));
   $$('#pvbody [data-mked]').forEach(b => b.onclick = () => editMark(v.id, +b.dataset.mked));
   $('#wout').onclick = () => openSheet(`

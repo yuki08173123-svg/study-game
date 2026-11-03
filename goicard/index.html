@@ -151,13 +151,22 @@ details.bulk[open] summary{margin-bottom:10px;}
 .seg button.on{background:var(--card); color:var(--ink); box-shadow:var(--shadow);}
 .sortrow{display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted); font-weight:600;}
 .sortrow select{font-size:14px; font-weight:700; border:1px solid var(--line); background:var(--card); border-radius:9px; padding:5px 8px;}
-.grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px;}
-.tile{position:relative; display:flex; flex-direction:column; gap:4px; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:13px; box-shadow:var(--shadow); padding:12px 12px 10px 28px; min-height:112px;}
-.tile::before{content:""; position:absolute; left:10px; top:15px; width:10px; height:10px; border-radius:50%; background:var(--hole); box-shadow:inset 0 1px 2px rgba(0,0,0,.25);}
-.tile img{width:100%; height:86px; object-fit:cover; border-radius:8px; background:var(--bg);}
-.tile .f{font-family:var(--mincho); font-weight:600; font-size:18px; line-height:1.35; overflow-wrap:anywhere;}
-.tile .b{font-size:12.5px; color:var(--muted); line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
-.tile .m{margin-top:auto; display:flex; gap:8px; align-items:center; font-size:11.5px; color:var(--muted); font-weight:600; font-variant-numeric:tabular-nums;}
+.mlist{list-style:none;}
+.ml{padding:14px 2px; border-bottom:1px solid var(--line);}
+.ml:first-child{padding-top:2px;}
+.ml:last-child{border-bottom:none; padding-bottom:2px;}
+.ml-top{display:flex; align-items:flex-start; gap:8px;}
+.ml-w{flex:1; min-width:0; font-family:var(--mincho); font-weight:600; font-size:22px; line-height:1.35; overflow-wrap:anywhere; white-space:pre-wrap;}
+.ml-top .chip-weak{flex:none; margin-top:5px;}
+.ml-edit{flex:none; font-size:13px; font-weight:700; color:var(--accent); padding:4px 6px; margin:-1px -4px 0 0;}
+.ml-ans{margin-top:4px;}
+.ml-b{font-size:17px; font-weight:600; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere;}
+.ml-i{margin-top:6px; font-size:14.5px; line-height:1.7; white-space:pre-wrap; overflow-wrap:anywhere;}
+.ml-i b{display:block; font-size:12px; letter-spacing:.08em; color:var(--accent); font-weight:700; line-height:1.5;}
+.ml-ans img{display:block; width:100%; height:180px; object-fit:contain; object-position:left center; margin-top:8px;}
+.mlist.hide .ml-ans{cursor:pointer;}
+.mlist.hide .ml:not(.open) .ml-ans > *{display:none;}
+.mlist.hide .ml:not(.open) .ml-ans::before{content:"タップで意味を見る"; display:block; background:var(--chip); color:var(--muted); font-size:13.5px; font-weight:700; border-radius:9px; padding:9px 12px;}
 
 /* ==== 設定 ==== */
 .setrow{display:flex; align-items:center; gap:10px; padding:14px 2px; border-bottom:1px solid var(--line); width:100%; text-align:left; color:inherit;}
@@ -330,8 +339,12 @@ body.studying .toast{bottom:calc(96px + env(safe-area-inset-bottom));}
             <option value="abc">五十音順</option>
           </select>
         </div>
+        <div class="opts" style="margin:0">
+          <label class="opt"><input type="checkbox" id="list-info">語源・例文・写真も出す</label>
+          <label class="opt"><input type="checkbox" id="list-hide">意味をかくす（タップで見る）</label>
+        </div>
       </div>
-      <div class="grid" id="grid"></div>
+      <div class="card"><ul class="mlist" id="mlist"></ul></div>
     </section>
 
     <section data-panel="set" hidden>
@@ -351,6 +364,7 @@ body.studying .toast{bottom:calc(96px + env(safe-area-inset-bottom));}
       <div class="sec-title">このアプリについて</div>
       <div class="card"><div class="lead" style="padding:0">
         表に覚えたい言葉、裏に意味を書いて、自分だけの語彙カードを作ります。語源・由来や例文、写真もつけられます。<br><br>
+        「一覧」では、入れた内容を上から順に全部読めます。ボタンを押さずに、スクロールするだけで覚えられます。<br><br>
         テストで「まだ」を押したカードは「苦手」に入り、そのあと2回続けて「わかった」を押すと外れます。<br><br>
         カードはこの端末の中に保存されます。ときどきバックアップを書き出しておくと安心です。
       </div></div>
@@ -380,7 +394,7 @@ body.studying .toast{bottom:calc(96px + env(safe-area-inset-bottom));}
 <div class="toast" id="toast"></div>
 
 <script>
-const VER = 1;
+const VER = 2;
 const KEY = 'goicard.v1';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -413,10 +427,10 @@ const S = (() => {
   return {
     cards: new Map((o.cards || []).map(c => [c.id, normalize(c)])),
     last: o.last || null,
-    prefs: Object.assign({mode: 'shuffle', count: '10', reverse: false, photoFront: false}, o.prefs || {}),
+    prefs: Object.assign({mode: 'shuffle', count: '10', reverse: false, photoFront: false, listInfo: true, listHide: false}, o.prefs || {}),
     theme: o.theme || '',
     tab: 'test', editing: null, pendingPhoto: undefined, saving: false,
-    q: '', filter: 'all', sort: 'new',
+    q: '', filter: 'all', sort: 'new', listY: 0,
   };
 })();
 function save(){
@@ -482,12 +496,13 @@ function toast(m){
 
 /* ---------- 画面 ---------- */
 function go(tab){
+  if(S.tab === 'list') S.listY = window.scrollY;
   S.tab = tab;
   $$('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== tab);
   $$('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   if(tab === 'list') renderList();
   if(tab === 'set') renderSet();
-  window.scrollTo(0, 0);
+  window.scrollTo(0, tab === 'list' ? S.listY : 0);
 }
 function renderAll(){ renderHome(); renderList(); renderRecent(); }
 const allCards = () => [...S.cards.values()].sort((a, b) => a.createdAt - b.createdAt);
@@ -517,7 +532,7 @@ function renderHome(){
       <div class="stat"><b>${weak.length}</b><span>苦手</span></div>
       <div class="stat"><b>${lt ? lt.right + '<small>/' + lt.total + '</small>' : '—'}</b><span>${lt ? '前回（' + fmtDate(lt.at) + '）' : '前回のテスト'}</span></div>
     </div>
-    <div class="sec-title">テストを始める</div>
+    <div class="sec-title"><span class="grow">テストを始める</span><button type="button" class="mini" data-act="go-list">一覧で覚える</button></div>
     <div class="card">
       <div class="modes">${['shuffle', 'random', 'order', 'weak'].map(tile).join('')}</div>
       <div class="opts">
@@ -538,7 +553,7 @@ function renderHome(){
 }
 
 function renderList(){
-  const grid = $('#grid'), q = S.q.trim().toLowerCase();
+  const el = $('#mlist'), q = S.q.trim().toLowerCase(), p = S.prefs;
   let list = allCards();
   if(S.filter === 'weak') list = list.filter(c => c.weak);
   if(S.filter === 'photo') list = list.filter(c => c.photo);
@@ -547,16 +562,24 @@ function renderList(){
   else if(S.sort === 'weak') list.sort((a, b) => (b.weak - a.weak) || (b.wrong - a.wrong));
   else if(S.sort === 'abc') list.sort((a, b) => a.front.localeCompare(b.front, 'ja'));
   $('#list-count').textContent = list.length + '枚';
+  $('#list-info').checked = p.listInfo;
+  $('#list-hide').checked = p.listHide;
+  el.classList.toggle('hide', p.listHide);
   if(!list.length){
-    grid.innerHTML = `<p class="lead" style="grid-column:1/-1">${S.cards.size ? '条件に合うカードはありません。' : 'まだカードがありません。「作る」から追加できます。'}</p>`;
+    el.innerHTML = `<li class="lead" style="padding:0">${S.cards.size ? '条件に合うカードはありません。' : 'まだカードがありません。「作る」から追加できます。'}</li>`;
     return;
   }
-  grid.innerHTML = list.map(c => `<button type="button" class="tile" data-id="${esc(c.id)}">
-      ${c.photo ? `<img data-img="${esc(c.photo)}" alt="">` : ''}
-      <span class="f">${wordHTML(c.front)}</span><span class="b">${esc(c.back)}</span>
-      <span class="m">${c.weak ? '<span class="chip-weak">苦手</span>' : ''}<span>○${c.right} ✕${c.wrong}</span></span>
-    </button>`).join('');
-  hydrate(grid);
+  const ansAttr = p.listHide ? 'role="button" tabindex="0" aria-label="意味を見る"' : '';
+  el.innerHTML = list.map(c => `<li class="ml" data-id="${esc(c.id)}">
+      <div class="ml-top"><div class="ml-w">${wordHTML(c.front)}</div>${c.weak ? '<span class="chip-weak">苦手</span>' : ''}<button type="button" class="ml-edit">直す</button></div>
+      <div class="ml-ans" ${ansAttr}>
+        <div class="ml-b">${esc(c.back)}</div>
+        ${p.listInfo && c.origin ? `<p class="ml-i"><b>語源・由来</b>${esc(c.origin)}</p>` : ''}
+        ${p.listInfo && c.note ? `<p class="ml-i"><b>例文・メモ</b>${esc(c.note)}</p>` : ''}
+        ${p.listInfo && c.photo ? `<img data-img="${esc(c.photo)}" alt="">` : ''}
+      </div>
+    </li>`).join('');
+  hydrate(el);
 }
 
 function renderRecent(){
@@ -929,6 +952,7 @@ home.addEventListener('click', e => {
     if(act === 'start') startStudy(S.prefs.mode, deckFor(S.prefs.mode));
     else if(act === 'start-weak') startStudy('weak', deckFor('weak'));
     else if(act === 'go-make'){ go('make'); F.front().focus(); }
+    else if(act === 'go-list') go('list');
     else if(act === 'samples') addSamples();
     return;
   }
@@ -978,7 +1002,17 @@ $('#seg').addEventListener('click', e => {
   renderList();
 });
 $('#sort').addEventListener('change', e => { S.sort = e.target.value; renderList(); });
-$('#grid').addEventListener('click', e => { const t = e.target.closest('.tile'); if(t) openEdit(t.dataset.id); });
+$('#list-info').addEventListener('change', e => { S.prefs.listInfo = e.target.checked; save(); renderList(); });
+$('#list-hide').addEventListener('change', e => { S.prefs.listHide = e.target.checked; save(); renderList(); });
+const mlist = $('#mlist');
+mlist.addEventListener('click', e => {
+  const b = e.target.closest('.ml-edit');
+  if(b){ openEdit(b.closest('.ml').dataset.id); return; }
+  if(S.prefs.listHide){ const a = e.target.closest('.ml-ans'); if(a) a.closest('.ml').classList.toggle('open'); }
+});
+mlist.addEventListener('keydown', e => {
+  if((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('ml-ans')){ e.preventDefault(); e.target.closest('.ml').classList.toggle('open'); }
+});
 
 $('#set-theme').addEventListener('click', cycleTheme);
 $('#set-update').addEventListener('click', () => checkUpdate(true));

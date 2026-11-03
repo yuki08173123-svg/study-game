@@ -1,7 +1,7 @@
 /* 語彙カード の service worker
    ほうしん:「ネットワーク優先」。まずネットから最新をとり、とれたものをキャッシュに控える。
    ネットがないときだけキャッシュで動く。 */
-const VER = 'gc-v1';
+const VER = 'gc-v2';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {

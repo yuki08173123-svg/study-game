@@ -57,6 +57,11 @@ main{ max-width:560px; margin:0 auto; padding:6px 16px 40px; }
 .promise.del div{ padding:6px 2px; } .promise.del b{ font-size:16px; white-space:nowrap; } .promise.del span{ font-size:11px; }
 .promise.del button{ width:30px; height:30px; border-radius:50%; background:var(--chip); color:var(--muted); font-weight:900; }
 .choices button.addp{ grid-column:1/-1; }
+.choices button.free{ white-space:normal; overflow-wrap:anywhere; font-size:14px; line-height:1.25; }
+.promise b.long{ font-size:14px; line-height:1.25; white-space:normal; overflow-wrap:anywhere; }
+.freein{ grid-column:1/-1; width:100%; box-sizing:border-box; font:inherit; font-size:17px; padding:13px 12px; border-radius:14px; border:2px solid var(--line); background:var(--card); color:var(--ink); }
+.freerm{ grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:2px 4px; font-size:14px; }
+.choices .freerm button{ width:30px; height:30px; flex:none; padding:0; border:0; border-radius:50%; background:var(--chip); color:var(--muted); }
 .hist{ width:100%; border-collapse:collapse; font-size:14px; }
 .hist td{ padding:7px 4px; border-top:1px solid var(--line); }
 .tag{ display:inline-block; font-size:12px; padding:1px 8px; border-radius:99px; background:var(--chip); }
@@ -619,7 +624,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 /* ===================== 基本 ===================== */
-const VER = 16;
+const VER = 17;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -632,7 +637,7 @@ const mdw = s => { const [y,m,d] = s.split('-').map(Number); return m+'/'+d+'（
 const hm = d => d.getHours()+':'+pad(d.getMinutes());
 const pick = a => a[Math.floor(Math.random() * a.length)];
 const LINE = Object.fromEntries(LINES.map(l => [l.id, l]));
-const SUBJ = ['英語','数学','国語','理科','社会','解き直し','その他'];
+const SUBJ = ['英語','数学','算数','国語','理科','社会','解き直し','その他'];
 const HOURS = [0.5, 1, 1.5, 2, 3, 4, 5, 6];
 const hLabel = h => h === 0.5 ? '30分' : h+'時間' + (h >= 6 ? '〜' : '');
 function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(()=>e.classList.remove('on'), 1800); }
@@ -643,6 +648,7 @@ function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on
    S.days['YYYY-MM-DD'] = { woke:'6:42', start:'19:00', hours:2, first:'数学', backlog:true|false, review:'できた'|'半分'|'できなかった' }
    review は「その日の約束」を次の朝にふり返った答え（その日の記録に入れる）
    more は足した約束 [{start,hours,first}]（v16・ユウキ・ハルネコの要望）。ふり返りは1日まとめて1つ
+   S.subj は「その他」で自由に入れた言葉（新しい順・6つまで）。次からボタンで選べる（v17・ユウキ・ハルネコの要望）
    word は最後に選んだ一言（'喝'・'本気の喝'・'励まし'・'喝（おまかせ）' など）。back は夕方に開いた時刻（woke の代わり）
    S.goal = { text:'ゴールの文', days:{ 'YYYY-MM-DD':true } }  ゴール宣言（v8・ユウキ・ハルネコの要望）
    S.test = { name:'期末テスト', date:'YYYY-MM-DD' }  次の大きなテストまでのカウントダウン（v10・こはるの要望） */
@@ -678,7 +684,7 @@ function promiseHtml(d, canDel){
   return rows.map((x, i) => `<div class="promise${del ? ' del' : ''}">
     <div><b>${esc(x.start)}</b><span>から</span></div>
     <div><b>${esc(hLabel(x.hours))}</b><span>やる</span></div>
-    <div><b>${esc(x.first)}</b><span>${i ? 'をやる' : 'から始める'}</span></div>
+    <div><b${String(x.first).length > 5 ? ' class="long"' : ''}>${esc(x.first)}</b><span>${i ? 'をやる' : 'から始める'}</span></div>
     ${del ? (i ? `<button data-del="${i - 1}" aria-label="この約束を消す">×</button>` : '<i></i>') : ''}
   </div>`).join('');
 }
@@ -896,7 +902,7 @@ async function next(lead){
   }else if(kind === 'hours'){
     choices = HOURS.map(h => `<button data-v="${h}">${hLabel(h)}</button>`).join(''); cls = 'four';
   }else if(kind === 'first'){
-    choices = SUBJ.map(v => `<button data-v="${v}">${v}</button>`).join('');
+    choices = firstButtons();
   }else if(kind === 'backlog'){
     const apps = backlogFromApps();
     if(apps) hint = apps.map(a => `${a.name}：今日の分 ${a.n}問`).join('　');
@@ -914,7 +920,43 @@ async function next(lead){
     <div class="choices ${cls}">${choices}</div>
     <div class="dots">${T.flow.filter(k => k !== 'end').map((k, i) => `<i class="${i < T.step ? 'on' : ''}"></i>`).join('')}</div>`;
   $('#stage').querySelectorAll('.choices button').forEach(b => b.onclick = () => answer(kind, b.dataset.v));
+  if(kind === 'first') bindFirst();
   say(ids);
+}
+/* 「何からやる？」の選択肢。「その他」は自由に入力＝教科名でも、取り組む内容でも。入れた言葉は次からボタンになる（v17） */
+function firstButtons(){
+  const mine = (S.subj || []).map(v => `<button class="free" data-v="${esc(v)}">${esc(v)}</button>`).join('');
+  return SUBJ.filter(v => v !== 'その他').map(v => `<button data-v="${v}">${v}</button>`).join('') + mine + `<button data-v="その他">その他</button>`;
+}
+function bindFirst(){
+  $('#stage').querySelectorAll('.choices button').forEach(b => b.onclick = () => b.dataset.v === 'その他' ? freeFirst() : answer('first', b.dataset.v));
+}
+function freeFirst(val){
+  const box = $('#stage .choices');
+  box.className = 'choices';
+  box.innerHTML = `<input class="freein" id="freeIn" maxlength="20" autocomplete="off" placeholder="例：計算ドリル・漢字・英単語" value="${esc(val || '')}">
+    <button class="wide" id="freeOk">これにする</button>
+    <button class="addp" id="freeBack">もどる</button>
+    ${(S.subj || []).length ? `<p class="muted" style="grid-column:1/-1;margin:6px 0 0">前に入れた言葉（×で消せます）</p>` : ''}
+    ${(S.subj || []).map((v, i) => `<div class="freerm"><span>${esc(v)}</span><button data-rm="${i}" aria-label="消す">×</button></div>`).join('')}`;
+  const inp = $('#freeIn');
+  const ok = () => {
+    const v = inp.value.trim();
+    if(!v) return toast('やることを入れてください');
+    answer('first', v);
+  };
+  $('#freeOk').onclick = ok;
+  inp.onkeydown = e => { if(e.key === 'Enter' && !e.isComposing){ e.preventDefault(); ok(); } };
+  $('#freeBack').onclick = () => { box.className = 'choices'; box.innerHTML = firstButtons(); bindFirst(); };
+  box.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
+    const keep = inp.value;
+    S.subj = S.subj.filter((x, i) => i !== Number(b.dataset.rm)); save(); freeFirst(keep);
+  });
+  inp.focus();
+}
+function rememberSubj(v){
+  if(SUBJ.includes(v)) return;
+  S.subj = [v, ...(S.subj || []).filter(x => x !== v)].slice(0, 6);
 }
 function answer(kind, v){
   let reply;
@@ -928,6 +970,7 @@ function answer(kind, v){
     const h = Number(v); (T.add || T.rec).hours = h;
     reply = h <= 1 ? 'e2a' : h >= 4 ? 'e2c' : 'e2b';
   }else if(kind === 'first'){
+    rememberSubj(v);
     if(T.add){   // 足した約束はここで終わり（v16）
       T.add.first = v;
       const d = S.days[today()]; d.more = [...(d.more || []), T.add]; T.add = null;
@@ -1046,6 +1089,17 @@ function wrapText(ctx, text, maxW){
 function cardName(){
   try{ return window.SGUsers && SGUsers.many() ? String(SGUsers.current().name || '').trim() : ''; }catch(e){ return ''; }
 }
+/* 枠の幅に収めて字を書く：まず小さめの1行、入らなければ2行に（自由に入れた長い言葉のため・v17） */
+function fitText(c, F, text, maxW, big, x, y){
+  let size = big, lines = [String(text)];
+  for(; size >= 36; size -= 2){ c.font = F(size); if(c.measureText(text).width <= maxW) break; }
+  if(size < 36){
+    for(size = 36; size > 24; size -= 2){ c.font = F(size); lines = wrapText(c, text, maxW); if(lines.length <= 2) break; }
+    c.font = F(size); lines = wrapText(c, text, maxW).slice(0, 2);
+  }
+  const lh = size * 1.2;
+  lines.forEach((t, i) => c.fillText(t, x, y + (i - (lines.length - 1) / 2) * lh));
+}
 function drawCard(light){
   const W = 1080, cv = document.createElement('canvas'); cv.width = W; cv.height = 1350;
   const c = cv.getContext('2d'), g = goal(), r = S.days[today()] || {};
@@ -1082,13 +1136,13 @@ function drawCard(light){
       c.strokeStyle = light ? '#bbb' : 'rgba(224,192,106,.45)'; c.lineWidth = 2;
       c.beginPath(); c.roundRect ? c.roundRect(120, yy, W - 240, 80, 20) : c.rect(120, yy, W - 240, 80); c.stroke();
       c.fillStyle = ink; c.font = F(42);
-      [x.start + 'から', hLabel(x.hours), x.first].forEach((v, k) => c.fillText(v, W / 2 + (k - 1) * 280, yy + 56));
+      [x.start + 'から', hLabel(x.hours), x.first].forEach((v, k) => fitText(c, F, v, 250, 42, W / 2 + (k - 1) * 280, yy + 54));
     });
     cells.forEach(([v, l], i) => {
       const x = W / 2 + (i - 1) * 310, yy = y + 125;
       c.strokeStyle = light ? '#bbb' : 'rgba(224,192,106,.45)'; c.lineWidth = 2;
       c.beginPath(); c.roundRect ? c.roundRect(x - 140, yy, 280, 160, 24) : c.rect(x - 140, yy, 280, 160); c.stroke();
-      c.fillStyle = ink; c.font = F(50); c.fillText(String(v), x, yy + 84);
+      c.fillStyle = ink; fitText(c, F, v, 256, 50, x, yy + 76);
       c.fillStyle = sub; c.font = F(28); c.fillText(l, x, yy + 132);
     });
     y += multi ? 140 + rows.length * 92 : 300;
@@ -1299,7 +1353,7 @@ function slides(){ return [
   { pic:'⏰', t:'ヒラボイスとは', p:'アラームを止めると、<b>ヒラ先生の声で朝の会話</b>がはじまる目覚ましです。起きてすぐに、<b>今日の勉強の約束</b>を決めます。', ex:'朝が弱い人ほど、起きた直後に「今日やること」を決めておくと、1日が動きだします。' },
   { pic:'🛠', t:'1. はじめに1回だけ準備', p:'ホームの<b>「準備」</b>の手順どおりに、iPhone の<b>「ショートカット」</b>アプリで「アラームを止めたら、このアプリを開く」を設定します（5分）。', ex:'このアプリは <b>Safari</b> で開いて使ってください。アラームから開くのも Safari です。Android の人は、アラームを止めたらアプリを開いてください。' },
   { pic:'☀️', t:'2. 朝は「おはよう」を押す', p:'アラームを止めると、このアプリが開きます。まん中の<b>「おはよう」</b>を押すと、ヒラ先生の声がはじまります。', ex:'スマホは、画面を押すまで音を出せない決まりです。押すこと自体が「起きた」合図になります。' },
-  { pic:'🗓', t:'3. 質問にボタンで答える', p:'<b>何時から</b>勉強するか・<b>何時間</b>やるか・<b>最初に何から</b>やるか・<b>解き直しがたまっていないか</b>を、ボタンで答えます。', ex:'今日やることが2つ以上あるときは、最後の画面かホームの<b>「約束をもう1つ足す」</b>で足せます（全部で5つまで）。1つでよい日は、そのままで大丈夫です。' },
+  { pic:'🗓', t:'3. 質問にボタンで答える', p:'<b>何時から</b>勉強するか・<b>何時間</b>やるか・<b>最初に何から</b>やるか・<b>解き直しがたまっていないか</b>を、ボタンで答えます。', ex:'何からやるかは<b>「その他」</b>を押すと自由に入れられます（一度入れた言葉は、次からボタンになります）。今日やることが2つ以上あるときは、最後の画面かホームの<b>「約束をもう1つ足す」</b>で足せます（全部で5つまで）。1つでよい日は、そのままで大丈夫です。' },
   { pic:'🔥', t:'4. 最後の一言を選ぶ', p:'最後に<b>「喝」「本気の喝」「励まし」「おまかせ」</b>から選ぶと、その一言が流れます。おまかせは、昨日の約束が<b>できた日は励まし</b>、<b>できなかった日は喝</b>です。', ex:'その日の気分で選んでください。「今日は本気の喝がほしい」と自分で選ぶのも、気持ちの切りかえになります。' },
   { pic:'✅', t:'5. 次の朝にふり返る', p:'次の朝、最初に<b>「昨日、約束した時間、できた？」</b>と聞かれます。「できた・半分・できなかった」で答えます。', ex:'約束は、決めっぱなしにしないことが大事です。約束を足した日は、まとめて1回答えます（一部だけできたら「半分」）。' },
   { pic:'⏳', t:'6. テストまでのカウントダウン', p:'ホームのいちばん上で、<b>次の大きなテストの名前と日</b>を設定します。開くたびに<b>「あと◯日」</b>が大きく出ます。', ex:'朝起きた画面にも出ます。テストが終わったら「テストを変える」で次のテストにしてください。' },

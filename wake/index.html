@@ -52,6 +52,11 @@ main{ max-width:560px; margin:0 auto; padding:6px 16px 40px; }
 .promise div{ background:var(--accent-soft); border-radius:14px; padding:10px 4px; }
 .promise b{ display:block; font-size:20px; font-weight:900; }
 .promise span{ font-size:12px; color:var(--muted); }
+.promise + .promise{ margin-top:8px; }
+.promise.del{ grid-template-columns:repeat(3,1fr) 30px; align-items:center; }
+.promise.del div{ padding:6px 2px; } .promise.del b{ font-size:16px; white-space:nowrap; } .promise.del span{ font-size:11px; }
+.promise.del button{ width:30px; height:30px; border-radius:50%; background:var(--chip); color:var(--muted); font-weight:900; }
+.choices button.addp{ grid-column:1/-1; }
 .hist{ width:100%; border-collapse:collapse; font-size:14px; }
 .hist td{ padding:7px 4px; border-top:1px solid var(--line); }
 .tag{ display:inline-block; font-size:12px; padding:1px 8px; border-radius:99px; background:var(--chip); }
@@ -614,7 +619,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 /* ===================== 基本 ===================== */
-const VER = 15;
+const VER = 16;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -637,6 +642,7 @@ function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on
    S.help: 使い方スライドを見たら true（はじめて開いたときだけ自動で出す）
    S.days['YYYY-MM-DD'] = { woke:'6:42', start:'19:00', hours:2, first:'数学', backlog:true|false, review:'できた'|'半分'|'できなかった' }
    review は「その日の約束」を次の朝にふり返った答え（その日の記録に入れる）
+   more は足した約束 [{start,hours,first}]（v16・ユウキ・ハルネコの要望）。ふり返りは1日まとめて1つ
    word は最後に選んだ一言（'喝'・'本気の喝'・'励まし'・'喝（おまかせ）' など）。back は夕方に開いた時刻（woke の代わり）
    S.goal = { text:'ゴールの文', days:{ 'YYYY-MM-DD':true } }  ゴール宣言（v8・ユウキ・ハルネコの要望）
    S.test = { name:'期末テスト', date:'YYYY-MM-DD' }  次の大きなテストまでのカウントダウン（v10・こはるの要望） */
@@ -663,6 +669,18 @@ function cdHtml(cls){
   const nm = esc(S.test.name || 'テスト');
   if(n < 0) return `<div class="cd ${cls||''}"><span>${nm}は終わりました</span><small>ホームで次のテストを設定してください</small></div>`;
   return `<div class="cd ${cls||''}"><span>${nm}まで</span><b>${n === 0 ? '今日が本番' : `あと<em>${n}</em>日`}</b></div>`;
+}
+/* その日の約束の一覧（1つ目＋足した分）。足せるのは全部で5つまで（v16） */
+const MAXP = 5;
+function promises(d){ return d && d.hours ? [{ start:d.start, hours:d.hours, first:d.first }, ...(d.more || [])] : []; }
+function promiseHtml(d, canDel){
+  const rows = promises(d), del = canDel && rows.length > 1;
+  return rows.map((x, i) => `<div class="promise${del ? ' del' : ''}">
+    <div><b>${esc(x.start)}</b><span>から</span></div>
+    <div><b>${esc(hLabel(x.hours))}</b><span>やる</span></div>
+    <div><b>${esc(x.first)}</b><span>${i ? 'をやる' : 'から始める'}</span></div>
+    ${del ? (i ? `<button data-del="${i - 1}" aria-label="この約束を消す">×</button>` : '<i></i>') : ''}
+  </div>`).join('');
 }
 /* 約束を守れた日：昨日までの7日間で、ふり返りが「できた」だった日（v10・こはるの要望）。半分は数えない */
 function week7(){
@@ -861,11 +879,14 @@ async function next(lead){
   const pre = lead ? [lead] : [];
   const steps = T.flow.filter(k => k !== 'end').length;
   $('#tStep').textContent = kind === 'end' ? '' : (T.step)+' / '+steps;
-  const q = { review:'c0', start:'d1', hours:'d2', first:'d3', backlog:'d4', last:'d5' }[kind];
+  const q = { review:'c0', start:'d1', hours:'d2', first:T.add ? 'd3b' : 'd3', backlog:'d4', last:'d5' }[kind];
   let choices = '', cls = '', hint = '';
   if(kind === 'review'){
     const y = S.days[addDays(today(), -1)];
-    hint = `昨日の約束：${esc(y.start)}から ${esc(hLabel(y.hours))}`;
+    const ys = promises(y);
+    hint = ys.length > 1
+      ? `昨日の約束：${ys.map(x => `${esc(x.start)}から ${esc(hLabel(x.hours))}（${esc(x.first)}）`).join('・')}<br>全部できたら「できた」、一部だけなら「半分」です`
+      : `昨日の約束：${esc(y.start)}から ${esc(hLabel(y.hours))}`;
     choices = ['できた','半分','できなかった'].map(v => `<button data-v="${v}">${v}</button>`).join('');
   }else if(kind === 'start'){
     const h0 = new Date().getHours();
@@ -901,12 +922,17 @@ function answer(kind, v){
     S.days[addDays(today(), -1)].review = v;
     reply = choose(ofGroup('C', v));
   }else if(kind === 'start'){
-    T.rec.start = v === '今すぐ' ? hm(new Date()) : v;
+    (T.add || T.rec).start = v === '今すぐ' ? hm(new Date()) : v;
     reply = choose(ofGroup('E', '何時から'));
   }else if(kind === 'hours'){
-    const h = Number(v); T.rec.hours = h;
+    const h = Number(v); (T.add || T.rec).hours = h;
     reply = h <= 1 ? 'e2a' : h >= 4 ? 'e2c' : 'e2b';
   }else if(kind === 'first'){
+    if(T.add){   // 足した約束はここで終わり（v16）
+      T.add.first = v;
+      const d = S.days[today()]; d.more = [...(d.more || []), T.add]; T.add = null;
+      save(); return promiseScreen(['e3b']);
+    }
     T.rec.first = v; reply = choose(ofGroup('E', '最初の教科'));
   }else if(kind === 'backlog'){
     T.rec.backlog = v === '1';
@@ -927,27 +953,43 @@ function finish(last){
   $('#tStep').textContent = '';
   S.days[today()] = Object.assign({}, S.days[today()] || {}, T.rec);
   save();
+  promiseScreen([last]);
+}
+/* 今日の約束の画面（会話の終わり・約束を足したあと） */
+function promiseScreen(ids){
+  $('#tStep').textContent = '';
   const r = S.days[today()];
-  const ids = [last];
   $('#stage').innerHTML = `
     <div class="who"><img src="icon-192.png" alt=""><b>ヒラ先生</b></div>
-    <div class="bubble">${ids.map(id => esc(LINE[id].text)).join('<br>')}</div>
+    ${ids.length ? `<div class="bubble">${ids.map(id => esc(LINE[id].text)).join('<br>')}</div>` : ''}
     <div class="card" style="margin-top:18px">
       <h2>今日の約束</h2>
-      <div class="promise">
-        <div><b>${esc(r.start)}</b><span>から</span></div>
-        <div><b>${esc(hLabel(r.hours))}</b><span>やる</span></div>
-        <div><b>${esc(r.first)}</b><span>から始める</span></div>
-      </div>
-      <p class="muted" style="margin:10px 0 0">明日、この約束をふり返ります。</p>
+      <div id="pList">${promiseHtml(r, true)}</div>
+      <p class="muted" style="margin:10px 0 0">明日、${promises(r).length > 1 ? 'まとめて' : 'この約束を'}ふり返ります。</p>
     </div>
     ${cdHtml()}
     <div class="choices two">
+      ${promises(r).length < MAXP ? `<button class="addp" id="addP">約束をもう1つ足す</button>` : ''}
       ${goal().text && !goal().days[today()] ? `<button class="wide dark" id="goalNow">ゴール宣言もする</button>` : ''}
-      <button class="wide" id="endBtn">${isEve() ? 'よし、始める' : 'よし、起きる'}</button></div>`;
+      <button class="wide" id="endBtn">${T.home ? 'とじる' : isEve() ? 'よし、始める' : 'よし、起きる'}</button></div>`;
   $('#endBtn').onclick = closeTalk;
+  if($('#addP')) $('#addP').onclick = () => addPromise();
   if($('#goalNow')) $('#goalNow').onclick = () => renderGoal(true);
-  say(ids);
+  bindDel($('#pList'), () => promiseScreen([]));
+  if(ids.length) say(ids);
+}
+/* 約束を足す（v16・ユウキ・ハルネコの要望）：何時から→何時間→何を の3つだけ聞く。朝の会話のあとでも、ホームからでも */
+function addPromise(home){
+  if(home){ prefetch(); T = { rec:{}, step:0, home:true }; $('#talk').classList.add('on'); document.body.style.overflow = 'hidden'; }
+  T.add = {}; T.flow = ['start', 'hours', 'first']; T.step = 0;
+  next();
+}
+function bindDel(box, after){
+  box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    const d = S.days[today()];
+    d.more = (d.more || []).filter((x, i) => i !== Number(b.dataset.del));   // 空でも more:[] を残す（同期で消した分が戻らないように）
+    save(); after();
+  });
 }
 
 /* ===================== ゴール宣言（v8） =====================
@@ -1005,9 +1047,13 @@ function cardName(){
   try{ return window.SGUsers && SGUsers.many() ? String(SGUsers.current().name || '').trim() : ''; }catch(e){ return ''; }
 }
 function drawCard(light){
-  const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const W = 1080, cv = document.createElement('canvas'); cv.width = W; cv.height = 1350;
   const c = cv.getContext('2d'), g = goal(), r = S.days[today()] || {};
   const F = n => `900 ${n}px 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif`;
+  const rows = promises(r), multi = rows.length > 1;
+  c.font = F(64);   // 約束が多くても入るように、中身に合わせて縦をのばす（ふつうは1350のまま）
+  const H = Math.max(1350, 420 + (wrapText(c, g.text, W - 240).slice(0, 4).length - 1) * 86 + 64 + (multi ? 140 + rows.length * 92 : rows.length ? 300 : 0) + 335);
+  cv.height = H;
   const ink = light ? '#1a1a1a' : '#F3EADF', gold = light ? '#8A6A1E' : '#E0C06A', sub = light ? '#444' : '#B9AE9E';
   if(light){ c.fillStyle = '#fff'; c.fillRect(0, 0, W, H); }
   else{ const gr = c.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#221C15'); gr.addColorStop(1, '#0B0A09'); c.fillStyle = gr; c.fillRect(0, 0, W, H); }
@@ -1029,7 +1075,15 @@ function drawCard(light){
   // 今日の約束
   if(r.hours){
     c.fillStyle = gold; c.font = F(34); c.fillText('今日の約束', W / 2, y + 90);
-    const cells = [[r.start, 'から'], [hLabel(r.hours), 'やる'], [r.first, 'から始める']];
+    const cells = multi ? [] : [[r.start, 'から'], [hLabel(r.hours), 'やる'], [r.first, 'から始める']];
+    rows.forEach((x, i) => {
+      if(!multi) return;
+      const yy = y + 125 + i * 92;
+      c.strokeStyle = light ? '#bbb' : 'rgba(224,192,106,.45)'; c.lineWidth = 2;
+      c.beginPath(); c.roundRect ? c.roundRect(120, yy, W - 240, 80, 20) : c.rect(120, yy, W - 240, 80); c.stroke();
+      c.fillStyle = ink; c.font = F(42);
+      [x.start + 'から', hLabel(x.hours), x.first].forEach((v, k) => c.fillText(v, W / 2 + (k - 1) * 280, yy + 56));
+    });
     cells.forEach(([v, l], i) => {
       const x = W / 2 + (i - 1) * 310, yy = y + 125;
       c.strokeStyle = light ? '#bbb' : 'rgba(224,192,106,.45)'; c.lineWidth = 2;
@@ -1037,7 +1091,7 @@ function drawCard(light){
       c.fillStyle = ink; c.font = F(50); c.fillText(String(v), x, yy + 84);
       c.fillStyle = sub; c.font = F(28); c.fillText(l, x, yy + 132);
     });
-    y += 300;
+    y += multi ? 140 + rows.length * 92 : 300;
   }
   // 続いた日数
   c.fillStyle = gold; c.font = F(40); c.fillText(`${streak()}日 続けて宣言中`, W / 2, Math.max(y + 110, 960));
@@ -1110,11 +1164,8 @@ function renderHome(){
     ${r && r.hours ? `
     <div class="card">
       <h2>今日の約束</h2>
-      <div class="promise">
-        <div><b>${esc(r.start)}</b><span>から</span></div>
-        <div><b>${esc(hLabel(r.hours))}</b><span>やる</span></div>
-        <div><b>${esc(r.first)}</b><span>から始める</span></div>
-      </div>
+      <div id="pHome">${promiseHtml(r, true)}</div>
+      ${promises(r).length < MAXP ? '<button class="sub" id="addHome">約束をもう1つ足す</button>' : ''}
     </div>` : ''}
     <div class="card">
       <button class="big" id="startBtn">${isEve() ? 'おかえりの会話をはじめる' : '朝の会話をはじめる'}</button>
@@ -1190,7 +1241,7 @@ function renderHome(){
       <table class="hist">
         ${days.map(k => { const d = S.days[k]; const rv = d.review;
           return `<tr><td>${mdw(k)}</td><td>${d.woke ? esc(d.woke)+' 起床' : d.back ? esc(d.back)+' 帰宅' : ''}</td>
-            <td>${d.hours ? esc(d.start)+'から'+esc(hLabel(d.hours)) : ''}</td>
+            <td>${d.hours ? esc(d.start)+'から'+esc(hLabel(d.hours))+(d.more && d.more.length ? '　ほか'+d.more.length+'つ' : '') : ''}</td>
             <td>${rv ? `<span class="tag ${rv === 'できた' ? 'ok' : rv === 'できなかった' ? 'ng' : ''}">${esc(rv)}</span>` : ''}</td></tr>`; }).join('')}
       </table>
     </div>` : ''}
@@ -1206,6 +1257,8 @@ function renderHome(){
   $('#updCheck').onclick = () => checkUpdate(false);
   HSync.render();
   $('#startBtn').onclick = openTalk;
+  if($('#addHome')) $('#addHome').onclick = () => addPromise(true);
+  if($('#pHome')) bindDel($('#pHome'), renderHome);
   $('#home').querySelectorAll('.listen button').forEach(b => b.onclick = () => {
     const id = choose(ofGroup(b.dataset.g)); save();
     const box = $('#said'); box.textContent = LINE[id].text; box.classList.add('on');
@@ -1246,9 +1299,9 @@ function slides(){ return [
   { pic:'⏰', t:'ヒラボイスとは', p:'アラームを止めると、<b>ヒラ先生の声で朝の会話</b>がはじまる目覚ましです。起きてすぐに、<b>今日の勉強の約束</b>を決めます。', ex:'朝が弱い人ほど、起きた直後に「今日やること」を決めておくと、1日が動きだします。' },
   { pic:'🛠', t:'1. はじめに1回だけ準備', p:'ホームの<b>「準備」</b>の手順どおりに、iPhone の<b>「ショートカット」</b>アプリで「アラームを止めたら、このアプリを開く」を設定します（5分）。', ex:'このアプリは <b>Safari</b> で開いて使ってください。アラームから開くのも Safari です。Android の人は、アラームを止めたらアプリを開いてください。' },
   { pic:'☀️', t:'2. 朝は「おはよう」を押す', p:'アラームを止めると、このアプリが開きます。まん中の<b>「おはよう」</b>を押すと、ヒラ先生の声がはじまります。', ex:'スマホは、画面を押すまで音を出せない決まりです。押すこと自体が「起きた」合図になります。' },
-  { pic:'🗓', t:'3. 質問にボタンで答える', p:'<b>何時から</b>勉強するか・<b>何時間</b>やるか・<b>最初に何から</b>やるか・<b>解き直しがたまっていないか</b>を、ボタンで答えます。', ex:'答え方によって、ヒラ先生の返事が変わります。同じ言葉は続けて出ません。' },
+  { pic:'🗓', t:'3. 質問にボタンで答える', p:'<b>何時から</b>勉強するか・<b>何時間</b>やるか・<b>最初に何から</b>やるか・<b>解き直しがたまっていないか</b>を、ボタンで答えます。', ex:'今日やることが2つ以上あるときは、最後の画面かホームの<b>「約束をもう1つ足す」</b>で足せます（全部で5つまで）。1つでよい日は、そのままで大丈夫です。' },
   { pic:'🔥', t:'4. 最後の一言を選ぶ', p:'最後に<b>「喝」「本気の喝」「励まし」「おまかせ」</b>から選ぶと、その一言が流れます。おまかせは、昨日の約束が<b>できた日は励まし</b>、<b>できなかった日は喝</b>です。', ex:'その日の気分で選んでください。「今日は本気の喝がほしい」と自分で選ぶのも、気持ちの切りかえになります。' },
-  { pic:'✅', t:'5. 次の朝にふり返る', p:'次の朝、最初に<b>「昨日、約束した時間、できた？」</b>と聞かれます。「できた・半分・できなかった」で答えます。', ex:'約束は、決めっぱなしにしないことが大事です。' },
+  { pic:'✅', t:'5. 次の朝にふり返る', p:'次の朝、最初に<b>「昨日、約束した時間、できた？」</b>と聞かれます。「できた・半分・できなかった」で答えます。', ex:'約束は、決めっぱなしにしないことが大事です。約束を足した日は、まとめて1回答えます（一部だけできたら「半分」）。' },
   { pic:'⏳', t:'6. テストまでのカウントダウン', p:'ホームのいちばん上で、<b>次の大きなテストの名前と日</b>を設定します。開くたびに<b>「あと◯日」</b>が大きく出ます。', ex:'朝起きた画面にも出ます。テストが終わったら「テストを変える」で次のテストにしてください。' },
   { pic:'📅', t:'7. 約束を守れた日', p:'ホームの<b>「約束を守れた日」</b>に、昨日までの7日間で約束が「できた」日の数が<b>◯/7</b>で出ます。', ex:'緑＝できた、黄＝半分、赤＝できなかった。半分は数に入りません。' },
   { pic:'🎯', t:'8. ゴール宣言', p:'ホームの<b>「ゴール宣言」</b>に自分のゴールを書いておきます。「ゴール宣言する」を押すとヒラ先生が<b>「ゴールは何？」</b>と聞くので、<b>声に出して言って</b>から「言った！」を押します。', ex:'宣言した日がたまり、<b>何日続いているか</b>が出ます。朝の会話の最後にも「ゴール宣言もする」が出ます。' },

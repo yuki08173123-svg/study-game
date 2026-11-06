@@ -1,6 +1,6 @@
 {
-  "name": "KEYWORD",
-  "short_name": "KEYWORD",
+  "name": "Keyword",
+  "short_name": "Keyword",
   "description": "SNSを開こうとすると単語の問題が出て、全問正解するまで開けないロック",
   "lang": "ja",
   "start_url": "./",

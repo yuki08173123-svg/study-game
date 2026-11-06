@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <script src="../common/users.js?v=1" data-app="keyword"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>KEYWORD</title>
+<title>Keyword</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="KEYWORD">
+<meta name="apple-mobile-web-app-title" content="Keyword">
 <meta name="theme-color" content="#0C0C0D">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,7 +33,7 @@ input,select{font:inherit; color:inherit;}
 
 header{position:sticky; top:0; z-index:5; background:var(--bg); padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
   display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--line);}
-header h1{flex:1; display:flex; align-items:center; gap:10px; white-space:nowrap; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:19px; letter-spacing:.18em;}
+header h1{flex:1; display:flex; align-items:center; gap:10px; white-space:nowrap; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:20px; letter-spacing:.04em;}
 header h1 img{width:30px; height:30px; border-radius:8px;}
 header h1 small{font-size:11px; color:var(--muted); letter-spacing:.04em; font-weight:500;}
 .helpBtn{width:34px; height:34px; border-radius:50%; background:var(--card2); font-weight:900;}
@@ -99,7 +99,7 @@ input[type=time]{width:auto;}
 /* ロックの画面 */
 #gate{min-height:100vh; display:flex; flex-direction:column; padding:calc(18px + env(safe-area-inset-top)) 20px calc(22px + env(safe-area-inset-bottom)); max-width:520px; margin:0 auto;}
 .gtop{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
-.gtop .brand{display:flex; align-items:center; gap:8px; font-family:'Space Grotesk',sans-serif; font-weight:700; letter-spacing:.2em; font-size:14px; color:var(--muted);}
+.gtop .brand{display:flex; align-items:center; gap:8px; font-family:'Space Grotesk',sans-serif; font-weight:700; letter-spacing:.06em; font-size:15px; color:var(--muted);}
 .gtop .brand img{width:22px; height:22px; border-radius:6px;}
 .dots{display:flex; gap:6px;}
 .dots i{width:28px; height:6px; border-radius:3px; background:var(--card2);}
@@ -135,7 +135,7 @@ input[type=time]{width:auto;}
 <!-- ふだんの画面（設定・記録・準備） -->
 <div id="home">
   <header>
-    <h1><img src="icon-192.png" alt="">KEYWORD <small class="num" id="ver"></small></h1>
+    <h1><img src="icon-192.png" alt="">Keyword <small class="num" id="ver"></small></h1>
     <button data-users-tag hidden></button>
     <button class="helpBtn" id="helpBtn" aria-label="準備のしかた">?</button>
   </header>
@@ -206,7 +206,7 @@ input[type=time]{width:auto;}
 <div id="gate" class="hidden"></div>
 
 <script>
-const VER = 1;
+const VER = 2;
 const SITE = 'https://yuki08173123-svg.github.io/study-game/keyword/';
 const UNLOCK_NAME = 'Keyword解除';
 const GATE_NAME = 'Keyword';
@@ -302,7 +302,7 @@ function closeGate(){
   renderHome();
 }
 function gateTop(dots){
-  return `<div class="gtop"><div class="brand"><img src="icon-192.png" alt="">KEYWORD${G.test ? '<span class="small" style="letter-spacing:0;margin-left:6px">（試し）</span>' : ''}</div>${dots || ''}</div>`;
+  return `<div class="gtop"><div class="brand"><img src="icon-192.png" alt="">Keyword${G.test ? '<span class="small" style="letter-spacing:0;margin-left:6px">（試し）</span>' : ''}</div>${dots || ''}</div>`;
 }
 function gateRoute(){
   const st = studyNow();
@@ -449,7 +449,7 @@ function showDone(){
     if(!G.test){ day().o++; save(); }
     if(G.test){ toast('試しなので開けません'); closeGate(); return; }
     location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(UNLOCK_NAME);
-    setTimeout(() => { gate.innerHTML = gateTop() + `<div class="center"><div class="ctitle">ホーム画面から開いてください</div><div class="ctext">ショートカットが動かないときは、準備の「Keyword解除」の名前を確かめてください。</div></div><div class="gfoot"><button class="btn ghost" id="gHome">KEYWORD にもどる</button></div>`; $('gHome').onclick = closeGate; }, 1200);
+    setTimeout(() => { gate.innerHTML = gateTop() + `<div class="center"><div class="ctitle">ホーム画面から開いてください</div><div class="ctext">ショートカットが動かないときは、準備の「Keyword解除」の名前を確かめてください。</div></div><div class="gfoot"><button class="btn ghost" id="gHome">Keyword にもどる</button></div>`; $('gHome').onclick = closeGate; }, 1200);
   };
 }
 function doStop(){
@@ -623,7 +623,7 @@ $('helpBtn').onclick = () => $('setup').scrollIntoView({behavior:'smooth'});
 $('testBtn').onclick = () => openGate(true);
 $('copyBtn').onclick = () => {
   const d = day();
-  const t = `KEYWORD ${dkey()}：開こうとした${d.t}回・やめた${d.s}回・開けた${d.o}回` + (d.q ? `・問題${d.q}問（正解率${Math.round(d.c/d.q*100)}%）` : '');
+  const t = `Keyword ${dkey()}：開こうとした${d.t}回・やめた${d.s}回・開けた${d.o}回` + (d.q ? `・問題${d.q}問（正解率${Math.round(d.c/d.q*100)}%）` : '');
   navigator.clipboard.writeText(t).then(() => toast('コピーしました'), () => toast('コピーできませんでした'));
 };
 

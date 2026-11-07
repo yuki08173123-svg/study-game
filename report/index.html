@@ -158,6 +158,56 @@ textarea{min-height:64px}
 .impbody{white-space:pre-wrap;font:inherit;font-size:13px;color:var(--muted);background:var(--bg);border-radius:9px;padding:8px 10px;margin:8px 0 0;max-height:200px;overflow:auto}
 .carry{background:var(--done-soft);color:var(--done);border-radius:12px;padding:9px 12px;font-size:13px;font-weight:700;margin:4px 0 6px;display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
 .empty{font-size:13px;color:var(--muted);border:2px dashed var(--line);border-radius:12px;padding:10px;text-align:center}
+
+/* 同期 */
+.hs-btns .btn{margin-top:8px}
+.synccard{border:2px solid var(--accent);border-radius:16px;padding:12px;background:var(--accent-soft);margin:10px 0}
+.synccard .lbl{margin-top:0;color:var(--accent);font-size:14px}
+.synccard .mini b{color:var(--ink)}
+/* 確認・入力の小さな画面（同期用） */
+.dlg-bg{position:fixed;inset:0;z-index:60;background:rgba(10,20,40,.5);display:flex;align-items:center;justify-content:center;padding:20px}
+.dlg{background:var(--card);border-radius:18px;box-shadow:var(--shadow-lg);padding:18px 16px 14px;width:100%;max-width:420px}
+.dlg h3{margin:0 0 8px;font-size:17px}
+.dlg p{white-space:pre-line;font-size:14px;color:var(--muted);margin:0 0 12px}
+.dlg input{border-style:solid;font-size:20px;letter-spacing:.08em;font-family:ui-monospace,Menlo,monospace;text-align:center}
+.dlg .row{flex-wrap:nowrap;margin-top:12px}
+.dlg .row .btn{flex:1;padding:13px}
+
+/* 使い方スライド */
+.guide{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top)) 0 calc(14px + env(safe-area-inset-bottom))}
+.gtrack{flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none}
+.gtrack::-webkit-scrollbar{display:none}
+.gslide{flex:0 0 100%;max-width:100%;scroll-snap-align:center;overflow-y:auto;padding:34px 20px 8px;display:flex}
+.gin{max-width:520px;width:100%;margin:auto}
+.gnum{font-size:13px;color:var(--accent);font-weight:900;letter-spacing:.08em}
+.gslide h2{font-size:24px;font-weight:900;margin:4px 0 12px;line-height:1.35}
+.gslide p{margin:0 0 10px;font-size:16px;line-height:1.7}
+.gslide p b{color:var(--accent)}
+.gvis{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:14px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px}
+.gvis .preview{margin:0}
+.gdots{display:flex;justify-content:center;gap:6px;margin:6px 0 12px}
+.gdots i{width:7px;height:7px;border-radius:50%;background:var(--line);transition:width .2s}
+.gdots i.on{background:var(--accent);width:22px;border-radius:4px}
+.gnav{display:flex;gap:10px;padding:0 20px;max-width:560px;width:100%;margin:0 auto}
+.gnav .btn{padding:15px;font-size:16px}
+.gskip{position:absolute;top:calc(8px + env(safe-area-inset-top));right:12px;color:var(--muted);font-size:14px;font-weight:700;padding:8px 10px;z-index:1}
+.gpill{display:inline-flex;align-items:center;gap:4px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:4px 12px;font-weight:900;font-size:13px;white-space:nowrap}
+.gpill.red{background:var(--warn);color:#fff}
+.gpill.green{background:var(--done);color:#fff}
+.gbox{background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.6}
+.gflow{display:flex;flex-direction:column;gap:6px}
+.gflow div{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:12px;padding:9px 12px;font-size:14.5px;font-weight:700}
+.gflow div span{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:13px;font-weight:900;flex:none}
+.gflow .arrow{background:none;padding:0;justify-content:center;color:var(--muted);font-size:13px}
+.gtwo{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gtwo>div{border-radius:12px;padding:10px;font-size:13.5px;line-height:1.75}
+.gtwo .k1{background:var(--done-soft)}
+.gtwo .k2{background:var(--gold-soft)}
+.gtwo b{display:block;font-size:13px;margin-bottom:2px}
+.gtqc{display:grid;grid-template-columns:44px 1fr 1fr 1fr;gap:6px;align-items:center;text-align:center;font-size:12px;color:var(--muted);font-weight:700}
+.gtqc .c{background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:7px 0;font-size:17px;font-weight:900;color:var(--ink)}
+.gtqc .c.auto{border-color:var(--done);color:var(--done)}
+.gsteps{margin:0;padding-left:20px;font-size:14.5px;line-height:1.85}
 </style>
 </head>
 <body>
@@ -169,6 +219,7 @@ textarea{min-height:64px}
     </div>
     <div class="row" style="flex-wrap:nowrap;flex:none">
       <button data-users-tag hidden></button>
+      <button class="iconbtn" id="helpBtn" title="使い方" style="font-weight:900;color:var(--accent)">？</button>
       <button class="iconbtn" id="histBtn" title="過去の報告">🗂</button>
       <button class="iconbtn" id="setBtn" title="設定">⚙️</button>
     </div>
@@ -306,6 +357,12 @@ textarea{min-height:64px}
   <div class="sh"><h3>設定</h3><button class="btn ghost" data-close>閉じる</button></div>
   <div class="body">
     <div data-users-card></div>
+    <p><button class="btn block" id="helpSet">📖 使い方を見る（スライド）</button></p>
+    <div class="synccard" id="syncCard">
+      <div class="lbl">🔄 同期（スマホ・iPad・パソコンで同じにする）</div>
+      <div id="hsBox"></div>
+    </div>
+    <hr style="border:0;border-top:1px solid var(--line)">
     <p><label><input type="checkbox" id="optStreak" style="width:auto;border:0;background:none;padding:0"> 日付の横に「連続◯日目」を付ける</label></p>
     <p class="mini">連続日数は、報告文をコピーまたは送った日に自動で1増えます。数字を直すときは上の「連続◯日目」をタップ。</p>
     <hr style="border:0;border-top:1px solid var(--line)">
@@ -326,7 +383,7 @@ textarea{min-height:64px}
     <textarea id="restoreBox" placeholder="ここに控えを貼りつける" style="min-height:70px"></textarea>
     <p><button class="btn" id="restoreBtn">読みこむ</button></p>
     <hr style="border:0;border-top:1px solid var(--line)">
-    <p class="mini">データはこの端末の中にだけ保存されます（外には送りません）。</p>
+    <p class="mini">同期を使わなければ、データはこの端末の中にだけ保存されます（外には送りません）。</p>
     <p style="margin-top:14px"><button class="btn danger" id="wipeAll">すべてのデータを消す</button></p>
     <p class="mini" id="verLabel"></p>
   </div>
@@ -335,7 +392,443 @@ textarea{min-height:64px}
 <div class="toast" id="toast"></div>
 
 <script>
-const VER = 7;
+/* HSYNC BEGIN ─────────────────────────────────────────────
+   同期（iPad・スマホ・パソコンで同じにする）。勉強報告 v8（2026-11-07 ヒラ「同期できるように」）。
+   ※ 理科の一問一答の HSYNC（共通版）をそのまま持ってきたもの。違いは init の設定だけ。
+   預け先は計画マップと同じ Google Apps Script（plan/gas/Sync.gs）。サーバー側は変えていない。
+   ・同期コードは全アプリで1つ。サーバーには、そのコードから作った「アプリごとのコード」で預ける。
+   ・預けるのは config.keys の localStorage だけ。記録は1つのキーなので、C.mergeKey（rikaMerge）で問題ごとに合わせる。
+   ※ 2026-10-31：同期で記録が消える穴をふさいだ「共通版」（ヒラボイス v14 の直しを、Essence の HSYNC に入れたもの）。
+     理科の一問一答・高校ルート・Essence・勉強報告は同じ中身。直すときは全部（とヒラボイス）同じように直す。
+     穴＝受けとった記録をカードの最中などに後回しにしている間に書くと、合わせずに送って、もう1台の記録を上書きしていた。
+     直し＝送るときは後回しの分と合わせる（outgoing）・合わせて送ったら「まだ受けとっていない」目印（M.stale）で次に開いたら先に受けとる・
+     mergeKey のあるアプリは受けとるときいつも合わせる（この端末だけの記録も残す）。
+   ─────────────────────────────────────────────────────────── */
+const HSync = (function(){
+  /* 手元（localhost）で試すときだけ、まねの預け先を使える（本物に書きこまないため・公開ページでは使わない） */
+  const URL = (location.hostname === 'localhost' && sessionStorage.getItem('hs.testurl')) ||
+    'https://script.google.com/macros/s/AKfycbztk0Zk4YnnAjKcOgsVU690-gAn_FfN5xGILx5u_YUj6syG5xk80sV6Biqa1WOce-uQ/exec';
+  const SECRET = 'hiramap-2026';
+  const CH = 'abcdefghjkmnpqrstuvwxyz23456789';      // 0/o/1/l/i は使わない（計画マップと同じ）
+  const TOMB_DAYS = 90;
+
+  let C = null;                 // 設定（init で受けとる）
+  let M = null;                 // この端末の同期の記録 { code, mt, at, dirty, err }
+  let T = {};                   // 消したしるし { key: { id: 時刻 } }
+  let applying = false, reloading = false, busy = false, seq = 0, timer = null, pending = null;
+  const ls = window.localStorage;
+  const _set = Storage.prototype.setItem, _get = Storage.prototype.getItem, _rm = Storage.prototype.removeItem;
+
+  /* ---------- 小道具 ---------- */
+  const now = () => Date.now();
+  const metaKey = () => 'hs.' + (C.metaApp || C.app), tombKey = () => 'hs.' + (C.metaApp || C.app) + '.tomb';
+  function loadMeta(){
+    try{ M = JSON.parse(_get.call(ls, metaKey()) || 'null') || {}; }catch(e){ M = {}; }
+    try{ T = JSON.parse(_get.call(ls, tombKey()) || 'null') || {}; }catch(e){ T = {}; }
+  }
+  function saveMeta(){ try{ _set.call(ls, metaKey(), JSON.stringify(M)); _set.call(ls, tombKey(), JSON.stringify(T)); }catch(e){} }
+  function norm(v){
+    const a = String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    return a.length === 8 ? a.slice(0, 4) + '-' + a.slice(4) : '';
+  }
+  /* コード X から、このアプリ用のコードを作る（どの端末でも同じになる） */
+  function h32(s, seed){ let h = seed >>> 0; for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h >>> 0; }
+  function derive(master){ return deriveWith(master, C.app); }
+  function deriveWith(master, app){
+    let a = h32(master + '|' + app, 2166136261), b = h32(app + '|' + master, 0x9747b28c), s = '';
+    for(let i = 0; i < 8; i++){
+      if(i === 4) s += '-';
+      if(i < 4){ s += CH[a % 31]; a = Math.floor(a / 31); } else { s += CH[b % 31]; b = Math.floor(b / 31); }
+    }
+    return s;
+  }
+  async function call(p){
+    const r = await fetch(URL, { method:'POST', body: JSON.stringify(Object.assign({ secret:SECRET }, p)) });
+    return r.json();
+  }
+  const say = (m) => { try{ C.toast && C.toast(m); }catch(e){} };
+  /* 入力と確認。C.ask / C.yes があればアプリの画面で聞く（iPhoneのホーム画面アプリでは prompt/confirm が出ないことがあるため） */
+  const ask = (msg) => C.ask ? C.ask(msg) : Promise.resolve(prompt(msg));
+  const yes = (msg) => C.yes ? C.yes(msg) : Promise.resolve(confirm(msg));
+  const fmt = (t) => { const d = new Date(t); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+
+  /* ---------- 中身の出し入れ ---------- */
+  function collect(){
+    const keys = {};
+    C.keys.forEach(k => { const v = _get.call(ls, k); if(v !== null) keys[k] = v; });
+    pruneTomb();
+    return { app: C.app, v: 1, keys, tomb: T, who: whoNow() };
+  }
+  /* 兄弟で1台を使うときの「いまの人」の名前（ヒラボイス v13 で追加・ほかの人のコードを入れたら止めるため） */
+  function whoNow(){ try{ return C.who ? (C.who() || '') : ''; }catch(e){ return ''; } }
+  function hasLocal(){ return C.hasData ? !!C.hasData() : C.keys.some(k => _get.call(ls, k) !== null); }
+  function pruneTomb(){
+    const lim = now() - TOMB_DAYS * 864e5;
+    Object.keys(T).forEach(k => { Object.keys(T[k] || {}).forEach(id => { if(T[k][id] < lim) delete T[k][id]; }); });
+  }
+  const idOf = (spec, x) => (x && x[spec.id] !== undefined) ? String(x[spec.id]) : null;
+
+  /* 消したものを覚える（lists のキーだけ） */
+  function tombDiff(k, oldRaw, newRaw){
+    const spec = C.lists && C.lists[k]; if(!spec) return;
+    let a = [], b = [];
+    try{ a = JSON.parse(oldRaw || '[]') || []; }catch(e){}
+    try{ b = JSON.parse(newRaw || '[]') || []; }catch(e){}
+    if(!Array.isArray(a) || !Array.isArray(b)) return;
+    const keep = {}; b.forEach(x => { const id = idOf(spec, x); if(id) keep[id] = 1; });
+    a.forEach(x => { const id = idOf(spec, x); if(id && !keep[id]){ (T[k] = T[k] || {})[id] = now(); } });
+    b.forEach(x => { const id = idOf(spec, x); if(id && T[k] && T[k][id]) delete T[k][id]; });   // 戻したものは消さない
+  }
+
+  /* 2台の中身を合わせる。lists は id ごとに足し合わせ、ほかは新しいほうの値 */
+  function merge(loc, rem, remNewer){
+    const out = { app: C.app, v: 1, keys: {}, tomb: {}, who: whoNow() || rem.who || loc.who || '' };
+    const tb = {};
+    [loc.tomb || {}, rem.tomb || {}].forEach(t => Object.keys(t).forEach(k => Object.keys(t[k] || {}).forEach(id => {
+      tb[k] = tb[k] || {}; tb[k][id] = Math.max(tb[k][id] || 0, t[k][id]);
+    })));
+    out.tomb = tb;
+    C.keys.forEach(k => {
+      const lv = loc.keys[k], rv = rem.keys[k];
+      const spec = C.lists && C.lists[k];
+      if(!spec){
+        let v;
+        if(C.mergeKey && lv !== undefined && rv !== undefined && lv !== rv){ try{ v = C.mergeKey(k, lv, rv, remNewer); }catch(e){ v = undefined; } }
+        if(v === undefined) v = remNewer ? (rv !== undefined ? rv : lv) : (lv !== undefined ? lv : rv);
+        if(v !== undefined) out.keys[k] = v;
+        return;
+      }
+      let la = [], ra = [];
+      try{ la = JSON.parse(lv || '[]') || []; }catch(e){}
+      try{ ra = JSON.parse(rv || '[]') || []; }catch(e){}
+      const first = remNewer ? ra : la, second = remNewer ? la : ra;   // 同じ id は新しい側を優先
+      const map = {}, order = [];
+      first.concat(second).forEach(x => {
+        const id = idOf(spec, x); if(!id) return;
+        const cur = map[id];
+        if(!cur){ map[id] = x; order.push(id); return; }
+        if(spec.t && (Number(x[spec.t]) || 0) > (Number(cur[spec.t]) || 0)) map[id] = x;
+      });
+      const dead = tb[k] || {};
+      let arr = order.filter(id => !(dead[id] && !(spec.t && (Number(map[id][spec.t]) || 0) > dead[id]))).map(id => map[id]);
+      if(spec.sort) arr.sort(spec.sort);
+      out.keys[k] = JSON.stringify(arr);
+    });
+    return out;
+  }
+
+  /* 預かっていた中身をこの端末に入れて、画面を読みなおす */
+  function applyAndReload(obj, msg){
+    if(isBusy()){
+      if(!pending) setTimeout(retryPending, 5000);
+      pending = { obj, msg, seq: pending ? pending.seq : seq };
+      return;
+    }
+    applying = true;
+    try{
+      C.keys.forEach(k => {
+        if(obj.keys && obj.keys[k] !== undefined) _set.call(ls, k, obj.keys[k]);
+        else _rm.call(ls, k);
+      });
+      T = obj.tomb || {};
+    }catch(e){}
+    applying = false;
+    saveMeta();
+    try{ sessionStorage.setItem('hs.msg', msg || '同期しました'); }catch(e){}
+    reloading = true;            // このあとアプリが閉じぎわに古い中身を保存しても、書きもどさない
+    location.reload();
+  }
+  function retryPending(){
+    if(!pending) return;
+    if(isBusy()){ setTimeout(retryPending, 5000); return; }
+    const p = pending; pending = null;
+    // 待っている間にこの端末でも書いた → 2つを合わせて入れ、合わせたものを預けなおす
+    if(seq !== p.seq){
+      const merged = merge(collect(), p.obj, false);
+      M.mt = Math.max(now(), (M.mt || 0) + 1); M.dirty = true; saveMeta();
+      applyAndReload(merged, '2台の記録を合わせました');
+      return;
+    }
+    applyAndReload(p.obj, p.msg);
+  }
+  function isBusy(){
+    try{ if(C.busy && C.busy()) return true; }catch(e){}
+    const a = document.activeElement;
+    return !!(a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /text|search|number|time|date/.test(a.type || 'text'))));
+  }
+
+  /* ---------- 変わったら送る ---------- */
+  function touch(){
+    if(!M.code) return;
+    seq++;
+    M.mt = Math.max(now(), (M.mt || 0) + 1);   // 端末の時計が多少ずれていても前に進む
+    M.dirty = true; saveMeta();
+    clearTimeout(timer);
+    timer = setTimeout(push, C.delay || 3000);
+  }
+  /* localStorage への書きこみを見張る。アプリ側のコードは直さなくてよい */
+  Storage.prototype.setItem = function(k, v){
+    if(this === ls && C && !applying && C.keys.indexOf(k) >= 0){
+      if(reloading) return;
+      const old = _get.call(this, k);
+      _set.call(this, k, v);
+      if(old !== String(v)){ tombDiff(k, old, String(v)); touch(); }
+      return;
+    }
+    return _set.call(this, k, v);
+  };
+  Storage.prototype.removeItem = function(k){
+    if(this === ls && C && !applying && C.keys.indexOf(k) >= 0){
+      if(reloading) return;
+      const old = _get.call(this, k);
+      _rm.call(this, k);
+      if(old !== null){ tombDiff(k, old, '[]'); touch(); }
+      return;
+    }
+    return _rm.call(this, k);
+  };
+
+  async function push(){
+    if(!M.code) return;
+    if(M.stale && !pending) return pull(true);   // まだ受けとっていない分があるときは、先に受けとって合わせる（この端末の古い中身で上書きしない）
+    if(busy){ clearTimeout(timer); timer = setTimeout(push, 1500); return; }
+    busy = true;
+    const mySeq = seq;
+    try{
+      const r = await call({ action:'put', code:derive(M.code), mt:M.mt || 0, name:C.label, data:JSON.stringify(outgoing()) });
+      if(r && r.ok && r.stale) await onRemote(r);
+      else if(r && r.ok){ M.at = now(); M.err = ''; if(seq === mySeq) M.dirty = false; }
+      else M.err = (r && r.err) || '送れませんでした';
+    }catch(e){ M.err = 'つながりませんでした'; }
+    busy = false; saveMeta(); render();
+    if(M.err){ clearTimeout(timer); timer = setTimeout(push, 30000); }
+    else if(M.dirty && seq !== mySeq){ clearTimeout(timer); timer = setTimeout(push, C.delay || 3000); }
+  }
+  /* 送る中身。受けとった記録を（カードの最中などで）まだ入れていないときは、それと合わせてから送る。
+     2026-10-31 ヒラボイス v14 で見つけた穴：合わせずに送ると、もう1台の記録を上書きして消していた */
+  function outgoing(){
+    if(!pending) return collect();
+    const m = merge(collect(), pending.obj, false);
+    pending.obj = m;
+    M.stale = true; saveMeta();   // 預け先には合わせたものを送るが、この端末にはまだ入っていない → 次に開いたら必ず受けとる
+    return m;
+  }
+  /* 2つの中身が同じか（キーの順番がちがっても同じとみる） */
+  function canon(v){
+    if(Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
+    if(v && typeof v === 'object') return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}';
+    return JSON.stringify(v);
+  }
+  function sameKeys(a, b){
+    const ka = a.keys || {}, kb = b.keys || {};
+    return C.keys.every(k => {
+      if(ka[k] === kb[k]) return true;
+      try{ return canon(JSON.parse(ka[k])) === canon(JSON.parse(kb[k])); }catch(e){ return false; }
+    });
+  }
+  /* 閉じるとき。書いた直後に閉じても届くように */
+  function flush(){
+    if(!M || !M.code || !M.dirty || reloading) return;
+    const body = JSON.stringify({ secret:SECRET, action:'put', code:derive(M.code), mt:M.mt || 0, name:C.label, data:JSON.stringify(outgoing()) });
+    if(body.length > 60000) return;            // keepalive で送れる大きさをこえたら、次に開いたときに送る
+    try{ fetch(URL, { method:'POST', body, keepalive:true }); }catch(e){}
+  }
+
+  /* 預かりのほうが新しかったとき */
+  async function onRemote(r){
+    let rem = null; try{ rem = JSON.parse(r.data || 'null'); }catch(e){}
+    if(!rem || rem.app !== C.app || !rem.keys){ M.err = 'このコードの中身が読めません'; return; }
+    M.stale = false;
+    /* 合わせ方がわかるアプリ（mergeKey）は、送りそこねがなくても、いつも合わせて入れる。
+       この端末にだけある記録（送る前に上書きされた分など）も消さずに残し、預けなおす（v14 の直し） */
+    if(C.mergeKey){
+      const loc = collect(), merged = merge(loc, rem, true);
+      const toRemote = !sameKeys(merged, rem), toLocal = !sameKeys(merged, loc);
+      M.mt = toRemote ? Math.max(now(), (r.mt || 0) + 1) : (r.mt || M.mt); M.at = now(); M.err = '';
+      if(toRemote) M.dirty = true;
+      saveMeta();
+      if(toLocal){ applyAndReload(merged, toRemote ? '2台の記録を合わせました' : 'ほかの端末の記録を受けとりました'); return; }
+      if(toRemote){ clearTimeout(timer); timer = setTimeout(push, 300); }
+      return;
+    }
+    if(!M.dirty){
+      M.mt = r.mt || M.mt; M.at = now(); M.err = ''; saveMeta();
+      applyAndReload(rem, 'ほかの端末の記録を受けとりました');
+      return;
+    }
+    // この端末にもまだ送っていない書きこみがある → 合わせて、合わせたものを預けなおす
+    const merged = merge(collect(), rem, true);
+    M.mt = Math.max(now(), (r.mt || 0) + 1); M.dirty = true; M.at = now(); M.err = ''; saveMeta();
+    applyAndReload(merged, '2台の記録を合わせました');
+  }
+
+  async function pull(quiet){
+    if(!M.code) return;
+    if(busy) return;
+    busy = true;
+    try{
+      const r = await call({ action:'get', code:derive(M.code) });
+      busy = false;
+      if(r && r.ok && r.found){
+        if((r.mt || 0) > (M.mt || 0) || M.stale){ await onRemote(r); }
+        else if((r.mt || 0) < (M.mt || 0) || M.dirty){ await push(); return; }
+        else { M.at = now(); M.err = ''; if(!quiet) say('同期ずみです'); }
+      }else if(r && r.ok){ await push(); return; }
+      else M.err = (r && r.err) || '受けとれませんでした';
+    }catch(e){ busy = false; M.err = 'つながりませんでした'; }
+    saveMeta(); render();
+  }
+
+  /* ---------- ボタン ---------- */
+  async function start(){
+    say('コードを作っています…');
+    try{
+      const r = await call({ action:'new' });
+      if(!r || !r.ok){ say((r && r.err) || 'つながりませんでした'); return; }
+      M = { code:r.code, mt:now(), dirty:true, at:0, err:'' }; saveMeta(); render();
+      await push();
+      say(M.err ? M.err : '同期をはじめました');
+    }catch(e){ say('つながりませんでした'); }
+  }
+  async function join(){
+    const v = await ask('同期コード（8文字）を入れてください。\n計画マップなど、ほかのアプリで使っているコードと同じでOKです。');
+    if(v === null) return;
+    const code = norm(v);
+    if(!code){ say('コードは8文字です（例 abcd-2345）'); return; }
+    try{
+      const r = await call({ action:'get', code:derive(code) });
+      if(r && r.ok && !r.found &&
+         !(await yes('コード「' + code + '」の' + C.label + 'の記録は、まだ預けられていません。\nこの端末の記録を、このコードで預けはじめますか？\n\n計画マップなどで使っているコードなら、このままで大丈夫です。打ちまちがいがないかだけ確認してください。'))) return;
+    }catch(e){}
+    joinWith(code);
+  }
+  async function stop(){
+    if(!(await yes('この端末の同期をやめます。記録はこの端末に残り、預けたぶんも消えません。よろしいですか？'))) return;
+    M = {}; saveMeta(); render(); say('同期をやめました');
+  }
+  /* 同じサイトのほかのアプリが同期コードを持っていれば、それを使える（パソコン・Android。
+     iPhoneのホーム画面アプリはアプリごとに保存場所が別なので、たいてい見つからない） */
+  function siblingCode(){
+    const tries = [];
+    try{
+      for(let i = 0; i < ls.length; i++){
+        const k = ls.key(i); let o = null;
+        if(/^planmap_(v1|p.+)$/.test(k)){ try{ o = JSON.parse(_get.call(ls, k) || '{}'); }catch(e){} if(o && o.syncCode) tries.push(['計画マップ', o.syncCode]); }
+        else if(k === 'mn_sync'){ try{ o = JSON.parse(_get.call(ls, k) || '{}'); }catch(e){} if(o && o.code) tries.push(['ReNote', o.code]); }
+        else if(/^hs\.[a-z]+$/.test(k) && k !== metaKey() && k.indexOf('hs.' + C.app) !== 0){ try{ o = JSON.parse(_get.call(ls, k) || '{}'); }catch(e){} if(o && o.code) tries.push(['ほかのアプリ', o.code]); }
+      }
+    }catch(e){}
+    for(const t of tries){ const c = norm(t[1]); if(c) return { from:t[0], code:c }; }
+    return null;
+  }
+  async function joinWith(code){
+    say('さがしています…');
+    try{
+      const r = await call({ action:'get', code:derive(code) });
+      if(!r || !r.ok){ say((r && r.err) || 'つながりませんでした'); return; }
+      if(r.found){
+        let rem = null; try{ rem = JSON.parse(r.data || 'null'); }catch(e){}
+        if(!rem || rem.app !== C.app || !rem.keys){ say('このコードの中身が読めません'); return; }
+        const me = whoNow();
+        if(rem.who && me && rem.who !== me &&
+           !(await yes('このコードは「' + rem.who + '」の記録です。\nいまの使う人は「' + me + '」です。\n\n兄弟は、人ごとに別の同期コードにしてください。もう1台でも、先に「使う人」を同じ人に切りかえてから入れます。\n\nこのまま「' + me + '」に入れますか？'))) return;
+        if((C.lists || C.mergeKey) && hasLocal()){
+          if(!(await yes('この端末の記録と、コード「' + code + '」に預けてある記録を合わせます。\nどちらの記録も残ります。よろしいですか？'))) return;
+          const merged = merge(collect(), rem, true);
+          M = { code, mt:Math.max(now(), (r.mt || 0) + 1), dirty:true, at:now(), err:'' }; saveMeta();
+          applyAndReload(merged, '2台の記録を合わせました');
+          return;
+        }
+        if(hasLocal() && !(await yes('この端末のいまの記録は、コード「' + code + '」の記録に入れかわります。よろしいですか？\n（この端末にだけある記録は消えます）'))) return;
+        M = { code, mt:r.mt || 0, dirty:false, at:now(), err:'' }; saveMeta();
+        applyAndReload(rem, '同じ記録になりました');
+        return;
+      }
+      M = { code, mt:now(), dirty:true, at:0, err:'' }; saveMeta(); render();
+      await push();
+      say(M.err ? M.err : '同期をはじめました');
+    }catch(e){ say('つながりませんでした'); }
+  }
+  async function copy(){
+    try{ await navigator.clipboard.writeText(M.code); say('コピーしました'); }
+    catch(e){ say('長押しでコピーしてください'); }
+  }
+
+  /* ---------- 画面 ---------- */
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  function render(){
+    const el = C && document.querySelector(C.mount); if(!el) return;
+    const k = C.cls || {};
+    if(!M.code){
+      const sib = siblingCode();
+      el.innerHTML =
+        '<div class="hs-btns">' +
+          (sib ? '<button class="' + (k.btn || '') + '" data-hs="sib" data-code="' + sib.code + '">' + sib.from + 'と同じコード（' + sib.code + '）で同期する</button>' : '') +
+          '<button class="' + (sib ? (k.ghost || k.btn || '') : (k.btn || '')) + '" data-hs="start">同期をはじめる（この端末の記録をあずける）</button>' +
+          '<button class="' + (k.ghost || k.btn || '') + '" data-hs="join">ほかの端末・アプリのコードを入れる</button>' +
+        '</div>' +
+        '<p class="' + (k.dim || '') + '">1台目で「同期をはじめる」を押すと、<b>同期コード</b>（8文字）が出ます。2台目でそのコードを入れると同じ記録になり、そのあとは<b>書くたびに自動で同期</b>します。<br>' +
+        '<b>計画マップで同期している人は、そのコードをここに入れればOK</b>です（コードは全アプリ共通）。<br>' +
+        (C.note ? C.note + '<br>' : '') +
+        '記録は、ヒラのGoogleドライブに預けます。コードを知っている人は中身を見られるので、コードは人に見せないでください。</p>';
+    }else{
+      const st = M.err
+        ? '<span class="hs-dot bad"></span>' + esc(M.err) + '。つながったら自動でもう一度送ります。'
+        : '<span class="hs-dot"></span>さいごの同期：' + (M.at ? fmt(M.at) : 'まだ');
+      el.innerHTML =
+        '<div class="hs-code"><span>同期コード</span><b>' + esc(M.code) + '</b><button data-hs="copy">コピー</button></div>' +
+        '<p class="' + (k.dim || '') + '">' + st + '<br>ほかの端末でも、このコードを入れてください。計画マップなど、ほかのアプリも同じコードで同期できます。' +
+        (C.note ? '<br>' + C.note : '') + '</p>' +
+        '<div class="hs-btns">' +
+          '<button class="' + (k.btn || '') + '" data-hs="now">いま同期する</button>' +
+          '<button class="' + (k.ghost || k.btn || '') + '" data-hs="stop">同期をやめる（この端末だけ）</button>' +
+        '</div>';
+    }
+  }
+  function onClick(e){
+    const b = e.target.closest && e.target.closest('[data-hs]'); if(!b) return;
+    const a = b.getAttribute('data-hs');
+    if(a === 'start') start();
+    else if(a === 'join') join();
+    else if(a === 'stop') stop();
+    else if(a === 'copy') copy();
+    else if(a === 'sib') joinWith(b.getAttribute('data-code'));
+    else if(a === 'now'){ say('同期しています…'); pull(false); }
+  }
+
+  function init(cfg){
+    C = cfg;
+    loadMeta();
+    const st = document.createElement('style');
+    st.textContent =
+      '.hs-btns{display:flex;flex-direction:column;gap:0;margin:8px 0 0}' +
+      '.hs-code{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;margin:8px 0;' +
+        'background:' + (C.codeBg || 'rgba(127,127,127,.12)') + '}' +
+      '.hs-code span{font-size:11px;opacity:.7;flex:none}' +
+      '.hs-code b{flex:1;font-size:20px;letter-spacing:.08em;font-family:ui-monospace,Menlo,monospace;user-select:all;-webkit-user-select:all}' +
+      '.hs-code button{flex:none;padding:7px 12px;border-radius:9px;font-size:12px;font-weight:700;' +
+        'border:1px solid currentColor;background:transparent;color:inherit;opacity:.85}' +
+      '.hs-dot{display:inline-block;width:8px;height:8px;border-radius:99px;background:#35b37e;margin-right:6px;vertical-align:middle}' +
+      '.hs-dot.bad{background:#e0762a}';
+    document.head.appendChild(st);
+    document.addEventListener('click', onClick);
+    render();
+    try{ const m = sessionStorage.getItem('hs.msg'); if(m){ sessionStorage.removeItem('hs.msg'); setTimeout(() => say(m), 600); } }catch(e){}
+    if(M.code){
+      setTimeout(() => { if(M.dirty && !M.stale) push(); else pull(true); }, 1200);
+    }
+    let lastPull = 0;
+    const wake = () => { if(M.code && !document.hidden && now() - lastPull > 20000){ lastPull = now(); pull(true); } };
+    document.addEventListener('visibilitychange', () => { if(document.hidden) flush(); else { wake(); retryPending(); } });
+    addEventListener('focus', wake);
+    addEventListener('pagehide', flush);
+  }
+  return { init, render, pull, push, _derive: m => derive(m), _merge: merge, _collect: collect,
+    code: () => (M && M.code) || '', _call: call, _deriveFor: (m, app) => deriveWith(m, app) };
+})();
+/* HSYNC END */
+
+const VER = 8;
 const KEY = 'studyreport-v1';
 const BK = 'studyreport-backup';
 const DEF_SUBJECTS = ['英語','数学','国語','理科','社会','その他'];
@@ -354,6 +847,7 @@ function emptyToday(tpl){
 let S = load();
 function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) return fix(s); }catch(e){} return fix({}); }
 function fix(s){
+  delete s._savedAt;   // v8：保存した時刻は中身に入れない（同期で毎回「変わった」とみなさないため）
   s.goal ??= ''; s.longTasks ??= []; s.max ??= {t:'',q:'',c:''}; s.systems ??= [];
   s.today ??= emptyToday(); s.history ??= []; s.books ??= []; s.streak ??= {count:0,last:''};
   s.opt ??= {}; s.opt.streak ??= true; s.opt.subjects ??= DEF_SUBJECTS.slice(); s.presets ??= [];
@@ -372,8 +866,8 @@ function flush(){
   clearTimeout(saveTimer);
   try{ const j=JSON.stringify(S); localStorage.setItem(KEY, j); localStorage.setItem(BK, JSON.stringify({at:Date.now(), data:S})); }
   catch(e){ toast('保存できませんでした。端末の空き容量を確かめてください'); return; }
-  const d=new Date(); S._savedAt=`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
-  const l=$('savedLabel'); l.textContent='保存済み '+S._savedAt; l.classList.add('show'); clearTimeout(l._t); l._t=setTimeout(()=>l.classList.remove('show'),2500);
+  const d=new Date(); const at=`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const l=$('savedLabel'); l.textContent='保存済み '+at; l.classList.add('show'); clearTimeout(l._t); l._t=setTimeout(()=>l.classList.remove('show'),2500);
 }
 window.addEventListener('pagehide', flush);
 window.addEventListener('beforeunload', flush);
@@ -987,7 +1481,7 @@ $('restoreBtn').onclick=()=>{
   if(!confirm('今のデータを、貼りつけた控えで上書きします。いいですか？')) return;
   S=fix(d); flush(); $('restoreBox').value=''; closeSheets(); renderAll(); toast('読みこみました');
 };
-$('wipeAll').onclick=()=>{ if(!confirm('本当にすべて消しますか？目標・長期タスク・仕組み・過去の報告もすべて消えます。')) return; localStorage.removeItem(KEY); localStorage.removeItem(BK); location.reload(); };
+$('wipeAll').onclick=()=>{ if(HSync.code()){ toast('同期中は消せません。先に上の「同期をやめる」を押してください'); return; } if(!confirm('本当にすべて消しますか？目標・長期タスク・仕組み・過去の報告もすべて消えます。')) return; localStorage.removeItem(KEY); localStorage.removeItem(BK); location.reload(); };
 
 /* 今日だけリセット */
 function taskTemplates(){ return S.today.tasks.filter(t=>t.subj||t.book).map(t=>({subj:t.subj,book:t.book,range:t.range})); }
@@ -1021,6 +1515,159 @@ function renderAll(){
 }
 dayCheck(); renderAll();
 document.addEventListener('visibilitychange',()=>{ if(document.hidden){ flush(); } else { dayCheck(); renderHeader(); } });
+
+/* ===================== 使い方スライド（v8） ===================== */
+const GUIDE_KEY = 'studyreport-guide';
+function guideSlides(){
+  return [
+    { t:'勉強報告アプリへ ようこそ',
+      p:['毎日の<b>勉強報告</b>を、ボタンと音声入力で作るアプリです。','できあがった報告文は、Discordの「勉強報告」に<b>そのまま貼るだけ</b>。テンプレートの形は、アプリが自動でそろえます。'],
+      v:`<div class="preview">11/7（連続12日目）
+①目標
+12/1の期末テストで数学80点以上
+②タスクとTQCスコア
+【長期のタスク】
+☐数学　青チャート1〜150　3周　11/30まで
+【今日のTQCスコア】
+MAX：T4・Q3・C100
+今日：T3.5・Q2・C90
+…</div>` },
+    { t:'使い方は、この流れだけ',
+      p:['画面の<b>上から順に</b>入れていき、さいごに下の「📄 全文を作る」を押します。','あとは「📋 コピーする」を押して、Discordに貼りつければ報告おわりです。'],
+      v:`<div class="gflow">
+  <div><span>1</span>目標を書く</div>
+  <div><span>2</span>長期のタスク・TQC・今日のタスクを入れる</div>
+  <div><span>3</span>タスクごとにレビューを書く</div>
+  <div><span>4</span>仕組みに ⭕️ か ❌ をつける</div>
+  <div class="arrow">▼</div>
+  <div style="background:var(--accent);color:var(--accent-ink)">📄 全文を作る → 📋 コピー → Discordに貼る</div>
+</div>` },
+    { t:'文章は「話して」入れる',
+      p:['レビューなどの文章の欄には <span class="gpill">🎤 音声</span> ボタンがあります。','押して話し、終わったら <span class="gpill red">■ 止める</span>。あとで読み返して、おかしいところだけ直せばOKです。ボタンが使えない端末は、キーボードのマイクを使ってください。'],
+      v:`<div class="gbox" style="position:relative;padding-bottom:46px">数学の問題集で、まちがえた3問を解き直した。式の立て方をまちがえていたので、明日は最初に解き直しからやる。<span class="gpill red" style="position:absolute;right:8px;bottom:8px">■ 止める</span></div>` },
+    { t:'毎日書くのは、半分だけ',
+      p:['<b>🔒 次の日も残る</b>のマークがついた所は、一度書けば次の日もそのまま残ります。','毎日入れるのは、<b>今日のタスク・TQCの「今日」・レビュー・⭕️❌</b> だけです。'],
+      v:`<div class="gtwo">
+  <div class="k1"><b>🔒 次の日も残る</b>目標<br>長期のタスク<br>TQCのMAX<br>仕組みの文</div>
+  <div class="k2"><b>✏️ 毎日入れる</b>今日のタスク<br>TQCの「今日」<br>レビュー<br>⭕️❌</div>
+</div>` },
+    { t:'今日のタスクは「5点セット」',
+      p:['<b>教科・教材名・ページ数や個数・勉強時間・正答率</b>の5つを入れます。教科はボタン、時間は＋−、正答率はつまみで選べます。','次の日は<b>きのうの教材が引きつがれる</b>ので、ページと時間を入れるだけ。よく使う教材は1タップで追加できます。'],
+      v:`<div class="chips"><span class="chip on">英語</span><span class="chip">数学</span><span class="chip">国語</span><span class="chip">理科</span></div>
+<div class="preview">・英語　英単語GRIT201〜400　1h 30m（82%）</div>
+<div class="carry" style="margin:0">きのうと同じ教材を引きつぎました</div>` },
+    { t:'TQCスコア',
+      p:['<b>T＝勉強時間、Q＝極めたタスクの数、C＝達成率(%)</b>。MAXは目標の値、今日は実際の値です。','<b>T は今日のタスクの時間から自動</b>で入ります。MAXに届かなかった日は、その理由とどう直すかを（レビュー）に書きます。'],
+      v:`<div class="gtqc">
+  <div></div><div>T 時間</div><div>Q 極めた数</div><div>C 達成率</div>
+  <div>MAX</div><div class="c">4</div><div class="c">3</div><div class="c">100</div>
+  <div>今日</div><div class="c auto">3.5</div><div class="c">2</div><div class="c">90</div>
+</div>
+<div class="mini" style="text-align:center">緑の T は自動で入った数字</div>` },
+    { t:'レビューと仕組み',
+      p:['レビューは<b>タスク1つずつ</b>。黄金ルートを回したかも、必ずボタンで選びます。','仕組みは、レビューで決めた「続けるためのルール」。毎日 <b>⭕️ できた</b> か <b>❌ できなかった</b> を選びます。'],
+      v:`<div class="mini" style="font-weight:900">黄金ルートを回した？</div>
+<div class="twobtn"><button type="button" tabindex="-1" class="ok on">回した</button><button type="button" tabindex="-1" class="ng">回せなかった</button></div>
+<div class="gbox">帰ったら5分以内に机に座る</div>
+<div class="twobtn"><button type="button" tabindex="-1" class="ok on">⭕️ できた</button><button type="button" tabindex="-1" class="ng">❌ できなかった</button></div>` },
+    { t:'全文を作って、コピー',
+      p:['下の「<b>📄 全文を作る</b>」で報告文ができます。書き忘れがあると<b>赤い枠</b>で教えてくれるので、そこだけ直します。','「📋 コピーする」で<b>連続◯日目</b>が1つ増え、報告は右上の 🗂 にたまります。'],
+      v:`<div class="miss" style="margin:0">⚠️ 入力できていないところが2こあります<ul><li>タスク1の正答率</li><li>仕組み1の⭕️❌</li></ul></div>
+<div class="row" style="flex-wrap:nowrap"><span class="btn save" style="flex:0 0 96px">💾 保存</span><span class="btn primary" style="flex:1;box-shadow:none">📄 全文を作る</span></div>` },
+    { t:'スマホとiPadで同じにする（同期）',
+      p:['スマホでもiPadでも、<b>同じ記録</b>を使えます。⚙️ 設定の「🔄 同期」から始めます。','<b>計画マップなどで同期している人は、そのコードを入れるだけ</b>でOK（コードは全アプリ共通）。'],
+      v:`<ol class="gsteps">
+  <li>1台目：⚙️ →「<b>同期をはじめる</b>」</li>
+  <li><b>同期コード</b>（8文字）が出る</li>
+  <li>2台目：⚙️ →「ほかの端末・アプリのコードを入れる」</li>
+  <li>あとは書くたびに<b>自動で同期</b></li>
+</ol>` },
+    { t:'さいごに',
+      p:['iPhoneは、ホーム画面に追加していないサイトの記録を消すことがあります。<b>必ずホーム画面に追加</b>してください。','前にDiscordに書いた報告文があれば、⚙️ の「📥 報告文を読みこむ」に貼るだけで取りこめます。この使い方は、右上の <b>？</b> からいつでも見られます。'],
+      v:`<div class="gbox">Safari で開く → 共有ボタン → <b>ホーム画面に追加</b></div>
+<div class="gbox">兄弟で1台を使うときは、⚙️ のいちばん上の <b>「使う人」</b>で ＋ ふやす</div>` },
+  ];
+}
+function openGuide(start){
+  if(document.querySelector('.guide')) return;
+  const G = guideSlides();
+  const g = document.createElement('div'); g.className = 'guide';
+  g.innerHTML = `<button class="gskip" data-a="skip">スキップ</button>
+    <div class="gtrack">${G.map((x, k) => `<section class="gslide"><div class="gin"><div class="gnum">${k+1} / ${G.length}</div><h2>${x.t}</h2><div class="gvis">${x.v}</div>${x.p.map(y => `<p>${y}</p>`).join('')}</div></section>`).join('')}</div>
+    <div class="gdots">${G.map(() => '<i></i>').join('')}</div>
+    <div class="gnav"><button class="btn" data-a="prev" style="flex:1">もどる</button><button class="btn primary" data-a="next" style="flex:2">次へ</button></div>`;
+  document.body.appendChild(g);
+  document.body.style.overflow = 'hidden';
+  const tr = g.querySelector('.gtrack'), dots = g.querySelectorAll('.gdots i');
+  const cur = () => Math.round(tr.scrollLeft / Math.max(1, tr.clientWidth));
+  const paint = () => {
+    const k = cur();
+    dots.forEach((d, j) => d.classList.toggle('on', j === k));
+    g.querySelector('[data-a=prev]').style.visibility = k ? 'visible' : 'hidden';
+    g.querySelector('[data-a=next]').textContent = k === G.length - 1 ? 'はじめる' : '次へ';
+  };
+  const close = () => { try{ localStorage.setItem(GUIDE_KEY, '1'); }catch(e){} document.body.style.overflow = ''; g.remove(); };
+  tr.addEventListener('scroll', () => requestAnimationFrame(paint));
+  g.querySelector('[data-a=next]').onclick = () => { const k = cur(); if(k >= G.length - 1) close(); else tr.scrollTo({ left:(k + 1) * tr.clientWidth, behavior:'smooth' }); };
+  g.querySelector('[data-a=prev]').onclick = () => tr.scrollTo({ left:Math.max(0, cur() - 1) * tr.clientWidth, behavior:'smooth' });
+  g.querySelector('[data-a=skip]').onclick = close;
+  if(start) requestAnimationFrame(() => { tr.scrollLeft = start * tr.clientWidth; paint(); });
+  paint();
+}
+$('helpBtn').onclick = () => openGuide(0);
+$('helpSet').onclick = () => { closeSheets(); setTimeout(() => openGuide(0), 250); };
+let guideSeen = false; try{ guideSeen = !!localStorage.getItem(GUIDE_KEY); }catch(e){}
+if(!guideSeen) openGuide(0);
+
+/* ===================== 同期（v8） ===================== */
+function dlg(title, msg, withInput){
+  return new Promise(res => {
+    const bg = document.createElement('div'); bg.className = 'dlg-bg';
+    bg.innerHTML = `<div class="dlg"><h3></h3><p></p>${withInput ? '<input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="abcd-2345">' : ''}
+      <div class="row"><button class="btn" data-r="no">やめる</button><button class="btn primary" data-r="ok">${withInput ? '入れる' : 'はい'}</button></div></div>`;
+    bg.querySelector('h3').textContent = title; bg.querySelector('p').textContent = msg;
+    document.body.appendChild(bg);
+    const inp = bg.querySelector('input');
+    let fin = false;
+    const done = v => { if(fin) return; fin = true; bg.remove(); res(v); };
+    bg.querySelector('[data-r=ok]').onclick = () => done(withInput ? inp.value : true);
+    bg.querySelector('[data-r=no]').onclick = () => done(withInput ? null : false);
+    bg.addEventListener('click', e => { if(e.target === bg) done(withInput ? null : false); });
+    if(inp) setTimeout(() => { try{ inp.focus(); }catch(e){} }, 80);
+  });
+}
+/* 2台の記録を合わせる。ふだんは新しいほうの中身をそのまま使い、
+   過去の報告・教材の候補・よく使う教材は両方の分を残す。「今日」は日付が新しいほうを使う。 */
+function reportMerge(k, lv, rv, remNewer){
+  if(k !== KEY) return undefined;
+  const L = JSON.parse(lv), R = JSON.parse(rv);
+  const A = remNewer ? R : L, B = remNewer ? L : R;
+  const out = JSON.parse(JSON.stringify(A));
+  delete out._savedAt;
+  if(B.today && (!A.today || (B.today.date || '') > (A.today.date || ''))) out.today = B.today;
+  const hm = {};
+  (A.history || []).forEach(h => { if(h && h.date) hm[h.date] = h; });
+  (B.history || []).forEach(h => { if(h && h.date && !hm[h.date]) hm[h.date] = h; });
+  out.history = Object.values(hm).sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : 0).slice(0, 60);
+  out.books = [...new Set([...(A.books || []), ...(B.books || [])])].slice(0, 40);
+  const ps = [];
+  [...(A.presets || []), ...(B.presets || [])].forEach(p => { if(p && !ps.some(q => q.subj === p.subj && q.book === p.book)) ps.push(p); });
+  out.presets = ps.slice(0, 12);
+  const sa = A.streak || {}, sb = B.streak || {};
+  if((sb.last || '') > (sa.last || '') || ((sb.last || '') === (sa.last || '') && (sb.count || 0) > (sa.count || 0))) out.streak = sb;
+  return JSON.stringify(out);
+}
+HSync.init({
+  app: 'report', label: '勉強報告',
+  keys: [KEY],
+  mergeKey: reportMerge,
+  hasData: () => !!(S.goal.trim() || S.longTasks.length || S.systems.length || S.history.length || S.today.tasks.some(t => t.subj || t.book || t.review)),
+  busy: () => !!rec || !!document.querySelector('.sheet.show:not(#setSheet), .guide, .dlg-bg'),   // 音声入力・報告文・読みこみ・使い方の最中は読みなおさない
+  mount: '#hsBox', cls: { btn: 'btn primary block', ghost: 'btn block', dim: 'mini' },
+  note: '目標・長期のタスク・今日の入力・仕組み・過去の報告が同期されます。',
+  delay: 3000,
+  toast: toast, ask: m => dlg('同期コード', m, true), yes: m => dlg('確認', m, false)
+});
 </script>
 </body>
 </html>

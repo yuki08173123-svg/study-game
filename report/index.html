@@ -157,6 +157,7 @@ textarea{min-height:64px}
 .imphead input{width:auto;border:0;background:none;padding:0;accent-color:var(--accent);transform:scale(1.3);margin-right:2px}
 .impbody{white-space:pre-wrap;font:inherit;font-size:13px;color:var(--muted);background:var(--bg);border-radius:9px;padding:8px 10px;margin:8px 0 0;max-height:200px;overflow:auto}
 .carry{background:var(--done-soft);color:var(--done);border-radius:12px;padding:9px 12px;font-size:13px;font-weight:700;margin:4px 0 6px;display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.afterreply{font-size:13px}
 .empty{font-size:13px;color:var(--muted);border:2px dashed var(--line);border-radius:12px;padding:10px;text-align:center}
 
 /* 更新（v9） */
@@ -335,6 +336,14 @@ textarea{min-height:64px}
     <p class="hint">レビューで決めた仕組みを書き、今日できたかを <b>⭕️</b> か <b>❌</b> で選びます。仕組みの文は次の日も残ります。</p>
     <div id="sysList"></div>
     <button class="btn block" id="addSys">＋ 仕組みを追加</button>
+  </section>
+
+  <section class="card" id="cardAfter">
+    <h2><span class="n">5</span>アフター報告<span class="keep">🔒 返信は次の日も残る</span></h2>
+    <p class="hint">もらった<b>返信</b>（レビュー）を貼っておき、言われたことを<b>やってみた結果</b>を書きます。結果を書いた日だけ、報告文の最後に「⑤アフター報告」として入ります。</p>
+    <div class="help" style="margin-bottom:8px">Discordで返信を長押し →「テキストをコピー」→ 下の「📋 返信を貼りつける」。アフターが終わった返信は ✕ で消します。</div>
+    <div id="afterList"></div>
+    <button class="btn block" id="addAfter">📋 返信を貼りつける</button>
   </section>
 
   <div class="row" style="justify-content:center;margin-top:8px">
@@ -884,7 +893,7 @@ const HSync = (function(){
 })();
 /* HSYNC END */
 
-const VER = 10;
+const VER = 11;
 const KEY = 'studyreport-v1';
 const BK = 'studyreport-backup';
 const DEF_SUBJECTS = ['英語','数学','国語','理科','社会','その他'];
@@ -897,7 +906,7 @@ function newTask(){ return {id:uid(), subj:'', book:'', range:'', prevRange:'', 
 function newLong(){ return {id:uid(), subj:'', book:'', range:'', laps:'', due:'', done:false}; }
 function emptyToday(tpl){
   const tasks=(tpl&&tpl.length)? tpl.map(x=>{ const t=newTask(); t.subj=x.subj||''; t.book=x.book||''; t.prevRange=x.range||''; return t; }) : [newTask()];
-  return { date: todayStr(), tqc:{t:'',q:'',c:''}, tqcReview:'', tasks, sysDone:{}, tManual:false, carried: !!(tpl&&tpl.length) };
+  return { date: todayStr(), tqc:{t:'',q:'',c:''}, tqcReview:'', tasks, sysDone:{}, afterRes:{}, tManual:false, carried: !!(tpl&&tpl.length) };
 }
 
 let S = load();
@@ -906,14 +915,15 @@ function fix(s){
   delete s._savedAt;   // v8：保存した時刻は中身に入れない（同期で毎回「変わった」とみなさないため）
   s.goal ??= ''; s.longTasks ??= []; s.max ??= {t:'',q:'',c:''}; s.systems ??= [];
   s.today ??= emptyToday(); s.history ??= []; s.books ??= []; s.streak ??= {count:0,last:''};
-  s.opt ??= {}; s.opt.streak ??= true; s.opt.room ??= ''; s.opt.subjects ??= DEF_SUBJECTS.slice(); s.presets ??= [];
+  s.afters ??= []; s.opt ??= {}; s.opt.streak ??= true; s.opt.room ??= ''; s.opt.subjects ??= DEF_SUBJECTS.slice(); s.presets ??= [];
   s.longTasks = s.longTasks.map(t=>{
     if(t && typeof t.text === 'string' && t.book===undefined){ const n=newLong(); n.book=t.text; n.done=!!t.done; return n; }
     return Object.assign(newLong(), t);
   });
   s.systems = s.systems.map(x=>({id:x.id||uid(), text:x.text||''}));
   s.today.tasks = ((s.today.tasks&&s.today.tasks.length)? s.today.tasks : [newTask()]).map(t=>Object.assign(newTask(), t));
-  s.today.sysDone ??= {};
+  s.today.sysDone ??= {}; s.today.afterRes ??= {};
+  s.afters = s.afters.map(a=>({id:a.id||uid(), reply:a.reply||'', at:a.at||''}));
   return s;
 }
 let saveTimer;
@@ -1208,6 +1218,38 @@ function renderSys(){
     box.append(card); autoGrow(ta);
   });
 }
+/* アフター報告（v11・のぐの要望「返信を引き継ぎ、アフター報告できる枠」） */
+function renderAfter(){
+  const box=$('afterList'); box.innerHTML='';
+  if(!S.afters.length) box.append(el('div',{class:'empty'},'まだありません。返信をもらったら、下の「📋 返信を貼りつける」から入れましょう。'));
+  S.afters.forEach((a,i)=>{
+    const card=el('div',{class:'unit'});
+    const del=el('button',{class:'del',title:'消す',onclick:()=>{ if((a.reply||S.today.afterRes[a.id]) && !confirm('この返信を消しますか？（アフターが終わったら消してOK）')) return; S.afters.splice(i,1); delete S.today.afterRes[a.id]; flush(); renderAfter(); }},'✕');
+    card.append(el('div',{class:'head'}, el('span',{class:'t'},'返信'+(i+1)+(a.at?'（'+fmtMD(a.at)+'）':'')), del));
+    card.append(el('div',{class:'lbl'},'もらった返信'));
+    const rt=el('textarea',{class:'afterreply',placeholder:'ここに返信を貼りつけます'}); rt.value=a.reply; markFilled(rt);
+    rt.oninput=()=>{ a.reply=rt.value; markFilled(rt); save(); autoGrow(rt); };
+    card.append(rt);
+    card.append(el('div',{class:'lbl'},'やってみた結果（アフター）'));
+    card.append(el('span',{class:'here'},'↓ やった日に書く（音声でどうぞ）'));
+    const ta=el('textarea',{placeholder:'例）言われたとおり解き直しを3時間あけてやったら、7問中6問解けた'}); ta.value=S.today.afterRes[a.id]||''; markFilled(ta);
+    ta.oninput=()=>{ S.today.afterRes[a.id]=ta.value; markFilled(ta); save(); autoGrow(ta); };
+    card.append(el('div',{class:'field voice'},ta,el('button',{class:'mic'},'🎤 音声')));
+    card.append(el('div',{class:'help'},'結果を書いた日だけ報告文に入ります。返信は ✕ を押すまで次の日も残ります。'));
+    box.append(card); autoGrow(rt); autoGrow(ta);
+  });
+}
+$('addAfter').onclick=async ()=>{
+  let txt='';
+  try{ if(navigator.clipboard && navigator.clipboard.readText) txt=(await navigator.clipboard.readText())||''; }catch(e){}
+  txt=txt.replace(/\r/g,'').trim();
+  // 同じ返信をもう一度貼ったときは、新しく作らない
+  if(txt && S.afters.some(a=>a.reply.trim()===txt)){ toast('この返信はもう入っています'); return; }
+  S.afters.push({id:uid(), reply:txt, at:todayStr()}); flush(); renderAfter();
+  const units=$('afterList').querySelectorAll('.unit'); const last=units[units.length-1];
+  if(last){ last.scrollIntoView({behavior:'smooth',block:'center'}); if(!txt) last.querySelector('textarea')?.focus(); }
+  toast(txt? '返信を貼りつけました' : '返信の欄を長押しして「ペースト」してください');
+};
 $('addSys').onclick=()=>{ S.systems.push({id:uid(),text:''}); flush(); renderSys(); const all=$('sysList').querySelectorAll('textarea'); all[all.length-1]?.focus(); };
 
 /* ===== よく使う教材 ===== */
@@ -1262,6 +1304,7 @@ function headOf(raw){
   if(/TQC/i.test(l)) return 'tqc';
   if(/^レビュー/.test(l)) return 'review';
   if(/仕組み/.test(l)) return 'sys';
+  if(/^アフター/.test(l)) return 'after';
   if(/^タスクと/.test(l)) return 'skip';
   return null;
 }
@@ -1314,6 +1357,7 @@ function parseReport(txt){
   let sec='', idx=-1;
   for(const raw of lines){
     if(!raw) continue;
+    if(sec==='after') continue;   // ⑤アフター報告（返信と結果）は最後なので、ここから先は読みこまない
     const l=raw;
     const h=headOf(l);
     if(h){
@@ -1513,6 +1557,16 @@ function build(){
     else L.push((S.today.sysDone[s.id]==='ok'?'⭕️':S.today.sysDone[s.id]==='ng'?'❌':'　')+s.text.trim());
     if(!S.today.sysDone[s.id]) bad('仕組み'+(i+1)+'の⭕️❌','sys-'+s.id+'-done');
   });
+  const af=S.afters.filter(a=>String(S.today.afterRes[a.id]||'').trim());
+  if(af.length){
+    L.push('⑤アフター報告');
+    af.forEach(a=>{
+      L.push('【返信'+(a.at?'（'+fmtMD(a.at)+'）':'')+'】');
+      if(a.reply.trim()) L.push(a.reply.trim());
+      L.push('【アフター】');
+      L.push(String(S.today.afterRes[a.id]).trim());
+    });
+  }
   return {text:L.join('\n'), miss, keys};
 }
 
@@ -1565,7 +1619,7 @@ function splitReport(txt){
     });
     if(buf) lines.push(buf);
   });
-  const good=l=>/^[①②③④]|^【|^[・･]/.test(l);
+  const good=l=>/^[①②③④⑤]|^【|^[・･]/.test(l);
   const len=a=>a.join('\n').length;
   const out=[]; let cur=[];
   for(const l of lines){
@@ -1719,7 +1773,7 @@ function renderAll(){
   clearErrors(); errFirstKey=null;
   renderHeader();
   goalTa.value=S.goal; markFilled(goalTa); autoGrow(goalTa);
-  renderLong(); renderTasks(); renderReview(); renderSys();
+  renderLong(); renderTasks(); renderReview(); renderSys(); renderAfter();
   bindTqc();
   tqcTa.value=S.today.tqcReview; markFilled(tqcTa); autoGrow(tqcTa);
   renderPresets();
@@ -1826,6 +1880,13 @@ MAX：T4・Q3・C100
       v:`<div class="cnt over" style="text-align:left;margin:0">2350字（Discordは1回2000字まで → 2回に分けて貼ります）</div>
 <div class="partbox" style="margin:0"><div>📏 長いので <b>2回に分けて</b> 貼ります。</div><div class="parts"><span class="done">✅ 1通目（1180字）</span><span class="now">2通目（1169字）</span></div></div>
 <div class="btn primary" style="box-shadow:none">📋 2通目をコピー（2/2）</div>` },
+    { t:'アフター報告',
+      p:['返信（レビュー）で言われたことをやったら、<b>結果を報告</b>します。いちばん下の「⑤ アフター報告」を使います。','Discordで返信を長押しして「テキストをコピー」→ アプリの「📋 返信を貼りつける」。返信は次の日も残るので、やった日に結果を書くだけ。結果を書いた日は、報告文の最後に入ります。'],
+      v:`<div class="preview">⑤アフター報告
+【返信（11/8）】
+解き直しは3時間あけてからやってください
+【アフター】
+3時間あけて解き直したら、7問中6問解けた</div>` },
     { t:'スマホとiPadで同じにする（同期）',
       p:['スマホでもiPadでも、<b>同じ記録</b>を使えます。⚙️ 設定の「🔄 同期」から始めます。','<b>計画マップなどで同期している人は、そのコードを入れるだけ</b>でOK（コードは全アプリ共通）。'],
       v:`<ol class="gsteps">
@@ -1869,9 +1930,10 @@ function openGuide(start){
 }
 $('helpBtn').onclick = () => openGuide(0);
 $('helpSet').onclick = () => { closeSheets(); setTimeout(() => openGuide(0), 250); };
-const GUIDE_V = 2;   // スライドの中身を大きく変えたら上げる（v9：部屋を開く・2回に分けてを足したので、もう一度出す）
-let guideSeen = false; try{ guideSeen = (Number(localStorage.getItem(GUIDE_KEY)) || 0) >= GUIDE_V; }catch(e){}
-if(!guideSeen) openGuide(0);
+const GUIDE_V = 3;   // スライドの中身を大きく変えたら上げる（v9：部屋を開く・2回に分ける／v11：アフター報告）
+let guideNum = 0; try{ guideNum = Number(localStorage.getItem(GUIDE_KEY)) || 0; }catch(e){}
+if(guideNum < 2) openGuide(0);
+else if(guideNum < GUIDE_V) openGuide(guideSlides().findIndex(x=>x.t==='アフター報告'));   // v9までのスライドを見た人には、新しい1枚から
 
 /* ===================== 同期（v8） ===================== */
 function dlg(title, msg, withInput){

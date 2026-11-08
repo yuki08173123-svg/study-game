@@ -884,7 +884,7 @@ const HSync = (function(){
 })();
 /* HSYNC END */
 
-const VER = 9;
+const VER = 10;
 const KEY = 'studyreport-v1';
 const BK = 'studyreport-backup';
 const DEF_SUBJECTS = ['英語','数学','国語','理科','社会','その他'];
@@ -938,23 +938,78 @@ function taskLine(t){ const parts=[t.subj, [t.book,t.range].filter(Boolean).join
 function longLine(t){ return [t.subj, [t.book,t.range].filter(Boolean).join(''), t.laps, t.due?fmtMD(t.due)+'まで':''].filter(Boolean).join('　'); }
 function totalHours(){ let mins=0; for(const t of S.today.tasks) mins+=(+t.h||0)*60+(+t.m||0); return Math.round(mins/60*10)/10; }
 
-/* 音声入力 */
+/* 音声入力
+   v10：Android の Chrome は「続けて聞く」にすると、同じ言葉を何度も結果に入れてくる
+   （のぐの報告：「まだ使いこなせていない」が8回）。
+   → Android は1文ずつ聞いて自動で聞き直す形にし、どの端末でも重なった結果はまとめる。 */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec=null, recBase='';
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
+let rec=null, recBase='', recDone='', recCur='', recWant=false, recIdle=0, recBtn=null, recTa=null;
+function mergeSpeech(results){
+  const parts=[];
+  for(let i=0;i<results.length;i++){
+    const t=String(results[i][0].transcript||'').trim(); if(!t) continue;
+    const p=parts.length? parts[parts.length-1] : null;
+    if(p!==null){
+      if(t===p || p.startsWith(t)) continue;               // 同じ言葉・前の言葉の途中 → 足さない
+      if(t.startsWith(p)){ parts[parts.length-1]=t; continue; } // 前の言葉をふくんだ全文 → 入れかえ
+    }
+    parts.push(t);
+  }
+  return parts.join('');
+}
+function joinSpeech(a,b){
+  if(!a) return b; if(!b) return a;
+  if(a.endsWith(b)) return a;                                // 同じ文が2回来た
+  if(b.startsWith(a)) return b;
+  return a+b;
+}
+function micUi(on){
+  if(!recBtn) return;
+  recBtn.classList.toggle('on', on); recBtn.textContent = on? '■ 止める' : '🎤 音声';
+}
+function micShow(){
+  if(!recTa) return;
+  const said = joinSpeech(recDone, recCur);
+  recTa.value = said ? recBase + said : recBase.replace(/\n$/,'');   // 何も話していなければ元のまま
+  autoGrow(recTa); markFilled(recTa); recTa.dispatchEvent(new Event('input',{bubbles:true}));
+}
+function stopMic(){
+  recWant=false;
+  if(rec){ try{ rec.stop(); }catch(e){} }
+}
+function listenOnce(){
+  const r = new SR(); rec = r;
+  r.lang='ja-JP'; r.interimResults=true; r.continuous = !IS_ANDROID;
+  recCur='';
+  r.onresult = e=>{ if(rec!==r) return; recCur = mergeSpeech(e.results); micShow(); };
+  r.onerror = e=>{
+    if(e.error==='not-allowed' || e.error==='service-not-allowed'){ recWant=false; toast('マイクの使用が許可されていません'); }
+    else if(e.error==='network'){ recWant=false; toast('音声入力にはネットが必要です'); }
+    else if(e.error!=='aborted' && e.error!=='no-speech' && !IS_ANDROID) toast('音声入力を止めました');
+  };
+  r.onend = ()=>{
+    if(rec!==r) return;
+    if(recCur){ recDone = joinSpeech(recDone, recCur); recIdle=0; } else recIdle++;
+    recCur=''; micShow();
+    // Android は1文ごとに止まるので、止めるを押すまで聞き直す（何も聞こえないのが3回続いたら止める）
+    if(recWant && IS_ANDROID && recIdle<3){
+      setTimeout(()=>{ if(!recWant) { rec=null; micUi(false); flush(); return; }
+        try{ listenOnce(); }catch(err){ recWant=false; rec=null; micUi(false); flush(); } }, 120);
+      return;
+    }
+    recWant=false; rec=null; micUi(false); flush();
+  };
+  r.start();
+}
 function toggleMic(btn, ta){
   if(!SR){ toast('この端末はキーボードのマイク🎤を使ってください'); ta.focus(); return; }
-  if(rec){ rec.stop(); return; }
-  rec = new SR(); rec.lang='ja-JP'; rec.interimResults=true; rec.continuous=true;
+  if(rec || recWant){ stopMic(); return; }
+  recBtn=btn; recTa=ta; recDone=''; recCur=''; recIdle=0; recWant=true;
   recBase = ta.value.trim()==='' ? '' : ta.value.replace(/\s+$/,'')+'\n';
-  btn.classList.add('on'); btn.textContent='■ 止める';
-  rec.onresult = e=>{
-    let fin='', inter='';
-    for(let i=0;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal) fin+=r[0].transcript; else inter+=r[0].transcript; }
-    ta.value = recBase + fin + inter; autoGrow(ta); markFilled(ta); ta.dispatchEvent(new Event('input',{bubbles:true}));
-  };
-  rec.onerror = e=>{ if(e.error==='not-allowed') toast('マイクの使用が許可されていません'); else if(e.error!=='aborted'&&e.error!=='no-speech') toast('音声入力を止めました'); };
-  rec.onend = ()=>{ btn.classList.remove('on'); btn.textContent='🎤 音声'; rec=null; flush(); };
-  try{ rec.start(); toast('話してください。終わったら「■ 止める」'); }catch(err){ rec=null; btn.classList.remove('on'); btn.textContent='🎤 音声'; }
+  micUi(true);
+  try{ listenOnce(); toast('話してください。終わったら「■ 止める」'); }
+  catch(err){ recWant=false; rec=null; micUi(false); }
 }
 document.addEventListener('click', e=>{
   const b=e.target.closest('.mic'); if(!b) return;
@@ -1472,7 +1527,7 @@ $('sheetBg').onclick=closeSheets;
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheets);
 
 $('saveBtn').onclick=()=>{
-  if(rec) rec.stop();
+  stopMic();
   flush();
   const b=$('saveBtn'); b.classList.add('ok'); b.textContent='✅ 保存した';
   clearTimeout(b._t); b._t=setTimeout(()=>{ b.classList.remove('ok'); b.textContent='💾 保存'; },1600);
@@ -1480,7 +1535,7 @@ $('saveBtn').onclick=()=>{
 };
 
 $('makeBtn').onclick=()=>{
-  if(rec) rec.stop();
+  stopMic();
   flush();
   const r=build();
   $('outText').value=r.text;
@@ -1861,7 +1916,7 @@ HSync.init({
   keys: [KEY],
   mergeKey: reportMerge,
   hasData: () => !!(S.goal.trim() || S.longTasks.length || S.systems.length || S.history.length || S.today.tasks.some(t => t.subj || t.book || t.review)),
-  busy: () => !!rec || !!document.querySelector('.sheet.show:not(#setSheet), .guide, .dlg-bg'),   // 音声入力・報告文・読みこみ・使い方の最中は読みなおさない
+  busy: () => !!rec || recWant || !!document.querySelector('.sheet.show:not(#setSheet), .guide, .dlg-bg'),   // 音声入力・報告文・読みこみ・使い方の最中は読みなおさない
   mount: '#hsBox', cls: { btn: 'btn primary block', ghost: 'btn block', dim: 'mini' },
   note: '目標・長期のタスク・今日の入力・仕組み・過去の報告が同期されます。',
   delay: 3000,

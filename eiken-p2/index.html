@@ -479,7 +479,7 @@ body.timing .ov{top:var(--sbh,52px);padding-top:8px}
 <script src="idioms.js?v=3"></script>
 <script>
 'use strict';
-const VER = 15;
+const VER = 16;
 /* ===================== 使う人（兄弟で1台） =====================
    1人目は今までの保存場所のまま（記録はそのまま残る）。2人目からは保存の名前のうしろに「__id」をつけて分ける。
    切りかえたらページを読みなおす。レベル・仕分け・計画・記録・タイマーはすべて人ごと。 */
@@ -740,7 +740,16 @@ function openLevel(){
 $('#lvChip').onclick = openLevel;
 
 /* ===================== 今日 ===================== */
+/* 予定より先に進んだら、この先の予定日（と完走予定）を前に詰める（設定 cfg.pull・利用者の声）。遅れたときは動かさない */
+function pullAhead(){
+  if(!S.cfg.pull) return;
+  const c = curN(); if(c <= 0 || c >= TOTAL) return;
+  const t = today(), doneToday = Object.values(S.days).some(r => r.d === t && !r.mv);
+  const cd = doneToday ? addDays(t, 1) : t;
+  if(cd < plan(c).date){ S.start = addDays(cd, -c); S.startSet = true; save(); }
+}
 function renderToday(){
+  pullAhead();
   const el = $('#tab-today');
   if(!N){ el.innerHTML = '<div class="card">データ（words.js・idioms.js）が読みこめませんでした。</div>'; return; }
   const n = curN(), st = statusText();
@@ -776,7 +785,7 @@ function renderToday(){
   const sortCard = uns ? `<div class="card remind"><div class="num" style="color:var(--ai);font-size:26px">${uns}<small>${UNIT}</small></div>
     <div style="flex:1"><h3>仕分け</h3><div class="dim">完璧に知っている${BNAME}を外して、覚えるものだけにします。${exn ? `<br>外した${BNAME} ${exn}${UNIT}` : ''}</div></div>
     <button class="btn" style="width:auto;padding:12px 16px" id="goSort">仕分け</button></div>` : '';
-  el.innerHTML = order + hero + sortCard + lvCardHTML() + remind + `<h2>計画（1日${PER}${IDIOM ? '個' : '語'} × ${DAYS}日 × ${LAPS}周 ＝ ${TOTAL}日）</h2><div class="card">${gridHTML()}</div>`;
+  el.innerHTML = order + resumeCardHTML() + hero + sortCard + lvCardHTML() + remind + `<h2>計画（1日${PER}${IDIOM ? '個' : '語'} × ${DAYS}日 × ${LAPS}周 ＝ ${TOTAL}日）</h2><div class="card">${gridHTML()}</div>`;
   if(n < TOTAL){
     const p = plan(n);
     $('#stStudy').onclick = () => openStudy(n);
@@ -787,6 +796,7 @@ function renderToday(){
     el.querySelectorAll('.pc').forEach(b => b.onclick = () => openPart(n, +b.dataset.k));
   }
   if($('#goRemind')) $('#goRemind').onclick = startRemind;
+  if($('#goResume')) $('#goResume').onclick = resumeTest;
   if($('#goSort')) $('#goSort').onclick = () => startSort(unsortedIds().slice(0, SORTN), '仕分け');
   if($('#goIdiom')) $('#goIdiom').onclick = () => switchBook('i');
   if($('#backWords')) $('#backWords').onclick = () => switchBook('w');
@@ -1024,7 +1034,8 @@ let SPK = null;
 function stopSpk(){ if(SPK){ SPK.dead = true; try{ SPK.a && SPK.a.pause(); }catch(e){} clearTimeout(SPK.t); SPK = null; } $$('.spk.on').forEach(b => b.classList.remove('on')); }
 /* 音声ファイルの一部（st〜en 秒）だけを鳴らす（見出し語・例文）。止めるのはタイマーだけに頼らず、再生位置でも止める。
    塾生の声：読みこみが遅いと「止める」が先に来て、あとから鳴った音が解説・覚え方まで流れていた（2026-10-27） */
-function playSeg(i, rec, st, en, done, fallback){
+function playSeg(i, rec, st, en0, done, fallback){
+  const en = +Math.max(st + .3, en0 - .28).toFixed(2);   // 区切りの少し手前で止める（次の日本語の頭が聞こえないように・区切りの前は無音）
   const a = new Audio(AUD + noOf(i) + '.mp3?h=' + (rec.h || VER) + '#t=' + st + ',' + en);
   const x = SPK = { a, t: 0, dead: false };
   const fin = () => { x.dead = true; clearTimeout(x.t); try{ a.pause(); }catch(e){} if(SPK === x){ SPK = null; done(); } };
@@ -1034,9 +1045,9 @@ function playSeg(i, rec, st, en, done, fallback){
   a.addEventListener('loadedmetadata', () => { if(alive()) seek(); });
   a.addEventListener('playing', () => {
     if(!alive()){ try{ a.pause(); }catch(e){} return; }   // もう止めた音・次の音に替わった音は鳴らさない
-    seek(); clearTimeout(x.t); x.t = setTimeout(fin, (en - st) * 1000 + 400);
+    seek(); clearTimeout(x.t); x.t = setTimeout(fin, Math.max(.1, en - a.currentTime) * 1000);
   });
-  a.addEventListener('timeupdate', () => { if(!alive() || a.currentTime >= en + .05) fin(); });
+  a.addEventListener('timeupdate', () => { if(!alive() || a.currentTime >= en) fin(); });
   a.addEventListener('ended', fin);
   x.t = setTimeout(fin, 8000);   // 8秒たっても鳴り始めなければ、あきらめる（あとから鳴っても止まる）
   a.play().catch(() => { if(alive()){ x.dead = true; clearTimeout(x.t); SPK = null; fallback(); } });
@@ -1297,11 +1308,41 @@ function startRemind(){
   if(!ids.length){ toast('今日のリマインドはありません'); return; }
   startTest({ ids, type:'remind', label:'リマインド' });
 }
+/* テストの途中を保存（利用者の声：200語テストを途中でやめると最初からになる）。1問ごとに S.resume に残し、
+   次に同じテストを始めるとき「続きから」を選べる。やり直し（retry）は残さない。 */
+function saveResume(){
+  if(!T || T.type === 'retry') return;
+  const k = T.k + (T.answered ? 1 : 0);
+  if(k <= 0 || k >= T.order.length) return;
+  S.resume = { type: T.type, plan: T.plan ?? null, label: T.label, ids: T.ids, order: T.order, k, ok: T.ok, wrong: T.wrong.slice(), secs: Math.round((Date.now() - T.t0) / 1000), at: today() };
+  save();
+}
+function resumeCardHTML(){
+  const r = S.resume; if(!r) return '';
+  return `<div class="card remind"><div class="num" style="font-size:22px">${r.k}<small>/${r.order.length}</small></div>
+    <div style="flex:1"><h3>中断したテスト</h3><div class="dim">${esc(r.label)}　${r.k}問まで解いています（${r.ok}問正解）</div></div>
+    <button class="btn" style="width:auto;padding:12px 16px" id="goResume">続きから</button></div>`;
+}
+function resumeTest(){
+  const r = S.resume; if(!r) return;
+  startTest({ ids: r.ids, type: r.type, plan: r.plan ?? undefined, label: r.label, resume: r });
+}
 function startTest(o){
+  const r = S.resume;
+  if(!o.resume && r && r.type === o.type && r.label === o.label && r.k > 0 && r.k < r.order.length){
+    const bg = sheet(`<h2>続きからにしますか？</h2>
+      <p>${esc(r.label)}　<b>${r.k} / ${r.order.length}問</b>まで解いています（${r.ok}問正解）。</p>
+      <div style="margin-top:14px"><button class="btn" data-a="go">続きから（${r.k + 1}問目から）</button><button class="btn sub" data-a="new">最初から</button></div>`);
+    bg.querySelector('[data-a=go]').onclick = () => { bg.remove(); startTest({ ...o, resume: r }); };
+    bg.querySelector('[data-a=new]').onclick = () => { bg.remove(); S.resume = null; save(); startTest({ ...o, resume: true }); };
+    return;
+  }
   if(S.timer) endStudy(true);
   closeOv();
   const dir = S.cfg.dir === 'mix' ? null : S.cfg.dir;
-  T = { ...o, order: shuffle(o.ids), k:0, ok:0, wrong:[], t0: Date.now(), dir, answered:false, timer:null, xp:0, xp0: S.xp };
+  const rs = o.resume && o.resume.order ? o.resume : null;
+  T = { ...o, order: rs ? rs.order.slice() : shuffle(o.ids), k: rs ? rs.k : 0, ok: rs ? rs.ok : 0, wrong: rs ? rs.wrong.slice() : [], t0: Date.now() - (rs ? rs.secs * 1000 : 0), dir, answered:false, timer:null, xp:0, xp0: S.xp };
+  delete T.resume;
   makeOv();
   T.timer = setInterval(() => { const e = $('.ov .tm'); if(e && T) e.textContent = clock((Date.now() - T.t0) / 1000); }, 500);
   drawQ();
@@ -1374,8 +1415,8 @@ function drawQ(){
   bindSpk(ov);
   if(dir === 'ear' || (dir === 'w2m' && S.cfg.autoSpk)) setTimeout(() => { if(T && T.order[T.k] === i) speakWord(i, ov.querySelector('[data-spk]')); }, 150);
   ov.querySelector('[data-a=x]').onclick = () => {
-    if(!confirm('テストを中断しますか？（ここまでの結果は記録されません）')) return;
-    clearInterval(T.timer); T = null; closeOv();
+    if(!confirm('テストを中断しますか？\nここまでの答えは保存されます。次にこのテストを始めると、続きからできます。')) return;
+    saveResume(); clearInterval(T.timer); T = null; closeOv(); renderAll();
     if(lvQueue){ const q = lvQueue; lvQueue = null; celebrate(q.from, q.to); }
   };
   if(typed){
@@ -1440,10 +1481,11 @@ function next(){
   if(!T) return;
   stopSpk();
   T.k++;
-  if(T.k < T.order.length) drawQ(); else finishTest();
+  if(T.k < T.order.length){ saveResume(); drawQ(); } else finishTest();
 }
 function finishTest(){
   clearInterval(T.timer);
+  if(S.resume && S.resume.type === T.type && S.resume.label === T.label) S.resume = null;
   const secs = Math.round((Date.now() - T.t0) / 1000), n = T.order.length, rate = T.ok / n;
   const rec = { at: new Date().toISOString(), d: today(), type: T.type, label: T.label, n, ok: T.ok, secs };
   S.tests.push(rec);
@@ -1589,6 +1631,9 @@ function renderSet(){
       <label>${BNAME}の開始日</label><input type="date" id="sStart" value="${S.start}">
       <label style="margin-top:12px">何周する？</label>
       <div class="seg" id="sLaps">${[4,6,8,10].map(n => `<button class="${LAPS===n?'on':''}" data-n="${n}">${n}周</button>`).join('')}</div>
+      <label style="margin-top:12px">予定より先に進んだら</label>
+      <div class="seg" id="sPull"><button class="${S.cfg.pull?'on':''}" data-v="1">予定日を前に詰める</button><button class="${!S.cfg.pull?'on':''}" data-v="0">そのまま</button></div>
+      <p class="dim" style="margin:8px 0 0">「前に詰める」にすると、先に進んだ日数だけ、この先の予定日と完走予定が早くなります。</p>
       <label style="margin-top:12px">1日の数</label>
       <div class="seg" id="sPer">${PER_OPTS.map(n => `<button class="${PER===n?'on':''}" data-n="${n}">${n}${UNIT}</button>`).join('')}</div>
       <p class="dim" style="margin:8px 0 0">1日${PER}${IDIOM ? '個' : '語'} × ${DAYS}日 = 1周。${LAPS}周で <b>${TOTAL}日</b>。この日から始めると、完走予定は <b>${md(end)}(${wd(end)})</b> です。${IDIOM ? '熟語は、単語を完走してから始めるのがおすすめです。' : ''}</p></div>
@@ -1634,6 +1679,7 @@ function renderSet(){
   $$('#sBook button').forEach(b => b.onclick = () => switchBook(b.dataset.b));
   $('#sStart').onchange = e => { if(e.target.value){ S.start = e.target.value; S.startSet = true; save(); renderAll(); renderSet(); toast('開始日を変えました'); } };
   $$('#sLaps button').forEach(b => b.onclick = () => { S.cfg.laps = +b.dataset.n; setLaps(S.cfg.laps); save(); renderAll(); renderSet(); });
+  $$('#sPull button').forEach(b => b.onclick = () => { S.cfg.pull = b.dataset.v === '1'; pullAhead(); save(); renderAll(); renderSet(); });
   $$('#sPer button').forEach(b => b.onclick = () => askPer(+b.dataset.n));
   $$('#sChunk button').forEach(b => b.onclick = () => { S.cfg.chunk = +b.dataset.c; save(); renderAll(); renderSet(); });
   $$('#sLv button').forEach(b => b.onclick = () => { S.hideLv = b.dataset.v === '1'; save(); renderAll(); renderSet(); });
@@ -1976,7 +2022,7 @@ function guideSlides(){
       v:`<div style="background:#1F2A4D;color:#fff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px"><b style="font-size:24px">9:42</b><small style="opacity:.8">覚える時間</small><span style="margin-left:auto;font-size:12px;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:99px">一時停止</span></div><div class="minicard">カード　／　一覧（意味をかくせる）　／　1分解説</div>` },
     { t:'発音と1分解説', p:['<b>スピーカーのボタン</b>で、ネイティブの発音が聞けます。カードを出すと自動で鳴ります。','1分解説は、スライドと音声で1つを約30秒で解説。英語はネイティブの声、意味や覚え方は日本語の声です。','<b>例文の音声</b>：例文の横のスピーカーで、英語の例文だけを聞けます（「設定」で 使わない／自動で鳴らす にもできます）。','例文の訳は、はじめは「タップで見る」です。「設定」の<b>例文の訳</b>で「最初から見せる」にもできます。','カード・テストの画面の上の<b>音あり／音なし</b>で、自動の発音をすぐ切りかえられます。'],
       v:`<div class="minicard" style="flex-direction:column;align-items:flex-start"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:22px">decide</b><span class="ph">/dɪˈsaɪd/</span><span class="spk">${SPK_SVG}</span></div><span style="color:var(--shu);font-weight:700;border:1.5px solid var(--shu);border-radius:8px;padding:2px 8px">〜を決める</span><span class="dim" style="font-size:12.5px">仲間の語：decision（名）決定</span></div>` },
-    { t:'② テスト', p:['その日の分の4択テスト（単語200問・熟語100問）。<b>時間と正答率は自動で記録</b>されます。','まちがえたものだけ、すぐにもう一度。「報告用にコピー」で、勉強報告にそのまま貼れます。','<b>少しずつ進める</b>：「今日」の <b>1〜20</b> などを押すと、その分だけ覚えて<b>すぐテスト</b>できます。全部おわると、その日のテストも完了です。','慣れてきたら、テストタブの「出題の形式」で<b>聞いて答える</b>・<b>書いて答える</b>・<b>例文の穴埋め</b>にも変えられます。'],
+    { t:'② テスト', p:['その日の分の4択テスト（単語200問・熟語100問）。<b>時間と正答率は自動で記録</b>されます。','まちがえたものだけ、すぐにもう一度。「報告用にコピー」で、勉強報告にそのまま貼れます。','<b>少しずつ進める</b>：「今日」の <b>1〜20</b> などを押すと、その分だけ覚えて<b>すぐテスト</b>できます。全部おわると、その日のテストも完了です。','慣れてきたら、テストタブの「出題の形式」で<b>聞いて答える</b>・<b>書いて答える</b>・<b>例文の穴埋め</b>にも変えられます。','途中でやめても、答えは保存されます。次に同じテストを始めると<b>続きから</b>できます。'],
       v:`<div style="text-align:center"><div style="font-family:var(--mincho);font-weight:700;font-size:44px;color:#2E7A57;line-height:1.1">92<small style="font-size:18px">%</small></div><div class="dim">200問中 184問 正解　・　時間 21分40秒</div></div>` },
     { t:'リマインドテスト', p:['まちがえたものは、<b>翌日 → 3日後 → 1週間後</b>にもどってきます。','3回つづけて正解したら卒業。苦手なものほど何度も出るので、自然に覚えきれます。'],
       v:`<div class="minicard"><b style="color:var(--shu)">✕</b> まちがえた</div><div class="minicard">翌日 → 3日後 → 1週間後 にもう一度</div><div class="minicard"><b style="color:#2E7A57">◯◯◯</b> 3回つづけて正解で卒業</div>` },

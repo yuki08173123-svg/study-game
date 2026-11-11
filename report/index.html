@@ -893,7 +893,7 @@ const HSync = (function(){
 })();
 /* HSYNC END */
 
-const VER = 11;
+const VER = 12;
 const KEY = 'studyreport-v1';
 const BK = 'studyreport-backup';
 const DEF_SUBJECTS = ['英語','数学','国語','理科','社会','その他'];
@@ -945,7 +945,7 @@ function autoGrow(ta){ ta.style.height='auto'; ta.style.height=(ta.scrollHeight+
 function markFilled(e){ e.classList.toggle('filled', String(e.value||'').trim()!==''); }
 function fmtTime(h,m){ h=+h||0; m=+m||0; if(h===0&&m===0) return ''; if(h===0) return `${m}m`; return m? `${h}h ${m}m` : `${h}h`; }
 function taskLine(t){ const parts=[t.subj, [t.book,t.range].filter(Boolean).join(''), fmtTime(t.h,t.m)].filter(Boolean); let s='・'+parts.join('　'); if(t.rate!=='' && t.rate!=null) s+=`（${t.rate}%）`; return s; }
-function longLine(t){ return [t.subj, [t.book,t.range].filter(Boolean).join(''), t.laps, t.due?fmtMD(t.due)+'まで':''].filter(Boolean).join('　'); }
+function longLine(t){ return [t.due?fmtMD(t.due)+'まで':'', t.subj, [t.book,t.range].filter(Boolean).join(''), t.laps].filter(Boolean).join('　'); }   // v12：日付を先頭に（ヒラの「長期のタスクの良い書き方例」と同じ形）
 function totalHours(){ let mins=0; for(const t of S.today.tasks) mins+=(+t.h||0)*60+(+t.m||0); return Math.round(mins/60*10)/10; }
 
 /* 音声入力
@@ -1381,8 +1381,10 @@ function parseReport(txt){
     if(sec==='long'){
       const c=l.replace(/️/g,'');
       const m2=c.match(/^([✅☑✓☐□■・･\s]*)(.*)$/);
-      const body=(m2[2]||'').trim();
-      if(body) out.longTasks.push(parseLongLine(body, /[✅☑✓■]/.test(m2[1]||'')));
+      let body=(m2[2]||'').trim(), done=/[✅☑✓■]/.test(m2[1]||'');
+      if(/^※?\s*達成率/.test(body)) continue;                       // ※達成率33% の行
+      const m3=body.match(/[\s　]*[✅☑✓]+$/); if(m3){ done=true; body=body.slice(0,m3.index).trim(); }   // v12：✅ は最後につく
+      if(body) out.longTasks.push(parseLongLine(body, done));
       continue;
     }
     if(sec==='tqc'){ continue; }
@@ -1422,7 +1424,7 @@ let impParsed=null;
 function impSections(r){
   return [
     {k:'goal',  name:'①目標',        has:!!r.goal,          body:r.goal},
-    {k:'long',  name:'長期のタスク',  has:r.longTasks.length>0, body:r.longTasks.map(t=>(t.done?'✅':'☐')+(longLine(t)||'（読めませんでした）')).join('\n')},
+    {k:'long',  name:'長期のタスク',  has:r.longTasks.length>0, body:r.longTasks.map(t=>(longLine(t)||'（読めませんでした）')+(t.done?'✅':'')).join('\n')},
     {k:'max',   name:'TQCのMAX',     has:!!r.max,           body:r.max? `T${r.max.t||'○'}・Q${r.max.q||'○'}・C${r.max.c||'○'}`:''},
     {k:'today', name:'TQCの今日とレビュー', has:!!r.tqc||!!r.tqcReview, body:[(r.tqc? `T${r.tqc.t||'○'}・Q${r.tqc.q||'○'}・C${r.tqc.c||'○'}`:''), r.tqcReview].filter(Boolean).join('\n')},
     {k:'tasks', name:'今日のタスクとレビュー', has:r.tasks.length>0, body:r.tasks.map(t=>{
@@ -1503,14 +1505,16 @@ function build(){
   const bad=(label,key)=>{ miss.push(label); if(key) keys.push(key); };
   let dl = fmtMD(S.today.date); if(S.opt.streak) dl += `（連続${S.streak.count||0}日目）`;
   L.push(dl);
+  L.push('');
   L.push('①目標');
   if(S.goal.trim()) L.push(S.goal.trim()); else bad('目標','goal');
+  L.push('');
   L.push('②タスクとTQCスコア');
   L.push('【長期のタスク】');
   const lt=S.longTasks.filter(t=>longLine(t));
   if(!S.longTasks.length) bad('長期のタスク（1つも書かれていません）');
   S.longTasks.forEach((t,i)=>{
-    if(longLine(t)) L.push((t.done?'✅':'☐')+longLine(t));
+    if(longLine(t)) L.push(longLine(t)+(t.done?'✅':''));
     else if(lt.length) return;
     if(!t.subj) bad('長期タスク'+(i+1)+'の教科','long-'+t.id+'-subj');
     if(!t.book) bad('長期タスク'+(i+1)+'の教材名','long-'+t.id+'-book');
@@ -1518,6 +1522,8 @@ function build(){
     if(!t.laps) bad('長期タスク'+(i+1)+'の周回数','long-'+t.id+'-laps');
     if(!t.due) bad('長期タスク'+(i+1)+'の「いつまでに」','long-'+t.id+'-due');
   });
+  if(lt.length) L.push('※達成率'+Math.round(lt.filter(t=>t.done).length/lt.length*100)+'%');
+  L.push('');
   L.push('【今日のTQCスコア】');
   const m=S.max,t=S.today.tqc;
   L.push(`MAX：T${m.t||'○'}・Q${m.q||'○'}・C${m.c||'○'}`);
@@ -1527,6 +1533,7 @@ function build(){
   const isMax = full && +t.t>=+m.t && +t.q>=+m.q && +t.c>=+m.c;
   if(S.today.tqcReview.trim()){ L.push('（レビュー）'); L.push(S.today.tqcReview.trim()); }
   else if(full && !isMax) bad('TQCのレビュー（MAXでないときは必要）','tqcReview');
+  L.push('');
   L.push('【今日のタスク】');
   const filled=S.today.tasks.filter(x=>x.subj||x.book||x.range||x.h||x.m||x.rate!=='');
   const ts = filled.length? filled : S.today.tasks.slice(0,1);
@@ -1540,15 +1547,18 @@ function build(){
     if(!x.h&&!x.m) bad('タスク'+n+'の勉強時間','task-'+x.id+'-time');
     if(x.rate==='') bad('タスク'+n+'の正答率','task-'+x.id+'-rate');
   });
+  L.push('');
   L.push('③レビュー');
-  ts.forEach(x=>{
+  ts.forEach((x,k)=>{
     const n=S.today.tasks.indexOf(x)+1;
+    if(k) L.push('');
     L.push('・'+[x.subj,(x.book||'')+(x.range||'')].filter(Boolean).join('　'));
     if(x.golden==='yes') L.push('黄金ルート：回した');
     else if(x.golden==='no') L.push('黄金ルート：回せなかった');
     else bad('タスク'+n+'の黄金ルート','rev-'+x.id+'-golden');
     if(x.review.trim()) L.push(x.review.trim()); else bad('タスク'+n+'のレビュー','rev-'+x.id+'-text');
   });
+  L.push('');
   L.push('④仕組みの達成度');
   const sysFilled=S.systems.filter(s=>s.text.trim());
   if(!S.systems.length) bad('仕組み（1つも書かれていません）');
@@ -1559,8 +1569,10 @@ function build(){
   });
   const af=S.afters.filter(a=>String(S.today.afterRes[a.id]||'').trim());
   if(af.length){
+    L.push('');
     L.push('⑤アフター報告');
-    af.forEach(a=>{
+    af.forEach((a,k)=>{
+      if(k) L.push('');
       L.push('【返信'+(a.at?'（'+fmtMD(a.at)+'）':'')+'】');
       if(a.reply.trim()) L.push(a.reply.trim());
       L.push('【アフター】');
@@ -1824,7 +1836,7 @@ function guideSlides(){
 12/1の期末テストで数学80点以上
 ②タスクとTQCスコア
 【長期のタスク】
-☐数学　青チャート1〜150　3周　11/30まで
+11/30まで　数学　青チャート1〜150　3周
 【今日のTQCスコア】
 MAX：T4・Q3・C100
 今日：T3.5・Q2・C90

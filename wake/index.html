@@ -59,6 +59,9 @@ main{ max-width:560px; margin:0 auto; padding:6px 16px 40px; }
 .choices button.addp{ grid-column:1/-1; }
 .choices button.free{ white-space:normal; overflow-wrap:anywhere; font-size:14px; line-height:1.25; }
 .promise b.long{ font-size:14px; line-height:1.25; white-space:normal; overflow-wrap:anywhere; }
+.hpick{ grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.choices .hpick button{ width:64px; height:64px; padding:0; border-radius:50%; font-size:28px; flex:none; }
+.hpick b{ flex:1; text-align:center; font-size:28px; font-weight:900; }
 .freein{ grid-column:1/-1; width:100%; box-sizing:border-box; font:inherit; font-size:17px; padding:13px 12px; border-radius:14px; border:2px solid var(--line); background:var(--card); color:var(--ink); }
 .freerm{ grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:2px 4px; font-size:14px; }
 .choices .freerm button{ width:30px; height:30px; flex:none; padding:0; border:0; border-radius:50%; background:var(--chip); color:var(--muted); }
@@ -203,7 +206,7 @@ textarea#goalIn{ width:100%; font:inherit; font-size:16px; padding:10px 12px; bo
 <div id="printBox"></div>
 <audio id="au" playsinline preload="auto"></audio>
 
-<script src="lines.js?v=20"></script>
+<script src="lines.js?v=21"></script>
 <script>
 /* HSYNC BEGIN ─────────────────────────────────────────────
    同期（iPad・スマホ・パソコンで同じにする）。ヒラボイス v12（2026-10-25 ユウキ・ハルネコ「iPadでも使いたい」）。
@@ -642,7 +645,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 /* ===================== 基本 ===================== */
-const VER = 20;
+const VER = 21;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -657,7 +660,7 @@ const pick = a => a[Math.floor(Math.random() * a.length)];
 const LINE = Object.fromEntries(LINES.map(l => [l.id, l]));
 const SUBJ = ['英語','数学','算数','国語','理科','社会','解き直し','その他'];
 const HOURS = [0.5, 1, 1.5, 2, 3, 4, 5, 6];
-const hLabel = h => h === 0.5 ? '30分' : h+'時間' + (h >= 6 ? '〜' : '');
+const hLabel = h => h < 1 ? Math.round(h * 60)+'分' : Math.floor(h)+'時間' + (h % 1 ? Math.round(h % 1 * 60)+'分' : '');   // 2.5 → 2時間30分（v21）
 function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(()=>e.classList.remove('on'), 1800); }
 
 /* ===================== データ =====================
@@ -942,10 +945,10 @@ async function next(lead){
   }else if(kind === 'start'){
     const h0 = new Date().getHours();
     const opts = ['今すぐ']; for(let h = Math.max(h0 + 1, 6); h <= 22; h++) opts.push(h+':00');
-    choices = opts.map(v => `<button data-v="${v}">${v}</button>`).join('');
+    choices = opts.map(v => `<button data-v="${v}">${v}</button>`).join('') + `<button class="addp" data-pick="1">時刻を細かく選ぶ</button>`;
     cls = 'four';
   }else if(kind === 'hours'){
-    choices = HOURS.map(h => `<button data-v="${h}">${hLabel(h)}</button>`).join(''); cls = 'four';
+    choices = HOURS.map(h => `<button data-v="${h}">${hLabel(h)}</button>`).join('') + `<button class="addp" data-pick="1">時間を細かく決める（30分ごと・何時間でも）</button>`; cls = 'four';
   }else if(kind === 'first'){
     choices = firstButtons();
   }else if(TK[kind]){
@@ -970,7 +973,37 @@ async function next(lead){
   $('#stage').querySelectorAll('.choices button').forEach(b => b.onclick = () => answer(kind, b.dataset.v));
   if(kind === 'first') bindFirst();
   if(TK[kind]) taskForm(kind);
+  const pk = $('#stage [data-pick]');
+  if(pk) pk.onclick = () => kind === 'start' ? pickStart() : pickHours();
   say(ids);
+}
+/* 開始時刻・目標時間を細かく決める（v21・ユウキ・ハルネコの要望）。ふだんのボタンはそのまま */
+function pickStart(){
+  const box = $('#stage .choices'), back = box.innerHTML, cls = box.className;
+  const d = new Date(Date.now() + 30 * 60000); d.setMinutes(d.getMinutes() < 30 ? 30 : 60, 0);
+  box.className = 'choices';
+  box.innerHTML = `<input class="freein" id="tIn" type="time" step="300" value="${pad(d.getHours())}:${pad(d.getMinutes())}">
+    <button class="wide" id="tOk">この時刻にする</button><button class="addp" id="tBack">もどる</button>`;
+  $('#tOk').onclick = () => {
+    const v = $('#tIn').value; if(!/^\d{1,2}:\d{2}/.test(v)) return toast('時刻を選んでください');
+    const [h, m] = v.split(':').map(Number); answer('start', h + ':' + pad(m));
+  };
+  $('#tBack').onclick = () => { box.className = cls; box.innerHTML = back; box.querySelectorAll('button').forEach(b => b.onclick = () => answer('start', b.dataset.v)); $('#stage [data-pick]').onclick = pickStart; };
+}
+function pickHours(){
+  const box = $('#stage .choices'), back = box.innerHTML, cls = box.className;
+  let h = 3;
+  box.className = 'choices';
+  const draw = () => {
+    box.innerHTML = `<div class="hpick"><button id="hDn" aria-label="30分へらす">−</button><b>${hLabel(h)}</b><button id="hUp" aria-label="30分ふやす">＋</button></div>
+      <p class="muted" style="grid-column:1/-1;text-align:center;margin:0">−・＋で30分ずつ変わります</p>
+      <button class="wide" id="hOk">${hLabel(h)}にする</button><button class="addp" id="hBack">もどる</button>`;
+    $('#hDn').onclick = () => { h = Math.max(0.5, h - 0.5); draw(); };
+    $('#hUp').onclick = () => { h = Math.min(16, h + 0.5); draw(); };
+    $('#hOk').onclick = () => answer('hours', h);
+    $('#hBack').onclick = () => { box.className = cls; box.innerHTML = back; box.querySelectorAll('button').forEach(b => b.onclick = () => answer('hours', b.dataset.v)); $('#stage [data-pick]').onclick = pickHours; };
+  };
+  draw();
 }
 /* 「何からやる？」の選択肢。「その他」は自由に入力＝教科名でも、取り組む内容でも。入れた言葉は次からボタンになる（v17） */
 function firstButtons(){
@@ -1516,7 +1549,7 @@ function slides(){ return [
   { pic:'⏰', t:'ヒラボイスとは', p:'アラームを止めると、<b>ヒラ先生の声で朝の会話</b>がはじまる目覚ましです。起きてすぐに、<b>今日の勉強の約束</b>を決めます。', ex:'朝が弱い人ほど、起きた直後に「今日やること」を決めておくと、1日が動きだします。' },
   { pic:'🛠', t:'1. はじめに1回だけ準備', p:'ホームの<b>「準備」</b>の手順どおりに、iPhone の<b>「ショートカット」</b>アプリで「アラームを止めたら、このアプリを開く」を設定します（5分）。', ex:'このアプリは <b>Safari</b> で開いて使ってください。アラームから開くのも Safari です。Android の人は、アラームを止めたらアプリを開いてください。' },
   { pic:'☀️', t:'2. 朝は「おはよう」を押す', p:'アラームを止めると、このアプリが開きます。まん中の<b>「おはよう」</b>を押すと、ヒラ先生の声がはじまります。', ex:'スマホは、画面を押すまで音を出せない決まりです。押すこと自体が「起きた」合図になります。会話の途中でも、<b>ヒラ先生の吹き出しを押すと、もう一度声が流れます</b>。' },
-  { pic:'🗓', t:'3. 質問にボタンで答える', p:'<b>何時から</b>勉強するか・<b>何時間</b>やるか・<b>最初に何から</b>やるか・<b>解き直しがたまっていないか</b>を、ボタンで答えます。', ex:'何からやるかは<b>「その他」</b>を押すと自由に入れられます（一度入れた言葉は、次からボタンになります）。今日やることが2つ以上あるときは、最後の画面かホームの<b>「時間を決めた約束を足す」</b>で足せます（全部で5つまで）。1つでよい日は、そのままで大丈夫です。' },
+  { pic:'🗓', t:'3. 質問にボタンで答える', p:'<b>何時から</b>勉強するか・<b>何時間</b>やるか・<b>最初に何から</b>やるか・<b>解き直しがたまっていないか</b>を、ボタンで答えます。', ex:'何時からは<b>「時刻を細かく選ぶ」</b>で好きな時刻に、何時間は<b>「時間を細かく決める」</b>で30分ごとに何時間でも決められます。何からやるかは<b>「その他」</b>を押すと自由に入れられます（一度入れた言葉は、次からボタンになります）。今日やることが2つ以上あるときは、最後の画面かホームの<b>「時間を決めた約束を足す」</b>で足せます（全部で5つまで）。1つでよい日は、そのままで大丈夫です。' },
   { pic:'📣', t:'4. 時間を決めずに宣言する', p:'ホームの<b>「朝に聞くことを選ぶ」</b>で、<b>計画タスク・習慣タスク・やること</b>を聞くようにできます。時間は決めず、<b>取り組む内容だけ</b>を宣言します。', ex:'「暗記の鉄則に沿って勉強する」のような毎日のことは習慣タスクに。一度入れた習慣は、次の朝からはじめから選ばれています。「何時から」の質問を外して、宣言だけにもできます。ふだんの日に足すときは、ホームの<b>「時間を決めずに宣言を足す」</b>からどうぞ。' },
   { pic:'🔥', t:'5. 最後の一言を選ぶ', p:'最後に<b>「喝」「本気の喝」「励まし」「おまかせ」</b>から選ぶと、その一言が流れます。おまかせは、昨日の約束が<b>できた日は励まし</b>、<b>できなかった日は喝</b>です。', ex:'その日の気分で選んでください。「今日は本気の喝がほしい」と自分で選ぶのも、気持ちの切りかえになります。' },
   { pic:'✅', t:'6. 次の朝にふり返る', p:'次の朝、最初に<b>昨日の約束ができたか</b>を聞かれます。「できた・半分・できなかった」で答えます。', ex:'約束は、決めっぱなしにしないことが大事です。約束を足した日は、まとめて1回答えます（一部だけできたら「半分」）。' },

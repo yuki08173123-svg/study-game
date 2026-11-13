@@ -99,6 +99,18 @@ textarea{min-height:64px}
 .twobtn button.ok.on{background:var(--done-soft);color:var(--done);border-color:var(--done)}
 .twobtn button.ng.on{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
 .twobtn.err{border:2px solid var(--warn);border-radius:12px;padding:4px;background:var(--warn-soft)}
+.twobtn button.na{flex:0 0 auto;padding:10px 12px;font-size:13px}
+.twobtn button.na.on{background:var(--line);color:var(--ink);border-color:var(--muted)}
+.stepper button.on{background:var(--ink);color:var(--bg)}
+.rate.na input[type=range]{opacity:.3}
+.tmrow{display:grid;grid-template-columns:96px 1fr 1fr 32px;gap:6px;align-items:center;margin:6px 0}
+.tmrow select{padding:10px 6px;font-size:14px}
+.switch{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;margin:6px 0 2px}
+.switch input{width:auto;border:0;background:none;padding:0;accent-color:var(--accent);transform:scale(1.3)}
+.plrow{display:flex;align-items:flex-start;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:9px 10px;margin:7px 0;font-size:14px}
+.plrow input{width:auto;border:0;background:none;padding:0;accent-color:var(--accent);transform:scale(1.3);margin-top:3px}
+.plrow .s{font-size:12px;color:var(--muted);margin-top:2px}
+.plrow.off{opacity:.55}
 
 .tqc.err{border:2px solid var(--warn);border-radius:14px;padding:6px;background:var(--warn-soft)}
 .tqc{display:grid;grid-template-columns:52px 1fr 1fr 1fr;gap:6px;align-items:center;margin:6px 0}
@@ -149,7 +161,9 @@ textarea{min-height:64px}
 .streak{display:inline-flex;align-items:center;gap:4px;background:var(--gold-soft);color:var(--gold);border-radius:999px;padding:3px 10px;font-weight:900;font-size:13px}
 .hist{border-bottom:1px solid var(--line);padding:10px 0}
 .hist .d{font-weight:900}
-.hist pre{white-space:pre-wrap;font:inherit;font-size:13px;color:var(--muted);margin:4px 0 0;max-height:120px;overflow:hidden}
+.hist pre{white-space:pre-wrap;font:inherit;font-size:13px;color:var(--muted);margin:4px 0 0}
+.hist pre.fold{max-height:118px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent)}
+.hist .more{display:block;width:100%;margin-top:4px;padding:8px;border-radius:10px;background:var(--chip);font-weight:900;font-size:13px;color:var(--accent)}
 .mini{font-size:12px;color:var(--muted)}
 .improw{border:1.5px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}
 .improw.off{opacity:.55}
@@ -322,6 +336,7 @@ textarea{min-height:64px}
     <div class="lbl" id="presetLbl" hidden>よく使う教材からすぐ追加</div>
     <div class="chips" id="presetChips" hidden></div>
     <button class="btn block" id="addTask">＋ 今日のタスクを追加</button>
+    <button class="btn block" id="fromPlan" style="margin-top:8px">📅 計画マップから入れる</button>
   </section>
 
   <section class="card" id="cardReview">
@@ -333,7 +348,7 @@ textarea{min-height:64px}
 
   <section class="card" id="cardSys">
     <h2><span class="n">4</span>仕組みの達成度<span class="keep">🔒 次の日も残る</span></h2>
-    <p class="hint">レビューで決めた仕組みを書き、今日できたかを <b>⭕️</b> か <b>❌</b> で選びます。仕組みの文は次の日も残ります。</p>
+    <p class="hint">レビューで決めた仕組みを書き、今日できたかを <b>⭕️</b> か <b>❌</b> で選びます。今日はやる日ではない仕組みは <b>➖ 該当なし</b>。仕組みの文は次の日も残ります。</p>
     <div id="sysList"></div>
     <button class="btn block" id="addSys">＋ 仕組みを追加</button>
   </section>
@@ -344,6 +359,28 @@ textarea{min-height:64px}
     <div class="help" style="margin-bottom:8px">Discordで返信を長押し →「テキストをコピー」→ 下の「📋 返信を貼りつける」。アフターが終わった返信は ✕ で消します。</div>
     <div id="afterList"></div>
     <button class="btn block" id="addAfter">📋 返信を貼りつける</button>
+  </section>
+
+  <section class="card" id="cardOther">
+    <h2><span class="n">6</span>その他・質問</h2>
+    <p class="hint">質問や、ほかに伝えたいことを自由に書けます。書いた日だけ、報告文の最後に入ります（書かなくてもOK）。</p>
+    <div id="otherList"></div>
+    <div class="row" style="flex-wrap:nowrap">
+      <button class="btn block" id="addQ">＋ 質問を書く</button>
+      <button class="btn block" id="addEtc">＋ その他を書く</button>
+    </div>
+  </section>
+
+  <section class="card" id="cardTomorrow">
+    <h2><span class="n">明</span>明日のタスク<span class="keep">報告文には入りません</span></h2>
+    <p class="hint">明日やることを書いておくと、明日アプリを開いたときに<b>「今日のタスク」にそのまま入ります</b>。</p>
+    <label class="switch"><input type="checkbox" id="tmCarry"> 明日の「今日のタスク」に引きつぐ</label>
+    <div id="tmList"></div>
+    <button class="btn block" id="addTm">＋ 明日のタスクを追加</button>
+    <div class="row" style="margin-top:8px;flex-wrap:nowrap">
+      <button class="btn block" id="tmSame">今日と同じにする</button>
+      <button class="btn block" id="tmPlan">📅 計画マップから</button>
+    </div>
   </section>
 
   <div class="row" style="justify-content:center;margin-top:8px">
@@ -378,6 +415,14 @@ textarea{min-height:64px}
   <div class="body">
     <p class="mini">自分の学年の部屋をえらんでください。次からは、コピーしたあとにこの部屋をすぐ開けます（⚙️ 設定でいつでも変えられます）。</p>
     <div class="roomgrid" id="roomPick"></div>
+  </div>
+</div>
+
+<div class="sheet" id="planSheet">
+  <div class="sh"><h3 id="planTitle">計画マップから入れる</h3><button class="btn ghost" data-close>閉じる</button></div>
+  <div class="body" id="planBody"></div>
+  <div class="acts" style="padding:10px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line)">
+    <button class="btn primary block" id="planApply">この内容で入れる</button>
   </div>
 </div>
 
@@ -893,7 +938,7 @@ const HSync = (function(){
 })();
 /* HSYNC END */
 
-const VER = 12;
+const VER = 13;
 const KEY = 'studyreport-v1';
 const BK = 'studyreport-backup';
 const DEF_SUBJECTS = ['英語','数学','国語','理科','社会','その他'];
@@ -905,8 +950,8 @@ function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(
 function newTask(){ return {id:uid(), subj:'', book:'', range:'', prevRange:'', h:0, m:0, rate:'', review:'', golden:''}; }
 function newLong(){ return {id:uid(), subj:'', book:'', range:'', laps:'', due:'', done:false}; }
 function emptyToday(tpl){
-  const tasks=(tpl&&tpl.length)? tpl.map(x=>{ const t=newTask(); t.subj=x.subj||''; t.book=x.book||''; t.prevRange=x.range||''; return t; }) : [newTask()];
-  return { date: todayStr(), tqc:{t:'',q:'',c:''}, tqcReview:'', tasks, sysDone:{}, afterRes:{}, tManual:false, carried: !!(tpl&&tpl.length) };
+  const tasks=(tpl&&tpl.length)? tpl.map(x=>{ const t=newTask(); t.subj=x.subj||''; t.book=x.book||''; t.prevRange=x.range||''; if(x.fill) t.range=x.range||''; return t; }) : [newTask()];
+  return { date: todayStr(), tqc:{t:'',q:'',c:''}, tqcReview:'', tasks, sysDone:{}, afterRes:{}, others:[], tManual:false, carried: !!(tpl&&tpl.length) };
 }
 
 let S = load();
@@ -922,7 +967,8 @@ function fix(s){
   });
   s.systems = s.systems.map(x=>({id:x.id||uid(), text:x.text||''}));
   s.today.tasks = ((s.today.tasks&&s.today.tasks.length)? s.today.tasks : [newTask()]).map(t=>Object.assign(newTask(), t));
-  s.today.sysDone ??= {}; s.today.afterRes ??= {};
+  s.today.sysDone ??= {}; s.today.afterRes ??= {}; s.today.others ??= [];
+  s.tomorrow ??= {tasks:[], carry:true, made:''}; s.tomorrow.tasks ??= []; s.tomorrow.carry ??= true;   // v13：明日のタスク
   s.afters = s.afters.map(a=>({id:a.id||uid(), reply:a.reply||'', at:a.at||''}));
   return s;
 }
@@ -944,7 +990,7 @@ function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('sho
 function autoGrow(ta){ ta.style.height='auto'; ta.style.height=(ta.scrollHeight+2)+'px'; }
 function markFilled(e){ e.classList.toggle('filled', String(e.value||'').trim()!==''); }
 function fmtTime(h,m){ h=+h||0; m=+m||0; if(h===0&&m===0) return ''; if(h===0) return `${m}m`; return m? `${h}h ${m}m` : `${h}h`; }
-function taskLine(t){ const parts=[t.subj, [t.book,t.range].filter(Boolean).join(''), fmtTime(t.h,t.m)].filter(Boolean); let s='・'+parts.join('　'); if(t.rate!=='' && t.rate!=null) s+=`（${t.rate}%）`; return s; }
+function taskLine(t){ const parts=[t.subj, [t.book,t.range].filter(Boolean).join(''), fmtTime(t.h,t.m)].filter(Boolean); let s='・'+parts.join('　'); if(t.rate!=='' && t.rate!=null && t.rate!=='na') s+=`（${t.rate}%）`; return s; }   // v13：正答率「該当なし」(na) は書かない
 function longLine(t){ return [t.due?fmtMD(t.due)+'まで':'', t.subj, [t.book,t.range].filter(Boolean).join(''), t.laps].filter(Boolean).join('　'); }   // v12：日付を先頭に（ヒラの「長期のタスクの良い書き方例」と同じ形）
 function totalHours(){ let mins=0; for(const t of S.today.tasks) mins+=(+t.h||0)*60+(+t.m||0); return Math.round(mins/60*10)/10; }
 
@@ -1126,7 +1172,7 @@ function renderTasks(){
   const box=$('taskList'); box.innerHTML='';
   const dl = el('datalist',{id:'bookList'}); S.books.forEach(b=>dl.append(el('option',{value:b}))); box.append(dl);
   if(S.today.carried) box.append(el('div',{class:'carry'},
-    el('div',{},'きのうと同じ教材を引きつぎました。ページと時間を入れるだけでOKです。'),
+    el('div',{}, S.today.carried==='tomorrow' ? 'きのう書いた「明日のタスク」を入れました。時間と正答率を入れるだけでOKです。' : S.today.carried==='plan' ? '計画マップから入れました。時間がちがえば直し、正答率を入れてください。' : 'きのうと同じ教材を引きつぎました。ページと時間を入れるだけでOKです。'),
     el('button',{class:'btn ghost',style:'padding:6px 10px',onclick:()=>{ S.today.tasks=[newTask()]; S.today.carried=false; flush(); renderTasks(); renderReview(); autoT(); }},'まっさらにする')));
   S.today.tasks.forEach((t,i)=>{
     const card=el('div',{class:'unit'});
@@ -1162,14 +1208,15 @@ function renderTasks(){
     card.append(timeBox);
     card.append(el('div',{class:'stepper'}, mk('+5分',()=>{ t.m=(+t.m||0)+5; }), mk('+15分',()=>{ t.m=(+t.m||0)+15; }), mk('+30分',()=>{ t.m=(+t.m||0)+30; }), mk('+1時間',()=>{ t.h=(+t.h||0)+1; }), mk('0にもどす',()=>{ t.h=0; t.m=0; })));
 
-    card.append(el('div',{class:'lbl'},'正答率 ',el('span',{class:'req'},'必ず入れる')));
-    const rateB=el('b',{}, t.rate===''?'—':t.rate+'%');
-    const rateBox=el('div',{class:'rate','data-k':'task-'+t.id+'-rate'});
-    const rng=el('input',{type:'range',min:0,max:100,step:1}); rng.value=(t.rate===''?80:t.rate);
-    const setRate=v=>{ t.rate=+v; rateB.textContent=t.rate+'%'; rng.value=v; rateBox.classList.remove('err'); save(); upd(); };
+    card.append(el('div',{class:'lbl'},'正答率 ',el('span',{class:'req'},'必ず選ぶ')));
+    const rateB=el('b',{}, t.rate===''?'—':t.rate==='na'?'なし':t.rate+'%');
+    const rateBox=el('div',{class:'rate'+(t.rate==='na'?' na':''),'data-k':'task-'+t.id+'-rate'});
+    const rng=el('input',{type:'range',min:0,max:100,step:1}); rng.value=((t.rate===''||t.rate==='na')?80:t.rate);
+    const naB=el('button',{class:t.rate==='na'?'on':'',onclick:()=>{ t.rate=(t.rate==='na'?'':'na'); save(); renderTasks(); }},'該当なし（正答率が出ない）');
+    const setRate=v=>{ t.rate=+v; rateB.textContent=t.rate+'%'; rng.value=v; rateBox.classList.remove('err','na'); naB.classList.remove('on'); save(); upd(); };
     rng.oninput=()=>setRate(rng.value);
     rateBox.append(rng,rateB); card.append(rateBox);
-    card.append(el('div',{class:'stepper'}, ...[50,60,70,80,90,100].map(v=>el('button',{onclick:()=>setRate(v)},v+'%'))));
+    card.append(el('div',{class:'stepper'}, ...[50,60,70,80,90,100].map(v=>el('button',{onclick:()=>setRate(v)},v+'%')), naB));
 
     card.append(pv); upd();
     box.append(card);
@@ -1213,7 +1260,8 @@ function renderSys(){
     card.append(el('div',{class:'lbl'},'今日できた？ ',el('span',{class:'req'},'必ず選ぶ')));
     card.append(el('div',{class:'twobtn','data-k':'sys-'+s.id+'-done'},
       el('button',{class:'ok'+(st==='ok'?' on':''),onclick:()=>{ S.today.sysDone[s.id]=(st==='ok'?'':'ok'); save(); renderSys(); }},'⭕️ できた'),
-      el('button',{class:'ng'+(st==='ng'?' on':''),onclick:()=>{ S.today.sysDone[s.id]=(st==='ng'?'':'ng'); save(); renderSys(); }},'❌ できなかった')
+      el('button',{class:'ng'+(st==='ng'?' on':''),onclick:()=>{ S.today.sysDone[s.id]=(st==='ng'?'':'ng'); save(); renderSys(); }},'❌ できなかった'),
+      el('button',{class:'na'+(st==='na'?' on':''),onclick:()=>{ S.today.sysDone[s.id]=(st==='na'?'':'na'); save(); renderSys(); }},'➖ 該当なし')
     ));
     box.append(card); autoGrow(ta);
   });
@@ -1251,6 +1299,168 @@ $('addAfter').onclick=async ()=>{
   toast(txt? '返信を貼りつけました' : '返信の欄を長押しして「ペースト」してください');
 };
 $('addSys').onclick=()=>{ S.systems.push({id:uid(),text:''}); flush(); renderSys(); const all=$('sysList').querySelectorAll('textarea'); all[all.length-1]?.focus(); };
+
+
+/* ===== v13：その他・質問（Vczzのお母さんの要望「④の次に質問など自由に書ける欄」） ===== */
+function renderOther(){
+  const box=$('otherList'); box.innerHTML='';
+  const os=S.today.others;
+  if(!os.length) box.append(el('div',{class:'empty'},'質問やほかに伝えたいことがあれば、下のボタンから書けます。'));
+  os.forEach((o,i)=>{
+    const card=el('div',{class:'unit'});
+    const nm=(o.kind==='q'?'質問':'その他')+(os.filter(x=>x.kind===o.kind).indexOf(o)+1);
+    const del=el('button',{class:'del',onclick:()=>{ if(o.text && !confirm(nm+'を消しますか？')) return; os.splice(i,1); flush(); renderOther(); }},'✕');
+    card.append(el('div',{class:'head'}, el('span',{class:'t'},nm), del));
+    const ta=el('textarea',{placeholder:o.kind==='q'?'例）英単語の2周目で覚えられない単語が多いです。どうやって覚え直せばいいですか？':'例）明日から部活の大会で、3日間は勉強時間が短くなります。'}); ta.value=o.text||''; markFilled(ta);
+    ta.oninput=()=>{ o.text=ta.value; markFilled(ta); save(); autoGrow(ta); };
+    card.append(el('div',{class:'field voice'},ta,el('button',{class:'mic'},'🎤 音声')));
+    box.append(card); autoGrow(ta);
+  });
+}
+function addOther(kind){
+  S.today.others.push({id:uid(), kind, text:''}); flush(); renderOther();
+  const all=$('otherList').querySelectorAll('textarea'); const last=all[all.length-1];
+  if(last){ last.scrollIntoView({behavior:'smooth',block:'center'}); last.focus(); }
+}
+$('addQ').onclick=()=>addOther('q');
+$('addEtc').onclick=()=>addOther('etc');
+
+/* ===== v13：明日のタスク（書いておくと、次の日の「今日のタスク」に入る） ===== */
+function tmTouch(){ S.tomorrow.made=todayStr(); save(); }
+function renderTm(){
+  $('tmCarry').checked=!!S.tomorrow.carry;
+  const box=$('tmList'); box.innerHTML='';
+  const ts=S.tomorrow.tasks;
+  if(!ts.length) box.append(el('div',{class:'empty'},'まだありません。下のボタンから入れられます（入れなくてもOK）。'));
+  ts.forEach((t,i)=>{
+    const sel=el('select',{}); sel.append(el('option',{value:''},'教科'));
+    const subs=S.opt.subjects.filter(x=>x!=='その他'); if(t.subj && !subs.includes(t.subj)) subs.push(t.subj);
+    subs.forEach(x=>{ const op=el('option',{value:x},x); if(x===t.subj) op.selected=true; sel.append(op); });
+    sel.onchange=()=>{ t.subj=sel.value; tmTouch(); };
+    const bk=el('input',{type:'text',list:'bookList',placeholder:'教材名'}); bk.value=t.book||''; bk.oninput=()=>{ t.book=bk.value; tmTouch(); };
+    const rg=el('input',{type:'text',placeholder:'ページ・個数'}); rg.value=t.range||''; rg.oninput=()=>{ t.range=rg.value; tmTouch(); };
+    const del=el('button',{class:'del',onclick:()=>{ ts.splice(i,1); tmTouch(); renderTm(); }},'✕');
+    box.append(el('div',{class:'tmrow'},sel,bk,rg,del));
+  });
+}
+$('tmCarry').onchange=e=>{ S.tomorrow.carry=e.target.checked; flush(); toast(e.target.checked?'明日、今日のタスクに入ります':'明日は自動では入りません（メモとして残ります）'); };
+$('addTm').onclick=()=>{ S.tomorrow.tasks.push({id:uid(),subj:'',book:'',range:''}); tmTouch(); renderTm(); const r=$('tmList').querySelectorAll('.tmrow'); r[r.length-1]?.querySelector('input')?.focus(); };
+$('tmSame').onclick=()=>{
+  const src=S.today.tasks.filter(t=>t.subj||t.book);
+  if(!src.length){ toast('今日のタスクがまだありません'); return; }
+  S.tomorrow.tasks=src.map(t=>({id:uid(),subj:t.subj,book:t.book,range:''})); tmTouch(); renderTm();
+  toast('今日と同じ教材を入れました。ページを入れておくと明日が楽です');
+};
+
+/* ===== v13：計画マップから入れる =====
+   ・同じ端末のブラウザで計画マップを使っていれば、その記録（localStorage）を読む
+     （users.js が getItem に人の名前をつけるので、localStorage[キー] で直接読む）
+   ・同期を使っていれば、計画マップと同じ預け先から読む（計画マップは同期コードそのままで預けている）
+     iPhoneのホーム画面アプリはアプリごとに保存場所が別なので、こちらが頼り。
+   ・両方あれば、新しいほう（mt）を使う */
+const SUBJ_ALL=['英語','数学','国語','理科','社会','算数','現代文','古文','漢文','物理','化学','生物','地学','日本史','世界史','地理','公民','政経','倫理','情報'];
+async function loadPlan(){
+  const got=[];
+  try{
+    const cur=localStorage['planmap_cur']||'0';
+    const raw=localStorage[cur==='0'?'planmap_v1':'planmap_p'+cur];
+    if(raw){ const o=JSON.parse(raw); if(o && o.weeks) got.push({from:'この端末', o, mt:o.mt||0}); }
+  }catch(e){}
+  const code=HSync.code();
+  if(code){
+    try{ const r=await HSync._call({action:'get', code}); if(r && r.ok && r.found){ const o=JSON.parse(r.data); if(o && o.weeks) got.push({from:'同期', o, mt:Math.max(r.mt||0,o.mt||0)}); } }catch(e){}
+  }
+  got.sort((a,b)=>b.mt-a.mt);
+  return got[0]||null;
+}
+function planDay(o, d){
+  const m=new Date(d.getFullYear(),d.getMonth(),d.getDate()); m.setDate(m.getDate()-((m.getDay()+6)%7));
+  const w=(o.weeks||{})[todayStr(m)]; const dd=w && w.days && w.days[todayStr(d)];
+  return ((dd && dd.tasks)||[]).filter(t=>t && !t.evt && String(t.text||'').trim());
+}
+function planToTask(p){
+  const t=newTask();
+  let txt=String(p.text||'').trim();
+  const subs=S.opt.subjects.filter(x=>x!=='その他').concat(SUBJ_ALL).sort((a,b)=>b.length-a.length);
+  const hit=subs.find(x=>txt.startsWith(x));
+  if(hit){ t.subj=hit; txt=txt.slice(hit.length).replace(/^[\s　:：・･\/／|｜\-－]+/,''); }
+  const br=splitBookRange(txt); t.book=br.book; t.range=br.range;
+  const mn=typeof p.act==='number'? Math.max(0,p.act) : (Number(p.min)||0);
+  t.h=Math.floor(mn/60); t.m=mn%60;
+  return t;
+}
+let planCtx=null;
+async function openPlan(target){
+  const d=new Date(); if(target==='tm') d.setDate(d.getDate()+1);
+  const wd='日月火水木金土'[d.getDay()];
+  $('planTitle').textContent=`計画マップの ${d.getMonth()+1}/${d.getDate()}（${wd}）`;
+  const b=$('planBody'); b.innerHTML='<p class="mini">読みこんでいます…</p>'; $('planApply').hidden=true;
+  openSheet('planSheet');
+  const src=await loadPlan();
+  b.innerHTML=''; planCtx=null;
+  if(!src){
+    b.append(el('div',{class:'miss',style:'background:var(--gold-soft);color:var(--ink)'},'この端末では、計画マップの記録が見つかりませんでした。'));
+    b.append(el('p',{class:'mini',style:'font-size:13.5px;line-height:1.75;color:var(--ink)'},'計画マップで「同期」を使っている人は、このアプリの ⚙️ 設定 →「🔄 同期」で、',el('b',{},'計画マップと同じ同期コード'),'を入れると読みこめます。'));
+    b.append(el('p',{class:'mini',style:'font-size:13.5px;line-height:1.75;color:var(--ink)'},'iPhoneでホーム画面に追加したアプリどうしは、記録を見せあえません。そのときも同期で読みこめます。'));
+    b.append(el('button',{class:'btn block',onclick:()=>{ closeSheets(); setTimeout(()=>$('setBtn').click(),260); }},'⚙️ 同期の設定を開く'));
+    return;
+  }
+  const items=planDay(src.o, d);
+  if(!items.length){
+    b.append(el('p',{class:'mini',style:'font-size:14px;color:var(--ink)'},`計画マップの ${d.getMonth()+1}/${d.getDate()} に「やること」がありません。計画マップで書いてから、もう一度押してください。`));
+    b.append(el('p',{class:'mini'},'読みこんだ記録：'+src.from));
+    return;
+  }
+  const anyDone=items.some(t=>t.done);
+  const rows=items.map(p=>{
+    const t=planToTask(p);
+    const on = target==='tm' ? true : (anyDone ? !!p.done : true);
+    const cb=el('input',{type:'checkbox'}); cb.checked=on;
+    const row=el('label',{class:'plrow'+(on?'':' off')}, cb, el('div',{},
+      el('div',{style:'font-weight:900'}, (p.done?'✅ ':'')+(p.star&&!p.nostar?'★ ':'')+p.text),
+      el('div',{class:'s'}, '→ '+(target==='tm'? [t.subj||'教科なし',(t.book||'')+(t.range||'')].filter(Boolean).join('　') : taskLine(t).slice(1)))));
+    cb.onchange=()=>row.classList.toggle('off',!cb.checked);
+    b.append(row);
+    return {cb, t};
+  });
+  let tqcCb=null;
+  if(target!=='tm'){
+    let all=0, done=0, q=0; items.forEach(p=>{ all++; if(p.done) done++; if(p.star && !p.nostar) q++; });
+    const c=all? Math.floor(done/all*100) : 0;
+    tqcCb=el('input',{type:'checkbox'}); tqcCb.checked=true;
+    b.append(el('label',{class:'switch',style:'margin-top:10px'}, tqcCb, `TQCの「今日」も入れる（Q＝★の数 ${q}・C＝達成率 ${c}%）`));
+    tqcCb._v={q,c};
+    b.append(el('p',{class:'mini'}, anyDone? 'できた（✅）のやることに、はじめからチェックが入っています。' : 'まだ ✅ がついていないので、全部にチェックが入っています。'));
+    b.append(el('p',{class:'mini'},'時間は計画マップの時間が入ります。教科・教材名・ページの分かれ方がちがうところは、入れたあとで直してください。'));
+  } else {
+    b.append(el('p',{class:'mini'},'明日のタスクに入ります。明日アプリを開くと「今日のタスク」になります。'));
+  }
+  b.append(el('p',{class:'mini'},'読みこんだ記録：'+src.from));
+  planCtx={target, rows, tqcCb};
+  $('planApply').hidden=false;
+}
+$('fromPlan').onclick=()=>openPlan('today');
+$('tmPlan').onclick=()=>openPlan('tm');
+$('planApply').onclick=()=>{
+  if(!planCtx) return;
+  const pick=planCtx.rows.filter(r=>r.cb.checked).map(r=>r.t);
+  if(!pick.length){ toast('1つ以上えらんでください'); return; }
+  if(planCtx.target==='tm'){
+    S.tomorrow.tasks=S.tomorrow.tasks.filter(x=>x.subj||x.book||x.range).concat(pick.map(t=>({id:uid(),subj:t.subj,book:t.book,range:t.range})));
+    tmTouch(); closeSheets(); renderTm(); toast('明日のタスクに入れました');
+    return;
+  }
+  // まだ何も書いていないタスク（教材だけ引きついだものもふくむ）は入れかえる
+  const keep=S.today.tasks.filter(x=>x.range||x.h||x.m||x.rate!==''||x.review||x.golden);
+  S.today.tasks=keep.concat(pick);
+  S.today.carried='plan';
+  if(planCtx.tqcCb && planCtx.tqcCb.checked){ S.today.tqc.q=String(planCtx.tqcCb._v.q); S.today.tqc.c=String(planCtx.tqcCb._v.c); }
+  pick.forEach(t=>{ if(t.book && !S.books.includes(t.book)) S.books.unshift(t.book); });
+  S.books=S.books.slice(0,40);
+  S.today.tManual=false;
+  flush(); closeSheets(); renderAll(); toast(pick.length+'こ入れました');
+  setTimeout(()=>$('cardTask').scrollIntoView({behavior:'smooth',block:'start'}),300);
+};
 
 /* ===== よく使う教材 ===== */
 function addPreset(subj, book, range){
@@ -1305,11 +1515,13 @@ function headOf(raw){
   if(/^レビュー/.test(l)) return 'review';
   if(/仕組み/.test(l)) return 'sys';
   if(/^アフター/.test(l)) return 'after';
+  if(/^(その他質問|質問その他|その他|質問)$/.test(l)) return 'after';   // v13：その他・質問も、ここから先は読まない
   if(/^タスクと/.test(l)) return 'skip';
   return null;
 }
 const RE_MAX = /MAX[：:]?\s*T\s*([\d.]*)\D+Q\s*(\d*)\D+C\s*(\d*)/i;
 const RE_TOD = /(?:今日|本日)[：:]?\s*T\s*([\d.]*)\D+Q\s*(\d*)\D+C\s*(\d*)/;
+function sysMark(v){ return v==='ok'?'⭕️':v==='ng'?'❌':v==='na'?'➖':'　'; }
 function looksLikeItem(l){ return /^[・･✅☑✓☐□■⭕◯○❌×✕]/.test(l.replace(/️/g,'')); }
 
 function parseLongLine(str, done){
@@ -1404,8 +1616,8 @@ function parseReport(txt){
     }
     if(sec==='sys'){
       const c=l.replace(/️/g,'');
-      const m3=c.match(/^([⭕◯○✅☑❌×✕☓]?)[\s・･]*(.*)$/);
-      const st=/[⭕◯○✅☑]/.test(m3[1]||'') ? 'ok' : (/[❌×✕☓]/.test(m3[1]||'') ? 'ng' : '');
+      const m3=c.match(/^([⭕◯○✅☑❌×✕☓➖]?)[\s・･]*(.*)$/);
+      const st=/[⭕◯○✅☑]/.test(m3[1]||'') ? 'ok' : (/[❌×✕☓]/.test(m3[1]||'') ? 'ng' : (/➖/.test(m3[1]||'') ? 'na' : ''));
       const body=(m3[2]||'').trim();
       if(body) out.systems.push({text:body, st});
       continue;
@@ -1433,7 +1645,7 @@ function impSections(r){
         if(t.review) parts.push('　'+t.review.replace(/\n/g,' '));
         return parts.join('\n');
       }).join('\n')},
-    {k:'sys',   name:'仕組みの達成度', has:r.systems.length>0, body:r.systems.map(s=>(s.st==='ok'?'⭕️':s.st==='ng'?'❌':'　')+s.text).join('\n')}
+    {k:'sys',   name:'仕組みの達成度', has:r.systems.length>0, body:r.systems.map(s=>sysMark(s.st)+s.text).join('\n')}
   ];
 }
 function renderImpPreview(){
@@ -1564,13 +1776,14 @@ function build(){
   if(!S.systems.length) bad('仕組み（1つも書かれていません）');
   S.systems.forEach((s,i)=>{
     if(!s.text.trim()){ if(sysFilled.length) return; bad('仕組み'+(i+1)+'の文','sys-'+s.id+'-text'); }
-    else L.push((S.today.sysDone[s.id]==='ok'?'⭕️':S.today.sysDone[s.id]==='ng'?'❌':'　')+s.text.trim());
+    else L.push(sysMark(S.today.sysDone[s.id])+s.text.trim());
     if(!S.today.sysDone[s.id]) bad('仕組み'+(i+1)+'の⭕️❌','sys-'+s.id+'-done');
   });
   const af=S.afters.filter(a=>String(S.today.afterRes[a.id]||'').trim());
+  let no=5;   // v13：⑤から先は、書いたものだけ番号を順につける
   if(af.length){
     L.push('');
-    L.push('⑤アフター報告');
+    L.push('⑤アフター報告'); no=6;
     af.forEach((a,k)=>{
       if(k) L.push('');
       L.push('【返信'+(a.at?'（'+fmtMD(a.at)+'）':'')+'】');
@@ -1578,6 +1791,12 @@ function build(){
       L.push('【アフター】');
       L.push(String(S.today.afterRes[a.id]).trim());
     });
+  }
+  const ot=(S.today.others||[]).filter(o=>String(o.text||'').trim());
+  if(ot.length){
+    L.push('');
+    L.push('⑤⑥⑦'[no-5]+'その他・質問');
+    ot.forEach((o,k)=>{ if(k) L.push(''); L.push('【'+(o.kind==='q'?'質問':'その他')+'】'); L.push(String(o.text).trim()); });
   }
   return {text:L.join('\n'), miss, keys};
 }
@@ -1631,7 +1850,7 @@ function splitReport(txt){
     });
     if(buf) lines.push(buf);
   });
-  const good=l=>/^[①②③④⑤]|^【|^[・･]/.test(l);
+  const good=l=>/^[①②③④⑤⑥⑦]|^【|^[・･]/.test(l);
   const len=a=>a.join('\n').length;
   const out=[]; let cur=[];
   for(const l of lines){
@@ -1743,7 +1962,10 @@ $('histBtn').onclick=()=>{
     b.append(el('div',{class:'hist'},
       el('div',{class:'row',style:'justify-content:space-between'}, el('span',{class:'d'},fmtMD(h.date)),
         el('button',{class:'btn',style:'padding:6px 12px',onclick:async()=>{ try{ await navigator.clipboard.writeText(h.text); toast('コピーしました'); }catch(e){ toast('コピーできませんでした'); } }},'コピー')),
-      el('pre',{},h.text)));
+      (()=>{ const pre=el('pre',{class:'fold'},h.text); const box=el('div',{},pre);
+        if(h.text.split('\n').length>6){ const mb=el('button',{class:'more',onclick:()=>{ const f=pre.classList.toggle('fold'); mb.textContent=f?'▼ 全文を見る':'▲ たたむ'; }},'▼ 全文を見る'); box.append(mb); }
+        else pre.classList.remove('fold');
+        return box; })()));
   });
   openSheet('histSheet');
 };
@@ -1764,7 +1986,16 @@ $('wipeAll').onclick=()=>{ if(HSync.code()){ toast('同期中は消せません�
 
 /* 今日だけリセット */
 function taskTemplates(){ return S.today.tasks.filter(t=>t.subj||t.book).map(t=>({subj:t.subj,book:t.book,range:t.range})); }
-function resetToday(carry){ const tpl=(carry===false)? [] : taskTemplates(); S.today=emptyToday(tpl); flush(); $('banner').hidden=true; renderAll(); }
+function resetToday(carry){
+  let tpl=(carry===false)? [] : taskTemplates(), fromTm=false;
+  // v13：前の日に「明日のタスク」を書いていれば、それを今日のタスクにする（引きつぐ がオンのとき）
+  const tm=(S.tomorrow.tasks||[]).filter(x=>x.subj||x.book||x.range);
+  if(carry!==false && tm.length && S.tomorrow.made && S.tomorrow.made<todayStr()){
+    if(S.tomorrow.carry){ tpl=tm.map(x=>({subj:x.subj,book:x.book,range:x.range,fill:true})); fromTm=true; S.tomorrow.tasks=[]; }
+  }
+  S.today=emptyToday(tpl); if(fromTm) S.today.carried='tomorrow';
+  flush(); $('banner').hidden=true; renderAll();
+}
 $('resetToday').onclick=()=>{ if(confirm('今日のタスク・レビュー・TQCの「今日」・⭕️❌を消します。目標・長期タスク・仕組み・MAXは残ります。いいですか？')) resetToday(false); };
 
 /* 日付が変わったとき */
@@ -1785,7 +2016,7 @@ function renderAll(){
   clearErrors(); errFirstKey=null;
   renderHeader();
   goalTa.value=S.goal; markFilled(goalTa); autoGrow(goalTa);
-  renderLong(); renderTasks(); renderReview(); renderSys(); renderAfter();
+  renderLong(); renderTasks(); renderReview(); renderSys(); renderAfter(); renderOther(); renderTm();
   bindTqc();
   tqcTa.value=S.today.tqcReview; markFilled(tqcTa); autoGrow(tqcTa);
   renderPresets();
@@ -1899,6 +2130,13 @@ MAX：T4・Q3・C100
 解き直しは3時間あけてからやってください
 【アフター】
 3時間あけて解き直したら、7問中6問解けた</div>` },
+    { t:'計画マップから入れる',
+      p:['計画マップに書いた「やること」を、<b>今日のタスクにそのまま入れられます</b>。今日のタスクの下の「<b>📅 計画マップから入れる</b>」を押します。','時間と ★の数（Q）・達成率（C）も入ります。あとは<b>正答率とレビュー</b>を書くだけ。','iPhoneのホーム画面アプリどうしは記録を見せあえないので、<b>計画マップと同じ同期コード</b>で同期しておきます。'],
+      v:`<div class="btn block" style="box-shadow:none">📅 計画マップから入れる</div>
+<div class="carry" style="margin:8px 0 0">計画マップから入れました</div>` },
+    { t:'明日のタスク・その他・質問',
+      p:['いちばん下の「<b>明日のタスク</b>」に書いておくと、明日アプリを開いたとき<b>今日のタスクに入ります</b>（報告文には入りません）。','「<b>その他・質問</b>」には、質問や伝えたいことを自由に。書いた日だけ報告文の最後に入ります。','正答率が出ないタスクは「<b>該当なし</b>」、今日やる日ではない仕組みは「<b>➖ 該当なし</b>」を選べます。'],
+      v:`<div class="twobtn"><button type="button" tabindex="-1" class="ok">⭕️ できた</button><button type="button" tabindex="-1" class="ng">❌ できなかった</button><button type="button" tabindex="-1" class="na on">➖ 該当なし</button></div>` },
     { t:'スマホとiPadで同じにする（同期）',
       p:['スマホでもiPadでも、<b>同じ記録</b>を使えます。⚙️ 設定の「🔄 同期」から始めます。','<b>計画マップなどで同期している人は、そのコードを入れるだけ</b>でOK（コードは全アプリ共通）。'],
       v:`<ol class="gsteps">
@@ -1942,10 +2180,11 @@ function openGuide(start){
 }
 $('helpBtn').onclick = () => openGuide(0);
 $('helpSet').onclick = () => { closeSheets(); setTimeout(() => openGuide(0), 250); };
-const GUIDE_V = 3;   // スライドの中身を大きく変えたら上げる（v9：部屋を開く・2回に分ける／v11：アフター報告）
+const GUIDE_V = 4;   // スライドの中身を大きく変えたら上げる（v9：部屋を開く・2回に分ける／v11：アフター報告）
 let guideNum = 0; try{ guideNum = Number(localStorage.getItem(GUIDE_KEY)) || 0; }catch(e){}
 if(guideNum < 2) openGuide(0);
-else if(guideNum < GUIDE_V) openGuide(guideSlides().findIndex(x=>x.t==='アフター報告'));   // v9までのスライドを見た人には、新しい1枚から
+else if(guideNum < 3) openGuide(guideSlides().findIndex(x=>x.t==='アフター報告'));   // v9までのスライドを見た人には、新しい所から
+else if(guideNum < GUIDE_V) openGuide(guideSlides().findIndex(x=>x.t==='計画マップから入れる'));   // v13   // v9までのスライドを見た人には、新しい1枚から
 
 /* ===================== 同期（v8） ===================== */
 function dlg(title, msg, withInput){

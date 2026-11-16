@@ -187,6 +187,8 @@ textarea{min-height:64px}
 /* 文字数・分けてコピー・部屋を開く（v9） */
 .cnt{text-align:right;font-size:12px;font-weight:900;color:var(--muted);margin-top:6px}
 .cnt.over{color:var(--warn)}
+.sharehint{margin-top:8px;background:var(--chip);border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.6;color:var(--ink)}
+.sharehint b{color:var(--accent)}
 .partbox{background:var(--gold-soft);border-radius:14px;padding:10px 12px;margin-top:10px;font-size:13.5px;line-height:1.6}
 .partbox b{color:var(--ink)}
 .partbox .parts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
@@ -401,6 +403,7 @@ textarea{min-height:64px}
     <textarea class="out" id="outText"></textarea>
     <div class="cnt" id="outCount"></div>
     <div class="mini" style="margin-top:2px">直したいところがあれば、ここで直接書きかえられます。</div>
+    <div class="sharehint" id="shareHint" hidden></div>
     <div class="partbox" id="partBox" hidden></div>
     <div class="nextbox" id="nextBox" hidden></div>
   </div>
@@ -938,7 +941,7 @@ const HSync = (function(){
 })();
 /* HSYNC END */
 
-const VER = 13;
+const VER = 14;
 const KEY = 'studyreport-v1';
 const BK = 'studyreport-backup';
 const DEF_SUBJECTS = ['英語','数学','国語','理科','社会','その他'];
@@ -1878,6 +1881,10 @@ $('outText').addEventListener('input', refreshOut);
 function renderParts(){
   const n=parts.length, pb=$('partBox'), cb=$('copyBtn');
   $('shareBtn').hidden = n>1;
+  /* v14：「📤 送る」で送るとき、Discordの検索に何を入れるか（部屋の名前は学年だけで「勉強」では出てこない・ゆきの質問） */
+  const sh=$('shareHint'), rm=ROOMS.find(r=>r[1]===S.opt.room);
+  sh.hidden = n>1 || !navigator.share;
+  sh.innerHTML = '📤 <b>送る</b>で送るときは、送り先の検索に'+(rm? '「<b>'+rm[0]+'</b>」' : '自分の学年（例：<b>中学2年生</b>）')+'と入れます。部屋の名前は学年だけなので、「勉強」では出てきません。';
   if(n<=1){ pb.hidden=true; cb.textContent='📋 コピーする'; return; }
   pb.hidden=false; pb.innerHTML='';
   pb.append(el('div',{},'📏 長いので ',el('b',{},n+'回に分けて'),' 貼ります。「1通目をコピー」→ 部屋に貼って送る → この画面にもどって次をコピー、の順です。'));

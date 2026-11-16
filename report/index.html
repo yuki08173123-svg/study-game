@@ -941,7 +941,7 @@ const HSync = (function(){
 })();
 /* HSYNC END */
 
-const VER = 14;
+const VER = 15;
 const KEY = 'studyreport-v1';
 const BK = 'studyreport-backup';
 const DEF_SUBJECTS = ['英語','数学','国語','理科','社会','その他'];
@@ -1035,7 +1035,29 @@ function micShow(){
 }
 function stopMic(){
   recWant=false;
-  if(rec){ try{ rec.stop(); }catch(e){} }
+  const r=rec;
+  if(r){
+    try{ r.stop(); }catch(e){}
+    // v15：終わりの知らせが来ない端末があり、ボタンが「止める」のまま動かなくなる → 1.5秒で元にもどす
+    setTimeout(()=>{ if(rec===r){ rec=null; micUi(false); flush(); } },1500);
+  }
+}
+/* v15：音声入力が使えないとき、理由と直し方を画面に出す（ユウキ・ハルネコ「レビューの音声入力が録音できない」）
+   前は2秒で消える小さな表示だけで、見落とすと「押しても何も起きない」に見えた */
+function micHelp(kind, ta){
+  const T={
+    none:['この画面では音声入力ボタンが使えません','キーボードのマイク🎤で入力してください（文字の欄を押すと出るキーボードの、マイクのボタン）。\nDiscordの中でリンクを開いたときは、右上のメニューから「Safariで開く」「Chromeで開く」にすると、ボタンが使えることがあります。'],
+    deny:['マイクが許可されていません','iPhone：設定 → アプリ → Safari → マイク を「許可」にします。\nAndroid：Chromeのアドレスの左のマーク → 権限 → マイクを「許可」にします。\nそのあとアプリを開き直してください。直せないときは、キーボードのマイク🎤で入力できます。'],
+    cap:['マイクが使えませんでした','ほかのアプリ（通話・録音・動画など）がマイクを使っていると、使えないことがあります。閉じてから、もう一度押してください。キーボードのマイク🎤でも入力できます。'],
+    net:['音声入力にはネットが必要です','電波のよいところで、もう一度押してください。キーボードのマイク🎤でも入力できます。'],
+    err:['音声入力を始められませんでした','もう一度押してください。それでもだめなときは、アプリを開き直すか、キーボードのマイク🎤で入力してください。']
+  }[kind]||[];
+  const bg=document.createElement('div'); bg.className='dlg-bg';
+  bg.innerHTML='<div class="dlg"><h3></h3><p style="white-space:pre-line"></p><div class="row"><button class="btn primary block" data-r="ok">わかった</button></div></div>';
+  bg.querySelector('h3').textContent=T[0]; bg.querySelector('p').textContent=T[1];
+  const done=()=>{ bg.remove(); if(ta) setTimeout(()=>ta.focus(),50); };
+  bg.querySelector('[data-r=ok]').onclick=done; bg.addEventListener('click',e=>{ if(e.target===bg) done(); });
+  document.body.appendChild(bg);
 }
 function listenOnce(){
   const r = new SR(); rec = r;
@@ -1043,8 +1065,9 @@ function listenOnce(){
   recCur='';
   r.onresult = e=>{ if(rec!==r) return; recCur = mergeSpeech(e.results); micShow(); };
   r.onerror = e=>{
-    if(e.error==='not-allowed' || e.error==='service-not-allowed'){ recWant=false; toast('マイクの使用が許可されていません'); }
-    else if(e.error==='network'){ recWant=false; toast('音声入力にはネットが必要です'); }
+    if(e.error==='not-allowed' || e.error==='service-not-allowed'){ recWant=false; micHelp('deny', recTa); }
+    else if(e.error==='audio-capture'){ recWant=false; micHelp('cap', recTa); }
+    else if(e.error==='network'){ recWant=false; micHelp('net', recTa); }
     else if(e.error!=='aborted' && e.error!=='no-speech' && !IS_ANDROID) toast('音声入力を止めました');
   };
   r.onend = ()=>{
@@ -1062,13 +1085,20 @@ function listenOnce(){
   r.start();
 }
 function toggleMic(btn, ta){
-  if(!SR){ toast('この端末はキーボードのマイク🎤を使ってください'); ta.focus(); return; }
-  if(rec || recWant){ stopMic(); return; }
+  if(!SR){ micHelp('none', ta); return; }
+  if(rec || recWant){
+    if(recBtn===btn && btn.isConnected){ stopMic(); return; }
+    // v15：ほかの欄のボタン、または画面が作り直されたあとの新しいボタン → 前のを止めて、こちらで始める
+    //（前は「止める」だけで終わり、押しても始まらないことがあった）
+    const old=rec; recWant=false; rec=null; micUi(false);
+    try{ old && old.abort(); }catch(e){}
+    flush();
+  }
   recBtn=btn; recTa=ta; recDone=''; recCur=''; recIdle=0; recWant=true;
   recBase = ta.value.trim()==='' ? '' : ta.value.replace(/\s+$/,'')+'\n';
   micUi(true);
   try{ listenOnce(); toast('話してください。終わったら「■ 止める」'); }
-  catch(err){ recWant=false; rec=null; micUi(false); }
+  catch(err){ recWant=false; rec=null; micUi(false); micHelp('err', ta); }
 }
 document.addEventListener('click', e=>{
   const b=e.target.closest('.mic'); if(!b) return;

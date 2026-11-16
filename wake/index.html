@@ -206,7 +206,7 @@ textarea#goalIn{ width:100%; font:inherit; font-size:16px; padding:10px 12px; bo
 <div id="printBox"></div>
 <audio id="au" playsinline preload="auto"></audio>
 
-<script src="lines.js?v=21"></script>
+<script src="lines.js?v=22"></script>
 <script>
 /* HSYNC BEGIN ─────────────────────────────────────────────
    同期（iPad・スマホ・パソコンで同じにする）。ヒラボイス v12（2026-10-25 ユウキ・ハルネコ「iPadでも使いたい」）。
@@ -339,6 +339,7 @@ const HSync = (function(){
     if(isBusy()){
       if(!pending) setTimeout(retryPending, 5000);
       pending = { obj, msg, seq: pending ? pending.seq : seq };
+      try{ if(C.live) C.live(obj); }catch(e){}   // 読みなおさずに、画面の数え方にだけ先に足す（v22・ヒラボイス）
       return;
     }
     applying = true;
@@ -645,7 +646,7 @@ const HSync = (function(){
 /* HSYNC END */
 
 /* ===================== 基本 ===================== */
-const VER = 21;
+const VER = 22;
 const KEY = 'wake_v1';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1626,6 +1627,24 @@ function wakeMerge(k, lr, rr, remNewer){
   out.help = !!(nw.help || od.help);
   return JSON.stringify(out);
 }
+/* 会話中に届いたもう1台の記録を、読みなおさずに手元の記録へ足す（v22・ユウキ・ハルネコ「iPhoneとiPadで続いた日数が合わない」）。
+   アラームから開くとすぐ会話になり、受けとった記録は会話が終わるまで待たされる → 会話中のゴール宣言の日数がこの端末の分だけになっていた。
+   この端末で書いたものを優先し、ない日・ない宣言の日だけを足す（入れ物は作りかえない＝会話中に持っている参照がずれない） */
+function wakeLive(obj){
+  const raw = obj && obj.keys && obj.keys[KEY]; if(!raw) return;
+  const r = JSON.parse(raw);
+  Object.entries(r.days || {}).forEach(([d, v]) => {
+    const cur = S.days[d];
+    if(!cur) S.days[d] = v;
+    else Object.keys(v).forEach(k => { if(cur[k] === undefined) cur[k] = v[k]; });
+  });
+  if(r.goal){
+    const g = goal();
+    if(!g.text && r.goal.text) g.text = r.goal.text;
+    Object.keys(r.goal.days || {}).forEach(d => { g.days[d] = true; });
+  }
+  ['test', 'words', 'subj', 'ask'].forEach(k => { if(S[k] === undefined && r[k] !== undefined) S[k] = r[k]; });
+}
 function sheet(html){
   const bg = document.createElement('div'); bg.className = 'sheet-bg';
   bg.innerHTML = `<div class="sheet">${html}<button class="close">閉じる</button></div>`;
@@ -1667,6 +1686,7 @@ HSync.init({
   app: 'wake', label: 'ヒラボイス',
   keys: [KEY],
   mergeKey: wakeMerge,
+  live: wakeLive,
   hasData: () => Object.keys(S.days).length > 0 || !!(S.goal && S.goal.text) || !!S.test,
   busy: () => $('#talk').classList.contains('on') || !!document.querySelector('.sheet-bg'),   // 会話・宣言の最中やシートを開いているときは読みなおさない
   mount: '#hsBox', cls: { btn: 'sub ok', ghost: 'sub', dim: 'muted' },

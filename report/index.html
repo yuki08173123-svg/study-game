@@ -281,7 +281,7 @@ textarea{min-height:64px}
   <section class="voicecard">
     <h2>🎤 音声入力しよう</h2>
     <p>報告は<b>音声入力</b>が基本です。文章の欄には <span class="k">🎤 音声</span> ボタンがあります。押して話し、終わったら <span class="k">■ 止める</span> を押します。</p>
-    <p>あとから読み返して、おかしいところだけ直せばOK。ボタンが使えない端末では、キーボードのマイク 🎤 から入力してください。</p>
+    <p>あとから読み返して、おかしいところだけ直せばOK。ボタンが使えない端末（iPhone・iPad のホーム画面から開いたときなど）では、キーボードのマイク 🎤 から入力してください。</p>
   </section>
 
   <section class="card" id="importCard" hidden>
@@ -941,7 +941,7 @@ const HSync = (function(){
 })();
 /* HSYNC END */
 
-const VER = 15;
+const VER = 16;
 const KEY = 'studyreport-v1';
 const BK = 'studyreport-backup';
 const DEF_SUBJECTS = ['英語','数学','国語','理科','社会','その他'];
@@ -1003,6 +1003,11 @@ function totalHours(){ let mins=0; for(const t of S.today.tasks) mins+=(+t.h||0)
    → Android は1文ずつ聞いて自動で聞き直す形にし、どの端末でも重なった結果はまとめる。 */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const IS_ANDROID = /Android/i.test(navigator.userAgent);
+/* v16：iPhone・iPad のホーム画面から開いたアプリでは、Apple の決まりでボタンの音声入力（SpeechRecognition）が使えない
+   （WebKit bug 225298・service-not-allowed になる）。ユウキ・ハルネコ「マイクを許可しても音声入力できない」の本当の原因。
+   → ボタンを押したら文字の欄にキーボードを出し、キーボードのマイク🎤で話すよう案内する（キーボードの音声入力はホーム画面でも使える） */
+const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IOS_HOME = IS_IOS && (navigator.standalone === true || matchMedia('(display-mode: standalone)').matches);
 let rec=null, recBase='', recDone='', recCur='', recWant=false, recIdle=0, recBtn=null, recTa=null;
 function mergeSpeech(results){
   const parts=[];
@@ -1047,7 +1052,9 @@ function stopMic(){
 function micHelp(kind, ta){
   const T={
     none:['この画面では音声入力ボタンが使えません','キーボードのマイク🎤で入力してください（文字の欄を押すと出るキーボードの、マイクのボタン）。\nDiscordの中でリンクを開いたときは、右上のメニューから「Safariで開く」「Chromeで開く」にすると、ボタンが使えることがあります。'],
-    deny:['マイクが許可されていません','iPhone：設定 → アプリ → Safari → マイク を「許可」にします。\nAndroid：Chromeのアドレスの左のマーク → 権限 → マイクを「許可」にします。\nそのあとアプリを開き直してください。直せないときは、キーボードのマイク🎤で入力できます。'],
+    kbd:['キーボードのマイク🎤で話してください','iPhone・iPad のホーム画面から開いたアプリでは、Apple の決まりで、このボタンの音声入力が使えません。\n「わかった」を押すとキーボードが出ます。キーボードの下にあるマイク🎤を押して話してください。\n（マイクが見当たらないときは、設定 → 一般 → キーボード →「音声入力」をオンにします）'],
+    deny:['マイクが許可されていません','iPhone：Safari のアドレスの左の「ぁあ」→ Webサイトの設定 → マイク を「許可」にします。\nAndroid：Chromeのアドレスの左のマーク → 権限 → マイクを「許可」にします。\nそのあとアプリを開き直してください。直せないときは、キーボードのマイク🎤で入力できます。'],
+    svc:['音声入力のサービスが使えません','iPhone・iPad：設定 → 一般 → キーボード →「音声入力」をオンにします。\nスクリーンタイムを使っているときは、スクリーンタイム → コンテンツとプライバシーの制限 → 許可されたApp で「Siriと音声入力」もオンにします。\nそれでもだめなときは、キーボードのマイク🎤で入力してください。'],
     cap:['マイクが使えませんでした','ほかのアプリ（通話・録音・動画など）がマイクを使っていると、使えないことがあります。閉じてから、もう一度押してください。キーボードのマイク🎤でも入力できます。'],
     net:['音声入力にはネットが必要です','電波のよいところで、もう一度押してください。キーボードのマイク🎤でも入力できます。'],
     err:['音声入力を始められませんでした','もう一度押してください。それでもだめなときは、アプリを開き直すか、キーボードのマイク🎤で入力してください。']
@@ -1065,7 +1072,8 @@ function listenOnce(){
   recCur='';
   r.onresult = e=>{ if(rec!==r) return; recCur = mergeSpeech(e.results); micShow(); };
   r.onerror = e=>{
-    if(e.error==='not-allowed' || e.error==='service-not-allowed'){ recWant=false; micHelp('deny', recTa); }
+    if(e.error==='service-not-allowed'){ recWant=false; micHelp(IOS_HOME ? 'kbd' : 'svc', recTa); }
+    else if(e.error==='not-allowed'){ recWant=false; micHelp(IOS_HOME ? 'kbd' : 'deny', recTa); }
     else if(e.error==='audio-capture'){ recWant=false; micHelp('cap', recTa); }
     else if(e.error==='network'){ recWant=false; micHelp('net', recTa); }
     else if(e.error!=='aborted' && e.error!=='no-speech' && !IS_ANDROID) toast('音声入力を止めました');
@@ -1085,6 +1093,7 @@ function listenOnce(){
   r.start();
 }
 function toggleMic(btn, ta){
+  if(IOS_HOME){ micHelp('kbd', ta); return; }   // v16：ホーム画面のアプリでは始めずに、キーボードのマイクへ
   if(!SR){ micHelp('none', ta); return; }
   if(rec || recWant){
     if(recBtn===btn && btn.isConnected){ stopMic(); return; }
@@ -2120,7 +2129,7 @@ MAX：T4・Q3・C100
   <div style="background:var(--accent);color:var(--accent-ink)">📄 全文を作る → 📋 コピー → Discordに貼る</div>
 </div>` },
     { t:'文章は「話して」入れる',
-      p:['レビューなどの文章の欄には <span class="gpill">🎤 音声</span> ボタンがあります。','押して話し、終わったら <span class="gpill red">■ 止める</span>。あとで読み返して、おかしいところだけ直せばOKです。ボタンが使えない端末は、キーボードのマイクを使ってください。'],
+      p:['レビューなどの文章の欄には <span class="gpill">🎤 音声</span> ボタンがあります。','押して話し、終わったら <span class="gpill red">■ 止める</span>。あとで読み返して、おかしいところだけ直せばOKです。ボタンが使えない端末や、iPhone・iPad のホーム画面から開いたときは、キーボードのマイク🎤で話してください（ボタンを押すと案内が出ます）。'],
       v:`<div class="gbox" style="position:relative;padding-bottom:46px">数学の問題集で、まちがえた3問を解き直した。式の立て方をまちがえていたので、明日は最初に解き直しからやる。<span class="gpill red" style="position:absolute;right:8px;bottom:8px">■ 止める</span></div>` },
     { t:'毎日書くのは、半分だけ',
       p:['<b>🔒 次の日も残る</b>のマークがついた所は、一度書けば次の日もそのまま残ります。','毎日入れるのは、<b>今日のタスク・TQCの「今日」・レビュー・⭕️❌</b> だけです。'],

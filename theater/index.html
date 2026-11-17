@@ -660,7 +660,7 @@ select{background:var(--surf2);border:1px solid var(--line2);border-radius:10px;
 <script>
 'use strict';
 /* ===================== 定数 ===================== */
-const VER = 65;
+const VER = 66;
 const K_PROG='th_prog', K_FAV='th_fav', K_CFG='th_cfg', K_CACHE='th_cache', K_ADM='th_adm',
       K_FOLD='th_folders', K_OUT='th_out', K_CHAP='th_chap', K_MAN='th_man', K_MYCH='th_mych',
       K_TOK='th_tok', K_OKAT='th_okat', K_AT='th_at', K_DAY='th_day', K_DGOAL='th_dgoal',
@@ -1273,6 +1273,8 @@ function ytId(s){
   return m ? m[1] : '';
 }
 const isLoom = id => String(id).startsWith('loom:');
+/* 資料が Discord の投稿（スライドのPDF）なら、ボタンの言い方を変える */
+const isPdfDoc = u => /^https:\/\/discord\.com\/channels\//.test(String(u || ''));
 
 /* ===================== 動画リストの取りこみ ===================== */
 /* 目次（チャプター）。検索にも使うので videos.json といっしょに読む */
@@ -3546,8 +3548,10 @@ function drawBody(){
       <b>回数のカウント・つづきから・付箋は使えます。</b>
       速さの切りかえだけは Loom の画面の中（右下）で行ってください。</div>` : ''}
     ${v.doc ? `<a class="btn" id="docbtn" href="${esc(v.doc)}" target="_blank" rel="noopener" style="margin-top:14px">
-      ${ICO.book({s:18})}<span>この動画のテキストを見る</span></a>
-      <div class="lead" style="margin-top:6px">動画の内容を1枚にまとめたものです（別の画面で開きます）。</div>` : ''}
+      ${ICO.book({s:18})}<span>${isPdfDoc(v.doc) ? 'この動画のスライド（PDF）を見る' : 'この動画のテキストを見る'}</span></a>
+      <div class="lead" style="margin-top:6px">${isPdfDoc(v.doc)
+        ? 'Discord の投稿が開きます。そこから PDF を見たり、保存したりできます。'
+        : '動画の内容を1枚にまとめたものです（別の画面で開きます）。'}</div>` : ''}
     ${v.d ? `<div class="desc">${esc(v.d)}</div>` : ''}
     ${canReview(v.id) ? `<div class="sec"><h2>ふりかえり</h2></div>
       <div class="lead" style="margin-top:-2px">見出しを見て、その話を思い出せるか試せます。</div>

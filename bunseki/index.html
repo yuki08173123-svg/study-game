@@ -11,7 +11,6 @@
 <link rel="icon" href="icon-192-v1.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="分析マップ">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
@@ -206,90 +205,70 @@ table.sum thead tr > :first-child{background:var(--bg)}
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:700;z-index:100;width:max-content;max-width:calc(100vw - 28px);text-align:center;box-shadow:var(--shadow-lg)}
 .ver{text-align:center;font-size:12px;color:var(--muted);margin:24px 0}
 
-/* 下のタブ（つくる／学ぶ） */
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--card);border-top:1px solid var(--line);display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
-.tabbar button{flex:1;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:700;color:var(--muted);padding:4px 0;min-height:50px}
-.tabbar button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.tabbar button.on{color:var(--accent)}
-/* 学ぶ */
-.lhero{background:linear-gradient(135deg,var(--accent),#14444A);color:#fff;border-radius:20px;padding:20px;margin:12px 0}
-.lhero h2{margin:0 0 4px;font-size:21px;color:#fff}
-.lhero p{margin:0 0 14px;font-size:14px;opacity:.9}
-.lhero .btn{background:#fff;color:#0E5E66;width:100%;font-size:17px;min-height:54px}
-.lhero .pbar{background:rgba(255,255,255,.25)}
-.lhero .pbar i{background:#fff}
-.vcard{display:flex;gap:12px;align-items:flex-start;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px;margin:10px 0;text-decoration:none;color:var(--ink)}
-.vcard .ic{flex:none;width:44px;height:44px;border-radius:12px;background:var(--shu-soft);color:var(--shu);display:grid;place-items:center;font-size:18px}
-.vcard .ic.loom{background:var(--accent-soft);color:var(--accent)}
-.vcard .m{flex:1;min-width:0}
-.vcard .k{font-size:12px;font-weight:700;color:var(--muted)}
-.vcard .t{font-weight:900;font-size:16px;line-height:1.4;overflow-wrap:anywhere}
-.vcard .d{font-size:13px;color:var(--muted);margin-top:2px}
-.vcard .chips{margin-top:8px}
-.vcard .chip{text-decoration:none;color:var(--ink)}
-.vlink{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--shu);text-decoration:none;background:var(--shu-soft);border-radius:999px;padding:6px 12px;margin-top:8px}
-/* スライド */
-.sv{position:fixed;inset:0;z-index:90;background:var(--bg);display:flex;flex-direction:column}
-.sv .top{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 8px}
-.sv .top .c{flex:1;font-size:13px;font-weight:700;color:var(--muted);text-align:center}
-.sv .prog{margin:0 16px}
-.sv .stage{flex:1;overflow-y:auto;padding:14px 16px 16px;-webkit-overflow-scrolling:touch}
-.sl{max-width:640px;margin:0 auto;background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:22px 20px;min-height:100%;display:flex;flex-direction:column}
-.sl .sec{font-size:12px;font-weight:900;color:var(--accent);letter-spacing:.08em}
-.sl h2{font-size:23px;margin:6px 0 14px;line-height:1.4}
-.sl .body{flex:1;font-size:16px;line-height:1.75}
-.sl .body p{margin:0 0 12px}
-.sl .body ul,.sl .body ol{margin:0 0 12px;padding-left:22px}
-.sl .body li{margin:4px 0}
-.sl .big{font-size:24px;font-weight:900;line-height:1.5;color:var(--accent);margin:8px 0 14px}
-.sl .quote{border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:6px 0 14px;font-weight:900;font-size:19px;line-height:1.55}
-.sl .box{background:var(--chip);border-radius:12px;padding:12px 14px;margin:0 0 12px}
-.sl .box b{color:var(--accent)}
-.sl .ng{background:var(--shu-soft);color:var(--shu);border-radius:12px;padding:10px 14px;margin:0 0 12px;font-weight:700}
-.sl .flow{display:flex;flex-direction:column;gap:6px;margin:4px 0 14px}
-.sl .flow > div{background:var(--accent-soft);border-radius:12px;padding:10px 14px;font-weight:700}
-.sl .flow > div small{display:block;font-weight:500;color:var(--muted);font-size:13px}
-.sl .flow > i{text-align:center;font-style:normal;color:var(--muted);line-height:1}
-.sl .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 14px}
-.sl .grid3 > div{background:var(--chip);border-radius:12px;padding:10px 8px;text-align:center;font-size:13px;line-height:1.5}
-.sl .grid3 > div b{display:block;font-size:26px;color:var(--accent);line-height:1.2}
-.sl .num3{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:4px;margin:4px 0 14px;text-align:center}
-.sl .num3 > div{background:var(--chip);border-radius:12px;padding:10px 4px;font-size:12px;line-height:1.4}
-.sl .num3 > div b{display:block;font-size:24px;color:var(--accent)}
-.sl .num3 > i{font-style:normal;color:var(--muted)}
-.sl .bar{display:flex;height:38px;border-radius:10px;overflow:hidden;margin:6px 0 6px;font-size:13px;font-weight:900}
-.sl .bar > div{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden}
-.sl details{background:var(--chip);border-radius:12px;margin:0 0 10px}
-.sl details summary{padding:12px 14px;font-weight:700;cursor:pointer;list-style:none}
-.sl details summary::-webkit-details-marker{display:none}
-.sl details summary::after{content:"　▸ 答えを見る";color:var(--accent);font-size:13px}
-.sl details[open] summary::after{content:""}
-.sl details > div{padding:0 14px 12px;color:var(--accent);font-weight:700}
-.sl .src{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px}
-.qopts{display:grid;gap:10px;margin:0 0 14px}
-.qopt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:12px 14px;font-size:16px;line-height:1.55;min-height:52px}
-.qopt .mk{flex:none;width:26px;height:26px;border-radius:50%;background:var(--chip);display:grid;place-items:center;font-weight:900;font-size:13px;color:var(--muted)}
-.qopt.right{border-color:var(--ok);background:var(--ok-soft)}
-.qopt.right .mk{background:var(--ok);color:#fff}
-.qopt.wrong{border-color:var(--shu);background:var(--shu-soft)}
-.qopt.wrong .mk{background:var(--shu);color:#fff}
-.qopt.dim{opacity:.5}
-.qopt:disabled{color:var(--ink)}
-.qres{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
-.qres b{flex:none;min-width:52px}
-.qres span{flex:1}
-.qres small{color:var(--shu);font-weight:700}
-.qres a{flex:none;color:var(--accent);font-weight:700;font-size:13px}
-.sv .nav{display:flex;gap:10px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--bg)}
-.sv .nav .btn{flex:1}
-.sv .nav .btn.pri{flex:2}
+/* ── 新しい分析マップ（2026-11 版）で足した見た目 ── */
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cols2 label{font-size:13px;color:var(--muted);font-weight:700;display:block;margin-bottom:3px}
+.cols2 .inp{text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.lrow{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px;margin:10px 0}
+.lrow .hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.lrow .no{font-weight:900;color:var(--shu);font-size:16px}
+.lrow .hd .sp{flex:1}
+.lrow .two{display:grid;grid-template-columns:1fr 92px;gap:8px}
+.lrow label{font-size:12px;color:var(--muted);font-weight:700;display:block;margin:6px 0 2px}
+.lrow .inp{min-height:44px;font-size:16px;padding:9px 11px}
+.lrow .pts{display:flex;align-items:center;gap:4px}
+.lrow .pts .inp{text-align:center;font-weight:900}
+.kind{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}
+.score4{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.score4 > div{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:10px 6px;text-align:center}
+.score4 .k{font-size:11px;font-weight:700;color:var(--muted)}
+.score4 .v{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.3}
+.score4 .v.t{color:var(--accent)}
+.score4 .v.r{color:var(--shu)}
+/* 取れた失点のタスク表（続きのページ） */
+table.task{border-collapse:collapse;width:100%;min-width:640px;font-size:14px;background:var(--card)}
+table.task th,table.task td{border:1px solid var(--line);padding:6px;text-align:center;vertical-align:middle}
+table.task th{font-size:12px;color:var(--muted);font-weight:700;background:var(--bg);white-space:nowrap}
+table.task td.l{text-align:left;overflow-wrap:anywhere;min-width:120px}
+table.task td.p{white-space:nowrap;font-weight:700}
+table.task tr.fin td{background:var(--ok-soft)}
+.lap{border:0;background:transparent;width:100%;min-height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:12px;color:var(--muted)}
+.lap .b{width:22px;height:22px;border:2px solid var(--muted);border-radius:5px;display:grid;place-items:center;font-size:14px;font-weight:900;color:#fff}
+.lap.on .b{background:var(--ok);border-color:var(--ok)}
+.lap.on{color:var(--ink);font-weight:700}
+.fin-b{border:0;background:transparent;width:100%;min-height:44px;display:grid;place-items:center}
+.fin-b .b{width:26px;height:26px;border:2px solid var(--muted);border-radius:50%;display:grid;place-items:center;font-weight:900;color:#fff}
+.fin-b.on .b{background:var(--ok);border-color:var(--ok)}
+table.fix{border-collapse:collapse;width:100%;font-size:14px;background:var(--card)}
+table.fix th,table.fix td{border:1px solid var(--line);padding:8px;vertical-align:top}
+table.fix th{font-size:12px;color:var(--muted);font-weight:700;background:var(--bg);text-align:center}
+table.fix td{overflow-wrap:anywhere}
+table.fix td:first-child{text-align:center;font-weight:900;white-space:nowrap;width:4em}
+.foot{border:2px solid var(--ink);border-radius:10px;text-align:center;font-weight:900;font-size:13px;padding:8px 10px;margin-top:10px}
+.sechd{display:flex;align-items:center;gap:8px;margin:18px 0 6px}
+.sechd h3{flex:1;margin:0;font-size:17px;font-weight:900}
+.sechd .edit{border:0;background:transparent;color:var(--accent);font-size:13px;font-weight:700}
+.note{font-size:12px;color:var(--muted);margin:4px 0 0}
+.vlink{display:flex;align-items:center;justify-content:center;gap:6px;font-size:15px;font-weight:700;color:var(--shu);text-decoration:none;background:var(--shu-soft);border-radius:14px;padding:12px;margin:0 0 12px}
+.nx{display:flex;gap:6px;align-items:center}
+.nx .inp{flex:1;min-width:0}
+.nx .no-b{flex:none;border:1.5px solid var(--line);background:var(--card);border-radius:10px;min-height:48px;padding:0 10px;font-size:13px;font-weight:700;color:var(--muted)}
+.nx .no-b.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pctmsg{border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;margin:10px 0}
+.pctmsg.good{background:var(--ok-soft);color:var(--ok)}
+.pctmsg.mid{background:#FFF4D6;color:#8A6200}
+.pctmsg.bad{background:var(--shu-soft);color:var(--shu)}
+.pc-good{color:var(--ok)!important}.pc-mid{color:#B07D00!important}.pc-bad{color:var(--shu)!important}
+.lapd{display:flex;flex-direction:column;align-items:center;gap:3px}
+.lapd input{width:100%;min-width:104px;border:1px solid var(--line);border-radius:6px;font-size:12px;padding:3px;background:var(--card)}
+.lapd .lap{min-height:34px}
 </style>
 </head>
 <body>
 
 <!-- ホーム -->
 <section id="home">
-  <header class="top" id="homeTop">
+  <header class="top">
     <h1><img src="icon-192-v1.png" alt="">分析マップ</h1>
     <button data-users-tag hidden></button>
     <button class="iconbtn" id="btnSet" aria-label="設定">⚙️<i class="dot" id="setDot" hidden></i></button>
@@ -299,21 +278,23 @@ table.sum thead tr > :first-child{background:var(--bg)}
       <span class="t"><b>新しいバージョンがあります</b><span id="updVer"></span></span><span>入れる ›</span>
     </button>
     <div class="hero">
-      <h2>テストが返ってきたら</h2>
-      <p>質問に答えていくだけで、分析マップができあがります。できたら画像にして、Discord の部屋に出しましょう。</p>
+      <h2>テスト・成績が返ってきたら</h2>
+      <p>返ってきてから<b>必ず1週間以内</b>に作ります（1か月たつと内容を忘れてしまいます）。1〜2時間かけてじっくり書けば、今から何をすればいいかが全部わかります。</p>
       <button class="btn" id="btnNew">＋ 分析マップを作る</button>
     </div>
+    <a class="vlink" href="https://youtu.be/KybljXAnKHE" target="_blank" rel="noopener">▶ 分析マップの使い方（動画）</a>
     <div id="mapList"></div>
-    <details class="ex explain" id="explain">
+    <details class="ex explain">
       <summary>分析マップの言葉</summary>
       <div style="padding:0 14px 14px">
         <dl>
-          <dt>失点</dt><dd>満点から点数を引いた、間違えた点。100点満点で87点なら、失点は13点。</dd>
-          <dt>取れた失点</dt><dd>やったことがあるのに間違えた点。覚えていれば・ミスしなければ取れた点で、次のテストで取りにいく点です。</dd>
-          <dt>取れない失点</dt><dd>解法を見てもわからない点。まだ習っていない・まったく歯が立たなかったなど、いまの実力では取れなかった点です。</dd>
-          <dt>KK率</dt><dd>やったことある・似てる・近い問題（KKできる問題）のうち、正解できた割合。41問のうち38問なら92%。90%以上が当たり前、100%に近づけます。</dd>
-          <dt>次の目標点</dt><dd>点数＋取れた失点。取れた失点を全部取れば届く点数です。</dd>
-          <dt>なぜ？ → どうする？</dt><dd>取れた失点が出た理由を具体的に書き、それを解決する行動を、教材・個数・周回数・正答率・期限の数字で決めます。</dd>
+          <dt>平均点差異</dt><dd>点数−平均点。平均より何点上か・下か。</dd>
+          <dt>取れた失点（いちばん大事）</dt><dd>暗記不足・教材に載っているのに間違えた・ケアレスミス・解説を読んで「これ行けたな」となった問題の点。1問ずつ書き出すと、アプリが教科ごとに足します。</dd>
+          <dt>取れない失点</dt><dd>解説を読んでもわからない・問題集にも載っていない問題の点。満点−点数−取れた失点で出します。</dd>
+          <dt>次の目標点</dt><dd>点数＋取れた失点。今回のテストで取れたはずの点＝次に取らないといけない点です。</dd>
+          <dt>％</dt><dd>点数÷次の目標点×100（小数点以下切り捨て）。取れたはずの点のうち、実際に取れた割合です。85%以上が目安、定期テストなら90%は超えたいところ。80%を切ると成績は伸びません。</dd>
+          <dt>改善点を習慣タスクにする</dt><dd>間違えた問題（取れた失点）ごとに、ふだんの勉強で毎回やる習慣を決めます。ミス対策・勉強法の改善・テストマニュアル通りの勉強・問題文の読み方や解き方など。「この単元ができていない」「暗記不足」は、ここではなく続きのタスクで。</dd>
+          <dt>タスク</dt><dd>取れた失点1問ごとに、対応する教材・ページ・問題番号を目の前の教材から探します（取れた失点なら必ずあります）。1周目〜3周目にやる日を書き、終わったら✓。1〜2周でもOK。全タスクに完了の✓がつくまで、このマップで管理します。</dd>
         </dl>
       </div>
     </details>
@@ -321,20 +302,7 @@ table.sum thead tr > :first-child{background:var(--bg)}
   </div>
 </section>
 
-<!-- 学ぶ -->
-<section id="learn" hidden>
-  <header class="top">
-    <h1><img src="icon-192-v1.png" alt="">分析を学ぶ</h1>
-  </header>
-  <div class="wrap" id="learnBody"></div>
-</section>
-
-<nav class="tabbar" id="tabbar">
-  <button data-tab="home" class="on"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9h17M9 9v11M8 14.5h0"/></svg>つくる</button>
-  <button data-tab="learn"><svg viewBox="0 0 24 24"><path d="M3 6.5c3-1.5 6-1.5 9 .5 3-2 6-2 9-.5V19c-3-1.5-6-1.5-9 .5-3-2-6-2-9-.5z"/><path d="M12 7v12.5"/></svg>学ぶ</button>
-</nav>
-
-<!-- 入力（質問に答えていく） -->
+<!-- 入力 -->
 <section id="wiz" hidden>
   <div class="wtop">
     <div class="row">
@@ -351,7 +319,7 @@ table.sum thead tr > :first-child{background:var(--bg)}
   </div></div>
 </section>
 
-<!-- できあがった分析マップ -->
+<!-- できあがり -->
 <section id="view" hidden>
   <header class="top">
     <button class="iconbtn" id="vBack" aria-label="ホームへ">‹</button>
@@ -361,11 +329,10 @@ table.sum thead tr > :first-child{background:var(--bg)}
   <div class="wrap" id="vBody"></div>
 </section>
 
-<!-- 画像 -->
 <div class="sheet" id="imgSheet" hidden>
   <div class="panel">
     <div class="ph"><h3>画像にしました</h3><button class="x" data-close>✕</button></div>
-    <p class="mini" style="margin:0 0 8px">「送る・保存する」から Discord を選ぶと、そのまま部屋に出せます。</p>
+    <p class="mini" style="margin:0 0 8px">「送る・保存する」から Discord を選ぶと、そのまま分析マップの部屋に出せます。</p>
     <img class="prev" id="imgPrev" alt="分析マップの画像">
     <div class="actions">
       <button class="btn pri wide" id="btnShare">送る・保存する</button>
@@ -374,25 +341,6 @@ table.sum thead tr > :first-child{background:var(--bg)}
   </div>
 </div>
 
-<!-- 計画マップへの入れ方 -->
-<div class="sheet" id="planSheet" hidden>
-  <div class="panel">
-    <div class="ph"><h3>行動タスクをコピーしました</h3><button class="x" data-close>✕</button></div>
-    <div class="card">
-      <p style="margin:0 0 8px;font-weight:700">計画マップのアプリで</p>
-      <ol style="margin:0;padding-left:22px;line-height:1.9">
-        <li>下の<b>「目標」</b>タブを開く</li>
-        <li><b>「分析マップから読みこむ（貼りつけ）」</b>を押す</li>
-        <li><b>「コピーしたものを貼りつける」</b>を押す</li>
-        <li>入れる目標をえらんで<b>「目標に入れる」</b></li>
-      </ol>
-    </div>
-    <p class="mini">入ったやることは、計画マップの「今週へ」で、その週の計画に入れられます。</p>
-    <button class="btn pri wide" data-close>わかった</button>
-  </div>
-</div>
-
-<!-- 一覧（どこからでも直す） -->
 <div class="sheet" id="jumpSheet" hidden>
   <div class="panel">
     <div class="ph"><h3>どこを直す？</h3><button class="x" data-close>✕</button></div>
@@ -400,14 +348,13 @@ table.sum thead tr > :first-child{background:var(--bg)}
   </div>
 </div>
 
-<!-- 設定 -->
 <div class="sheet" id="setSheet" hidden>
   <div class="panel">
     <div class="ph"><h3>設定</h3><button class="x" data-close>✕</button></div>
     <div data-users-card></div>
     <div class="card">
-      <h3>更新</h3>
-      <button class="btn line wide" id="btnCheckUpd">更新を確認する</button>
+      <h3>アップデート</h3>
+      <button class="btn line wide" id="btnCheckUpd">更新があるか調べる</button>
       <p class="mini" id="updMsg" style="margin:6px 0 0"></p>
     </div>
     <div class="card">
@@ -418,33 +365,30 @@ table.sum thead tr > :first-child{background:var(--bg)}
       <h3>バックアップ</h3>
       <p class="mini" style="margin:0 0 8px">データはこの端末の中だけにあります。機種変更の前などに書き出しておくと、読みこんで戻せます。</p>
       <div class="actions" style="margin:0">
-        <button class="btn line wide" id="btnExport">書き出す（ファイルに保存）</button>
-        <button class="btn line wide" id="btnImport">読みこむ（いまのデータと入れかえ）</button>
-        <input type="file" id="fileImport" accept="application/json,.json" hidden>
+        <button class="btn line wide" id="btnExport">書き出す（コピー）</button>
+        <button class="btn line wide" id="btnImport">読みこむ（貼りつけ）</button>
       </div>
     </div>
-    <p class="ver">分析マップ v<span id="verNo"></span></p>
   </div>
 </div>
 
 <script>
-const VER = 7;
-const KEY = 'bunseki-v1';
+const VER = 8;
+const KEY = 'bunseki2-v1';
 const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
-const CIRC = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
-const circ = i => CIRC[i] || '(' + (i + 1) + ')';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
 const SUBJ = ['国語', '数学', '英語', '理科', '社会'];
 
-/* ── 保存 ───────────────────────────────────── */
-let S = { name: '', full: 100, maps: [] };
+/* ── 保存 ── */
+let S = { name: '', maps: [] };
 try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (j && Array.isArray(j.maps)) S = Object.assign(S, j); } catch (e) {}
 let saveT = 0;
 function save() { clearTimeout(saveT); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 function saveSoon() { clearTimeout(saveT); saveT = setTimeout(save, 300); }
+addEventListener('pagehide', save);
 
-/* ── 数字 ───────────────────────────────────── */
+/* ── 数字 ── */
 function num(v) {
   if (v === null || v === undefined) return null;
   const s = String(v).replace(/[０-９．－]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[^\d.\-]/g, '');
@@ -454,768 +398,499 @@ function num(v) {
 const r1 = n => Math.round(n * 10) / 10;
 const fmt = n => n === null || n === undefined ? '' : String(r1(n));
 const sgn = n => n === null ? '' : (n > 0 ? '+' : n < 0 ? '−' : '±') + fmt(Math.abs(n));
-function kkOf(s) {
-  const t = String(s || '').replace(/[０-９／]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).trim();
-  if (!t) return null;
-  const m = t.match(/(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/);
-  if (m) { const a = +m[1], b = +m[2]; if (b > 0) return { pct: Math.floor(a / b * 100), frac: m[1] + '/' + m[2] }; return null; }
-  const n = num(t); return n === null ? null : { pct: n, frac: '' };
-}
-/* KK率（経験率）＝ これまでやった問題と同じ・似た・近い問題（KKできる問題）のうち、正解できた割合
-   ヒラの説明（分析マップのアップデート動画・KK率の出し方と戦略立て）:
-   ① テストの全問題数 ② そのうち、やったことある・似てる・近い問題（KKできる問題）③ そのうち実際に正解できた問題
-   KK率 ＝ ③ ÷ ② × 100（例 41÷45 → 91%）。90%以上が当たり前、100%に近づける。
-   KKできる問題の割合 ＝ ② ÷ ①（例 25÷30 → 83%） */
-function kkCalc(s) {
-  const all = num(s.kkAll), can = num(s.kkCan), ok = num(s.kkOk);
-  if (can !== null && can > 0 && ok !== null) return { pct: r1(ok / can * 100), frac: fmt(ok) + '/' + fmt(can), miss: r1(can - ok), can, ok, all, share: all ? r1(can / all * 100) : null };
-  return kkOf(s.kk);
-}
-function calc(s) {
-  const score = num(s.score), full = num(s.full), avg = num(s.avg), toreta = num(s.toreta);
-  const lost = score !== null && full !== null ? r1(full - score) : null;
-  const diff = score !== null && avg !== null ? r1(score - avg) : null;
-  const notT = lost !== null && toreta !== null ? r1(lost - toreta) : null;
-  const target = score !== null && toreta !== null ? r1(score + toreta) : null;
-  return { score, full, avg, toreta, lost, diff, notT, target, kk: kkCalc(s), dev: num(s.dev), rank: num(s.rank), total: num(s.total) };
-}
 function today() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-function md(iso) { if (!iso) return ''; const [y, m, d] = iso.split('-'); return (+m) + '/' + (+d); }
+function md(iso) { if (!iso) return ''; const [, m, d] = iso.split('-'); return (+m) + '/' + (+d); }
 function ymd(iso) { if (!iso) return ''; const [y, m, d] = iso.split('-'); return y + '/' + (+m) + '/' + (+d); }
 
-/* ── 行動タスクの文 ─────────────────────────── */
-function actText(a) {
-  const ex = [];
-  if (num(a.laps) !== null) ex.push(fmt(num(a.laps)) + '周');
-  if (num(a.rate) !== null) ex.push('正答率' + fmt(num(a.rate)) + '%');
-  if (a.due) ex.push(md(a.due) + 'まで');
-  const t = (a.text || '').trim();
-  return ex.length ? (t ? t + '（' + ex.join('・') + '）' : ex.join('・')) : t;
+/* 紙の1枚目の表の計算
+   取れた失点 ＝ 続きのページに書いた、その教科の取れた失点の点数の合計（紙ではグレーの欄）
+   取れない失点 ＝ 満点 − 点数 − 取れた失点
+   次の目標点 ＝ 点数 ＋ 取れた失点
+   ％ ＝ 点数 ÷ 次の目標点 × 100（小数点以下切り捨て）＝紙の※ */
+function calc(m, s) {
+  const score = num(s.score), full = num(s.full), avg = num(s.avg);
+  const rows = m.losses.filter(l => l.subj === s.name);
+  const toreta = rows.length ? r1(rows.reduce((a, l) => a + (num(l.pts) || 0), 0)) : (score !== null ? 0 : null);
+  const lost = score !== null && full !== null ? r1(full - score) : null;
+  const notT = lost !== null && toreta !== null ? r1(lost - toreta) : null;
+  const target = score !== null && toreta !== null ? r1(score + toreta) : null;
+  const pct = score !== null && target ? Math.floor(score / target * 100) : null;
+  const diff = score !== null && avg !== null ? r1(score - avg) : null;
+  return { score, full, avg, diff, toreta, lost, notT, target, pct, rows };
 }
+function rankText(s) {
+  const a = [];
+  if (s.noRank) a.push('順位✕'); else if (num(s.rank) !== null) a.push(fmt(num(s.rank)) + (num(s.total) !== null ? '/' + fmt(num(s.total)) : '') + '位');
+  if (s.noDev) a.push('偏差値✕'); else if (num(s.dev) !== null) a.push('偏差値' + fmt(num(s.dev)));
+  return a.join('・');
+}
+const avgText = (s, c) => s.noAvg ? '✕' : fmt(c.avg);
+const diffText = (s, c) => s.noAvg ? '✕' : sgn(c.diff);
+function totals(m) {
+  let score = 0, full = 0, toreta = 0, has = false;
+  for (const s of m.subs) { const c = calc(m, s); if (c.score === null) continue; has = true; score += c.score; full += c.full || 0; toreta += c.toreta || 0; }
+  if (!has) return null;
+  const target = r1(score + toreta);
+  return { score: r1(score), full: r1(full), toreta: r1(toreta), notT: r1(full - score - toreta), target, pct: target ? Math.floor(score / target * 100) : null };
+}
+function taskProg(m) {
+  const n = m.losses.filter(l => (l.task || '').trim() || (l.q || '').trim()).length;
+  const d = m.losses.filter(l => l.done).length;
+  return { n, d };
+}
+
+/* 改善点（習慣タスク）のやさしい指摘。止めはしない */
 const NG = [
-  [/意識/, '「意識する」だけでは手が動きません。何を・どれだけ・いつまでにやるか、に直しましょう。'],
-  [/気を(つけ|付け)|注意する|注意して/, '「気をつける」は行動になっていません。気をつけるために何をするか（例：問題文の条件に丸をつける）に直しましょう。'],
-  [/見直/, '「見直す」は、何を・どう見直すかまで書くと行動になります（例：計算は途中式を書いて、終わったら逆算で確かめる）。'],
-  [/確認/, '「確認する」は、何を・どう確認するかまで書くと行動になります（例：赤シートで隠して全部言えるか試す）。'],
-  [/注目/, '「注目する」は、何に・どう印をつけるかまで書くと行動になります。'],
-  [/頑張|がんば/, '「頑張る」は行動になっていません。何をどれだけやるかを書きましょう。'],
+  [/意識/, '「意識する」だけでは手が動きません。毎回なにをするか（例：問題文の条件に線を引く）に直しましょう。'],
+  [/気を(つけ|付け)|注意する|注意して/, '「気をつける」は行動になっていません。気をつけるために毎回なにをするかを書きましょう。'],
+  [/見直/, '「見直す」は、何を・どう見直すかまで書くと習慣になります（例：計算は途中式を書き、最後に逆算で確かめる）。'],
+  [/確認/, '「確認する」は、何を・どう確認するかまで書くと習慣になります。'],
+  [/頑張|がんば/, '「頑張る」は行動になっていません。毎回やることを書きましょう。'],
 ];
-function actWarn(a) {
-  const t = (a.text || '');
-  if (!t.trim() && !a.laps && !a.rate && !a.due) return [];
-  const w = [];
-  for (const [re, m] of NG) if (re.test(t)) { w.push(m); break; }
-  const hasNum = /[0-9０-９一二三四五六七八九十百]/.test(t) || num(a.laps) !== null || num(a.rate) !== null || !!a.due;
-  if (!hasNum) w.push('数字が入っていません。周回数・正答率・期限のどれかを入れましょう。');
-  else if (!a.due && !/まで|月|日|週/.test(t)) w.push('期限があると、計画マップに入れやすくなります。');
-  return w;
+function habitWarn(t) {
+  t = (t || '').trim(); if (!t) return '';
+  for (const [re, msg] of NG) if (re.test(t)) return msg;
+  if (t.length < 8) return 'もう少し具体的に。いつ・何を・どうするかまで書くと、次のテストで使える習慣になります。';
+  return '';
 }
-function reasonWarn(t) {
-  t = (t || '').trim();
-  if (!t) return '';
-  if (/ケアレス|凡ミス/.test(t) && t.length < 20) return '「ケアレスミス」は中身まで書きましょう（何を何と書いた？どの問題で？）。中身が分かると対策が立てられます。';
-  if (t.length < 10) return 'もう少し具体的に。どの問題で・何を・なぜまちがえたか、まで書きましょう。';
+function qWarn(t) {
+  t = (t || '').trim(); if (!t) return '';
+  if (/ケアレス|凡ミス/.test(t) && t.length < 20) return '「ケアレスミス」は中身まで書きましょう（何を何と書いた？どの問題で？）。';
   return '';
 }
 
-/* ── 画面の切りかえ ─────────────────────────── */
-let cur = null;      // いま開いている分析マップ
-let stepI = 0;
-function show(id) {
-  for (const s of ['home', 'learn', 'wiz', 'view']) $(s).hidden = s !== id;
-  $('tabbar').hidden = !(id === 'home' || id === 'learn');
-  document.querySelectorAll('#tabbar [data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
-  window.scrollTo(0, 0);
-}
+/* ── 画面 ── */
+let cur = null, stepI = 0;
+function show(id) { for (const s of ['home', 'wiz', 'view']) $(s).hidden = s !== id; window.scrollTo(0, 0); }
 function findMap(id) { return S.maps.find(m => m.id === id); }
 
-/* ── ホーム ─────────────────────────────────── */
 function renderHome() {
-  const box = $('mapList');
-  const maps = S.maps.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.created - a.created);
-  $('explain').open = maps.length === 0;
-  if (!maps.length) { box.innerHTML = ''; return; }
-  box.innerHTML = '<h3 style="margin:18px 0 0">これまでの分析マップ</h3>' + maps.map(m => {
-    const cs = m.subs.map(calc);
-    const tg = cs.filter(c => c.target !== null);
-    const acts = m.subs.flatMap(s => s.acts.filter(a => actText(a)));
-    const done = acts.filter(a => a.done).length;
-    const total = tg.length >= 2 ? tg.reduce((x, c) => x + c.target, 0) : (tg.length === 1 ? tg[0].target : null);
-    return `<button class="maprow" data-open="${m.id}">
-      <div class="m">
-        <div class="n">${esc(m.title || '（テスト名なし）')}</div>
-        <div class="s">${esc(ymd(m.date))}　${esc(m.subs.map(s => s.name).join('・'))}</div>
-        <div style="margin-top:4px">${m.status === 'done' ? `<span class="badge ok">完成</span> <span class="badge">行動タスク ${done}/${acts.length}</span>` : '<span class="badge draft">書きかけ・つづきから</span>'}</div>
-      </div>
-      ${total !== null ? `<div class="goal">${fmt(total)}<small>${tg.length >= 2 ? '次の目標 合計' : '次の目標点'}</small></div>` : ''}
-    </button>`;
+  $('ver').textContent = '分析マップ v' + VER;
+  const L = S.maps.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.created - a.created);
+  $('mapList').innerHTML = L.map(m => {
+    const t = totals(m), p = taskProg(m);
+    const badge = !m.finished ? '<span class="badge draft">書きかけ</span>'
+      : p.n && p.d >= p.n ? '<span class="badge ok">タスク完了</span>'
+      : '<span class="badge">タスク ' + p.d + '/' + p.n + '</span>';
+    return '<button class="maprow" data-id="' + m.id + '"><div class="m"><div class="n">' + esc(m.title || '（テスト名なし）') + '</div>'
+      + '<div class="s">' + esc(ymd(m.date)) + '　' + esc(m.subs.map(s => s.name).join('・')) + '</div><div style="margin-top:4px">' + badge + '</div></div>'
+      + (t ? '<div class="goal">' + fmt(t.target) + '<small>次の目標（合計）</small></div>' : '') + '</button>';
   }).join('');
-  box.querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
-    const m = findMap(b.dataset.open); if (!m) return;
-    cur = m;
-    if (m.status === 'done') openView(); else openWiz(m.step || 0);
+  $('mapList').querySelectorAll('.maprow').forEach(b => b.onclick = () => {
+    cur = findMap(b.dataset.id);
+    if (cur.finished) openView(); else openWiz(0);
   });
 }
-$('btnNew').onclick = () => {
-  const m = { id: uid(), title: '', date: today(), status: 'draft', step: 0, created: Date.now(), subs: [] };
-  S.maps.push(m); save(); cur = m; openWiz(0);
-};
 
-/* ── 入力の流れ ─────────────────────────────── */
+/* ── 入力の流れ ──
+   テスト → 教科ごとの結果 → 教科ごとの取れた失点（＋タスク）→ 間違えた問題と改善点 → まとめ */
 function steps(m) {
   const a = [{ k: 'test', t: 'テスト' }];
-  m.subs.forEach(s => a.push({ k: 'num', s: s.id, t: s.name + '：結果と失点' }));
-  if (m.subs.length) a.push({ k: 'sum', t: 'ここまでのまとめ' });
-  m.subs.forEach(s => { a.push({ k: 'why', s: s.id, t: s.name + '：なぜ？' }); a.push({ k: 'how', s: s.id, t: s.name + '：どうする？' }); });
+  m.subs.forEach(s => a.push({ k: 'score', s: s.id, t: s.name + 'の結果' }));
+  m.subs.forEach(s => a.push({ k: 'loss', s: s.id, t: s.name + 'の取れた失点' }));
+  a.push({ k: 'fix', t: '改善点を習慣タスクに' });
+  a.push({ k: 'sum', t: 'まとめ' });
   return a;
 }
-function subOf(id) { return cur.subs.find(s => s.id === id); }
-function newSub(name) { return { id: uid(), name, full: String(S.full || 100), score: '', avg: '', rank: '', total: '', dev: '', toreta: '', kk: '', kkAll: '', kkCan: '', kkOk: '', reasons: [''], acts: [newAct()] }; }
-function newAct() { return { id: uid(), text: '', laps: '', rate: '', due: '', r: -1, done: false }; }
+const subOf = id => cur.subs.find(s => s.id === id);
+const newSub = name => ({ id: uid(), name, full: '100', score: '', avg: '', rank: '', total: '', dev: '' });
+const newLoss = subj => ({ id: uid(), subj, q: '', pts: '', task: '', laps: [{ d: '', ok: false }, { d: '', ok: false }, { d: '', ok: false }], done: false });
+const newFix = subj => ({ id: uid(), subj, q: '', kinds: [], habit: '' });
+const KINDS = ['ミス対策', '勉強法の改善', 'テストマニュアル通りの勉強', '問題文の読み方や解き方'];
+// 使い方動画（12:41〜14:10）でヒラが挙げた習慣タスクの例
+const HABIT_EX = ['用語の関連事項（背景・理由・人物が何をしたか）まで覚える', '過去形の「〜した」の「た」に丸をつけるバックスキャンをする', '問題文の条件と、最後の部分（問われていること）に丸をつける', '黄金ルートを毎回回す', '途中式を全て書く', '大問ごとに時間を測って解く'];
 
-function openWiz(i) {
-  show('wiz');
-  goStep(i);
-}
+$('btnNew').onclick = () => {
+  cur = { id: uid(), title: '', date: today(), subs: [], losses: [], fixes: [], created: Date.now(), finished: false };
+  S.maps.push(cur); save(); openWiz(0);
+};
+function openWiz(i) { show('wiz'); goStep(i); }
 function goStep(i) {
-  const st = steps(cur);
-  stepI = Math.max(0, Math.min(i, st.length - 1));
-  cur.step = stepI; save();
+  const st = steps(cur); stepI = Math.max(0, Math.min(i, st.length - 1));
   const s = st[stepI];
-  $('wTtl').textContent = (cur.title || '新しい分析マップ') + '　' + (stepI + 1) + ' / ' + st.length;
+  $('wTtl').textContent = (cur.title || '新しい分析マップ') + '　' + (stepI + 1) + '/' + st.length;
   $('wProg').style.width = ((stepI + 1) / st.length * 100) + '%';
-  $('wBack').textContent = stepI === 0 ? 'ホームへ' : '‹ 戻る';
-  $('wNext').textContent = stepI === st.length - 1 ? 'できあがり！' : '次へ ›';
-  const b = $('wBody');
-  b.innerHTML = '';
-  ({ test: stTest, num: stNum, sum: stSum, why: stWhy, how: stHow })[s.k](b, s.s ? subOf(s.s) : null);
+  const b = $('wBody'); b.innerHTML = '';
+  if (s.k === 'test') stTest(b);
+  if (s.k === 'score') stScore(b, subOf(s.s));
+  if (s.k === 'loss') stLoss(b, subOf(s.s));
+  if (s.k === 'fix') stFix(b);
+  if (s.k === 'sum') stSum(b);
+  $('wBack').disabled = stepI === 0;
+  $('wNext').textContent = s.k === 'sum' ? 'できあがり ›' : '次へ ›';
   window.scrollTo(0, 0);
 }
-$('wBack').onclick = () => { save(); if (stepI === 0) { show('home'); renderHome(); } else goStep(stepI - 1); };
+$('wBack').onclick = () => goStep(stepI - 1);
 $('wNext').onclick = () => {
-  const st = steps(cur), s = st[stepI];
+  const s = steps(cur)[stepI];
   if (s.k === 'test') {
-    if (!cur.title.trim()) { toast('テスト名を入れてください'); $('fTitle')?.focus(); return; }
-    if (!cur.subs.length) { toast('教科を1つ以上えらんでください'); return; }
+    if (!cur.title.trim()) { toast('テスト名を入れてください'); return; }
+    if (!cur.subs.length) { toast('教科をえらんでください'); return; }
   }
-  if (s.k === 'num') {
-    const c = calc(subOf(s.s));
-    if (c.score === null) { toast('点数を入れてください'); return; }
-    if (c.toreta === null) { toast('取れた失点を入れてください（0点でもOK）'); return; }
-    if (c.lost !== null && c.toreta > c.lost) { toast('取れた失点が、失点より大きくなっています'); return; }
-  }
-  save();
-  if (stepI === st.length - 1) { cur.status = 'done'; cur.updated = Date.now(); save(); openView(); toast('分析マップができました'); return; }
-  goStep(stepI + 1);
+  if (s.k === 'sum') { cur.finished = true; save(); openView(); return; }
+  save(); goStep(stepI + 1);
 };
 $('wClose').onclick = () => { save(); show('home'); renderHome(); };
-$('wJump').onclick = () => openJump();
-function openJump() {
-  const st = steps(cur);
-  $('jumpList').innerHTML = st.map((s, i) => `<button data-i="${i}">${i === stepI ? '▶ ' : ''}${esc(s.t)}<span>${i + 1}</span></button>`).join('');
-  $('jumpList').querySelectorAll('button').forEach(b => b.onclick = () => { closeSheet('jumpSheet'); if ($('view').hidden === false) show('wiz'); goStep(+b.dataset.i); });
+$('wJump').onclick = () => {
+  $('jumpList').innerHTML = steps(cur).map((s, i) => '<button data-i="' + i + '">' + esc(s.t) + (i === stepI ? '<span>いまここ</span>' : '') + '</button>').join('');
+  $('jumpList').querySelectorAll('button').forEach(b => b.onclick = () => { closeSheet('jumpSheet'); goStep(+b.dataset.i); });
   openSheet('jumpSheet');
-}
+};
 
-/* 1. テスト */
 function stTest(b) {
-  const known = cur.subs.map(s => s.name);
-  const extra = known.filter(n => !SUBJ.includes(n));
-  b.innerHTML = `
-    <h2>どのテストの分析ですか？</h2>
-    <p class="lead">テストが返ってきたら、すぐに作るのがおすすめです。</p>
-    <div class="field">
-      <label for="fTitle">テスト名</label>
-      <input class="inp" id="fTitle" value="${esc(cur.title)}" placeholder="例：前期期末テスト／第2回全統高2模試" maxlength="40">
-      <div class="chips" style="margin-top:8px">${['中間テスト', '期末テスト', '実力テスト', '模試'].map(t => `<button class="chip sm" data-t="${t}">${t}</button>`).join('')}</div>
-    </div>
-    <div class="field">
-      <label for="fDate">テストの日（返ってきた日でもOK）</label>
-      <input class="inp" type="date" id="fDate" value="${esc(cur.date)}">
-    </div>
-    <div class="field">
-      <span class="flabel">教科（分析する教科をすべてえらぶ）</span>
-      <div class="chips" id="subjChips">
-        ${SUBJ.concat(extra).map(n => `<button class="chip ${known.includes(n) ? 'on' : ''}" data-s="${esc(n)}">${esc(n)}</button>`).join('')}
-        <button class="chip" id="addSubj">＋ ほかの教科</button>
-      </div>
-      <p class="help">えらんだ順に並びます。</p>
-    </div>
-    <div class="field">
-      <span class="flabel">満点</span>
-      <div class="chips" id="fullChips">${[100, 200].map(n => `<button class="chip ${+S.full === n ? 'on' : ''}" data-f="${n}">${n}点</button>`).join('')}</div>
-      <p class="help">教科ごとにちがうときは、次の画面で直せます。</p>
-    </div>`;
-  $('fTitle').oninput = e => { cur.title = e.target.value; $('wTtl').textContent = (cur.title || '新しい分析マップ') + '　1 / ' + steps(cur).length; saveSoon(); };
-  b.querySelectorAll('[data-t]').forEach(c => c.onclick = () => {
-    const t = c.dataset.t; const f = $('fTitle');
-    if (!f.value.includes(t)) f.value = f.value.trim() + t;   // 「前期」と入れてから押すと「前期期末テスト」
-    cur.title = f.value; saveSoon(); f.focus();
-  });
-  $('fDate').onchange = e => { cur.date = e.target.value; saveSoon(); };
-  b.querySelectorAll('[data-s]').forEach(c => c.onclick = () => toggleSubj(c.dataset.s));
-  $('addSubj').onclick = () => {
-    const n = (prompt('教科の名前（例：古文、日本史、物理）') || '').trim().slice(0, 12);
-    if (!n) return;
-    if (cur.subs.some(s => s.name === n)) { toast('もう入っています'); return; }
-    cur.subs.push(newSub(n)); save(); goStep(0);
+  b.innerHTML = '<h2>どのテストの分析？</h2><p class="lead">テスト・成績が返ってきてから1週間以内に作りましょう。</p>'
+    + '<div class="field"><label>テスト名</label><input class="inp" id="tTitle" placeholder="例：2学期中間テスト／第2回全統模試" maxlength="40"></div>'
+    + '<div class="field"><label>返ってきた日</label><input class="inp" type="date" id="tDate"></div>'
+    + '<div class="field"><label>教科（いくつでも）</label><div class="chips" id="tSubs"></div>'
+    + '<div style="display:flex;gap:8px;margin-top:8px"><input class="inp" id="tOther" placeholder="ほかの教科（例：古文・物理）" maxlength="12"><button class="btn sm" id="tAdd" style="min-height:48px">足す</button></div></div>';
+  $('tTitle').value = cur.title; $('tDate').value = cur.date || '';
+  $('tTitle').oninput = e => { cur.title = e.target.value; saveSoon(); };
+  $('tDate').onchange = e => { cur.date = e.target.value; saveSoon(); };
+  const draw = () => {
+    const names = SUBJ.concat(cur.subs.map(s => s.name).filter(n => !SUBJ.includes(n)));
+    $('tSubs').innerHTML = names.map(n => '<button class="chip' + (cur.subs.some(s => s.name === n) ? ' on' : '') + '" data-n="' + esc(n) + '">' + esc(n) + '</button>').join('');
+    $('tSubs').querySelectorAll('.chip').forEach(c => c.onclick = () => { toggleSubj(c.dataset.n); draw(); });
   };
-  b.querySelectorAll('[data-f]').forEach(c => c.onclick = () => {
-    const old = String(S.full); S.full = +c.dataset.f;
-    cur.subs.forEach(s => { if (!s.full || s.full === old) s.full = String(S.full); });
-    save(); goStep(0);
-  });
+  draw();
+  $('tAdd').onclick = () => { const n = $('tOther').value.trim(); if (!n) return; if (!cur.subs.some(s => s.name === n)) toggleSubj(n); $('tOther').value = ''; draw(); };
 }
 function toggleSubj(n) {
   const i = cur.subs.findIndex(s => s.name === n);
-  if (i < 0) { cur.subs.push(newSub(n)); }
-  else {
-    const s = cur.subs[i];
-    const has = s.score || s.toreta || s.reasons.some(x => x.trim()) || s.acts.some(a => actText(a));
-    if (has && !confirm(n + ' には入力した内容があります。はずすと消えます。はずしますか？')) return;
-    cur.subs.splice(i, 1);
+  if (i >= 0) {
+    const used = cur.losses.some(l => l.subj === n && (l.q || l.task)) || cur.fixes.some(f => f.subj === n && (f.q || f.habit));
+    if (used && !confirm(n + 'の入力を消しますか？')) return;
+    cur.subs.splice(i, 1); cur.losses = cur.losses.filter(l => l.subj !== n); cur.fixes = cur.fixes.filter(f => f.subj !== n);
+  } else {
+    const s = newSub(n); cur.subs.push(s);
+    const order = SUBJ.concat(cur.subs.map(x => x.name).filter(x => !SUBJ.includes(x)));
+    cur.subs.sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
   }
-  save(); goStep(0);
+  saveSoon();
 }
 
-/* 2. 教科ごとの結果と失点 */
-function prevTarget(s) {
-  const others = S.maps.filter(m => m !== cur && (m.date || '') <= (cur.date || '9') && m.created < cur.created)
-    .sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.created - a.created);
-  for (const m of others) { const p = m.subs.find(x => x.name === s.name); if (p) { const c = calc(p); if (c.target !== null) return { t: c.target, title: m.title }; } }
-  return null;
-}
-function stNum(b, s) {
-  const pv = prevTarget(s);
-  b.innerHTML = `
-    <span class="subjtag">${esc(s.name)}</span>
-    <h2>${esc(s.name)}の結果を入れましょう</h2>
-    <p class="lead">分かるところだけでOK。順位・偏差値は空でも大丈夫です。</p>
-    <div class="field">
-      <span class="flabel">点数</span>
-      <div class="num"><input class="inp" id="fScore" inputmode="decimal" value="${esc(s.score)}" placeholder="0"><span class="u">点 ／</span><input class="inp s" id="fFull" inputmode="decimal" value="${esc(s.full)}"><span class="u">点満点</span></div>
-      <div id="pvBox"></div>
-    </div>
-    <div class="field">
-      <span class="flabel">平均点</span>
-      <div class="num"><input class="inp" id="fAvg" inputmode="decimal" value="${esc(s.avg)}" placeholder="—"><span class="u">点</span></div>
-      <div class="calc" id="diffBox" hidden><span class="k">平均点差異（自動）</span><span class="v" id="diffV"></span></div>
-    </div>
-    <div class="field">
-      <span class="flabel">順位・偏差値（分かれば）</span>
-      <div class="num"><input class="inp s" id="fRank" inputmode="numeric" value="${esc(s.rank)}" placeholder="—"><span class="u">位 ／</span><input class="inp s" id="fTotal" inputmode="numeric" value="${esc(s.total)}" placeholder="—"><span class="u">人中</span></div>
-      <div class="num" style="margin-top:8px"><span class="u">偏差値</span><input class="inp s" id="fDev" inputmode="decimal" value="${esc(s.dev)}" placeholder="—"></div>
-    </div>
-    <div class="split">
-      <h3 style="margin:0">失点を2つに分けます</h3>
-      <div class="lossbar" id="lossBar"></div>
-      <div class="legend"><span><i style="background:var(--accent)"></i>点数</span><span><i style="background:var(--shu)"></i>取れた失点</span><span><i style="background:var(--gray)"></i>取れない失点</span></div>
-      <p class="bigq" id="lossQ"></p>
-      <p class="mini" style="margin:0 0 8px">「取れた失点」は、やったことがあるのに間違えた点（覚えていれば・ミスしなければ取れた点）。「取れない失点」は、解法を見てもわからない点（まだ習っていない・まったく歯が立たなかった問題）です。</p>
-      <div class="num"><input class="inp" id="fToreta" inputmode="decimal" value="${esc(s.toreta)}" placeholder="0"><span class="u">点が取れた失点</span></div>
-      <p class="help">目安：取れた失点は5点未満におさえる。</p>
-      <div class="calc" id="notBox" hidden><span class="k">取れない失点（自動）</span><span class="v" id="notV"></span></div>
-      <div class="warn" id="lossWarn" hidden></div>
-    </div>
-    <div class="split">
-      <h3 style="margin:0">KK率を出します</h3>
-      <a class="vlink" href="https://youtu.be/U1NFZE84Yq8?t=182" target="_blank" rel="noopener">▶ 動画で見る：KK率の出し方</a>
-      <p class="mini" style="margin:4px 0 10px">KK＝これまでやった問題の解き方を使えること（解法の活用）。問題用紙と答案を見ながら、3つ数えます。分からなければ空でOK。</p>
-      <p class="bigq" style="margin-top:0">① テストの問題は全部で何問？</p>
-      <div class="num"><input class="inp" id="fKkAll" inputmode="numeric" value="${esc(s.kkAll)}" placeholder="—"><span class="u">問</span></div>
-      <p class="bigq">② そのうち「やったことある・似てる・近い」問題は何問？</p>
-      <p class="mini" style="margin:0 0 6px">見たことがない問題は数えません。これが「KKできる問題」です。</p>
-      <div class="num"><input class="inp" id="fKkCan" inputmode="numeric" value="${esc(s.kkCan)}" placeholder="—"><span class="u">問</span></div>
-      <p class="bigq">③ ②のうち、実際に正解できた問題は何問？</p>
-      <div class="num"><input class="inp" id="fKkOk" inputmode="numeric" value="${esc(s.kkOk)}" placeholder="—"><span class="u">問</span></div>
-      <div class="calc" id="kkBox" hidden><span class="k">KK率（③÷②）</span><span class="v" id="kkV"></span></div>
-      <div id="kkNote"></div>
-    </div>
-    <div class="target" id="tgBox" hidden>
-      <div class="k">次の目標点（点数＋取れた失点）</div>
-      <div class="v" id="tgV"></div>
-      <div class="f" id="tgF"></div>
-    </div>`;
-  const bind = (id, key) => { $(id).oninput = e => { s[key] = e.target.value; saveSoon(); upd(); }; };
-  bind('fScore', 'score'); bind('fFull', 'full'); bind('fAvg', 'avg'); bind('fRank', 'rank'); bind('fTotal', 'total'); bind('fDev', 'dev'); bind('fToreta', 'toreta'); bind('fKkAll', 'kkAll'); bind('fKkCan', 'kkCan'); bind('fKkOk', 'kkOk');
-  function upd() {
-    const c = calc(s);
-    $('diffBox').hidden = c.diff === null; $('diffV').textContent = sgn(c.diff) + '点';
-    if (c.lost !== null) {
-      const f = c.full || 1, sc = Math.max(0, c.score), tr = Math.max(0, Math.min(c.toreta ?? 0, c.lost)), nt = Math.max(0, c.lost - tr);
-      $('lossBar').innerHTML = `<div class="sc" style="flex:${sc / f}">${sc ? fmt(sc) : ''}</div><div class="tr" style="flex:${tr / f}">${tr ? fmt(tr) : ''}</div><div class="nt" style="flex:${nt / f}">${nt ? fmt(nt) : ''}</div>`;
-      $('lossQ').textContent = c.lost > 0 ? `失点 ${fmt(c.lost)}点のうち、取れたはずの失点は何点？` : '満点です。失点はありません（0点と入れてください）。';
-    } else { $('lossBar').innerHTML = ''; $('lossQ').textContent = '点数と満点を入れると、失点が出ます。'; }
-    $('notBox').hidden = c.notT === null || c.notT < 0;
-    $('notV').textContent = c.notT !== null ? fmt(c.notT) + ' / ' + fmt(c.lost) : '';
-    const w = c.lost !== null && c.toreta !== null && c.toreta > c.lost ? `取れた失点（${fmt(c.toreta)}点）が、失点（${fmt(c.lost)}点）より大きくなっています。` : (c.score !== null && c.full !== null && c.score > c.full ? '点数が満点より大きくなっています。' : '');
-    $('lossWarn').hidden = !w; $('lossWarn').textContent = w;
-    $('kkBox').hidden = !c.kk; $('kkV').textContent = c.kk ? (c.kk.frac ? c.kk.frac + '　' : '') + c.kk.pct + '%' : '';
-    let kn = '';
-    const ka = num(s.kkAll), kc = num(s.kkCan), ko = num(s.kkOk);
-    if (ka !== null && kc !== null && kc > ka) kn = '<div class="warn">②が①より多くなっています。</div>';
-    else if (kc !== null && ko !== null && ko > kc) kn = '<div class="warn">③が②より多くなっています。</div>';
-    else if (c.kk) {
-      kn = (c.kk.share !== null ? `<p class="help">KKできる問題の割合（②÷①）は ${c.kk.share}%。</p>` : '')
-        + (c.kk.pct >= 90 ? `<div class="ok">90%以上。普段の勉強が身になっています。100%に近づけましょう。</div>`
-          : `<div class="warn">90%に届いていません。KKできたはずの問題を ${fmt(c.kk.miss)}問 落としています。ここが穴＝取れた失点です。「なぜ？」で、なぜ極まっていなかったかを書きましょう。</div>`);
-    }
-    $('kkNote').innerHTML = kn;
-    $('tgBox').hidden = c.target === null;
-    $('tgV').textContent = c.target !== null ? fmt(c.target) + '点' : '';
-    $('tgF').textContent = c.target !== null ? fmt(c.score) + ' ＋ ' + fmt(c.toreta) + ' ＝ ' + fmt(c.target) : '';
-    if (pv && c.score !== null) {
-      const d = r1(c.score - pv.t);
-      $('pvBox').innerHTML = `<div class="${d >= 0 ? 'ok' : 'tip'}" style="margin-top:8px">前回（${esc(pv.title)}）の目標点は ${fmt(pv.t)}点。${d >= 0 ? '目標を達成しました！' : 'あと ' + fmt(-d) + '点でした。'}</div>`;
-    } else $('pvBox').innerHTML = pv ? `<p class="help">前回（${esc(pv.title)}）の目標点は ${fmt(pv.t)}点でした。</p>` : '';
-  }
+function stScore(b, s) {
+  const nx = (f, lab, mode, no) => '<div><label>' + lab + '</label><div class="nx"><input class="inp" inputmode="' + mode + '" data-f="' + f + '">'
+    + (no ? '<button class="no-b" data-no="' + no + '">出ない</button>' : '') + '</div></div>';
+  b.innerHTML = '<span class="subjtag">' + esc(s.name) + '</span><h2>' + esc(s.name) + 'の結果</h2>'
+    + '<p class="lead">平均点・順位・偏差値が学校から出ないときは「出ない」を押してください（表に✕がつきます）。空白にはしないでおきましょう。</p>'
+    + '<div class="cols2">'
+    + nx('score', '点数', 'decimal') + nx('full', '満点', 'decimal')
+    + nx('avg', '平均点', 'decimal', 'noAvg') + nx('dev', '偏差値', 'decimal', 'noDev')
+    + nx('rank', '順位（学年・クラス）', 'numeric', 'noRank') + nx('total', '人数（何人中）', 'numeric')
+    + '</div><div class="calc"><span class="k">平均点差異（点数−平均点）</span><span class="v" id="cDiff"></span></div>'
+    + '<div class="tip">点数がよかった・悪かったで一喜一憂しないこと。平均点は毎回ちがうので、見るのは<b>平均点差異・順位・偏差値がどれだけ上がったか</b>です。</div>';
+  const upd = () => {
+    const c = calc(cur, s); $('cDiff').textContent = s.noAvg ? '✕' : c.diff === null ? '—' : sgn(c.diff) + '点';
+    b.querySelectorAll('[data-no]').forEach(x => { x.classList.toggle('on', !!s[x.dataset.no]); x.previousElementSibling.disabled = !!s[x.dataset.no]; });
+  };
+  b.querySelectorAll('[data-f]').forEach(i => { i.value = s[i.dataset.f] || ''; i.oninput = () => { s[i.dataset.f] = i.value; saveSoon(); upd(); }; });
+  b.querySelectorAll('[data-no]').forEach(x => x.onclick = () => { s[x.dataset.no] = !s[x.dataset.no]; saveSoon(); upd(); });
   upd();
 }
-
-/* 3. まとめ（上半分） */
-function sumTable(m) {
-  const cs = m.subs.map(s => [s, calc(s)]);
-  const rows = cs.map(([s, c]) => `<tr>
-    <td class="sub">${esc(s.name)}</td>
-    <td>${c.score !== null ? fmt(c.score) : '—'}<span class="small2">/${fmt(c.full)}</span></td>
-    <td>${c.avg !== null ? fmt(c.avg) : '—'}</td>
-    <td>${c.diff !== null ? sgn(c.diff) : '—'}</td>
-    <td>${c.rank !== null ? fmt(c.rank) + '位' + (c.total !== null ? '<span class="small2">/' + fmt(c.total) + '人</span>' : '') : ''}${c.dev !== null ? '<span class="small2">偏差値 ' + fmt(c.dev) + '</span>' : ''}${c.rank === null && c.dev === null ? '—' : ''}</td>
-    <td class="g">${c.toreta !== null ? fmt(c.toreta) + (c.lost !== null ? '<span class="small2">/' + fmt(c.lost) + '</span>' : '') : '—'}${c.kk ? '<span class="small2">KK率 ' + c.kk.pct + '%</span>' : ''}</td>
-    <td>${c.notT !== null ? fmt(c.notT) : '—'}</td>
-    <td class="t">${c.target !== null ? fmt(c.target) : '—'}</td></tr>`).join('');
-  let total = '';
-  if (cs.length >= 2) {
-    const sum = k => cs.every(([, c]) => c[k] !== null) ? r1(cs.reduce((x, [, c]) => x + c[k], 0)) : null;
-    const sc = sum('score'), fu = sum('full'), tg = sum('target'), tr = sum('toreta');
-    total = `<tr class="total"><td>合計</td><td>${sc !== null ? fmt(sc) : '—'}<span class="small2">/${fu !== null ? fmt(fu) : ''}</span></td><td></td><td></td><td></td><td class="g">${tr !== null ? fmt(tr) : ''}</td><td></td><td class="t">${tg !== null ? fmt(tg) : '—'}</td></tr>`;
-  }
-  return `<div class="tblwrap"><table class="sum"><thead><tr><th>教科</th><th>点数</th><th>平均点</th><th>平均点差異</th><th>順位・偏差値</th><th class="g">取れた失点<br>KK率</th><th>取れない<br>失点</th><th>次の<br>目標点</th></tr></thead><tbody>${rows}${total}</tbody></table></div>`;
-}
-function stSum(b) {
-  const cs = cur.subs.map(s => [s, calc(s)]).filter(([, c]) => c.toreta !== null);
-  const best = cs.slice().sort((a, b) => b[1].toreta - a[1].toreta)[0];
-  const sc = cs.reduce((x, [, c]) => x + (c.score || 0), 0), tg = cs.reduce((x, [, c]) => x + (c.target || 0), 0);
-  b.innerHTML = `
-    <h2>ここまでが上半分です</h2>
-    <p class="lead">横にスクロールできます。</p>
-    ${sumTable(cur)}
-    ${cs.length >= 2 ? `<div class="target"><div class="k">合計</div><div class="v">${fmt(sc)} → ${fmt(tg)}点</div><div class="f">取れた失点を全部取ると ＋${fmt(r1(tg - sc))}点</div></div>` : ''}
-    ${best && best[1].toreta > 0 ? `<div class="tip">いちばん伸びしろが大きいのは <b>${esc(best[0].name)}</b>（取れた失点 ${fmt(best[1].toreta)}点）です。</div>` : ''}
-    <div class="tip">次は教科ごとに、<b>なぜ？</b>（取れた失点が出た理由）と <b>どうする？</b>（それを取るための行動）を書きます。</div>`;
+function pctClass(p) { return p === null || p === undefined ? '' : p >= 85 ? 'good' : p >= 80 ? 'mid' : 'bad'; }
+function pctMsg(p) {
+  if (p === null || p === undefined) return '';
+  if (p >= 90) return '取れたはずの点の' + p + '%を取れています。この調子で100%に近づけましょう。';
+  if (p >= 85) return p + '%。85%以上は目安クリア。定期テストなら90%を超えたいところです。';
+  if (p >= 80) return p + '%。あと少し。85%以上が目安です。取れた失点を必ずつぶしましょう。';
+  return p + '%。80%を切ると成績は伸びません。やったのに取れていない＝勉強不足です。取れた失点のタスクを必ずやりきりましょう。';
 }
 
-/* 4. なぜ？ */
-function stWhy(b, s) {
-  const c = calc(s);
-  b.innerHTML = `
-    <span class="subjtag">${esc(s.name)}</span>
-    <h2>なぜ「取れた失点」が出た？</h2>
-    <p class="lead">${c.toreta !== null ? `${esc(s.name)}の取れた失点は <b>${fmt(c.toreta)}点</b>。` : ''}その理由を具体的に。1つの欄に1つずつ書きます。</p>
-    ${c.kk && c.kk.pct < 90 && c.kk.miss ? `<div class="tip">KK率は <b>${c.kk.pct}%</b>。やったことがある・似ている問題を <b>${fmt(c.kk.miss)}問</b> 落としています。その問題は、なぜ極まっていなかった？</div>` : ''}
-    <div class="tip"><b>書くときの3つの質問</b><br>① どの問題で？（単元・問題の形）<br>② 何をまちがえた？<br>③ なぜ？（覚えていなかった・読み落とした・時間が足りなかった…）</div>
-    <div id="rList"></div>
-    <button class="add" id="rAdd">＋ 理由を足す</button>
-    <div class="field">
-      <span class="flabel" style="font-size:13px;color:var(--muted)">よくある理由から書きはじめる</span>
-      <div class="chips">${['覚えていなかった：', '別の意味・用法を知らなかった：', '問題文の読み落とし：', '計算・書きまちがい：', '時間が足りなかった：', 'ワークの周回が足りなかった：', '理解があいまいだった：'].map(t => `<button class="chip sm" data-p="${t}">${t.replace('：', '')}</button>`).join('')}</div>
-    </div>
-    <a class="vlink" href="https://youtu.be/xKcVUAVAkkQ?t=396" target="_blank" rel="noopener">▶ 動画で見る：「なぜ？」の書き方</a>
-    <details class="ex"><summary>書き方の例</summary><ul>
-      <li>知らない単語があった。単語自体は知っていたが、別の意味があってそれを知らなかった。</li>
-      <li>1次関数で、切片が分数のときのグラフの書き方が分からなかった。</li>
-      <li>化学式で 2H₂O → H₂＋O₂ と書いた（係数をそろえていなかった）。</li>
-      <li>「8語以上」と指定があったのに7語で書いた。</li>
-      <li>ワークの周回が後ろのページだけ少なく、そこから出た問題を落とした。</li>
-    </ul></details>`;
-  const list = $('rList');
-  function draw() {
-    list.innerHTML = s.reasons.map((t, i) => `<div class="item"><div class="hd"><span class="no">${circ(i)}</span><span class="sp"></span><button class="x" data-del="${i}" aria-label="消す">✕</button></div>
-      <textarea class="inp" data-i="${i}" rows="2" placeholder="例：英単語の別の意味を知らなかった">${esc(t)}</textarea><div class="warn" data-w="${i}" hidden></div></div>`).join('');
-    list.querySelectorAll('textarea').forEach(ta => {
-      autosize(ta);
-      ta.oninput = () => { s.reasons[+ta.dataset.i] = ta.value; autosize(ta); saveSoon(); warn(+ta.dataset.i); };
-      ta.onblur = () => warn(+ta.dataset.i, true);
+function stLoss(b, s) {
+  b.innerHTML = '<span class="subjtag">' + esc(s.name) + '</span><h2>' + esc(s.name) + 'の「取れた失点」を1問ずつ</h2>'
+    + '<p class="lead">分析マップでいちばん大事なところです。取れた失点を1問ずつあぶり出し、それに対応する教材・ページ・問題番号（タスク）を、目の前の教材から探して決めます。</p>'
+    + '<details class="ex"><summary>取れた失点・取れない失点の見分け方</summary><ul>'
+    + '<li><b>取れた失点</b>：暗記不足・教材（問題集）に載っているのに間違えた・ケアレスミス・解説を読んで「これ行けたな」となった問題</li>'
+    + '<li><b>取れない失点</b>：解説を読んでもわからない・問題集にも載っていない問題。<b>ここには書きません</b></li>'
+    + '<li>迷ったら、先に取れない失点を見つけて、それ以外を全部取れた失点にしてもOK</li>'
+    + '<li>問題番号だけだと後で何のことかわからないので、「大問2(1) 比の計算」のように簡単な内容も書く</li></ul></details>'
+    + '<div id="lList"></div><button class="add" id="lAdd">＋ 取れた失点を足す</button>'
+    + '<div class="score4" id="lSum"></div>';
+  const draw = () => {
+    const rows = cur.losses.filter(l => l.subj === s.name);
+    $('lList').innerHTML = rows.map((l, i) =>
+      '<div class="lrow" data-id="' + l.id + '"><div class="hd"><span class="no">' + (i + 1) + '</span><span class="sp"></span><button class="x" data-del aria-label="消す">✕</button></div>'
+      + '<div class="two"><div><label>問題番号・簡単な内容</label><input class="inp" data-f="q" placeholder="例：大問2(1) 比の計算"></div>'
+      + '<div><label>点数</label><div class="pts"><input class="inp" inputmode="decimal" data-f="pts"><span class="u">点</span></div></div></div>'
+      + '<label>タスク（対応教材・ページ・問題番号）</label><input class="inp" data-f="task" placeholder="例：新中問 p.12-13">'
+      + '<div class="warn" data-w hidden></div></div>').join('') || '<p class="empty">まだありません。下の「＋」から足しましょう。</p>';
+    $('lList').querySelectorAll('.lrow').forEach(r => {
+      const l = cur.losses.find(x => x.id === r.dataset.id);
+      r.querySelectorAll('[data-f]').forEach(i => {
+        i.value = l[i.dataset.f] || '';
+        i.oninput = () => { l[i.dataset.f] = i.value; saveSoon(); sum(); w(); };
+      });
+      const w = () => { const m = qWarn(l.q); const e = r.querySelector('[data-w]'); e.hidden = !m; e.textContent = m; };
+      w();
+      r.querySelector('[data-del]').onclick = () => { if ((l.q || l.task) && !confirm('この行を消しますか？')) return; cur.losses = cur.losses.filter(x => x !== l); saveSoon(); draw(); };
     });
-    list.querySelectorAll('[data-del]').forEach(x => x.onclick = () => {
-      const i = +x.dataset.del;
-      if (s.reasons[i].trim() && !confirm(circ(i) + ' を消しますか？')) return;
-      s.reasons.splice(i, 1);
-      s.acts.forEach(a => { if (a.r === i) a.r = -1; else if (a.r > i) a.r--; });
-      if (!s.reasons.length) s.reasons.push('');
-      save(); draw();
-    });
-    s.reasons.forEach((_, i) => warn(i, true));
-  }
-  function warn(i, show) {
-    const w = list.querySelector(`[data-w="${i}"]`); if (!w) return;
-    const m = reasonWarn(s.reasons[i]);
-    if (!m) { w.hidden = true; return; }
-    if (show || !w.hidden) { w.hidden = false; w.textContent = m; }
-  }
+    sum();
+  };
+  const sum = () => {
+    const c = calc(cur, s);
+    $('lSum').innerHTML = '<div><div class="k">失点</div><div class="v">' + (c.lost ?? '—') + '</div></div>'
+      + '<div><div class="k">取れた失点</div><div class="v r">' + (c.toreta ?? '—') + '</div></div>'
+      + '<div><div class="k">取れない失点</div><div class="v">' + (c.notT ?? '—') + '</div></div>'
+      + '<div><div class="k">次の目標点</div><div class="v t">' + (c.target ?? '—') + '</div></div>'
+      + '<div><div class="k">％</div><div class="v pc-' + pctClass(c.pct) + '">' + (c.pct ?? '—') + '</div></div>'
+      + (c.notT !== null && c.notT < 0 ? '<div style="grid-column:1/-1" class="warn">取れた失点の合計が、失点（満点−点数）より多くなっています。点数を見直してください。</div>' : '')
+      + (c.pct !== null ? '<div style="grid-column:1/-1" class="pctmsg ' + pctClass(c.pct) + '">' + pctMsg(c.pct) + '</div>' : '');
+  };
+  $('lAdd').onclick = () => { cur.losses.push(newLoss(s.name)); saveSoon(); draw(); const ins = $('lList').querySelectorAll('[data-f="q"]'); ins[ins.length - 1]?.focus(); };
+  if (!cur.losses.some(l => l.subj === s.name)) cur.losses.push(newLoss(s.name));
   draw();
-  $('rAdd').onclick = () => { s.reasons.push(''); save(); draw(); list.querySelector(`textarea[data-i="${s.reasons.length - 1}"]`).focus(); };
-  b.querySelectorAll('[data-p]').forEach(c => c.onclick = () => {
-    let i = s.reasons.findIndex(x => !x.trim());
-    if (i < 0) { s.reasons.push(''); i = s.reasons.length - 1; }
-    s.reasons[i] = c.dataset.p; save(); draw();
-    const ta = list.querySelector(`textarea[data-i="${i}"]`); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+}
+
+function stFix(b) {
+  b.innerHTML = '<h2>改善点を習慣タスクにする</h2>'
+    + '<p class="lead">間違えた問題（取れた失点）ごとに、<b>ふだんの勉強で毎回やる習慣</b>を決めます。「この単元ができていない」「暗記不足」などのやり直しは、続きのタスクのほうに書いたので、ここには書きません。</p>'
+    + '<details class="ex"><summary>ヒラの例（押すと入ります）</summary><div class="chips" style="padding:0 14px 14px" id="fEx">'
+    + HABIT_EX.map((t, i) => '<button class="chip sm" data-ex="' + i + '">' + esc(t) + '</button>').join('') + '</div></details>'
+    + '<div id="fList"></div><button class="add" id="fAdd">＋ 足す</button>';
+  let lastTa = null;
+  $('fEx').querySelectorAll('[data-ex]').forEach(c => c.onclick = () => {
+    const ta = lastTa && document.body.contains(lastTa) ? lastTa : $('fList').querySelector('textarea');
+    if (!ta) return; ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + HABIT_EX[+c.dataset.ex]; ta.dispatchEvent(new Event('input')); toast('入れました。自分の問題に合わせて書きかえましょう');
   });
-}
-
-/* 5. どうする？ */
-function stHow(b, s) {
-  const rs = s.reasons.map((t, i) => [t.trim(), i]).filter(([t]) => t);
-  b.innerHTML = `
-    <span class="subjtag">${esc(s.name)}</span>
-    <h2>取れた失点を取るために、どうする？</h2>
-    <p class="lead">理由を解決する行動を書きます。<b>教材・個数・周回数・正答率・期限</b>の数字で決めましょう。</p>
-    ${rs.length ? `<div class="refs">${rs.map(([t, i]) => `<div class="r"><b>${circ(i)}</b><span>${esc(t)}</span></div>`).join('')}</div>` : ''}
-    <div class="tip">考え方：<b>KKできなかった分を補う</b>＋<b>次に出そうなところを、KKできるように演習する</b>。</div>
-    <div id="aList"></div>
-    <button class="add" id="aAdd">＋ 行動を足す</button>
-    <a class="vlink" href="https://youtu.be/xKcVUAVAkkQ?t=565" target="_blank" rel="noopener">▶ 動画で見る：「どうする？」の書き方</a>
-    <details class="ex"><summary>書き方の例</summary><ul>
-      <li>模試の解き直しをする（1周・10月末まで）</li>
-      <li>Stock4500 を極める（正答率100%・12/31まで）</li>
-      <li>古文の助動詞を「ひとつひとつ」で1周（11/9まで）</li>
-      <li>ワーク p.46〜71 と p.102〜105 を3周（11/13まで）</li>
-      <li>「8語以上」などの条件に丸をつけてから書く。単語数を数えて書いた数を横に書く</li>
-    </ul></details>
-    <div class="remind">行動タスクを書いたら、必ず計画マップに入れましょう！</div>`;
-  const list = $('aList');
-  function draw() {
-    list.innerHTML = s.acts.map((a, i) => `<div class="item">
-      <div class="hd"><span class="no" style="font-size:15px">行動 ${i + 1}</span><span class="sp"></span><button class="x" data-del="${i}" aria-label="消す">✕</button></div>
-      ${rs.length ? `<div class="chips" style="margin-bottom:8px"><span class="mini" style="align-self:center">どの理由の対策？</span>${rs.map(([, ri]) => `<button class="chip sm ${a.r === ri ? 'on' : ''}" data-a="${i}" data-r="${ri}">${circ(ri)}</button>`).join('')}</div>` : ''}
-      <textarea class="inp" data-i="${i}" rows="2" placeholder="何を、どれだけやる？（教材・範囲・個数）">${esc(a.text)}</textarea>
-      <div class="nums3">
-        <div><label>周回数</label><div class="num" style="flex-wrap:nowrap"><input class="inp" data-k="laps" data-i="${i}" inputmode="decimal" value="${esc(a.laps)}" placeholder="—" style="width:100%;text-align:left;font-size:15px"><span class="u">周</span></div></div>
-        <div><label>正答率</label><div class="num" style="flex-wrap:nowrap"><input class="inp" data-k="rate" data-i="${i}" inputmode="decimal" value="${esc(a.rate)}" placeholder="—" style="width:100%;text-align:left;font-size:15px"><span class="u">%</span></div></div>
-        <div class="due"><label>期限</label><input class="inp" type="date" data-k="due" data-i="${i}" value="${esc(a.due)}"></div>
-      </div>
-      <div data-w="${i}"></div>
-    </div>`).join('');
-    list.querySelectorAll('textarea').forEach(ta => {
-      autosize(ta);
-      ta.oninput = () => { s.acts[+ta.dataset.i].text = ta.value; autosize(ta); saveSoon(); };
-      ta.onblur = () => warn(+ta.dataset.i);
+  const draw = () => {
+    $('fList').innerHTML = cur.fixes.map((f, i) => {
+      const probs = cur.losses.filter(l => l.subj === f.subj && (l.q || '').trim());
+      return '<div class="lrow" data-id="' + f.id + '"><div class="hd"><span class="no" style="color:var(--accent)">' + (i + 1) + '</span><span class="sp"></span><button class="x" data-del aria-label="消す">✕</button></div>'
+      + '<div class="chips" data-subj>' + cur.subs.map(s => '<button class="chip sm' + (f.subj === s.name ? ' on' : '') + '" data-n="' + esc(s.name) + '">' + esc(s.name) + '</button>').join('') + '</div>'
+      + '<label>間違えた問題</label>'
+      + (probs.length ? '<div class="kind" data-probs>' + probs.map(l => '<button class="chip sm' + ((f.q || '').includes(l.q.trim()) ? ' on' : '') + '" data-q="' + esc(l.q.trim()) + '">' + esc(l.q.trim()) + '</button>').join('') + '</div><p class="note">取れた失点から押して選べます（いくつでも）。</p>' : '')
+      + '<input class="inp" data-f="q" placeholder="例：大問2(3)" style="margin-top:6px">'
+      + '<label>なにを直す？（いくつでも）</label><div class="kind" data-kinds>' + KINDS.map(k => '<button class="chip sm' + ((f.kinds || []).includes(k) ? ' on' : '') + '" data-k="' + k + '">' + k + '</button>').join('') + '</div>'
+      + ((f.kinds || []).includes('テストマニュアル通りの勉強') ? '<p class="note">テストマニュアルはシークレット会6を見返しましょう。</p>' : '')
+      + '<label>改善点を習慣タスクにする（ふだんの勉強で毎回やること）</label><textarea class="inp" data-f="habit" placeholder="例：途中式を全て書く"></textarea>'
+      + '<div class="warn" data-w hidden></div></div>';
+    }).join('') || '<p class="empty">まだありません。</p>';
+    $('fList').querySelectorAll('.lrow').forEach(r => {
+      const f = cur.fixes.find(x => x.id === r.dataset.id);
+      r.querySelectorAll('[data-subj] .chip').forEach(c => c.onclick = () => { f.subj = c.dataset.n; saveSoon(); draw(); });
+      r.querySelectorAll('[data-kinds] .chip').forEach(c => c.onclick = () => { const a = f.kinds || (f.kinds = []); const k = c.dataset.k; a.includes(k) ? a.splice(a.indexOf(k), 1) : a.push(k); saveSoon(); draw(); });
+      r.querySelectorAll('[data-probs] .chip').forEach(c => c.onclick = () => {
+        const parts = (f.q || '').split('／').map(x => x.trim()).filter(Boolean); const q = c.dataset.q;
+        f.q = (parts.includes(q) ? parts.filter(x => x !== q) : parts.concat(q)).join('／'); saveSoon(); draw();
+      });
+      r.querySelector('textarea').addEventListener('focus', e => lastTa = e.target);
+      const w = () => { const m = qWarn(f.q) || habitWarn(f.habit); const e = r.querySelector('[data-w]'); e.hidden = !m; e.textContent = m; };
+      r.querySelectorAll('[data-f]').forEach(i => {
+        i.value = f[i.dataset.f] || '';
+        i.oninput = () => { f[i.dataset.f] = i.value; saveSoon(); w(); if (i.tagName === 'TEXTAREA') autosize(i); };
+        if (i.tagName === 'TEXTAREA') autosize(i);
+      });
+      w();
+      r.querySelector('[data-del]').onclick = () => { if ((f.q || f.habit) && !confirm('この行を消しますか？')) return; cur.fixes = cur.fixes.filter(x => x !== f); saveSoon(); draw(); };
     });
-    list.querySelectorAll('input[data-k]').forEach(inp => {
-      const ev = inp.type === 'date' ? 'onchange' : 'oninput';
-      inp[ev] = () => { s.acts[+inp.dataset.i][inp.dataset.k] = inp.value; saveSoon(); warn(+inp.dataset.i); };
-    });
-    list.querySelectorAll('[data-r]').forEach(c => c.onclick = () => {
-      const a = s.acts[+c.dataset.a], r = +c.dataset.r;
-      a.r = a.r === r ? -1 : r; save();
-      c.parentNode.querySelectorAll('[data-r]').forEach(x => x.classList.toggle('on', +x.dataset.r === a.r));
-    });
-    list.querySelectorAll('[data-del]').forEach(x => x.onclick = () => {
-      const i = +x.dataset.del;
-      if (actText(s.acts[i]) && !confirm('行動 ' + (i + 1) + ' を消しますか？')) return;
-      s.acts.splice(i, 1); if (!s.acts.length) s.acts.push(newAct()); save(); draw();
-    });
-    s.acts.forEach((_, i) => warn(i));
-  }
-  function warn(i) {
-    const w = list.querySelector(`[data-w="${i}"]`); if (!w) return;
-    const a = s.acts[i], ws = actWarn(a);
-    if (!actText(a)) { w.innerHTML = ''; return; }
-    w.innerHTML = ws.length ? ws.map(m => `<div class="warn">${esc(m)}</div>`).join('') : `<div class="ok">✓ ${esc(actText(a))}</div>`;
-  }
+  };
+  $('fAdd').onclick = () => { cur.fixes.push(newFix(cur.subs[0]?.name || '')); saveSoon(); draw(); };
+  if (!cur.fixes.length) cur.fixes.push(newFix(cur.subs[0]?.name || ''));
   draw();
-  $('aAdd').onclick = () => { s.acts.push(newAct()); save(); draw(); list.querySelector(`textarea[data-i="${s.acts.length - 1}"]`).focus(); };
 }
-
 function autosize(ta) { ta.style.height = 'auto'; ta.style.height = Math.max(60, ta.scrollHeight + 3) + 'px'; }
 
-/* ── できあがった分析マップ ─────────────────── */
+function sumTableHTML(m) {
+  const head = '<tr><th>教科名</th><th>点数</th><th>平均点</th><th>平均点差異</th><th>順位・偏差値</th><th class="g">取れた失点</th><th class="g">%</th><th>取れない失点</th><th>次の目標点</th></tr>';
+  const rows = m.subs.map(s => {
+    const c = calc(m, s);
+    return '<tr><td class="sub">' + esc(s.name) + '</td><td>' + fmt(c.score) + (c.full !== null && c.full !== 100 ? '<span class="small2">/' + fmt(c.full) + '</span>' : '') + '</td><td>' + avgText(s, c) + '</td><td>' + diffText(s, c)
+      + '</td><td>' + esc(rankText(s)) + '</td><td class="g">' + fmt(c.toreta) + '</td><td class="g pc-' + pctClass(c.pct) + '" style="font-weight:900">' + (c.pct ?? '') + '</td><td>' + fmt(c.notT) + '</td><td class="t">' + fmt(c.target) + '</td></tr>';
+  }).join('');
+  const t = totals(m);
+  const tot = t && m.subs.length > 1 ? '<tr class="total"><td>合計</td><td>' + fmt(t.score) + '</td><td></td><td></td><td></td><td class="g">' + fmt(t.toreta) + '</td><td class="g">' + (t.pct ?? '') + '</td><td>' + fmt(t.notT) + '</td><td class="t">' + fmt(t.target) + '</td></tr>' : '';
+  return '<div class="tblwrap"><table class="sum"><thead>' + head + '</thead><tbody>' + rows + tot + '</tbody></table></div><p class="note">※ %＝点数÷次の目標点×100（小数点以下切り捨て）</p>';
+}
+function stSum(b) {
+  const t = totals(cur);
+  b.innerHTML = '<h2>まとめ</h2><p class="lead">取れた失点を全部取れば、次はここまで届きます。</p>'
+    + (t ? '<div class="target"><div class="k">次の目標点（合計）</div><div class="v">' + fmt(t.target) + '点</div><div class="f">いま ' + fmt(t.score) + '点 ＋ 取れた失点 ' + fmt(t.toreta) + '点</div></div>' : '')
+    + (t && t.pct !== null ? '<div class="pctmsg ' + pctClass(t.pct) + '">合計の％：' + pctMsg(t.pct) + '</div>' : '')
+    + sumTableHTML(cur)
+    + '<div class="tip">「できあがり」を押すと、タスク表で管理できます。1周目〜3周目にやる日を入れ、終わったら✓をつけましょう。</div>';
+}
+
+/* ── できあがり ── */
 function openView() { show('view'); renderView(); }
 function renderView() {
-  const m = cur;
-  const acts = m.subs.flatMap(s => s.acts.filter(a => actText(a)));
-  const done = acts.filter(a => a.done).length;
-  const st = steps(m);
-  $('vBody').innerHTML = `
-    <div class="paper">
-      <p class="ttl">分析マップ</p>
-      <p class="meta">【テスト名】${esc(m.title)}　${esc(ymd(m.date))}${S.name ? '　' + esc(S.name) : ''}</p>
-      ${sumTable(m)}
-      <div class="tri">▼</div>
-      ${m.subs.map(s => {
-        const rs = s.reasons.map((t, i) => [t.trim(), i]).filter(([t]) => t);
-        const as = s.acts.map(a => [a, actText(a)]).filter(([, t]) => t);
-        const wi = st.findIndex(x => x.k === 'why' && x.s === s.id);
-        return `<div class="sblock">
-          <div class="sh"><span>${esc(s.name)}</span><span class="sp"></span><button class="edit" data-go="${wi}">直す</button></div>
-          <div class="col"><div class="lab">【なぜ？】「取れた失点」の失点要因</div>${rs.length ? `<ol>${rs.map(([t, i]) => `<li><b>${circ(i)}</b><span>${esc(t)}</span></li>`).join('')}</ol>` : '<p class="empty">（まだ書いていません）</p>'}</div>
-          <div class="col"><div class="lab">【どうする？】アクションプラン・行動タスク</div>${as.length ? as.map(([a, t]) => `<button class="act ${a.done ? 'done' : ''}" data-act="${s.id}:${a.id}"><span class="box">${a.done ? '✓' : ''}</span><span class="tx">${a.r >= 0 && s.reasons[a.r]?.trim() ? '<b style="color:var(--accent)">' + circ(a.r) + '</b> ' : ''}${esc(t)}</span></button>`).join('') : '<p class="empty">（まだ書いていません）</p>'}</div>
-        </div>`;
-      }).join('')}
-      <div class="remind">アクションプラン、行動タスクを書けば、必ず計画マップに反映して記入してください！</div>
-    </div>
-    ${acts.length ? `<div class="card"><div style="display:flex;justify-content:space-between;font-weight:700"><span>行動タスク</span><span>${done} / ${acts.length} できた</span></div><div class="pbar"><i style="width:${done / acts.length * 100}%"></i></div><p class="mini" style="margin:0">□ を押すと、できた印がつきます。</p></div>` : ''}
-    <div class="actions">
-      <button class="btn pri wide" id="vImg">画像にする（Discord に出す）</button>
-      <button class="btn pri wide" id="vPlan" style="background:var(--ok)">計画マップに入れる（コピー）</button>
-      <button class="btn line wide" id="vText">文章でコピー</button>
-      <button class="btn danger wide" id="vDel">この分析マップを消す</button>
-    </div>`;
-  $('vBody').querySelectorAll('[data-act]').forEach(b => b.onclick = () => {
-    const [sid, aid] = b.dataset.act.split(':');
-    const a = subOf(sid)?.acts.find(x => x.id === aid); if (!a) return;
-    a.done = !a.done; save(); renderView();
+  const m = cur, p = taskProg(m);
+  const rows = m.losses.filter(l => (l.q || '').trim() || (l.task || '').trim());
+  const fixes = m.fixes.filter(f => (f.q || '').trim() || (f.habit || '').trim());
+  $('vBody').innerHTML = '<div class="paper"><p class="ttl">分析マップ</p><p class="meta">' + esc(m.title) + (m.date ? '（' + ymd(m.date) + '）' : '') + '</p>'
+    + sumTableHTML(m)
+    + '<div class="tri">▼</div>'
+    + '<div class="sechd"><h3>改善点を習慣タスクにする</h3><button class="edit" data-go="fix">直す</button></div>'
+    + (fixes.length ? '<table class="fix"><thead><tr><th>教科</th><th>間違えた問題</th><th>改善点（習慣タスク）</th></tr></thead><tbody>'
+      + fixes.map(f => '<tr><td>' + esc(f.subj) + '</td><td>' + esc(f.q) + '</td><td>' + ((f.kinds || []).length ? '<span class="small2" style="color:var(--accent);font-weight:700">' + esc(f.kinds.join('・')) + '</span>' : '') + esc(f.habit) + '</td></tr>').join('') + '</tbody></table>' : '<p class="empty">まだありません。</p>')
+    + '</div>'
+    + '<div class="paper"><p class="ttl" style="font-size:19px">分析マップ（続き）</p><p class="meta">取れた失点のタスク　完了 ' + p.d + ' / ' + p.n + '</p>'
+    + '<div class="pbar"><i style="width:' + (p.n ? p.d / p.n * 100 : 0) + '%"></i></div>'
+    + (rows.length ? '<div class="tblwrap"><table class="task"><thead><tr><th>教科</th><th>取れた失点<br>問題番号・内容</th><th>点数</th><th>タスク<br>教材・ページ・問題番号</th><th>1周目</th><th>2周目</th><th>3周目</th><th>完了</th></tr></thead><tbody>'
+      + rows.map(l => '<tr class="' + (l.done ? 'fin' : '') + '" data-id="' + l.id + '"><td><b>' + esc(l.subj) + '</b></td><td class="l">' + esc(l.q) + '</td><td class="p">' + (num(l.pts) !== null ? fmt(num(l.pts)) + '点' : '') + '</td><td class="l">' + esc(l.task) + '</td>'
+        + l.laps.map((x, i) => '<td><div class="lapd"><input type="date" data-ld="' + i + '" value="' + esc(x.d) + '" aria-label="' + (i + 1) + '周目の日付"><button class="lap' + (x.ok ? ' on' : '') + '" data-lap="' + i + '" aria-label="' + (i + 1) + '周目できた"><span class="b">' + (x.ok ? '✓' : '') + '</span></button></div></td>').join('')
+        + '<td><button class="fin-b' + (l.done ? ' on' : '') + '" data-fin><span class="b">' + (l.done ? '✓' : '') + '</span></button></td></tr>').join('')
+      + '</tbody></table></div><p class="note">1周目〜3周目に<b>やる日</b>を入れ、終わったら□に✓（日付が空なら今日が入ります）。3周目まで✓がつくと完了になります。1〜2周で終えるときは「完了」を押してください。</p>' : '<p class="empty">取れた失点がありません。</p>')
+    + '<div class="foot">全タスクの完了に✓がつくまで、このマップで管理する。実施日は計画マップにも書き込む。</div></div>'
+    + '<div class="actions"><button class="btn pri wide" id="vImg">画像にして Discord に出す</button>'
+    + '<button class="btn line wide" id="vPlan">計画マップに入れる（コピー）</button>'
+    + '<button class="btn line wide" id="vText">文章でコピー</button>'
+    + '<button class="btn danger wide" id="vDel">この分析マップを消す</button></div>';
+  $('vBody').querySelectorAll('tr[data-id]').forEach(tr => {
+    const l = m.losses.find(x => x.id === tr.dataset.id);
+    tr.querySelectorAll('[data-lap]').forEach(b => b.onclick = () => {
+      const x = l.laps[+b.dataset.lap];
+      x.ok = !x.ok; if (x.ok && !x.d) x.d = today();
+      autoDone(l); save(); renderView();
+    });
+    tr.querySelectorAll('[data-ld]').forEach(inp => inp.onchange = () => { l.laps[+inp.dataset.ld].d = inp.value; autoDone(l); save(); renderView(); });
+    tr.querySelector('[data-fin]').onclick = () => { l.done = !l.done; save(); renderView(); };
   });
-  $('vBody').querySelectorAll('[data-go]').forEach(b => b.onclick = () => { show('wiz'); goStep(+b.dataset.go); });
+  $('vBody').querySelectorAll('[data-go]').forEach(b => b.onclick = () => openWiz(steps(m).findIndex(s => s.k === b.dataset.go)));
   $('vImg').onclick = makeImage;
-  $('vPlan').onclick = async () => { if (await copy(planText(m), 'コピーしました')) openSheet('planSheet'); };
-  $('vText').onclick = () => copy(fullText(m), 'コピーしました');
-  $('vDel').onclick = () => {
-    if (!confirm('「' + (m.title || 'この分析マップ') + '」を消しますか？元に戻せません。')) return;
-    S.maps = S.maps.filter(x => x !== m); save(); cur = null; show('home'); renderHome(); toast('消しました');
-  };
+  $('vPlan').onclick = () => { const t = planText(m); if (!t) { toast('タスクがまだありません'); return; } copy(t, 'コピーしました。計画マップの「目標」→「分析マップから読みこむ」で貼りつけてください'); };
+  $('vText').onclick = () => copy(fullText(m), '文章でコピーしました');
+  $('vDel').onclick = () => { if (!confirm('「' + (m.title || 'この分析マップ') + '」を消しますか？もとに戻せません。')) return; S.maps = S.maps.filter(x => x !== m); save(); show('home'); renderHome(); };
 }
 $('vBack').onclick = () => { show('home'); renderHome(); };
-$('vEdit').onclick = () => { stepI = -1; openJump(); };
+$('vEdit').onclick = () => openWiz(0);
 
-/* 計画マップの「分析マップから読みこむ」で読める形。期限は年まで入れる（［2026/11/4まで］） */
+/* 計画マップ（v56〜の parseBunseki）が読める形：
+   1行目【分析マップ】テスト名（2026/11/14）／以降 □【教科】やること */
+// 3周そろったら自動で完了。1〜2周で終えるときは「完了」を手で押す。✓を外したら完了も外す
+function autoDone(l) {
+  if (l.laps.every(y => y.ok)) l.done = true;
+  else if (!l.laps.some(y => y.ok)) l.done = false;
+}
 function planText(m) {
-  const L = [];
-  m.subs.forEach(s => s.acts.forEach(a => {
-    if (!actText(a)) return;
-    const t = actText(Object.assign({}, a, { due: '' }));
-    L.push('□【' + s.name + '】' + (t || '（期限まで）') + (a.due ? '［' + ymd(a.due) + 'まで］' : ''));
-  }));
+  const L = m.losses.filter(l => !l.done && (l.task || '').trim()).map(l => {
+    const ds = l.laps.map((x, i) => x.d && !x.ok ? (i + 1) + '周目' + md(x.d) : '').filter(Boolean);
+    const last = l.laps.filter(x => !x.ok).map(x => x.d).filter(Boolean).sort().pop();
+    return '□【' + l.subj + '】' + l.task.trim() + ((l.q || '').trim() ? '（' + l.q.trim() + '）' : '') + (ds.length ? '（' + ds.join('・') + '）' : '') + (last ? '［' + ymd(last) + 'まで］' : '');
+  });
   return L.length ? '【分析マップ】' + m.title + (m.date ? '（' + ymd(m.date) + '）' : '') + '\n' + L.join('\n') : '';
 }
 function fullText(m) {
   const L = ['【分析マップ】' + m.title + (m.date ? '（' + ymd(m.date) + '）' : '')];
-  m.subs.forEach(s => {
-    const c = calc(s);
-    L.push('', '■' + s.name);
-    const a = [];
-    if (c.score !== null) a.push('点数 ' + fmt(c.score) + '/' + fmt(c.full));
-    if (c.avg !== null) a.push('平均 ' + fmt(c.avg) + '（' + sgn(c.diff) + '）');
-    if (c.rank !== null) a.push(fmt(c.rank) + '位' + (c.total !== null ? '/' + fmt(c.total) + '人' : ''));
-    if (c.dev !== null) a.push('偏差値 ' + fmt(c.dev));
-    L.push(a.join('　'));
-    const b = [];
-    if (c.toreta !== null) b.push('取れた失点 ' + fmt(c.toreta) + (c.lost !== null ? '/' + fmt(c.lost) : ''));
-    if (c.kk) b.push('KK率 ' + (c.kk.frac ? c.kk.frac + ' ' : '') + c.kk.pct + '%' + (c.kk.share !== null && c.kk.share !== undefined ? '（KKできる問題 ' + fmt(c.kk.can) + '/' + fmt(c.kk.all) + '）' : ''));
-    if (c.notT !== null) b.push('取れない失点 ' + fmt(c.notT) + '/' + fmt(c.lost));
-    if (b.length) L.push(b.join('　'));
-    if (c.target !== null) L.push('次の目標点 ' + fmt(c.score) + '+' + fmt(c.toreta) + '=' + fmt(c.target));
-    const rs = s.reasons.map((t, i) => [t.trim(), i]).filter(([t]) => t);
-    if (rs.length) { L.push('【なぜ？】'); rs.forEach(([t, i]) => L.push(circ(i) + t)); }
-    const as = s.acts.filter(x => actText(x));
-    if (as.length) { L.push('【どうする？】'); as.forEach(x => L.push((x.done ? '☑' : '□') + (x.r >= 0 && s.reasons[x.r]?.trim() ? circ(x.r) + '→' : '') + actText(x))); }
-  });
-  const cs = m.subs.map(calc);
-  if (cs.length >= 2 && cs.every(c => c.target !== null)) L.push('', '合計 ' + fmt(r1(cs.reduce((x, c) => x + c.score, 0))) + '点 → 次の目標 ' + fmt(r1(cs.reduce((x, c) => x + c.target, 0))) + '点');
+  for (const s of m.subs) {
+    const c = calc(m, s);
+    L.push('■' + s.name + '　' + fmt(c.score) + '点' + (!s.noAvg && c.avg !== null ? '（平均' + fmt(c.avg) + '・' + sgn(c.diff) + '）' : '') + (rankText(s) ? '　' + rankText(s) : '')
+      + '　取れた失点' + fmt(c.toreta) + '・取れない失点' + fmt(c.notT) + '・次の目標点' + fmt(c.target) + (c.pct !== null ? '（' + c.pct + '%）' : ''));
+  }
+  const t = totals(m); if (t && m.subs.length > 1) L.push('■合計　' + fmt(t.score) + '点 → 次の目標点' + fmt(t.target) + '点');
+  const fx = m.fixes.filter(f => (f.habit || '').trim());
+  if (fx.length) { L.push('', '▼改善点（習慣タスク）'); fx.forEach(f => L.push('・【' + f.subj + '】' + (f.q ? f.q + ' → ' : '') + ((f.kinds || []).length ? '〈' + f.kinds.join('・') + '〉' : '') + f.habit)); }
+  const ls = m.losses.filter(l => (l.q || l.task || '').trim());
+  if (ls.length) { L.push('', '▼取れた失点のタスク'); ls.forEach(l => L.push((l.done ? '☑' : '□') + '【' + l.subj + '】' + l.q + (num(l.pts) !== null ? '（' + fmt(num(l.pts)) + '点）' : '') + ' → ' + l.task + '　' + l.laps.map((x, i) => (i + 1) + '周' + (x.d ? md(x.d) : '') + (x.ok ? '✓' : (x.d ? '' : '－'))).join(' '))); }
   return L.join('\n');
 }
 
-/* ── 画像（紙の分析マップと同じ形） ─────────── */
-const FF = '"Zen Kaku Gothic New","Hiragino Sans",sans-serif';
+/* ── 画像（紙と同じ形の表を縦に並べる） ── */
 function wrapLines(ctx, text, w) {
-  const out = [];
-  for (const para of String(text).split('\n')) {
-    let line = '';
-    for (const ch of Array.from(para)) {
-      if (ctx.measureText(line + ch).width > w && line) {
-        if (/^[、。，．）」』】・！？ーっゃゅょ]$/.test(ch) && ctx.measureText(line + ch).width <= w + 30) { line += ch; continue; }
-        out.push(line); line = ch;
-      } else line += ch;
-    }
+  const out = []; for (const para of String(text || '').split('\n')) {
+    let line = ''; for (const ch of para) { if (ctx.measureText(line + ch).width > w && line) { out.push(line); line = ch; } else line += ch; }
     out.push(line);
+  } return out;
+}
+function drawTable(ctx, x, y, cols, rows, o) {
+  const pad = 10, lh = o.lh || 30, W = cols.reduce((a, c) => a + c.w, 0);
+  ctx.font = '700 22px "Zen Kaku Gothic New",sans-serif';
+  const hl = cols.map(c => wrapLines(ctx, c.label, c.w - pad * 2));
+  const hh = Math.max(...hl.map(l => l.length)) * 28 + 20;
+  let cx = x; ctx.lineWidth = 1.5; ctx.strokeStyle = '#555';
+  cols.forEach((c, i) => {
+    ctx.fillStyle = c.g ? '#c9c9c9' : '#dcdcdc'; ctx.fillRect(cx, y, c.w, hh); ctx.strokeRect(cx, y, c.w, hh);
+    ctx.fillStyle = '#111'; ctx.textAlign = 'center';
+    hl[i].forEach((t, k) => ctx.fillText(t, cx + c.w / 2, y + (hh - hl[i].length * 28) / 2 + 22 + k * 28)); cx += c.w;
+  });
+  y += hh;
+  for (const r of rows) {
+    ctx.font = (o.font || '500 24px') + ' "Zen Kaku Gothic New",sans-serif';
+    const ls = cols.map((c, i) => wrapLines(ctx, r[i] ?? '', c.w - pad * 2));
+    const rh = Math.max(o.minH || 50, Math.max(...ls.map(l => l.length)) * lh + 18);
+    cx = x;
+    cols.forEach((c, i) => {
+      ctx.fillStyle = c.g ? '#efefef' : (r.fin ? '#e2f4ea' : '#fff'); ctx.fillRect(cx, y, c.w, rh); ctx.strokeRect(cx, y, c.w, rh);
+      ctx.fillStyle = (r.bold && i === 0) || c.b ? '#0E5E66' : '#111';
+      ctx.textAlign = c.left ? 'left' : 'center';
+      ls[i].forEach((t, k) => ctx.fillText(t, c.left ? cx + pad : cx + c.w / 2, y + (rh - ls[i].length * lh) / 2 + lh - 7 + k * lh)); cx += c.w;
+    });
+    y += rh;
   }
-  return out;
+  return y;
+}
+function title(ctx, t, sub, y, W) {
+  ctx.fillStyle = '#111'; ctx.textAlign = 'center';
+  ctx.font = '900 54px "Zen Kaku Gothic New",sans-serif'; ctx.fillText(t, W / 2, y + 54);
+  ctx.font = '700 26px "Zen Kaku Gothic New",sans-serif'; ctx.fillText(sub, W / 2, y + 96);
+  return y + 120;
+}
+function drawMap(m, ctx, W) {
+  const X = 50, IW = W - 100; let y = 30;
+  const head = (m.title || '') + (m.date ? '（' + ymd(m.date) + '）' : '') + (S.name ? '　' + S.name : '');
+  y = title(ctx, '分析マップ', head, y, W);
+  const sc = [{ label: '教科名', w: 150 }, { label: '点数', w: 150 }, { label: '平均点', w: 150 }, { label: '平均点差異', w: 180 }, { label: '順位・偏差値', w: 260 },
+    { label: '取れた失点', w: 190, g: 1 }, { label: '%※', w: 120, g: 1 }, { label: '取れない失点', w: 200 }, { label: '点数＋取れた失点（＝次の目標点）', w: IW - 1400, b: 1 }];
+  const rows = m.subs.map(s => { const c = calc(m, s); return [s.name, fmt(c.score) + (c.full !== null && c.full !== 100 ? '/' + fmt(c.full) : ''), avgText(s, c), diffText(s, c), rankText(s), fmt(c.toreta), c.pct ?? '', fmt(c.notT), fmt(c.target)]; });
+  const t = totals(m); if (t && m.subs.length > 1) rows.push(['合計', fmt(t.score), '', '', '', fmt(t.toreta), t.pct ?? '', fmt(t.notT), fmt(t.target)]);
+  y = drawTable(ctx, X, y, sc, rows, {});
+  ctx.font = '700 22px "Zen Kaku Gothic New",sans-serif'; ctx.fillStyle = '#111'; ctx.textAlign = 'center';
+  ctx.fillText('▼', W / 2, y + 36); ctx.textAlign = 'right'; ctx.fillText('※ %＝点数÷次の目標点×100（小数点以下切り捨て）', X + IW, y + 36);
+  y += 60;
+  const fx = m.fixes.filter(f => (f.q || f.habit || '').trim());
+  y = drawTable(ctx, X, y, [{ label: '教科', w: 150 }, { label: '間違えた問題', w: 520, left: 1 }, { label: '改善点を習慣タスクにする（ミス対策・勉強法の改善・テストマニュアル通りの勉強・問題文の読み方や解き方など）', w: IW - 670, left: 1 }],
+    (fx.length ? fx : [{ subj: '', q: '', habit: '' }]).map(f => [f.subj, f.q, ((f.kinds || []).length ? '〈' + f.kinds.join('・') + '〉\n' : '') + f.habit]), { minH: 90 });
+  y += 50;
+  y = title(ctx, '分析マップ（続き）', '取れた失点のタスク　完了 ' + taskProg(m).d + ' / ' + taskProg(m).n, y, W);
+  const ls = m.losses.filter(l => (l.q || l.task || '').trim());
+  const tc = [{ label: '教科', w: 130 }, { label: '【取れた失点】問題番号・簡単な内容', w: 470, left: 1 }, { label: '点数', w: 110 }, { label: '【タスク】対応教材・ページ・問題番号', w: IW - 1310, left: 1 },
+    { label: '1周目', w: 170 }, { label: '2周目', w: 170 }, { label: '3周目', w: 170 }, { label: '完了✓', w: 90 }];
+  const tr = (ls.length ? ls : [newLoss('')]).map(l => { const r = [l.subj, l.q, num(l.pts) !== null ? fmt(num(l.pts)) + '点' : '点', l.task].concat(l.laps.map(x => (x.d ? md(x.d) : '') + (x.ok ? ' ✓' : '')), [l.done ? '✓' : '']); r.fin = l.done; return r; });
+  y = drawTable(ctx, X, y, tc, tr, {});
+  ctx.lineWidth = 3; ctx.strokeStyle = '#111'; ctx.strokeRect(X, y, IW, 56);
+  ctx.font = '700 24px "Zen Kaku Gothic New",sans-serif'; ctx.fillStyle = '#111'; ctx.textAlign = 'center';
+  ctx.fillText('全タスクの完了に✓がつくまで、このマップで管理する。実施日は計画マップにも書き込む。', W / 2, y + 37);
+  return y + 56 + 40;
 }
 async function makeImage() {
-  toast('画像を作っています…');
-  try { await Promise.all([document.fonts.load('900 40px "Zen Kaku Gothic New"'), document.fonts.load('500 24px "Zen Kaku Gothic New"'), document.fonts.load('700 24px "Zen Kaku Gothic New"')]); } catch (e) {}
-  const cv = drawMap(cur);
-  cv.toBlob(blob => {
-    if (!blob) { toast('画像を作れませんでした'); return; }
-    const url = URL.createObjectURL(blob);
-    $('imgPrev').src = url;
-    const fname = '分析マップ_' + (cur.title || '').replace(/[\\/:*?"<>|\s]/g, '') + '.jpg';
-    $('btnDl').href = url; $('btnDl').download = fname;
-    const file = new File([blob], fname, { type: 'image/jpeg' });
-    const canShare = navigator.canShare && navigator.canShare({ files: [file] });
-    $('btnShare').hidden = !canShare;
+  try { await document.fonts.ready; } catch (e) {}
+  const W = 1800, cv = document.createElement('canvas'); cv.width = W; cv.height = 6000;
+  const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, 6000);
+  const H = drawMap(cur, ctx, W);
+  const out = document.createElement('canvas'); out.width = W; out.height = H;
+  out.getContext('2d').drawImage(cv, 0, 0);
+  out.toBlob(blob => {
+    const url = URL.createObjectURL(blob); $('imgPrev').src = url; $('btnDl').href = url;
+    const file = new File([blob], 'analysis-map.jpg', { type: 'image/jpeg' });
+    $('btnShare').hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
     $('btnShare').onclick = () => { navigator.share({ files: [file], title: '分析マップ' }).catch(() => {}); };
     openSheet('imgSheet');
   }, 'image/jpeg', 0.92);
 }
-function drawMap(m) {
-  const W = 1800, P = 60, IW = W - P * 2;
-  const cv = document.createElement('canvas');
-  const ctx = cv.getContext('2d');
-  const INK = '#1a1a1a', GRAY = '#d6d6d6', MUTE = '#555', ACC = '#0E5E66';
-  // 上の表の列
-  const cols = [['教科名', .085], ['点数', .1], ['平均点', .095], ['平均点差異', .1], ['順位・偏差値', .14], ['取れた失点・KK率', .165], ['取れない失点', .12], ['点数＋取れた失点（＝次の目標点）', .195]];
-  const cs = m.subs.map(s => [s, calc(s)]);
-  const showTotal = cs.length >= 2;
-  const HR = 52, RH = 76;
-  // 下の段
-  const bc = [['教科名', .085], ['【なぜ？】「取れた失点」の失点要因', .4], ['【どうする？】「取れた失点」を取るためのアクションプラン・行動タスク', .515]];
-  const LH = 38, FS = 25;
-  ctx.font = `500 ${FS}px ${FF}`;
-  const blocks = cs.map(([s]) => {
-    const rw = IW * bc[1][1] - 28, aw = IW * bc[2][1] - 60;
-    const rl = [];
-    s.reasons.forEach((t, i) => { if (t.trim()) wrapLines(ctx, circ(i) + t.trim(), rw - FS).forEach((l, j) => rl.push(j ? '　' + l : l)); });
-    const al = [];
-    s.acts.forEach(a => { const t = actText(a); if (!t) return; const pre = a.r >= 0 && s.reasons[a.r]?.trim() ? circ(a.r) + '→' : ''; wrapLines(ctx, pre + t, aw).forEach((l, j) => al.push({ t: l, box: j === 0, done: a.done })); });
-    const n = Math.max(3, rl.length, al.length);
-    return { s, rl, al, h: n * LH + 30 };
-  });
-  const topH = 120 + 64 + HR + RH * cs.length + (showTotal ? RH : 0);
-  const midH = 90;
-  const botH = HR + blocks.reduce((x, b) => x + b.h, 0);
-  const footH = 60 + 70;
-  const H = P + topH + midH + botH + footH + P;
-  cv.width = W; cv.height = H;
-  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
-  ctx.textBaseline = 'middle';
-  const line = (x1, y1, x2, y2, w = 2) => { ctx.strokeStyle = INK; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
-  const text = (t, x, y, size, weight = 500, align = 'center', color = INK) => { ctx.font = `${weight} ${size}px ${FF}`; ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(t, x, y); };
-  const fit = (t, x, y, maxW, size, weight = 500, color = INK) => { let s = size; ctx.font = `${weight} ${s}px ${FF}`; while (ctx.measureText(t).width > maxW && s > 12) { s--; ctx.font = `${weight} ${s}px ${FF}`; } text(t, x, y, s, weight, 'center', color); };
-  let y = P;
-  // タイトル
-  ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.strokeRect(P, y, IW, topH);
-  text('分析マップ', W / 2, y + 62, 58, 900);
-  if (S.name) text(S.name, P + IW - 24, y + 62, 28, 700, 'right', MUTE);
-  line(P, y + 120, P + IW, y + 120, 3);
-  text('【テスト名】', P + 20, y + 152, 28, 700, 'left');
-  ctx.font = `700 28px ${FF}`; const tw = ctx.measureText('【テスト名】').width;
-  text(m.title + (m.date ? '　（' + ymd(m.date) + '）' : ''), P + 28 + tw, y + 152, 30, 500, 'left');
-  y += 184; line(P, y, P + IW, y, 3);
-  // 表の見出し
-  let x = P; const cx = [];
-  cols.forEach(([, w]) => { cx.push(x); x += IW * w; });
-  cx.push(P + IW);
-  const gx0 = cx[5], gx1 = cx[6];
-  ctx.fillStyle = GRAY; ctx.fillRect(gx0, y, gx1 - gx0, HR + RH * cs.length + (showTotal ? RH : 0));
-  cols.forEach(([t], i) => fit(t, (cx[i] + cx[i + 1]) / 2, y + HR / 2, cx[i + 1] - cx[i] - 12, 23, 700));
-  y += HR; line(P, y, P + IW, y, 3);
-  const cell = (i, l1, l2, opt = {}) => {
-    const mx = (cx[i] + cx[i + 1]) / 2, w = cx[i + 1] - cx[i] - 14;
-    if (l2) { fit(l1, mx, y + RH / 2 - 15, w, opt.size || 30, opt.w || 500, opt.c || INK); fit(l2, mx, y + RH / 2 + 19, w, 20, 500, MUTE); }
-    else fit(l1, mx, y + RH / 2, w, opt.size || 30, opt.w || 500, opt.c || INK);
-  };
-  cs.forEach(([s, c], ri) => {
-    cell(0, s.name, '', { w: 700, size: 32 });
-    cell(1, c.score !== null ? fmt(c.score) + ' / ' + fmt(c.full) : '');
-    cell(2, c.avg !== null ? fmt(c.avg) : '');
-    cell(3, c.diff !== null ? sgn(c.diff) : '');
-    const rk = c.rank !== null ? fmt(c.rank) + (c.total !== null ? ' / ' + fmt(c.total) : '') + '位' : '';
-    const dv = c.dev !== null ? '偏差値 ' + fmt(c.dev) : '';
-    cell(4, rk || dv, rk && dv ? dv : '', { size: rk ? 26 : 30 });
-    cell(5, c.toreta !== null ? fmt(c.toreta) + (c.lost !== null ? ' / ' + fmt(c.lost) : '') : '', c.kk ? 'KK率 ' + (c.kk.frac ? c.kk.frac + '  ' : '') + c.kk.pct + '%' : '');
-    cell(6, c.notT !== null ? fmt(c.notT) + ' / ' + fmt(c.lost) : '');
-    cell(7, c.target !== null ? fmt(c.score) + ' ＋ ' + fmt(c.toreta) + ' ＝ ' + fmt(c.target) : '', '', { w: 700 });
-    y += RH;
-    if (ri < cs.length - 1 || showTotal) line(P, y, P + IW, y, ri === cs.length - 1 ? 3 : 1.5);
-  });
-  if (showTotal) {
-    const sum = k => cs.every(([, c]) => c[k] !== null) ? r1(cs.reduce((x2, [, c]) => x2 + c[k], 0)) : null;
-    const sc = sum('score'), fu = sum('full'), tg = sum('target'), tr = sum('toreta');
-    cell(0, '合計', '', { w: 900, size: 30 });
-    cell(1, sc !== null ? fmt(sc) + ' / ' + fmt(fu) : '', '', { w: 700 });
-    cell(5, tr !== null ? fmt(tr) : '', '', { w: 700 });
-    cell(7, tg !== null ? '目標 合計 ' + fmt(tg) : '', '', { w: 900, c: ACC });
-    y += RH;
-  }
-  cx.slice(1, -1).forEach(xx => line(xx, P + 184, xx, y, 1.5));
-  y += 6;
-  // ▼
-  ctx.fillStyle = INK; ctx.beginPath(); ctx.moveTo(W / 2 - 30, y + 22); ctx.lineTo(W / 2 + 30, y + 22); ctx.lineTo(W / 2, y + 66); ctx.closePath(); ctx.fill();
-  y += midH - 6;
-  // 下の段
-  const by0 = y;
-  let bx = P; const bxs = [];
-  bc.forEach(([, w]) => { bxs.push(bx); bx += IW * w; }); bxs.push(P + IW);
-  bc.forEach(([t], i) => fit(t, (bxs[i] + bxs[i + 1]) / 2, y + HR / 2, bxs[i + 1] - bxs[i] - 16, 23, 700));
-  y += HR; line(P, y, P + IW, y, 3);
-  blocks.forEach((b, bi) => {
-    fit(b.s.name, (bxs[0] + bxs[1]) / 2, y + b.h / 2, bxs[1] - bxs[0] - 12, 36, 700);
-    ctx.font = `500 ${FS}px ${FF}`; ctx.textAlign = 'left'; ctx.fillStyle = INK;
-    b.rl.forEach((l, i) => { ctx.fillText(l, bxs[1] + 14, y + 15 + LH * i + LH / 2); });
-    for (let i = 1; i <= Math.max(3, b.rl.length, b.al.length); i++) {
-      if (i * LH + 15 >= b.h - 4) break;
-      ctx.strokeStyle = '#e2e2e2'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(bxs[1] + 8, y + 15 + LH * i); ctx.lineTo(P + IW - 8, y + 15 + LH * i); ctx.stroke();
-    }
-    b.al.forEach((l, i) => {
-      const ly = y + 15 + LH * i + LH / 2;
-      if (l.box) {
-        ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.strokeRect(bxs[2] + 16, ly - 11, 22, 22);
-        if (l.done) { ctx.strokeStyle = '#1E8E5A'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(bxs[2] + 19, ly); ctx.lineTo(bxs[2] + 26, ly + 8); ctx.lineTo(bxs[2] + 40, ly - 12); ctx.stroke(); }
-      }
-      ctx.font = `500 ${FS}px ${FF}`; ctx.fillStyle = INK; ctx.textAlign = 'left';
-      ctx.fillText(l.t, bxs[2] + 50, ly);
-    });
-    y += b.h;
-    if (bi < blocks.length - 1) line(P, y, P + IW, y, 2);
-  });
-  line(P, y, P + IW, y, 3);
-  bxs.slice(1, -1).forEach(xx => line(xx, by0, xx, y, 2));
-  // フッター
-  text('↑ 不足、弱点、間違えた理由を具体的にまとめる、深く分析する', (bxs[1] + bxs[2]) / 2, y + 30, 20, 500, 'center', MUTE);
-  text('↑ 左を解決する改善策（教材、個数、周回数、正答率、期限などで数値化する）', (bxs[2] + bxs[3]) / 2, y + 30, 20, 500, 'center', MUTE);
-  y += 60; line(P, y, P + IW, y, 3);
-  text('アクションプラン、行動タスクを書けば、必ず計画マップに反映して記入してください！', W / 2, y + 35, 28, 900);
-  y += 70;
-  ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.strokeRect(P, by0, IW, y - by0);
-  return cv;
-}
 
-/* ── シート・トースト・コピー ───────────────── */
+/* ── 小物 ── */
 function openSheet(id) { $(id).hidden = false; }
 function closeSheet(id) { $(id).hidden = true; }
-document.querySelectorAll('.sheet').forEach(sh => {
-  sh.addEventListener('click', e => { if (e.target === sh || e.target.closest('[data-close]')) sh.hidden = true; });
-});
+document.querySelectorAll('.sheet').forEach(sh => sh.addEventListener('click', e => { if (e.target === sh || e.target.closest('[data-close]')) sh.hidden = true; }));
 let toastT = 0;
 function toast(msg) {
-  let t = document.querySelector('.toast');
-  if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.append(t); }
-  t.textContent = msg; t.hidden = false;
-  clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600);
+  let t = document.querySelector('.toast'); if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600);
 }
 async function copy(text, msg) {
-  if (!text.trim()) { toast('コピーするものがありません'); return false; }
-  try { await navigator.clipboard.writeText(text); toast(msg); return true; }
-  catch (e) {
-    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.append(ta); ta.select();
-    let ok = false;
-    try { ok = document.execCommand('copy'); toast(ok ? msg : 'コピーできませんでした'); } catch (e2) { toast('コピーできませんでした'); }
-    ta.remove(); return ok;
-  }
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  toast(msg);
 }
-
-/* ── 設定 ───────────────────────────────────── */
 $('btnSet').onclick = () => { $('setName').value = S.name || ''; openSheet('setSheet'); };
-$('setName').oninput = e => { S.name = e.target.value.trim(); saveSoon(); };
-$('btnExport').onclick = () => {
-  const blob = new Blob([JSON.stringify(S)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'bunseki-map-' + today() + '.json'; a.click();
+$('setName').oninput = e => { S.name = e.target.value; saveSoon(); };
+$('btnExport').onclick = () => copy(JSON.stringify(S), 'バックアップをコピーしました。メモなどに貼って残してください');
+$('btnImport').onclick = async () => {
+  let t = ''; try { t = await navigator.clipboard.readText(); } catch (e) {}
+  if (!t) t = prompt('バックアップの文字を貼りつけてください') || '';
+  try { const j = JSON.parse(t); if (!Array.isArray(j.maps)) throw 0; if (!confirm('いまの記録を、読みこんだ記録に置きかえますか？')) return; S = Object.assign({ name: '', maps: [] }, j); save(); closeSheet('setSheet'); renderHome(); toast('読みこみました'); }
+  catch (e) { toast('読みこめませんでした'); }
 };
-$('btnImport').onclick = () => $('fileImport').click();
-$('fileImport').onchange = async e => {
-  const f = e.target.files[0]; if (!f) return;
-  try {
-    const j = JSON.parse(await f.text());
-    if (!j || !Array.isArray(j.maps)) throw 0;
-    if (!confirm('いまのデータを、このファイルの内容（分析マップ ' + j.maps.length + '枚）と入れかえますか？')) return;
-    S = Object.assign({ name: '', full: 100, maps: [] }, j); save(); renderHome(); closeSheet('setSheet'); toast('読みこみました');
-  } catch (err) { toast('このファイルは読みこめませんでした'); }
-  e.target.value = '';
-};
-window.addEventListener('scroll', () => $('homeTop').classList.toggle('scrolled', scrollY > 4), { passive: true });
 
-/* ── 更新（新しいバージョンが出たら知らせて、押したら入れ直す） ────────── */
 async function checkUpdate(silent) {
   const msg = t => { if (!silent) $('updMsg').textContent = t; };
   try {
@@ -1234,8 +909,7 @@ async function checkUpdate(silent) {
   } catch (e) { msg('いまは調べられませんでした。電波のよい所でもう一度ためしてください。'); }
 }
 async function doUpdate() {
-  save();
-  toast('更新しています…');
+  save(); toast('更新しています…');
   try {
     if ('serviceWorker' in navigator) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.unregister())); }
     if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
@@ -1245,14 +919,10 @@ async function doUpdate() {
 $('btnUpdate').onclick = doUpdate;
 $('btnCheckUpd').onclick = () => { $('updMsg').textContent = '調べています…'; checkUpdate(false); };
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { save(); checkUpdate(true); } else save(); });
-window.addEventListener('pagehide', save);
 
-$('verNo').textContent = VER;
-$('ver').textContent = '分析マップ v' + VER;
 renderHome();
 checkUpdate(true);
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 </script>
-<script src="learn.js?v=6"></script>
 </body>
 </html>

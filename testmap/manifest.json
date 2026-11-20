@@ -1,14 +1,15 @@
 {
-  "name": "マップ返信",
-  "short_name": "マップ返信",
+  "id": "./",
+  "name": "テストマップ",
+  "short_name": "テストマップ",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#F3F1EC",
-  "theme_color": "#F3F1EC",
+  "background_color": "#F6F3F1",
+  "theme_color": "#F6F3F1",
   "icons": [
-    {"src": "icon-192-v1.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-    {"src": "icon-512-v1.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-    {"src": "icon-maskable-v1.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {"src": "icon-192-v2.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512-v2.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-maskable-v2.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ]
 }

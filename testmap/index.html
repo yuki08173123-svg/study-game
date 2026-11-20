@@ -2,402 +2,964 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="testmap"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>マップ返信</title>
-<meta name="theme-color" content="#F3F1EC">
+<title>テストマップ</title>
+<meta name="theme-color" content="#F6F3F1">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="apple-touch-icon-v1.png">
-<link rel="icon" href="icon-192-v1.png">
+<link rel="apple-touch-icon" href="apple-touch-icon-v2.png">
+<link rel="icon" href="icon-192-v2.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="マップ返信">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="テストマップ">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap">
 <style>
 :root{
-  --bg:#F3F1EC; --card:#FFFFFF; --ink:#1A1A1A; --muted:#5E5A52; --line:#DDD8CE;
-  --accent:#1F3A5F; --accent-soft:#E4EAF2; --accent-ink:#FFFFFF;
-  --hot:#D9622B; --hot-soft:#FBE9DF;
-  --done:#1E8A5A; --warn:#C4372B; --warn-soft:#F9E3E0;
-  --chip:#ECE8E0; --shadow:0 1px 3px rgba(40,30,10,.08); --shadow-lg:0 8px 24px rgba(40,30,10,.18);
+  --bg:#F6F3F1; --card:#FFFFFF; --ink:#22191A; --muted:#6A5E5C; --line:#E3DAD6;
+  --accent:#A3302A; --accent-soft:#F8E7E4; --accent-ink:#FFFFFF;
+  --ok:#1E8E5A; --ok-soft:#E2F4EA;
+  --warn:#B36B00; --warn-soft:#FFF2D9;
+  --chip:#F0EAE7; --gray:#D9D2CF;
+  --shadow:0 1px 3px rgba(40,20,20,.08); --shadow-lg:0 10px 30px rgba(40,20,20,.18);
 }
 @media (prefers-color-scheme: dark){
-  :root{
-    --bg:#16181C; --card:#202329; --ink:#ECEAE6; --muted:#A39E94; --line:#33373F;
-    --accent:#8FB1DE; --accent-soft:#25324A; --accent-ink:#10141B;
-    --hot:#F08A55; --hot-soft:#3E2A1F;
-    --done:#5CC995; --warn:#EF7B6E; --warn-soft:#432622;
-    --chip:#2A2E36; --shadow:0 1px 3px rgba(0,0,0,.35); --shadow-lg:0 8px 24px rgba(0,0,0,.55);
+  :root:not([data-theme="light"]){
+    --bg:#171213; --card:#221B1C; --ink:#F0E9E8; --muted:#AA9D9B; --line:#3A3031;
+    --accent:#F08A7E; --accent-soft:#3B2422; --accent-ink:#1A1011;
+    --ok:#5FD39A; --ok-soft:#173326;
+    --warn:#F2B552; --warn-soft:#3A2E17;
+    --chip:#2C2425; --gray:#463B3C;
+    --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 10px 30px rgba(0,0,0,.5);
   }
 }
+:root[data-theme="dark"]{
+  --bg:#171213; --card:#221B1C; --ink:#F0E9E8; --muted:#AA9D9B; --line:#3A3031;
+  --accent:#F08A7E; --accent-soft:#3B2422; --accent-ink:#1A1011;
+  --ok:#5FD39A; --ok-soft:#173326;
+  --warn:#F2B552; --warn-soft:#3A2E17;
+  --chip:#2C2425; --gray:#463B3C;
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New",system-ui,-apple-system,"Hiragino Sans",sans-serif;font-size:16px;line-height:1.6;font-weight:500}
+button{font:inherit;color:inherit;cursor:pointer}
+input,textarea,select{font:inherit;color:var(--ink)}
 [hidden]{display:none!important}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New","Hiragino Sans",system-ui,sans-serif;font-size:16px;line-height:1.65;font-weight:500}
-button,input,textarea{font:inherit;color:inherit}
-button{cursor:pointer;border:0;background:none;padding:0}
-.wrap{max-width:640px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 8px) 16px calc(env(safe-area-inset-bottom) + 60px)}
-header.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0 2px}
-header.top h1{font-size:22px;margin:0;font-weight:900;letter-spacing:.03em}
-header.top .sub{font-size:12.5px;color:var(--muted);margin-top:-2px}
-.hbtns{display:flex;gap:8px}
-.iconbtn{position:relative;width:42px;height:42px;border-radius:12px;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;font-size:19px;flex:none}
-.dot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:var(--warn)}
-.updbar{display:flex;align-items:center;gap:10px;background:var(--hot-soft);color:var(--ink);border-radius:14px;padding:10px 12px;margin:10px 0 0;font-size:14px}
-.updbar b{flex:1}
-.card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:14px;margin:12px 0}
-.card h2{margin:0 0 8px;font-size:16.5px;display:flex;align-items:center;gap:8px;font-weight:900}
-.card h2 .n{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:13.5px;font-weight:900;flex:none}
-.card h2 .opt{font-size:12px;color:var(--muted);font-weight:500}
-.hint{font-size:13px;color:var(--muted);margin:0 0 10px}
-textarea{width:100%;min-height:150px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg);padding:11px 12px;font-size:16px;line-height:1.65;resize:vertical}
-textarea#out{min-height:280px;background:var(--card)}
-input[type=text],input[type=password]{width:100%;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);padding:11px 12px;font-size:16px}
-textarea:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:10px 16px;border-radius:14px;background:var(--chip);font-weight:900;font-size:15px}
-.btn.primary{background:var(--accent);color:var(--accent-ink)}
-.btn.hot{background:var(--hot);color:#fff}
-.btn.grow{flex:1}
-.btn.big{width:100%;min-height:58px;font-size:18px;border-radius:16px;margin-top:4px}
-.btn:disabled{opacity:.45}
-.photos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.ph{position:relative;aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:var(--chip)}
-.ph img{width:100%;height:100%;object-fit:cover;display:block}
-.ph .x{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:14px;font-weight:900;display:grid;place-items:center}
-.ph.add{display:grid;place-items:center;border:2px dashed var(--line);background:transparent;color:var(--muted);font-size:13px;text-align:center;line-height:1.3}
-.ph.add span{font-size:26px;display:block}
-.chips{display:flex;gap:6px;flex-wrap:wrap}
-.chip{padding:7px 13px;border-radius:999px;background:var(--chip);font-size:14px;font-weight:700}
-.chip.on{background:var(--accent);color:var(--accent-ink)}
-.memo-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.memo-presets button{padding:5px 10px;border-radius:999px;border:1.5px solid var(--line);font-size:13px;color:var(--muted)}
-.loading{display:flex;align-items:center;gap:12px;padding:6px 2px}
-.spin{width:26px;height:26px;border-radius:50%;border:3px solid var(--accent-soft);border-top-color:var(--accent);animation:sp 1s linear infinite;flex:none}
-@keyframes sp{to{transform:rotate(360deg)}}
-.err{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:700;margin-top:10px}
-.count{font-size:12px;color:var(--muted);text-align:right;margin-top:4px}
-.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;font-weight:700;box-shadow:var(--shadow-lg);z-index:50;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
-.toast.show{opacity:1}
-.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:30;display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:var(--bg);width:100%;max-width:640px;max-height:88vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom) + 24px)}
-.sheet h3{margin:4px 0 12px;font-size:18px;font-weight:900;display:flex;justify-content:space-between;align-items:center}
-.sheet label{display:block;font-size:13.5px;font-weight:700;margin:14px 0 6px}
-.hist{background:var(--card);border-radius:14px;padding:11px 12px;margin:8px 0;box-shadow:var(--shadow)}
-.hist .d{font-size:12px;color:var(--muted)}
-.hist .s{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hist .r{font-size:14px;white-space:pre-wrap;max-height:4.9em;overflow:hidden;margin-top:4px}
-.hist.open .r{max-height:none}
-.ver{font-size:12px;color:var(--muted);text-align:center;margin-top:24px}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px calc(110px + env(safe-area-inset-bottom))}
+header.top{position:sticky;top:0;z-index:20;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;gap:10px}
+header.top h1{font-size:19px;margin:0;font-weight:900;letter-spacing:.06em;flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+header.top h1 img{width:28px;height:28px;border-radius:7px}
+header.top h1 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iconbtn{width:42px;height:42px;border-radius:12px;border:0;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;font-size:19px;position:relative;flex:none}
+.dot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:var(--accent)}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:16px;margin:12px 0}
+.btn{border:0;border-radius:14px;padding:12px 18px;min-height:48px;background:var(--chip);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;color:var(--ink)}
+.btn.pri{background:var(--accent);color:var(--accent-ink)}
+.btn.line{background:transparent;border:1.5px solid var(--line)}
+.btn.danger{background:var(--accent-soft);color:var(--accent)}
+.btn.wide{width:100%}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:14px;border-radius:10px}
+.mini{font-size:13px;color:var(--muted)}
+h2{font-size:20px;margin:6px 0 4px;font-weight:900;line-height:1.4}
+h3{font-size:17px;margin:0 0 8px;font-weight:900}
+.lead{color:var(--muted);font-size:14px;margin:0 0 10px}
+.updbar{display:flex;align-items:center;gap:10px;width:100%;border:0;background:var(--accent);color:var(--accent-ink);border-radius:14px;padding:10px 14px;margin:8px 0 0;text-align:left}
+.updbar .t{flex:1;display:flex;flex-direction:column;font-size:13px}
+.updbar b{font-size:15px}
+.hero{background:var(--accent);color:var(--accent-ink);border-radius:20px;padding:20px;margin:12px 0}
+.hero h2{margin:0 0 6px;font-size:21px}
+.hero p{margin:0 0 14px;font-size:14px;opacity:.94}
+.hero .btn{background:var(--accent-ink);color:var(--accent);width:100%;font-size:17px;min-height:54px}
+.vlink{display:flex;align-items:center;justify-content:center;gap:6px;font-size:15px;font-weight:700;color:var(--accent);text-decoration:none;background:var(--accent-soft);border-radius:14px;padding:12px;margin:0 0 12px}
+.maprow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;margin:10px 0}
+.maprow .m{flex:1;min-width:0}
+.maprow .n{font-weight:900;font-size:16px;overflow-wrap:anywhere}
+.maprow .s{font-size:13px;color:var(--muted)}
+.maprow .d{text-align:right;font-weight:900;color:var(--accent);font-size:24px;line-height:1}
+.maprow .d small{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-top:4px}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--muted);white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+details.ex{background:var(--card);border-radius:12px;box-shadow:var(--shadow);margin:12px 0}
+details.ex summary{padding:12px 14px;font-weight:700;font-size:14px;color:var(--accent);list-style:none;cursor:pointer}
+details.ex summary::-webkit-details-marker{display:none}
+details.ex summary::before{content:"▸ "}
+details.ex[open] summary::before{content:"▾ "}
+details.ex .in{padding:0 14px 14px;font-size:14px}
+details.ex ul{margin:0;padding-left:1.2em}
+details.ex li{margin:4px 0}
+details.ex dl{margin:0;display:grid;gap:8px}
+details.ex dt{font-weight:900}
+details.ex dd{margin:0;color:var(--muted)}
+.ver{text-align:center;font-size:12px;color:var(--muted);margin:24px 0}
+
+/* マップの画面 */
+.sum{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:14px;margin:4px 0 12px}
+.sum .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.sum .k{font-size:11px;font-weight:700;color:var(--muted)}
+.sum .v{font-size:26px;font-weight:900;line-height:1.2;font-variant-numeric:tabular-nums}
+.sum .v small{font-size:13px;font-weight:700;color:var(--muted)}
+.sum .v.a{color:var(--accent)}
+.pbar{height:10px;background:var(--line);border-radius:5px;overflow:hidden;margin:10px 0 0}
+.pbar i{display:block;height:100%;background:var(--ok);transition:width .25s}
+.now{border-radius:12px;padding:10px 12px;margin-top:10px;font-size:14px;background:var(--accent-soft)}
+.now b{color:var(--accent)}
+.now.sun{background:var(--warn-soft)}
+.now.sun b{color:var(--warn)}
+.tabs{position:sticky;top:calc(60px + env(safe-area-inset-top));z-index:15;background:var(--bg);display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px 0 8px}
+.tabs button{border:0;border-radius:12px;min-height:44px;background:var(--chip);font-weight:900;font-size:14px;line-height:1.2;padding:4px}
+.tabs button small{display:block;font-size:11px;font-weight:700;opacity:.8}
+.tabs button.on{background:var(--ink);color:var(--bg)}
+.tip{background:var(--chip);border-radius:12px;padding:10px 14px;font-size:14px;margin:10px 0}
+.tip b{color:var(--accent)}
+.alert{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;margin:10px 0}
+.good{background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;margin:10px 0}
+.subjh{display:flex;align-items:center;gap:8px;margin:18px 0 6px}
+.subjh h3{margin:0;flex:1}
+.stag{display:inline-block;background:var(--accent-soft);color:var(--accent);font-weight:900;border-radius:8px;padding:1px 9px;font-size:14px}
+.cnt{font-size:13px;font-weight:700;color:var(--muted)}
+.tk{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:10px 12px;margin:8px 0}
+.tk .hd{display:flex;gap:10px;align-items:flex-start}
+.fin{flex:none;width:34px;height:34px;border:0;background:transparent;display:grid;place-items:center;padding:0}
+.fin i{width:26px;height:26px;border:2.5px solid var(--muted);border-radius:50%;display:block}
+.fin.on i{background:var(--ink);border-color:var(--ink)}
+.tk .tx{flex:1;min-width:0;border:0;background:transparent;text-align:left;padding:4px 0;font-weight:700;font-size:16px;overflow-wrap:anywhere;line-height:1.45}
+.tk .tx small{display:inline-block;margin-left:6px;font-size:13px;color:var(--muted);font-weight:700}
+.tk.done .tx span{text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted)}
+.laps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.lp{border:1.5px solid var(--line);border-radius:10px;padding:4px 4px 6px;text-align:center;position:relative}
+.lp .lb{font-size:11px;font-weight:700;color:var(--muted);display:block}
+.dt{position:relative;display:block;min-height:32px;line-height:32px;font-size:15px;font-weight:900;font-variant-numeric:tabular-nums;border-radius:8px;margin:0 0 4px;cursor:pointer}
+.dt.no{font-size:12px;font-weight:700;color:var(--muted)}
+.dt input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none;cursor:pointer}
+.lp .ck{width:100%;min-height:34px;border:0;border-radius:8px;background:var(--chip);font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;gap:4px}
+.lp .ck b{width:20px;height:20px;border:2px solid var(--muted);border-radius:4px;display:grid;place-items:center;font-size:13px;color:#fff;background:var(--card)}
+.lp.ok{border-color:var(--ok);background:var(--ok-soft)}
+.lp.ok .ck{background:transparent;color:var(--ok)}
+.lp.ok .ck b{background:var(--ok);border-color:var(--ok)}
+.lp.late{border-color:var(--warn)}
+.lp.late .lb{color:var(--warn)}
+.add{width:100%;border:1.5px dashed var(--line);background:transparent;border-radius:14px;min-height:48px;font-weight:700;color:var(--accent);margin:4px 0}
+.empty{font-size:14px;color:var(--muted);padding:6px 2px}
+.field{margin:14px 0}
+.field > label,.flabel{display:block;font-weight:700;font-size:15px;margin-bottom:6px}
+.help{font-size:13px;color:var(--muted);margin:4px 0 0}
+.inp{width:100%;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:11px 12px;font-size:17px;min-height:48px;outline:none;-webkit-appearance:none;appearance:none}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea.inp{resize:none;line-height:1.55;min-height:76px;font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px;font-weight:700;font-size:15px;min-height:40px;max-width:100%;overflow-wrap:anywhere}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip.sm{padding:5px 11px;font-size:13px;min-height:34px}
+.goal{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.goal .inp{width:84px;text-align:center;font-weight:900;font-size:20px;padding:8px}
+.goal .ar{font-weight:900;color:var(--muted)}
+.goal .u{font-weight:700;color:var(--muted);font-size:14px}
+.chk{display:flex;align-items:center;gap:8px;margin:6px 0}
+.chk .bx{flex:none;width:34px;height:34px;border:0;background:transparent;display:grid;place-items:center;padding:0}
+.chk .bx b{width:24px;height:24px;border:2px solid var(--muted);border-radius:5px;display:grid;place-items:center;font-size:15px;color:#fff;background:var(--card)}
+.chk.on .bx b{background:var(--ok);border-color:var(--ok)}
+.chk .inp{min-height:42px;padding:8px 10px;font-size:16px}
+.chk.on .inp{text-decoration:line-through;color:var(--muted)}
+.chk .x{flex:none}
+.x{border:0;background:transparent;color:var(--muted);font-size:18px;width:34px;height:34px;border-radius:10px}
+.rh{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rh .lp{padding:3px 4px 5px}
+.rh .lp .ck{min-height:30px}
+.rh .dt{min-height:28px;line-height:28px;margin:0 0 3px}
+.cells{display:grid;grid-template-columns:repeat(10,1fr);border:1.5px solid var(--ink);border-radius:8px;overflow:hidden;margin:8px 0}
+.cells span{font-size:10px;font-weight:700;text-align:center;padding:8px 0;border-left:1px solid var(--line);color:var(--muted)}
+.cells span:first-child{border-left:0}
+.cells span.on{background:var(--ok);color:#fff}
+.n2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.n2 label{font-size:13px;color:var(--muted);font-weight:700;display:block;margin-bottom:3px}
+.n2 .inp{text-align:center;font-weight:900;font-size:20px}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.wk{border-collapse:collapse;width:100%;font-size:14px;background:var(--card);font-variant-numeric:tabular-nums}
+table.wk th,table.wk td{border:1px solid var(--line);padding:6px 4px;text-align:center}
+table.wk th{font-size:12px;color:var(--muted);font-weight:700;background:var(--bg)}
+table.wk td:first-child,table.wk th:first-child{text-align:left;padding-left:8px;font-size:13px;font-weight:700;white-space:nowrap}
+table.wk td.c{cursor:pointer;font-weight:900;font-size:17px;color:var(--ok);min-width:44px;height:38px}
+table.wk tr.tot td{font-weight:900;border-top:2px solid var(--ink)}
+table.wk th.cur{background:var(--accent);color:var(--accent-ink)}
+.chklist{margin:8px 0 0;padding:0;list-style:none}
+.chklist li{margin:8px 0;font-size:14px}
+.chklist li b{display:block}
+.chklist li span{color:var(--muted)}
+.sheet{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center;background:rgba(20,10,10,.45)}
+.sheet .panel{background:var(--bg);width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));box-shadow:var(--shadow-lg)}
+.sheet .ph{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sheet .ph h3{flex:1;margin:0;font-size:18px}
+.sheet img.prev{width:100%;border-radius:10px;border:1px solid var(--line);background:#fff}
+.actions{display:grid;gap:10px;margin:14px 0}
+.toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:700;z-index:100;width:max-content;max-width:calc(100vw - 28px);text-align:center;box-shadow:var(--shadow-lg)}
+.wkc{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:6px 0;background:var(--card)}
+.wkc .ln{display:flex;justify-content:space-between;font-size:15px;padding:2px 0}
+.wkc .ln b{font-variant-numeric:tabular-nums}
+.ckrow{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:0;background:var(--card);border-radius:12px;padding:10px 12px;margin:6px 0;box-shadow:var(--shadow)}
+.ckrow b.bx{flex:none;width:24px;height:24px;border:2px solid var(--muted);border-radius:5px;display:grid;place-items:center;font-size:15px;color:#fff;margin-top:1px}
+.ckrow.on b.bx{background:var(--ok);border-color:var(--ok)}
+.ckrow .t{flex:1;font-weight:700;font-size:15px}
+.ckrow .t small{display:block;font-weight:500;font-size:12.5px;color:var(--muted)}
+.ckrow .t em{font-style:normal;color:var(--ok)}
+.score8{font-size:40px;font-weight:900;text-align:center;color:var(--accent);line-height:1.1;margin:6px 0}
+.score8 small{font-size:18px;color:var(--muted)}
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<!-- ホーム -->
+<section id="home">
   <header class="top">
-    <div>
-      <h1>マップ返信</h1>
-      <div class="sub">テストマップに、ヒラの返信を</div>
-    </div>
-    <div class="hbtns">
-      <button class="iconbtn" id="btnHist" aria-label="これまでの返信">🗂</button>
-      <button class="iconbtn" id="btnSet" aria-label="設定">⚙️<i class="dot" id="setDot" hidden></i></button>
-    </div>
+    <h1><img src="icon-192-v2.png" alt=""><span>テストマップ</span></h1>
+    <button data-users-tag hidden></button>
+    <button class="iconbtn" id="btnSet" aria-label="設定">⚙️<i class="dot" id="setDot" hidden></i></button>
   </header>
-
-  <div class="updbar" id="updBar" hidden><b id="updVer"></b><button class="btn hot" id="btnUpdate">更新</button></div>
-  <div class="updbar" id="passBar" hidden><b>最初に合言葉を入れてください</b><button class="btn primary" id="btnPassGo">入れる</button></div>
-
-  <section class="card">
-    <h2><span class="n">1</span>テストマップの写真 <span class="opt">4枚まで</span></h2>
-    <div class="photos" id="photos"></div>
-    <input type="file" id="file" accept="image/*" multiple hidden>
-  </section>
-
-  <section class="card">
-    <h2><span class="n">2</span>生徒の文章</h2>
-    <textarea id="txt" placeholder="①進捗具合は順調か ②次回提出までに何％にするか ③これからどうするか&#10;…生徒の投稿をそのまま貼る"></textarea>
-    <div class="row">
-      <button class="btn grow" id="btnPaste">📋 貼り付け（文章・写真）</button>
-      <button class="btn" id="btnClrTxt">消す</button>
+  <div class="wrap">
+    <button class="updbar" id="btnUpdate" hidden>
+      <span class="t"><b>新しいバージョンがあります</b><span id="updVer"></span></span><span>入れる ›</span>
+    </button>
+    <div class="hero">
+      <h2>テストの1か月前になったら</h2>
+      <p>テスト対策用のマップです。テスト1か月前に作って提出し、そこからは<b>毎週日曜日</b>に、どこまで進んだかを提出します。</p>
+      <button class="btn" id="btnNew">＋ テストマップを作る</button>
     </div>
-  </section>
+    <a class="vlink" href="https://youtu.be/bSzF739ldMo" target="_blank" rel="noopener">▶ テストマップの使い方（動画）</a>
+    <div id="mapList"></div>
+    <details class="ex">
+      <summary>テストマップのルール</summary>
+      <div class="in"><ul>
+        <li><b>テスト1か月前</b>に必ず提出。そこからは<b>毎週日曜日</b>に1回ずつ提出して、進み具合を報告します。</li>
+        <li>左上（タスク）からスタートして、右下の<b>8つの最終チェックで8/8</b>がゴール。まさに地図です。</li>
+        <li>タスクは<b>1行に1つ</b>。教材名・範囲・量・解き直し・リハーサルなど。実技教科も書きます。</li>
+        <li>1周目はテスト<b>2週間前</b>までに。2周目・3周目は間違えた問題だけ。</li>
+        <li>テスト<b>2週間前</b>になったら、ネガティブ仮定設定とミス対策を書きます。</li>
+        <li>シークレット会（2・3・6）の話がたくさん出てきます。まだの人は必ず見てください。</li>
+      </ul></div>
+    </details>
+    <p class="ver" id="ver"></p>
+  </div>
+</section>
 
-  <section class="card">
-    <h2><span class="n">3</span>ひとこと <span class="opt">なくてもOK</span></h2>
-    <input type="text" id="memo" placeholder="例：前回の返信で仕組み化を指示した／テストは明後日">
-    <div class="memo-presets" id="presets"></div>
-    <div class="hint" style="margin:12px 0 6px">返信の長さ</div>
-    <div class="chips" id="lens">
-      <button class="chip" data-v="auto">おまかせ</button>
-      <button class="chip" data-v="short">短く</button>
-      <button class="chip" data-v="long">しっかり</button>
+<!-- 1つのテストマップ -->
+<section id="map" hidden>
+  <header class="top">
+    <button class="iconbtn" id="mBack" aria-label="ホームへ">‹</button>
+    <h1 style="font-size:17px"><span id="mTtl"></span></h1>
+    <button class="btn sm line" id="mMeta">テスト・教科</button>
+  </header>
+  <div class="wrap">
+    <div id="mSum"></div>
+    <div class="tabs" id="tabs">
+      <button data-t="task">タスク<small>1/2 上</small></button>
+      <button data-t="plan">対策<small>目標点・ミス</small></button>
+      <button data-t="check">チェック<small>毎週・8つ</small></button>
     </div>
-  </section>
-
-  <button class="btn big primary" id="btnGo">返信をつくる</button>
-  <div class="err" id="err" hidden></div>
-
-  <section class="card" id="outCard" hidden>
-    <h2>返信文 <span class="opt">直してからコピーできます</span></h2>
-    <div class="loading" id="loading" hidden><div class="spin"></div><div><b>テストマップを読んでいます…</b><div class="hint" style="margin:0">写真があると30秒〜1分ほどかかります</div></div></div>
-    <textarea id="out"></textarea>
-    <div class="count" id="cnt"></div>
-    <div class="row">
-      <button class="btn hot grow" id="btnCopy">コピー</button>
-      <button class="btn" id="btnAgain">作り直す</button>
+    <div id="mBody"></div>
+    <div class="actions">
+      <button class="btn pri wide" id="mWeek">今週の記録をつける（毎週日曜）</button>
+      <button class="btn line wide" id="mImg">画像にして Discord に出す</button>
+      <button class="btn line wide" id="mText">文章でコピー</button>
+      <button class="btn line wide" id="mPlan">計画マップに入れる（コピー）</button>
+      <button class="btn danger wide" id="mDel">このテストマップを消す</button>
     </div>
-    <div class="row">
-      <button class="btn grow" id="btnNext">次の生徒へ（入力を空にする）</button>
-    </div>
-  </section>
+  </div>
+</section>
 
-  <div class="ver" id="ver"></div>
+<!-- テスト・教科 -->
+<div class="sheet" id="metaSheet" hidden>
+  <div class="panel">
+    <div class="ph"><h3 id="metaH">テストマップを作る</h3><button class="x" data-close>✕</button></div>
+    <div class="field"><label>テスト名</label><input class="inp" id="fTitle" placeholder="例：2学期期末テスト／第2回全統模試" maxlength="40"></div>
+    <div class="field"><label>テスト日（初日）</label><input class="inp" type="date" id="fDate"></div>
+    <div class="field"><label>教科（いくつでも・実技教科も）</label><div class="chips" id="fSubs"></div>
+      <div style="display:flex;gap:8px;margin-top:8px"><input class="inp" id="fOther" placeholder="ほかの教科（例：古文・物理）" maxlength="12"><button class="btn sm" id="fAdd" style="min-height:48px;white-space:nowrap;flex:none">足す</button></div>
+    </div>
+    <button class="btn pri wide" id="fOK">これで作る</button>
+  </div>
 </div>
 
-<div class="sheet-bg" id="setSheet" hidden>
-  <div class="sheet">
-    <h3>設定 <button class="btn" data-close>閉じる</button></h3>
-    <label for="pass">合言葉</label>
-    <input type="password" id="pass" autocomplete="off" placeholder="合言葉">
-    <div class="row"><button class="btn primary grow" id="btnPassSave">保存してためす</button></div>
-    <div class="hint" id="passMsg" style="margin-top:8px"></div>
-    <label>アプリの更新</label>
-    <div class="row"><button class="btn grow" id="btnCheckUpd">更新を確認する</button></div>
-    <div class="hint" id="updMsg" style="margin-top:8px"></div>
-    <label>使い方</label>
-    <div class="hint" style="font-size:14px;color:var(--ink)">
-      1. Discord で生徒のテストマップの写真を長押し →「保存」か「コピー」<br>
-      2. 生徒の文章も長押し →「テキストをコピー」<br>
-      3. このアプリで写真を入れ、文章を貼る（「貼り付け」ボタンは写真もそのまま入ります）<br>
-      4. 「返信をつくる」→ 直したいところを直して「コピー」→ Discord で返信に貼る<br>
-      写真と文章はこのiPhoneとAIにだけ送られ、どこにも保存されません。
+<!-- タスク -->
+<div class="sheet" id="taskSheet" hidden>
+  <div class="panel">
+    <div class="ph"><h3 id="tkH">タスクを足す</h3><button class="x" data-close>✕</button></div>
+    <div class="field"><label>教科</label><div class="chips" id="tkSubs"></div></div>
+    <div class="field"><label>教材・範囲</label><input class="inp" id="tkText" placeholder="例：学校ワーク P110〜119" maxlength="60">
+      <p class="help">定期テストなら、テスト範囲表に書いてあるものをそのまま。教科書の音読○回・過去問なども入れてOK。</p></div>
+    <div class="field"><label>量（パッと見てわかるなら空でもOK）</label><input class="inp" id="tkAmt" placeholder="例：10ページ" maxlength="20"></div>
+    <div class="field"><label>周回ごとの期限</label>
+      <div class="laps" id="tkLaps"></div>
+      <button class="btn sm line" id="tkSuggest" style="margin-top:8px">目安を入れる（1周目＝テスト2週間前）</button>
+      <p class="help">1周目はテスト2週間前までに終わらせる。2周目・3周目は間違えた問題だけ。</p>
+    </div>
+    <div class="actions">
+      <button class="btn pri wide" id="tkOK">足す</button>
+      <button class="btn line wide" id="tkMore">足して、もう1つ</button>
+      <button class="btn danger wide" id="tkDel" hidden>このタスクを消す</button>
     </div>
   </div>
 </div>
 
-<div class="sheet-bg" id="histSheet" hidden>
-  <div class="sheet">
-    <h3>これまでの返信 <button class="btn" data-close>閉じる</button></h3>
-    <div id="histList"></div>
+<!-- 今週の記録 -->
+<div class="sheet" id="weekSheet" hidden>
+  <div class="panel">
+    <div class="ph"><h3>今週の記録</h3><button class="x" data-close>✕</button></div>
+    <div id="wkBody"></div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="sheet" id="imgSheet" hidden>
+  <div class="panel">
+    <div class="ph"><h3>画像にしました</h3><button class="x" data-close>✕</button></div>
+    <p class="mini" style="margin:0 0 8px">「送る・保存する」から Discord を選ぶと、そのままテストマップの部屋に出せます。</p>
+    <img class="prev" id="imgPrev" alt="テストマップの画像">
+    <div class="actions">
+      <button class="btn pri wide" id="btnShare">送る・保存する</button>
+      <a class="btn line wide" id="btnDl" download="test-map.jpg">画像をダウンロード</a>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="setSheet" hidden>
+  <div class="panel">
+    <div class="ph"><h3>設定</h3><button class="x" data-close>✕</button></div>
+    <div data-users-card></div>
+    <div class="card">
+      <h3>アップデート</h3>
+      <button class="btn line wide" id="btnCheckUpd">更新があるか調べる</button>
+      <p class="mini" id="updMsg" style="margin:6px 0 0"></p>
+    </div>
+    <div class="card">
+      <h3>画像に入れる名前</h3>
+      <input class="inp" id="setName" placeholder="Discord の名前など（空でもOK）" maxlength="30">
+    </div>
+    <div class="card">
+      <h3>バックアップ</h3>
+      <p class="mini" style="margin:0 0 8px">データはこの端末の中だけにあります。機種変更の前などに書き出しておくと、読みこんで戻せます。</p>
+      <div class="actions" style="margin:0">
+        <button class="btn line wide" id="btnExport">書き出す（コピー）</button>
+        <button class="btn line wide" id="btnImport">読みこむ（貼りつけ）</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
-const VER = 1;
-const API = 'https://testmap-reply.yuki08173123.workers.dev';
-const KEY = 'tmreply-v1';
-const MAXI = 4, EDGE = 2400;
+const VER = 2;
+const KEY = 'testmap-v1';
 const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+const SUBJ = ['国語', '数学', '英語', '理科', '社会'];
+const SUBJ2 = ['音楽', '美術', '保体', '技家'];
+const CHECKS = [
+  ['教材・戦略のズレなし', '教材がそのテストに合っているか（模試・検定ならレベルや種類がズレていないか）。戦略＝計画で本当に間に合うか。作った時点でつけられるのはここだけ。'],
+  ['達成率100%', '上のタスクが全部ぬりつぶせた（全部完了した）。'],
+  ['正答率100%', '解き直しも含めて全部正解できる。黄金ルートを回す（シークレット会3）。'],
+  ['解法の活用100%', 'リハーサルで、極めた問題集の解き方・暗記事項・解法が使えた。'],
+  ['ネガティブ仮定設定100%', '「どんな対策をする？」のチェックが全部ついた。'],
+  ['リハーサル→分析→戦略100%', 'リハーサルをして分析し、テスト本番はこう解く、という戦略が固まった。'],
+  ['分析マップのタスク達成度100%', '前回の分析マップのタスクが100%終わった＝前回の反省を活かせた。'],
+  ['ミス対策OK', 'ミス対策を全部やって「このミスはもうしない」と言える。'],
+];
 
-let S = { pass:'', len:'auto', text:'', memo:'', out:'', hist:[] };
-try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch(e){}
-let photos = []; // {data, media_type, url}
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} };
+/* ── 保存 ── */
+let S = { name: '', maps: [] };
+try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (j && Array.isArray(j.maps)) S = Object.assign(S, j); } catch (e) {}
+let saveT = 0;
+function save() { clearTimeout(saveT); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function saveSoon() { clearTimeout(saveT); saveT = setTimeout(save, 300); }
+addEventListener('pagehide', save);
 
-function toast(t){ const el=$('toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),1800); }
+/* ── 日付 ── */
+const pad2 = n => String(n).padStart(2, '0');
+const isoOf = d => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+const parseISO = s => { if (!s) return null; const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const today = () => isoOf(new Date());
+const addDays = (iso, n) => { const d = parseISO(iso); d.setDate(d.getDate() + n); return isoOf(d); };
+const daysBetween = (a, b) => Math.round((parseISO(b) - parseISO(a)) / 864e5);
+const WD = '日月火水木金土';
+function md(iso) { if (!iso) return ''; const d = parseISO(iso); return (d.getMonth() + 1) + '/' + d.getDate(); }
+function mdw(iso) { if (!iso) return ''; const d = parseISO(iso); return md(iso) + '（' + WD[d.getDay()] + '）'; }
+function ymd(iso) { if (!iso) return ''; const d = parseISO(iso); return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate(); }
+function num(v) {
+  const s = String(v ?? '').replace(/[０-９．]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[^\d.]/g, '');
+  if (!s || s === '.') return null; const n = parseFloat(s); return isFinite(n) ? n : null;
+}
+const left = m => m.date ? daysBetween(today(), m.date) : null;
+// 毎週の記録の提出日（目安）：テスト前の最後の日曜日を4週目として、1週間ずつさかのぼる
+function weekDates(m) {
+  if (!m.date) return ['', '', '', ''];
+  const d = parseISO(m.date); d.setDate(d.getDate() - 1); d.setDate(d.getDate() - d.getDay());
+  const last = isoOf(d); return [21, 14, 7, 0].map(n => addDays(last, -n));
+}
 
-/* ── 写真 ───────────────────────── */
-function renderPhotos(){
-  const box = $('photos'); box.innerHTML = '';
-  photos.forEach((p,i) => {
-    const d = document.createElement('div'); d.className='ph';
-    d.innerHTML = `<img src="${p.url}" alt="写真${i+1}"><button class="x" aria-label="外す">✕</button>`;
-    d.querySelector('.x').onclick = () => { photos.splice(i,1); renderPhotos(); };
-    box.appendChild(d);
+/* ── 計算 ── */
+const tasksOf = m => m.tasks.filter(t => (t.text || '').trim());
+function prog(m) { const a = tasksOf(m); const d = a.filter(t => t.done).length; return { all: a.length, done: d, pct: a.length ? Math.floor(d / a.length * 100) : 0 }; }
+function negProg(m) { const a = []; m.plans.forEach(p => p.acts.forEach(x => { if ((x.t || '').trim()) a.push(x); })); return { all: a.length, done: a.filter(x => x.ok).length }; }
+function missProg(m) { const a = m.miss.filter(x => (x.t || '').trim()); return { all: a.length, done: a.filter(x => x.ok).length }; }
+function anPct(m) { const a = num(m.an.all), d = num(m.an.done); if (!a) return null; return Math.min(100, Math.floor((d || 0) / a * 100)); }
+function autoDone(t) { if (t.laps.every(x => x.ok)) t.done = true; else if (!t.laps.some(x => x.ok)) t.done = false; }
+function curWeek(m) {
+  const ds = weekDates(m), t = today(); if (!ds[0]) return 0;
+  let best = 0, bd = 1e9; ds.forEach((d, i) => { const g = Math.abs(daysBetween(d, t)); if (g < bd) { bd = g; best = i; } }); return best;
+}
+function lastScore(m) { for (let i = 3; i >= 0; i--) { const w = m.weeks[i]; if (w && w.d) return { i, n: w.chk.filter(Boolean).length }; } return null; }
+
+/* ── データの形 ── */
+const newLaps = () => [{ d: '', ok: false }, { d: '', ok: false }, { d: '', ok: false }];
+const newWeek = () => ({ d: '', left: null, all: null, done: null, pct: null, chk: [false, false, false, false, false, false, false, false] });
+const newPlan = subj => ({ id: uid(), subj, prev: '', goal: '', neg: '', acts: [{ t: '', ok: false }, { t: '', ok: false }] });
+function newMap() {
+  return { id: uid(), title: '', date: '', subj: [], tasks: [], plans: [], reh: Array.from({ length: 10 }, () => ({ d: '', ok: false })),
+    an: { all: '', done: '' }, miss: [{ t: '', ok: false }, { t: '', ok: false }], weeks: [newWeek(), newWeek(), newWeek(), newWeek()], created: Date.now() };
+}
+function syncPlans(m) {
+  for (const s of m.subj) if (!m.plans.some(p => p.subj === s)) m.plans.push(newPlan(s));
+  m.plans.sort((a, b) => m.subj.indexOf(a.subj) - m.subj.indexOf(b.subj));
+}
+
+/* ── 画面 ── */
+let cur = null, tab = 'task';
+function show(id) { for (const s of ['home', 'map']) $(s).hidden = s !== id; window.scrollTo(0, 0); }
+function renderHome() {
+  $('ver').textContent = 'テストマップ v' + VER;
+  const L = S.maps.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.created - a.created);
+  $('mapList').innerHTML = L.map(m => {
+    const p = prog(m), d = left(m), sc = lastScore(m);
+    return '<button class="maprow" data-id="' + m.id + '"><div class="m"><div class="n">' + esc(m.title || '（テスト名なし）') + '</div>'
+      + '<div class="s">' + (m.date ? 'テスト ' + esc(mdw(m.date)) + '　' : '') + esc(m.subj.join('・')) + '</div>'
+      + '<div style="margin-top:4px"><span class="badge' + (p.all && p.done === p.all ? ' ok' : '') + '">達成率 ' + p.done + '/' + p.all + '（' + p.pct + '%）</span>'
+      + (sc ? ' <span class="badge' + (sc.n === 8 ? ' ok' : '') + '">最終チェック ' + sc.n + '/8</span>' : '') + '</div></div>'
+      + (d !== null ? '<div class="d">' + (d > 0 ? d : d === 0 ? '今日' : '済') + '<small>' + (d > 0 ? 'テストまで' : d === 0 ? 'テスト' : 'テスト終了') + '</small></div>' : '') + '</button>';
+  }).join('');
+  $('mapList').querySelectorAll('.maprow').forEach(b => b.onclick = () => { cur = S.maps.find(m => m.id === b.dataset.id); openMap(); });
+}
+function openMap() { show('map'); renderMap(); }
+$('mBack').onclick = () => { save(); show('home'); renderHome(); };
+
+function nowText(m) {
+  const d = left(m); if (d === null) return '<div class="now">テスト日を入れると、いまやることと毎週の提出日が出ます。</div>';
+  const sun = new Date().getDay() === 0 && d > 0 ? '<div class="now sun"><b>今日は日曜日＝提出日</b>。「今週の記録をつける」→ 画像にして提出しましょう。</div>' : '';
+  let t;
+  if (d < 0) t = '<b>テストおつかれさまでした。</b>返ってきたら<b>1週間以内に分析マップ</b>を作りましょう。';
+  else if (d === 0) t = '<b>テスト当日。</b>8つの最終チェックが8/8なら準備100%。自信を持って向かいましょう。';
+  else if (d <= 7) t = '<b>最後の1週間。</b>リハーサル→分析→戦略。8つの最終チェックを8/8にしてテストに向かいます。';
+  else if (d <= 14) t = '<b>テスト2週間前。</b>1周目は終わっている時期。ネガティブ仮定設定とミス対策を書き、2周目・3周目（間違えた問題だけ）へ。';
+  else if (d <= 31) t = '<b>テスト1か月前〜2週間前。</b>タスクを全部書き出して、1周目を進める時期。1周目はテスト2週間前までに終わらせます。';
+  else t = '<b>まだテストの1か月以上前。</b>早めに始めるのはOK。1か月前になったら毎週日曜日の提出をスタートします。';
+  return sun + '<div class="now">' + t + '</div>';
+}
+function renderSum() {
+  const m = cur, p = prog(m), d = left(m), sc = lastScore(m);
+  $('mSum').innerHTML = '<div class="sum"><div class="g3">'
+    + '<div><div class="k">テストまで</div><div class="v a">' + (d === null ? '—' : d > 0 ? d + '<small>日</small>' : d === 0 ? '今日' : '終了') + '</div></div>'
+    + '<div><div class="k">達成率</div><div class="v">' + p.pct + '<small>%</small></div><div class="mini">' + p.done + ' / ' + p.all + '</div></div>'
+    + '<div><div class="k">8つの最終チェック</div><div class="v">' + (sc ? sc.n : '—') + '<small>/8</small></div><div class="mini">' + (sc ? (sc.i + 1) + '週目の記録' : 'まだ記録なし') + '</div></div>'
+    + '</div><div class="pbar"><i style="width:' + p.pct + '%"></i></div>' + nowText(m) + '</div>';
+}
+function renderMap() {
+  const m = cur; syncPlans(m);
+  $('mTtl').textContent = m.title || 'テストマップ';
+  renderSum();
+  $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+  const b = $('mBody');
+  if (tab === 'task') tabTask(b); else if (tab === 'plan') tabPlan(b); else tabCheck(b);
+}
+$('tabs').querySelectorAll('button').forEach(b => b.onclick = () => { tab = b.dataset.t; renderMap(); const y = $('tabs').offsetTop - 70; if (scrollY > y) scrollTo(0, y); });
+
+/* 日付：見た目は「11/24（月）」、押すとカレンダー（透明な date の入力を上にかぶせる） */
+function dateChip(attr, v, label) {
+  return '<label class="dt' + (v ? '' : ' no') + '">' + (v ? esc(mdw(v)) : '日付を入れる') + '<input type="date" ' + attr + ' value="' + esc(v) + '" aria-label="' + esc(label) + '"></label>';
+}
+document.addEventListener('click', e => { const i = e.target.closest && e.target.closest('.dt input'); if (i && i.showPicker) { try { i.showPicker(); } catch (er) {} } });
+
+/* ── タブ1：タスク ── */
+function lapHTML(t, i) {
+  const x = t.laps[i], late = x.d && !x.ok && x.d < today();
+  return '<div class="lp' + (x.ok ? ' ok' : '') + (late ? ' late' : '') + '"><span class="lb">' + (i + 1) + '周目' + (late ? '・期限すぎ' : '') + '</span>'
+    + dateChip('data-ld="' + i + '"', x.d, (i + 1) + '周目の期限')
+    + '<button class="ck" data-lap="' + i + '"><b>' + (x.ok ? '✓' : '') + '</b>' + (x.ok ? 'できた' : '終わった') + '</button></div>';
+}
+function tabTask(b) {
+  const m = cur;
+  const subs = m.subj.concat([...new Set(m.tasks.map(t => t.subj))].filter(s => s && !m.subj.includes(s)));
+  let h = '<div class="tip">目標点に達するための<b>タスクを1行に1つ</b>（教材名・範囲・量・解き直し・リハーサルなど）。周回ごとに期限を書き、その周が終わったら✓。3周目まで✓がつくと<b>〇がぬりつぶされて完了</b>です。</div>';
+  if (!subs.length) h += '<p class="empty">右上の「テスト・教科」から教科を選んでください。</p>';
+  for (const s of subs) {
+    const ts = m.tasks.filter(t => t.subj === s), dn = ts.filter(t => t.done).length;
+    h += '<div class="subjh"><h3><span class="stag">' + esc(s) + '</span></h3><span class="cnt">完了 ' + dn + '/' + ts.length + '</span></div>';
+    h += ts.map(t => '<div class="tk' + (t.done ? ' done' : '') + '" data-id="' + t.id + '"><div class="hd">'
+      + '<button class="fin' + (t.done ? ' on' : '') + '" data-fin aria-label="完了"><i></i></button>'
+      + '<button class="tx" data-edit><span>' + esc(t.text) + '</span>' + (t.amt ? '<small>' + esc(t.amt) + '</small>' : '') + '</button></div>'
+      + '<div class="laps">' + [0, 1, 2].map(i => lapHTML(t, i)).join('') + '</div></div>').join('');
+    h += '<button class="add" data-add="' + esc(s) + '">＋ ' + esc(s) + 'のタスクを足す</button>';
+  }
+  const p = prog(m);
+  if (p.all >= 31) h += '<div class="tip">紙のテストマップは31行です。足りない人は2枚目を用意してOK（アプリはいくつでも入ります）。</div>';
+  h += '<details class="ex"><summary>タスクの書き方（動画より）</summary><div class="in"><ul>'
+    + '<li>定期テストは、テスト範囲表に書いてあるものをそのまま書けばOK。</li>'
+    + '<li>教科書の音読○回、模試なら過去問なども入れてOK。テストの内容や範囲に合わせて自由に。</li>'
+    + '<li>量は、ページ数などパッと見てわかるように。わかるなら空でもOK。</li>'
+    + '<li>周回は3周まで（1か月前からだと4周・5周はできない。3周目で仕留める）。</li>'
+    + '<li>定期テストなら<b>1周目はテスト2週間前</b>までに。2周目・3周目は間違えた問題だけ。</li>'
+    + '<li>最後にもう1回全部やるなら、リハーサルのタスクとして入れる・テストする日を先に決めておく。</li>'
+    + '</ul></div></details>';
+  b.innerHTML = h;
+  b.querySelectorAll('.tk').forEach(el => {
+    const t = m.tasks.find(x => x.id === el.dataset.id);
+    el.querySelector('[data-fin]').onclick = () => {
+      if (!t.done && !t.laps.every(x => x.ok) && !confirm('3周目まで✓がついていませんが、完了にしますか？')) return;
+      t.done = !t.done; save(); renderMap();
+    };
+    el.querySelector('[data-edit]').onclick = () => openTask(t);
+    el.querySelectorAll('[data-lap]').forEach(btn => btn.onclick = () => { const x = t.laps[+btn.dataset.lap]; x.ok = !x.ok; autoDone(t); save(); renderMap(); if (t.done && x.ok) toast('完了！〇をぬりつぶしました'); });
+    el.querySelectorAll('[data-ld]').forEach(inp => inp.onchange = () => { t.laps[+inp.dataset.ld].d = inp.value; save(); renderMap(); });
   });
-  if (photos.length < MAXI){
-    const a = document.createElement('button'); a.className='ph add';
-    a.innerHTML = '<div><span>＋</span>写真を<br>入れる</div>';
-    a.onclick = () => $('file').click();
-    box.appendChild(a);
-  }
+  b.querySelectorAll('[data-add]').forEach(x => x.onclick = () => openTask(null, x.dataset.add));
 }
-async function shrink(blob){
-  const url = URL.createObjectURL(blob);
-  try{
-    const img = await new Promise((ok,ng)=>{ const im=new Image(); im.onload=()=>ok(im); im.onerror=ng; im.src=url; });
-    const k = Math.min(1, EDGE / Math.max(img.naturalWidth, img.naturalHeight));
-    const w = Math.round(img.naturalWidth*k), h = Math.round(img.naturalHeight*k);
-    const c = document.createElement('canvas'); c.width=w; c.height=h;
-    const g = c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,w,h); g.drawImage(img,0,0,w,h);
-    const dataUrl = c.toDataURL('image/jpeg', 0.85);
-    return { data: dataUrl.split(',')[1], media_type:'image/jpeg', url: dataUrl };
-  } finally { URL.revokeObjectURL(url); }
-}
-async function addBlobs(list){
-  let n = 0;
-  for (const b of list){
-    if (photos.length >= MAXI){ toast('写真は4枚までです'); break; }
-    try { photos.push(await shrink(b)); n++; } catch(e){ toast('この写真は読みこめませんでした'); }
-  }
-  renderPhotos();
-  return n;
-}
-$('file').onchange = async e => { await addBlobs([...e.target.files]); e.target.value=''; };
 
-/* ── 貼り付け（文章も写真も）─────── */
-$('btnPaste').onclick = async () => {
-  let gotImg = 0, gotTxt = false;
-  try{
-    if (navigator.clipboard && navigator.clipboard.read){
-      const items = await navigator.clipboard.read();
-      const blobs = [];
-      for (const it of items){
-        const t = it.types.find(x => x.startsWith('image/'));
-        if (t) blobs.push(await it.getType(t));
-        else if (it.types.includes('text/plain')){
-          const s = await (await it.getType('text/plain')).text();
-          if (s.trim()){ setText(s); gotTxt = true; }
-        }
-      }
-      if (blobs.length) gotImg = await addBlobs(blobs);
-    } else if (navigator.clipboard && navigator.clipboard.readText){
-      const s = await navigator.clipboard.readText();
-      if (s.trim()){ setText(s); gotTxt = true; }
-    }
-  }catch(e){}
-  if (gotImg || gotTxt) toast(gotImg ? `写真を${gotImg}枚入れました` : '文章を貼りました');
-  else { $('txt').focus(); toast('長押しで「ペースト」してください'); }
+/* タスクの入力シート */
+let tkEdit = null, tkDraft = null;
+function openTask(t, subj) {
+  tkEdit = t;
+  tkDraft = t ? JSON.parse(JSON.stringify(t)) : { id: uid(), subj: subj || cur.subj[0] || '', text: '', amt: '', laps: newLaps(), done: false };
+  $('tkH').textContent = t ? 'タスクを直す' : 'タスクを足す';
+  $('tkOK').textContent = t ? 'これで直す' : '足す';
+  $('tkMore').hidden = !!t; $('tkDel').hidden = !t;
+  $('tkText').value = tkDraft.text; $('tkAmt').value = tkDraft.amt;
+  drawTkSheet(); openSheet('taskSheet');
+  if (!t) setTimeout(() => $('tkText').focus(), 250);
+}
+function drawTkSheet() {
+  const subs = cur.subj.length ? cur.subj : SUBJ;
+  $('tkSubs').innerHTML = subs.map(s => '<button class="chip sm' + (tkDraft.subj === s ? ' on' : '') + '" data-s="' + esc(s) + '">' + esc(s) + '</button>').join('');
+  $('tkSubs').querySelectorAll('.chip').forEach(c => c.onclick = () => { tkDraft.subj = c.dataset.s; drawTkSheet(); });
+  $('tkLaps').innerHTML = tkDraft.laps.map((x, i) => '<div class="lp"><span class="lb">' + (i + 1) + '周目の期限</span>' + dateChip('data-i="' + i + '"', x.d, (i + 1) + '周目の期限') + '</div>').join('');
+  $('tkLaps').querySelectorAll('input').forEach(inp => inp.onchange = () => { tkDraft.laps[+inp.dataset.i].d = inp.value; drawTkSheet(); });
+}
+$('tkText').oninput = e => tkDraft.text = e.target.value;
+$('tkAmt').oninput = e => tkDraft.amt = e.target.value;
+$('tkSuggest').onclick = () => {
+  if (!cur.date) { toast('先にテスト日を入れてください'); return; }
+  [-14, -10, -6].forEach((n, i) => { if (!tkDraft.laps[i].d) tkDraft.laps[i].d = addDays(cur.date, n); });
+  drawTkSheet(); toast('目安を入れました（1周目＝2週間前・2周目＝10日前・3周目＝6日前）');
 };
-document.addEventListener('paste', async e => {
-  const files = [...(e.clipboardData?.files || [])].filter(f => f.type.startsWith('image/'));
-  if (files.length){ e.preventDefault(); const n = await addBlobs(files); if (n) toast(`写真を${n}枚入れました`); }
-});
-function setText(s){
-  const t = $('txt');
-  t.value = t.value.trim() ? t.value.replace(/\s*$/,'') + '\n' + s : s;
-  S.text = t.value; save();
+function commitTask() {
+  if (!tkDraft.text.trim()) { toast('教材・範囲を入れてください'); return false; }
+  if (!tkDraft.subj) { toast('教科を選んでください'); return false; }
+  if (tkEdit) Object.assign(tkEdit, tkDraft); else cur.tasks.push(tkDraft);
+  save(); renderMap(); return true;
 }
-$('txt').oninput = () => { S.text = $('txt').value; save(); };
-$('btnClrTxt').onclick = () => { $('txt').value=''; S.text=''; save(); };
+$('tkOK').onclick = () => { if (commitTask()) closeSheet('taskSheet'); };
+$('tkMore').onclick = () => {
+  const keep = { subj: tkDraft.subj, laps: tkDraft.laps.map(x => ({ d: x.d, ok: false })) };
+  if (!commitTask()) return;
+  tkEdit = null; tkDraft = { id: uid(), subj: keep.subj, text: '', amt: '', laps: keep.laps, done: false };
+  $('tkText').value = ''; $('tkAmt').value = ''; drawTkSheet(); $('tkText').focus(); toast('足しました。続けてどうぞ（期限はそのまま）');
+};
+$('tkDel').onclick = () => { if (!confirm('このタスクを消しますか？')) return; cur.tasks = cur.tasks.filter(x => x !== tkEdit); save(); closeSheet('taskSheet'); renderMap(); };
 
-/* ── ひとこと・長さ ───────────────── */
-const PRESETS = ['テストは明日','テスト後の振り返り','写真が貼られていない','前回の指摘が直っていない','厳しめに','やさしめに'];
-PRESETS.forEach(p => {
-  const b = document.createElement('button'); b.textContent = p;
-  b.onclick = () => { const m=$('memo'); m.value = m.value.trim() ? m.value.trim() + '／' + p : p; S.memo=m.value; save(); };
-  $('presets').appendChild(b);
-});
-$('memo').oninput = () => { S.memo = $('memo').value; save(); };
-function renderLens(){ document.querySelectorAll('#lens .chip').forEach(c => c.classList.toggle('on', c.dataset.v === S.len)); }
-document.querySelectorAll('#lens .chip').forEach(c => c.onclick = () => { S.len = c.dataset.v; save(); renderLens(); });
-
-/* ── 返信をつくる ─────────────────── */
-function showErr(t){ const e=$('err'); e.textContent=t; e.hidden=!t; }
-function setOut(t){ $('out').value=t; S.out=t; save(); $('cnt').textContent = t ? t.length + '字' : ''; }
-$('out').oninput = () => { S.out=$('out').value; save(); $('cnt').textContent = S.out.length + '字'; };
-
-let busy = false;
-async function generate(){
-  if (busy) return;
-  showErr('');
-  const text = $('txt').value.trim();
-  if (!photos.length && !text){ showErr('写真か生徒の文章を入れてください。'); return; }
-  if (!S.pass){ openSet(); $('passMsg').textContent='先に合言葉を入れてください。'; return; }
-  busy = true; $('btnGo').disabled = true; $('btnAgain').disabled = true;
-  $('outCard').hidden = false; $('loading').hidden = false; $('out').hidden = true;
-  $('outCard').scrollIntoView({behavior:'smooth', block:'start'});
-  try{
-    const res = await fetch(API, { method:'POST', headers:{'content-type':'application/json'},
-      body: JSON.stringify({ pass:S.pass, text, memo:$('memo').value.trim(), length:S.len,
-        images: photos.map(p => ({data:p.data, media_type:p.media_type})) }) });
-    let j = null; try { j = await res.json(); } catch(e){}
-    if (!res.ok || !j || !j.reply) throw new Error(j && j.error ? j.error.message : '通信に失敗しました（' + res.status + '）');
-    setOut(j.reply);
-    S.hist.unshift({ t: Date.now(), s: text.slice(0,80) || '（写真のみ）', r: j.reply, p: photos.length });
-    S.hist = S.hist.slice(0,60); save();
-  }catch(e){
-    showErr(e.message && e.message !== 'Failed to fetch' ? e.message : '通信できませんでした。電波のよい所でもう一度ためしてください。');
-    if (!S.out) $('outCard').hidden = true;
-  }finally{
-    busy = false; $('btnGo').disabled = false; $('btnAgain').disabled = false;
-    $('loading').hidden = true; $('out').hidden = false;
-  }
+/* ── タブ2：対策 ── */
+function chkList(arr, ph) {
+  return arr.map((x, i) => '<div class="chk' + (x.ok ? ' on' : '') + '" data-i="' + i + '"><button class="bx" data-ok aria-label="できた"><b>' + (x.ok ? '✓' : '') + '</b></button>'
+    + '<input class="inp" data-t value="' + esc(x.t) + '" placeholder="' + esc(i === 0 ? ph : '') + '"><button class="x" data-del aria-label="消す">✕</button></div>').join('');
 }
-$('btnGo').onclick = generate;
-$('btnAgain').onclick = generate;
-$('btnCopy').onclick = async () => {
-  const t = $('out').value;
-  try { await navigator.clipboard.writeText(t); toast('コピーしました'); }
-  catch(e){ $('out').select(); document.execCommand('copy'); toast('コピーしました'); }
-};
-$('btnNext').onclick = () => {
-  photos = []; renderPhotos();
-  $('txt').value=''; $('memo').value=''; S.text=''; S.memo=''; setOut('');
-  $('outCard').hidden = true; showErr('');
-  window.scrollTo({top:0, behavior:'smooth'});
-};
-
-/* ── 設定・履歴 ─────────────────── */
-function openSet(){ $('pass').value = S.pass; $('setSheet').hidden = false; }
-$('btnSet').onclick = () => { openSet(); checkUpdate(true); };
-$('btnPassGo').onclick = openSet;
-$('btnPassSave').onclick = async () => {
-  S.pass = $('pass').value.trim(); save(); renderPassBar();
-  $('passMsg').textContent = 'たしかめています…';
-  try{
-    const r = await fetch(API, {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({pass:S.pass, ping:1})});
-    const j = await r.json().catch(()=>null);
-    $('passMsg').textContent = r.ok ? '✅ つながりました。使えます。' : (j && j.error ? j.error.message : 'まだつながりません（' + r.status + '）');
-  }catch(e){ $('passMsg').textContent = 'サーバーにつながりませんでした（まだ準備中かもしれません）。'; }
-};
-function renderPassBar(){ $('passBar').hidden = !!S.pass; }
-$('btnHist').onclick = () => {
-  const L = $('histList'); L.innerHTML = '';
-  if (!S.hist.length) L.innerHTML = '<p class="hint">まだありません。</p>';
-  S.hist.forEach(h => {
-    const d = new Date(h.t);
-    const el = document.createElement('div'); el.className='hist';
-    el.innerHTML = `<div class="d">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}${h.p ? '・写真' + h.p + '枚' : ''}</div><div class="s"></div><div class="r"></div><div class="row"><button class="btn grow">この返信をコピー</button></div>`;
-    el.querySelector('.s').textContent = h.s; el.querySelector('.r').textContent = h.r;
-    el.querySelector('.r').onclick = () => el.classList.toggle('open');
-    el.querySelector('button').onclick = async () => { try{ await navigator.clipboard.writeText(h.r); toast('コピーしました'); }catch(e){ toast('コピーできませんでした'); } };
-    L.appendChild(el);
+function bindChk(root, arr, redraw) {
+  root.querySelectorAll('.chk').forEach(r => {
+    const x = arr[+r.dataset.i];
+    r.querySelector('[data-ok]').onclick = () => { if (!(x.t || '').trim()) { toast('先に中身を書いてください'); return; } x.ok = !x.ok; save(); redraw(); };
+    r.querySelector('[data-t]').oninput = e => { x.t = e.target.value; saveSoon(); };
+    r.querySelector('[data-del]').onclick = () => { if ((x.t || '').trim() && !confirm('消しますか？')) return; arr.splice(+r.dataset.i, 1); save(); redraw(); };
   });
-  $('histSheet').hidden = false;
-};
-document.querySelectorAll('.sheet-bg').forEach(bg => {
-  bg.addEventListener('click', e => { if (e.target === bg || e.target.hasAttribute('data-close')) bg.hidden = true; });
-});
+}
+const MISS_EX = ['過去形の「た」に丸をつけるバックスキャンをする', '問題文の条件と、問われていることに丸をつける', '途中式を全て書く', '大問ごとに時間を測って解く', '漢字は書いたら1画ずつ見直す'];
+function tabPlan(b) {
+  const m = cur, d = left(m);
+  let h = (d !== null && d <= 14 && d >= 0 && m.plans.some(p => !(p.neg || '').trim()) ? '<div class="alert">テスト2週間前をすぎています。ネガティブ仮定設定を書きましょう。</div>' : '')
+    + '<div class="tip"><b>ネガティブ仮定設定</b>：もし目標点が取れないとしたら、何をやらかしたから？を想像して書き、それに対する<b>対策</b>を立てます（シークレット会2）。勉強が進むとわかってくるので、<b>テスト2週間前</b>（1周目が終わるころ）までに書けばOK。</div>';
+  m.plans.forEach((p, pi) => {
+    h += '<div class="card" data-p="' + p.id + '"><h3><span class="stag">' + esc(p.subj) + '</span></h3>'
+      + '<div class="flabel">目標点（前回 → 今回）</div><div class="goal"><input class="inp" inputmode="decimal" data-f="prev" placeholder="前回"><span class="ar">→</span><input class="inp" inputmode="decimal" data-f="goal" placeholder="今回"><span class="u">点</span></div>'
+      + (pi === 0 ? '<p class="help">前回の点数がない人（はじめてのテストなど）は、今回の目標点だけでOK。</p>' : '')
+      + '<div class="field"><label>もし目標点が取れないなら・・・（ネガティブ仮定設定）</label><textarea class="inp" data-f="neg" placeholder="例：漢字でミスする・記述問題が書けない・選択問題を間違えまくる"></textarea></div>'
+      + '<div class="flabel">どんな対策をする？（できたら✓＝線を引いて消す）</div><div data-acts>' + chkList(p.acts, '例：漢字を3周する') + '</div>'
+      + '<button class="add" data-addact>＋ 対策を足す</button></div>';
+  });
+  h += '<div class="card" id="missCard"><h3>ミス対策</h3>'
+    + '<p class="lead">テストで成果を出せるかの最後の最後は、ミスをどれだけ防げるか。<b>テスト2週間前</b>から、こういうミスをやらかしそう、に対する対策を書いて、全部✓がつくようにします（バックスキャンなどはシークレット会6のテストバイブル）。</p>'
+    + '<div data-acts>' + chkList(m.miss, '例：過去形の「た」に丸をつけるバックスキャンをする') + '</div><button class="add" data-addmiss>＋ ミス対策を足す</button>'
+    + '<details class="ex" style="box-shadow:none;border:1.5px solid var(--line)"><summary>例（押すと入ります）</summary><div class="in chips" id="missEx">'
+    + MISS_EX.map((t, i) => '<button class="chip sm" data-ex="' + i + '">' + esc(t) + '</button>').join('') + '</div></details></div>';
+  b.innerHTML = h;
+  const redraw = () => { const y = scrollY; renderMap(); scrollTo(0, y); };
+  b.querySelectorAll('[data-p]').forEach(card => {
+    const p = m.plans.find(x => x.id === card.dataset.p);
+    card.querySelectorAll('[data-f]').forEach(i => { i.value = p[i.dataset.f] || ''; i.oninput = () => { p[i.dataset.f] = i.value; saveSoon(); if (i.tagName === 'TEXTAREA') autosize(i); }; if (i.tagName === 'TEXTAREA') autosize(i); });
+    bindChk(card.querySelector('[data-acts]'), p.acts, redraw);
+    card.querySelector('[data-addact]').onclick = () => { p.acts.push({ t: '', ok: false }); save(); redraw(); };
+  });
+  const mc = $('missCard');
+  bindChk(mc.querySelector('[data-acts]'), m.miss, redraw);
+  mc.querySelector('[data-addmiss]').onclick = () => { m.miss.push({ t: '', ok: false }); save(); redraw(); };
+  $('missEx').querySelectorAll('[data-ex]').forEach(c => c.onclick = () => {
+    const t = MISS_EX[+c.dataset.ex]; if (m.miss.some(x => x.t === t)) { toast('もう入っています'); return; }
+    const e = m.miss.find(x => !(x.t || '').trim()); if (e) e.t = t; else m.miss.push({ t, ok: false });
+    save(); redraw(); toast('入れました。自分のミスに合わせて書きかえてOK');
+  });
+}
+function autosize(ta) { ta.style.height = 'auto'; ta.style.height = Math.max(76, ta.scrollHeight + 3) + 'px'; }
 
-/* ── 更新 ─────────────────────── */
-async function checkUpdate(silent){
+/* ── タブ3：チェック ── */
+function readBunseki() {
+  try {
+    const j = JSON.parse(localStorage.getItem('bunseki2-v1') || 'null');
+    if (!j || !Array.isArray(j.maps) || !j.maps.length) return null;
+    const mm = j.maps.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.created - a.created)[0];
+    const ls = (mm.losses || []).filter(l => (l.task || '').trim() || (l.q || '').trim());
+    if (!ls.length) return null;
+    return { title: mm.title || '', all: ls.length, done: ls.filter(l => l.done).length };
+  } catch (e) { return null; }
+}
+function tabCheck(b) {
+  const m = cur, ap = anPct(m), wd = weekDates(m), cw = curWeek(m), bk = readBunseki();
+  let h = '<div class="card"><h3>リハーサル</h3>'
+    + '<p class="lead">やったことのない初見問題・まとめ問題・過去問、今までやった問題の全部テストなど。最後に必ずやる。やる日を書いて、終わったら✓。</p>'
+    + '<div class="rh">' + m.reh.map((x, i) => '<div class="lp' + (x.ok ? ' ok' : '') + '"><span class="lb">' + (i + 1) + '回</span>' + dateChip('data-rd="' + i + '"', x.d, (i + 1) + '回目の日') + '<button class="ck" data-rk="' + i + '"><b>' + (x.ok ? '✓' : '') + '</b>' + (x.ok ? 'やった' : 'やった？') + '</button></div>').join('') + '</div></div>';
+  h += '<div class="card"><h3>分析マップのタスク</h3>'
+    + '<p class="lead">前回のテストでやらかしたことは、また同じことをやらかします。前回の分析マップのタスクが何%終わったかを、ここでぬっていきます。（はじめてのテストで分析マップがない人は空けたままでOK）</p>'
+    + '<div class="n2"><div><label>分析マップのタスク（全部）</label><input class="inp" inputmode="numeric" id="anAll" placeholder="個"></div><div><label>終わった</label><input class="inp" inputmode="numeric" id="anDone" placeholder="個"></div></div>'
+    + '<div class="cells" id="anCells"></div><div class="mini" id="anTxt"></div>'
+    + (bk ? '<button class="btn sm line" id="anRead" style="margin-top:8px">分析マップのアプリから読みこむ（' + esc(bk.title) + '：' + bk.done + '/' + bk.all + '）</button>' : '')
+    + '</div>';
+  h += '<div class="card"><h3>毎週の記録</h3>'
+    + '<p class="lead">毎週日曜日に「今週の記録をつける」を押すと、テストまでの残り・全タスク・完了・達成率が入ります。提出日は、テスト4週間前・3週間前・2週間前・1週間前の日曜日（目安）。</p>'
+    + '<div class="tblwrap"><table class="wk"><thead><tr><th></th>' + [0, 1, 2, 3].map(i => '<th class="' + (i === cw ? 'cur' : '') + '">' + (i + 1) + '週目</th>').join('') + '</tr></thead><tbody>'
+    + '<tr><td>提出日</td>' + m.weeks.map((w, i) => '<td>' + (w.d ? md(w.d) : '<span class="mini">' + md(wd[i]) + '</span>') + '</td>').join('') + '</tr>'
+    + '<tr><td>テストまで残り</td>' + m.weeks.map(w => '<td>' + (w.left !== null ? w.left + '日' : '') + '</td>').join('') + '</tr>'
+    + '<tr><td>全タスク</td>' + m.weeks.map(w => '<td>' + (w.all !== null ? w.all + '個' : '') + '</td>').join('') + '</tr>'
+    + '<tr><td>完了</td>' + m.weeks.map(w => '<td>' + (w.done !== null ? w.done + '個' : '') + '</td>').join('') + '</tr>'
+    + '<tr><td>達成率</td>' + m.weeks.map(w => '<td><b>' + (w.pct !== null ? w.pct + '%' : '') + '</b></td>').join('') + '</tr>'
+    + '</tbody></table></div></div>';
+  h += '<div class="card"><h3>8つの最終チェック</h3>'
+    + '<p class="lead">8/8がそろえば、まちがいなく点数も順位も偏差値も上がる＝準備100%。ここがゴールです（くわしくはシークレット会6のテストバイブル）。マスを押すと✓がつきます。</p>'
+    + '<div class="tblwrap"><table class="wk"><thead><tr><th></th>' + [0, 1, 2, 3].map(i => '<th class="' + (i === cw ? 'cur' : '') + '">' + (i + 1) + '週目</th>').join('') + '</tr></thead><tbody>'
+    + CHECKS.map((c, k) => '<tr><td>' + '①②③④⑤⑥⑦⑧'[k] + c[0] + '</td>' + m.weeks.map((w, i) => '<td class="c" data-w="' + i + '" data-k="' + k + '">' + (w.chk[k] ? '✓' : '') + '</td>').join('') + '</tr>').join('')
+    + '<tr class="tot"><td>合計</td>' + m.weeks.map(w => '<td>' + w.chk.filter(Boolean).length + '/8</td>').join('') + '</tr>'
+    + '</tbody></table></div>'
+    + '<details class="ex" style="box-shadow:none;border:1.5px solid var(--line)"><summary>8つの最終チェックの意味</summary><div class="in"><ul class="chklist">'
+    + CHECKS.map((c, k) => '<li><b>' + '①②③④⑤⑥⑦⑧'[k] + c[0] + '</b><span>' + c[1] + '</span></li>').join('') + '</ul></div></details></div>';
+  b.innerHTML = h;
+  const redraw = () => { const y = scrollY; renderMap(); scrollTo(0, y); };
+  b.querySelectorAll('[data-rd]').forEach(i => i.onchange = () => { m.reh[+i.dataset.rd].d = i.value; save(); redraw(); });
+  b.querySelectorAll('[data-rk]').forEach(x => x.onclick = () => { const r = m.reh[+x.dataset.rk]; r.ok = !r.ok; if (r.ok && !r.d) r.d = today(); save(); redraw(); });
+  const anDraw = () => {
+    const p = anPct(m), n = p === null ? 0 : Math.floor(p / 10);
+    $('anCells').innerHTML = Array.from({ length: 10 }, (_, i) => '<span class="' + (i < n ? 'on' : '') + '">' + (i + 1) * 10 + '%</span>').join('');
+    $('anTxt').textContent = p === null ? '' : 'いま ' + p + '%' + (p >= 100 ? '　⑦がつけられます' : '');
+  };
+  $('anAll').value = m.an.all; $('anDone').value = m.an.done;
+  $('anAll').oninput = e => { m.an.all = e.target.value; saveSoon(); anDraw(); };
+  $('anDone').oninput = e => { m.an.done = e.target.value; saveSoon(); anDraw(); };
+  if ($('anRead')) $('anRead').onclick = () => { m.an.all = String(bk.all); m.an.done = String(bk.done); save(); redraw(); toast('読みこみました'); };
+  anDraw();
+  b.querySelectorAll('td.c').forEach(td => td.onclick = () => { const w = m.weeks[+td.dataset.w]; w.chk[+td.dataset.k] = !w.chk[+td.dataset.k]; save(); redraw(); });
+}
+
+/* ── 今週の記録 ── */
+function autoChecks(m) {
+  const p = prog(m), n = negProg(m), ms = missProg(m), a = anPct(m);
+  const everySubj = m.plans.length > 0 && m.plans.every(x => x.acts.some(a => (a.t || '').trim()));
+  return { 1: p.all > 0 && p.done === p.all, 4: everySubj && n.all > 0 && n.done === n.all, 6: a !== null && a >= 100, 7: ms.all > 0 && ms.done === ms.all };
+}
+function autoNote(m, k) {
+  const p = prog(m), n = negProg(m), ms = missProg(m), a = anPct(m);
+  if (k === 1) return 'いま ' + p.done + '/' + p.all + '（' + p.pct + '%）';
+  if (k === 4) { const miss = m.plans.filter(x => !x.acts.some(a => (a.t || '').trim())).map(x => x.subj); return (n.all ? '対策 ' + n.done + '/' + n.all : '対策がまだ書かれていません') + (n.all && miss.length ? '（' + miss.join('・') + 'は対策がまだ）' : ''); }
+  if (k === 6) return a === null ? '分析マップのタスクが未入力' : 'いま ' + a + '%';
+  if (k === 7) return ms.all ? 'ミス対策 ' + ms.done + '/' + ms.all : 'ミス対策がまだ書かれていません';
+  return '';
+}
+let wkI = 0, wkChk = null;
+function openWeek() {
+  const m = cur; wkI = curWeek(m);
+  const auto = autoChecks(m), w = m.weeks[wkI];
+  wkChk = w.d ? w.chk.slice() : (wkI > 0 ? m.weeks[wkI - 1].chk.slice() : w.chk.slice());
+  for (const k in auto) if (auto[k]) wkChk[k] = true;
+  drawWeek(); openSheet('weekSheet');
+}
+function drawWeek() {
+  const m = cur, p = prog(m), d = left(m), wd = weekDates(m), w = m.weeks[wkI];
+  const n = wkChk.filter(Boolean).length;
+  $('wkBody').innerHTML = '<div class="flabel">どの週？</div><div class="chips">' + [0, 1, 2, 3].map(i => '<button class="chip sm' + (i === wkI ? ' on' : '') + '" data-wi="' + i + '">' + (i + 1) + '週目' + (wd[i] ? '（' + md(wd[i]) + '）' : '') + (m.weeks[i].d ? '✓' : '') + '</button>').join('') + '</div>'
+    + (w.d ? '<p class="help">この週は ' + md(w.d) + ' に記録ずみ。もう一度つけると上書きします。</p>' : '')
+    + '<div class="wkc"><div class="ln"><span>提出日</span><b>' + mdw(today()) + '</b></div><div class="ln"><span>テストまで残り</span><b>' + (d === null ? '—' : d + '日') + '</b></div>'
+    + '<div class="ln"><span>全タスク</span><b>' + p.all + '個</b></div><div class="ln"><span>完了</span><b>' + p.done + '個</b></div><div class="ln"><span>達成率</span><b>' + p.pct + '%</b></div></div>'
+    + '<div class="flabel" style="margin-top:12px">8つの最終チェック（できたら✓）</div>'
+    + CHECKS.map((c, k) => { const nt = autoNote(m, k); return '<button class="ckrow' + (wkChk[k] ? ' on' : '') + '" data-k="' + k + '"><b class="bx">' + (wkChk[k] ? '✓' : '') + '</b><span class="t">' + '①②③④⑤⑥⑦⑧'[k] + c[0] + '<small>' + c[1] + (nt ? '<br><em>' + esc(nt) + '</em>' : '') + '</small></span></button>'; }).join('')
+    + '<div class="score8">' + n + '<small> / 8</small></div>'
+    + '<div class="actions"><button class="btn pri wide" id="wkSave">記録して画像を作る</button><button class="btn line wide" id="wkOnly">記録だけする</button></div>';
+  $('wkBody').querySelectorAll('[data-wi]').forEach(c => c.onclick = () => { wkI = +c.dataset.wi; const ww = m.weeks[wkI]; if (ww.d) wkChk = ww.chk.slice(); drawWeek(); });
+  $('wkBody').querySelectorAll('.ckrow').forEach(r => r.onclick = () => { wkChk[+r.dataset.k] = !wkChk[+r.dataset.k]; drawWeek(); });
+  const rec = () => { const pp = prog(m); Object.assign(m.weeks[wkI], { d: today(), left: left(m), all: pp.all, done: pp.done, pct: pp.pct, chk: wkChk.slice() }); save(); closeSheet('weekSheet'); renderMap(); };
+  $('wkSave').onclick = () => { rec(); makeImage(); };
+  $('wkOnly').onclick = () => { rec(); toast((wkI + 1) + '週目を記録しました'); };
+}
+$('mWeek').onclick = () => { if (!tasksOf(cur).length) { toast('先にタスクを書きましょう'); return; } openWeek(); };
+
+/* ── テスト・教科のシート ── */
+let metaNew = false, metaDraft = null;
+function openMeta(isNew) {
+  metaNew = isNew;
+  metaDraft = isNew ? newMap() : { title: cur.title, date: cur.date, subj: cur.subj.slice() };
+  $('metaH').textContent = isNew ? 'テストマップを作る' : 'テスト・教科';
+  $('fOK').textContent = isNew ? 'これで作る' : 'これで直す';
+  $('fTitle').value = metaDraft.title; $('fDate').value = metaDraft.date;
+  drawMetaSubs(); openSheet('metaSheet');
+}
+function drawMetaSubs() {
+  const names = SUBJ.concat(SUBJ2, metaDraft.subj.filter(n => !SUBJ.includes(n) && !SUBJ2.includes(n)));
+  $('fSubs').innerHTML = names.map(n => '<button class="chip sm' + (metaDraft.subj.includes(n) ? ' on' : '') + '" data-n="' + esc(n) + '">' + esc(n) + '</button>').join('');
+  $('fSubs').querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    const n = c.dataset.n, i = metaDraft.subj.indexOf(n);
+    if (i >= 0) metaDraft.subj.splice(i, 1); else { metaDraft.subj.push(n); metaDraft.subj.sort((a, b) => ord(a) - ord(b)); }
+    drawMetaSubs();
+  });
+}
+function ord(n) { const all = SUBJ.concat(SUBJ2); const i = all.indexOf(n); return i < 0 ? 99 : i; }
+$('fTitle').oninput = e => metaDraft.title = e.target.value;
+$('fDate').onchange = e => metaDraft.date = e.target.value;
+$('fAdd').onclick = () => { const n = $('fOther').value.trim(); if (!n) return; if (!metaDraft.subj.includes(n)) metaDraft.subj.push(n); $('fOther').value = ''; drawMetaSubs(); };
+$('fOK').onclick = () => {
+  if (!metaDraft.title.trim()) { toast('テスト名を入れてください'); return; }
+  if (!metaDraft.subj.length) { toast('教科を選んでください'); return; }
+  if (metaNew) { S.maps.push(metaDraft); cur = metaDraft; tab = 'task'; }
+  else {
+    const gone = cur.subj.filter(s => !metaDraft.subj.includes(s));
+    const used = gone.filter(s => cur.tasks.some(t => t.subj === s) || cur.plans.some(p => p.subj === s && ((p.neg || '').trim() || p.goal)));
+    if (used.length && !confirm(used.join('・') + 'をはずすと、その教科の対策（目標点・ネガティブ仮定設定）が消えます。タスクは残ります。よいですか？')) return;
+    cur.title = metaDraft.title; cur.date = metaDraft.date; cur.subj = metaDraft.subj.slice();
+    cur.plans = cur.plans.filter(p => cur.subj.includes(p.subj));
+  }
+  save(); closeSheet('metaSheet'); openMap();
+};
+$('btnNew').onclick = () => openMeta(true);
+$('mMeta').onclick = () => openMeta(false);
+$('mDel').onclick = () => { if (!confirm('「' + (cur.title || 'このテストマップ') + '」を消しますか？もとに戻せません。')) return; S.maps = S.maps.filter(x => x !== cur); save(); show('home'); renderHome(); };
+
+/* ── 文章 ── */
+const lapTxt = t => t.laps.map((x, i) => (i + 1) + '周' + (x.d ? md(x.d) : '') + (x.ok ? '✓' : '')).join(' ');
+function fullText(m) {
+  const p = prog(m), d = left(m), L = [];
+  L.push('【テストマップ】' + m.title + (m.date ? '（' + ymd(m.date) + '）' : '') + (d !== null && d > 0 ? '　テストまで残り' + d + '日' : ''));
+  L.push('達成率 ' + p.done + '/' + p.all + '（' + p.pct + '%）');
+  const subs = m.subj.concat([...new Set(m.tasks.map(t => t.subj))].filter(s => s && !m.subj.includes(s)));
+  for (const s of subs) {
+    const ts = tasksOf(m).filter(t => t.subj === s); if (!ts.length) continue;
+    L.push('', '■' + s + '（完了 ' + ts.filter(t => t.done).length + '/' + ts.length + '）');
+    ts.forEach(t => L.push((t.done ? '●' : '○') + ' ' + t.text + (t.amt ? '（' + t.amt + '）' : '') + '　' + lapTxt(t)));
+  }
+  const pl = m.plans.filter(x => x.goal || (x.neg || '').trim() || x.acts.some(a => (a.t || '').trim()));
+  if (pl.length) {
+    L.push('', '▼目標点・ネガティブ仮定設定');
+    pl.forEach(x => { L.push('■' + x.subj + '　' + (x.prev ? x.prev + '→' : '') + (x.goal || '') + (x.goal ? '点' : '')); if ((x.neg || '').trim()) L.push('もし取れないなら：' + x.neg.trim()); x.acts.filter(a => (a.t || '').trim()).forEach(a => L.push((a.ok ? '☑ ' : '□ ') + a.t.trim())); });
+  }
+  const rh = m.reh.filter(r => r.d || r.ok); if (rh.length) L.push('', '▼リハーサル　' + rh.map((r, i) => (m.reh.indexOf(r) + 1) + '回' + (r.d ? md(r.d) : '') + (r.ok ? '✓' : '')).join(' '));
+  const a = anPct(m); if (a !== null) L.push('▼分析マップのタスク　' + (m.an.done || 0) + '/' + m.an.all + '（' + a + '%）');
+  const ms = m.miss.filter(x => (x.t || '').trim()); if (ms.length) { L.push('', '▼ミス対策'); ms.forEach(x => L.push((x.ok ? '☑ ' : '□ ') + x.t.trim())); }
+  const sc = lastScore(m);
+  if (sc) { const w = m.weeks[sc.i]; L.push('', '▼' + (sc.i + 1) + '週目の記録（' + md(w.d) + '）　8つの最終チェック ' + sc.n + '/8'); L.push(CHECKS.map((c, k) => (w.chk[k] ? '☑' : '□') + '①②③④⑤⑥⑦⑧'[k] + c[0]).join('\n')); }
+  return L.join('\n');
+}
+// 計画マップ（parseBunseki）が読める形：□【教科】やること［YYYY/M/Dまで］（1行目の見出しはつけない＝やることとして読まれてしまうため）
+function planText(m) {
+  return tasksOf(m).filter(t => !t.done).map(t => {
+    const i = t.laps.findIndex(x => !x.ok), x = t.laps[i];
+    return '□【' + t.subj + '】' + t.text.trim() + '（' + (t.amt ? t.amt + '・' : '') + (i + 1) + '周目）' + (x && x.d ? '［' + ymd(x.d) + 'まで］' : '');
+  }).join('\n');
+}
+$('mText').onclick = () => copy(fullText(cur), '文章でコピーしました');
+$('mPlan').onclick = () => { const t = planText(cur); if (!t) { toast('まだ終わっていないタスクがありません'); return; } copy(t, 'コピーしました。計画マップの「目標」→「分析マップから読みこむ」で貼りつけると入ります'); };
+
+/* ── 画像（紙と同じ並び：1/2 タスク → 2/2 対策・チェック） ── */
+const F = w => w + ' "Zen Kaku Gothic New","Hiragino Sans",sans-serif';
+function wrapLines(ctx, text, w) {
+  const out = []; for (const para of String(text ?? '').split('\n')) {
+    let line = ''; for (const ch of para) { if (ctx.measureText(line + ch).width > w && line) { out.push(line); line = ch; } else line += ch; }
+    out.push(line);
+  } return out;
+}
+// cells: 文字列 または {t, fill, strike, color, bold, size}
+function drawTable(ctx, x, y, cols, rows, o = {}) {
+  const pad = 10, lh = o.lh || 32;
+  ctx.lineWidth = 1.5; ctx.strokeStyle = '#444';
+  if (cols.some(c => c.label !== undefined)) {
+    ctx.font = F('700 22px');
+    const hl = cols.map(c => wrapLines(ctx, c.label || '', c.w - pad * 2));
+    const hh = Math.max(...hl.map(l => l.length)) * 28 + 18; let cx = x;
+    cols.forEach((c, i) => {
+      ctx.fillStyle = '#dedede'; ctx.fillRect(cx, y, c.w, hh); ctx.strokeRect(cx, y, c.w, hh);
+      ctx.fillStyle = '#111'; ctx.textAlign = 'center';
+      hl[i].forEach((t, k) => ctx.fillText(t, cx + c.w / 2, y + (hh - hl[i].length * 28) / 2 + 22 + k * 28)); cx += c.w;
+    });
+    y += hh;
+  }
+  for (const r of rows) {
+    const cs = r.map(v => typeof v === 'object' && v ? v : { t: v ?? '' });
+    const ls = cols.map((c, i) => { ctx.font = F((cs[i].bold ? '700 ' : '500 ') + (cs[i].size || o.size || 24) + 'px'); return wrapLines(ctx, cs[i].t, c.w - pad * 2); });
+    const rh = Math.max(o.minH || 52, Math.max(...ls.map(l => l.length)) * lh + 18);
+    let cx = x;
+    cols.forEach((c, i) => {
+      const cell = cs[i];
+      ctx.fillStyle = cell.fill || c.fill || '#fff'; ctx.fillRect(cx, y, c.w, rh); ctx.strokeRect(cx, y, c.w, rh);
+      ctx.font = F((cell.bold || c.bold ? '700 ' : '500 ') + (cell.size || o.size || 24) + 'px');
+      ctx.fillStyle = cell.color || '#111'; ctx.textAlign = c.left ? 'left' : 'center';
+      ls[i].forEach((t, k) => {
+        const tx = c.left ? cx + pad : cx + c.w / 2, ty = y + (rh - ls[i].length * lh) / 2 + lh - 8 + k * lh;
+        ctx.fillText(t, tx, ty);
+        if (cell.strike && t) { const tw = ctx.measureText(t).width, x0 = c.left ? tx : tx - tw / 2; ctx.save(); ctx.strokeStyle = '#111'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x0, ty - 8); ctx.lineTo(x0 + tw, ty - 8); ctx.stroke(); ctx.restore(); }
+      });
+      cx += c.w;
+    });
+    y += rh;
+  }
+  return y;
+}
+function pageHead(ctx, X, y, IW, t, sub, m) {
+  ctx.lineWidth = 3; ctx.strokeStyle = '#111'; ctx.strokeRect(X, y, IW, 76);
+  ctx.fillStyle = '#111'; ctx.textAlign = 'left';
+  ctx.font = F('900 46px'); ctx.fillText(t, X + 20, y + 55);
+  const tw = ctx.measureText(t).width; ctx.font = F('700 24px'); ctx.fillText(sub, X + 32 + tw, y + 55);
+  ctx.font = F('700 26px');
+  const meta = 'テスト名：' + (m.title || '') + '　　テスト日：' + (m.date ? mdw(m.date) : '') + (S.name ? '　　' + S.name : '');
+  ctx.textAlign = 'right'; ctx.fillText(meta, X + IW - 20, y + 50);
+  return y + 96;
+}
+function sectionTitle(ctx, X, y, t) { ctx.fillStyle = '#111'; ctx.textAlign = 'left'; ctx.font = F('900 28px'); ctx.fillText(t, X, y + 30); return y + 46; }
+function lapCell(x) { return { t: (x.d ? md(x.d) : '　/　') + (x.ok ? ' ✓' : ' □'), color: x.ok ? '#1E6E46' : '#111', bold: x.ok }; }
+function drawMap(m, ctx, W) {
+  const X = 40, IW = W - 80; let y = 30;
+  const p = prog(m);
+  y = pageHead(ctx, X, y, IW, 'テストマップ', '1/2 タスク', m);
+  ctx.font = F('500 22px'); ctx.fillStyle = '#333'; ctx.textAlign = 'left';
+  ctx.fillText('【タスク】目標点に達するためのタスクを1行に1つ → 周回ごとに期限 → その周が終われば□に✓ → 全部終われば〇をぬりつぶし、教材・範囲に横線', X, y + 4); y += 24;
+  const tc = [{ label: '教科', w: 120, bold: 1 }, { label: '教材・範囲', w: IW - 120 - 190 - 3 * 190 - 100, left: 1 }, { label: '量', w: 190 }, { label: '1周目', w: 190 }, { label: '2周目', w: 190 }, { label: '3周目', w: 190 }, { label: '完了', w: 100 }];
+  const subs = m.subj.concat([...new Set(m.tasks.map(t => t.subj))].filter(s => s && !m.subj.includes(s)));
+  const ts = subs.flatMap(s => tasksOf(m).filter(t => t.subj === s));
+  const rows = ts.map(t => [t.subj, { t: t.text, strike: t.done, color: t.done ? '#666' : '#111' }, t.amt || '', lapCell(t.laps[0]), lapCell(t.laps[1]), lapCell(t.laps[2]), { t: t.done ? '●' : '〇', size: 34, fill: t.done ? '#e2f4ea' : '#fff' }]);
+  while (rows.length < 5) rows.push(['', '', '', lapCell({ d: '' }), lapCell({ d: '' }), lapCell({ d: '' }), { t: '〇', size: 34 }]);
+  y = drawTable(ctx, X, y, tc, rows);
+  ctx.font = F('700 24px'); ctx.textAlign = 'right'; ctx.fillStyle = '#111';
+  ctx.fillText('全タスク ' + p.all + '個　完了 ' + p.done + '個　達成率 ' + p.pct + '%', X + IW, y + 34); y += 70;
+
+  y = pageHead(ctx, X, y, IW, 'テストマップ', '2/2 対策・チェック', m);
+  const pc = [{ label: '教科', w: 120, bold: 1 }, { label: '目標点（前回→今回）', w: 270 }, { label: 'もし目標点が取れないなら・・・（ネガティブ仮定設定）', w: 600, left: 1 }, { label: 'どんな対策をする？ → 完了すれば線を引いて消す', w: IW - 990, left: 1 }];
+  const prow = m.plans.map(x => {
+    const acts = x.acts.filter(a => (a.t || '').trim());
+    return [x.subj, (x.prev ? x.prev : '　') + ' → ' + (x.goal || '　'), x.neg || '', acts.map(a => (a.ok ? '✓ ' : '□ ') + a.t.trim()).join('\n')];
+  });
+  y = drawTable(ctx, X, y, pc, prow.length ? prow : [['', '→', '', '']], { minH: 90, size: 23 });
+  y += 20;
+  // リハーサル・分析マップのタスク
+  const rc = [{ w: 260, bold: 1 }].concat(Array.from({ length: 10 }, () => ({ w: (IW - 260) / 10 })));
+  rc.forEach((c, i) => c.label = i === 0 ? '' : i + '回');
+  y = drawTable(ctx, X, y, rc, [[{ t: 'リハーサル', bold: 1 }].concat(m.reh.map(r => ({ t: (r.d ? md(r.d) : '') + (r.ok ? ' ✓' : ''), fill: r.ok ? '#e2f4ea' : '#fff', bold: r.ok })))], { size: 22 });
+  const ap = anPct(m), an = ap === null ? 0 : Math.floor(ap / 10);
+  y = drawTable(ctx, X, y, rc.map(c => ({ w: c.w, bold: c.bold })), [[{ t: '分析マップのタスク' + (ap !== null ? '\n' + (m.an.done || 0) + '/' + m.an.all + '（' + ap + '%）' : ''), bold: 1, size: 21 }]
+    .concat(Array.from({ length: 10 }, (_, i) => ({ t: (i + 1) * 10 + '%', fill: i < an ? '#9fd6b8' : '#fff', size: 21 })))], { size: 21 });
+  y += 20;
+  // ミス対策
+  const ms = m.miss.filter(x => (x.t || '').trim());
+  y = drawTable(ctx, X, y, [{ label: 'ミス対策', w: 260, bold: 1 }, { label: 'ミス対策方法', w: IW - 260, left: 1 }], [['', ms.length ? ms.map(x => (x.ok ? '✓ ' : '□ ') + x.t.trim()).join('\n') : '']], { minH: 90, size: 23 });
+  y += 20;
+  // 毎週の記録・8つの最終チェック
+  const wc = [{ label: '毎週の記録', w: 520, left: 1 }].concat([0, 1, 2, 3].map(i => ({ label: (i + 1) + '週目', w: (IW - 520) / 4 })));
+  const wr = [
+    ['提出日'].concat(m.weeks.map(w => w.d ? md(w.d) : '／')),
+    ['テストまで残り'].concat(m.weeks.map(w => w.left !== null ? w.left + '日' : '日')),
+    ['全タスク'].concat(m.weeks.map(w => w.all !== null ? w.all + '個' : '個')),
+    ['完了'].concat(m.weeks.map(w => w.done !== null ? w.done + '個' : '個')),
+    ['達成率'].concat(m.weeks.map(w => ({ t: w.pct !== null ? w.pct + '%' : '%', bold: 1 }))),
+    [{ t: '8つの最終チェック（できたら✓）', bold: 1, fill: '#dedede' }].concat(m.weeks.map(() => ({ t: '', fill: '#dedede' }))),
+  ].concat(CHECKS.map((c, k) => ['①②③④⑤⑥⑦⑧'[k] + c[0]].concat(m.weeks.map(w => ({ t: w.chk[k] ? '✓' : '', bold: 1, color: '#1E6E46', size: 28 })))))
+    .concat([[{ t: '合計', bold: 1 }].concat(m.weeks.map(w => ({ t: (w.d ? w.chk.filter(Boolean).length : '') + '／8', bold: 1, size: 26 })))]);
+  y = drawTable(ctx, X, y, wc, wr, { minH: 46, size: 23 });
+  return y + 30;
+}
+async function makeImage() {
+  try { await document.fonts.ready; } catch (e) {}
+  const W = 1800, H0 = 9000, cv = document.createElement('canvas'); cv.width = W; cv.height = H0;
+  const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H0);
+  const H = Math.min(H0, drawMap(cur, ctx, W));
+  const out = document.createElement('canvas'); out.width = W; out.height = H;
+  out.getContext('2d').drawImage(cv, 0, 0);
+  out.toBlob(blob => {
+    const url = URL.createObjectURL(blob); $('imgPrev').src = url; $('btnDl').href = url;
+    const file = new File([blob], 'test-map.jpg', { type: 'image/jpeg' });
+    $('btnShare').hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
+    $('btnShare').onclick = () => { navigator.share({ files: [file], title: 'テストマップ' }).catch(() => {}); };
+    openSheet('imgSheet');
+  }, 'image/jpeg', 0.92);
+}
+$('mImg').onclick = makeImage;
+
+/* ── 小物 ── */
+function openSheet(id) { $(id).hidden = false; }
+function closeSheet(id) { $(id).hidden = true; }
+document.querySelectorAll('.sheet').forEach(sh => sh.addEventListener('click', e => { if (e.target === sh || e.target.closest('[data-close]')) sh.hidden = true; }));
+let toastT = 0;
+function toast(msg) {
+  let t = document.querySelector('.toast'); if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600);
+}
+async function copy(text, msg) {
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  toast(msg);
+}
+$('btnSet').onclick = () => { $('setName').value = S.name || ''; openSheet('setSheet'); };
+$('setName').oninput = e => { S.name = e.target.value; saveSoon(); };
+$('btnExport').onclick = () => copy(JSON.stringify(S), 'バックアップをコピーしました。メモなどに貼って残してください');
+$('btnImport').onclick = async () => {
+  let t = ''; try { t = await navigator.clipboard.readText(); } catch (e) {}
+  if (!t) t = prompt('バックアップの文字を貼りつけてください') || '';
+  try { const j = JSON.parse(t); if (!Array.isArray(j.maps)) throw 0; if (!confirm('いまの記録を、読みこんだ記録に置きかえますか？')) return; S = Object.assign({ name: '', maps: [] }, j); save(); closeSheet('setSheet'); renderHome(); toast('読みこみました'); }
+  catch (e) { toast('読みこめませんでした'); }
+};
+
+async function checkUpdate(silent) {
   const msg = t => { if (!silent) $('updMsg').textContent = t; };
-  try{
-    const res = await fetch('version.json?t=' + Date.now(), {cache:'no-store'});
+  try {
+    const res = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw 0;
     const j = await res.json(), v = Number(j.v) || 0;
-    if (v > VER){
-      $('updVer').textContent = '新しいバージョン v' + VER + ' → v' + v + (j.note ? '　' + j.note : '');
-      $('updBar').hidden = false; $('setDot').hidden = false;
-      msg('新しいバージョン v' + v + ' があります。上の「更新」を押してください。');
+    if (v > VER) {
+      $('updVer').textContent = 'v' + VER + ' → v' + v + (j.note ? '　' + j.note : '');
+      $('btnUpdate').hidden = false; $('setDot').hidden = false;
+      msg('新しいバージョン v' + v + ' があります。' + (j.note || ''));
     } else {
-      $('updBar').hidden = true; $('setDot').hidden = true;
+      $('btnUpdate').hidden = true; $('setDot').hidden = true;
       msg('いまが最新です（v' + VER + '）。');
+      if (!silent) toast('いまが最新です');
     }
-  }catch(e){ msg('いまは調べられませんでした。'); }
+  } catch (e) { msg('いまは調べられませんでした。電波のよい所でもう一度ためしてください。'); }
 }
-async function doUpdate(){
+async function doUpdate() {
   save(); toast('更新しています…');
-  try{
-    if ('serviceWorker' in navigator){ const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(x => x.unregister())); }
-    if (window.caches){ const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
-  }catch(e){}
+  try {
+    if ('serviceWorker' in navigator) { const r = await navigator.serviceWorker.getRegistration(); if (r) await r.unregister(); }
+    if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.filter(k => k.startsWith('tm-')).map(k => caches.delete(k))); }
+  } catch (e) {}
   location.replace(location.pathname + '?u=' + Date.now());
 }
 $('btnUpdate').onclick = doUpdate;
 $('btnCheckUpd').onclick = () => { $('updMsg').textContent = '調べています…'; checkUpdate(false); };
-document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(true); });
+document.addEventListener('visibilitychange', () => { save(); if (!document.hidden) { checkUpdate(true); if (!$('map').hidden && cur) renderSum(); } });
 
-/* ── 起動 ─────────────────────── */
-$('txt').value = S.text || ''; $('memo').value = S.memo || '';
-if (S.out){ setOut(S.out); $('outCard').hidden = false; }
-$('ver').textContent = 'マップ返信 v' + VER;
-renderPhotos(); renderLens(); renderPassBar();
+renderHome();
 checkUpdate(true);
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 </script>
 </body>
 </html>

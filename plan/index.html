@@ -741,7 +741,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <div class="sec-label">同期（スマホとパソコンで同じにする）</div>
       <div id="syncOff">
         <button class="subbtn" id="btnSyncNew" style="margin-top:4px">同期をはじめる（この端末のデータをあずける）</button>
-        <button class="subbtn" id="btnSyncJoin">ほかの端末のコードを入れる</button>
+        <button class="subbtn" id="btnSyncJoin">ほかの端末・アプリのコードを入れる</button>
         <p class="note">1台目で「同期をはじめる」を押すと、<b>同期コード</b>（8文字）が出ます。2台目でそのコードを入れると同じデータになり、そのあとは<b>書くたびに自動で同期</b>します。<br>データは、ヒラのGoogleドライブにあずけます。</p>
       </div>
       <div id="syncOnBox" class="hidden">
@@ -785,7 +785,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 61;
+const VER = 62;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -2557,7 +2557,7 @@ function renderSync(){
   if(bf) bb.textContent = '同期で入れかわる前にもどす（'+fmtAt(bf.at)+'・やること'+bf.n+'件）';
   const n = $('#syncNote');
   if(syncErr) n.innerHTML = '<span class="syncdot bad"></span>'+esc(syncErr)+'。つながったら自動でもう一度送ります。';
-  else n.innerHTML = '<span class="syncdot"></span>さいごの同期：'+(S.syncAt ? fmtAt(S.syncAt) : 'まだ')+'<br>ほかの端末でも、設定の「ほかの端末のコードを入れる」にこのコードを入れてください。';
+  else n.innerHTML = '<span class="syncdot"></span>さいごの同期：'+(S.syncAt ? fmtAt(S.syncAt) : 'まだ')+'<br>ほかの端末でも、設定の「ほかの端末・アプリのコードを入れる」にこのコードを入れてください。Essence・勉強報告なども同じコードで同期できます。';
 }
 function normCode(v){
   const a = String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -2575,7 +2575,7 @@ $('#btnSyncNew').onclick = async ()=>{
   }catch(e){ toast('つながりませんでした'); }
 };
 $('#btnSyncJoin').onclick = async ()=>{
-  const v = prompt('ほかの端末に出ている同期コード（8文字）を入れてください');
+  const v = prompt('同期コード（8文字）を入れてください。\nEssence・勉強報告など、ほかのアプリで使っているコードと同じでOKです。');
   if(v === null) return;
   const code = normCode(v);
   if(!code){ toast('コードは8文字です（例 abcd-2345）'); return; }
@@ -2583,7 +2583,14 @@ $('#btnSyncJoin').onclick = async ()=>{
   try{
     const r = await syncCall({ action:'get', code });
     if(!r || !r.ok){ toast((r && r.err) || 'つながりませんでした'); return; }
-    if(!r.found){ toast('そのコードは見つかりません'); return; }
+    if(!r.found){
+      // ほかのアプリ（Essence・勉強報告など）で作ったコードは、計画マップの記録がまだ無いだけ。このコードで預けはじめる
+      if(!confirm('コード「'+code+'」の計画マップの記録は、まだ預けられていません。\nこの端末の記録を、このコードで預けはじめますか？\n\nEssence・勉強報告など、ほかのアプリで使っているコードなら、このままで大丈夫です。打ちまちがいがないかだけ確認してください。')) return;
+      S.syncCode = code; S.syncAt = 0; syncErr = ''; save(); renderSync(); guardNote();
+      await syncPush();
+      toast(syncErr ? syncErr : '同期をはじめました');
+      return;
+    }
     if(hasData() && !confirm('この端末のいまのデータは、コード「'+code+'」のデータに入れかわります。よろしいですか？')) return;
     S.syncCode = code; save(); guardNote();
     applyRemote(r);

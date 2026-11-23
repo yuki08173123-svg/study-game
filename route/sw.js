@@ -1,7 +1,7 @@
 /* 高校ルート の service worker
    ほうしん:「ネットワーク優先」。まずネットから最新をとり、とれたものをキャッシュに控える。
    ネットがないときだけキャッシュで動く。 */
-const VER = 'rt-v41';
+const VER = 'rt-v42';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
@@ -16,7 +16,8 @@ self.addEventListener('fetch', e => {
   if(url.origin !== location.origin) return;
   e.respondWith((async () => {
     try{
-      const res = await fetch(req);
+      /* ブラウザのキャッシュを使わず、必ずネットから取る（maps.js など名前が変わらないファイルが古いままになるのを防ぐ） */
+      const res = await fetch(req.url, { cache: 'no-store' });
       if(res && res.ok){ const c = await caches.open(VER); c.put(req, res.clone()); }
       return res;
     }catch(err){

@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<script src="../common/users.js?v=1" data-app="imagery"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Imagery</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Imagery">
+<meta name="theme-color" content="#F6F7F9">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.openverse.org">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Imagery：単語や熟語を入れると、イメージ画像をパッと出す。
+   画像は Openverse（https://openverse.org ・自由に使える写真の検索。キーなし・無料）から。
+   1台（1つのネット回線）につき 1分20回・1日200回まで検索できる（Openverse の決まり）。 */
+:root{
+  --bg:#F6F7F9; --card:#FFFFFF; --card2:#ECEFF3; --ink:#1A1A1A; --muted:#55595F; --line:#DDE2E8;
+  --acc:#1F6F78; --acc-soft:#E1F0F1; --btn:#1A1A1A; --btn-ink:#FFFFFF;
+  color-scheme:light;
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%; background:var(--bg);}
+body{font-family:'Zen Kaku Gothic New',system-ui,sans-serif; font-weight:500; background:var(--bg); color:var(--ink); min-height:100vh; min-height:100dvh;}
+button{font:inherit; color:inherit; border:0; background:none; cursor:pointer;}
+input{font:inherit; color:inherit;}
+.en{font-family:'Space Grotesk','Zen Kaku Gothic New',sans-serif;}
+.hidden{display:none !important;}
+.muted{color:var(--muted);}
+
+/* 上：検索バー（いつも上にはりつく） */
+.top{position:sticky; top:0; z-index:10; background:var(--bg); padding:calc(10px + env(safe-area-inset-top)) 16px 10px;}
+.bar{display:flex; align-items:center; gap:8px; max-width:760px; margin:0 auto;}
+.brand{display:flex; align-items:center; gap:8px; flex:none;}
+.brand img{width:30px; height:30px; border-radius:8px;}
+.brand b{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:18px; letter-spacing:.03em;}
+.iconbtn{width:40px; height:40px; border-radius:12px; display:grid; place-items:center; flex:none; color:var(--muted);}
+.iconbtn:active{background:var(--card2);}
+[data-users-tag]{background:var(--card2); border-radius:999px; padding:6px 12px; font-size:13px; font-weight:700; flex:none;}
+.search{max-width:760px; margin:10px auto 0; position:relative;}
+.search input{width:100%; height:56px; border-radius:16px; border:2px solid var(--line); background:var(--card);
+  padding:0 52px 0 50px; font-size:20px; font-family:'Space Grotesk','Zen Kaku Gothic New',sans-serif; font-weight:500; outline:none;
+  -webkit-appearance:none; appearance:none;}
+.search input:focus{border-color:var(--acc);}
+.search input::placeholder{color:#8A9098; font-family:'Zen Kaku Gothic New',sans-serif; font-size:16px;}
+.search .glass{position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none;}
+.search .clear{position:absolute; right:8px; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:999px; display:grid; place-items:center; color:var(--muted);}
+.search input::-webkit-search-cancel-button{display:none;}
+
+main{max-width:760px; margin:0 auto; padding:6px 16px calc(40px + env(safe-area-inset-bottom));}
+
+/* ホーム（まだ検索していないとき） */
+.home{min-height:50vh;}
+.hint{font-size:15px; line-height:1.8; color:var(--muted); margin:14px 2px 0;}
+.hint b{color:var(--ink);}
+.sec{display:flex; align-items:center; justify-content:space-between; margin:24px 2px 10px;}
+.sec h2{font-size:15px; font-weight:700;}
+.chips{display:flex; flex-wrap:wrap; gap:8px;}
+.chip{background:var(--card); border:1px solid var(--line); border-radius:999px; padding:9px 14px; font-size:16px;
+  font-family:'Space Grotesk','Zen Kaku Gothic New',sans-serif; font-weight:500;}
+.chip:active{background:var(--acc-soft);}
+.tap-anywhere{height:30vh;}
+
+/* 結果 */
+.head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin:8px 2px 12px;}
+.head .word{font-family:'Space Grotesk','Zen Kaku Gothic New',sans-serif; font-weight:700; font-size:26px; letter-spacing:.01em; word-break:break-word;}
+.grid{columns:2; column-gap:10px;}
+@media (min-width:600px){ .grid{columns:3;} }
+.tile{break-inside:avoid; margin:0 0 10px; border-radius:12px; overflow:hidden; background:var(--card2); display:block; width:100%; position:relative;}
+.tile img{display:block; width:100%; height:auto; min-height:80px; background:var(--card2);}
+.tile .cap{position:absolute; left:0; right:0; bottom:0; padding:18px 8px 6px; font-size:11px; color:#fff; line-height:1.4;
+  background:linear-gradient(transparent, rgba(0,0,0,.55)); text-align:left; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
+.skel{break-inside:avoid; margin:0 0 10px; border-radius:12px; background:linear-gradient(100deg,var(--card2) 30%,#F4F6F8 50%,var(--card2) 70%); background-size:300% 100%; animation:sh 1.2s infinite linear;}
+@keyframes sh{from{background-position:100% 0} to{background-position:0 0}}
+.msg{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 16px; line-height:1.8; font-size:15px; margin:6px 0 14px;}
+.btn{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:50px; border-radius:14px; background:var(--btn); color:var(--btn-ink); font-weight:700; font-size:16px; text-decoration:none;}
+.btn.sub{background:var(--card); color:var(--ink); border:1px solid var(--line);}
+.btns{display:grid; gap:10px; margin:6px 0 0;}
+.foot{font-size:12px; color:var(--muted); text-align:center; margin:18px 0 0; line-height:1.7;}
+.foot a{color:var(--muted);}
+
+/* 大きく見る */
+.lb{position:fixed; inset:0; z-index:50; background:rgba(10,12,14,.94); display:flex; flex-direction:column; color:#fff;}
+.lb .lbtop{display:flex; align-items:center; gap:8px; padding:calc(8px + env(safe-area-inset-top)) 10px 8px;}
+.lb .lbtop .w{flex:1; font-family:'Space Grotesk','Zen Kaku Gothic New',sans-serif; font-weight:700; font-size:20px; padding-left:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.lb .x{width:44px; height:44px; border-radius:999px; display:grid; place-items:center; color:#fff; background:rgba(255,255,255,.12);}
+.lb .stage{flex:1; display:flex; align-items:center; justify-content:center; position:relative; min-height:0; padding:0 8px; touch-action:pan-y;}
+.lb .stage img{max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; user-select:none; -webkit-user-drag:none;}
+.lb .nav{position:absolute; top:50%; transform:translateY(-50%); width:44px; height:64px; display:grid; place-items:center; color:#fff; background:rgba(255,255,255,.10); border-radius:12px;}
+.lb .prev{left:6px;} .lb .next{right:6px;}
+.lb .info{padding:10px 18px calc(14px + env(safe-area-inset-bottom)); font-size:12px; line-height:1.7; color:rgba(255,255,255,.78);}
+.lb .info .t{font-size:14px; color:#fff; margin-bottom:2px;}
+.lb .info a{color:rgba(255,255,255,.78);}
+
+/* 設定 */
+.sheet-bg{position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.35); display:flex; align-items:flex-end; justify-content:center;}
+.sheet{background:var(--bg); width:100%; max-width:560px; border-radius:20px 20px 0 0; padding:16px 16px calc(24px + env(safe-area-inset-bottom)); max-height:88vh; overflow:auto;}
+.sheet .sh{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+.sheet .sh h2{font-size:18px; font-weight:700;}
+.box{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin:0 0 12px; font-size:14px; line-height:1.8;}
+.box h3{font-size:15px; margin-bottom:4px;}
+.box a{color:var(--acc);}
+.ver{text-align:center; font-size:12px; color:var(--muted); margin-top:8px;}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="bar">
+    <div class="brand"><img src="icon-192.png" alt=""><b>Imagery</b></div>
+    <div style="flex:1"></div>
+    <button data-users-tag hidden></button>
+    <button class="iconbtn" id="openSet" aria-label="設定">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+  <form class="search" id="form" action="#" autocomplete="off">
+    <svg class="glass" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input id="q" type="search" enterkeyhint="search" inputmode="text" autocapitalize="none" autocorrect="off" spellcheck="false"
+      placeholder="単語・熟語を入れる" autofocus>
+    <button type="button" class="clear hidden" id="clear" aria-label="消す">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </form>
+</div>
+
+<main>
+  <section class="home" id="home">
+    <p class="hint">英単語や熟語を入れると、<b>イメージの画像</b>がすぐ出ます。<br>文字だけでは覚えにくい語を、<b>どんな場面で使うのか</b>の絵とセットで覚えましょう。</p>
+    <div id="histWrap" class="hidden">
+      <div class="sec"><h2>最近しらべた語</h2></div>
+      <div class="chips" id="hist"></div>
+    </div>
+    <div class="tap-anywhere" id="tapArea"></div>
+  </section>
+
+  <section id="result" class="hidden">
+    <div class="head"><span class="word" id="rWord"></span><span class="muted" id="rCount" style="font-size:13px"></span></div>
+    <div id="rMsg"></div>
+    <div class="grid" id="grid"></div>
+    <div class="btns" id="moreBtns">
+      <button class="btn sub hidden" id="more">もっと見る</button>
+      <a class="btn sub" id="google" target="_blank" rel="noopener">Google の画像検索でも見る</a>
+    </div>
+    <p class="foot">画像：<a href="https://openverse.org" target="_blank" rel="noopener">Openverse</a>（Flickr などの、自由に使える写真）</p>
+  </section>
+</main>
+
+<!-- 大きく見る -->
+<div class="lb hidden" id="lb">
+  <div class="lbtop">
+    <div class="w" id="lbWord"></div>
+    <button class="x" id="lbClose" aria-label="とじる"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="stage" id="stage">
+    <img id="lbImg" alt="">
+    <button class="nav prev" id="lbPrev" aria-label="前"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <button class="nav next" id="lbNext" aria-label="次"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+  <div class="info" id="lbInfo"></div>
+</div>
+
+<!-- 設定 -->
+<div class="sheet-bg hidden" id="set">
+  <div class="sheet">
+    <div class="sh"><h2>設定</h2><button class="iconbtn" id="setClose" aria-label="とじる"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div data-users-card></div>
+    <div class="box">
+      <h3>最近しらべた語</h3>
+      <p class="muted">ホームに出る「最近しらべた語」を全部消します。</p>
+      <button class="btn sub" id="clearHist" style="margin-top:10px">最近しらべた語を消す</button>
+    </div>
+    <div class="box">
+      <h3>画像について</h3>
+      <p>画像は <a href="https://openverse.org" target="_blank" rel="noopener">Openverse</a> から出しています。世界中の人が「自由に使ってよい」として公開した写真（おもに Flickr）を、写真のタイトルや説明の文で探しています。</p>
+      <p style="margin-top:6px">合わない画像が出ることもあります。そのときは下の「Google の画像検索でも見る」を使ってください。</p>
+      <p style="margin-top:6px">検索は、1分に20回・1日に200回までです。</p>
+    </div>
+    <div class="ver" id="ver"></div>
+  </div>
+</div>
+
+<script>
+const VER = 1;
+const KEY = 'imagery_v1';
+const PER = 20;
+const $ = id => document.getElementById(id);
+
+/* ---------- 保存（最近しらべた語） ---------- */
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {hist:[]}; }catch(e){ return {hist:[]}; } }
+let S = load();
+if(!Array.isArray(S.hist)) S.hist = [];
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function addHist(w){
+  const k = w.toLowerCase();
+  S.hist = S.hist.filter(h => h.toLowerCase() !== k);
+  S.hist.unshift(w);
+  S.hist = S.hist.slice(0, 40);
+  save();
+}
+
+/* ---------- 画面 ---------- */
+const q = $('q');
+function showHome(){
+  $('home').classList.remove('hidden');
+  $('result').classList.add('hidden');
+  cur.seq++;   // 取りに行っている途中の画像は出さない
+  if(location.search) try{ history.replaceState(null, '', location.pathname); }catch(e){}
+  renderHist();
+}
+function renderHist(){
+  const box = $('hist'); box.innerHTML = '';
+  $('histWrap').classList.toggle('hidden', !S.hist.length);
+  for(const w of S.hist){
+    const b = document.createElement('button');
+    b.className = 'chip'; b.textContent = w;
+    b.onclick = () => { q.value = w; syncClear(); go(w); };
+    box.appendChild(b);
+  }
+}
+function syncClear(){ $('clear').classList.toggle('hidden', !q.value); }
+
+/* キーボードをすぐ出す。
+   iPhone は「画面をさわったとき」しかキーボードを出さないので、
+   ホームのどこをさわっても入力欄に入るようにしてある。 */
+function focusQ(select){
+  try{ q.focus({preventScroll:true}); }catch(e){ q.focus(); }
+  if(select) try{ q.select(); }catch(e){}
+}
+$('tapArea').addEventListener('click', () => focusQ(false));
+$('home').addEventListener('click', e => { if(e.target === $('home') || e.target.classList.contains('hint')) focusQ(false); });
+q.addEventListener('focus', () => setTimeout(() => { try{ q.select(); }catch(e){} }, 0));
+q.addEventListener('input', () => { syncClear(); if(!q.value.trim()) showHome(); });
+$('clear').onclick = () => { q.value = ''; syncClear(); showHome(); focusQ(false); };
+
+/* パソコン・iPad のキーボード：どこにいても、文字を打てば入力欄に入る */
+document.addEventListener('keydown', e => {
+  if(!$('lb').classList.contains('hidden')){
+    if(e.key === 'Escape') closeLb();
+    else if(e.key === 'ArrowLeft') stepLb(-1);
+    else if(e.key === 'ArrowRight') stepLb(1);
+    return;
+  }
+  if(!$('set').classList.contains('hidden')) return;
+  if(document.activeElement === q) return;
+  if(e.metaKey || e.ctrlKey || e.altKey) return;
+  if(e.key.length === 1 && e.key !== ' '){ q.value = ''; focusQ(false); }
+});
+
+$('form').addEventListener('submit', e => {
+  e.preventDefault();
+  const w = q.value.trim().replace(/\s+/g, ' ');
+  if(!w) return;
+  q.blur();   // スマホはキーボードをしまって画像を見せる
+  go(w);
+});
+
+/* ---------- 検索 ---------- */
+let cur = { word:'', page:1, items:[], pageCount:1, seq:0 };
+
+function flickrSize(u, s){
+  // live.staticflickr.com/…/{id}_{secret}[_x].jpg → 大きさの記号を付けかえる
+  const m = u.match(/^(https:\/\/live\.staticflickr\.com\/\d+\/\d+_[0-9a-f]+)(?:_[a-z0-9])?\.(jpg|png|gif)$/i);
+  return m ? `${m[1]}_${s}.jpg` : null;
+}
+function small(it){ return flickrSize(it.url, 'z') || it.thumbnail || it.url; }
+function large(it){ return flickrSize(it.url, 'b') || it.url; }
+
+async function go(w, more){
+  if(!more){
+    cur = { word:w, page:1, items:[], pageCount:1, seq:cur.seq + 1 };
+    addHist(w);
+    try{ history.replaceState(null, '', '?q=' + encodeURIComponent(w)); }catch(e){}
+    $('home').classList.add('hidden');
+    $('result').classList.remove('hidden');
+    $('rWord').textContent = w;
+    $('rCount').textContent = '';
+    $('rMsg').innerHTML = '';
+    $('grid').innerHTML = '';
+    $('more').classList.add('hidden');
+    $('google').href = 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(w);
+    window.scrollTo(0, 0);
+  }
+  const seq = cur.seq;
+  const skels = [];
+  for(let i = 0; i < (more ? 4 : 8); i++){
+    const s = document.createElement('div'); s.className = 'skel';
+    s.style.height = (120 + ((i * 53) % 90)) + 'px';
+    $('grid').appendChild(s); skels.push(s);
+  }
+  $('more').disabled = true;
+  let data = null, err = '';
+  try{
+    const url = 'https://api.openverse.org/v1/images/?' + new URLSearchParams({
+      q: w, page: String(cur.page), page_size: String(PER), mature: 'false'
+    });
+    const res = await fetch(url, { headers:{ 'Accept':'application/json' } });
+    if(res.status === 429) err = 'limit';
+    else if(!res.ok) err = 'http';
+    else data = await res.json();
+  }catch(e){ err = navigator.onLine === false ? 'offline' : 'net'; }
+  if(seq !== cur.seq) return;   // その間に別の語を検索した
+  skels.forEach(s => s.remove());
+  $('more').disabled = false;
+
+  if(err){
+    const t = {
+      limit: '検索が多すぎて、少しのあいだ使えなくなっています（1分に20回・1日200回まで）。少し待ってから、もう一度ためしてください。',
+      offline: 'ネットにつながっていません。つながってから、もう一度ためしてください。',
+      net: '画像を取りに行けませんでした。もう一度ためしてください。',
+      http: '画像を取りに行けませんでした。少し待ってから、もう一度ためしてください。'
+    }[err];
+    if(!more) $('rMsg').innerHTML = `<div class="msg">${t}</div>`;
+    else $('rMsg').insertAdjacentHTML('beforeend', `<div class="msg">${t}</div>`);
+    return;
+  }
+  const res = (data.results || []).filter(r => r && r.url);
+  cur.pageCount = data.page_count || 1;
+  if(!more && !res.length){
+    $('rMsg').innerHTML = `<div class="msg">「${esc(w)}」の画像が見つかりませんでした。<br>つづりを確かめるか、下の「Google の画像検索でも見る」を使ってください。</div>`;
+  }
+  for(const it of res){
+    const idx = cur.items.length;
+    cur.items.push(it);
+    const b = document.createElement('button');
+    b.className = 'tile';
+    const ratio = (it.width && it.height) ? (it.height / it.width) : 0.75;
+    b.style.aspectRatio = '1 / ' + Math.min(Math.max(ratio, 0.4), 1.8).toFixed(3);
+    const img = new Image();
+    img.loading = 'lazy'; img.decoding = 'async'; img.alt = it.title || '';
+    img.referrerPolicy = 'no-referrer';
+    img.src = small(it);
+    img.style.height = '100%'; img.style.objectFit = 'cover';
+    img.onerror = () => {
+      // 小さいほうが無ければ元の画像、それも無ければ消す
+      if(img.dataset.f !== '1' && it.url && img.src !== it.url){ img.dataset.f = '1'; img.src = it.url; }
+      else { b.remove(); it.dead = true; }
+    };
+    b.appendChild(img);
+    b.onclick = () => openLb(idx);
+    $('grid').appendChild(b);
+  }
+  $('rCount').textContent = cur.items.length ? cur.items.length + '枚' : '';
+  $('more').classList.toggle('hidden', !(cur.page < cur.pageCount && res.length));
+}
+$('more').onclick = () => { cur.page++; go(cur.word, true); };
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------- 大きく見る ---------- */
+let lbIdx = 0;
+const LIC = { by:'CC BY', 'by-sa':'CC BY-SA', 'by-nc':'CC BY-NC', 'by-nd':'CC BY-ND', 'by-nc-sa':'CC BY-NC-SA', 'by-nc-nd':'CC BY-NC-ND', cc0:'CC0', pdm:'パブリックドメイン' };
+function openLb(i){
+  lbIdx = i; drawLb();
+  $('lb').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeLb(){ $('lb').classList.add('hidden'); document.body.style.overflow = ''; }
+function stepLb(d){
+  const n = cur.items.length; if(!n) return;
+  let i = lbIdx;
+  for(let k = 0; k < n; k++){ i = (i + d + n) % n; if(!cur.items[i].dead) break; }
+  lbIdx = i; drawLb();
+}
+function drawLb(){
+  const it = cur.items[lbIdx];
+  $('lbWord').textContent = cur.word;
+  const img = $('lbImg');
+  img.referrerPolicy = 'no-referrer';
+  img.src = small(it);            // まず手元にある小さい画像を出し、
+  const big = large(it);          // 大きい画像が届いたら差しかえる
+  const pre = new Image(); pre.referrerPolicy = 'no-referrer';
+  pre.onload = () => { if(cur.items[lbIdx] === it) img.src = big; };
+  pre.src = big;
+  const who = it.creator ? esc(it.creator) : '作者不明';
+  const lic = LIC[it.license] || (it.license || '').toUpperCase();
+  const src = it.source ? it.source.replace(/^./, c => c.toUpperCase()) : '';
+  $('lbInfo').innerHTML =
+    (it.title ? `<div class="t">${esc(it.title)}</div>` : '') +
+    `写真：${who}（${esc(src)}・${esc(lic)}）` +
+    (it.foreign_landing_url ? `　<a href="${esc(it.foreign_landing_url)}" target="_blank" rel="noopener">元のページ</a>` : '') +
+    `　${lbIdx + 1} / ${cur.items.length}`;
+}
+$('lbClose').onclick = closeLb;
+$('lbPrev').onclick = e => { e.stopPropagation(); stepLb(-1); };
+$('lbNext').onclick = e => { e.stopPropagation(); stepLb(1); };
+$('stage').addEventListener('click', e => { if(e.target === $('stage')) closeLb(); });
+// 左右にすべらせて前後の画像へ
+let tx = null, ty = null;
+$('stage').addEventListener('touchstart', e => { const t = e.touches[0]; tx = t.clientX; ty = t.clientY; }, {passive:true});
+$('stage').addEventListener('touchend', e => {
+  if(tx === null) return;
+  const t = e.changedTouches[0], dx = t.clientX - tx, dy = t.clientY - ty;
+  tx = null;
+  if(Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.3) stepLb(dx < 0 ? 1 : -1);
+  else if(dy > 90 && Math.abs(dy) > Math.abs(dx) * 1.3) closeLb();
+}, {passive:true});
+
+/* ---------- 設定 ---------- */
+$('openSet').onclick = () => { $('set').classList.remove('hidden'); };
+$('setClose').onclick = () => $('set').classList.add('hidden');
+$('set').addEventListener('click', e => { if(e.target === $('set')) $('set').classList.add('hidden'); });
+$('clearHist').onclick = () => {
+  if(!S.hist.length) return;
+  if(!confirm('最近しらべた語を全部消しますか？')) return;
+  S.hist = []; save(); renderHist();
+};
+$('ver').textContent = 'Imagery v' + VER;
+
+/* ---------- はじめ ---------- */
+const first = new URLSearchParams(location.search).get('q');
+if(first && first.trim()){ q.value = first.trim(); syncClear(); go(first.trim()); }
+else { showHome(); focusQ(false); }
+// アプリに戻ってきたとき（ホーム画面から開き直したとき）も、すぐ打てるように
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && !$('home').classList.contains('hidden')
+     && $('lb').classList.contains('hidden') && $('set').classList.contains('hidden')) focusQ(false);
+});
+window.addEventListener('pageshow', () => { if(!$('home').classList.contains('hidden')) focusQ(false); });
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>

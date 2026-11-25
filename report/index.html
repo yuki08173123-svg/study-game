@@ -172,6 +172,7 @@ textarea{min-height:64px}
 .impbody{white-space:pre-wrap;font:inherit;font-size:13px;color:var(--muted);background:var(--bg);border-radius:9px;padding:8px 10px;margin:8px 0 0;max-height:200px;overflow:auto}
 .carry{background:var(--done-soft);color:var(--done);border-radius:12px;padding:9px 12px;font-size:13px;font-weight:700;margin:4px 0 6px;display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
 .afterreply{font-size:13px}
+.unit.moved{box-shadow:0 0 0 3px var(--accent);transition:box-shadow .3s}
 .empty{font-size:13px;color:var(--muted);border:2px dashed var(--line);border-radius:12px;padding:10px;text-align:center}
 
 /* 更新（v9） */
@@ -304,7 +305,7 @@ textarea{min-height:64px}
 
   <section class="card" id="cardLong">
     <h2><span class="n">2</span>長期のタスク<span class="keep">🔒 次の日も残る</span></h2>
-    <p class="hint">1〜3ヶ月のタスク。<b>教科・教材名・ページ数や個数・周回数・いつまでに</b>を全部そろえます。終わったら左のチェック。</p>
+    <p class="hint">1〜3ヶ月のタスク。<b>教科・教材名・ページ数や個数・周回数・いつまでに</b>を全部そろえます。終わったら左のチェック。<b>期限が近い順</b>に自動で並びます。</p>
     <div id="longList"></div>
     <button class="btn block" id="addLong">＋ 長期のタスクを追加</button>
   </section>
@@ -941,7 +942,7 @@ const HSync = (function(){
 })();
 /* HSYNC END */
 
-const VER = 16;
+const VER = 17;
 const KEY = 'studyreport-v1';
 const BK = 'studyreport-backup';
 const DEF_SUBJECTS = ['英語','数学','国語','理科','社会','その他'];
@@ -1145,11 +1146,29 @@ const goalTa=$('goal');
 goalTa.oninput=()=>{ S.goal=goalTa.value; markFilled(goalTa); goalTa.classList.remove('err'); save(); autoGrow(goalTa); };
 
 /* 長期のタスク */
+/* v17：長期のタスクは期限が近い順に自動で並べる（みーずの要望）。期限が空のものはいちばん下（入れた順のまま） */
+function sortLong(){
+  const before=S.longTasks.map(t=>t.id).join();
+  S.longTasks=S.longTasks.map((t,i)=>[t,i]).sort((a,b)=>{
+    const x=a[0].due||'', y=b[0].due||'';
+    if(x!==y){ if(!x) return 1; if(!y) return -1; return x<y?-1:1; }
+    return a[1]-b[1];
+  }).map(p=>p[0]);
+  return before!==S.longTasks.map(t=>t.id).join();
+}
+/* 期限を変えたら並べ直し、そのタスクの場所まで画面を動かす */
+function resortLong(t){
+  if(!sortLong()) return;
+  flush(); renderLong();
+  const c=document.querySelector('#longList [data-lid="'+t.id+'"]');
+  if(c){ c.scrollIntoView({behavior:'smooth',block:'center'}); c.classList.add('moved'); setTimeout(()=>c.classList.remove('moved'),1400); }
+}
 function renderLong(){
+  sortLong();
   const box=$('longList'); box.innerHTML='';
   if(!S.longTasks.length) box.append(el('div',{class:'empty'},'まだありません。下の「＋ 長期のタスクを追加」から書きましょう。'));
   S.longTasks.forEach((t,i)=>{
-    const card=el('div',{class:'unit'});
+    const card=el('div',{class:'unit','data-lid':t.id});
     const chk=el('button',{class:'check'+(t.done?' on':''),onclick:()=>{ t.done=!t.done; save(); renderLong(); }}, t.done?'✅':'');
     const del=el('button',{class:'del',onclick:()=>{ if(longLine(t) && !confirm('この長期タスクを消しますか？')) return; S.longTasks.splice(i,1); flush(); renderLong(); }},'✕');
     card.append(el('div',{class:'head'}, el('div',{class:'row'},chk,el('span',{class:'t'},'長期タスク'+(i+1))), del));
@@ -1181,9 +1200,10 @@ function renderLong(){
     card.append(el('div',{class:'lbl'},'いつまでに ',el('span',{class:'req'},'必ず入れる')));
     const due=el('input',{type:'date','data-k':'long-'+t.id+'-due'}); due.value=t.due||''; markFilled(due);
     due.oninput=()=>{ t.due=due.value; markFilled(due); due.classList.remove('err'); save(); upd(); };
+    due.onchange=()=>{ t.due=due.value; resortLong(t); };
     card.append(due);
     const quick=el('div',{class:'stepper'});
-    [['1週間後',7],['2週間後',14],['1ヶ月後',30],['2ヶ月後',60],['3ヶ月後',90]].forEach(p=>quick.append(el('button',{onclick:()=>{ const d=new Date(); d.setDate(d.getDate()+p[1]); t.due=todayStr(d); due.value=t.due; markFilled(due); due.classList.remove('err'); save(); upd(); }},p[0])));
+    [['1週間後',7],['2週間後',14],['1ヶ月後',30],['2ヶ月後',60],['3ヶ月後',90]].forEach(p=>quick.append(el('button',{onclick:()=>{ const d=new Date(); d.setDate(d.getDate()+p[1]); t.due=todayStr(d); due.value=t.due; markFilled(due); due.classList.remove('err'); save(); upd(); resortLong(t); }},p[0])));
     card.append(quick);
 
     card.append(pv); upd();
@@ -1765,6 +1785,7 @@ function build(){
   L.push('');
   L.push('②タスクとTQCスコア');
   L.push('【長期のタスク】');
+  sortLong();
   const lt=S.longTasks.filter(t=>longLine(t));
   if(!S.longTasks.length) bad('長期のタスク（1つも書かれていません）');
   S.longTasks.forEach((t,i)=>{

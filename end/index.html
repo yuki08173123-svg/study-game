@@ -73,7 +73,7 @@ footer{text-align:center;font-size:13px;color:#555;padding:28px 16px 40px}
     <div class="once">一発買い切り</div>
     <div class="price"><span class="n">39,800</span><span class="y">円</span><span class="t">（税込）</span></div>
     <p class="was">1年間の想定価格 176,100円 ／ 月額料金なし</p>
-    <div class="deadline">販売は 12月21日（月）23:59 まで</div>
+    <div class="deadline">販売は 12月8日（火）23:59 まで</div>
     <a class="btn js-buy" href="https://buy.stripe.com/dRm6oH3LGfZC7B288J9EI0s">エンドを購入する</a>
     <p class="note js-note">決済はStripe（クレジットカード・Apple Pay・Google Payなど）。決済が終わると、すぐにご案内ページが開きます。</p>
   </div>
@@ -121,7 +121,7 @@ footer{text-align:center;font-size:13px;color:#555;padding:28px 16px 40px}
 
 <section>
   <h2>販売期間</h2>
-  <p><b>2026年12月21日（月）23:59まで</b>の3日間限定です。<br>これ以降、エンドは一切購入できません。</p>
+  <p><b>2026年12月8日（火）23:59まで</b>の3日間限定です。<br>これ以降、エンドは一切購入できません。</p>
 </section>
 
 <section>
@@ -142,7 +142,7 @@ footer{text-align:center;font-size:13px;color:#555;padding:28px 16px 40px}
   <div class="eyebrow">今いる塾生だけ・今回限り</div>
   <div class="price" style="margin:10px 0 16px"><span class="n" style="font-size:56px">39,800</span><span class="y" style="font-size:28px">円</span><span class="t">（税込）</span></div>
   <a class="btn js-buy" href="https://buy.stripe.com/dRm6oH3LGfZC7B288J9EI0s">エンドを購入する</a>
-  <p class="note">販売は 2026年12月21日（月）23:59 まで</p>
+  <p class="note">販売は 2026年12月8日（火）23:59 まで</p>
 </div>
 
 <section id="law">
@@ -160,7 +160,7 @@ footer{text-align:center;font-size:13px;color:#555;padding:28px 16px 40px}
     <tr><th>代金の支払時期</th><td>ご注文時に決済されます</td></tr>
     <tr><th>お渡し時期</th><td>決済後、即時</td></tr>
     <tr><th>お渡し方法</th><td>決済完了後に開くご案内ページで、エンドのリンク・使い方・エンドルーム（Discord）の招待リンクをお渡しします</td></tr>
-    <tr><th>販売期間</th><td>2026年12月21日（月）23:59まで</td></tr>
+    <tr><th>販売期間</th><td>2026年12月8日（火）23:59まで</td></tr>
     <tr><th>動作環境</th><td>Googleアカウントと、インターネットにつながるスマホまたはパソコン</td></tr>
     <tr><th>返金について</th><td>お客様都合による返金は受け付けておりません。</td></tr>
     <tr><th>表現および商品に関する注意書き</th><td>本商品に示された表現や再現性には個人差があり、必ずしも利益や効果を保証したものではございません。</td></tr>
@@ -173,9 +173,9 @@ footer{text-align:center;font-size:13px;color:#555;padding:28px 16px 40px}
 <footer>© オンライン塾ヒラ</footer>
 
 <script>
-// 販売期限（日本時間 2026-12-21 23:59:59）を過ぎたら、購入ボタンを止める
+// 販売期限（日本時間 2026-12-08 23:59:59）を過ぎたら、購入ボタンを止める
 (function(){
-  var end = new Date('2026-12-21T23:59:59+09:00').getTime();
+  var end = new Date('2026-12-08T23:59:59+09:00').getTime();
   if (Date.now() > end) {
     document.querySelectorAll('.js-buy').forEach(function(a){
       a.textContent = '販売は終了しました';
@@ -183,7 +183,7 @@ footer{text-align:center;font-size:13px;color:#555;padding:28px 16px 40px}
       a.removeAttribute('href');
     });
     var n = document.querySelector('.js-note');
-    if (n) n.textContent = '2026年12月21日（月）23:59で販売を終了しました。';
+    if (n) n.textContent = '2026年12月8日（火）23:59で販売を終了しました。';
   }
 })();
 </script>

@@ -392,6 +392,30 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 .hist-item .mt{flex:1; min-width:0;}
 .hist-item .mt b{display:block; font-size:14px; font-weight:900;}
 .hist-item .mt span{font-size:11px; color:var(--muted); font-weight:700;}
+/* 今週のランキング */
+.rank{margin-top:12px; padding:0; overflow:hidden;}
+.rank .rk-head{display:flex; align-items:center; gap:8px; padding:12px 14px 0;}
+.rank .rk-head b{font-size:13px; font-weight:900; letter-spacing:.04em;}
+.rank .rk-seg{margin-left:auto; display:flex; background:var(--chip); border-radius:999px; padding:2px;}
+.rank .rk-seg button{padding:5px 13px; border-radius:999px; font-size:12px; font-weight:900; color:var(--muted);}
+.rank .rk-seg button.on{background:var(--card); color:var(--ink); box-shadow:var(--shadow);}
+.rank .rk-me{padding:6px 14px 10px; font-size:13px; font-weight:800; color:var(--muted);}
+.rank .rk-me b{font-size:28px; font-weight:900; color:var(--ink); margin:0 3px; line-height:1.2;}
+.rank .rk-row{display:grid; grid-template-columns:30px minmax(0,1fr) auto; align-items:center; gap:9px; padding:9px 14px; border-top:1px solid var(--line);}
+.rank .rk-row.me{background:var(--accent-soft);}
+.rank .rk-row .no{font-size:15px; font-weight:900; text-align:center; color:var(--muted);}
+.rank .rk-row.top .no{color:var(--star);}
+.rank .rk-row .nm{min-width:0;}
+.rank .rk-row .nm b{display:block; font-size:14px; font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.rank .rk-row .nm span{font-size:11px; color:var(--muted); font-weight:700;}
+.rank .rk-row .sc{font-size:20px; font-weight:900; text-align:right; white-space:nowrap;}
+.rank .rk-row .sc em{font-size:10px; font-style:normal; color:var(--muted); margin-left:2px;}
+.rank .rk-gap{padding:1px 14px 3px; text-align:center; color:var(--muted); font-weight:900; border-top:1px solid var(--line);}
+.rank .rk-msg{padding:8px 14px 13px; font-size:12.5px; color:var(--muted); font-weight:700; line-height:1.7;}
+.rank .rk-more{display:block; width:100%; padding:10px; border-top:1px solid var(--line); font-size:13px; font-weight:900; color:var(--accent);}
+.rank .rk-foot{display:flex; align-items:center; gap:8px; padding:8px 8px 9px 14px; border-top:1px solid var(--line); font-size:11px; color:var(--muted); font-weight:700;}
+.rank .rk-foot button{margin-left:auto; font-size:12px; font-weight:900; color:var(--accent); padding:5px 8px; flex:none;}
+.rank .rk-join{margin:0 14px 13px; width:calc(100% - 28px);}
 .chart{display:flex; align-items:stretch; gap:5px; height:130px; padding:14px 12px 0;}
 .chart .b{flex:1; background:var(--chip); border-radius:6px; position:relative;}
 .chart .b i{position:absolute; left:0; right:0; bottom:0; background:var(--accent); border-radius:6px; display:block;}
@@ -633,6 +657,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
     <button class="subbtn hidden" id="btnQSend">この日のQをQランキングに送る</button>
 
     <div class="tqc" id="tqcCard"></div>
+    <div class="card rank hidden" id="rankCard"></div>
 
     <button class="bigbtn" id="btnWeekView">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M9 9v11M15 9v11"/></svg>
@@ -688,6 +713,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <div class="lab">出すもの</div>
       <label class="chk"><input type="checkbox" id="swCd">カウントダウンを「今週」タブに出す</label>
       <label class="chk"><input type="checkbox" id="swHist">「記録」を下のタブに出す</label>
+      <label class="chk hidden" id="swRankLab"><input type="checkbox" id="swRank">ランキングを「今週」タブに出す</label>
       <p class="note">つかわない機能は、しまっておけます。いつでもここから出せます。<br>記録をしまっても、「今週」タブの<b>TQCスコアのカードを押す</b>と見られます。</p>
     </div>
     <div class="field">
@@ -713,6 +739,12 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
       <button class="subbtn" id="btnIcs">iPhoneのカレンダーに入れる</button>
       <button class="subbtn" id="btnNotifPerm">アプリの通知をゆるす</button>
       <p class="note">決まった時間に必ず知らせるには、カレンダーが確実です。ふだん使っているほうのボタンを押すと、「計画マップを書く」の予定が毎週日曜のこの時間に入ります。<br>Googleカレンダーは、ひらいた画面で<b>「保存」</b>を押してください。<br>時間を変えたときは、もう一度ボタンを押して入れ直してください。<br>「アプリの通知をゆるす」は、カウントダウンが終わったときなど、アプリを開いているあいだのお知らせに使います。</p>
+    </div>
+    <div class="field hidden" id="rankField">
+      <div class="lab">ランキング（今週のTQCスコア）</div>
+      <label class="chk" style="margin-top:6px"><input type="checkbox" id="setRankOn">ランキングに参加する</label>
+      <div class="row2 hidden" id="rankNameBox"><span class="u" style="flex:none">出す名前</span><input type="text" id="setRankName" maxlength="20" placeholder="例）ヒラ"></div>
+      <p class="note">参加すると、<b>何も押さなくても</b>今週のTQCスコアが自動でランキングに入り、「今週」タブで自分の順位とみんなの数字が見られます。<br>送るのは、<b>名前・T・Q・C・スコアだけ</b>です。やることの中身は送りません。<br>毎週月曜に、前の週の結果をDiscordにも出します。<br>チェックを外すと、今週と先週の自分の行が消えます。</p>
     </div>
     <div class="field hidden" id="qField">
       <div class="lab">Qランキング</div>
@@ -785,7 +817,7 @@ nav.tabs .dot{position:absolute; top:4px; right:26%; width:9px; height:9px; bord
 
 <script>
 'use strict';
-const VER = 62;
+const VER = 63;
 const PROF_KEY = 'planmap_profiles', CUR_KEY = 'planmap_cur';
 const PID = localStorage.getItem(CUR_KEY) || '0';
 const KEY = PID === '0' ? 'planmap_v1' : 'planmap_p' + PID;
@@ -851,7 +883,7 @@ let saveT = null;
 function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{
   const sn = snap();
   // 端末の時計が少しずれていても、あとから書いたほうが必ず新しくなるようにする
-  if(sn !== lastSnap){ lastSnap = sn; S.mt = Math.max(Date.now(), (S.mt||0)+1); syncSchedule(); }
+  if(sn !== lastSnap){ lastSnap = sn; S.mt = Math.max(Date.now(), (S.mt||0)+1); syncSchedule(); rankSchedule(); }
   try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
   syncProfileName();
 }, 200); }
@@ -1202,7 +1234,7 @@ function renderTQC(){
   + '</div>'
   + '<div class="formula">'+fmtH(r.T)+' × '+r.Q+' × '+r.C+' ÷ 1000 ＝ '+r.score+'</div>';
 }
-function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderKinds(); renderPend(); renderDay(); renderTQC(); renderTop(); renderPast(); renderGoals(); renderQ(); save(); }
+function renderAll(){ renderWeekBar(); renderDays(); renderRep(); renderKinds(); renderPend(); renderDay(); renderTQC(); renderTop(); renderPast(); renderGoals(); renderQ(); renderRank(); save(); }
 
 function renderHist(){
   const keys = Object.keys(S.weeks).filter(k=>{ const r = tqcOf(k); return r.all>0; }).sort();
@@ -2458,6 +2490,194 @@ $('#durRow').onclick = e => {
 /* ---------- Qランキングに送る ---------- */
 function qOn(){ return !!Q_GAS_URL; }
 
+/* ---------- ランキング（今週のTQCスコア） ----------
+   「参加する」をオンにした人だけ、今週（と先週）の T・Q・C を自動で送る。ボタンは押さない。
+   受け取り側は plan/gas/Sync.gs の rank_put / rank_list / rank_leave（同期と同じURL）。
+   送るのは 週・番号・名前・T（分）・Q・C・できた件数・やることの件数 だけ。やることの中身は送らない。
+   「できた」が1つもない週は載せない（計画だけ入れた人が0点で並ばないように）。
+   S.rank = { on, id, name } は同期にのるので、スマホとパソコンで同じ1行になる。 */
+function rankAvail(){ return syncOn(); }
+/* 読むだけ（S を書きかえない。書きかえると、開いただけの端末が「いちばん新しい」ことになってしまう） */
+function rankGet(){ return (S.rank && typeof S.rank === 'object') ? S.rank : { on:false, id:'', name:'' }; }
+function rankShown(){ return !(S.show && typeof S.show === 'object' && S.show.rank === false); }
+function rankNewId(){
+  const cs = 'abcdefghjkmnpqrstuvwxyz23456789', a = new Uint32Array(8);
+  crypto.getRandomValues(a);
+  let s = '';
+  for(let i=0;i<8;i++){ if(i === 4) s += '-'; s += cs[a[i] % cs.length]; }
+  return s;
+}
+function rankCleanName(v){ return String(v||'').replace(/\s+/g,' ').trim().slice(0, 20); }
+function rankWeeks(){ const k = iso(mondayOf(new Date())); return { cur:k, prev:iso(addDays(parseISO(k), -7)) }; }
+function rankViewKey(){ const w = rankWeeks(); return RK.view === 'prev' ? w.prev : w.cur; }
+function rankPack(k){ const r = tqcOf(k); return { week:k, tmin:r.Tmin, q:r.Q, c:r.C, done:r.done, all:r.all }; }
+function rankSig(p, name){ return [p.tmin, p.q, p.c, p.done > 0 ? 1 : 0, name].join('|'); }
+/* この端末から、どの週にどの数字を送ったか（同じ数字を何度も送らないため。端末ごと・使う人ごと） */
+const RK_SENT_KEY = ()=>KEY+'_rksent';
+function rankSent(){ try{ const o = JSON.parse(localStorage.getItem(RK_SENT_KEY())||'{}'); return (o && typeof o === 'object') ? o : {}; }catch(e){ return {}; } }
+function rankSentSave(o){ try{ localStorage.setItem(RK_SENT_KEY(), JSON.stringify(o)); }catch(e){} }
+let RK = { view:'cur', data:{}, busy:false, err:'', ready:true, all:false, t:null, wait:0 };
+function rankSchedule(ms){
+  if(!rankAvail() || !rankGet().on) return;
+  clearTimeout(RK.t);
+  RK.t = setTimeout(()=>rankPush(false), ms || 3000);
+}
+function rankTake(r){
+  if(r && r.ok && r.rank){ RK.ready = true; RK.err = ''; RK.data[r.week] = { rows:r.rows||[], at:Date.now() }; return true; }
+  if(r && !r.ok && /action/.test(r.err||'')){ RK.ready = false; RK.err = ''; return false; }   // 受け取り側が、まだ新しくなっていない
+  RK.err = (r && r.err) || 'つながりませんでした';
+  return false;
+}
+async function rankPush(force){
+  const o = rankGet();
+  if(!rankAvail() || !o.on || !o.id) return;
+  if(RK.busy){ clearTimeout(RK.t); RK.t = setTimeout(()=>rankPush(force), 1500); return; }
+  // 同期している人は、先にほかの端末の中身を受け取ってから送る（古い数字を送らないため）。待つのは数回まで
+  if(S.syncCode && !pulledOK && RK.wait < 5){ RK.wait++; clearTimeout(RK.t); RK.t = setTimeout(()=>rankPush(force), 1500); return; }
+  RK.wait = 0;
+  const w = rankWeeks(), sent = rankSent(), list = [], sig = {};
+  [w.cur, w.prev].forEach(k=>{
+    const p = rankPack(k);
+    sig[k] = p.done > 0 ? rankSig(p, o.name) : '';
+    if(p.done <= 0 && !sent[k]) return;       // 「できた」が1つもない週は送らない（計画だけの人を0点で載せない）
+    if(!force && sent[k] === sig[k]) return;  // 前に送ったのと同じなら送らない
+    list.push(p);
+  });
+  if(!list.length){
+    const d = RK.data[rankViewKey()];
+    if(force || !d || Date.now() - d.at > 60000) rankPull();
+    return;
+  }
+  RK.busy = true; renderRank();
+  try{
+    const r = await syncCall({ action:'rank_put', id:o.id, name:o.name, weeks:list, view:rankViewKey() });
+    if(rankTake(r)){
+      const s2 = {};
+      [w.cur, w.prev].forEach(k=>{
+        const v = list.some(p=>p.week === k) ? sig[k] : sent[k];
+        if(v) s2[k] = v;
+      });
+      rankSentSave(s2);
+    }
+  }catch(e){ RK.err = 'つながりませんでした'; }
+  RK.busy = false; renderRank();
+}
+async function rankPull(){
+  const o = rankGet();
+  if(!rankAvail() || !o.on || RK.busy) return;
+  RK.busy = true; renderRank();
+  try{ rankTake(await syncCall({ action:'rank_list', id:o.id, week:rankViewKey() })); }
+  catch(e){ RK.err = 'つながりませんでした'; }
+  RK.busy = false; renderRank();
+}
+function rankRowHtml(r){
+  return '<div class="rk-row'+(r.me?' me':'')+(r.rank<=3?' top':'')+'"><span class="no num">'+r.rank+'</span>'
+    + '<span class="nm"><b>'+esc(r.name)+(r.me?'（あなた）':'')+'</b><span class="num">T '+fmtH(r.tmin/60)+'h ・ Q '+r.q+' ・ C '+r.c+'%</span></span>'
+    + '<span class="sc num">'+r.score+'<em>点</em></span></div>';
+}
+function renderRank(){
+  const el = $('#rankCard'); if(!el) return;
+  const o = rankGet(), avail = rankAvail();
+  $('#rankField').classList.toggle('hidden', !avail);
+  $('#swRankLab').classList.toggle('hidden', !avail);
+  $('#swRank').checked = rankShown();
+  $('#setRankOn').checked = !!o.on;
+  $('#rankNameBox').classList.toggle('hidden', !o.on);
+  if(document.activeElement !== $('#setRankName')) $('#setRankName').value = o.name || '';
+  if(!avail || !rankShown()){ el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  if(!o.on){
+    el.innerHTML = '<div class="rk-head"><b>今週のランキング</b></div>'
+      + '<div class="rk-msg">参加すると、自分の順位と、みんなのTQCスコアが見られます。<br>毎日なにかを押す必要はありません。自動で入ります。</div>'
+      + '<button class="subbtn rk-join" data-a="join">ランキングに参加する</button>';
+    return;
+  }
+  const prev = RK.view === 'prev', k = rankViewKey(), m = parseISO(k), d = RK.data[k];
+  let h = '<div class="rk-head"><b>'+(prev?'先週':'今週')+'のランキング</b>'
+    + '<div class="rk-seg"><button data-a="cur" class="'+(prev?'':'on')+'">今週</button><button data-a="prev" class="'+(prev?'on':'')+'">先週</button></div></div>';
+  if(!RK.ready){
+    h += '<div class="rk-msg">ランキングは、いま じゅんび中です。はじまったら、ここに自動で出ます。</div>';
+  }else if(!d){
+    h += '<div class="rk-msg">'+(RK.busy || !RK.err ? '読みこんでいます…' : esc(RK.err))+'</div>'
+      + (RK.busy || !RK.err ? '' : '<button class="rk-more" data-a="upd">もう一度ためす</button>');
+  }else{
+    const rows = d.rows, me = rows.find(r=>r.me);
+    h += '<div class="rk-me">' + (me
+        ? (prev ? '先週は' : 'あなたは今')+'<b class="num">'+me.rank+'</b>位'+(prev?'でした':'')+'（'+rows.length+'人中）'
+        : (prev ? 'この週は、ランキングに入っていません。' : 'やることに「できた」を1つつけると、ここに入ります。'))
+      + '　<span style="font-weight:700">'+md(m)+'〜'+md(addDays(m,6))+'</span></div>';
+    if(!rows.length) h += '<div class="rk-msg" style="border-top:1px solid var(--line); padding-top:11px">まだ、だれも入っていません。</div>';
+    else if(RK.all || rows.length <= 10) h += rows.map(rankRowHtml).join('');
+    else{
+      h += rows.slice(0,10).map(rankRowHtml).join('');
+      if(me && rows.indexOf(me) >= 10) h += '<div class="rk-gap">⋮</div>' + rankRowHtml(me);
+    }
+    if(rows.length > 10) h += '<button class="rk-more" data-a="more">'+(RK.all ? '上の10人だけにする' : 'ぜんぶ見る（'+rows.length+'人）')+'</button>';
+    h += '<div class="rk-foot"><span>'+(RK.busy ? '更新しています…' : (RK.err ? esc(RK.err) : fmtAt(d.at)+' の順位です'))+'</span><button data-a="upd">更新</button></div>';
+  }
+  el.innerHTML = h;
+}
+$('#rankCard').onclick = e => {
+  const b = e.target.closest('button[data-a]'); if(!b) return;
+  const a = b.dataset.a;
+  if(a === 'join'){ rankJoinSheet(); return; }
+  if(a === 'more'){ RK.all = !RK.all; renderRank(); return; }
+  if(a === 'upd'){ RK.err = ''; rankPush(true); return; }
+  if(a === 'cur' || a === 'prev'){
+    if(RK.view === a) return;
+    RK.view = a; RK.all = false; RK.err = ''; renderRank();
+    const d = RK.data[rankViewKey()];
+    if(!d || Date.now() - d.at > 60000) rankPull();
+  }
+};
+function rankJoinSheet(){
+  const o = rankGet();
+  const sh = openSheet('<h2>ランキングに参加する</h2>'
+    + '<p style="font-size:13px; line-height:1.8; font-weight:700">今週のTQCスコアが、<b>自動で</b>ランキングに入ります。毎日なにかを押す必要はありません。<br>'
+    + '送るのは <b>名前・T・Q・C・スコアだけ</b>です。やることの中身は送りません。<br>'
+    + '毎週月曜に、前の週の結果をDiscordにも出します。<br>'
+    + 'やめたいときは、設定からいつでもやめられます。</p>'
+    + '<div class="field" style="margin-top:12px"><div class="lab">ランキングに出す名前</div>'
+    + '<input type="text" id="rkName" maxlength="20" value="'+esc(o.name || S.name || '')+'" placeholder="例）ヒラ"></div>'
+    + '<button class="bigbtn" id="rkGo">参加する</button>');
+  sh.querySelector('#rkGo').onclick = ()=>{
+    const nm = rankCleanName(sh.querySelector('#rkName').value);
+    if(!nm){ toast('名前を入れてください'); return; }
+    S.rank = { on:true, id:(o.id || rankNewId()), name:nm };
+    RK.view = 'cur'; RK.data = {}; RK.err = '';
+    sh.remove(); save(); renderRank(); rankPush(true);
+    toast('ランキングに参加しました');
+  };
+}
+async function rankLeave(){
+  const o = rankGet();
+  let ok = false;
+  try{
+    const r = await syncCall({ action:'rank_leave', id:o.id });
+    ok = !!(r && (r.ok || /action/.test(r.err||'')));   // 受け取り側がまだ古いときは、送った行もないので、そのままやめてよい
+  }catch(e){}
+  if(!ok){ toast('つながりませんでした。もう一度ためしてください'); renderRank(); return; }
+  clearTimeout(RK.t);
+  S.rank = { on:false, id:o.id, name:o.name };
+  rankSentSave({}); RK.data = {}; RK.err = '';
+  save(); renderRank(); toast('ランキングをやめました');
+}
+$('#setRankOn').onchange = ()=>{
+  if($('#setRankOn').checked){ $('#setRankOn').checked = false; rankJoinSheet(); return; }
+  if(!confirm('ランキングをやめます。今週と先週の自分の行が消えます。よろしいですか？')){ $('#setRankOn').checked = true; return; }
+  $('#setRankOn').checked = true;   // 消せたのをたしかめてから外す
+  rankLeave();
+};
+$('#setRankName').onchange = ()=>{
+  const o = rankGet(), nm = rankCleanName($('#setRankName').value);
+  if(!o.on) return;
+  if(!nm){ toast('名前を入れてください'); $('#setRankName').value = o.name || ''; return; }
+  $('#setRankName').value = nm;
+  if(nm === o.name) return;
+  S.rank = { on:true, id:o.id, name:nm };
+  save(); rankPush(false);
+};
+
 /* ---------- 同期（スマホとパソコンで同じにする） ----------
    plan/gas/Sync.gs をスプレッドシートに貼ってデプロイし、そのURLを SYNC_URL に入れる。
    空のあいだは、この機能は表示されない。
@@ -2887,6 +3107,7 @@ function renderShow(){
 $('#histBack').onclick = ()=>{ document.querySelector('nav.tabs button[data-tab="Plan"]').click(); window.scrollTo(0,0); };
 $('#swCd').onchange = ()=>{ showOpt().cd = $('#swCd').checked; save(); renderShow(); };
 $('#swHist').onchange = ()=>{ showOpt().hist = $('#swHist').checked; save(); renderShow(); };
+$('#swRank').onchange = ()=>{ showOpt().rank = $('#swRank').checked; save(); renderRank(); };
 /* 記録をしまっていても、今週タブのTQCスコアを押せば見られる */
 $('.tc-score').onclick = ()=>{ openHist(); };
 function openHist(){
@@ -3121,7 +3342,9 @@ const SLIDES = [
 </div>
 <p><b>T</b>＝1週間の勉強時間　<b>Q</b>＝きわまった数（★）　<b>C</b>＝達成率<br>
 <b>TQCスコア ＝ T × Q × C ÷ 1000</b>（小数点は切りすて）<br>
-毎日つけていけば、自動で出ます。</p>`,
+毎日つけていけば、自動で出ます。</p>
+<p><b>ランキング</b>：設定で「ランキングに参加する」をオンにすると、このTQCスコアが<b>自動で</b>ランキングに入り、「今週」タブで自分の順位とみんなの数字が見られます。<br>
+送るのは名前・T・Q・C・スコアだけです。参加しない人は、何もしなくて大丈夫です。</p>`,
 
 `<span class="snum">⑥</span>
 <h3>1週間をまとめて見る</h3>
@@ -3233,7 +3456,7 @@ async function doUpdate(){
 $('#btnUpdate').onclick = doUpdate;
 $('#btnCheckUpd').onclick = ()=>checkUpdate(false);
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ pulledOK = false; checkUpdate(true); renderCd(); checkDayChange(); syncPull(true); } });
-window.addEventListener('focus', ()=>{ checkDayChange(); syncPull(true); });
+window.addEventListener('focus', ()=>{ checkDayChange(); syncPull(true); rankSchedule(1500); });
 
 function boot(){
   if(!S.cur) S.cur = iso(mondayOf(new Date()));
@@ -3248,6 +3471,7 @@ function boot(){
   $('#verTag').textContent = 'v'+VER; $('#verTag2').textContent = 'v'+VER;
   bkNote(); guardNote(); tidyNote(); renderShow(); askPersist(); renderSync();
   syncRep(); renderAll(); renderCd();
+  RK.data = {}; RK.all = false; renderRank(); rankSchedule(1500);   // 使う人や中身が入れかわったら、ランキングも取りなおす
   // 再読みこみでカウントダウンが続いているときは、最初のタップで音を使えるようにする
   if(cdRunning()) document.addEventListener('pointerdown', ()=>audioUnlock(), { once:true });
 }
